@@ -420,7 +420,13 @@ class Templar:
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
-                    ran = UnsafeProxy(",".join(ran))
+                    try:
+                        ran = UnsafeProxy(",".join(ran))
+                    except TypeError:
+                        if isinstance(ran, list) and len(ran) == 1:
+                            ran = wrap_var(ran[0])
+                        else:
+                            ran = wrap_var(ran)
 
             return ran
         else:
