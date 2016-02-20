@@ -22,7 +22,6 @@ import glob
 import pwd
 import grp
 
-from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 HAVE_SELINUX=False
@@ -79,13 +78,13 @@ def file_props(root, path):
         elif os.path.isfile(abspath):
             ret['state'] = 'file'
             ret['src'] = abspath
-    except OSError, e:
+    except OSError as e:
         display.warning('filetree: Error querying path %s  (%s)' % (abspath, e))
         return None
 
     try:
         stat = os.stat(abspath)
-    except OSError, e:
+    except OSError as e:
         display.warning('filetree: Error using stat() on path %s  (%s)' % (abspath, e))
         return None
 
