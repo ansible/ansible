@@ -73,6 +73,7 @@ class Validator(object):
         ret = []
 
         for trace in self.traces:
+            print('TRACE:')
             print(trace)
         for error in self.errors:
             print('ERROR: %s' % error)
@@ -307,20 +308,94 @@ class ModuleValidator(Validator):
             self.errors.append('Missing python documentation file')
 
     def _get_docs(self):
-        docs = None
-        examples = None
-        ret = None
+        docs = {
+            'DOCUMENTATION': {
+                'value': None,
+                'lineno': 0
+            },
+            'EXAMPLES': {
+                'value': None,
+                'lineno': 0
+            },
+            'RETURN': {
+                'value': None,
+                'lineno': 0
+            }
+        }
         for child in self.ast.body:
             if isinstance(child, ast.Assign):
                 for grandchild in child.targets:
                     if grandchild.id == 'DOCUMENTATION':
-                        docs = child.value.s
+                        docs['DOCUMENTATION']['value'] = child.value.s
+                        docs['DOCUMENTATION']['lineno'] = child.lineno
                     elif grandchild.id == 'EXAMPLES':
+                        docs['EXAMPLES']['value'] = child.value.s[1:]
+                        docs['EXAMPLES']['lineno'] = child.lineno
                         examples = child.value.s[1:]
                     elif grandchild.id == 'RETURN':
-                        ret = child.value.s
+                        docs['RETURN']['value'] = child.value.s
+                        docs['RETURN']['lineno'] = child.lineno
 
-        return docs, examples, ret
+        return docs
+
+    def _validate_docs(self):
+        sys_stdout = sys.stdout
+        sys_stderr = sys.stderr
+        sys.stdout = sys.stderr = buf = StringIO()
+        # instead of adding noqa to the above, do something with buf
+        assert buf
+        setattr(sys.stdout, 'encoding', sys_stdout.encoding)
+        setattr(sys.stderr, 'encoding', sys_stderr.encoding)
+        doc_info = self._get_docs()
+        try:
+            doc, examples, ret = get_docstring(self.path, verbose=True)
+            trace = None
+        except yaml.YAMLError as e:
+            doc = None
+            examples = doc_info['EXAMPLES']['value']
+            ret = doc_info['RETURN']['value']
+            trace = e
+        finally:
+            sys.stdout = sys_stdout
+            sys.stderr = sys_stderr
+        if trace:
+            # This offsets the error line number to where the
+            # DOCUMENTATION starts so we can just go to that line in the
+            # module
+            trace.problem_mark.line += (
+                doc_info['DOCUMENTATION']['lineno'] - 1
+            )
+            trace.problem_mark.name = '%s.DOCUMENTATION' % self.name
+            self.traces.append(trace)
+            self.errors.append('DOCUMENTATION is not valid YAML. Line %d '
+                               'column %d' %
+                               (trace.problem_mark.line + 1,
+                                trace.problem_mark.column + 1))
+        if not bool(doc):
+            self.errors.append('No DOCUMENTATION provided')
+        else:
+            self._check_version_added(doc)
+            self._check_for_new_args(doc)
+        if not bool(examples):
+            self.errors.append('No EXAMPLES provided')
+        if not bool(ret):
+            if self._is_new_module():
+                self.errors.append('No RETURN documentation provided')
+            else:
+                self.warnings.append('No RETURN provided')
+        else:
+            try:
+                yaml.safe_load(ret)
+            except yaml.YAMLError as e:
+                e.problem_mark.line += (
+                    doc_info['RETURN']['lineno'] - 1
+                )
+                e.problem_mark.name = '%s.RETURN' % self.name
+                self.errors.append('RETURN is not valid YAML. Line %d '
+                                   'column %d' %
+                                   (e.problem_mark.line + 1,
+                                    e.problem_mark.column + 1))
+                self.traces.append(e)
 
     def _find_redeclarations(self):
         g = set()
@@ -411,43 +486,7 @@ class ModuleValidator(Validator):
             return
 
         if self._python_module():
-            sys_stdout = sys.stdout
-            sys_stderr = sys.stderr
-            sys.stdout = sys.stderr = buf = StringIO()
-            # instead of adding noqa to the above, do something with buf
-            assert buf
-            setattr(sys.stdout, 'encoding', sys_stdout.encoding)
-            setattr(sys.stderr, 'encoding', sys_stderr.encoding)
-            try:
-                doc, examples, ret = get_docstring(self.path, verbose=True)
-                trace = None
-            except:
-                doc = None
-                _, examples, ret = self._get_docs()
-                trace = traceback.format_exc()
-            finally:
-                sys.stdout = sys_stdout
-                sys.stderr = sys_stderr
-            if trace:
-                self.traces.append(trace)
-            if not bool(doc):
-                self.errors.append('Invalid or no DOCUMENTATION provided')
-            else:
-                self._check_version_added(doc)
-                self._check_for_new_args(doc)
-            if not bool(examples):
-                self.errors.append('No EXAMPLES provided')
-            if not bool(ret):
-                if self._is_new_module():
-                    self.errors.append('No RETURN documentation provided')
-                else:
-                    self.warnings.append('No RETURN provided')
-            else:
-                try:
-                    yaml.safe_load(ret)
-                except:
-                    self.errors.append('RETURN is not valid YAML')
-                    self.traces.append(traceback.format_exc())
+            self._validate_docs()
 
         if self._python_module() and not self._just_docs():
             self._check_for_sys_exit()
