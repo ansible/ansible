@@ -8,7 +8,6 @@ import ast
 import os
 import re
 import sys
-import traceback
 
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
@@ -328,7 +327,6 @@ class ModuleValidator(Validator):
                     elif grandchild.id == 'EXAMPLES':
                         docs['EXAMPLES']['value'] = child.value.s[1:]
                         docs['EXAMPLES']['lineno'] = child.lineno
-                        examples = child.value.s[1:]
                     elif grandchild.id == 'RETURN':
                         docs['RETURN']['value'] = child.value.s
                         docs['RETURN']['lineno'] = child.lineno
