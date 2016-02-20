@@ -1,4 +1,8 @@
 import ast
+import sys
+
+# We only use StringIO, since we cannot setattr on cStringIO
+from StringIO import StringIO
 
 
 def find_globals(g, tree):
@@ -22,3 +26,25 @@ def find_globals(g, tree):
                 if g_name == '*':
                     continue
                 g.add(g_name)
+
+
+class CaptureStd():
+    """Context manager to handle capturing stderr and stdout"""
+
+    def __enter__(self):
+        self.sys_stdout = sys.stdout
+        self.sys_stderr = sys.stderr
+        sys.stdout = self.stdout = StringIO()
+        sys.stderr = self.stderr = StringIO()
+        setattr(sys.stdout, 'encoding', self.sys_stdout.encoding)
+        setattr(sys.stderr, 'encoding', self.sys_stderr.encoding)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdout = self.sys_stdout
+        sys.stderr = self.sys_stderr
+
+    def get(self):
+        """Return ``(stdout, stderr)``"""
+
+        return self.stdout.getvalue(), self.stderr.getvalue()
