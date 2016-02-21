@@ -126,7 +126,7 @@ class CallbackModule(CallbackBase):
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             args = ' %s' % args
         self._display.banner("TASK [%s%s]" % (task.get_name().strip(), args))
-        if self._display.verbosity > 2:
+        if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
                 self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
