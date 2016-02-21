@@ -212,7 +212,6 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        color = C.COLOR_SKIP
         self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
