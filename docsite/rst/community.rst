@@ -251,7 +251,12 @@ channel or the general project mailing list.
 IRC Channel
 -----------
 
-Ansible has an IRC channel #ansible on irc.freenode.net.
+Ansible has several IRC channels on Freenode (irc.freenode.net):
+
+- #ansible - For general use questions and support.
+- #ansible-devel - For discussions on developer topics and code related to features/bugs.
+- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists.
+- #ansible-notices - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
 -----------------------
