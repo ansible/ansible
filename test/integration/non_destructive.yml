@@ -42,6 +42,5 @@
     - { role: test_embedded_module, tags: test_embedded_module }
     - { role: test_uri, tags: test_uri }
     - { role: test_add_host, tags: test_add_host }
-    # Turn on test_binary when we start testing v2
-    #- { role: test_binary, tags: test_binary }
+    - { role: test_binary, tags: test_binary }
 
