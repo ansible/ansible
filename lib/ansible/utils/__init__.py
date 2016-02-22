@@ -828,7 +828,7 @@ def merge_hash(a, b):
     for k, v in b.iteritems():
         # if there's already such key in a
         # and that key contains dict
-        if k in result and isinstance(result[k], dict):
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
         else:
