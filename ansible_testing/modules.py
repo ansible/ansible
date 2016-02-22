@@ -411,8 +411,8 @@ class ModuleValidator(Validator):
                                'number: %r' % version_added)
             return
 
-        strict_ansible_version = StrictVersion(ansible_version)
         should_be = '.'.join(ansible_version.split('.')[:2])
+        strict_ansible_version = StrictVersion(should_be)
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
@@ -422,6 +422,8 @@ class ModuleValidator(Validator):
     def _check_for_new_args(self, doc):
         if self._is_new_module():
             return
+
+        mod_version_added = StrictVersion(str(doc.get('version_added', '0.0')))
 
         with CaptureStd():
             try:
@@ -441,8 +443,8 @@ class ModuleValidator(Validator):
 
         options = doc.get('options', {})
 
-        strict_ansible_version = StrictVersion(ansible_version)
         should_be = '.'.join(ansible_version.split('.')[:2])
+        strict_ansible_version = StrictVersion(should_be)
 
         for option, details in options.iteritems():
             new = not bool(existing_options.get(option))
@@ -460,8 +462,9 @@ class ModuleValidator(Validator):
                                    (option, version_added))
                 continue
 
-            if (version_added < strict_ansible_version or
-                    strict_ansible_version < version_added):
+            if (strict_ansible_version != mod_version_added and
+                    (version_added < strict_ansible_version or
+                     strict_ansible_version < version_added)):
                 self.errors.append('version_added for new option (%s) should '
                                    'be %s. Currently %s' %
                                    (option, should_be, version_added))
