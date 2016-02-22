@@ -106,6 +106,13 @@ EXAMPLES = '''
   register: deleted_vgw
 '''
 
+RETURN = '''
+result:
+  description: The result of the create, or delete action.
+  returned: success
+  type: dictionary
+'''
+
 try:
    import json
    import time
