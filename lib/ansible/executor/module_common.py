@@ -25,6 +25,7 @@ from io import BytesIO
 import json
 import os
 import shlex
+import zipfile
 
 # from Ansible
 from ansible import __version__
@@ -49,6 +50,26 @@ ENCODING_STRING = b'# -*- coding: utf-8 -*-'
 _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 # ******************************************************************************
+
+ZIPLOADER_DATA = '''#!/usr/bin/python
+import os
+import sys
+import tempfile
+import zipimport
+
+ZIPDATA = """%s"""
+os.environ['MODULE_COMPLEX_ARGS'] = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
+
+try:
+    temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_', dir='./')
+    os.write(temp_fd, ZIPDATA.decode('base64'))
+    sys.path.insert(0, temp_path)
+    from ansible_ziploader_module import main
+    main()
+finally:
+    os.close(temp_fd)
+    os.remove(temp_path)
+'''
 
 def _slurp(path):
     if not os.path.exists(path):
@@ -78,34 +99,61 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
 
     output = BytesIO()
     lines = module_data.split(b'\n')
+
     snippet_names = []
 
-    for line in lines:
 
-        if REPLACER in line:
-            output.write(_slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
-            snippet_names.append(b'basic')
-        if REPLACER_WINDOWS in line:
-            ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
-            output.write(ps_data)
-            snippet_names.append(b'powershell')
-        elif line.startswith(b'from ansible.module_utils.'):
-            tokens=line.split(b".")
-            import_error = False
-            if len(tokens) != 3:
-                import_error = True
-            if b" import *" not in line:
-                import_error = True
-            if import_error:
-                raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
-            snippet_name = tokens[2].split()[0]
-            snippet_names.append(snippet_name)
-            output.write(_slurp(os.path.join(_SNIPPET_PATH, to_unicode(snippet_name) + ".py")))
-        else:
-            if strip_comments and line.startswith(b"#") or line == b'':
-                pass
-            output.write(line)
-            output.write(b"\n")
+    if module_style == 'new' and module_path.endswith('.py'):
+        zipoutput = StringIO()
+        zf = zipfile.PyZipFile(zipoutput, mode='w')
+        if REPLACER in module_data:
+            module_data.replace(REPLACER, '')
+            zf.writestr('basic.py', _slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
+        final_data = []
+        zf.writestr("ansible_module_temp/__init__.py", "")
+        for line in lines:
+            if line.startswith('from ansible.module_utils.'):
+                tokens=line.split(".")
+                import_error = False
+                if len(tokens) != 3 or " import *" not in line:
+                    raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
+                snippet_name = tokens[2].split()[0]
+                snippet_names.append(snippet_name)
+                fname = snippet_name + ".py"
+                zf.writestr(os.path.join("ansible_module_temp", fname), _slurp(os.path.join(_SNIPPET_PATH, fname)))
+                final_data.append('from ansible_module_temp.%s import *' % snippet_name)
+            else:
+                final_data.append(line)
+
+        zf.writestr('ansible_ziploader_module.py', "\n".join(final_data))
+        zf.close()
+        output.write(ZIPLOADER_DATA % zipoutput.getvalue().encode('base64'))
+    else:
+        for line in lines:
+            if REPLACER in line:
+                output.write(_slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
+                snippet_names.append('basic')
+            if REPLACER_WINDOWS in line:
+                ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
+                output.write(ps_data)
+                snippet_names.append('powershell')
+            elif line.startswith('from ansible.module_utils.'):
+                tokens=line.split(".")
+                import_error = False
+                if len(tokens) != 3:
+                    import_error = True
+                if " import *" not in line:
+                    import_error = True
+                if import_error:
+                    raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
+                snippet_name = tokens[2].split()[0]
+                snippet_names.append(snippet_name)
+                output.write(_slurp(os.path.join(_SNIPPET_PATH, snippet_name + ".py")))
+            else:
+                if strip_comments and line.startswith("#") or line == '':
+                    pass
+                output.write(line)
+                output.write("\n")
 
     if not module_path.endswith(".ps1"):
         # Unixy modules

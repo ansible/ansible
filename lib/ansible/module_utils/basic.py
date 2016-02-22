@@ -1413,7 +1413,10 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+        try:
+            params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+        except:
+            params = json_dict_unicode_to_bytes(json.loads(os.environ['MODULE_COMPLEX_ARGS']))
         if params is None:
             params = dict()
         return params
