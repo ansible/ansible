@@ -366,6 +366,11 @@ class ActionModule(object):
             diff['after_header'] = source
             diff['after'] = src.read()
 
+        if self.runner.no_log:
+            if 'before' in diff:
+                diff["before"] = ""
+            if 'after' in diff:
+                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
         return diff
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):

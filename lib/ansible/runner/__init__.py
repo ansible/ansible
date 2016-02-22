@@ -647,8 +647,7 @@ class Runner(object):
         # vars_files which had host-specific templating done)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
         # role parameters next
-        role_params = template.template(self.basedir, self.role_params, inject)
-        inject = utils.combine_vars(inject, role_params)
+        inject = utils.combine_vars(inject, self.role_params)
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars

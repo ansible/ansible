@@ -19,8 +19,8 @@ import collections
 import os
 import sys
 import time
-import threading
 from itertools import chain
+from multiprocessing import Lock
 
 from ansible import constants as C
 from ansible.cache.base import BaseCacheModule
@@ -51,7 +51,7 @@ class ProxyClientPool(object):
         self._num_connections = 0
         self._available_connections = collections.deque(maxlen=self.max_connections)
         self._locked_connections = set()
-        self._lock = threading.Lock()
+        self._lock = Lock()
 
     def _check_safe(self):
         if self.pid != os.getpid():

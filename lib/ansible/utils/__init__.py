@@ -19,9 +19,7 @@ import errno
 import sys
 import re
 import os
-import shlex
 import yaml
-import copy
 import optparse
 import operator
 from ansible import errors
@@ -29,8 +27,7 @@ from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
-from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s
-from ansible.callbacks import display
+from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s #unused here but 'reexported'
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -45,10 +42,11 @@ import pipes
 import random
 import difflib
 import warnings
-import traceback
 import getpass
 import subprocess
 import contextlib
+import tempfile
+from multiprocessing import Lock
 
 from vault import VaultLib
 
@@ -62,6 +60,7 @@ LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 PRINT_CODE_REGEX = re.compile(r'(?:{[{%]|[%}]})')
 CODE_REGEX = re.compile(r'(?:{%|%})')
 
+_LOCK = Lock()
 
 try:
     # simplejson can be much faster if it's available
@@ -127,8 +126,15 @@ def key_for_hostname(hostname):
 
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path, mode=0700)
-        os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+        # avoid race with multiple forks trying to create paths on host
+        # but limit when locking is needed to creation only
+        with(_LOCK):
+            if not os.path.exists(key_path):
+                # use a temp directory and rename to ensure the directory
+                # searched for only appears after permissions applied.
+                tmp_dir = tempfile.mkdtemp(dir=os.path.dirname(key_path))
+                os.chmod(tmp_dir, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+                os.rename(tmp_dir, key_path)
     elif not os.path.isdir(key_path):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
@@ -139,19 +145,25 @@ def key_for_hostname(hostname):
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
     if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
-        key = AesKey.Generate(size=256)
-        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
-        fh = os.fdopen(fd, 'w')
-        fh.write(str(key))
-        fh.close()
-        return key
-    else:
-        if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
-            raise errors.AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
-        fh = open(key_path)
-        key = AesKey.Read(fh.read())
-        fh.close()
-        return key
+        # avoid race with multiple forks trying to create key
+        # but limit when locking is needed to creation only
+        with(_LOCK):
+            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+                key = AesKey.Generate()
+                # use temp file to ensure file only appears once it has
+                # desired contents and permissions
+                with tempfile.NamedTemporaryFile(mode='w', dir=os.path.dirname(key_path), delete=False) as fh:
+                    tmp_key_path = fh.name
+                    fh.write(str(key))
+                os.chmod(tmp_key_path, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
+                os.rename(tmp_key_path, key_path)
+                return key
+
+    if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
+        raise errors.AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
+
+    with open(key_path) as fh:
+        return AesKey.Read(fh.read())
 
 def encrypt(key, msg):
     return key.Encrypt(msg.encode('utf-8'))
@@ -340,9 +352,6 @@ def path_dwim(basedir, given):
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
     # (used by roles code)
-
-    from ansible.utils import template
-
 
     basedir = os.path.dirname(original)
     if os.path.islink(basedir):
@@ -535,8 +544,6 @@ def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
 
 def parse_json(raw_data, from_remote=False, from_inventory=False, no_exceptions=False):
     ''' this version for module return data only '''
-
-    orig_data = raw_data
 
     # ignore stuff like tcgetattr spewage or other warnings
     data = filter_leading_non_json_lines(raw_data)
@@ -806,23 +813,27 @@ def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    result = {}
-
     # we check here as well as in combine_vars() since this
     # function can work recursively with nested dicts
     _validate_both_dicts(a, b)
 
-    for dicts in a, b:
-        # next, iterate over b keys and values
-        for k, v in dicts.iteritems():
-            # if there's already such key in a
-            # and that key contains dict
-            if k in result and isinstance(result[k], dict):
-                # merge those dicts recursively
-                result[k] = merge_hash(a[k], v)
-            else:
-                # otherwise, just copy a value from b to a
-                result[k] = v
+    # if a is empty or equal to b, return b
+    if a == {} or a == b:
+        return b.copy()
+
+    # if b is empty the below unfolds quickly
+    result = a.copy()
+
+    # next, iterate over b keys and values
+    for k, v in b.iteritems():
+        # if there's already such key in a
+        # and that key contains dict
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            # merge those dicts recursively
+            result[k] = merge_hash(result[k], v)
+        else:
+            # otherwise, just copy a value from b to a
+            result[k] = v
 
     return result
 
@@ -1365,6 +1376,14 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
 
+    # define certain JSON types
+    # eg. JSON booleans are unknown to python eval()
+    JSON_TYPES = {
+        'false': False,
+        'null': None,
+        'true': True,
+    }
+
     # this is the whitelist of AST nodes we are going to
     # allow in the evaluation. Any node type other than
     # those listed here will raise an exception in our custom
@@ -1428,7 +1447,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
-        result = eval(compiled, {}, locals)
+        result = eval(compiled, JSON_TYPES, dict(locals))
 
         if include_exceptions:
             return (result, None)
@@ -1485,12 +1504,13 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
 def combine_vars(a, b):
 
-    _validate_both_dicts(a, b)
-
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
-        return dict(a.items() + b.items())
+        _validate_both_dicts(a, b)
+        result = a.copy()
+        result.update(b)
+        return result
 
 def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
     '''Return a random password string of length containing only chars.'''

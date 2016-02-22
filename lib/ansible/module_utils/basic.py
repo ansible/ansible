@@ -355,7 +355,10 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
-        
+        # May be used to set modifications to the environment for any
+        # run_command invocation
+        self.run_command_environ_update = {}
+
         self.aliases = {}
         
         if add_file_common_args:
@@ -363,8 +366,8 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        # check the locale as set by the current environment, and
-        # reset to LANG=C if it's an invalid/unavailable locale
+        # check the locale as set by the current environment, and reset to
+        # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
         (self.params, self.args) = self._load_params()
@@ -866,7 +869,7 @@ class AnsibleModule(object):
             # setting the locale to '' uses the default locale
             # as it would be returned by locale.getdefaultlocale()
             locale.setlocale(locale.LC_ALL, '')
-        except locale.Error, e:
+        except locale.Error:
             # fallback to the 'C' locale, which may cause unicode
             # issues but is preferable to simply failing because
             # of an unknown locale
@@ -1412,25 +1415,29 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
-        args is the command to run
-        If args is a list, the command will be run with shell=False.
-        If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
-        If args is a string and use_unsafe_shell=True it run with shell=True.
-        Other arguments:
-        - check_rc (boolean)    Whether to call fail_json in case of
-                                non zero RC.  Default is False.
-        - close_fds (boolean)   See documentation for subprocess.Popen().
-                                Default is True.
-        - executable (string)   See documentation for subprocess.Popen().
-                                Default is None.
-        - prompt_regex (string) A regex string (not a compiled regex) which
-                                can be used to detect prompts in the stdout
-                                which would otherwise cause the execution
-                                to hang (especially if no input data is
-                                specified)
+
+        :arg args: is the command to run
+            * If args is a list, the command will be run with shell=False.
+            * If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
+            * If args is a string and use_unsafe_shell=True it runs with shell=True.
+        :kw check_rc: Whether to call fail_json in case of non zero RC.
+            Default False
+        :kw close_fds: See documentation for subprocess.Popen(). Default True
+        :kw executable: See documentation for subprocess.Popen(). Default None
+        :kw data: If given, information to write to the stdin of the command
+        :kw binary_data: If False, append a newline to the data.  Default False
+        :kw path_prefix: If given, additional path to find the command in.
+            This adds to the PATH environment vairable so helper commands in
+            the same directory can also be found
+        :kw cwd: iIf given, working directory to run the command inside
+        :kw use_unsafe_shell: See `args` parameter.  Default False
+        :kw prompt_regex: Regex string (not a compiled regex) which can be
+            used to detect prompts in the stdout which would otherwise cause
+            the execution to hang (especially if no input data is specified)
+        :kwarg environ_update: dictionary to *update* os.environ with
         '''
 
         shell = False
@@ -1461,10 +1468,19 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporart env path if a prefix is passed
-        env=os.environ
+        # Manipulate the environ we'll send to the new process
+        old_env_vals = {}
+        # We can set this from both an attribute and per call
+        for key, val in self.run_command_environ_update.items():
+            old_env_vals[key] = os.environ.get(key, None)
+            os.environ[key] = val
+        if environ_update:
+            for key, val in environ_update.items():
+                old_env_vals[key] = os.environ.get(key, None)
+                os.environ[key] = val
         if path_prefix:
-            env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+            old_env_vals['PATH'] = os.environ['PATH']
+            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
@@ -1505,11 +1521,10 @@ class AnsibleModule(object):
             close_fds=close_fds,
             stdin=st_in,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE 
+            stderr=subprocess.PIPE,
+            env=os.environ,
         )
 
-        if path_prefix:
-            kwargs['env'] = env
         if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
 
@@ -1577,6 +1592,13 @@ class AnsibleModule(object):
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
+        # Restore env settings
+        for key, val in old_env_vals.items():
+            if val is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = val
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip())
