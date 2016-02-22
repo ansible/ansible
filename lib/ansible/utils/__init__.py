@@ -1504,12 +1504,13 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
 def combine_vars(a, b):
 
-    _validate_both_dicts(a, b)
-
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
-        return dict(a.items() + b.items())
+        _validate_both_dicts(a, b)
+        result = a.copy()
+        result.update(b)
+        return result
 
 def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
     '''Return a random password string of length containing only chars.'''
