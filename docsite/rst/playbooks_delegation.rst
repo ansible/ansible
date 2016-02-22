@@ -147,7 +147,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           setup:
           delegate_to: "{{item}}"
           delegate_facts: True
-          with_items: "{{groups['dbservers'}}"
+          with_items: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
 This way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
