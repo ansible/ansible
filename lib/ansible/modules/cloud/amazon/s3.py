@@ -131,9 +131,13 @@ options:
     version_added: "2.0"
   s3_url:
     description:
-      - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
     default: null
     aliases: [ S3_URL ]
+  rgw:
+    description:
+      - Enable Ceph RGW S3 support
+    default: false
   src:
     description:
       - The source file path when performing a PUT operation.
@@ -151,6 +155,9 @@ extends_documentation_fragment: aws
 EXAMPLES = '''
 # Simple PUT operation
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
+
+# Simple PUT operation in Ceph RGW S3
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put rgw=true s3_url=http://localhost:8000
 
 # Simple GET operation
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
@@ -384,6 +391,7 @@ def main():
             prefix         = dict(default=None),
             retries        = dict(aliases=['retry'], type='int', default=0),
             s3_url         = dict(aliases=['S3_URL']),
+            rgw            = dict(default='no', type='bool'),
             src            = dict(),
         ),
     )
@@ -408,6 +416,7 @@ def main():
     prefix = module.params.get('prefix')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
+    rgw = module.params.get('rgw')
     src = module.params.get('src')
 
     for acl in module.params.get('permission'):
@@ -437,6 +446,10 @@ def main():
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
 
+    # rgw requires an explicit url
+    if rgw and not s3_url:
+        module.fail_json(msg='rgw flavour requires s3_url')
+
     # bucket names with .'s in them need to use the calling_format option,
     # otherwise the connection will fail. See https://github.com/boto/boto/issues/2836
     # for more details.
@@ -444,9 +457,18 @@ def main():
         aws_connect_kwargs['calling_format'] = OrdinaryCallingFormat()
 
     # Look at s3_url and tweak connection settings
-    # if connecting to Walrus or fakes3
+    # if connecting to RGW, Walrus or fakes3
     try:
-        if is_fakes3(s3_url):
+        if s3_url and rgw:
+            rgw = urlparse.urlparse(s3_url)
+            s3 = boto.connect_s3(
+                is_secure=rgw.scheme == 'https',
+                host=rgw.hostname,
+                port=rgw.port,
+                calling_format=OrdinaryCallingFormat(),
+                **aws_connect_kwargs
+            )
+        elif is_fakes3(s3_url):
             fakes3 = urlparse.urlparse(s3_url)
             s3 = S3Connection(
                 is_secure=fakes3.scheme == 'fakes3s',
