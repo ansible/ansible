@@ -255,7 +255,7 @@ def main():
             connection.set_topic_attributes(arn_topic, 'DisplayName',
                     display_name)
 
-    if policy and policy != json.loads(topic_attributes['policy']):
+    if policy and policy != json.loads(topic_attributes['Policy']):
         changed = True
         attributes_set.append('policy')
         if not check_mode:
