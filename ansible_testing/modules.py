@@ -423,8 +423,6 @@ class ModuleValidator(Validator):
         if self._is_new_module():
             return
 
-        mod_version_added = StrictVersion(str(doc.get('version_added', '0.0')))
-
         with CaptureStd():
             try:
                 existing = module_loader.find_plugin(self.name, mod_type='.py')
@@ -440,6 +438,14 @@ class ModuleValidator(Validator):
                 self.errors.append('Unknown existing DOCUMENTATION error, see '
                                    'TRACE')
                 return
+
+
+        try:
+            mod_version_added = StrictVersion(
+                str(existing_doc.get('version_added', '0.0'))
+            )
+        except ValueError:
+            mod_version_added = StrictVersion('0.0')
 
         options = doc.get('options', {})
 
