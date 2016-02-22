@@ -148,7 +148,7 @@ def attach_vgw(client, module, vpn_gateway_id):
     status_achieved, vgw = wait_for_status(client, module, [vpn_gateway_id], 'attached')
     if not status_achieved:
         module.fail_json(msg='Error waiting for vpc to attach to vgw - please check the AWS console')
-    
+
     result = response
     return result
 
@@ -195,7 +195,7 @@ def delete_vgw(client, module, vpn_gateway_id):
         response = client.delete_vpn_gateway(VpnGatewayId=vpn_gateway_id)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
-    
+
     #return the deleted VpnGatewayId as this is not included in the above response
     result = vpn_gateway_id
     return result
@@ -318,7 +318,7 @@ def find_vgw(client, module, vpn_gateway_id=None):
                 ])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
-        
+
     else:
         if vpn_gateway_id:
             try:
@@ -334,7 +334,7 @@ def find_vgw(client, module, vpn_gateway_id=None):
                     ])
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg=str(e))
-    
+
     result = response['VpnGateways']
     return result
 
@@ -363,44 +363,44 @@ def ensure_vgw_present(client, module):
     if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':
         vpn_gateway_id = existing_vgw[0]['VpnGatewayId']
         vgw, changed = check_tags(client, module, existing_vgw, vpn_gateway_id)
-        
-        if not changed:       
-            
-            # if a vpc_id was provided, check if it exists and if it's attached
-            if params['VpcId']:     
-                
-                # check that the vpc_id exists. If not, an exception is thrown
-                vpc = find_vpc(client, module)
-                current_vpc_attachments = existing_vgw[0]['VpcAttachments']
-                
-                if current_vpc_attachments != [] and current_vpc_attachments[0]['State'] == 'attached':
-                    if current_vpc_attachments[0]['VpcId'] == params['VpcId'] and current_vpc_attachments[0]['State'] == 'attached':
-                        changed = False
-                    else:          
-                        
-                        # detach the existing vpc from the virtual gateway
-                        vpc_to_detach = current_vpc_attachments[0]['VpcId']
-                        detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
-                        time.sleep(5) 
-                        attached_vgw = attach_vgw(client, module, vpn_gateway_id)
-                        changed = True
+
+        # if a vpc_id was provided, check if it exists and if it's attached
+        if params['VpcId']:
+
+            # check that the vpc_id exists. If not, an exception is thrown
+            vpc = find_vpc(client, module)
+            current_vpc_attachments = existing_vgw[0]['VpcAttachments']
+
+            if current_vpc_attachments != [] and current_vpc_attachments[0]['State'] == 'attached':
+                if current_vpc_attachments[0]['VpcId'] == params['VpcId'] and current_vpc_attachments[0]['State'] == 'attached':
+                    changed = False
                 else:
-                    # attach the vgw to the supplied vpc
+
+                    # detach the existing vpc from the virtual gateway
+                    vpc_to_detach = current_vpc_attachments[0]['VpcId']
+                    detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
+                    time.sleep(5)
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
+                    vgw = find_vgw(client, module, [vpn_gateway_id])
+                    changed = True
+            else:
+                # attach the vgw to the supplied vpc
+                attached_vgw = attach_vgw(client, module, vpn_gateway_id)
+                vgw = find_vgw(client, module, [vpn_gateway_id]) 
+                changed = True
+
+        # if params['VpcId'] is not provided, check the vgw is attached to a vpc. if so, detach it.
+        else:
+            existing_vgw = find_vgw(client, module, [vpn_gateway_id])
+
+            if existing_vgw[0]['VpcAttachments'] != []:
+                if existing_vgw[0]['VpcAttachments'][0]['State'] == 'attached':
+                    # detach the vpc from the vgw
+                    vpc_to_detach = existing_vgw[0]['VpcAttachments'][0]['VpcId']
+                    detach_vgw(client, module, vpn_gateway_id, vpc_to_detach) 
                     changed = True
 
-            # if params['VpcId'] is not provided, check the vgw is attached to a vpc. if so, detach it.
-            else:
-                existing_vgw = find_vgw(client, module, [vpn_gateway_id])
-
-                if existing_vgw[0]['VpcAttachments'] != []:
-                    if existing_vgw[0]['VpcAttachments'][0]['State'] == 'attached':
-                        # detach the vpc from the vgw
-                        vpc_to_detach = existing_vgw[0]['VpcAttachments'][0]['VpcId']
-                        detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)      
-                        changed = True
-
-                    vgw = find_vgw(client, module, [vpn_gateway_id])         
+                vgw = find_vgw(client, module, [vpn_gateway_id])
 
     else:
         # create a new vgw
@@ -468,7 +468,7 @@ def ensure_vgw_absent(client, module):
 
         else:
             changed = False
-            deleted_vgw = None
+            deleted_vgw = "Nothing to do"
 
     else:
         #Check that a name and type argument has been supplied if no vgw-id
