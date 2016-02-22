@@ -1,5 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# This is a free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This Ansible library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+
 
 DOCUMENTATION = """
 module: sns_topic
@@ -12,30 +26,35 @@ options:
   name:
     description:
       - The name or ARN of the SNS topic to converge
-    required: true
+    required: True
   state:
     description:
       - Whether to create or destroy an SNS topic
-    required: false
+    required: False
     default: present
     choices: ["absent", "present"]
   display_name:
     description:
       - Display name of the topic
     required: False
+    default: None
   policy:
     description:
       - Policy to apply to the SNS topic
     required: False
+    default: None
   delivery_policy:
     description:
       - Delivery policy to apply to the SNS topic
     required: False
+    default: None
   subscriptions:
     description:
       - List of subscriptions to apply to the topic. Note that AWS requires
-      subscriptions to be confirmed, so you will need to confirm any new
-      subscriptions.
+        subscriptions to be confirmed, so you will need to confirm any new
+        subscriptions.
+    required: False
+    default: []
   purge_subscriptions:
     description:
       - Whether to purge any subscriptions not listed here. NOTE: AWS does not
@@ -43,6 +62,7 @@ options:
         exist and would be purged, they are silently skipped. This means that
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon.
+    required: False
     default: True
 extends_documentation_fragment: aws
 requirements: [ "boto" ]
@@ -73,6 +93,38 @@ EXAMPLES = """
         protocol: "sms"
 
 """
+
+RETURN = '''
+topic_created:
+    description: Whether the topic was newly created
+    type: bool
+    returned: changed and state == present
+    sample: True
+
+attributes_set:
+    description: The attributes which were changed
+    type: list
+    returned: state == "present"
+    sample: ["policy", "delivery_policy"]
+
+subscriptions_added:
+    description: The subscriptions added to the topic
+    type: list
+    returned: state == "present"
+    sample: [["sms", "my_mobile_number"], ["sms", "my_mobile_2"]]
+
+subscriptions_deleted:
+    description: The subscriptions deleted from the topic
+    type: list
+    returned: state == "present"
+    sample: [["sms", "my_mobile_number"], ["sms", "my_mobile_2"]]
+
+sns_arn:
+    description: The ARN of the topic you are modifying
+    type: string
+    returned: state == "present"
+    sample: "arn:aws:sns:us-east-1:123456789012:my_topic_name"
+'''
 
 import sys
 import time
