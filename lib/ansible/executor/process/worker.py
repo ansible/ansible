@@ -113,6 +113,7 @@ class WorkerProcess(multiprocessing.Process):
                 self._new_stdin,
                 self._loader,
                 self._shared_loader_obj,
+                self._rslt_q
             ).run()
 
             debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))

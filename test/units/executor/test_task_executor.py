@@ -45,6 +45,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict()
+        mock_queue = MagicMock()
         te = TaskExecutor(
             host = mock_host,
             task = mock_task,
@@ -53,6 +54,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
+            rslt_q = mock_queue,
         )
 
     def test_task_executor_run(self):
@@ -66,6 +68,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
+        mock_queue = MagicMock()
 
         new_stdin = None
         job_vars = dict()
@@ -78,6 +81,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
+            rslt_q = mock_queue,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -97,7 +101,7 @@ class TestTaskExecutor(unittest.TestCase):
 
     def test_task_executor_get_loop_items(self):
         fake_loader = DictDataLoader({})
-        
+
         mock_host = MagicMock()
 
         mock_task = MagicMock()
@@ -111,6 +115,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         new_stdin = None
         job_vars = dict()
+        mock_queue = MagicMock()
 
         te = TaskExecutor(
             host = mock_host,
@@ -120,6 +125,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
+            rslt_q = mock_queue,
         )
 
         items = te._get_loop_items()
@@ -142,6 +148,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
+        mock_queue = MagicMock()
 
         new_stdin = None
         job_vars = dict()
@@ -154,6 +161,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
+            rslt_q = mock_queue,
         )
 
         def _execute(variables):
@@ -184,6 +192,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = None
+        mock_queue = MagicMock()
 
         new_stdin = None
         job_vars = dict(pkg_mgr='yum')
@@ -196,6 +205,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
+            rslt_q = mock_queue,
         )
 
         #
@@ -279,6 +289,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection._connect.return_value = None
 
         mock_action = MagicMock()
+        mock_queue = MagicMock()
 
         shared_loader = None
         new_stdin = None
@@ -292,6 +303,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = shared_loader,
+            rslt_q = mock_queue,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -330,6 +342,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
 
         mock_action = MagicMock()
+        mock_queue = MagicMock()
 
         shared_loader = MagicMock()
         shared_loader.action_loader = action_loader
@@ -345,6 +358,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = shared_loader,
+            rslt_q = mock_queue,
         )
 
         te._connection = MagicMock()
