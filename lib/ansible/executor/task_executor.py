@@ -409,10 +409,6 @@ class TaskExecutor:
         display.debug("starting attempt loop")
         result = None
         for attempt in range(retries):
-            if attempt > 0:
-                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color=C.COLOR_DEBUG)
-                result['attempts'] = attempt + 1
-
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
@@ -469,16 +465,21 @@ class TaskExecutor:
                 _evaluate_failed_when_result(result)
 
             if attempt < retries - 1:
+                if retries > 1:
+                    result['attempts'] = attempt + 1
                 cond = Conditional(loader=self._loader)
                 cond.when = [ self._task.until ]
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
 
                 # no conditional check, or it failed, so sleep for the specified time
+                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-(attempt+1), result), color=C.COLOR_DEBUG)
                 time.sleep(delay)
-
-            elif 'failed' not in result:
-                break
+        else:
+            if retries > 1:
+                # we ran out of attempts, so mark the result as failed
+                result['attempts'] = retries
+                result['failed'] = True
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
