@@ -117,6 +117,10 @@
   register: recursive_copy_result
 
 - debug: var=recursive_copy_result
+- name: assert that the recursive copy did something
+  assert:
+    that:
+      - "recursive_copy_result|changed"
 
 - name: check that a file in a directory was transferred
   stat: path={{output_dir}}/sub/subdir/bar.txt
