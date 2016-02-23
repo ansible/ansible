@@ -61,7 +61,7 @@ class Host(object):
         results = utils.combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
+        results['group_names'] = [ g.name for g in groups if g.name != 'all']
         return results
 
 
