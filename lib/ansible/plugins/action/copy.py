@@ -184,7 +184,7 @@ class ActionModule(ActionBase):
                     dest_file = self._connection._shell.join_path(dest, source_rel)
                     dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
 
-            if not dest_status['exists'] and not force:
+            if dest_status['exists'] and not force:
                 # remote_file does not exist so continue to next iteration.
                 continue
 
