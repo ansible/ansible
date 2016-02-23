@@ -45,6 +45,15 @@ except ImportError:
     HAVE_SELINUX=False
 
 try:
+    # Check if we have SSLContext support
+    from ssl import create_default_context, SSLContext
+    del create_default_context
+    del SSLContext
+    HAS_SSLCONTEXT = True
+except ImportError:
+    HAS_SSLCONTEXT = False
+
+try:
     import json
     # Detect python-json which is incompatible and fallback to simplejson in
     # that case
@@ -794,7 +803,8 @@ class Facts(object):
             },
             'version_info': list(sys.version_info),
             'executable': sys.executable,
-            'type': sys.subversion[0]
+            'type': sys.subversion[0],
+            'has_sslcontext': HAS_SSLCONTEXT
         }
 
 
