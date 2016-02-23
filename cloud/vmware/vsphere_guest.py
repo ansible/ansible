@@ -1607,9 +1607,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            vcenter_hostname=dict(required=True, type='str'),
-            username=dict(required=True, type='str'),
-            password=dict(required=True, type='str', no_log=True),
+            vcenter_hostname=dict(
+                type='str',
+                default=os.environ['VMWARE_HOST']
+            ),
+            username=dict(
+                type='str',
+                default=os.environ['VMWARE_USER']
+            ),
+            password=dict(
+                type='str', no_log=True,
+                default=os.environ['VMWARE_PASSWORD']
+            ),
             state=dict(
                 required=False,
                 choices=[
