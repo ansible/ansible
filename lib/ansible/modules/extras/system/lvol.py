@@ -48,7 +48,8 @@ options:
     choices: [ "present", "absent" ]
     default: present
     description:
-    - Control if the logical volume exists.
+    - Control if the logical volume exists. If C(present) the C(size) option 
+      is required.
     required: false
   force:
     version_added: "1.5"
