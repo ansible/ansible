@@ -311,6 +311,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # empty might be matched, 1 should never match, also backwards compatible
             mystat['stat']['checksum'] = '1'
 
+        # happens sometimes when it is a dir and not on bsd
+        if not 'checksum' in mystat['stat']:
+            mystat['stat']['checksum'] = ''
+
         return mystat['stat']
 
     def _remote_checksum(self, path, all_vars):
