@@ -25,8 +25,8 @@ things in your playbooks.
 
 .. code-block:: yaml
 
-   tasks:
-     - service: name=foo state=started enabled=yes
+  tasks:
+    - service: name=foo state=started enabled=yes
 
 If you think the service may not be started, the best thing to do is request it to be started.  If the service fails to start, Ansible
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to
@@ -40,27 +40,33 @@ existing system, using the `--check` flag to the `ansible` command will report i
 bring the system into a desired state.
 
 This can let you know up front if there is any need to deploy onto the given system.  Ordinarily scripts and commands don't run in check mode, so if you
-want certain steps to always execute in check mode, such as calls to the script module, add the 'always_run' flag::
+want certain steps to always execute in check mode, such as calls to the script module, add the 'always_run' flag:
 
+.. code-block:: yaml
 
-   roles:
-     - webserver
+  roles:
+    - webserver
 
-   tasks:
-     - script: verify.sh
-       always_run: True
+  tasks:
+    - script: verify.sh
+      always_run: True
+
 
 Modules That Are Useful for Testing
 ```````````````````````````````````
 
-Certain playbook modules are particularly good for testing.  Below is an example that ensures a port is open::
+Certain playbook modules are particularly good for testing.  Below is an example that ensures a port is open:
+
+.. code-block:: yaml
 
    tasks:
 
      - wait_for: host={{ inventory_hostname }} port=22
        delegate_to: localhost
       
-Here's an example of using the URI module to make sure a web service returns::
+Here's an example of using the URI module to make sure a web service returns:
+
+.. code-block:: yaml
 
    tasks:
 
@@ -70,7 +76,9 @@ Here's an example of using the URI module to make sure a web service returns::
      - fail: msg='service is not happy'
        when: "'AWESOME' not in webpage.content"
 
-It's easy to push an arbitrary script (in any language) on a remote host and the script will automatically fail if it has a non-zero return code::
+It's easy to push an arbitrary script (in any language) on a remote host and the script will automatically fail if it has a non-zero return code:
+
+.. code-block:: yaml
 
    tasks:
 
@@ -79,7 +87,9 @@ It's easy to push an arbitrary script (in any language) on a remote host and the
 
 If using roles (you should be, roles are great!), scripts pushed by the script module can live in the 'files/' directory of a role.
 
-And the assert module makes it very easy to validate various kinds of truth::
+And the assert module makes it very easy to validate various kinds of truth:
+
+.. code-block:: yaml
 
    tasks:
 
@@ -91,7 +101,9 @@ And the assert module makes it very easy to validate various kinds of truth::
             - "'not ready' not in cmd_result.stderr"
             - "'gizmo enabled' in cmd_result.stdout"
 
-Should you feel the need to test for existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
+Should you feel the need to test for existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice:
+
+.. code-block:: yaml
 
    tasks:
 
@@ -112,12 +124,12 @@ to check up behind it.
 Testing Lifecycle
 `````````````````
 
-If writing some degree of basic validation of your application into your playbooks, they will run every time you deploy.
+If you write some degree of basic validation of your application into your playbooks, they will run every time you deploy.
 
-As such, deploying into a local development VM and a staging environment will both validate that things are according to plan
+As such, deploying into a local development VM and a staging environment will validate that things are working according to plan
 ahead of your production deploy.
 
-Your workflow may be something like this::
+Your workflow may be something like this:
 
     - Use the same playbook all the time with embedded tests in development
     - Use the playbook to deploy to a staging environment (with the same playbooks) that simulates production
@@ -136,7 +148,9 @@ Integrating Testing With Rolling Updates
 If you have read into :doc:`playbooks_delegation` it may quickly become apparent that the rolling update pattern can be extended, and you
 can use the success or failure of the playbook run to decide whether to add a machine into a load balancer or not. 
 
-This is the great culmination of embedded tests::
+This is the great culmination of embedded tests:
+
+.. code-block:: yaml
 
     ---
 
@@ -171,7 +185,9 @@ the machine will not go back into the pool.
 Read the delegation chapter about "max_fail_percentage" and you can also control how many failing tests will stop a rolling update
 from proceeding.
 
-This above approach can also be modified to run a step from a testing machine remotely against a machine::
+This above approach can also be modified to run a step from a testing machine remotely against a machine:
+
+.. code-block:: yaml
 
     ---
 
@@ -210,7 +226,7 @@ Achieving Continuous Deployment
 
 If desired, the above techniques may be extended to enable continuous deployment practices.
 
-The workflow may look like this::
+The workflow may look like this:
 
     - Write and use automation to deploy local development VMs
     - Have a CI system like Jenkins deploy to a staging environment on every code change
