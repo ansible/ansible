@@ -204,6 +204,24 @@ This should return something like::
 
     {"changed": true, "time": "2012-03-14 12:23:00.000307"}
 
+.. _binary_module_reading_input:
+
+Binary Modules Input
+~~~~~~~~~~~~~~~~~~~~
+
+Support for binary modules was added in Ansible 2.1.  When Ansible detects a binary module, it will proceed to
+supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
+would resemble something similar to::
+
+    {
+        "name": "Ansible",
+        "_ansible_verbosity": 4,
+        "_ansible_diff": false,
+        "_ansible_debug": false,
+        "_ansible_check_mode": false,
+        "_ansible_no_log": false
+    }
+
 .. _module_provided_facts:
 
 Module Provided 'Facts'
