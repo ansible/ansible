@@ -24,7 +24,6 @@ import os
 import pipes
 import pty
 import select
-import shlex
 import subprocess
 import time
 
@@ -101,15 +100,6 @@ class Connection(ConnectionBase):
 
         return controlpersist, controlpath
 
-    @staticmethod
-    def _split_args(argstring):
-        """
-        Takes a string like '-o Foo=1 -o Bar="foo bar"' and returns a
-        list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
-        the argument list. The list will not contain any empty elements.
-        """
-        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
-
     def _add_args(self, explanation, args):
         """
         Adds the given args to self._command and displays a caller-supplied
@@ -158,7 +148,7 @@ class Connection(ConnectionBase):
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
         if self._play_context.ssh_args:
-            args = self._split_args(self._play_context.ssh_args)
+            args = self._split_ssh_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
 
         # Now we add various arguments controlled by configuration file settings
@@ -211,7 +201,7 @@ class Connection(ConnectionBase):
         for opt in ['ssh_common_args', binary + '_extra_args']:
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
-                args = self._split_args(attr)
+                args = self._split_ssh_args(attr)
                 self._add_args("PlayContext set %s" % opt, args)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
