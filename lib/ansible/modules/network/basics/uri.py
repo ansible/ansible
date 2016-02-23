@@ -156,6 +156,8 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: '1.9.2'
+notes:
+  - The dependency on httplib2 was removed in Ansible 2.1
 author: "Romeo Theriault (@romeotheriault)"
 '''
 
