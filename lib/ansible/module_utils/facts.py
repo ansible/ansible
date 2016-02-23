@@ -45,6 +45,15 @@ except ImportError:
     HAVE_SELINUX=False
 
 try:
+    # Check if we have SSLContext support
+    from ssl import create_default_context, SSLContext
+    del create_default_context
+    del SSLContext
+    HAS_SSLCONTEXT = True
+except ImportError:
+    HAS_SSLCONTEXT = False
+
+try:
     import json
     # Detect python-json which is incompatible and fallback to simplejson in
     # that case
@@ -166,6 +175,7 @@ class Facts(object):
             self.get_local_facts()
             self.get_env_facts()
             self.get_dns_facts()
+            self.get_python_facts()
 
     def populate(self):
         return self.facts
@@ -781,6 +791,22 @@ class Facts(object):
         except OSError:
             pass
         return size_total, size_available
+
+    def get_python_facts(self):
+        self.facts['python'] = {
+            'version': {
+                'major': sys.version_info[0],
+                'minor': sys.version_info[1],
+                'micro': sys.version_info[2],
+                'releaselevel': sys.version_info[3],
+                'serial': sys.version_info[4]
+            },
+            'version_info': list(sys.version_info),
+            'executable': sys.executable,
+            'type': sys.subversion[0],
+            'has_sslcontext': HAS_SSLCONTEXT
+        }
+
 
 class Hardware(Facts):
     """
