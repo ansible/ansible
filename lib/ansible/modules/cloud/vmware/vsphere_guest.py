@@ -1606,15 +1606,15 @@ def main():
         argument_spec=dict(
             vcenter_hostname=dict(
                 type='str',
-                default=os.environ['VMWARE_HOST']
+                default=os.environ.get('VMWARE_HOST')
             ),
             username=dict(
                 type='str',
-                default=os.environ['VMWARE_USER']
+                default=os.environ.get('VMWARE_USER')
             ),
             password=dict(
                 type='str', no_log=True,
-                default=os.environ['VMWARE_PASSWORD']
+                default=os.environ.get('VMWARE_PASSWORD')
             ),
             state=dict(
                 required=False,
