@@ -51,6 +51,7 @@ class CallbackModule(CallbackBase):
 
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
+
         else:
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color='red')
@@ -147,24 +148,22 @@ class CallbackModule(CallbackBase):
                 self._display.display(diff)
 
     def v2_playbook_item_on_ok(self, result):
-
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if result._task.action == 'include':
             return
         elif result._result.get('changed', False):
-            if delegated_vars:
-                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-            else:
-                msg = "changed: [%s]" % result._host.get_name()
-            color = 'yellow'
+            msg = 'changed'
+            color = C.COLOR_CHANGED
         else:
-            if delegated_vars:
-                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-            else:
-                msg = "ok: [%s]" % result._host.get_name()
-            color = 'green'
+            msg = 'ok'
+            color = C.COLOR_OK
 
-        msg += " => (item=%s)" % (result._result['item'],)
+        if delegated_vars:
+            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+        else:
+            msg += ": [%s]" % result._host.get_name()
+
+        msg += " => (item=%s)" % (self._get_item(result._result))
 
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
@@ -185,15 +184,17 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
+        msg = "failed: "
         if delegated_vars:
-            self._display.display("failed: [%s -> %s] => (item=%s) => %s" % (result._host.get_name(), delegated_vars['ansible_host'], result._result['item'], self._dump_results(result._result)), color='red')
+            msg += "[%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
         else:
-            self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color='red')
+            msg += "[%s]" % (result._host.get_name())
 
+        self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
         self._handle_warnings(result._result)
 
     def v2_playbook_item_on_skipped(self, result):
-        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), result._result['item'])
+        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color='cyan')
@@ -243,3 +244,9 @@ class CallbackModule(CallbackBase):
                     val =  getattr(self._options,option)
                     if val:
                         self._display.vvvv('%s: %s' % (option,val))
+
+    def v2_playbook_retry(self, result):
+        msg = "FAILED - RETRYING: %s (%d retries left)." % (result._task, result._result['retries'] - result._result['attempts'])
+        if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+            msg += "Result was: %s" % self._dump_results(result._result)
+        self._display.display(msg, color=C.COLOR_DEBUG)
