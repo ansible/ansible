@@ -153,6 +153,28 @@
     that:
       - 'result.location|default("") == "http://httpbin.org/relative-redirect/1"'
 
+- name: Check SSL with redirect
+  uri:
+    url: 'https://httpbin.org/redirect/2'
+  register: result
+
+- name: Assert SSL with redirect
+  assert:
+    that:
+      - 'result.url|default("") == "https://httpbin.org/get"'
+
+- name: redirect to bad SSL site
+  uri:
+    url: 'http://wrong.host.badssl.com'
+  register: result
+  ignore_errors: true
+
+- name: Ensure bad SSL site reidrect fails
+  assert:
+    that:
+      - result|failed
+      - '"wrong.host.badssl.com" in result.msg'
+
 - name: test basic auth
   uri:
     url: 'http://httpbin.org/basic-auth/user/passwd'
