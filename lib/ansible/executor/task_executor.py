@@ -441,6 +441,9 @@ class TaskExecutor:
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result, templar=templar)
 
+                # ensure no log is preserved
+                result["_ansible_no_log"] = self._play_context.no_log
+
             # helper methods for use below in evaluating changed/failed_when
             def _evaluate_changed_when_result(result):
                 if self._task.changed_when is not None:
