@@ -42,8 +42,6 @@ except:
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
-    params['aws_session_token'] = params.pop('security_token', None)
-    params['verify'] = params.pop('validate_certs', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
