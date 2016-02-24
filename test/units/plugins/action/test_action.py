@@ -49,7 +49,7 @@ class TestActionBase(unittest.TestCase):
 
         play_context.remote_user = 'apo'
         action_base._low_level_execute_command('ECHO', sudoable=True)
-        play_context.make_become_cmd.assert_called_once_with('ECHO', executable=None)
+        play_context.make_become_cmd.assert_called_once_with("ECHO", executable='/bin/sh')
 
         play_context.make_become_cmd.reset_mock()
 
@@ -58,6 +58,6 @@ class TestActionBase(unittest.TestCase):
         try:
             play_context.remote_user = 'root'
             action_base._low_level_execute_command('ECHO SAME', sudoable=True)
-            play_context.make_become_cmd.assert_called_once_with('ECHO SAME', executable=None)
+            play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable='/bin/sh')
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user

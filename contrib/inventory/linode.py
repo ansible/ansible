@@ -280,6 +280,11 @@ class LinodeInventory(object):
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
         node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
 
+        # Set the SSH host information, so these inventory items can be used if
+        # their labels aren't FQDNs
+        node_vars['ansible_ssh_host'] = node_vars["public_ip"]
+        node_vars['ansible_host'] = node_vars["public_ip"]
+
         private_ips = [addr.address for addr in node.ipaddresses if not addr.is_public]
 
         if private_ips:

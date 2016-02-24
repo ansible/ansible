@@ -310,36 +310,45 @@ class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
 
+# Some environments (Google Compute Engine's CoreOS deploys) do not compile
+# against openssl and thus do not have any HTTPS support.
+CustomHTTPSConnection = CustomHTTPSHandler = None
+if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
+    class CustomHTTPSConnection(httplib.HTTPSConnection):
+        def __init__(self, *args, **kwargs):
+            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            if HAS_SSLCONTEXT:
+                self.context = create_default_context()
+                if self.cert_file:
+                    self.context.load_cert_chain(self.cert_file, self.key_file)
 
-class CustomHTTPSConnection(httplib.HTTPSConnection):
-    def __init__(self, *args, **kwargs):
-        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
-        if HAS_SSLCONTEXT:
-            self.context = create_default_context()
-            if self.cert_file:
-                self.context.load_cert_chain(self.cert_file, self.key_file)
+        def connect(self):
+            "Connect to a host on a given (SSL) port."
 
-    def connect(self):
-        "Connect to a host on a given (SSL) port."
+            if hasattr(self, 'source_address'):
+                sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+            else:
+                sock = socket.create_connection((self.host, self.port), self.timeout)
 
-        if hasattr(self, 'source_address'):
-            sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
-        else:
-            sock = socket.create_connection((self.host, self.port), self.timeout)
-        if self._tunnel_host:
-            self.sock = sock
-            self._tunnel()
-        if HAS_SSLCONTEXT:
-            self.sock = self.context.wrap_socket(sock, server_hostname=self.host)
-        else:
-            self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
+            server_hostname = self.host
+            # Note: self._tunnel_host is not available on py < 2.6 but this code
+            # isn't used on py < 2.6 (lack of create_connection)
+            if self._tunnel_host:
+                self.sock = sock
+                self._tunnel()
+                server_hostname = self._tunnel_host
 
-class CustomHTTPSHandler(urllib2.HTTPSHandler):
+            if HAS_SSLCONTEXT:
+                self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
+            else:
+                self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
-    def https_open(self, req):
-        return self.do_open(CustomHTTPSConnection, req)
+    class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
-    https_request = urllib2.AbstractHTTPHandler.do_request_
+        def https_open(self, req):
+            return self.do_open(CustomHTTPSConnection, req)
+
+        https_request = urllib2.AbstractHTTPHandler.do_request_
 
 def generic_urlparse(parts):
     '''
@@ -373,7 +382,10 @@ def generic_urlparse(parts):
         # get the username, password, etc.
         try:
             netloc_re = re.compile(r'^((?:\w)+(?::(?:\w)+)?@)?([A-Za-z0-9.-]+)(:\d+)?$')
-            (auth, hostname, port) = netloc_re.match(parts[1])
+            match = netloc_re.match(parts[1])
+            auth = match.group(1)
+            hostname = match.group(2)
+            port = match.group(3)
             if port:
                 # the capture group for the port will include the ':',
                 # so remove it and convert the port to an integer
@@ -383,6 +395,8 @@ def generic_urlparse(parts):
                 # and then split it up based on the first ':' found
                 auth = auth[:-1]
                 username, password = auth.split(':', 1)
+            else:
+                username = password = None
             generic_parts['username'] = username
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
@@ -390,7 +404,7 @@ def generic_urlparse(parts):
         except:
             generic_parts['username'] = None
             generic_parts['password'] = None
-            generic_parts['hostname'] = None
+            generic_parts['hostname'] = parts[1]
             generic_parts['port']     = None
     return generic_parts
 
@@ -403,7 +417,7 @@ class RequestWithMethod(urllib2.Request):
     def __init__(self, url, method, data=None, headers=None):
         if headers is None:
             headers = {}
-        self._method = method
+        self._method = method.upper()
         urllib2.Request.__init__(self, url, data, headers)
 
     def get_method(self):
@@ -411,6 +425,55 @@ class RequestWithMethod(urllib2.Request):
             return self._method
         else:
             return urllib2.Request.get_method(self)
+
+
+def RedirectHandlerFactory(follow_redirects=None):
+    """This is a class factory that closes over the value of
+    ``follow_redirects`` so that the RedirectHandler class has access to
+    that value without having to use globals, and potentially cause problems
+    where ``open_url`` or ``fetch_url`` are used multiple times in a module.
+    """
+
+    class RedirectHandler(urllib2.HTTPRedirectHandler):
+        """This is an implementation of a RedirectHandler to match the
+        functionality provided by httplib2. It will utilize the value of
+        ``follow_redirects`` that is passed into ``RedirectHandlerFactory``
+        to determine how redirects should be handled in urllib2.
+        """
+
+        def redirect_request(self, req, fp, code, msg, hdrs, newurl):
+            if follow_redirects == 'urllib2':
+                return urllib2.HTTPRedirectHandler.redirect_request(self, req,
+                                                                    fp, code,
+                                                                    msg, hdrs,
+                                                                    newurl)
+
+            if follow_redirects in [None, 'no', 'none']:
+                raise urllib2.HTTPError(newurl, code, msg, hdrs, fp)
+
+            do_redirect = False
+            if follow_redirects in ['all', 'yes']:
+                do_redirect = (code >= 300 and code < 400)
+
+            elif follow_redirects == 'safe':
+                m = req.get_method()
+                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
+
+            if do_redirect:
+                # be conciliant with URIs containing a space
+                newurl = newurl.replace(' ', '%20')
+                newheaders = dict((k,v) for k,v in req.headers.items()
+                                  if k.lower() not in ("content-length", "content-type")
+                                 )
+                return urllib2.Request(newurl,
+                                       headers=newheaders,
+                                       origin_req_host=req.get_origin_req_host(),
+                                       unverifiable=True)
+            else:
+                raise urllib2.HTTPError(req.get_full_url(), code, msg, hdrs,
+                                        fp)
+
+    return RedirectHandler
 
 
 class SSLValidationHandler(urllib2.BaseHandler):
@@ -532,7 +595,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse.urlparse(https_proxy))
-                s.connect((proxy_parts.get('hostname'), proxy_parts.get('port')))
+                port = proxy_parts.get('port') or 443
+                s.connect((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
@@ -542,7 +606,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
                     if context:
-                        ssl_s = context.wrap_socket(s, server_hostname=proxy_parts.get('hostname'))
+                        ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
@@ -589,7 +653,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
 # Rewrite of fetch_url to not require the module environment
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None, force_basic_auth=False):
+        url_username=None, url_password=None, http_agent=None,
+        force_basic_auth=False, follow_redirects='urllib2'):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -661,9 +726,13 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         handlers.append(proxyhandler)
 
     # pre-2.6 versions of python cannot use the custom https
-    # handler, since the socket class is lacking this method
-    if hasattr(socket, 'create_connection'):
+    # handler, since the socket class is lacking create_connection.
+    # Some python builds lack HTTPS support.
+    if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
+
+    if follow_redirects != 'urllib2':
+        handlers.append(RedirectHandlerFactory(follow_redirects))
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
@@ -734,7 +803,8 @@ def url_argument_spec():
     )
 
 def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=True, force=False, last_mod_time=None, timeout=10):
+              use_proxy=True, force=False, last_mod_time=None, timeout=10,
+              follow_redirects=False):
     '''
     Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
     '''
@@ -751,14 +821,16 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     password = module.params.get('url_password', '')
     http_agent = module.params.get('http_agent', None)
     force_basic_auth = module.params.get('force_basic_auth', '')
+    follow_redirects = follow_redirects or module.params.get('follow_redirects', 'urllib2')
 
     r = None
     info = dict(url=url)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
-                use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-                validate_certs=validate_certs, url_username=username,
-                url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth)
+                     use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
+                     validate_certs=validate_certs, url_username=username,
+                     url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
+                     follow_redirects=follow_redirects)
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
@@ -771,7 +843,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError), e:
         module.fail_json(msg=str(e))
     except urllib2.HTTPError, e:
-        info.update(dict(msg=str(e), status=e.code))
+        info.update(dict(msg=str(e), status=e.code, **e.info()))
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))

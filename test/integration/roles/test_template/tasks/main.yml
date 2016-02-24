@@ -48,11 +48,6 @@
 
 - name: copy known good into place
   copy: src=foo.txt dest={{output_dir}}/foo.txt
-  when: pyver.stdout != '2.6'
-
-- name: copy known good into place
-  copy: src=foo-py26.txt dest={{output_dir}}/foo.txt
-  when: pyver.stdout == '2.6'
 
 - name: compare templated file to known good
   shell: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt

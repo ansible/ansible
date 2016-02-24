@@ -89,6 +89,7 @@ class ActionModule(ActionBase):
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
+        follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
 
         if src is None or dest is None:
@@ -109,15 +110,20 @@ class ActionModule(ActionBase):
         if regexp is not None:
             _re = re.compile(regexp)
 
+        if not os.path.isdir(src):
+            result['failed'] = True
+            result['msg'] = "Source (%s) is not a directory" % src
+            return result
+
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
+        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
 
         diff = {}
-        if path_checksum != remote_checksum:
+        if path_checksum != dest_stat['checksum']:
             resultant = file(path).read()
 
             if self._play_context.diff:

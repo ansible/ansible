@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	ansible
-PORTVERSION=	2.0
+PORTVERSION=	2.1
 PORTREVISION=	1
 CATEGORIES=	python net-mgmt sysutils
 MASTER_SITES=	http://releases.ansible.com/ansible/

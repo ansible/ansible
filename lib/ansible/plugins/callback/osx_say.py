@@ -40,9 +40,9 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'osx_say'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
+    def __init__(self):
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
         # plugin disable itself if say is not present
         # ansible will not call any callback if disabled is set to True

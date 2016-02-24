@@ -38,7 +38,7 @@ You can also dictate the connection type to be used, if you want::
     foo.example.com
     bar.example.com 
 
-You may also wish to keep these in group variables instead, or file in them in a group_vars/<groupname> file.
+You may also wish to keep these in group variables instead, or file them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
 
 .. _use_ssh:
@@ -304,8 +304,6 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-.. _i_dont_see_my_question:
-
 In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
@@ -322,6 +320,8 @@ The no_log attribute can also apply to an entire play::
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed.   
 
+
+.. _i_dont_see_my_question:
 
 I don't see my question here
 ++++++++++++++++++++++++++++

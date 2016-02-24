@@ -40,7 +40,8 @@ class RoleInclude(RoleDefinition):
     is included for execution in a play.
     """
 
-    _delegate_to          = FieldAttribute(isa='string')
+    _delegate_to    = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
         super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader)

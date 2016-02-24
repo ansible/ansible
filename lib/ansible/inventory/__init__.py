@@ -78,6 +78,10 @@ class Inventory(object):
         self._restriction = None
         self._subset = None
 
+        # clear the cache here, which is only useful if more than
+        # one Inventory objects are created when using the API directly
+        self.clear_pattern_cache()
+
         self.parse_inventory(host_list)
 
     def serialize(self):
@@ -109,7 +113,12 @@ class Inventory(object):
             pass
         elif isinstance(host_list, list):
             for h in host_list:
-                (host, port) = parse_address(h, allow_ranges=False)
+                try:
+                    (host, port) = parse_address(h, allow_ranges=False)
+                except AnsibleError as e:
+                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
+                    host = h
+                    port = None
                 all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
@@ -178,25 +187,26 @@ class Inventory(object):
             if self._restriction:
                 pattern_hash += u":%s" % to_unicode(self._restriction)
 
-        if pattern_hash in HOSTS_PATTERNS_CACHE:
-            return HOSTS_PATTERNS_CACHE[pattern_hash][:]
+        if pattern_hash not in HOSTS_PATTERNS_CACHE:
 
-        patterns = Inventory.split_host_pattern(pattern)
-        hosts = self._evaluate_patterns(patterns)
+            patterns = Inventory.split_host_pattern(pattern)
+            hosts = self._evaluate_patterns(patterns)
 
-        # mainly useful for hostvars[host] access
-        if not ignore_limits_and_restrictions:
-            # exclude hosts not in a subset, if defined
-            if self._subset:
-                subset = self._evaluate_patterns(self._subset)
-                hosts = [ h for h in hosts if h in subset ]
+            # mainly useful for hostvars[host] access
+            if not ignore_limits_and_restrictions:
+                # exclude hosts not in a subset, if defined
+                if self._subset:
+                    subset = self._evaluate_patterns(self._subset)
+                    hosts = [ h for h in hosts if h in subset ]
 
-            # exclude hosts mentioned in any restriction (ex: failed hosts)
-            if self._restriction is not None:
-                hosts = [ h for h in hosts if h in self._restriction ]
+                # exclude hosts mentioned in any restriction (ex: failed hosts)
+                if self._restriction is not None:
+                    hosts = [ h for h in hosts if h in self._restriction ]
 
-        HOSTS_PATTERNS_CACHE[pattern_hash] = hosts[:]
-        return hosts
+            seen = set()
+            HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+
+        return HOSTS_PATTERNS_CACHE[pattern_hash][:]
 
     @classmethod
     def split_host_pattern(cls, pattern):
@@ -227,15 +237,13 @@ class Inventory(object):
         # If it doesn't, it could still be a single pattern. This accounts for
         # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
         else:
-            (base, port) = parse_address(pattern, allow_ranges=True)
-            if base:
+            try:
+                (base, port) = parse_address(pattern, allow_ranges=True)
                 patterns = [pattern]
-
-            # The only other case we accept is a ':'-separated list of patterns.
-            # This mishandles IPv6 addresses, and is retained only for backwards
-            # compatibility.
-
-            else:
+            except:
+                # The only other case we accept is a ':'-separated list of patterns.
+                # This mishandles IPv6 addresses, and is retained only for backwards
+                # compatibility.
                 patterns = re.findall(
                     r'''(?:             # We want to match something comprising:
                             [^\s:\[\]]  # (anything other than whitespace or ':[]'
@@ -388,7 +396,7 @@ class Inventory(object):
                     end = -1
                 subscript = (int(start), int(end))
                 if sep == '-':
-                    display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
+                    display.warning("Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
 
         return (pattern, subscript)
 
@@ -455,6 +463,8 @@ class Inventory(object):
 
     def clear_pattern_cache(self):
         ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
+        global HOSTS_PATTERNS_CACHE
+        HOSTS_PATTERNS_CACHE = {}
         self._pattern_cache = {}
 
     def groups_for_host(self, host):
@@ -729,12 +739,12 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.realpath(os.path.join(basedir, "group_vars/%s" % group.name))
-                results = self._variable_manager.add_group_vars_file(base_path, self._loader)
+                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "group_vars/%s" % group.name))
+                results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.realpath(os.path.join(basedir, "host_vars/%s" % host.name))
-                results = self._variable_manager.add_host_vars_file(base_path, self._loader)
+                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "host_vars/%s" % host.name))
+                results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
 
         # all done, results is a dictionary of variables for this particular host.
         return results

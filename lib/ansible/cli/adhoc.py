@@ -70,7 +70,7 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if len(self.args) != 1:
             raise AnsibleOptionsError("Missing target hosts")
@@ -124,17 +124,13 @@ class AdHocCLI(CLI):
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
 
-        hosts = inventory.list_hosts(pattern)
-        no_hosts = False
-        if len(hosts) == 0:
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
 
         if self.options.subset:
             inventory.subset(self.options.subset)
-            if len(inventory.list_hosts(pattern)) == 0 and not no_hosts:
-                # Invalid limit
-                raise AnsibleError("Specified --limit does not match any hosts")
+
+        hosts = inventory.list_hosts(pattern)
+        if len(hosts) == 0:
+            raise AnsibleError("Specified hosts options do not match any hosts")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))
@@ -158,14 +154,18 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.options.one_line:
+        if self.callback: 
+            cb = self.callback
+        elif self.options.one_line:
             cb = 'oneline'
         else:
             cb = 'minimal'
 
+        run_tree=False
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
+            run_tree=True
 
         # now create a task queue manager to execute the play
         self._tqm = None
@@ -177,7 +177,10 @@ class AdHocCLI(CLI):
                     options=self.options,
                     passwords=passwords,
                     stdout_callback=cb,
+                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                    run_tree=run_tree,
                 )
+
             result = self._tqm.run(play)
         finally:
             if self._tqm:

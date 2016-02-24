@@ -46,6 +46,12 @@ except ImportError:
 
 from numbers import Number
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 __all__ = ['Templar']
 
 # A regex for checking to see if a variable we're trying to
@@ -164,7 +170,8 @@ class Templar:
         self.block_end      = self.environment.block_end_string
         self.variable_start = self.environment.variable_start_string
         self.variable_end   = self.environment.variable_end_string
-        self._clean_regex   = re.compile(r'(?:%s[%s%s]|[%s%s]%s)' % (self.variable_start[0], self.variable_start[1], self.block_start[1], self.block_end[0], self.variable_end[0], self.variable_end[1]))
+        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (self.variable_start, self.block_start, self.block_end, self.variable_end))
+        self._no_type_regex = re.compile(r'.*\|(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.variable_end))
 
     def _get_filters(self):
         '''
@@ -268,7 +275,7 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True, bare_deprecated=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -278,8 +285,7 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
-        # Don't template unsafe variables, instead drop them back down to
-        # their constituent type.
+        # Don't template unsafe variables, instead drop them back down to their constituent type.
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
                 return self._clean_data(text_type(variable))
@@ -290,10 +296,11 @@ class Templar:
 
         try:
             if convert_bare:
-                variable = self._convert_bare_variable(variable)
+                variable = self._convert_bare_variable(variable, bare_deprecated=bare_deprecated)
 
             if isinstance(variable, string_types):
                 result = variable
+
                 if self._contains_vars(variable):
 
                     # Check to see if the string we are trying to render is just referencing a single
@@ -319,7 +326,7 @@ class Templar:
                         result = self._cached_result[sha1_hash]
                     else:
                         result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
-                        if convert_data:
+                        if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                               result.startswith("[") or result in ("True", "False"):
@@ -365,7 +372,7 @@ class Templar:
         '''
         return self.environment.block_start_string in data or self.environment.variable_start_string in data
 
-    def _convert_bare_variable(self, variable):
+    def _convert_bare_variable(self, variable, bare_deprecated):
         '''
         Wraps a bare string, which may have an attribute portion (ie. foo.bar)
         in jinja2 variable braces so that it is evaluated properly.
@@ -375,6 +382,9 @@ class Templar:
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
             if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
+                if bare_deprecated:
+                     display.deprecated("Using bare variables is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
+                        (self.environment.variable_start_string, variable, self.environment.variable_end_string))
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
@@ -391,6 +401,8 @@ class Templar:
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
+            wantlist = kwargs.pop('wantlist', False)
+
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
             # safely catch run failures per #5059
@@ -404,8 +416,17 @@ class Templar:
                 ran = None
 
             if ran:
-                from ansible.vars.unsafe_proxy import UnsafeProxy
-                ran = UnsafeProxy(",".join(ran))
+                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+                if wantlist:
+                    ran = wrap_var(ran)
+                else:
+                    try:
+                        ran = UnsafeProxy(",".join(ran))
+                    except TypeError:
+                        if isinstance(ran, list) and len(ran) == 1:
+                            ran = wrap_var(ran[0])
+                        else:
+                            ran = wrap_var(ran)
 
             return ran
         else:
@@ -449,7 +470,7 @@ class Templar:
             try:
                 t = myenv.from_string(data)
             except TemplateSyntaxError as e:
-                raise AnsibleError("template error while templating string: %s" % str(e))
+                raise AnsibleError("template error while templating string: %s. String: %s" % (str(e), data))
             except Exception as e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)

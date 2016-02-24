@@ -3,7 +3,7 @@
 #- include: docker-setup-rht.yml
   # Packages on RHEL and CentOS 7 are broken, broken, broken.  Revisit when
   # they've got that sorted out
-  # CentOS 6 currently broken by conflicting files in pyhton-backports and python-backports-ssl_match_hostname
+  # CentOS 6 currently broken by conflicting files in python-backports and python-backports-ssl_match_hostname
   #when: ansible_distribution in ['RedHat', 'CentOS'] and ansible_lsb.major_release|int == 6
 
 # python-docker isn't available until 14.10.  Revist at the next Ubuntu LTS

@@ -34,6 +34,8 @@ class Block(Base, Become, Conditional, Taggable):
     _rescue = FieldAttribute(isa='list', default=[])
     _always = FieldAttribute(isa='list', default=[])
     _delegate_to = FieldAttribute(isa='list')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -42,11 +44,16 @@ class Block(Base, Become, Conditional, Taggable):
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play         = play
         self._role         = role
-        self._task_include = task_include
-        self._parent_block = parent_block
+        self._task_include = None
+        self._parent_block = None
+        self._dep_chain    = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
-        self._dep_chain    = []
+
+        if task_include:
+            self._task_include = task_include
+        elif parent_block:
+            self._parent_block = parent_block
 
         super(Block, self).__init__()
 
@@ -142,6 +149,17 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError:
             raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
+    def get_dep_chain(self):
+        if self._dep_chain is None:
+            if self._parent_block:
+                return self._parent_block.get_dep_chain()
+            elif self._task_include:
+                return self._task_include._block.get_dep_chain()
+            else:
+                return None
+        else:
+            return self._dep_chain[:]
+
     def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
@@ -158,7 +176,9 @@ class Block(Base, Become, Conditional, Taggable):
         new_me = super(Block, self).copy()
         new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
-        new_me._dep_chain    = self._dep_chain[:]
+
+        if self._dep_chain:
+            new_me._dep_chain = self._dep_chain[:]
 
         if not exclude_tasks:
             new_me.block  = _dupe_task_list(self.block or [], new_me)
@@ -175,7 +195,8 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy()
+            new_me._task_include = self._task_include.copy(exclude_block=True)
+            new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
 
         return new_me
 
@@ -190,7 +211,7 @@ class Block(Base, Become, Conditional, Taggable):
             if attr not in ('block', 'rescue', 'always'):
                 data[attr] = getattr(self, attr)
 
-        data['dep_chain'] = self._dep_chain
+        data['dep_chain'] = self.get_dep_chain()
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -215,7 +236,7 @@ class Block(Base, Become, Conditional, Taggable):
             if attr in data and attr not in ('block', 'rescue', 'always'):
                 setattr(self, attr, data.get(attr))
 
-        self._dep_chain = data.get('dep_chain', [])
+        self._dep_chain = data.get('dep_chain', None)
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')
@@ -236,10 +257,12 @@ class Block(Base, Become, Conditional, Taggable):
             pb = Block()
             pb.deserialize(pb_data)
             self._parent_block = pb
+            self._dep_chain = self._parent_block.get_dep_chain()
 
     def evaluate_conditional(self, templar, all_vars):
-        if len(self._dep_chain):
-            for dep in self._dep_chain:
+        dep_chain = self.get_dep_chain()
+        if dep_chain:
+            for dep in dep_chain:
                 if not dep.evaluate_conditional(templar, all_vars):
                     return False
         if self._task_include is not None:
@@ -263,8 +286,10 @@ class Block(Base, Become, Conditional, Taggable):
         if self._task_include:
             self._task_include.set_loader(loader)
 
-        for dep in self._dep_chain:
-            dep.set_loader(loader)
+        dep_chain = self.get_dep_chain()
+        if dep_chain:
+            for dep in dep_chain:
+                dep.set_loader(loader)
 
     def _get_parent_attribute(self, attr, extend=False):
         '''
@@ -287,18 +312,18 @@ class Block(Base, Become, Conditional, Taggable):
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
-            if self._role and (value is None or extend):
-                parent_value = getattr(self._role, attr)
+            if self._role and (value is None or extend) and hasattr(self._role, attr):
+                parent_value = getattr(self._role, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
 
-                if len(self._dep_chain) and (not value or extend):
-                    reverse_dep_chain = self._dep_chain[:]
-                    reverse_dep_chain.reverse()
-                    for dep in reverse_dep_chain:
-                        dep_value = getattr(dep, attr)
+                dep_chain = self.get_dep_chain()
+                if dep_chain and (value is None or extend):
+                    dep_chain.reverse()
+                    for dep in dep_chain:
+                        dep_value = getattr(dep, attr, None)
                         if extend:
                             value = self._extend_value(value, dep_value)
                         else:
@@ -306,14 +331,13 @@ class Block(Base, Become, Conditional, Taggable):
 
                         if value is not None and not extend:
                             break
-
-            if self._play and (value is None or extend):
-                parent_value = getattr(self._play, attr)
+            if self._play and (value is None or extend) and hasattr(self._play, attr):
+                parent_value = getattr(self._play, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
-        except KeyError:
+        except KeyError as e:
             pass
 
         return value
@@ -329,6 +353,12 @@ class Block(Base, Become, Conditional, Taggable):
 
         return environment
 
+    def _get_attr_any_errors_fatal(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        return self._get_parent_attribute('any_errors_fatal')
+
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
         Creates a new block, with task lists filtered based on the tags contained
@@ -340,12 +370,14 @@ class Block(Base, Become, Conditional, Taggable):
             for task in target:
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
-                elif task.action in ('meta', 'include') or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                elif task.action == 'meta' \
+                or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
+                or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
         def evaluate_block(block):
-            new_block = self.copy()
+            new_block = self.copy(exclude_tasks=True)
             new_block.block  = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)
@@ -355,3 +387,4 @@ class Block(Base, Become, Conditional, Taggable):
 
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
+

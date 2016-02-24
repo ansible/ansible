@@ -58,7 +58,7 @@ class ResultProcess(multiprocessing.Process):
 
     def _send_result(self, result):
         debug(u"sending result: %s" % ([text_type(x) for x in result],))
-        self._final_q.put(result, block=False)
+        self._final_q.put(result)
         debug("done sending result")
 
     def _read_worker_result(self):
@@ -73,7 +73,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 if not rslt_q.empty():
                     debug("worker %d has data to read" % self._cur_worker)
-                    result = rslt_q.get(block=False)
+                    result = rslt_q.get()
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
@@ -101,7 +101,20 @@ class ResultProcess(multiprocessing.Process):
             try:
                 result = self._read_worker_result()
                 if result is None:
-                    time.sleep(0.01)
+                    time.sleep(0.0001)
+                    continue
+
+                # send callbacks for 'non final' results
+                if '_ansible_retry' in result._result:
+                    self._send_result(('v2_playbook_retry', result))
+                    continue
+                elif '_ansible_item_result' in result._result:
+                    if result.is_failed() or result.is_unreachable():
+                        self._send_result(('v2_playbook_item_on_failed', result))
+                    elif result.is_skipped():
+                        self._send_result(('v2_playbook_item_on_skipped', result))
+                    else:
+                        self._send_result(('v2_playbook_item_on_ok', result))
                     continue
 
                 clean_copy = strip_internal_keys(result._result)
@@ -110,7 +123,7 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('register_host_var', result._host, result._task.register, clean_copy))
+                    self._send_result(('register_host_var', result._host, result._task, clean_copy))
 
                 # send callbacks, execute other options based on the result status
                 # TODO: this should all be cleaned up and probably moved to a sub-function.
@@ -142,8 +155,6 @@ class ResultProcess(multiprocessing.Process):
                                 # notifies all other threads
                                 for notify in result_item['_ansible_notify']:
                                     self._send_result(('notify_handler', result, notify))
-                            # now remove the notify field from the results, as its no longer needed
-                            result_item.pop('_ansible_notify')
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
@@ -165,7 +176,7 @@ class ResultProcess(multiprocessing.Process):
 
             except queue.Empty:
                 pass
-            except (KeyboardInterrupt, IOError, EOFError):
+            except (KeyboardInterrupt, SystemExit, IOError, EOFError):
                 break
             except:
                 # TODO: we should probably send a proper callback here instead of

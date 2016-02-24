@@ -72,6 +72,7 @@ class Task(Base, Conditional, Taggable, Become):
     _changed_when         = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
+    _delegate_facts       = FieldAttribute(isa='bool', default=False)
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True)
@@ -81,7 +82,7 @@ class Task(Base, Conditional, Taggable, Become):
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=3)
-    _until                = FieldAttribute(isa='list')
+    _until                = FieldAttribute(isa='string')
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -106,11 +107,10 @@ class Task(Base, Conditional, Taggable, Become):
         elif self.name:
             return self.name
         else:
-            flattened_args = self._merge_kv(self.args)
             if self._role:
-                return "%s : %s %s" % (self._role.get_name(), self.action, flattened_args)
+                return "%s : %s" % (self._role.get_name(), self.action)
             else:
-                return "%s %s" % (self.action, flattened_args)
+                return "%s" % (self.action,)
 
     def _merge_kv(self, ds):
         if ds is None:
@@ -133,7 +133,10 @@ class Task(Base, Conditional, Taggable, Become):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        return "TASK: %s" % self.get_name()
+        if self.get_name() == 'meta ':
+            return "TASK: meta (%s)" % self.args['_raw_params']
+        else:
+            return "TASK: %s" % self.get_name()
 
     def _preprocess_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
@@ -213,14 +216,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
-    def _load_any_errors_fatal(self, attr, value):
-        '''
-        Exists only to show a deprecation warning, as this attribute is not valid
-        at the task level.
-        '''
-        display.deprecated("Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only")
-        return None
-
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
@@ -249,12 +244,43 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             return dict()
 
-        for env_item in value:
-            if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                display.deprecated("Using bare variables for environment is deprecated."
-                        " Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
-                break
+        elif isinstance(value, list):
+            if  len(value) == 1:
+                return templar.template(value[0], convert_bare=True)
+            else:
+                env = []
+                for env_item in value:
+                    if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                        env[env_item] =  templar.template(env_item, convert_bare=True)
+        elif isinstance(value, dict):
+            env = dict()
+            for env_item in value:
+                if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                    env[env_item] =  templar.template(value[env_item], convert_bare=True)
+
+        # at this point it should be a simple string
         return templar.template(value, convert_bare=True)
+
+    def _post_validate_changed_when(self, attr, value, templar):
+        '''
+        changed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_failed_when(self, attr, value, templar):
+        '''
+        failed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_until(self, attr, value, templar):
+        '''
+        until is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
 
     def get_vars(self):
         all_vars = dict()
@@ -270,6 +296,14 @@ class Task(Base, Conditional, Taggable, Become):
         if 'when' in all_vars:
             del all_vars['when']
 
+        return all_vars
+
+    def get_include_params(self):
+        all_vars = dict()
+        if self._task_include:
+            all_vars.update(self._task_include.get_include_params())
+        if self.action == 'include':
+            all_vars.update(self.vars)
         return all_vars
 
     def copy(self, exclude_block=False):
@@ -390,3 +424,10 @@ class Task(Base, Conditional, Taggable, Become):
         if parent_environment is not None:
             environment = self._extend_value(environment, parent_environment)
         return environment
+
+    def _get_attr_any_errors_fatal(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        return self._get_parent_attribute('any_errors_fatal')
+

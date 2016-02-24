@@ -28,6 +28,7 @@ from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.vars import strip_internal_keys
+from ansible.utils.color import stringc
 from ansible.utils.unicode import to_unicode
 
 try:
@@ -38,6 +39,11 @@ except ImportError:
 
 __all__ = ["CallbackBase"]
 
+try:
+    from __main__ import cli
+except ImportError:
+    # using API w/o cli 
+    cli = False
 
 class CallbackBase:
 
@@ -53,11 +59,31 @@ class CallbackBase:
         else:
             self._display = global_display
 
+        if cli:
+            self._options = cli.options
+        else:
+            self._options = None
+
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
+
+    ''' helper for callbacks, so they don't all have to include deepcopy '''
+    _copy_result = deepcopy
+
+    def _copy_result_exclude(self, result, exclude):
+        values = []
+        for e in exclude:
+            values.append(getattr(result, e))
+            setattr(result, e, None)
+
+        result_copy = deepcopy(result)
+        for i,e in enumerate(exclude):
+            setattr(result, e, values[i])
+
+        return result_copy
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
@@ -91,7 +117,6 @@ class CallbackBase:
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    ret = []
                     if 'dst_binary' in diff:
                         ret.append("diff skipped: destination file appears to be binary\n")
                     if 'src_binary' in diff:
@@ -101,6 +126,10 @@ class CallbackBase:
                     if 'src_larger' in diff:
                         ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
                     if 'before' in diff and 'after' in diff:
+                        # format complex structures into 'files'
+                        for x in ['before', 'after']:
+                            if isinstance(diff[x], dict):
+                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4)
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
                         else:
@@ -109,12 +138,30 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
-                        ret.extend(list(differ))
-                        ret.append('\n')
-                    return u"".join(ret)
+                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True),
+                                                      to_unicode(diff['after']).splitlines(True),
+                                                      fromfile=before_header,
+                                                      tofile=after_header,
+                                                      fromfiledate='',
+                                                      tofiledate='',
+                                                      n=C.DIFF_CONTEXT)
+                        has_diff = False
+                        for line in differ:
+                            has_diff = True
+                            if line.startswith('+'):
+                                line = stringc(line, C.COLOR_DIFF_ADD)
+                            elif line.startswith('-'):
+                                line = stringc(line, C.COLOR_DIFF_REMOVE)
+                            elif line.startswith('@@'):
+                                line = stringc(line, C.COLOR_DIFF_LINES)
+                            ret.append(line)
+                        if has_diff:
+                            ret.append('\n')
+                    if 'prepared' in diff:
+                        ret.append(to_unicode(diff['prepared']))
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
+        return u''.join(ret)
 
     def _get_item(self, result):
         if result.get('_ansible_no_log', False):
@@ -125,16 +172,14 @@ class CallbackBase:
         return item
 
     def _process_items(self, result):
-        for res in result._result['results']:
-            newres = deepcopy(result)
-            res['item'] = self._get_item(res)
-            newres._result = res
-            if 'failed' in res and res['failed']:
-                self.v2_playbook_item_on_failed(newres)
-            elif 'skipped' in res and res['skipped']:
-                self.v2_playbook_item_on_skipped(newres)
-            else:
-                self.v2_playbook_item_on_ok(newres)
+        # just remove them as now they get handled by individual callbacks
+        del result._result['results']
+
+    def _clean_results(self, result, task_name):
+        if 'changed' in result and task_name in ['debug']:
+            del result['changed']
+        if 'invocation' in result and task_name in ['debug']:
+            del result['invocation']
 
     def set_play_context(self, play_context):
         pass
@@ -246,7 +291,7 @@ class CallbackBase:
     def v2_runner_on_file_diff(self, result, diff):
         pass #no v1 correspondance
 
-    def v2_playbook_on_start(self):
+    def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
 
     def v2_playbook_on_notify(self, result, handler):
@@ -293,14 +338,18 @@ class CallbackBase:
         if 'diff' in result._result:
             self.on_file_diff(host, result._result['diff'])
 
-    def v2_playbook_on_item_ok(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_failed(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_skipped(self, result):
-        pass # no v1
-
     def v2_playbook_on_include(self, included_file):
         pass #no v1 correspondance
+
+    def v2_playbook_item_on_ok(self, result):
+        pass
+
+    def v2_playbook_item_on_failed(self, result):
+        pass
+
+    def v2_playbook_item_on_skipped(self, result):
+        pass
+
+    def v2_playbook_retry(self, result):
+        pass
+

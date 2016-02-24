@@ -32,6 +32,7 @@ import tempfile
 import traceback
 import fcntl
 import sys
+import re
 
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
@@ -54,6 +55,9 @@ paramiko: The authenticity of host '%s' can't be established.
 The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
 """
+
+# SSH Options Regex
+SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -137,6 +141,51 @@ class Connection(ConnectionBase):
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
 
+    def _parse_proxy_command(self, port=22):
+        proxy_command = None
+        # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
+        ssh_args = [
+            getattr(self._play_context, 'ssh_extra_args', ''),
+            getattr(self._play_context, 'ssh_common_args', ''),
+            getattr(self._play_context, 'ssh_args', ''),
+        ]
+        if ssh_common_args is not None:
+            args = self._split_ssh_args(' '.join(ssh_args))
+            for i, arg in enumerate(args):
+                if arg.lower() == 'proxycommand':
+                    # _split_ssh_args split ProxyCommand from the command itself
+                    proxy_command = args[i + 1]
+                else:
+                    # ProxyCommand and the command itself are a single string
+                    match = SETTINGS_REGEX.match(arg)
+                    if match:
+                        if match.group(1).lower() == 'proxycommand':
+                            proxy_command = match.group(2)
+
+                if proxy_command:
+                    break
+
+        proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+
+        sock_kwarg = {}
+        if proxy_command:
+            replacers = {
+                '%h': self._play_context.remote_addr,
+                '%p': port,
+                '%r': self._play_context.remote_user
+            }
+            for find, replace in replacers.items():
+                proxy_command = proxy_command.replace(find, str(replace))
+            try:
+                sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
+                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self._play_context.remote_addr)
+            except AttributeError:
+                display.warning('Paramiko ProxyCommand support unavailable. '
+                                'Please upgrade to Paramiko 1.9.0 or newer. '
+                                'Not using configured ProxyCommand')
+
+        return sock_kwarg
+
     def _connect_uncached(self):
         ''' activates the connection object '''
 
@@ -151,12 +200,16 @@ class Connection(ConnectionBase):
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
-            try:
-                #TODO: check if we need to look at several possible locations, possible for loop
-                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
-            except IOError:
-                pass # file was not found, but not required to function
+            for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
+                try:
+                    #TODO: check if we need to look at several possible locations, possible for loop
+                    ssh.load_system_host_keys(ssh_known_hosts)
+                    break
+                except IOError:
+                    pass # file was not found, but not required to function
             ssh.load_system_host_keys()
+
+        sock_kwarg = self._parse_proxy_command(port)
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
@@ -179,6 +232,7 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
+                **sock_kwarg
             )
         except Exception as e:
             msg = str(e)

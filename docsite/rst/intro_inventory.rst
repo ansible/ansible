@@ -186,7 +186,7 @@ available to them. This can be very useful to keep your variables organized when
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables. Note that this only works on Ansible 1.4 or later.
 
-Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
+Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
@@ -248,7 +248,9 @@ Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for furthe
 Remote host environment parameters::
 
     ansible_shell_type
-      The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
+      The shell type of the target system. You should not use this setting unless you have set the 'executable' to a non sh compatible shell.
+      By default commands are formatted using 'sh'-style syntax.
+      Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python

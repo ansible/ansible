@@ -45,9 +45,9 @@ class CallbackModule(CallbackBase):
     TIME_FORMAT="%b %d %Y %H:%M:%S"
     MSG_FORMAT="%(now)s - %(category)s - %(data)s\n\n"
 
-    def __init__(self, display):
+    def __init__(self):
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
         if not os.path.exists("/var/log/ansible/hosts"):
             os.makedirs("/var/log/ansible/hosts")

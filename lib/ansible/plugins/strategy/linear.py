@@ -62,19 +62,26 @@ class StrategyModule(StrategyBase):
         num_rescue = 0
         num_always = 0
 
-        lowest_cur_block = len(iterator._blocks)
-
         display.debug("counting tasks in each state of execution")
-        for (k, v) in iteritems(host_tasks):
-            if v is None:
-                continue
+        host_tasks_to_run = [(host, state_task)
+                             for host, state_task in iteritems(host_tasks)
+                             if state_task and state_task[1]]
 
+        if host_tasks_to_run:
+            lowest_cur_block = min(
+                (s.cur_block for h, (s, t) in host_tasks_to_run
+                if s.run_state != PlayIterator.ITERATING_COMPLETE))
+        else:
+            # empty host_tasks_to_run will just run till the end of the function
+            # without ever touching lowest_cur_block
+            lowest_cur_block = None
+
+        for (k, v) in host_tasks_to_run:
             (s, t) = v
-            if t is None:
-                continue
 
-            if s.cur_block < lowest_cur_block and s.run_state != PlayIterator.ITERATING_COMPLETE:
-                lowest_cur_block = s.cur_block
+            if s.cur_block > lowest_cur_block:
+                # Not the current block, ignore it
+                continue
 
             if s.run_state == PlayIterator.ITERATING_SETUP:
                 num_setups += 1
@@ -98,7 +105,7 @@ class StrategyModule(StrategyBase):
             rvals = []
             display.debug("starting to advance hosts")
             for host in hosts:
-                host_state_task = host_tasks[host.name]
+                host_state_task = host_tasks.get(host.name)
                 if host_state_task is None:
                     continue
                 (s, t) = host_state_task
@@ -155,7 +162,7 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
@@ -169,6 +176,10 @@ class StrategyModule(StrategyBase):
                 skip_rest   = False
                 choose_step = True
 
+                # flag set if task is set to any_errors_fatal
+                any_errors_fatal = False
+
+                results = []
                 for (host, task) in host_tasks:
                     if not task:
                         continue
@@ -185,12 +196,10 @@ class StrategyModule(StrategyBase):
 
                     try:
                         action = action_loader.get(task.action, class_only=True)
-                        if task.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
-                            run_once = True
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
-                        pass
+                        action = None
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
@@ -218,6 +227,11 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
+                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+
+                        if task.any_errors_fatal or run_once:
+                            any_errors_fatal = True
+
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
                             saved_name = task.name
@@ -243,12 +257,14 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
+                    results += self._process_pending_results(iterator, one_pass=True)
+
                 # go to next host/task group
                 if skip_rest:
                     continue
 
                 display.debug("done queuing things up, now waiting for results queue to drain")
-                results = self._wait_on_pending_results(iterator)
+                results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 if not work_to_do and len(iterator.get_failed_hosts()) > 0:
@@ -258,51 +274,94 @@ class StrategyModule(StrategyBase):
                     break
 
                 try:
-                    included_files = IncludedFile.process_include_results(host_results, self._tqm,
-                            iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
+                    included_files = IncludedFile.process_include_results(
+                        host_results,
+                        self._tqm,
+                        iterator=iterator,
+                        inventory=self._inventory,
+                        loader=self._loader,
+                        variable_manager=self._variable_manager
+                    )
                 except AnsibleError as e:
                     return False
 
+                include_failure = False
                 if len(included_files) > 0:
+                    display.debug("we have included files to process")
                     noop_task = Task()
                     noop_task.action = 'meta'
                     noop_task.args['_raw_params'] = 'noop'
                     noop_task.set_loader(iterator._play._loader)
 
+                    display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating all_blocks data")
                     for included_file in included_files:
+                        display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
 
+                            display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
+                                task_vars = self._variable_manager.get_vars(
+                                    loader=self._loader,
+                                    play=iterator._play,
+                                    task=included_file._task,
+                                )
+                                display.debug("filtering new block on tags")
+                                final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                                display.debug("done filtering new block on tags")
+
                                 noop_block = Block(parent_block=task._block)
                                 noop_block.block  = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
+
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        task_vars = self._variable_manager.get_vars(loader=self._loader,
-                                                play=iterator._play, host=host, task=included_file._task)
-                                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                         all_blocks[host].append(final_block)
                                     else:
                                         all_blocks[host].append(noop_block)
+                            display.debug("done iterating over new_blocks loaded from include file")
 
                         except AnsibleError as e:
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(e, wrap_text=False)
+                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks
+                    display.debug("extending task lists for all hosts with included blocks")
+
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
+                    display.debug("done extending task lists")
+                    display.debug("done processing included files")
+
                 display.debug("results queue empty")
+
+                display.debug("checking for any_errors_fatal")
+                failed_hosts = []
+                for res in results:
+                    if res.is_failed() or res.is_unreachable():
+                        failed_hosts.append(res._host.name)
+
+                # if any_errors_fatal and we had an error, mark all hosts as failed
+                if any_errors_fatal and len(failed_hosts) > 0:
+                    for host in hosts_left:
+                        # don't double-mark hosts, or the iterator will potentially
+                        # fail them out of the rescue/always states
+                        if host.name not in failed_hosts:
+                            self._tqm._failed_hosts[host.name] = True
+                            iterator.mark_host_failed(host)
+                display.debug("done checking for any_errors_fatal")
+
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed

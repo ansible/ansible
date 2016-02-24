@@ -19,21 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import getpass
-import locale
 import os
-import signal
-import sys
 
 from ansible.compat.six import string_types
 
+from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
-
-from ansible.utils.color import colorize, hostcolor
-from ansible.utils.encrypt import do_encrypt
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -70,8 +63,6 @@ class PlaybookExecutor:
         may limit the runs to serialized groups, etc.
         '''
 
-        signal.signal(signal.SIGINT, self._cleanup)
-
         result = 0
         entrylist = []
         entry = {}
@@ -83,6 +74,10 @@ class PlaybookExecutor:
                 if self._tqm is None: # we are doing a listing
                     entry = {'playbook': playbook_path}
                     entry['plays'] = []
+                else:
+                    # make sure the tqm has callbacks loaded
+                    self._tqm.load_callbacks()
+                    self._tqm.send_callback('v2_playbook_on_start', pb)
 
                 i = 1
                 plays = pb.get_plays()
@@ -108,10 +103,12 @@ class PlaybookExecutor:
                             salt_size = var.get("salt_size", None)
                             salt      = var.get("salt", None)
 
-                            if vname not in play.vars:
+                            if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                else: # we are either in --list-<option> or syntax check
+                                    play.vars[vname] = default
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
@@ -128,8 +125,6 @@ class PlaybookExecutor:
                         entry['plays'].append(new_play)
 
                     else:
-                        # make sure the tqm has callbacks loaded
-                        self._tqm.load_callbacks()
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         # we are actually running plays
@@ -149,9 +144,7 @@ class PlaybookExecutor:
                             # conditions are met, we break out, otherwise we only break out if the entire
                             # batch failed
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
-                            if new_play.any_errors_fatal and failed_hosts_count > 0:
-                                break
-                            elif new_play.max_fail_percentage is not None and \
+                            if new_play.max_fail_percentage is not None and \
                                int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
                                 break
                             elif len(batch) == failed_hosts_count:
@@ -171,6 +164,24 @@ class PlaybookExecutor:
                 if entry:
                     entrylist.append(entry) # per playbook
 
+                # send the stats callback for this playbook
+                if self._tqm is not None:
+                    if C.RETRY_FILES_ENABLED:
+                        retries = list(set(self._tqm._failed_hosts.keys() + self._tqm._unreachable_hosts.keys()))
+                        retries.sort()
+                        if len(retries) > 0:
+                            if C.RETRY_FILES_SAVE_PATH:
+                                basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
+                            else:
+                                basedir = os.path.dirname(playbook_path)
+
+                            (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                            filename = os.path.join(basedir, "%s.retry" % retry_name)
+                            if self._generate_retry_inventory(filename, retries):
+                                display.display("\tto retry, use: --limit @%s\n" % filename)
+
+                    self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
+
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
                     break
@@ -180,45 +191,13 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
-                self._cleanup()
+                self._tqm.cleanup()
 
         if self._options.syntax:
             display.display("No issues encountered")
             return result
 
-        # TODO: this stat summary stuff should be cleaned up and moved
-        #        to a new method, if it even belongs here...
-        display.banner("PLAY RECAP")
-
-        hosts = sorted(self._tqm._stats.processed.keys())
-        for h in hosts:
-            t = self._tqm._stats.summarize(h)
-
-            display.display(u"%s : %s %s %s %s" % (
-                hostcolor(h, t),
-                colorize(u'ok', t['ok'], 'green'),
-                colorize(u'changed', t['changed'], 'yellow'),
-                colorize(u'unreachable', t['unreachable'], 'red'),
-                colorize(u'failed', t['failures'], 'red')),
-                screen_only=True
-            )
-
-            display.display(u"%s : %s %s %s %s" % (
-                hostcolor(h, t, False),
-                colorize(u'ok', t['ok'], None),
-                colorize(u'changed', t['changed'], None),
-                colorize(u'unreachable', t['unreachable'], None),
-                colorize(u'failed', t['failures'], None)),
-                log_only=True
-            )
-
-        display.display("", screen_only=True)
-        # END STATS STUFF
-
         return result
-
-    def _cleanup(self, signum=None, framenum=None):
-        return self._tqm.cleanup()
 
     def _get_serialized_batches(self, play):
         '''
@@ -258,48 +237,19 @@ class PlaybookExecutor:
 
             return serialized_batches
 
-    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def _generate_retry_inventory(self, retry_path, replay_hosts):
+        '''
+        Called when a playbook run fails. It generates an inventory which allows
+        re-running on ONLY the failed hosts.  This may duplicate some variable
+        information in group_vars/host_vars but that is ok, and expected.
+        '''
 
-        if sys.__stdin__.isatty():
-            if prompt and default is not None:
-                msg = "%s [%s]: " % (prompt, default)
-            elif prompt:
-                msg = "%s: " % prompt
-            else:
-                msg = 'input for %s: ' % varname
+        try:
+            with open(retry_path, 'w') as fd:
+                for x in replay_hosts:
+                    fd.write("%s\n" % x)
+        except Exception as e:
+            display.error("Could not create retry file '%s'. The error was: %s" % (retry_path, e))
+            return False
 
-            def do_prompt(prompt, private):
-                if sys.stdout.encoding:
-                    msg = prompt.encode(sys.stdout.encoding)
-                else:
-                    # when piping the output, or at other times when stdout
-                    # may not be the standard file descriptor, the stdout
-                    # encoding may not be set, so default to something sane
-                    msg = prompt.encode(locale.getpreferredencoding())
-                if private:
-                    return getpass.getpass(msg)
-                return raw_input(msg)
-
-            if confirm:
-                while True:
-                    result = do_prompt(msg, private)
-                    second = do_prompt("confirm " + msg, private)
-                    if result == second:
-                        break
-                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
-            else:
-                result = do_prompt(msg, private)
-        else:
-            result = None
-            display.warning("Not prompting as we are not in interactive mode")
-
-        # if result is false and default is not None
-        if not result and default is not None:
-            result = default
-
-        if encrypt:
-            result = do_encrypt(result, encrypt, salt_size, salt)
-
-        # handle utf-8 chars
-        result = to_unicode(result, errors='strict')
-        return result
+        return True

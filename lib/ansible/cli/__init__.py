@@ -27,12 +27,13 @@ import time
 import yaml
 import re
 import getpass
+import signal
 import subprocess
 
 from ansible import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -44,7 +45,7 @@ except ImportError:
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
-    # TODO: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
+    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
@@ -66,7 +67,7 @@ class CLI(object):
     LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
                         # -S (chop long lines) -X (disable termcap init and de-init)
 
-    def __init__(self, args):
+    def __init__(self, args, callback=None):
         """
         Base init method for all command line programs
         """
@@ -75,6 +76,21 @@ class CLI(object):
         self.options = None
         self.parser = None
         self.action = None
+        self.callback = callback
+
+    def _terminate(self, signum=None, framenum=None):
+        if signum == signal.SIGTERM:
+            if hasattr(os, 'getppid'):
+                display.debug("Termination requested in parent, shutting down gracefully")
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            else:
+                display.debug("Term signal in child, harakiri!")
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+            raise SystemExit
+
+        #NOTE: if ever want to make this immediately kill children use on parent:
+        #os.killpg(os.getpgid(0), signal.SIGTERM)
 
     def set_action(self):
         """
@@ -104,9 +120,12 @@ class CLI(object):
 
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
-                display.display("Using %s as config file" % C.CONFIG_FILE)
+                display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
             else:
-                display.display("No config file found; using defaults")
+                display.display(u"No config file found; using defaults")
+
+        # Manage user interruptions
+        #signal.signal(signal.SIGTERM, self._terminate)
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
@@ -191,12 +210,9 @@ class CLI(object):
 
         if runas_opts:
             # Check for privilege escalation conflicts
-            if (op.su or op.su_user or op.ask_su_pass) and \
-                        (op.sudo or op.sudo_user or op.ask_sudo_pass) or \
-                (op.su or op.su_user or op.ask_su_pass) and \
-                        (op.become or op.become_user or op.become_ask_pass) or \
-                (op.sudo or op.sudo_user or op.ask_sudo_pass) and \
-                        (op.become or op.become_user or op.become_ask_pass):
+            if (op.su or op.su_user) and (op.sudo or op.sudo_user) or \
+                (op.su or op.su_user) and (op.become or op.become_user) or \
+                (op.sudo or op.sudo_user) and (op.become or op.become_user):
 
                 self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
                                   "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
@@ -213,7 +229,7 @@ class CLI(object):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
+            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # TODO: implement epilog parsing
@@ -226,7 +242,7 @@ class CLI(object):
 
         if inventory_opts:
             parser.add_option('-i', '--inventory-file', dest='inventory',
-                help="specify inventory host path (default=%s) or comma separated host list" % C.DEFAULT_HOST_LIST,
+                help="specify inventory host path (default=%s) or comma separated host list." % C.DEFAULT_HOST_LIST,
                 default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
@@ -246,14 +262,15 @@ class CLI(object):
                 help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
 
         if vault_opts:
-            parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
+            parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                 help='ask for vault password')
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE, dest='vault_password_file',
                 help="vault password file", action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--new-vault-password-file', dest='new_vault_password_file',
                 help="new vault password file for rekey", action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--output', default=None, dest='output_file',
-                help='output file name for encrypt or decrypt; use - for stdout')
+                help='output file name for encrypt or decrypt; use - for stdout',
+                action="callback", callback=CLI.expand_tilde, type=str)
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -267,50 +284,63 @@ class CLI(object):
             parser.add_option('-t', '--tree', dest='tree', default=None,
                 help='log output to this directory')
 
+        if connect_opts:
+            connect_group = optparse.OptionGroup(parser, "Connection Options", "control as whom and how to connect to hosts")
+            connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+                help='ask for connection password')
+            connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+                help='use this file to authenticate the connection')
+            connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+            connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
+                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+            connect_group.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
+                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            connect_group.add_option('--ssh-common-args', default='', dest='ssh_common_args',
+                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
+            connect_group.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
+                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
+            connect_group.add_option('--scp-extra-args', default='', dest='scp_extra_args',
+                help="specify extra arguments to pass to scp only (e.g. -l)")
+            connect_group.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
+                help="specify extra arguments to pass to ssh only (e.g. -R)")
+
+            parser.add_option_group(connect_group)
+
+        runas_group = None
+        rg = optparse.OptionGroup(parser, "Privilege Escalation Options", "control how and which user you become as on target hosts")
         if runas_opts:
+            runas_group = rg
             # priv user defaults to root later on to enable detecting when this option was given here
-            parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                help='ask for sudo password (deprecated, use become)')
-            parser.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                help='ask for su password (deprecated, use become)')
-            parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
+            runas_group.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
                 help="run operations with sudo (nopasswd) (deprecated, use become)")
-            parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
+            runas_group.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
                               help='desired sudo user (default=root) (deprecated, use become)')
-            parser.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
+            runas_group.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
                 help='run operations with su (deprecated, use become)')
-            parser.add_option('-R', '--su-user', default=None,
+            runas_group.add_option('-R', '--su-user', default=None,
                 help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
 
             # consolidated privilege escalation (become)
-            parser.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
-                help="run operations with become (nopasswd implied)")
-            parser.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='string',
+            runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
+                help="run operations with become (does not imply password prompting)")
+            runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
                 help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
-            parser.add_option('--become-user', default=None, dest='become_user', type='string',
+            runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
                 help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
-            parser.add_option('--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+
+        if runas_opts or runas_prompt_opts:
+            if not runas_group:
+                runas_group = rg
+            runas_group.add_option('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
+                help='ask for sudo password (deprecated, use become)')
+            runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
+                help='ask for su password (deprecated, use become)')
+            runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
                 help='ask for privilege escalation password')
 
-        if connect_opts:
-            parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                help='ask for connection password')
-            parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection')
-            parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
-                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
-            parser.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
-                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-            parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
-                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
-            parser.add_option('--ssh-common-args', default='', dest='ssh_common_args',
-                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
-            parser.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
-                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
-            parser.add_option('--scp-extra-args', default='', dest='scp_extra_args',
-                help="specify extra arguments to pass to scp only (e.g. -l)")
-            parser.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
-                help="specify extra arguments to pass to ssh only (e.g. -R)")
+        if runas_group:
+            parser.add_option_group(runas_group)
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
@@ -458,7 +488,7 @@ class CLI(object):
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
             cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
-            cmd.communicate(input=text.encode(sys.stdout.encoding))
+            cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
         except KeyboardInterrupt:

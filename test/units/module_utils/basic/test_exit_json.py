@@ -31,8 +31,11 @@ from ansible.module_utils import basic
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.module_utils.basic import return_values, remove_values
 
+empty_invocation = {u'module_args': {}}
+
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitJson(unittest.TestCase):
+
     def setUp(self):
         self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
         basic.MODULE_COMPLEX_ARGS = '{}'
@@ -56,7 +59,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=False))
+        self.assertEquals(return_val, dict(changed=False, invocation=empty_invocation))
 
     def test_exit_json_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -67,7 +70,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", changed=False))
+        self.assertEquals(return_val, dict(msg="message", changed=False, invocation=empty_invocation))
 
     def test_fail_json_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -78,13 +81,13 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 1)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", failed=True))
+        self.assertEquals(return_val, dict(msg="message", failed=True, invocation=empty_invocation))
 
     def test_exit_json_proper_changed(self):
         with self.assertRaises(SystemExit) as ctx:
             self.module.exit_json(changed=True, msg='success')
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=True, msg='success'))
+        self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
@@ -94,19 +97,22 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             (dict(username='person', password='password12345'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             (dict(username='person', password='$ecret k3y'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             )
 
@@ -119,6 +125,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         sys.stdout = self.old_stdout
 
     def test_exit_json_removes_values(self):
+        self.maxDiff = None
         for args, return_val, expected in self.dataset:
             sys.stdout = StringIO()
             basic.MODULE_COMPLEX_ARGS = json.dumps(args)
@@ -134,6 +141,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
 
     def test_fail_json_removes_values(self):
+        self.maxDiff = None
         for args, return_val, expected in self.dataset:
             expected = copy.deepcopy(expected)
             del expected['changed']
