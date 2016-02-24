@@ -21,6 +21,8 @@ short_description: run, start or stop a task in ecs
 description:
     - Creates or deletes instances of task definitions.
 version_added: "2.0"
+author: Mark Chance(@Java1Guy)
+requirements: [ json, boto, botocore, boto3 ]
 options:
     operation:
         description:
@@ -94,8 +96,61 @@ EXAMPLES = '''
 RETURN = '''
 task:
     description: details about the tast that was started
+    returned: success
     type: complex
-    sample: "TODO: include sample"
+    contains:
+        taskArn:
+            description: The Amazon Resource Name (ARN) that identifies the task.
+            returned: always
+            type: string
+        clusterArn:
+            description: The Amazon Resource Name (ARN) of the of the cluster that hosts the task.
+            returned: only when details is true
+            type: string
+        taskDefinitionArn:
+            description: The Amazon Resource Name (ARN) of the task definition.
+            returned: only when details is true
+            type: string
+        containerInstanceArn:
+            description: The Amazon Resource Name (ARN) of the container running the task.
+            returned: only when details is true
+            type: string
+        overrides:
+            description: The container overrides set for this task.
+            returned: only when details is true
+            type: list of complex
+        lastStatus:
+            description: The last recorded status of the task.
+            returned: only when details is true
+            type: string
+        desiredStatus:
+            description: The desired status of the task.
+            returned: only when details is true
+            type: string
+        containers:
+            description: The container details.
+            returned: only when details is true
+            type: list of complex
+        startedBy:
+            description: The used who started the task.
+            returned: only when details is true
+            type: string
+        stoppedReason:
+            description: The reason why the task was stopped.
+            returned: only when details is true
+            type: string
+        createdAt:
+            description: The timestamp of when the task was created.
+            returned: only when details is true
+            type: string
+        startedAt:
+            description: The timestamp of when the task was started.
+            returned: only when details is true
+            type: string
+        stoppedAt:
+            description: The timestamp of when the task was stopped.
+            returned: only when details is true
+            type: string
 '''
 try:
     import boto
