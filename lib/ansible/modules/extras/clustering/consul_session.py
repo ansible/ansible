@@ -113,8 +113,6 @@ EXAMPLES = '''
   consul_session: state=list
 '''
 
-import sys
-
 try:
     import consul
     from requests.exceptions import ConnectionError
