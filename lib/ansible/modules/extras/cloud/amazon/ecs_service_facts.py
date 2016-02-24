@@ -23,7 +23,10 @@ notes:
 description:
     - Lists or describes services in ecs.
 version_added: "2.1"
-author: Mark Chance (@java1guy)
+author:
+    - "Mark Chance (@java1guy)"
+    - "Darek Kaczynski (@kaczynskid)"
+requirements: [ json, boto, botocore, boto3 ]
 options:
     details:
         description:
@@ -59,23 +62,69 @@ EXAMPLES = '''
     cluster: test-cluster
 '''
 
-# Disabled the RETURN as it was breaking docs building.  Someone needs to fix
-# this
-RETURN = '''# '''
-'''
-services: When details is false, returns an array of service ARNs, else an array of these fields
-    clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
-    desiredCount: The desired number of instantiations of the task definition to keep running on the service.
-    loadBalancers: A list of load balancer objects
-        loadBalancerName: the name
-        containerName: The name of the container to associate with the load balancer.
-        containerPort: The port on the container to associate with the load balancer.
-    pendingCount: The number of tasks in the cluster that are in the PENDING state.
-    runningCount: The number of tasks in the cluster that are in the RUNNING state.
-    serviceArn: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
-    serviceName: A user-generated string used to identify the service
-    status: The valid values are ACTIVE, DRAINING, or INACTIVE.
-    taskDefinition: The ARN of a task definition to use for tasks in the service.
+RETURN = '''
+services:
+    description: When details is false, returns an array of service ARNs, otherwise an array of complex objects as described below.
+    returned: success
+    type: list of complex
+    contains:
+        clusterArn:
+            description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+            returned: always
+            type: string
+        desiredCount:
+            description: The desired number of instantiations of the task definition to keep running on the service.
+            returned: always
+            type: int
+        loadBalancers:
+            description: A list of load balancer objects
+            returned: always
+            type: complex
+            contains:
+                loadBalancerName:
+                    description: the name
+                    returned: always
+                    type: string
+                containerName:
+                    description: The name of the container to associate with the load balancer.
+                    returned: always
+                    type: string
+                containerPort:
+                    description: The port on the container to associate with the load balancer.
+                    returned: always
+                    type: int
+        pendingCount:
+            description: The number of tasks in the cluster that are in the PENDING state.
+            returned: always
+            type: int
+        runningCount:
+            description: The number of tasks in the cluster that are in the RUNNING state.
+            returned: always
+            type: int
+        serviceArn:
+            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+            returned: always
+            type: string
+        serviceName:
+            description: A user-generated string used to identify the service
+            returned: always
+            type: string
+        status:
+            description: The valid values are ACTIVE, DRAINING, or INACTIVE.
+            returned: always
+            type: string
+        taskDefinition:
+            description: The ARN of a task definition to use for tasks in the service.
+            returned: always
+            type: string
+        deployments:
+            description: list of service deployments
+            returned: always
+            type: list of complex
+        events:
+            description: lost of service events
+            returned: always
+            type: list of complex
 '''
 try:
     import boto
@@ -91,7 +140,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 class EcsServiceManager:
-    """Handles ECS Clusters"""
+    """Handles ECS Services"""
 
     def __init__(self, module):
         self.module = module
@@ -128,10 +177,25 @@ class EcsServiceManager:
             fn_args['cluster'] = cluster
         fn_args['services']=services.split(",")
         response = self.ecs.describe_services(**fn_args)
-        relevant_response = dict(services = response['services'])
+        relevant_response = dict(services = map(self.extract_service_from, response['services']))
         if 'failures' in response and len(response['failures'])>0:
             relevant_response['services_not_running'] = response['failures']
         return relevant_response
+
+    def extract_service_from(self, service):
+        # some fields are datetime which is not JSON serializable
+        # make them strings
+        if 'deployments' in service:
+            for d in service['deployments']:
+                if 'createdAt' in d:
+                    d['createdAt'] = str(d['createdAt'])
+                if 'updatedAt' in d:
+                    d['updatedAt'] = str(d['updatedAt'])
+        if 'events' in service:
+            for e in service['events']:
+                if 'createdAt' in e:
+                    e['createdAt'] = str(e['createdAt'])
+        return service
 
 def main():
 
@@ -159,13 +223,9 @@ def main():
         if 'service' not in module.params or not module.params['service']:
             module.fail_json(msg="service must be specified for ecs_service_facts")
         ecs_facts = task_mgr.describe_services(module.params['cluster'], module.params['service'])
-        # the bad news is the result has datetime fields that aren't JSON serializable
-        # nuk'em!
-        for service in ecs_facts['services']:
-            del service['deployments']
-            del service['events']
     else:
         ecs_facts = task_mgr.list_services(module.params['cluster'])
+
     ecs_facts_result = dict(changed=False, ansible_facts=ecs_facts)
     module.exit_json(**ecs_facts_result)
 
