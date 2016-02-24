@@ -15,9 +15,11 @@ ansible-galaxy install -r path/to/rolesfile.yml -p path/to/rolesdir -f
 ansible-playbook run-the-playbook.yml
 ```
 
-The most likely step in this process to be forgotten is the middle step. While
-we can improve processes and documentation to try and ensure that this step is
-not skipped, we can improve ansible-playbook so that the step is not required.
+### Problems
+
+- The most likely step in this process to be forgotten is the middle step. While we can improve processes and documentation to try and ensure that this step is not skipped, we can improve ansible-playbook so that the step is not required.
+- Ansible-galaxy does ot sufficiently handle versioning. 
+- There is not a consistent format for specifying a role in a playbook or a dependent role in meta/main.yml.
 
 ## Approaches
 
@@ -98,9 +100,50 @@ content within the playbook:
 - New configuration defaults would likely still be required (and possibly
   an override keyword for rolesdir and role auto update)
 
+
+### Approach 3:  
+
+*Author*: chouseknecht<@chouseknecht>
+
+*Date*: 24/02/2016
+
+This is a combination of ideas taken from IRC, the ansible development group, and conversations at the recent contributor's summit. It also incorporates most of the ideas from Approach 1 (above) with two notable texceptions: 1) it elmintates maintaing a roles file (or what we think of today as requirements.yml); and 2) it does not include the definition of rolesdir in the playbook.
+
+Here's the approach:
+
+- Share the role install logic between ansible-playbook and ansible-galaxy so that ansible-playbook can resolve and install missing roles at playbook run time simply by evaluating the playbook.
+- Ansible-galaxy installs or preloads roles also by examining a playbook.
+- Deprecate support for requirements.yaml (the two points above make it unnecessary).
+- Make ansible-playbook auto-downloading of roles configurable in ansible.cfg. In certain circumstance it may be desirable to disable auto-download.
+- Provide one format for specifying a role whether in a playbook or in meta/main.yml. Suggested format: 
+
+    ```
+    {
+        'scm': 'git',
+        'src': 'http://git.example.com/repos/repo.git',
+        'version': 'v1.0',
+        'name': 'repo’
+    }
+    ```
+
+- Refactor the install process to encompass the following :
+
+    - Idempotency - If a role version is already installed, don’t attempt to install it again. If symlinks are present (see below), don’t break or remove them.
+    - Provide a --force option that overrides idempotency.
+    - Install roles via tree-ish references, not just tags or commits (PR exists for this).
+    - Support a whitelist of role sources. Galaxy should not be automatically assumed to be part of the whitelist.
+    - Continue to be recursive, allowing roles to have dependencies specified in meta/main.yml.
+    - Continue to install roles in the roles_path.
+    - Use a symlink approach to managing role versions in the roles_path. Example:
+
+        ```
+        roles/
+           briancoca.oracle_java7.v1.0
+           briancoca.oracle_java7.v2.2
+           briancoca.oracle_java7.qs3ih6x
+           briancoca.oracle_java7 =>  briancoca.oracle_java7.qs3ih6x
+        ```
+    
 ## Conclusion
 
-The author's preferred approach is currently Approach 1.
-
-Feedback is requested to improve either approach, or provide further
-approaches to solve this problem.
+Feedback is requested to improve any of the above approaches, or provide further approaches to solve this problem.
