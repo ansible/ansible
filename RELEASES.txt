@@ -9,7 +9,7 @@ Active Development
 Released
 ++++++++
 
-2.0.1  "Over the Hills and Far Away" TBD
+2.0.1  "Over the Hills and Far Away" 02-24-2015
 2.0.0  "Over the Hills and Far Away" 01-12-2015
 1.9.4  "Dancing In the Streets" 10-09-2015
 1.9.3  "Dancing In the Streets" 09-03-2015
