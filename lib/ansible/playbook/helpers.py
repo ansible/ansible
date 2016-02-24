@@ -92,11 +92,14 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
         else:
             if use_handlers:
-                t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader, play=play)
             else:
                 t = Task.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
 
-        task_list.append(t)
+        if isinstance(t, list):
+            task_list.extend(t)
+        else:
+            task_list.append(t)
 
     return task_list
 
