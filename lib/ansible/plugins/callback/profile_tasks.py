@@ -49,8 +49,10 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        self.stats[self.current] = time.time() - self.stats[self.current]
-
+        stat = self.stats[-1]
+        if stat['task'] == self.current:
+           stat['end_time'] = time.time()
+           stat['duration'] = stat['end_time'] - stat['start_time']
 
 def tasktime():
     global tn
@@ -71,11 +73,11 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'profile_tasks'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
-        self.stats = {}
+    def __init__(self):
+        self.stats = []
         self.current = None
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
     def _record_task(self, name):
         """
@@ -86,7 +88,7 @@ class CallbackModule(CallbackBase):
 
         # Record the start time of the current task
         self.current = name
-        self.stats[self.current] = time.time()
+        self.stats.append({'task': self.current, 'start_time': time.time()})
 
     def playbook_on_task_start(self, name, is_conditional):
         self._record_task(name)
@@ -105,8 +107,8 @@ class CallbackModule(CallbackBase):
 
         # Sort the tasks by their running time
         results = sorted(
-            self.stats.items(),
-            key=lambda value: value[1],
+            self.stats,
+            key=lambda value: 'duration',
             reverse=True,
         )
 
@@ -114,10 +116,10 @@ class CallbackModule(CallbackBase):
         results = results[:20]
 
         # Print the timings
-        for name, elapsed in results:
+        for stat in self.stats:
             self._display.display(
                 "{0:-<70}{1:->9}".format(
-                    '{0} '.format(name),
-                    ' {0:.02f}s'.format(elapsed),
+                    '{0} '.format(stat['task']),
+                    ' {0:.02f}s'.format(stat['duration']),
                 )
             )
