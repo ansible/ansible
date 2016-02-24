@@ -38,6 +38,7 @@ description:
     surrounded by customizable marker lines.
 notes:
   - This module supports check mode.
+  - When using 'with_' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
 options:
   dest:
     aliases: [ name, destfile ]
@@ -136,6 +137,17 @@ EXAMPLES = r"""
     dest: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     content: ""
+
+- name: insert/update "Match User" configuation block in /etc/ssh/sshd_config
+  blockinfile:
+    dest: /etc/hosts
+    block: |
+      {{item.name}} {{item.ip}}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{item.name}}"
+    with_items:
+        - { name: host1, ip: 10.10.1.10 }
+        - { name: host2, ip: 10.10.1.11 }
+        - { name: host3, ip: 10.10.1.12 }
 """
 
 
