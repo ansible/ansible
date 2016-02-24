@@ -15,6 +15,8 @@ privilege escalation tools, which you probably already use or have configured, l
     and execute tasks, create resources with the 2nd user's permissions. As of 1.9 `become` supersedes the old sudo/su, while still being backwards compatible.
     This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker), `pfexec` and others.
 
+.. note:: Setting any var or directive makes no implications on the values of the other related directives, i.e. setting become_user does not set become.
+
 
 Directives
 -----------
@@ -24,7 +26,7 @@ become
     set to 'true'/'yes' to activate privilege escalation.
 
 become_user
-    set to user with desired privileges, the user you 'become', NOT the user you login as.
+    set to user with desired privileges, the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
     at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'
@@ -41,7 +43,7 @@ ansible_become_method
     allows to set privilege escalation method
 
 ansible_become_user
-    allows to set the user you become through privilege escalation
+    allows to set the user you become through privilege escalation, does not imply `ansible_become: True`
 
 ansible_become_pass
     allows you to set the privilege escalation password
@@ -61,7 +63,7 @@ New command line options
     valid choices: [ sudo | su | pbrun | pfexec | doas ]
 
 --become-user=BECOME_USER
-    run operations as this user (default=root)
+    run operations as this user (default=root), does not imply --become/-b
 
 
 For those from Pre 1.9 , sudo and su still work!
