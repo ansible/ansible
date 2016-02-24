@@ -257,7 +257,7 @@ def main():
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
             template_format=dict(default='json', choices=['json', 'yaml'], required=False),
-            tags=dict(default=None)
+            tags=dict(default=None, type='dict')
         )
     )
 
@@ -410,4 +410,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()
