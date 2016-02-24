@@ -172,14 +172,12 @@ def lookup_sessions(module):
 def update_session(module):
 
     name = module.params.get('name')
-    session_id = module.params.get('id')
     delay = module.params.get('delay')
     checks = module.params.get('checks')
     datacenter = module.params.get('datacenter')
     node = module.params.get('node')
 
     consul_client = get_consul_api(module)
-    changed = True
 
     try:
         
@@ -208,10 +206,9 @@ def remove_session(module):
         remove a session.""")
 
     consul_client = get_consul_api(module)
-    changed = False
 
     try:
-        session = consul_client.session.destroy(session_id)
+        consul_client.session.destroy(session_id)
 
         module.exit_json(changed=True,
                          session_id=session_id)
