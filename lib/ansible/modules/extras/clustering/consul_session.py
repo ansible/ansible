@@ -248,7 +248,8 @@ def main():
         name=dict(required=False),
         node=dict(required=False),
         state=dict(default='present',
-                   choices=['present', 'absent', 'info', 'node', 'list'])
+                   choices=['present', 'absent', 'info', 'node', 'list']),
+        datacenter=dict(required=False)
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=False)
