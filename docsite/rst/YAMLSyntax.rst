@@ -77,17 +77,20 @@ Ansible doesn't really use these too much, but you can also specify a boolean va
     likes_emacs: TRUE
     uses_cvs: false
 
-Values can span multiple lines using *|* or *>* to include newlines or ignore them::
+Values can span multiple lines using *|* or *>*.  Spanning multiple lines using a *|* will include the newlines.  Using a *>* will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
+In either case the indentation will be ignored.
+Examples are::
+
+    include_newlines: |
+                exactly as you see
+                will appear these three
+                lines of poetry
 
     ignore_newlines: >
                 this is really a
                 single line of text
                 despite appearances
-                
-    include_newlines: |
-                exactly as you see
-                will appear these three
-                lines of poetry
+
 
 Let's combine what we learned so far in an arbitrary YAML example.
 This really has nothing to do with Ansible, but will give you a feel for the format::
