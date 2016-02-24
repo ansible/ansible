@@ -112,6 +112,14 @@ def get_host_groups(inventory, refresh=False):
     return groups
 
 
+def append_hostvars(hostvars, groups, key, server, namegroup=False):
+    hostvars[key] = dict(
+        ansible_ssh_host=server['interface_ip'],
+        openstack=server)
+    for group in get_groups_from_server(server, namegroup=namegroup):
+        groups[group].append(key)
+
+
 def get_host_groups_from_cloud(inventory):
     groups = collections.defaultdict(list)
     firstpass = collections.defaultdict(list)
@@ -130,20 +138,19 @@ def get_host_groups_from_cloud(inventory):
         firstpass[server['name']].append(server)
     for name, servers in firstpass.items():
         if len(servers) == 1 and use_hostnames:
-            server = servers[0]
-            hostvars[name] = dict(
-                ansible_ssh_host=server['interface_ip'],
-                openstack=server)
-            for group in get_groups_from_server(server, namegroup=False):
-                groups[group].append(server['name'])
+            append_hostvars(hostvars, groups, name, servers[0])
         else:
+            server_ids = set()
+            # Trap for duplicate results
             for server in servers:
-                server_id = server['id']
-                hostvars[server_id] = dict(
-                    ansible_ssh_host=server['interface_ip'],
-                    openstack=server)
-                for group in get_groups_from_server(server, namegroup=True):
-                    groups[group].append(server_id)
+                server_ids.add(server['id'])
+            if len(server_ids) == 1 and use_hostnames:
+                append_hostvars(hostvars, groups, name, servers[0])
+            else:
+                for server in servers:
+                    append_hostvars(
+                        hostvars, groups, server['id'], servers[0],
+                        namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
 
