@@ -48,7 +48,7 @@ features, show how the feature would be used.
 
 ##### Actual Results:
 
-<!--- What actually happened? -->
+<!--- What actually happened? If possible run with high verbosity (-vvvv) -->
 
 ```
 <!--- Paste verbatim command output here -->
