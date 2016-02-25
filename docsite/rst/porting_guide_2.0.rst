@@ -256,43 +256,28 @@ Connection plugins
 
 Hybrid plugins
 ==============
-In specific cases you may want a plugin that supports both ansible-1.9.x *and*
-ansible-2.0. Much like porting plugins from v1 to v2, you need to understand
-how plugins work in each version and support both requirements. It may mean
-playing tricks on Ansible.
+In specific cases you may want a plugin that supports both ansible-1.9.x *and* ansible-2.0. Much like porting plugins from v1 to v2, you need to understand how plugins work in each version and support both requirements. It may mean playing tricks on Ansible.
 
-Since the ansible-2.0 plugin system is more advanced, it is easier to adapt
-your plugin to provide similar pieces (subclasses, methods) for ansible-1.9.x
-as ansible-2.0 expects. This way your code will look a lot cleaner.
+Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your plugin to provide similar pieces (subclasses, methods) for ansible-1.9.x as ansible-2.0 expects. This way your code will look a lot cleaner.
 
 You may find the following tips useful:
 
-* Check whether the ansible-2.0 class(es) are available and if they are missing
-  (ansible-1.9.x) mimic them with the needed methods (e.g. `__init__`)
+* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``)
 
-* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x),
-  catch the `ImportError` exception and perform the equivalent imports for
-  ansible-1.9.x. With possible translations (e.g. importing specific methods).
+* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (e.g. importing specific methods).
 
-* Use the existence of these methods as a qualifier to what version of Ansible
-  you are running. So rather than using version checks, you can do capability
-  checks instead. (See examples below)
+* Use the existence of these methods as a qualifier to what version of Ansible you are running. So rather than using version checks, you can do capability checks instead. (See examples below)
 
-* Document for each if-then-else case for which specific version each block is
-  needed. This will help others to understand how they have to adapt their
-  plugins, but it will also help you to remove the older ansible-1.9.x support
-  when it is deprecated.
+* Document for each if-then-else case for which specific version each block is needed. This will help others to understand how they have to adapt their plugins, but it will also help you to remove the older ansible-1.9.x support when it is deprecated.
 
-* When doing plugin development, it is very useful to have the `warning()`
-  method during development, but it is also important to emit warnings for
-  deadends (cases that you expect should never be triggered) or corner cases
-  (e.g. cases where you expect misconfigurations).
+* When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
+
+* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
 
 
 Lookup plugins
 --------------
-As a simple example we are going to make a hybrid `fileglob` lookup plugin.
-The `fileglob` lookup plugin is pretty simple to understand::
+As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand::
 
     from __future__ import (absolute_import, division, print_function)
     __metaclass__ = type
@@ -324,7 +309,7 @@ The `fileglob` lookup plugin is pretty simple to understand::
 
     class LookupModule(LookupBase):
 
-        # For ansible-1.9.x, we added inject=None as valid arguments
+        # For ansible-1.9.x, we added inject=None as valid argument
         def run(self, terms, inject=None, variables=None, **kwargs):
 
             # ansible-2.0, but we made this work for ansible-1.9.x too !
@@ -351,9 +336,7 @@ The `fileglob` lookup plugin is pretty simple to understand::
 
             return ret
 
-Note that in the above example we did not use the `warning()` method as we
-had no direct use for it in the final version. However we left this code in
-so people can use this part during development/porting/use.
+.. Note:: In the above example we did not use the ``warning()`` method as we had no direct use for it in the final version. However we left this code in so people can use this part during development/porting/use.
 
 
 
