@@ -186,9 +186,9 @@ class CallbackModule(CallbackBase):
 
         msg = "failed: "
         if delegated_vars:
-            self._display.display("failed: [%s -> %s] => (item=%s) => %s" % (result._host.get_name(), delegated_vars['ansible_host'], result._result['item'], self._dump_results(result._result)), color=C.COLOR_ERROR)
+            msg += '[%s -> %s]' %  (result._host.get_name(), delegated_vars['ansible_host'])
         else:
-            self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color=C.COLOR_ERROR)
+            msg += '[%s]' % (result._host.get_name())
 
         self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
         self._handle_warnings(result._result)
@@ -201,7 +201,6 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        color = C.COLOR_SKIP
         self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
