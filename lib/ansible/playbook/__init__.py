@@ -24,6 +24,7 @@ import os
 from ansible.errors import AnsibleParserError
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
+from ansible.playbook.vars_scope import VarsScope
 from ansible.plugins import get_all_plugin_loaders
 from ansible import constants as C
 
@@ -37,9 +38,11 @@ except ImportError:
 __all__ = ['Playbook']
 
 
-class Playbook:
+class Playbook(VarsScope):
 
     def __init__(self, loader):
+        super(Playbook, self).__init__()
+
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
@@ -89,8 +92,14 @@ class Playbook:
                     self._entries.extend(pb._entries)
                 else:
                     display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
+            elif 'hosts' not in entry:
+                for k in entry:
+                    if not k.startswith('vars'):
+                        raise AnsibleParserError("playbook entries must be either a valid play, vars block, or include statement", obj=entry)
+                self.load_data(entry)
+
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
+                entry_obj = Play.load(entry, playbook=self, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)
 
     def get_loader(self):

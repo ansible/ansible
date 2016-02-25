@@ -144,6 +144,7 @@ class TestVariableManager(unittest.TestCase):
         fake_loader = DictDataLoader({})
 
         mock_play = MagicMock()
+        mock_play._playbook = None
         mock_play.get_vars.return_value = dict(foo="bar")
         mock_play.get_roles.return_value = []
         mock_play.get_vars_files.return_value = []
@@ -159,6 +160,7 @@ class TestVariableManager(unittest.TestCase):
         })
 
         mock_play = MagicMock()
+        mock_play._playbook = None
         mock_play.get_vars.return_value = dict()
         mock_play.get_roles.return_value = []
         mock_play.get_vars_files.return_value = ['/path/to/somefile.yml']

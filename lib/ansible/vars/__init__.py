@@ -184,6 +184,9 @@ class VariableManager:
         - host_vars_files[host] (if there is a host context)
         - host->get_vars (if there is a host context)
         - fact_cache[host] (if there is a host context)
+        - playbook vars (if there is a play context)
+        - playbook vars_files (if there's no host context, ignore
+          file names that cannot be templated)
         - play vars (if there is a play context)
         - play vars_files (if there's no host context, ignore
           file names that cannot be templated)
@@ -260,49 +263,54 @@ class VariableManager:
                 pass
 
         if play:
-            all_vars = combine_vars(all_vars, play.get_vars())
+            # merge playbook variables, then play variables
 
-            for vars_file_item in play.get_vars_files():
-                # create a set of temporary vars here, which incorporate the extra
-                # and magic vars so we can properly template the vars_files entries
-                temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(temp_vars, magic_variables)
-                templar = Templar(loader=loader, variables=temp_vars)
+            for scope in filter(None, (play._playbook, play)):
+                all_vars = combine_vars(all_vars, scope.get_vars())
 
-                # we assume each item in the list is itself a list, as we
-                # support "conditional includes" for vars_files, which mimics
-                # the with_first_found mechanism.
-                vars_file_list = vars_file_item
-                if not isinstance(vars_file_list, list):
-                     vars_file_list = [ vars_file_list ]
+                for vars_file_item in scope.get_vars_files():
+                    # create a set of temporary vars here, which incorporate the extra
+                    # and magic vars so we can properly template the vars_files entries
+                    temp_vars = combine_vars(all_vars, self._extra_vars)
+                    temp_vars = combine_vars(temp_vars, magic_variables)
+                    templar = Templar(loader=loader, variables=temp_vars)
 
-                # now we iterate through the (potential) files, and break out
-                # as soon as we read one from the list. If none are found, we
-                # raise an error, which is silently ignored at this point.
-                try:
-                    for vars_file in vars_file_list:
-                        vars_file = templar.template(vars_file)
-                        try:
-                            data = preprocess_vars(loader.load_from_file(vars_file))
-                            if data is not None:
-                                for item in data:
-                                    all_vars = combine_vars(all_vars, item)
-                            break
-                        except AnsibleFileNotFound as e:
-                            # we continue on loader failures
+                    # we assume each item in the list is itself a list, as we
+                    # support "conditional includes" for vars_files, which mimics
+                    # the with_first_found mechanism.
+                    vars_file_list = vars_file_item
+                    if not isinstance(vars_file_list, list):
+                         vars_file_list = [ vars_file_list ]
+
+                    # now we iterate through the (potential) files, and break out
+                    # as soon as we read one from the list. If none are found, we
+                    # raise an error, which is silently ignored at this point.
+                    try:
+                        for vars_file in vars_file_list:
+                            vars_file = templar.template(vars_file)
+                            try:
+                                data = preprocess_vars(loader.load_from_file(vars_file))
+                                if data is not None:
+                                    for item in data:
+                                        all_vars = combine_vars(all_vars, item)
+                                break
+                            except AnsibleFileNotFound as e:
+                                # we continue on loader failures
+                                continue
+                            except AnsibleParserError as e:
+                                raise
+                        else:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
+                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
+                        else:
+                            # we do not have a full context here, and the missing variable could be
+                            # because of that, so just show a warning and continue
+                            display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                             continue
-                        except AnsibleParserError as e:
-                            raise
-                    else:
-                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
-                except (UndefinedError, AnsibleUndefinedVariable):
-                    if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
-                    else:
-                        # we do not have a full context here, and the missing variable could be
-                        # because of that, so just show a warning and continue
-                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
-                        continue
+
+            # merge role variables
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
