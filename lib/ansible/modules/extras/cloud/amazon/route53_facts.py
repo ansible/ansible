@@ -316,6 +316,9 @@ def record_sets_details(client, module):
     else:
         module.fail_json(msg="Hosted Zone Id is required")
 
+    if module.params.get('max_items'):
+        params['MaxItems'] = module.params.get('max_items')
+
     if module.params.get('start_record_name'):
         params['StartRecordName'] = module.params.get('start_record_name')
 
