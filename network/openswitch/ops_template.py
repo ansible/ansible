@@ -18,7 +18,7 @@
 DOCUMENTATION = """
 ---
 module: ops_config
-verions_added: "2.1"
+version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Push configuration to OpenSwitch using declarative config
 description:
