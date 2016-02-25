@@ -148,9 +148,9 @@ else:
 # MongoDB module specific support methods.
 #
 
-def user_find(client, user):
+def user_find(client, user, db_name):
     for mongo_user in client["admin"].system.users.find():
-        if mongo_user['user'] == user:
+        if mongo_user['user'] == user and mongo_user['db'] == db_name:
             return mongo_user
     return False
 
@@ -158,6 +158,7 @@ def user_add(module, client, db_name, user, password, roles):
     #pymono's user_add is a _create_or_update_user so we won't know if it was changed or updated
     #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
+
     if roles is None:
         db.add_user(user, password, False)
     else:
@@ -170,7 +171,7 @@ def user_add(module, client, db_name, user, password, roles):
             module.fail_json(msg=err_msg)
 
 def user_remove(module, client, db_name, user):
-    exists = user_find(client, user)
+    exists = user_find(client, user, db_name)
     if exists:
         db = client[db_name]
         db.remove_user(user)
@@ -223,7 +224,7 @@ def main():
     login_host = module.params['login_host']
     login_port = module.params['login_port']
     login_database = module.params['login_database']
-    
+
     replica_set = module.params['replica_set']
     db_name = module.params['database']
     user = module.params['name']
@@ -261,13 +262,21 @@ def main():
         if password is None and update_password == 'always':
             module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
 
-        if update_password != 'always' and user_find(client, user):
+        uinfo = user_find(client, user, db_name)
+        if update_password != 'always' and uinfo:
             password = None
+            if list(map((lambda x: x['role']), uinfo['roles'])) == roles:
+                module.exit_json(changed=False, user=user)
 
         try:
             user_add(module, client, db_name, user, password, roles)
         except OperationFailure, e:
             module.fail_json(msg='Unable to add or update user: %s' % str(e))
+
+            # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
+            #newuinfo = user_find(client, user, db_name)
+            #if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
+            #    module.exit_json(changed=False, user=user)
 
     elif state == 'absent':
         try:
