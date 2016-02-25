@@ -233,12 +233,12 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(required=True),
-            description=dict(required=True),
-            vpc_id=dict(),
-            rules=dict(),
-            rules_egress=dict(),
-            state = dict(default='present', choices=['present', 'absent']),
+            name=dict(type='str', required=True),
+            description=dict(type='str', required=True),
+            vpc_id=dict(type='str'),
+            rules=dict(type='list'),
+            rules_egress=dict(type='list'),
+            state = dict(default='present', type='str', choices=['present', 'absent']),
             purge_rules=dict(default=True, required=False, type='bool'),
             purge_rules_egress=dict(default=True, required=False, type='bool'),
 
