@@ -44,16 +44,19 @@ class Handler(Task):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None, play=None):
         h = Handler(block=block, role=role, task_include=task_include)
         h.load_data(data, variable_manager=variable_manager, loader=loader)
-        if h.get_name() == 'include':
-            filename = data[u'include']
-            display.debug('loading handlers from %s' % filename)
-            ds = loader.load_from_file(filename)
-            if ds is None:
-                return []
-            elif not isinstance(ds, list):
-                raise AnsibleError("included task files must contain a list of tasks")
-            handlers = load_list_of_tasks(ds, play=play, use_handlers=True, loader=loader)
-            return handlers
+        if h.action == 'include':
+            filenames = h.args['_raw_params'].strip().split()
+            retval = []
+            for filename in filenames:
+                display.debug('loading handlers from %s' % filename)
+                ds = loader.load_from_file(filename)
+                if ds is None:
+                    continue
+                elif not isinstance(ds, list):
+                    raise AnsibleError("included task files must contain a list of tasks")
+                handlers = load_list_of_tasks(ds, play=play, use_handlers=True, loader=loader)
+                retval.extend(handlers)
+            return retval
 
         return h
 
