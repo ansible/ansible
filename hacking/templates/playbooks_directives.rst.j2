@@ -1,0 +1,19 @@
+Directives Glossary
+===================
+
+Here we list the common playbook objects and the possible directives that can be used with them.
+Note that not all directives affect the object itself and might just be there to be inherited by other contained objects.
+
+.. contents::
+   :local:
+   :depth: 1
+
+{% for name in oblist %}
+
+{{ name }}
+{{ '-' * name|length }}
+{% for attribute in oblist[name].__dict__['_attributes']|sort %}
+  * {{ attribute }}
+{% endfor %}
+
+{% endfor %}
