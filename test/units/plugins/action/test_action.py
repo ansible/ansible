@@ -24,7 +24,7 @@ import json
 import pipes
 
 from sys import version_info
-if version_info.major == 2:
+if version_info[0] == 2:
     import __builtin__ as builtins
 else:
     import builtins
@@ -124,7 +124,7 @@ class TestActionBase(unittest.TestCase):
         )
 
         # test python module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=python_module_replacers.strip())) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=text_type(python_module_replacers.strip()))) as m:
             mock_task.args = dict(a=1)
             mock_connection.module_implementation_preferences = ('',)
             (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
@@ -135,7 +135,7 @@ class TestActionBase(unittest.TestCase):
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
 
         # test powershell module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=powershell_module_replacers.strip())) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=text_type(powershell_module_replacers.strip()))) as m:
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
