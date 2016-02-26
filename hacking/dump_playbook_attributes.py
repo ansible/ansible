@@ -23,7 +23,7 @@ p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/
 
 (options, args) = p.parse_args()
 
-for aclass in class_list
+for aclass in class_list:
     aobj = aclass()
     name = type(aobj).__name__
 
