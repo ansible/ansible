@@ -64,71 +64,58 @@ options:
     description:
       - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
     required: false
-    default: null
-    aliases: []
   user_data:
     description:
       - opaque blob of data which is made available to the ec2 instance
     required: false
-    default: null
-    aliases: []
   kernel_id:
     description:
       - Kernel id for the EC2 instance
     required: false
-    default: null
-    aliases: []
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
     required: false
-    default: null
   instance_monitoring:
     description:
       - whether instances in group are launched with detailed monitoring.
-    required: false
     default: false
-    aliases: []
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
     required: false
-    aliases: []
     version_added: "1.8"
   ramdisk_id:
     description:
       - A RAM disk id for the instances.
     required: false
-    default: null
-    aliases: []
     version_added: "1.8"
   instance_profile_name:
     description:
       - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instances.
     required: false
-    default: null
-    aliases: []
     version_added: "1.8"
   ebs_optimized:
     description:
       - Specifies whether the instance is optimized for EBS I/O (true) or not (false).
     required: false
     default: false
-    aliases: []
     version_added: "1.8"
   classic_link_vpc_id:
     description:
       - Id of ClassicLink enabled VPC
     required: false
-    default: null
     version_added: "2.0"
   classic_link_vpc_security_groups"
     description:
       - A list of security group id's with which to associate the ClassicLink VPC instances.
     required: false
-    default: null
     version_added: "2.0"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
+requires: 
+    - "boto >= 2.39.0"
 """
 
 EXAMPLES = '''
