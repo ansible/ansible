@@ -206,13 +206,15 @@ class DataLoader():
         '''
 
         given = unquote(given)
+        given = to_unicode(given, errors='strict')
 
-        if given.startswith("/"):
+        if given.startswith(u"/"):
             return os.path.abspath(given)
-        elif given.startswith("~"):
+        elif given.startswith(u"~"):
             return os.path.abspath(os.path.expanduser(given))
         else:
-            return os.path.abspath(os.path.join(self._basedir, given))
+            basedir = to_unicode(self._basedir, errors='strict')
+            return os.path.abspath(os.path.join(basedir, given))
 
     def path_dwim_relative(self, path, dirname, source):
         '''
