@@ -174,7 +174,9 @@ How do I loop over a list of hosts in a group, inside of a template?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A pretty common pattern is to iterate over a list of hosts inside of a host group, perhaps to populate a template configuration
-file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this::
+file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this:
+
+.. code-block:: jinja2
 
     {% for host in groups['db_servers'] %}
         {{ host }}
@@ -184,7 +186,7 @@ If you need to access facts about these hosts, for instance, the IP address of e
 
     - hosts:  db_servers
       tasks:
-        - # doesn't matter what you do, just that they were talked to previously.
+        - debug: msg="doesn't matter what you do, just that they were talked to previously."
 
 Then you can use the facts inside your template, like this::
 
