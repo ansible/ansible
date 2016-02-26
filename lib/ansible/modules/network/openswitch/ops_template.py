@@ -119,8 +119,7 @@ tasks:
 
 RETURN = """
 updates:
-  description: The list of configuration updates to be merged  The format
-    of the return is 'key: new_value (old_value)'
+  description: The list of configuration updates to be merged
   retured: always
   type: list
   sample: ["System.hostname: ops01 (switch)"]
