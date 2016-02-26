@@ -278,7 +278,7 @@ def main():
         uinfo = user_find(client, user, db_name)
         if update_password != 'always' and uinfo:
             password = None
-            if list(map((lambda x: x['role']), uinfo['roles'])) == roles:
+            if 'roles' in uinfo and list(map((lambda x: x['role']), uinfo['roles'])) == roles:
                 module.exit_json(changed=False, user=user)
 
         if module.check_mode:
