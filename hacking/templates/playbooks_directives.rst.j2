@@ -13,7 +13,9 @@ Note that not all directives affect the object itself and might just be there to
 {{ name }}
 {{ '-' * name|length }}
 {% for attribute in oblist[name].__dict__['_attributes']|sort %}
+{% if attribute not in ['loop', 'loop_args'] %}
   * {{ attribute }}
+{% endif %}
 {% endfor %}
 
 {% endfor %}
