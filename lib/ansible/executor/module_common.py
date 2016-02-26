@@ -36,6 +36,7 @@ REPLACER          = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS     = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX  = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS  = "# POWERSHELL_COMMON"
+REPLACER_WIN_ACC  = "# POWERSHELL_ACCOUNT"
 REPLACER_WINARGS  = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
 REPLACER_JSONARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 REPLACER_VERSION  = "\"<<ANSIBLE_VERSION>>\""
@@ -89,6 +90,10 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
             ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
             output.write(ps_data)
             snippet_names.append('powershell')
+        elif REPLACER_WIN_ACC in line:
+            ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell_account.ps1"))
+            output.write(ps_data)
+            snippet_names.append('powershell_account')
         elif line.startswith('from ansible.module_utils.'):
             tokens=line.split(".")
             import_error = False
