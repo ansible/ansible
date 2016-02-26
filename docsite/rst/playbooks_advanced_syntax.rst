@@ -5,14 +5,14 @@ Advanced Syntax
 
 This page describes advanced YAML syntax that enables you to have more control over the data placed in YAML files used by Ansible.
 
-.. _yaml_tags_and_python_types
+.. _yaml_tags_and_python_types:
 
 YAML tags and Python types
 ``````````````````````````
 
 The documentation covered here is an extension of the documentation that can be found in the `PyYAML Documentation <http://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_
 
-.. _unsafe_strings
+.. _unsafe_strings:
 
 Unsafe or Raw Strings
 ~~~~~~~~~~~~~~~~~~~~~

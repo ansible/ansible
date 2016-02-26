@@ -228,7 +228,7 @@ Allows disabling of deprecating warnings in ansible-playbook output::
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
-.. _display_args_to_stdout
+.. _display_args_to_stdout:
 
 display_args_to_stdout
 ======================
@@ -768,7 +768,7 @@ instead.  Setting it to False will improve performance and is recommended when h
 
     record_host_keys=True
 
-.. _paramiko_proxy_command
+.. _paramiko_proxy_command:
 
 proxy_command
 =============
