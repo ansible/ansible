@@ -65,7 +65,7 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning('While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
+                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
