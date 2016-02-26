@@ -10,9 +10,8 @@ from ansible.playbook.task import  Task
 
 template_file = 'playbooks_directives.rst.j2'
 oblist = {}
-for aclass in Play, Block, Role, Task:
-    aobj = aclass()
-    oblist[type(aobj).__name__] = aobj
+clist = []
+class_list = [ Play, Role, Block, Task ]
 
 p = optparse.OptionParser(
     version='%prog 1.0',
@@ -24,10 +23,28 @@ p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/
 
 (options, args) = p.parse_args()
 
+for aclass in class_list
+    aobj = aclass()
+    name = type(aobj).__name__
+
+    # build ordered list to loop over and dict with attributes
+    clist.append(name)
+    oblist[name] = aobj.__dict__['_attributes']
+
+    # loop is really with_ for users
+    if 'loop' in oblist[name]:
+        oblist[name]['with_<lookup_plugin>'] = True
+        del oblist[name]['loop']
+        del oblist[name]['loop_args']
+
+    # local_action is implicit with action
+    if 'action' in oblist[name]:
+        oblist[name]['local_action'] = True
+
 env = Environment(loader=FileSystemLoader(options.template_dir), trim_blocks=True,)
 template = env.get_template(template_file)
 outputname = options.output_dir + template_file.replace('.j2','')
-tempvars = { 'oblist': oblist }
+tempvars = { 'oblist': oblist, 'clist': clist }
 
 with open( outputname, 'w') as f:
     f.write(template.render(tempvars))
