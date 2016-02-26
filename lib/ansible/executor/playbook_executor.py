@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -81,7 +82,7 @@ class PlaybookExecutor:
 
                 i = 1
                 plays = pb.get_plays()
-                display.vv('%d plays in %s' % (len(plays), playbook_path))
+                display.vv(u'%d plays in %s' % (len(plays), to_unicode(playbook_path)))
 
                 for play in plays:
                     if play._included_path is not None:
