@@ -35,7 +35,7 @@ Function Get-CustomFacts {
   $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
 
   foreach ($FactsFile in $FactsFiles) {
-      $out = . $($FactsFile.FullName)
+      $out = & $($FactsFile.FullName)
       Set-Attr $result.ansible_facts "ansible_$(($FactsFile.Name).Split('.')[0])" $out
   }
 }
