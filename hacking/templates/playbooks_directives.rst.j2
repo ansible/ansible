@@ -1,21 +1,20 @@
 Directives Glossary
 ===================
 
-Here we list the common playbook objects and the possible directives that can be used with them.
+Here we list the common playbook objects and the their directives.
 Note that not all directives affect the object itself and might just be there to be inherited by other contained objects.
+Aliases for the directives are not reflected here, nor are mutable ones, for example `action` in task can be substituted by the name of any module plugin.
 
 .. contents::
    :local:
    :depth: 1
 
-{% for name in oblist %}
+{% for name in clist %}
 
 {{ name }}
 {{ '-' * name|length }}
-{% for attribute in oblist[name].__dict__['_attributes']|sort %}
-{% if attribute not in ['loop', 'loop_args'] %}
+{% for attribute in oblist[name]|sort %}
   * {{ attribute }}
-{% endif %}
 {% endfor %}
 
 {% endfor %}
