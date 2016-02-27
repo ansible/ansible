@@ -36,6 +36,13 @@ except ImportError:
     from yaml.parser import ParserError
 
 
+class NameStringIO(StringIO):
+    """In py2.6, StringIO doesn't let you set name because a baseclass has it
+    as readonly property"""
+    name = None
+    def __init__(self, *args, **kwargs):
+        super(NameStringIO, self).__init__(*args, **kwargs)
+
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
     def setUp(self):
@@ -155,7 +162,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def setUp(self):
-        stream = StringIO(u"""
+        stream = NameStringIO(u"""
                 - hosts: localhost
                   vars:
                     number: 1
