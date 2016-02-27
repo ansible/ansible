@@ -455,6 +455,8 @@ class PlayContext(Base):
                 else:
                     becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
 
+            elif self.become_method == 'sudosu':
+                becomecmd = 'sudo %s su - %s %s -c %s' % (flags, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
 
