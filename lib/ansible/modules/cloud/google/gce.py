@@ -404,13 +404,13 @@ def create_instances(module, gce, instance_names):
             except SyntaxError as e:
                 module.fail_json(msg='bad metadata syntax')
 
-    if hasattr(libcloud, '__version__') and libcloud.__version__ < '0.15':
-        items = []
-        for k, v in md.items():
-            items.append({"key": k, "value": v})
-        metadata = {'items': items}
-    else:
-        metadata = md
+        if hasattr(libcloud, '__version__') and libcloud.__version__ < '0.15':
+            items = []
+            for k, v in md.items():
+                items.append({"key": k, "value": v})
+            metadata = {'items': items}
+        else:
+            metadata = md
 
     lc_image = LazyDiskImage(module, gce, image, lc_disks)
     ex_sa_perms = []
