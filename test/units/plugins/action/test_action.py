@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2015, Florian Apolloner <florian@apolloner.eu>
 #
@@ -209,7 +210,7 @@ class TestActionBase(unittest.TestCase):
 
         # test python module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))) as m:
-            mock_task.args = dict(a=1)
+            mock_task.args = dict(a=1, foo='fö〩')
             mock_connection.module_implementation_preferences = ('',)
             (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
             self.assertEqual(style, "new")
