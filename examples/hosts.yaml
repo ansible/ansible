@@ -1,0 +1,43 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Top level entries are assumed to be groups
+#   - Hosts must be specified in a group's hosts:
+#     and they must be a key (: terminated)
+#   - groups can have children, hosts and vars keys
+#   - Anything defined under a hosts is assumed to be a var
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+# Ex 1: Ungrouped hosts, put in 'ungrouped' group
+##ungrouped:
+##  hosts:
+##      green.example.com:
+##          ansible_ssh_host: 191.168.100.32
+##      blue.example.com:
+##      192.168.100.1:
+##      192.168.100.10:
+
+# Ex 2: A collection of hosts belonging to the 'webservers' group
+
+##webservers:
+##  hosts:
+##      alpha.example.org:
+##      beta.example.org:
+##      192.168.1.100:
+##      192.168.1.110:
+
+# Ex 3: You can create hosts using ranges and add children groups and vars to a group
+# The child group can define anything you would normall add to a group
+
+##testing:
+##  hosts:
+##      www[001:006].example.com:
+##  vars:
+##      testing1: value1
+##  children:
+##      webservers:
+##          hosts:
+##              beta.example.org:
