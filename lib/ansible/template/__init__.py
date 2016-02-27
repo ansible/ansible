@@ -23,8 +23,9 @@ import ast
 import contextlib
 import os
 import re
+from io import StringIO
 
-from ansible.compat.six import string_types, text_type, binary_type, StringIO
+from ansible.compat.six import string_types, text_type, binary_type
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError

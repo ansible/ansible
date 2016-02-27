@@ -17,7 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
+from io import StringIO
 import os
 import ConfigParser
 import re
@@ -28,8 +28,8 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
-        config = StringIO.StringIO()
-        config.write('[java_properties]\n' + open(filename).read())
+        config = StringIO()
+        config.write(u'[java_properties]\n' + open(filename).read())
         config.seek(0, os.SEEK_SET)
         self.cp.readfp(config)
         return self.get_value(key, 'java_properties', dflt, is_regexp)
