@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # (c) 2015, Florian Apolloner <florian@apolloner.eu>
 #
 # This file is part of Ansible
@@ -34,15 +35,17 @@ from ansible import constants as C
 from ansible.compat.six import text_type
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open
+
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import PluginLoader
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
+from ansible.utils.unicode import to_bytes
 
 from units.mock.loader import DictDataLoader
 
-python_module_replacers = """
+python_module_replacers = b"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
@@ -50,13 +53,94 @@ python_module_replacers = """
 #MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 #SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
+test = u'Toshio \u304f\u3089\u3068\u307f'
 from ansible.module_utils.basic import *
 """
 
-powershell_module_replacers = """
+powershell_module_replacers = b"""
 WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
 # POWERSHELL_COMMON
 """
+
+# Prior to 3.4.4, mock_open cannot handle binary read_data
+if version_info >= (3,) and version_info < (3, 4, 4):
+    file_spec = None
+
+    def _iterate_read_data(read_data):
+        # Helper for mock_open:
+        # Retrieve lines from read_data via a generator so that separate calls to
+        # readline, read, and readlines are properly interleaved
+        sep = b'\n' if isinstance(read_data, bytes) else '\n'
+        data_as_list = [l + sep for l in read_data.split(sep)]
+
+        if data_as_list[-1] == sep:
+            # If the last line ended in a newline, the list comprehension will have an
+            # extra entry that's just a newline.  Remove this.
+            data_as_list = data_as_list[:-1]
+        else:
+            # If there wasn't an extra newline by itself, then the file being
+            # emulated doesn't have a newline to end the last line  remove the
+            # newline that our naive format() added
+            data_as_list[-1] = data_as_list[-1][:-1]
+
+        for line in data_as_list:
+            yield line
+
+    def mock_open(mock=None, read_data=''):
+        """
+        A helper function to create a mock to replace the use of `open`. It works
+        for `open` called directly or used as a context manager.
+
+        The `mock` argument is the mock object to configure. If `None` (the
+        default) then a `MagicMock` will be created for you, with the API limited
+        to methods or attributes available on standard file handles.
+
+        `read_data` is a string for the `read` methoddline`, and `readlines` of the
+        file handle to return.  This is an empty string by default.
+        """
+        def _readlines_side_effect(*args, **kwargs):
+            if handle.readlines.return_value is not None:
+                return handle.readlines.return_value
+            return list(_data)
+
+        def _read_side_effect(*args, **kwargs):
+            if handle.read.return_value is not None:
+                return handle.read.return_value
+            return type(read_data)().join(_data)
+
+        def _readline_side_effect():
+            if handle.readline.return_value is not None:
+                while True:
+                    yield handle.readline.return_value
+            for line in _data:
+                yield line
+
+
+        global file_spec
+        if file_spec is None:
+            import _io
+            file_spec = list(set(dir(_io.TextIOWrapper)).union(set(dir(_io.BytesIO))))
+
+        if mock is None:
+            mock = MagicMock(name='open', spec=open)
+
+        handle = MagicMock(spec=file_spec)
+        handle.__enter__.return_value = handle
+
+        _data = _iterate_read_data(read_data)
+
+        handle.write.return_value = None
+        handle.read.return_value = None
+        handle.readline.return_value = None
+        handle.readlines.return_value = None
+
+        handle.read.side_effect = _read_side_effect
+        handle.readline.side_effect = _readline_side_effect()
+        handle.readlines.side_effect = _readlines_side_effect
+
+        mock.return_value = handle
+        return mock
+
 
 class DerivedActionBase(ActionBase):
     def run(self, tmp=None, task_vars=None):
@@ -124,18 +208,18 @@ class TestActionBase(unittest.TestCase):
         )
 
         # test python module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=text_type(python_module_replacers.strip()))) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))) as m:
             mock_task.args = dict(a=1)
             mock_connection.module_implementation_preferences = ('',)
             (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
             self.assertEqual(style, "new")
-            self.assertEqual(shebang, "#!/usr/bin/python")
+            self.assertEqual(shebang, b"#!/usr/bin/python")
 
             # test module not found
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
 
         # test powershell module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=text_type(powershell_module_replacers.strip()))) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))) as m:
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
