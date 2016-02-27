@@ -69,6 +69,8 @@ This length can be changed by passing an extra parameter::
 
 .. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
 
+Caution: Because this runs on the ansible host as the user running the playbook, if the file does not exist, and is not writeable by that user, the playbook will just loop.
+
 Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
 
     ---
