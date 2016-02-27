@@ -19,7 +19,11 @@
 import re
 import socket
 
-from StringIO import StringIO
+# py2 vs py3; replace with six via ziploader
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 try:
     import paramiko
