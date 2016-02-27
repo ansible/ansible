@@ -169,7 +169,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
     python_repred_args = to_bytes(repr(module_args_json))
 
     # these strings should be part of the 'basic' snippet which is required to be included
-    module_data = module_data.replace(REPLACER_VERSION, to_bytes(__version__, nonstring='repr'))
+    module_data = module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
     module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
     module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
     module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
