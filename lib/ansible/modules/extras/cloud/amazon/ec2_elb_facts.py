@@ -134,6 +134,8 @@ def get_elb_info(connection,elb):
         'name': elb.name,
         'zones': elb.availability_zones,
         'dns_name': elb.dns_name,
+        'canonical_hosted_zone_name': elb.canonical_hosted_zone_name,
+        'canonical_hosted_zone_name_id': elb.canonical_hosted_zone_name_id,
         'instances': [instance.id for instance in elb.instances],
         'listeners': get_elb_listeners(elb.listeners),
         'scheme': elb.scheme,
