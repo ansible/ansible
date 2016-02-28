@@ -71,7 +71,7 @@ For those from Pre 1.9 , sudo and su still work!
 
 For those using old playbooks will not need to be changed, even though they are deprecated, sudo and su directives, variables and options
 will continue to work. It is recommended to move to become as they may be retired at one point.
-ou cannot mix directives on the same object (become and sudo) though, Ansible will complain if you try to.
+Xou cannot mix directives on the same object (become and sudo) though, Ansible will complain if you try to.
 
 Become will default to using the old sudo/su configs and variables if they exist, but will override them if you specify any of the new ones.
 
