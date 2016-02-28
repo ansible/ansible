@@ -189,7 +189,7 @@ EXAMPLES = '''
 # access the app in later tasks
 
 - uri:
-    url: https://your.form.based.auth.examle.com/index.php
+    url: https://your.form.based.auth.example.com/index.php
     method: POST
     body: "name=your_username&password=your_password&enter=Sign%20in"
     status_code: 302
