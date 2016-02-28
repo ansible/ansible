@@ -364,18 +364,18 @@ class Host(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
-            login_user=dict(required=True),
-            login_password=dict(required=True, no_log=True),
-            host_name=dict(required=True),
-            host_groups=dict(required=False),
-            link_templates=dict(required=False),
+            server_url=dict(type='str', required=True, aliases=['url']),
+            login_user=dict(rtype='str', equired=True),
+            login_password=dict(type='str', required=True, no_log=True),
+            host_name=dict(type='str', required=True),
+            host_groups=dict(type='list', required=False),
+            link_templates=dict(type='list', required=False),
             status=dict(default="enabled", choices=['enabled', 'disabled']),
             state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10),
-            interfaces=dict(required=False),
-            force=dict(default=True, type='bool'),
-            proxy=dict(required=False)
+            interfaces=dict(type='list', required=False),
+            force=dict(type='bool', default=True),
+            proxy=dict(type='str', required=False)
         ),
         supports_check_mode=True
     )

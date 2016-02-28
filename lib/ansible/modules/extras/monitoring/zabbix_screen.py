@@ -315,9 +315,9 @@ class Screen(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
-            login_user=dict(required=True),
-            login_password=dict(required=True, no_log=True),
+            server_url=dict(type='str', required=True, aliases=['url']),
+            login_user=dict(type='str', required=True),
+            login_password=dict(type='str', required=True, no_log=True),
             timeout=dict(type='int', default=10),
             screens=dict(type='list', required=True)
         ),
