@@ -17,10 +17,10 @@
 #
 DOCUMENTATION = """
 ---
-module: ops_config
-verions_added: "2.1"
+module: ops_template
+version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Push configuration to OpenSwitch using declarative config
+short_description: Push configuration to OpenSwitch
 description:
   - The OpenSwitch platform provides a library for pushing JSON structured
     configuration files into the current running-config.  This module
@@ -36,8 +36,7 @@ options:
         file with config or a template that will be merged during
         runtime.  By default the task will search for the source
         file in role or playbook root folder in templates directory.
-    required: false
-    default: null
+    required: true
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -46,45 +45,16 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
-  include_defaults:
-    description:
-      - The module, by default, will collect the current device
-        running-config to use as a base for comparision to the commands
-        in I(src).  Setting this value to true will cause the module
-        to issue the command `show running-config all` to include all
-        device settings.
-    required: false
-    default: false
-    choices: BOOLEANS
+    choices: ['yes', 'no']
   backup:
     description:
       - When this argument is configured true, the module will backup
         the running-config from the node prior to making any changes.
-        The backup file will be written to backup_{{ hostname }} in
+        The backup file will be written to backups/ in
         the root of the playbook directory.
     required: false
     default: false
-    choices: BOOLEANS
-  ignore_missing:
-    description:
-      - This flag instructs the module to ignore lines that are missing
-        from the device configuration.  In some instances, the config
-        command doesn't show up in the running-config because it is the
-        default.  See examples for how this is used.
-    required: false
-    default: false
-    choices: BOOLEANS
-  replace:
-    description:
-      - This argument will cause the provided configuration to be replaced
-        on the destination node.   The use of the replace argument will
-        always cause the task to set changed to true and will implies
-        I(force) is true.  This argument is only valid with I(transport)
-        is eapi.
-    required: false
-    default: false
-    choice: BOOLEANS
+    choices: ['yes', 'no']
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -99,39 +69,40 @@ options:
 """
 
 EXAMPLES = """
-# Pushes the candidate configuraition to the device using a variable
+- name: set hostname with file lookup
+    ops_template:
+    src: ./hostname.json
+    backup: yes
+    remote_user: admin
+    become: yes
 
-vars:
-  config:
-    System
-      hostname: ops01
-
-tasks:
-  - ops_config:
-      src: "{{ config }}"
-
-# Reads the candidate configuration from a file
-
-tasks:
-  - ops_config:
-      src: "{{ lookup('file', 'ops_config.json') }}"
+- name: set hostname with var
+    ops_template:
+    src: "{{ config }}"
+    remote_user: admin
+    become: yes
 """
 
 RETURN = """
 updates:
   description: The list of configuration updates to be merged
   retured: always
+  type: dict
+  sample: {obj, obj}
+responses:
+  desription: returns the responses when configuring using cli
+  returned: when transport == cli
   type: list
-  sample: ["System.hostname: ops01 (switch)"]
+  sample: [...]
 """
+import copy
 
-def compare(this, other, ignore_missing=False):
+def compare(this, other):
     parents = [item.text for item in this.parents]
     for entry in other:
         if this == entry:
             return None
-    if not ignore_missing:
-        return this
+    return this
 
 def expand(obj, queue):
     block = [item.raw for item in obj.parents]
@@ -197,11 +168,10 @@ def main():
     """
 
     argument_spec = dict(
-        src=dict(),
+        src=dict(type='dict'),
         force=dict(default=False, type='bool'),
         backup=dict(default=False, type='bool'),
-        ignore_missing=dict(default=False, type='bool'),
-        config=dict(),
+        config=dict(type='dict'),
     )
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
@@ -211,33 +181,22 @@ def main():
                         supports_check_mode=True)
 
     src = module.params['src']
-    force = module.params['force']
-    backup = module.params['backup']
-    ignore_missing = module.params['ignore_missing']
-    config = module.params['config']
 
     result = dict(changed=False)
 
+    contents = get_config(module)
+    result['_backup'] = copy.deepcopy(module.config)
+
     if module.params['transport'] in ['ssh', 'rest']:
-        if isinstance(src, basestring):
-            src = module.from_json(src)
-
-        if not force:
-            config = module.config
-        else:
-            config = dict()
-
-        if backup:
-            result['_config'] = module.config
+        config = contents
 
         changeset = diff(src, config)
         candidate = merge(changeset, config)
 
-        updates = list()
+        updates = dict()
         for path, key, new_value, old_value in changeset:
-            update = '%s.%s' % ('.'.join(path), key)
-            update += ': %s (%s)' % (new_value, old_value)
-            updates.append(update)
+            path = '%s.%s' % ('.'.join(path), key)
+            updates[path] = new_value
         result['updates'] = updates
 
         if changeset:
@@ -246,12 +205,8 @@ def main():
             result['changed'] = True
 
     else:
+        config = module.parse_config(config)
         candidate = module.parse_config(module.params['src'])
-
-        contents = get_config(module)
-        result['_config'] = module.config
-
-        config = module.parse_config(contents)
 
         commands = collections.OrderedDict()
         toplevel = [c.text for c in config]
@@ -264,7 +219,7 @@ def main():
                 if line.text not in toplevel:
                     expand(line, commands)
             else:
-                item = compare(line, config, ignore_missing)
+                item = compare(line, config)
                 if item:
                     expand(item, commands)
 
@@ -274,9 +229,9 @@ def main():
             if not module.check_mode:
                 commands = [str(c).strip() for c in commands]
                 response = module.configure(commands)
+                result['responses'] = response
             result['changed'] = True
-
-        result['commands'] = commands
+        result['updates'] = commands
 
     module.exit_json(**result)
 
