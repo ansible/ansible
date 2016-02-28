@@ -288,9 +288,11 @@ class Host(object):
     # check the exist_interfaces whether it equals the interfaces or not
     def check_interface_properties(self, exist_interface_list, interfaces):
         interfaces_port_list = []
-        if len(interfaces) >= 1:
-            for interface in interfaces:
-                interfaces_port_list.append(int(interface['port']))
+
+        if interfaces is not None:
+            if len(interfaces) >= 1:
+                for interface in interfaces:
+                    interfaces_port_list.append(int(interface['port']))
 
         exist_interface_ports = []
         if len(exist_interface_list) >= 1:
