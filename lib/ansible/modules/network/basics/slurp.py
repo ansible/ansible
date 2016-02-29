@@ -55,23 +55,24 @@ import base64
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            src = dict(required=True, aliases=['path']),
+            src = dict(required=True, aliases=['path'], type='path'),
         ),
         supports_check_mode=True
     )
-    source = os.path.expanduser(module.params['src'])
+    source = module.params['src']
 
     if not os.path.exists(source):
         module.fail_json(msg="file not found: %s" % source)
     if not os.access(source, os.R_OK):
         module.fail_json(msg="file is not readable: %s" % source)
 
-    data = base64.b64encode(file(source).read())
+    data = base64.b64encode(open(source, 'rb').read())
 
     module.exit_json(content=data, source=source, encoding='base64')
 
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
 
