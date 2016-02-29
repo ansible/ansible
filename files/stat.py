@@ -305,7 +305,7 @@ import grp
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path = dict(required=True),
+            path = dict(required=True, type='path'),
             follow = dict(default='no', type='bool'),
             get_md5 = dict(default='yes', type='bool'),
             get_checksum = dict(default='yes', type='bool'),
@@ -316,7 +316,6 @@ def main():
     )
 
     path = module.params.get('path')
-    path = os.path.expanduser(path)
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
     get_checksum = module.params.get('get_checksum')
