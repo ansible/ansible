@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016, James Cammarata <jimi@sngx.net>
 #
 # This file is part of Ansible
 #
@@ -18,24 +18,4 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
-
-    if result is None:
-        return "{}"
-
-    indent = None
-    if format:
-        indent = 4
-
-    try:
-        return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False)
-    except UnicodeDecodeError:
-        return json.dumps(result, sort_keys=True, indent=indent)
 
