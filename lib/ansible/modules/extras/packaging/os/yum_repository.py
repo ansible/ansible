@@ -25,7 +25,7 @@ import os
 
 DOCUMENTATION = '''
 ---
-module: yumrepo
+module: yum_repository
 author: Jiri Tyr (@jtyr)
 version_added: '2.0'
 short_description: Add and remove YUM repositories
@@ -302,20 +302,20 @@ notes:
 
 EXAMPLES = '''
 - name: Add repository
-  yumrepo:
+  yum_repository:
     name: epel
     description: EPEL YUM repo
     baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
 
 - name: Add multiple repositories into the same file (1/2)
-  yumrepo:
+  yum_repository:
     name: epel
     description: EPEL YUM repo
     file: external_repos
     baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
     gpgcheck: no
 - name: Add multiple repositories into the same file (2/2)
-  yumrepo:
+  yum_repository:
     name: rpmforge
     description: RPMforge YUM repo
     file: external_repos
@@ -324,18 +324,18 @@ EXAMPLES = '''
     enabled: no
 
 - name: Remove repository
-  yumrepo:
+  yum_repository:
     name: epel
     state: absent
 
 - name: Remove repository from a specific repo file
-  yumrepo:
+  yum_repository:
     name: epel
     file: external_repos
     state: absent
 
 #
-# Allow to overwrite the yumrepo parameters by defining the parameters
+# Allow to overwrite the yum_repository parameters by defining the parameters
 # as a variable in the defaults or vars file:
 #
 # my_role_somerepo_params:
@@ -345,7 +345,7 @@ EXAMPLES = '''
 #   gpgkey: null
 #
 - name: Add Some repo
-  yumrepo:
+  yum_repository:
     name: somerepo
     description: Some YUM repo
     baseurl: http://server.com/path/to/the/repo
