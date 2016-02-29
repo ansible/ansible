@@ -334,7 +334,7 @@ def main():
         dest = dict(required=False, default=None, type='path'),
         url_username = dict(required=False, default=None, aliases=['user']),
         url_password = dict(required=False, default=None, aliases=['password']),
-        body = dict(required=False, default=None),
+        body = dict(required=False, default=None, type='raw'),
         body_format = dict(required=False, default='raw', choices=['raw', 'json']),
         method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
         return_content = dict(required=False, default='no', type='bool'),
