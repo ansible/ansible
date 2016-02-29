@@ -348,15 +348,16 @@ def main():
             reload = dict(default=True, type='bool'),
             sysctl_set = dict(default=False, type='bool'),
             ignoreerrors = dict(default=False, type='bool'),
-            sysctl_file = dict(default='/etc/sysctl.conf')
+            sysctl_file = dict(default='/etc/sysctl.conf', type='path')
         ),
         supports_check_mode=True
     )
 
-    result = SysctlModule(module)    
+    result = SysctlModule(module)
 
     module.exit_json(changed=result.changed)
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
