@@ -269,7 +269,12 @@ class TaskExecutor:
         if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
-                name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
+
+                name = None
+                for allowed in ['name', 'pkg', 'package']:
+                    name = self._task.args.pop(allowed, None)
+                    if name is not None:
+                        break
 
                 # This gets the information to check whether the name field
                 # contains a template that we can squash for
