@@ -1,4 +1,6 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# (c) 2016, James Cammarata <jimi@sngx.net>
 #
 # This file is part of Ansible
 #
@@ -15,27 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.compat.tests import unittest
+from ansible.parsing.utils.jsonify import jsonify
 
-def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
+class TestJsonify(unittest.TestCase):
+    def test_jsonify_simple(self):
+        self.assertEqual(jsonify(dict(a=1, b=2, c=3)), '{"a": 1, "b": 2, "c": 3}')
 
-    if result is None:
-        return "{}"
+    def test_jsonify_simple_format(self):
+        self.assertEqual(jsonify(dict(a=1, b=2, c=3), format=True), '{\n    "a": 1, \n    "b": 2, \n    "c": 3\n}')
 
-    indent = None
-    if format:
-        indent = 4
+    def test_jsonify_unicode(self):
+        self.assertEqual(jsonify(dict(toshio=u'くらとみ')), u'{"toshio": "くらとみ"}')
 
-    try:
-        return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False)
-    except UnicodeDecodeError:
-        return json.dumps(result, sort_keys=True, indent=indent)
-
+    def test_jsonify_empty(self):
+        self.assertEqual(jsonify(None), '{}')
