@@ -98,11 +98,11 @@ EXAMPLES = '''
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        config=dict(required=False),
+        config=dict(required=False, type='path'),
         server_url=dict(required=False),
         username=dict(required=False),
         password=dict(required=False),
-        supervisorctl_path=dict(required=False),
+        supervisorctl_path=dict(required=False, type='path'),
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'absent'])
     )
 
@@ -121,7 +121,6 @@ def main():
     supervisorctl_path = module.params.get('supervisorctl_path')
 
     if supervisorctl_path:
-        supervisorctl_path = os.path.expanduser(supervisorctl_path)
         if os.path.exists(supervisorctl_path) and is_executable(supervisorctl_path):
             supervisorctl_args = [supervisorctl_path]
         else:
@@ -131,7 +130,7 @@ def main():
         supervisorctl_args = [module.get_bin_path('supervisorctl', True)]
 
     if config:
-        supervisorctl_args.extend(['-c', os.path.expanduser(config)])
+        supervisorctl_args.extend(['-c', config])
     if server_url:
         supervisorctl_args.extend(['-s', server_url])
     if username:
