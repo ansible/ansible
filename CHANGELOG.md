@@ -46,6 +46,9 @@ Ansible Changes By Release
   module was rewritten for 2.0.
 * Fix bugs with non-english locales in yum, git, and apt modules
 * Fix a bug with the dnf module where state=latest could only upgrade, not install.
+* Fix to make implicit fact gathering task correctly inherit settings from play,
+  this might cause an error if settings environment on play depending on 'ansible_env'
+  which was previouslly ignored
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
