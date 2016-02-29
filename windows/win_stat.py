@@ -34,10 +34,18 @@ options:
     aliases: []
   get_md5:
     description:
-      - Whether to return the md5 sum of the file
+      - Whether to return the checksum sum of the file. As of Ansible 1.9 this
+        is no longer a MD5, but a SHA1 instead.
     required: false
     default: yes
     aliases: []
+  get_checksum:
+    description:
+      - Whether to return a checksum of the file
+        (only sha1 currently supported)
+    required: false
+    default: yes
+    version_added: "2.1"
 author: "Chris Church (@cchurch)"
 '''
 
