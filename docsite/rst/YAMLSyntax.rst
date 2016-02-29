@@ -77,7 +77,7 @@ Ansible doesn't really use these too much, but you can also specify a boolean va
     likes_emacs: TRUE
     uses_cvs: false
 
-Values can span multiple lines using `|` or `>`.  Spanning multiple lines using a `|` will include the newlines.  Using a `>` will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
+Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a ``|`` will include the newlines.  Using a ``>`` will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
 In either case the indentation will be ignored.
 Examples are::
 
