@@ -114,7 +114,7 @@ class HostGroup(object):
         try:
             group_add_list = []
             for group_name in group_names:
-                result = self._zapi.hostgroup.exists({'name': group_name})
+                result = self._zapi.hostgroup.get({'filter': {'name': group_name}})
                 if not result:
                     try:
                         if self._module.check_mode:
