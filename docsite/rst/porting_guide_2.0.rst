@@ -83,6 +83,8 @@ uses key=value escaping which has not changed.  The other option is to check for
 * Extras callbacks must be whitelisted in ansible.cfg. Copying is no longer necessary but whitelisting in ansible.cfg must be completed.
 * dnf module has been rewritten. Some minor changes in behavior may be observed.
 * win_updates has been rewritten and works as expected now.
+* from 2.0.1 onwards, the implicit setup task from gather_facts now correctly inherits everything from play, but this might cause issues for those setting
+  `environment` at the play level and depending on `ansible_env` existing. Previouslly this was ignored but now might issue an 'Undefined' error.
 
 Deprecated
 ----------
