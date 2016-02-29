@@ -498,6 +498,10 @@ class ModuleValidator(Validator):
 
         if self._python_module() and self.ast is None:
             self.errors.append('Python SyntaxError while parsing module')
+            try:
+                compile(self.text, self.path, 'exec')
+            except Exception as e:
+                self.traces.append(e)
             return
 
         if self._python_module():
