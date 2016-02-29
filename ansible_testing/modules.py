@@ -204,6 +204,18 @@ class ModuleValidator(Validator):
                                            'should use '
                                            'ansible.module_utils.urls '
                                            'instead')
+            elif isinstance(child, ast.TryExcept):
+                bodies = child.body
+                for handler in child.handlers:
+                    bodies.extend(handler.body)
+                for grandchild in bodies:
+                    if isinstance(grandchild, ast.Import):
+                        for name in grandchild.names:
+                            if name.name == 'requests':
+                                self.errors.append('requests import found, '
+                                                   'should use '
+                                                   'ansible.module_utils.urls '
+                                                   'instead')
 
     def _find_module_utils(self, main):
         linenos = []
