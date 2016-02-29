@@ -31,6 +31,7 @@ If ($path -eq $FALSE)
 }
 
 $get_md5 = Get-Attr $params "get_md5" $TRUE | ConvertTo-Bool;
+$get_checksum = Get-Attr $params "get_checksum" $TRUE | ConvertTo-Bool;
 
 $result = New-Object psobject @{
     stat = New-Object psobject
@@ -63,7 +64,7 @@ Else
     Set-Attr $result.stat "exists" $FALSE;
 }
 
-If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
+If (($get_checksum -or $get_md5) -and $result.stat.exists -and -not $result.stat.isdir)
 {
     $hash = Get-FileChecksum($path);
     Set-Attr $result.stat "md5" $hash;
