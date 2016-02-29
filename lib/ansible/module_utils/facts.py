@@ -808,9 +808,12 @@ class Facts(object):
             },
             'version_info': list(sys.version_info),
             'executable': sys.executable,
-            'type': sys.subversion[0],
             'has_sslcontext': HAS_SSLCONTEXT
         }
+        try:
+            self.facts['python']['type'] = sys.subversion[0]
+        except AttributeError:
+            self.facts['python']['type'] = None
 
 
 class Hardware(Facts):
