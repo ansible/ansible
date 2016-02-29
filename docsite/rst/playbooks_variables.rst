@@ -936,7 +936,7 @@ how all of these things can work together.
 Advanced Syntax
 ```````````````
 
-For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see `:doc:playbooks_advanced_syntax`
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
 
 .. seealso::
 
