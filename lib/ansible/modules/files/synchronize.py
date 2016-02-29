@@ -263,7 +263,7 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
-            dest_port = dict(default=22),
+            dest_port = dict(default=22, type='int'),
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
