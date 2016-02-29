@@ -27,7 +27,6 @@ Ansible Changes By Release
 * callbacks now have access to the options with which the CLI was called
 * debug is now controlable with verbosity
 
-## 2.0 "Over the Hills and Far Away"
 ## 2.0.1 "Over the Hills and Far Away"
 
 * Fixes a major compatibility break in the synchronize module shipped with
