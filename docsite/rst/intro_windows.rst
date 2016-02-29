@@ -28,6 +28,8 @@ On a Linux control machine::
 
    pip install "pywinrm>=0.1.1"
 
+Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
+
 Active Directory Support
 ++++++++++++++++++++++++
 
