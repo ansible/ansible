@@ -133,6 +133,8 @@ class Inventory(object):
             if not self.parser:
                 # should never happen, but JIC
                 raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
+        else:
+            display.warning("Host file not found: %s" % to_unicode(host_list))
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
