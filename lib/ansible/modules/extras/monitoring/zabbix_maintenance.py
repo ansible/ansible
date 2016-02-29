@@ -202,18 +202,6 @@ def delete_maintenance(zbx, maintenance_id):
     return 0, None, None
 
 
-def check_maintenance(zbx, name):
-    try:
-        result = zbx.maintenance.exists(
-            {
-                "name": name
-            }
-        )
-    except BaseException as e:
-        return 1, None, str(e)
-    return 0, result, None
-
-
 def get_group_ids(zbx, host_groups):
     group_ids = []
     for group in host_groups:
@@ -325,11 +313,11 @@ def main():
         else:
             host_ids = []
 
-        (rc, exists, error) = check_maintenance(zbx, name)
+        (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
             module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
 
-        if not exists:
+        if not maintenance:
             if not host_names and not host_groups:
                 module.fail_json(msg="At least one host_name or host_group must be defined for each created maintenance.")
 
@@ -344,24 +332,19 @@ def main():
 
     if state == "absent":
 
-        (rc, exists, error) = check_maintenance(zbx, name)
+        (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
             module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
 
-        if exists:
-            (rc, maintenance, error) = get_maintenance_id(zbx, name)
-            if rc != 0:
-                module.fail_json(msg="Failed to get maintenance id: %s" % error)
-
-            if maintenance:
-                if module.check_mode:
+        if maintenance:
+            if module.check_mode:
+                changed = True
+            else:
+                (rc, _, error) = delete_maintenance(zbx, maintenance)
+                if rc == 0:
                     changed = True
                 else:
-                    (rc, _, error) = delete_maintenance(zbx, maintenance)
-                    if rc == 0:
-                        changed = True
-                    else:
-                        module.fail_json(msg="Failed to remove maintenance: %s" % error)
+                    module.fail_json(msg="Failed to remove maintenance: %s" % error)
 
     module.exit_json(changed=changed)
 
