@@ -142,9 +142,9 @@ def _run_xattr(module,cmd,check_rc=True):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, aliases=['path']),
-            key = dict(required=False, default=None),
-            value = dict(required=False, default=None),
+            name = dict(required=True, aliases=['path'], type='path'),
+            key = dict(required=False, default=None, type='str'),
+            value = dict(required=False, default=None, type='str'),
             state = dict(required=False, default='read', choices=[ 'read', 'present', 'all', 'keys', 'absent' ], type='str'),
             follow = dict(required=False, type='bool', default=True),
         ),
@@ -203,4 +203,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
