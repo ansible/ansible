@@ -106,11 +106,6 @@ class HostMacro(object):
         self._module = module
         self._zapi = zbx
 
-    # exist host
-    def is_host_exist(self, host_name):
-        result = self._zapi.host.exists({'host': host_name})
-        return result
-
     # get host id by host name
     def get_host_id(self, host_name):
         try:
