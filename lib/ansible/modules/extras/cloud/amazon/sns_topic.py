@@ -134,9 +134,9 @@ import re
 try:
     import boto
     import boto.sns
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def canonicalize_endpoint(protocol, endpoint):
@@ -185,6 +185,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     name = module.params.get('name')
     state = module.params.get('state')
