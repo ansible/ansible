@@ -274,10 +274,12 @@ EXAMPLES = '''
 
 '''
 
+MINIMUM_BOTO_VERSION = '2.28.0'
 WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
 
 import time
+import distutils.version
 
 try:
     import boto
@@ -390,6 +392,9 @@ def main():
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
+
+    if distutils.version.StrictVersion(boto.__version__) < distutils.version.StrictVersion(MINIMUM_BOTO_VERSION):
+        module.fail_json(msg='Found boto in version %s, but >= %s is required' % (boto.__version__, MINIMUM_BOTO_VERSION))
 
     command_in                      = module.params.get('command')
     zone_in                         = module.params.get('zone').lower()
