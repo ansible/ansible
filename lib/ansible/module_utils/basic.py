@@ -191,7 +191,7 @@ except ImportError:
         pass
 
 try:
-    from ast import literal_eval as _literal_eval
+    from ast import literal_eval
 except ImportError:
     # a replacement for literal_eval that works with python 2.4. from: 
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
@@ -199,7 +199,7 @@ except ImportError:
     # ast.py
     from compiler import ast, parse
 
-    def _literal_eval(node_or_string):
+    def literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
         expression.  The string or node provided may only consist of the  following
@@ -229,6 +229,7 @@ except ImportError:
             raise ValueError('malformed string')
         return _convert(node_or_string)
 
+_literal_eval = literal_eval
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
@@ -1229,9 +1230,9 @@ class AnsibleModule(object):
         try:
             result = None
             if not locals:
-                result = _literal_eval(str)
+                result = literal_eval(str)
             else:
-                result = _literal_eval(str, None, locals)
+                result = literal_eval(str, None, locals)
             if include_exceptions:
                 return (result, None)
             else:
