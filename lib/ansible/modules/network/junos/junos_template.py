@@ -45,7 +45,7 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: [ "true", "false" ]
   backup:
     description:
       - When this argument is configured true, the module will backup
@@ -54,7 +54,7 @@ options:
         the root of the playbook directory.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: [ "true", "false" ]
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -178,4 +178,3 @@ from ansible.module_utils.netcfg import *
 from ansible.module_utils.junos import *
 if __name__ == '__main__':
     main()
-
