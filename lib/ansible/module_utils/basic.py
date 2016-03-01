@@ -114,6 +114,12 @@ else:
         return d.iteritems()
 
 try:
+    reduce
+except NameError:
+    # Python 3
+    from six.moves import reduce
+
+try:
     NUMBERTYPES = (int, long, float)
 except NameError:
     # Python 3
