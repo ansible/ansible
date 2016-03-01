@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_timezone
-version_added: "2.0"
+version_added: "2.1"
 short_description: Sets Windows machine timezone
 description:
     - Sets machine time to the specified timezone, the module will check if the provided timezone is supported on the machine.
@@ -45,3 +45,5 @@ EXAMPLES = '''
   win_timezone:
     timezone: "Central Standard Time"
 '''
+
+RETURN = '''# '''
