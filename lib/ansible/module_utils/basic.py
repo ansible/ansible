@@ -117,7 +117,7 @@ try:
     reduce
 except NameError:
     # Python 3
-    from six.moves import reduce
+    from functools import reduce
 
 try:
     NUMBERTYPES = (int, long, float)
