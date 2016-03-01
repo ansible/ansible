@@ -138,7 +138,7 @@ options:
     description:
       - If set, manages a crontab's environment variable. New variables are added on top of crontab.
         "name" and "value" paramenters are the name and the value of environment variable.
-    version_added: "2"
+    version_added: "2.1"
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -146,14 +146,14 @@ options:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted after the declaration of specified environment variable.
-    version_added: "2"
+    version_added: "2.1"
     required: false
     default: null
   insertbefore:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted before the declaration of specified environment variable.
-    version_added: "2"
+    version_added: "2.1"
     required: false
     default: null
 requirements:
