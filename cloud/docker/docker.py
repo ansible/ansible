@@ -1765,6 +1765,8 @@ def restarted(manager, containers, count, name):
         manager.stop_containers([container])
         manager.remove_containers([container])
 
+    containers.refresh()
+
     manager.restart_containers(containers.running)
     started(manager, containers, count, name)
 
