@@ -59,7 +59,9 @@ options:
         description:
             - Whether or not to use HTTPS
         required: false
-        choices: BOOLEANS 
+        choices:
+            - true
+            - false
         default: 'false'
 
     site_apps:
