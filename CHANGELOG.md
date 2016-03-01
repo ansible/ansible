@@ -12,7 +12,7 @@ Ansible Changes By Release
 * aws: ec2_vpc_dhcp_options.py
 * aws: ec2_vpc_net_facts
 * cloudstack: cs_volume
-* yumrepo
+* yum_repository
 
 ####New Filters:
 * extract
