@@ -18,6 +18,8 @@ from ansible.module_utils import basic as module_utils_basic
 from ansible.plugins import module_loader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
+from schema import doc_schema, option_schema
+
 from utils import CaptureStd, find_globals
 
 import yaml
@@ -345,6 +347,26 @@ class ModuleValidator(Validator):
 
         return docs
 
+    def _validate_docs_schema(self, doc):
+        errors = []
+        try:
+            doc_schema(doc)
+        except Exception as e:
+            errors.extend(e.errors)
+
+        for key, option in doc.get('options', {}).iteritems():
+            try:
+                option_schema(option)
+            except Exception as e:
+                for error in e.errors:
+                    error.path[:0] = ['options', key]
+                errors.extend(e.errors)
+
+        for error in errors:
+            path = [str(p) for p in error.path]
+            self.errors.append('DOCUMENTATION.%s: %s' %
+                               ('.'.join(path), error.error_message))
+
     def _validate_docs(self):
         doc_info = self._get_docs()
         try:
@@ -378,6 +400,7 @@ class ModuleValidator(Validator):
                     self.errors.append('Unknown DOCUMENTATION error, see '
                                        'TRACE')
 
+            self._validate_docs_schema(doc)
             self._check_version_added(doc)
             self._check_for_new_args(doc)
 
@@ -450,7 +473,6 @@ class ModuleValidator(Validator):
                 self.errors.append('Unknown existing DOCUMENTATION error, see '
                                    'TRACE')
                 return
-
 
         try:
             mod_version_added = StrictVersion(
