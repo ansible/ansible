@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_regmerge
-version_added: "2.0"
+version_added: "2.1"
 short_description: Merges the contents of a registry file into the windows registry
 description:
     - Wraps the reg.exe command to import the contents of a registry file.
@@ -68,3 +68,4 @@ EXAMPLES = '''
     compare_to: HKLM:\SOFTWARE\myCompany
 '''
 
+RETURN = '''# '''
