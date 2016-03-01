@@ -21,6 +21,10 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
+New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR -ErrorAction SilentlyContinue
+New-PSDrive -PSProvider registry -Root HKEY_USERS -Name HKU -ErrorAction SilentlyContinue
+New-PSDrive -PSProvider registry -Root HKEY_CURRENT_CONFIG -Name HCCC -ErrorAction SilentlyContinue
+
 $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
