@@ -27,10 +27,11 @@ import pipes
 import os
 
 from sys import version_info
-if version_info[0] == 2:
-    import __builtin__ as builtins
-else:
+
+try:
     import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 from ansible import __version__ as ansible_version
 from ansible import constants as C
