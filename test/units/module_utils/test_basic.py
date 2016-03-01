@@ -100,6 +100,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         mod = builtins.__import__('ansible.module_utils.basic')
 
     @patch.object(builtins, '__import__')
+    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic_import_literal_eval(self, mock_import):
         def _mock_import(name, *args, **kwargs):
             try:
