@@ -4,7 +4,7 @@ option_schema = Schema(
     {
         Required('description'): Any(basestring, [basestring]),
         'required': bool,
-        'choices': Any(list, basestring),
+        'choices': list,
         'aliases': list,
         'version_added': Any(basestring, float)
     },
