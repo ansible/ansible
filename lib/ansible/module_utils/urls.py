@@ -258,6 +258,7 @@ if not HAS_MATCH_HOSTNAME:
 
 
 import httplib
+import netrc
 import os
 import re
 import sys
@@ -691,6 +692,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if parsed[0] != 'ftp':
         username = url_username
 
+        if headers is None:
+            headers = {}
+
         if username:
             password = url_password
             netloc = parsed[1]
@@ -723,10 +727,19 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             handlers.append(authhandler)
 
         elif username and force_basic_auth:
-            if headers is None:
-                headers = {}
+            headers["Authorization"] = basic_auth_header(username, password)
 
-            headers["Authorization"] = "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+        else:
+            try:
+                rc = netrc.netrc(os.environ.get('NETRC'))
+                login = rc.authenticators(parsed[1])
+            except IOError:
+                login = None
+
+            if login:
+                username, _, password = login
+                if username and password:
+                    headers["Authorization"] = basic_auth_header(username, password)
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
@@ -790,6 +803,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 #
 # Module-related functions
 #
+
+def basic_auth_header(username, password):
+    return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
 
 def url_argument_spec():
     '''
