@@ -31,7 +31,7 @@ description:
 options:
   timezone:
     description:
-      - Timezone to set to.  Example: Central Standard Time
+      - Timezone to set to.  Example Central Standard Time
     required: true
     default: null
     aliases: []

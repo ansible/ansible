@@ -31,7 +31,7 @@ description:
     - Suitable for use with registry files created using M(win_template).
     - Windows registry files have a specific format and must be constructed correctly with carriage return and line feed line endings otherwise they will not be merged.  
     - Exported registry files often start with a Byte Order Mark which must be removed if the file is to templated using M(win_template).
-    - Registry file format is described here: https://support.microsoft.com/en-us/kb/310516
+    - Registry file format is described at U(https://support.microsoft.com/en-us/kb/310516)
     - See also M(win_template), M(win_regedit)
 options:
   path:
