@@ -29,8 +29,7 @@ options:
   domain_name:
     description:
       - The domain name to set in the DHCP option sets
-    required:
-      - false
+    required: false
     default: ""
   dns_servers:
     description:
