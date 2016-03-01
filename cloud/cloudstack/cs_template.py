@@ -592,7 +592,7 @@ def main():
         is_routing = dict(type='bool', default=False),
         checksum = dict(default=None),
         template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
-        hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
+        hypervisor = dict(choices=CS_HYPERVISORS, default=None),
         requires_hvm = dict(type='bool', default=False),
         password_enabled = dict(type='bool', default=False),
         template_tag = dict(default=None),
