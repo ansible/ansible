@@ -321,7 +321,30 @@ The no_log attribute can also apply to an entire play::
       no_log: True
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
-be applied to single tasks only, once a playbook is completed.   
+be applied to single tasks only, once a playbook is completed.
+
+
+.. _when_to_use_brackets:
+.. _dynamic_variables:
+.. _interpolate_variables:
+
+When should I use {{ }}? Also, howto interpolate variables or dyanmic variable names
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+A steadfast rule is 'always use {{ }} except when `when:`'.
+Conditionals are always run through Jinja2 as to resolve the expression,
+so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
+
+In most other cases you should always use the brackets, even if previouslly you could use variables without specifying (like `with_` clauses),
+as this made it hard to distinguish between an undefined variable and a string.
+
+Another rule is 'moustaches don't stack'. We often see this::
+
+     {{ somvar_{{other_var}} }}
+
+The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
+
+    {{ hostvars[inventory_hostname]['somevar_'  + other_var] }}
 
 
 .. _i_dont_see_my_question:
