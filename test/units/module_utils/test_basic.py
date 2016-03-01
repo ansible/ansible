@@ -1002,3 +1002,42 @@ class TestModuleUtilsBasic(unittest.TestCase):
         am.selinux_enabled.return_value = True
         am.atomic_move('/path/to/src', '/path/to/dest')
 
+    def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
+
+        from ansible.module_utils import basic
+
+        basic.MODULE_COMPLEX_ARGS = '{}'
+        am = basic.AnsibleModule(
+            argument_spec = dict(),
+        )
+
+        mock_stat = MagicMock()
+
+        # FIXME: trying many more combinations here would be good
+        # directory, give full perms to all, then one group at a time
+        mock_stat.st_mode = 0o040000
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a+rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx,g+rwx,o+rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o+rwx'), 0o0007)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g+rwx'), 0o0070)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx'), 0o0700)
+
+        # same as above, but in reverse so removing permissions
+        mock_stat.st_mode = 0o040777
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a-rwx'), 0o0000)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx,g-rwx,o-rwx'), 0o0000)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o-rwx'), 0o0770)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g-rwx'), 0o0707)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx'), 0o0077)
+
+        # now using absolute assignment
+        mock_stat.st_mode = 0o040000
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a=rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx,g=rwx,o=rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o=rwx'), 0o0007)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g=rwx'), 0o0070)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
+
+        # invalid modes
+        mock_stat.st_mode = 0o0400000
+        self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')
