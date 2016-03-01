@@ -88,6 +88,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
                 raise ImportError
+            elif name == 'simplejson':
+                return MagicMock()
             return realimport(name, *args, **kwargs)
 
         self.clear_modules(['json', 'ansible.module_utils.basic'])
@@ -109,8 +111,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             return realimport(name, *args, **kwargs)
 
         mock_import.side_effect = _mock_import
-        del sys.modules['ast']
-        del sys.modules['ansible.module_utils.basic']
+        self.clear_modules(['ast', 'ansible.module_utils.basic'])
         mod = builtins.__import__('ansible.module_utils.basic')
         self.assertEqual(mod.module_utils.basic.literal_eval("'1'"), "1")
         self.assertEqual(mod.module_utils.basic.literal_eval("1"), 1)
