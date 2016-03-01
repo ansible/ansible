@@ -4,7 +4,7 @@
 
 The purpose of docker_container is to manage the lifecycle of a container. The module will provide a mechanism for
 moving the container between absent, present, stopped and started states. It will focus purely on managing container
-state. The intention of the narrow focus is to make understanding and using the module clear and to keep maintenance
+state. The intention of the narrow focus is to make understanding and using the module clear and keep maintenance
 and testing as easy as possible.
 
 Docker_container will manage a container using docker-py to communicate with either a local or remote API. It will
@@ -19,7 +19,7 @@ leading the way. If this project is successful, it will naturally deprecate the 
 Docker_container will accept the parameters listed below. An attempt has been made to represent all the options available to
 docker's create, kill, pause, run, rm, start, stop and update commands.
 
-Parameters related to connecting to the API are not listed here.
+Parameters for connecting to the API are not listed here. They are included in the common utility module mentioned above.
 
 ```
 blkio_weight:
@@ -49,7 +49,7 @@ cgroup_parent:
 
 command:
   description:
-    - Command executed in the container when it starts.
+    - Command or list of commands to execute in the container when it starts.
   default: null
 
 cpu_period:
@@ -111,12 +111,6 @@ device_write_iops:
 dns_servers:
   description:
     - List of custom DNS servers.
-  default: null
-
-dns_opts:
-  description:
-    - List of custom DNS options. Each option is written as an options line
-      into the container's /etc/resolv.conf.
   default: null
 
 dns_search_domains:
@@ -183,9 +177,11 @@ ipv6_address:
     - Container IPv6 address.
   default: null
 
-ipc_namespace:
+ipc_mode:
   description:
-    - Container IPC namespace.
+    - Set the IPC mode for the container. Can be one of 
+      'container:<name|id>' to reuse another container's IPC namespace
+      or 'host' to use the host's IPC namespace within the container.
   default: null
 
 keep_volumes:
@@ -227,10 +223,10 @@ log_driver:
     - splunk
   defult: json-file
 
-log_opt:
+log_options:
   description:
-    - Additional options to pass to the logging driver selected above. See Docker `log-driver
-      <https://docs.docker.com/reference/logging/overview/>` documentation for more information.
+    - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/ 
+      for details.
   required: false
   default: null
 
@@ -268,13 +264,14 @@ name:
     - When identifying an existing container name may be a name or a long or short container ID.
   required: true
 
-net:
+network_mode:
   description:
     - Connect the container to a network.
   choices:
     - bridge
     - container:<name|id>
     - host
+    - none
   default: null
 
 net_alias:
@@ -287,7 +284,7 @@ paused:
     - Use with the started state to pause running processes inside the container.
   default: false
 
-pid:
+pid_mode:
   description:
     - Set the PID namespace mode for the container. Currenly only supports 'host'.
   default: null
@@ -325,16 +322,14 @@ restart_policy:
   description:
     - Container restart policy.
   choices:
-    - no
     - on-failure
     - always
-    - unless-stopped
-  default: no
+  default: on-failure 
 
-restart_policy_retry:
+restart_retries:
    description:
-     - When C(restart_policy) is on-failure sets the max number of retries.
-   default: 0
+     - Use with restart policy to control maximum number of restart attempts.
+   default: 0 
 
 shm_size:
   description:
@@ -419,13 +414,13 @@ volumes:
     - List of volumes to mount within the container.
     - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
     - You can specify a read mode for the mount with either C(ro) or C(rw).
-      Starting at version 2.1, SELinux hosts can additionally use C(z) or C(Z)
-      mount options to use a shared or private label for the volume.
+    - SELinux hosts can additionally use C(z) or C(Z) to use a shared or 
+      private label for the volume.
 default: null
 
 volumes_from:
   description:
-    - List of container names to mount volumes from.
+    - List of container names or Ids to get volumes from. 
   default: null
 ```
 
@@ -512,14 +507,10 @@ The JSON object returned by the module will include a *results* object providing
 ```
 {
     changed: True,
+    failed: False,
+    rc: 0
     results: {
         < the results of `docker inspect` >
     }
 }
 ```
-
-## Contributors
-
-[chouseknecht](http://twitter.com/chouseknecht)
-
-*Last Updated:* 2016-02-24
