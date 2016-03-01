@@ -439,7 +439,7 @@ class TaskExecutor:
                 try:
                     if 'skipped' in result and result['skipped'] or 'failed' in result and result['failed']:
                         return result
-                    result = json.loads(result.get('stdout'))
+                    result = json.loads(self._handler._filter_leading_non_json_lines(result.get('stdout')))
                 except (TypeError, ValueError) as e:
                     return dict(failed=True, msg=u"The async task did not return valid JSON: %s" % to_unicode(e))
 
