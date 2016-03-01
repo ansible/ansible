@@ -312,13 +312,13 @@ def api_fetch_role_related(api_server, related, role_id, ignore_certs=False):
         url = 'https://%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
         data = json.load(open_url(url, validate_certs=validate_certs))
         results = data['results']
-        done = (data.get('next', None) == None)
+        done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next'])
+            url = 'https://%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
-            done = (data.get('next', None) == None)
+            done = (data.get('next_link', None) == None)
         return results
     except:
         return None
@@ -340,14 +340,14 @@ def api_get_list(api_server, what, ignore_certs=False):
         else:
             results = data
         done = True
-        if "next" in data:
-            done = (data.get('next', None) == None)
+        if "next_link" in data:
+            done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next'])
+            url = 'https://%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
-            done = (data.get('next', None) == None)
+            done = (data.get('next_link', None) == None)
         return results
     except:
         print "- failed to download the %s list" % what
