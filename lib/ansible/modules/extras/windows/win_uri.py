@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Corwin Brown <corwin.brown@maxpoint.com>
+# (c) 2015, Corwin Brown <corwin@corwinbrown.com>
 #
 # This file is part of Ansible
 #
@@ -27,7 +27,7 @@ module: win_uri
 version_added: "2.1"
 short_description: Interacts with webservices.
 description:
-  - Interacts with HTTP and HTTPS services.
+  - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE HTTP authentication mechanisms.
 options:
   url:
     description:
@@ -55,7 +55,7 @@ options:
       - The body of the HTTP request/response to the web service.
   headers:
     description:
-      - Key Value pairs for headers. Example "Host: www.somesite.com"
+      - 'Key Value pairs for headers. Example "Host: www.somesite.com"'
   use_basic_parsing:
     description:
       - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
@@ -81,7 +81,7 @@ EXAMPLES = """
     url: http://my.internal.server.com
     method: GET
     headers:
-      host: "www.somesite.com
+      host: "www.somesite.com"
 
 # Do a HEAD request on an endpoint
 ---
@@ -120,27 +120,27 @@ use_basic_parsing:
   returned: always
   type: bool
   sample: True
-StatusCode:
+status_code:
   description: The HTTP Status Code of the response.
   returned: success
   type: int
   sample: 200
-StatusDescription:
+status_description:
   description: A summery of the status.
   returned: success
   type: string
   stample: "OK"
-RawContent:
+raw_content:
   description: The raw content of the HTTP response.
   returned: success
   type: string
   sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443"; ma=2592000; v="30,29,28,27,26,25",quic=":443"; ma=2...'
-Headers:
+headers:
   description: The Headers of the response.
   returned: success
   type: dict
   sample: {"Content-Type": "application/json"}
-RawContentLength:
+raw_content_length:
   description: The byte size of the response.
   returned: success
   type: int
