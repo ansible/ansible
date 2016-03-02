@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # encoding: utf-8
 
-# (c) 2015, Jiri Tyr <jiri.tyr@gmail.com>
+# (c) 2015-2016, Jiri Tyr <jiri.tyr@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -33,6 +33,13 @@ description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
 
 options:
+  async:
+    required: false
+    choices: ['yes', 'no']
+    default: 'yes'
+    description:
+      - If set to C(yes) Yum will download packages and metadata from this
+        repo in parallel, if possible.
   bandwidth:
     required: false
     default: 0
@@ -45,22 +52,40 @@ options:
         throttling).
   baseurl:
     required: false
-    default: None
+    default: null
     description:
       - URL to the directory where the yum repository's 'repodata' directory
         lives.
-      - This or the I(mirrorlist) parameter is required.
+      - This or the I(mirrorlist) parameter is required if I(state) is set to
+        C(present).
   cost:
     required: false
     default: 1000
     description:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
+  deltarpm_metadata_percentage:
+    required: false
+    default: 100
+    description:
+      - When the relative size of deltarpm metadata vs pkgs is larger than
+        this, deltarpm metadata is not downloaded from the repo. Note that you
+        can give values over C(100), so C(200) means that the metadata is
+        required to be half the size of the packages. Use C(0) to turn off
+        this check, and always download metadata.
+  deltarpm_percentage:
+    required: false
+    default: 75
+    description:
+      - When the relative size of delta vs pkg is larger than this, delta is
+        not used. Use C(0) to turn off delta rpm processing. Local repositories
+        (with file:// I(baseurl)) have delta rpms turned off by default.
   description:
     required: false
-    default: None
+    default: null
     description:
       - A human readable string describing the repository.
+      - This parameter is only required if I(state) is set to C(present).
   enabled:
     required: false
     choices: ['yes', 'no']
@@ -76,7 +101,7 @@ options:
         repository.
   exclude:
     required: false
-    default: None
+    default: null
     description:
       - List of packages to exclude from updates or installs. This should be a
         space separated list. Shell globs using wildcards (eg. C(*) and C(?))
@@ -90,16 +115,16 @@ options:
       - C(roundrobin) randomly selects a URL out of the list of URLs to start
         with and proceeds through each of them as it encounters a failure
         contacting the host.
-      - C(priority) starts from the first baseurl listed and reads through them
-        sequentially.
+      - C(priority) starts from the first I(baseurl) listed and reads through
+        them sequentially.
   file:
     required: false
-    default: None
+    default: null
     description:
       - File to use to save the repo in. Defaults to the value of I(name).
   gpgcakey:
     required: false
-    default: None
+    default: null
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
   gpgcheck:
@@ -111,7 +136,7 @@ options:
         packages.
   gpgkey:
     required: false
-    default: None
+    default: null
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
   http_caching:
@@ -125,15 +150,31 @@ options:
       - C(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
       - C(none) means that no HTTP downloads should be cached.
+  include:
+    required: false
+    default: null
+    description:
+      - Include external configuration file. Both, local path and URL is
+        supported. Configuration file will be inserted at the position of the
+        I(include=) line. Included files may contain further include lines.
+        Yum will abort with an error if an inclusion loop is detected.
   includepkgs:
     required: false
-    default: None
+    default: null
     description:
       - List of packages you want to only use from a repository. This should be
         a space separated list. Shell globs using wildcards (eg. C(*) and C(?))
         are allowed. Substitution variables (e.g. C($releasever)) are honored
         here.
       - The list can also be a regular YAML array.
+  ip_resolve:
+    required: false
+    choices: [4, 6, IPv4, IPv6, whatever]
+    default: whatever
+    description:
+      - Determines how yum resolves host names.
+      - C(4) or C(IPv4) - resolve to IPv4 addresses only.
+      - C(6) or C(IPv6) - resolve to IPv6 addresses only.
   keepalive:
     required: false
     choices: ['yes', 'no']
@@ -142,25 +183,54 @@ options:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
+  keepcache:
+    required: false
+    choices: ['0', '1']
+    default: '1'
+    description:
+      - Either C(1) or C(0). Determines whether or not yum keeps the cache of
+        headers and packages after successful installation.
   metadata_expire:
     required: false
     default: 21600
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
+  metadata_expire_filter:
+    required: false
+    choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
+    default: 'read-only:present'
+    description:
+      - Filter the I(metadata_expire) time, allowing a trade of speed for
+        accuracy if a command doesn't require it. Each yum command can specify
+        that it requires a certain level of timeliness quality from the remote
+        repos. from "I'm about to install/upgrade, so this better be current"
+        to "Anything that's available is good enough".
+      - C(never) - Nothing is filtered, always obey I(metadata_expire).
+      - C(read-only:past) - Commands that only care about past information are
+        filtered from metadata expiring. Eg. I(yum history) info (if history
+        needs to lookup anything about a previous transaction, then by
+        definition the remote package was available in the past).
+      - C(read-only:present) - Commands that are balanced between past and
+        future. Eg. I(yum list yum).
+      - C(read-only:future) - Commands that are likely to result in running
+        other commands which will require the latest metadata. Eg.
+        I(yum check-update).
+      - Note that this option does not override "yum clean expire-cache".
   metalink:
     required: false
-    default: None
+    default: null
     description:
       - Specifies a URL to a metalink file for the repomd.xml, a list of
         mirrors for the entire repository are generated by converting the
-        mirrors for the repomd.xml file to a baseurl.
+        mirrors for the repomd.xml file to a I(baseurl).
   mirrorlist:
     required: false
-    default: None
+    default: null
     description:
       - Specifies a URL to a file containing a list of baseurls.
-      - This or the I(baseurl) parameter is required.
+      - This or the I(baseurl) parameter is required if I(state) is set to
+        C(present).
   mirrorlist_expire:
     required: false
     default: 21600
@@ -172,17 +242,26 @@ options:
     required: true
     description:
       - Unique repository ID.
+      - This parameter is only required if I(state) is set to C(present) or
+        C(absent).
   params:
     required: false
-    default: None
+    default: null
     description:
-      - Option used to allow the user to overwrite any of the other options. To
-        remove an option, set the value of the option to C(null).
+      - Option used to allow the user to overwrite any of the other options.
+        To remove an option, set the value of the option to C(null).
   password:
     required: false
-    default: None
+    default: null
     description:
       - Password to use with the username for basic authentication.
+  priority:
+    required: false
+    default: 99
+    description:
+      - Enforce ordered protection of repositories. The value is an integer
+        from 1 to 99.
+      - This option only works if the YUM Priorities plugin is installed.
   protect:
     required: false
     choices: ['yes', 'no']
@@ -191,17 +270,17 @@ options:
       - Protect packages from updates from other repositories.
   proxy:
     required: false
-    default: None
+    default: null
     description:
       - URL to the proxy server that yum should use.
   proxy_password:
     required: false
-    default: None
+    default: null
     description:
       - Username to use for proxy.
   proxy_username:
     required: false
-    default: None
+    default: null
     description:
       - Password for this proxy.
   repo_gpgcheck:
@@ -222,6 +301,13 @@ options:
     description:
       - Set the number of times any attempt to retrieve a file should retry
         before returning an error. Setting this to C(0) makes yum try forever.
+  s3_enabled:
+    required: false
+    choices: ['yes', 'no']
+    default: 'no'
+    description:
+      - Enables support for S3 repositories.
+      - This option only works if the YUM S3 plugin is installed.
   skip_if_unavailable:
     required: false
     choices: ['yes', 'no']
@@ -230,12 +316,6 @@ options:
       - If set to C(yes) yum will continue running if this repository cannot be
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
-  sslcacert:
-    required: false
-    default: None
-    description:
-      - Path to the directory containing the databases of the certificate
-        authorities yum should use to verify SSL certificates.
   ssl_check_cert_permissions:
     required: false
     choices: ['yes', 'no']
@@ -244,18 +324,24 @@ options:
       - Whether yum should check the permissions on the paths for the
         certificates on the repository (both remote and local).
       - If we can't read any of the files then yum will force
-        I(skip_if_unavailable) to be true. This is most useful for non-root
+        I(skip_if_unavailable) to be C(yes). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
+  sslcacert:
+    required: false
+    default: null
+    description:
+      - Path to the directory containing the databases of the certificate
+        authorities yum should use to verify SSL certificates.
   sslclientcert:
     required: false
-    default: None
+    default: null
     description:
       - Path to the SSL client certificate yum should use to connect to
         repos/remote sites.
   sslclientkey:
     required: false
-    default: None
+    default: null
     description:
       - Path to the SSL client key yum should use to connect to repos/remote
         sites.
@@ -270,10 +356,10 @@ options:
     choices: [absent, present]
     default: present
     description:
-      - A source string state.
+      - State of the repo file.
   throttle:
     required: false
-    default: None
+    default: null
     description:
       - Enable bandwidth throttling for downloads.
       - This option can be expressed as a absolute data rate in bytes/sec. An
@@ -283,9 +369,16 @@ options:
     default: 30
     description:
       - Number of seconds to wait for a connection before timing out.
+  ui_repoid_vars:
+    required: false
+    default: releasever basearch
+    description:
+      - When a repository id is displayed, append these yum variables to the
+        string if they are used in the I(baseurl)/etc. Variables are appended
+        in the order listed (and found).
   username:
     required: false
-    default: None
+    default: null
     description:
       - Username to use for basic authentication to a repo or really any url.
 
@@ -377,14 +470,51 @@ class YumRepo(object):
 
     # List of parameters which will be allowed in the repo file output
     allowed_params = [
-        'bandwidth', 'baseurl', 'cost', 'enabled', 'enablegroups', 'exclude',
-        'failovermethod', 'gpgcakey', 'gpgcheck', 'gpgkey', 'http_caching',
-        'includepkgs', 'keepalive', 'metadata_expire', 'metalink',
-        'mirrorlist', 'mirrorlist_expire', 'name', 'password', 'protect',
-        'proxy', 'proxy_password', 'proxy_username', 'repo_gpgcheck',
-        'retries', 'skip_if_unavailable', 'sslcacert',
-        'ssl_check_cert_permissions', 'sslclientcert', 'sslclientkey',
-        'sslverify', 'throttle', 'timeout', 'username']
+        'async',
+        'bandwidth',
+        'baseurl',
+        'cost',
+        'deltarpm_metadata_percentage',
+        'deltarpm_percentage',
+        'enabled',
+        'enablegroups',
+        'exclude',
+        'failovermethod',
+        'gpgcakey',
+        'gpgcheck',
+        'gpgkey',
+        'http_caching',
+        'ignore_repo_files',
+        'include',
+        'includepkgs',
+        'ip_resolve',
+        'keepalive',
+        'keepcache',
+        'metadata_expire',
+        'metadata_expire_filter',
+        'metalink',
+        'mirrorlist',
+        'mirrorlist_expire',
+        'name',
+        'password',
+        'priority',
+        'protect',
+        'proxy',
+        'proxy_password',
+        'proxy_username',
+        'repo_gpgcheck',
+        'retries',
+        's3_enabled',
+        'skip_if_unavailable',
+        'sslcacert',
+        'ssl_check_cert_permissions',
+        'sslclientcert',
+        'sslclientkey',
+        'sslverify',
+        'throttle',
+        'timeout',
+        'ui_repoid_vars',
+        'username']
 
     # List of parameters which can be a list
     list_params = ['exclude', 'includepkgs']
@@ -401,15 +531,11 @@ class YumRepo(object):
         repos_dir = self.params['reposdir']
         if not os.path.isdir(repos_dir):
             self.module.fail_json(
-                msg='Repo directory "%s" does not exist.' % repos_dir)
-
-        # Get the given or the default repo file name
-        repo_file = self.params['repoid']
-        if self.params['file'] is not None:
-            repo_file = self.params['file']
+                msg="Repo directory '%s' does not exist." % repos_dir)
 
         # Set dest; also used to set dest parameter for the FS attributes
-        self.params['dest'] = os.path.join(repos_dir, "%s.repo" % repo_file)
+        self.params['dest'] = os.path.join(
+            repos_dir, "%s.repo" % self.params['file'])
 
         # Read the repo file if it exists
         if os.path.isfile(self.params['dest']):
@@ -449,28 +575,29 @@ class YumRepo(object):
             # Write data into the file
             try:
                 fd = open(self.params['dest'], 'wb')
-            except IOError:
+            except IOError, e:
                 self.module.fail_json(
-                    msg='Cannot open repo file %s.' %
-                    self.params['dest'])
+                    msg="Cannot open repo file %s." % self.params['dest'],
+                    details=str(e))
+
+            self.repofile.write(fd)
 
             try:
-                try:
-                    self.repofile.write(fd)
-                except Error:
-                    self.module.fail_json(
-                        msg='Cannot write repo file %s.' %
-                        self.params['dest'])
-            finally:
                 fd.close()
+            except IOError, e:
+                self.module.fail_json(
+                    msg="Cannot write repo file %s." % self.params['dest'],
+                    details=str(e))
         else:
             # Remove the file if there are not repos
             try:
                 os.remove(self.params['dest'])
-            except OSError:
+            except OSError, e:
                 self.module.fail_json(
-                    msg='Cannot remove empty repo file %s.' %
-                    self.params['dest'])
+                    msg=(
+                        "Cannot remove empty repo file %s." %
+                        self.params['dest']),
+                    details=str(e))
 
     def remove(self):
         # Remove section if exists
@@ -496,9 +623,12 @@ def main():
     # Module settings
     module = AnsibleModule(
         argument_spec=dict(
+            async=dict(type='bool'),
             bandwidth=dict(),
             baseurl=dict(),
             cost=dict(),
+            deltarpm_metadata_percentage=dict(),
+            deltarpm_percentage=dict(),
             description=dict(),
             enabled=dict(type='bool'),
             enablegroups=dict(type='bool'),
@@ -509,15 +639,26 @@ def main():
             gpgcheck=dict(type='bool'),
             gpgkey=dict(),
             http_caching=dict(choices=['all', 'packages', 'none']),
+            ignore_repo_files=dict(default=[]),
+            include=dict(),
             includepkgs=dict(),
+            ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
             keepalive=dict(type='bool'),
+            keepcache=dict(choices=['0', '1']),
             metadata_expire=dict(),
+            metadata_expire_filter=dict(
+                choices=[
+                    'never',
+                    'read-only:past',
+                    'read-only:present',
+                    'read-only:future']),
             metalink=dict(),
             mirrorlist=dict(),
             mirrorlist_expire=dict(),
             name=dict(required=True),
             params=dict(),
             password=dict(no_log=True),
+            priority=dict(),
             protect=dict(type='bool'),
             proxy=dict(),
             proxy_password=dict(no_log=True),
@@ -525,6 +666,7 @@ def main():
             repo_gpgcheck=dict(type='bool'),
             reposdir=dict(default='/etc/yum.repos.d'),
             retries=dict(),
+            s3_enabled=dict(type='bool'),
             skip_if_unavailable=dict(type='bool'),
             sslcacert=dict(),
             ssl_check_cert_permissions=dict(type='bool'),
@@ -534,6 +676,7 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             throttle=dict(),
             timeout=dict(),
+            ui_repoid_vars=dict(),
             username=dict(),
         ),
         add_file_common_args=True,
@@ -549,10 +692,25 @@ def main():
     name = module.params['name']
     state = module.params['state']
 
+    # Check if required parameters are present
+    if state == 'present':
+        if (
+                module.params['baseurl'] is None and
+                module.params['mirrorlist'] is None):
+            module.fail_json(
+                msg="Parameter 'baseurl' or 'mirrorlist' is required.")
+        if module.params['description'] is None:
+            module.fail_json(
+                msg="Parameter 'description' is required.")
+
     # Rename "name" and "description" to ensure correct key sorting
     module.params['repoid'] = module.params['name']
     module.params['name'] = module.params['description']
     del module.params['description']
+
+    # Define repo file name if it doesn't exist
+    if module.params['file'] is None:
+        module.params['file'] = module.params['repoid']
 
     # Instantiate the YumRepo object
     yumrepo = YumRepo(module)
