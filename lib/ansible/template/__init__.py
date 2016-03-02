@@ -507,7 +507,8 @@ class Templar:
                     )
                 else:
                     debug("failing because of a type error, template data is: %s" % data)
-                    raise AnsibleError("an unexpected type error occurred. Error was %s" % te)
+                    import traceback
+                    raise AnsibleError("an unexpected type error occurred. Error was %s, tracback: %s" % (te, traceback.format_exc()))
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
