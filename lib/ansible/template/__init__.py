@@ -24,10 +24,7 @@ import contextlib
 import os
 import re
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 from ansible.compat.six import string_types, text_type, binary_type
 from jinja2 import Environment
@@ -293,10 +290,17 @@ class Templar:
         # Don't template unsafe variables, instead drop them back down to their constituent type.
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
-                return self._clean_data(text_type(variable))
+                return self._clean_data(variable)
             elif isinstance(variable, binary_type):
-                return self._clean_data(bytes(variable))
+                # If we're unicode sandwiching, then we shouldn't get here but
+                # seems like we are.  Will have to decide whether to turn them
+                # into text_type instead
+                raise AnsibleError("variable is str: %s" % variable)
+            #elif isinstance(variable, binary_type):
+            #    return self._clean_data(bytes(variable))
             else:
+                # Do we need to convert these into text_type as well?
+                # return self._clean_data(to_unicode(variable._obj, nonstring='passthru'))
                 return self._clean_data(variable._obj)
 
         try:
