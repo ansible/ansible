@@ -37,7 +37,7 @@ All members of a list are lines beginning at the same indentation level starting
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
 
     # An employee record
-    -  martin:
+    martin:
         name: Martin D'vloper
         job: Developer
         skill: Elite
@@ -45,9 +45,8 @@ A dictionary is represented in a simple ``key: value`` form (the colon must be f
 Dictionaries and lists can also be represented in an abbreviated form if you really want to::
 
     ---
-    employees:
-      -  martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
+    martin: {name: Martin D'vloper, job: Developer, skill: Elite}
+    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango]
 
 .. _truthiness:
 
