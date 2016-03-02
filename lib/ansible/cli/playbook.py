@@ -72,6 +72,9 @@ class PlaybookCLI(CLI):
             help="one-step-at-a-time: confirm each task before running")
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
+        parser.add_option('--error-if-no-plays-matched',
+            dest='error_if_no_plays_matched', action='store_true',
+            help="exit with a non-zero status code if no plays were matched by any host")
 
         self.options, self.args = parser.parse_args(self.args[1:])
 

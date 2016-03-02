@@ -80,7 +80,9 @@ class PlaybookExecutor:
                     self._tqm.load_callbacks()
                     self._tqm.send_callback('v2_playbook_on_start', pb)
 
-                i = 1
+                num_plays_total = 0
+                num_plays_matched = 0
+
                 plays = pb.get_plays()
                 display.vv(u'%d plays in %s' % (len(plays), to_unicode(playbook_path)))
 
@@ -130,6 +132,9 @@ class PlaybookExecutor:
 
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
+                            # keep track of the number of plays we attempt to run
+                            num_plays_matched += len(batch)
+
                             if len(batch) == 0:
                                 self._tqm.send_callback('v2_playbook_on_play_start', new_play)
                                 self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
@@ -160,7 +165,7 @@ class PlaybookExecutor:
                         if result not in (0, 3):
                             break
 
-                    i = i + 1 # per play
+                    num_plays_total += 1 # per play
 
                 if entry:
                     entrylist.append(entry) # per playbook
@@ -197,6 +202,10 @@ class PlaybookExecutor:
         if self._options.syntax:
             display.display("No issues encountered")
             return result
+
+        if self._options.error_if_no_plays_matched and num_plays_matched == 0:
+            display.error("No plays were matched by any host.")
+            result = 1
 
         return result
 
