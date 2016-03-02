@@ -389,7 +389,7 @@ class Ec2Inventory(object):
         self.ec2_instance_filters = defaultdict(list)
         if config.has_option('ec2', 'instance_filters'):
 
-            filters = [tag for tag in config.get('ec2', 'instance_filters').split(',') if tag]
+            filters = [f for f in config.get('ec2', 'instance_filters').split(',') if f]
 
             for instance_filter in filters:
                 instance_filter = instance_filter.strip()
