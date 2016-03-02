@@ -39,6 +39,11 @@ except ImportError:
 
 __all__ = ["CallbackBase"]
 
+try:
+    from __main__ import cli
+except ImportError:
+    # using API w/o cli 
+    cli = False
 
 class CallbackBase:
 
@@ -53,6 +58,11 @@ class CallbackBase:
             self._display = display
         else:
             self._display = global_display
+
+        if cli:
+            self._options = cli.options
+        else:
+            self._options = None
 
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
@@ -134,7 +144,7 @@ class CallbackBase:
                                                       tofile=after_header,
                                                       fromfiledate='',
                                                       tofiledate='',
-                                                      n=10)
+                                                      n=C.DIFF_CONTEXT)
                         has_diff = False
                         for line in differ:
                             has_diff = True
@@ -162,16 +172,8 @@ class CallbackBase:
         return item
 
     def _process_items(self, result):
-        for res in result._result['results']:
-            newres = self._copy_result_exclude(result, ['_result'])
-            res['item'] = self._get_item(res)
-            newres._result = res
-            if 'failed' in res and res['failed']:
-                self.v2_playbook_item_on_failed(newres)
-            elif 'skipped' in res and res['skipped']:
-                self.v2_playbook_item_on_skipped(newres)
-            else:
-                self.v2_playbook_item_on_ok(newres)
+        # just remove them as now they get handled by individual callbacks
+        del result._result['results']
 
     def _clean_results(self, result, task_name):
         if 'changed' in result and task_name in ['debug']:
@@ -336,15 +338,6 @@ class CallbackBase:
         if 'diff' in result._result:
             self.on_file_diff(host, result._result['diff'])
 
-    def v2_playbook_on_item_ok(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_failed(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_skipped(self, result):
-        pass # no v1
-
     def v2_playbook_on_include(self, included_file):
         pass #no v1 correspondance
 
@@ -356,3 +349,7 @@ class CallbackBase:
 
     def v2_playbook_item_on_skipped(self, result):
         pass
+
+    def v2_playbook_retry(self, result):
+        pass
+

@@ -83,6 +83,8 @@ uses key=value escaping which has not changed.  The other option is to check for
 * Extras callbacks must be whitelisted in ansible.cfg. Copying is no longer necessary but whitelisting in ansible.cfg must be completed.
 * dnf module has been rewritten. Some minor changes in behavior may be observed.
 * win_updates has been rewritten and works as expected now.
+* from 2.0.1 onwards, the implicit setup task from gather_facts now correctly inherits everything from play, but this might cause issues for those setting
+  `environment` at the play level and depending on `ansible_env` existing. Previouslly this was ignored but now might issue an 'Undefined' error.
 
 Deprecated
 ----------
@@ -163,6 +165,7 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
     - task: dostuf
       becom: yes
+
   The task always ran without using privilege escalation (for that you need `become`) but was also silently ignored so the play 'ran' even though it should not, now this is a parsing error.
 
 
@@ -247,6 +250,113 @@ populates the callback with them.  Here's a short snippet that shows you how::
             self._display.display('%s: %s: %s' % (self.playbook.name,
             self.play.name, self.task))
 
+
+Connection plugins
+------------------
+
+* connection plugins
+
+
+Hybrid plugins
+==============
+In specific cases you may want a plugin that supports both ansible-1.9.x *and* ansible-2.0. Much like porting plugins from v1 to v2, you need to understand how plugins work in each version and support both requirements. It may mean playing tricks on Ansible.
+
+Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your plugin to provide similar pieces (subclasses, methods) for ansible-1.9.x as ansible-2.0 expects. This way your code will look a lot cleaner.
+
+You may find the following tips useful:
+
+* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``)
+
+* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (e.g. importing specific methods).
+
+* Use the existence of these methods as a qualifier to what version of Ansible you are running. So rather than using version checks, you can do capability checks instead. (See examples below)
+
+* Document for each if-then-else case for which specific version each block is needed. This will help others to understand how they have to adapt their plugins, but it will also help you to remove the older ansible-1.9.x support when it is deprecated.
+
+* When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
+
+* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
+
+
+Lookup plugins
+--------------
+As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand::
+
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
+
+    import os
+    import glob
+
+    try:
+        # ansible-2.0
+        from ansible.plugins.lookup import LookupBase
+    except ImportError:
+        # ansible-1.9.x
+
+        class LookupBase(object):
+            def __init__(self, basedir=None, runner=None, **kwargs):
+                self.runner = runner
+                self.basedir = self.runner.basedir
+
+            def get_basedir(self, variables):
+                return self.basedir
+
+    try:
+        # ansible-1.9.x
+        from ansible.utils import (listify_lookup_plugin_terms, path_dwim, warning)
+    except ImportError:
+        # ansible-2.0
+        from __main__ import display
+        warning = display.warning
+
+    class LookupModule(LookupBase):
+
+        # For ansible-1.9.x, we added inject=None as valid argument
+        def run(self, terms, inject=None, variables=None, **kwargs):
+
+            # ansible-2.0, but we made this work for ansible-1.9.x too !
+            basedir = self.get_basedir(variables)
+
+            # ansible-1.9.x
+            if 'listify_lookup_plugin_terms' in globals():
+                terms = listify_lookup_plugin_terms(terms, basedir, inject)
+
+            ret = []
+            for term in terms:
+                term_file = os.path.basename(term)
+
+                # For ansible-1.9.x, we imported path_dwim() from ansible.utils
+                if 'path_dwim' in globals():
+                    # ansible-1.9.x
+                    dwimmed_path = path_dwim(basedir, os.path.dirname(term))
+                else:
+                    # ansible-2.0
+                    dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
+
+                globbed = glob.glob(os.path.join(dwimmed_path, term_file))
+                ret.extend(g for g in globbed if os.path.isfile(g))
+
+            return ret
+
+.. Note:: In the above example we did not use the ``warning()`` method as we had no direct use for it in the final version. However we left this code in so people can use this part during development/porting/use.
+
+
+
+Connection plugins
+------------------
+
+* connection plugins
+
+Action plugins
+--------------
+
+* action plugins
+
+Callback plugins
+----------------
+
+* callback plugins
 
 Connection plugins
 ------------------

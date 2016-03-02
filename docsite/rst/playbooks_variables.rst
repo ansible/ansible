@@ -586,7 +586,7 @@ in Ansible.  Effectively registered variables are just like facts.
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-```````````````````````````````
+````````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
@@ -758,19 +758,20 @@ If multiple variables of the same name are defined in different places, they get
 
 .. include:: ansible_ssh_changes_note.rst
 
-In 1.x the precedence is (last listed wins):
+In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 
- * then "role defaults", which are the most "defaulty" and lose in priority to everything.
- * then come the variables defined in inventory
- * then come the facts discovered about a system
- * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
- * then come connection variables (``ansible_user``, etc)
+ * "role defaults", which lose in priority to everything and are the most easily overridden 
+ * variables defined in inventory
+ * facts discovered about a system
+ * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
+ * connection variables (``ansible_user``, etc.)
  * extra vars (``-e`` in the command line) always win
 
-.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+.. note:: 
 
+    In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-In 2.x we have made the order of precedence more specific (last listed wins):
+In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
   * inventory vars [2]_
@@ -787,7 +788,7 @@ In 2.x we have made the order of precedence more specific (last listed wins):
   * role and include vars
   * block vars (only for tasks in block)
   * task vars (only for the task)
-  * extra vars
+  * extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
@@ -815,7 +816,7 @@ but they behave like other variables, so if you really want to override the remo
 .. _variable_scopes:
 
 Variable Scopes
-```````````````
+````````````````
 
 Ansible has 3 main scopes:
 
@@ -931,6 +932,11 @@ how all of these things can work together.
 
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+
+Advanced Syntax
+```````````````
+
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
 
 .. seealso::
 

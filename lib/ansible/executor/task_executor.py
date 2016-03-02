@@ -30,12 +30,13 @@ from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
+from ansible.executor.task_result import TaskResult
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
@@ -60,7 +61,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
         self._host              = host
         self._task              = task
         self._job_vars          = job_vars
@@ -69,6 +70,7 @@ class TaskExecutor:
         self._loader            = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection        = None
+        self._rslt_q            = rslt_q
 
     def run(self):
         '''
@@ -185,8 +187,8 @@ class TaskExecutor:
                         loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
                         loop_terms = []
-                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.")
-                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=self._job_vars)
+                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.: %s" % to_bytes(e))
+                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=self._job_vars, wantlist=True)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
@@ -242,7 +244,9 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res['item'] = item
-            #TODO: send item results to callback here, instead of all at the end
+            res['_ansible_item_result'] = True
+
+            self._rslt_q.put(TaskResult(self._host, self._task, res), block=False)
             results.append(res)
 
         return results
@@ -265,34 +269,40 @@ class TaskExecutor:
         if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
-                name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
+
+                name = None
+                for allowed in ['name', 'pkg', 'package']:
+                    name = self._task.args.pop(allowed, None)
+                    if name is not None:
+                        break
 
                 # This gets the information to check whether the name field
                 # contains a template that we can squash for
                 template_no_item = template_with_item = None
-                if templar._contains_vars(name):
-                    variables['item'] = '\0$'
-                    template_no_item = templar.template(name, variables, cache=False)
-                    variables['item'] = '\0@'
-                    template_with_item = templar.template(name, variables, cache=False)
-                    del variables['item']
+                if name:
+                    if templar._contains_vars(name):
+                        variables['item'] = '\0$'
+                        template_no_item = templar.template(name, variables, cache=False)
+                        variables['item'] = '\0@'
+                        template_with_item = templar.template(name, variables, cache=False)
+                        del variables['item']
 
-                # Check if the user is doing some operation that doesn't take
-                # name/pkg or the name/pkg field doesn't have any variables
-                # and thus the items can't be squashed
-                if name and (template_no_item != template_with_item):
-                    for item in items:
-                        variables['item'] = item
-                        if self._task.evaluate_conditional(templar, variables):
-                            new_item = templar.template(name, cache=False)
-                            final_items.append(new_item)
-                    self._task.args['name'] = final_items
-                    # Wrap this in a list so that the calling function loop
-                    # executes exactly once
-                    return [final_items]
-                else:
-                    # Restore the name parameter
-                    self._task.args['name'] = name
+                    # Check if the user is doing some operation that doesn't take
+                    # name/pkg or the name/pkg field doesn't have any variables
+                    # and thus the items can't be squashed
+                    if template_no_item != template_with_item:
+                        for item in items:
+                            variables['item'] = item
+                            if self._task.evaluate_conditional(templar, variables):
+                                new_item = templar.template(name, cache=False)
+                                final_items.append(new_item)
+                        self._task.args['name'] = final_items
+                        # Wrap this in a list so that the calling function loop
+                        # executes exactly once
+                        return [final_items]
+                    else:
+                        # Restore the name parameter
+                        self._task.args['name'] = name
             #elif:
                 # Right now we only optimize single entries.  In the future we
                 # could optimize more types:
@@ -409,16 +419,15 @@ class TaskExecutor:
         display.debug("starting attempt loop")
         result = None
         for attempt in range(retries):
-            if attempt > 0:
-                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color=C.COLOR_DEBUG)
-                result['attempts'] = attempt + 1
-
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_unicode(e))
             display.debug("handler run complete")
+
+            # preserve no log
+            result["_ansible_no_log"] = self._play_context.no_log
 
             # update the local copy of vars with the registered value, if specified,
             # or any facts which may have been generated by the module execution
@@ -437,6 +446,9 @@ class TaskExecutor:
 
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result, templar=templar)
+
+                # ensure no log is preserved
+                result["_ansible_no_log"] = self._play_context.no_log
 
             # helper methods for use below in evaluating changed/failed_when
             def _evaluate_changed_when_result(result):
@@ -473,12 +485,19 @@ class TaskExecutor:
                 cond.when = [ self._task.until ]
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
-
-                # no conditional check, or it failed, so sleep for the specified time
-                time.sleep(delay)
-
-            elif 'failed' not in result:
-                break
+                else:
+                    # no conditional check, or it failed, so sleep for the specified time
+                    result['attempts'] = attempt + 1
+                    result['retries'] = retries
+                    result['_ansible_retry'] = True
+                    display.debug('Retrying task, attempt %d of %d' % (attempt + 1, retries))
+                    self._rslt_q.put(TaskResult(self._host, self._task, result), block=False)
+                    time.sleep(delay)
+        else:
+            if retries > 1:
+                # we ran out of attempts, so mark the result as failed
+                result['attempts'] = retries
+                result['failed'] = True
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
@@ -504,9 +523,6 @@ class TaskExecutor:
             result["_ansible_delegated_vars"] = dict()
             for k in ('ansible_host', ):
                 result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
-
-        # preserve no_log setting
-        result["_ansible_no_log"] = self._play_context.no_log
 
         # and return
         display.debug("attempt loop complete, returning result")

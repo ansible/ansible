@@ -34,7 +34,12 @@ import datetime
 import getpass
 import pwd
 import ConfigParser
-import StringIO
+
+# py2 vs py3; replace with six via ziploader
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from string import maketrans
 
@@ -43,6 +48,15 @@ try:
     HAVE_SELINUX=True
 except ImportError:
     HAVE_SELINUX=False
+
+try:
+    # Check if we have SSLContext support
+    from ssl import create_default_context, SSLContext
+    del create_default_context
+    del SSLContext
+    HAS_SSLCONTEXT = True
+except ImportError:
+    HAS_SSLCONTEXT = False
 
 try:
     import json
@@ -166,6 +180,7 @@ class Facts(object):
             self.get_local_facts()
             self.get_env_facts()
             self.get_dns_facts()
+            self.get_python_facts()
 
     def populate(self):
         return self.facts
@@ -274,7 +289,7 @@ class Facts(object):
             Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
-            FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
+            FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
         )
 
         # TODO: Rewrite this to use the function references in a dict pattern
@@ -511,8 +526,9 @@ class Facts(object):
             machine_id = machine_id.split('\n')[0]
             self.facts["machine_id"] = machine_id
         self.facts['os_family'] = self.facts['distribution']
-        if self.facts['distribution'] in OS_FAMILY:
-            self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
+        distro = self.facts['distribution'].replace(' ', '_')
+        if distro in OS_FAMILY:
+            self.facts['os_family'] = OS_FAMILY[distro]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
@@ -769,6 +785,36 @@ class Facts(object):
                         continue
                     val = len(option_tokens) == 2 and option_tokens[1] or True
                     self.facts['dns']['options'][option_tokens[0]] = val
+
+    def _get_mount_size_facts(self, mountpoint):
+        size_total = None
+        size_available = None
+        try:
+            statvfs_result = os.statvfs(mountpoint)
+            size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
+            size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+        except OSError:
+            pass
+        return size_total, size_available
+
+    def get_python_facts(self):
+        self.facts['python'] = {
+            'version': {
+                'major': sys.version_info[0],
+                'minor': sys.version_info[1],
+                'micro': sys.version_info[2],
+                'releaselevel': sys.version_info[3],
+                'serial': sys.version_info[4]
+            },
+            'version_info': list(sys.version_info),
+            'executable': sys.executable,
+            'has_sslcontext': HAS_SSLCONTEXT
+        }
+        try:
+            self.facts['python']['type'] = sys.subversion[0]
+        except AttributeError:
+            self.facts['python']['type'] = None
+
 
 class Hardware(Facts):
     """
@@ -1037,28 +1083,25 @@ class LinuxHardware(Hardware):
 
     @timeout(10)
     def get_mount_facts(self):
+        uuids = dict()
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    size_total = None
-                    size_available = None
-                    try:
-                        statvfs_result = os.statvfs(fields[1])
-                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
-                    except OSError:
-                        continue
+                    size_total, size_available = self._get_mount_size_facts(fields[1])
+                    if fields[0] in uuids:
+                        uuid = uuids[fields[0]]
+                    else:
+                        uuid = 'NA'
+                        lsblkPath = module.get_bin_path("lsblk")
+                        if lsblkPath:
+                            rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
 
-                    uuid = 'NA'
-                    lsblkPath = module.get_bin_path("lsblk")
-                    if lsblkPath:
-                        rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
-
-                        if rc == 0:
-                            uuid = out.strip()
+                            if rc == 0:
+                                uuid = out.strip()
+                                uuids[fields[0]] = uuid
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
@@ -1294,7 +1337,9 @@ class SunOSHardware(Hardware):
         if fstab:
             for line in fstab.split('\n'):
                 fields = line.rstrip('\n').split('\t')
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
+
 
 class OpenBSDHardware(Hardware):
     """
@@ -1344,7 +1389,9 @@ class OpenBSDHardware(Hardware):
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
                 if fields[1] == 'none' or fields[3] == 'xx':
                     continue
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+
 
     def get_memory_facts(self):
         # Get free memory. vmstat output looks like:
@@ -1467,7 +1514,8 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -1596,7 +1644,8 @@ class NetBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
 
 class AIX(Hardware):
     """

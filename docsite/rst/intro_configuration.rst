@@ -228,6 +228,34 @@ Allows disabling of deprecating warnings in ansible-playbook output::
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
+.. _display_args_to_stdout:
+
+display_args_to_stdout
+======================
+
+.. versionadded:: 2.1.0
+
+By default, ansible-playbook will print a header for each task that is run to
+stdout.  These headers will contain the ``name:`` field from the task if you
+specified one.  If you didn't then ansible-playbook uses the task's action to
+help you tell which task is presently running.  Sometimes you run many of the
+same action and so you want more information about the task to differentiate
+it from others of the same action.  If you set this variable to ``True`` in
+the config then ansible-playbook will also include the task's arguments in the
+header.
+
+This setting defaults to ``False`` because there is a chance that you have
+sensitive values in your parameters and do not want those to be printed to
+stdout::
+
+    display_args_to_stdout=False
+
+If you set this to ``True`` you should be sure that you have secured your
+environment's stdout (no one can shoulder surf your screen and you aren't
+saving stdout to an insecure file) or made sure that all of your playbooks
+explicitly added the ``no_log: True`` parameter to tasks which have sensistive
+values   See :ref:`keep_secret_data` for more information.
+
 .. _display_skipped_hosts:
 
 display_skipped_hosts
@@ -739,6 +767,17 @@ This setting may be inefficient for large numbers of hosts, and in those situati
 instead.  Setting it to False will improve performance and is recommended when host key checking is disabled::
 
     record_host_keys=True
+
+.. _paramiko_proxy_command:
+
+proxy_command
+=============
+
+.. versionadded:: 2.1
+
+Use an OpenSSH like ProxyCommand for proxying all Paramiko SSH connections through a bastion or jump host. Requires a minimum of Paramiko version 1.9.0. On Enterprise Linux 6 this is provided by ``python-paramiko1.10`` in the EPEL repository::
+
+    proxy_command = ssh -W "%h:%p" bastion
 
 .. _openssh_settings:
 

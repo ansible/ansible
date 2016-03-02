@@ -21,12 +21,18 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import errno
+import os
 import sys
 
-from six.moves import builtins
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
+from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+
+realimport = builtins.__import__
 
 class TestModuleUtilsBasic(unittest.TestCase):
  
@@ -36,17 +42,108 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_module_utils_basic_imports(self):
-        realimport = builtins.__import__
+    def clear_modules(self, mods):
+        for mod in mods:
+            if mod in sys.modules:
+                del sys.modules[mod]
 
+    @patch.object(builtins, '__import__')
+    def test_module_utils_basic_import_syslog(self, mock_import):
+        def _mock_import(name, *args, **kwargs):
+            if name == 'syslog':
+                raise ImportError
+            return realimport(name, *args, **kwargs)
+
+        self.clear_modules(['syslog', 'ansible.module_utils.basic'])
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertTrue(mod.module_utils.basic.HAS_SYSLOG)
+
+        self.clear_modules(['syslog', 'ansible.module_utils.basic'])
+        mock_import.side_effect = _mock_import
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertFalse(mod.module_utils.basic.HAS_SYSLOG)
+
+    @patch.object(builtins, '__import__')
+    def test_module_utils_basic_import_selinux(self, mock_import):
+        def _mock_import(name, *args, **kwargs):
+            if name == 'selinux':
+                raise ImportError
+            return realimport(name, *args, **kwargs)
+
+        try:
+            self.clear_modules(['selinux', 'ansible.module_utils.basic'])
+            mod = builtins.__import__('ansible.module_utils.basic')
+            self.assertTrue(mod.module_utils.basic.HAVE_SELINUX)
+        except ImportError:
+            # no selinux on test system, so skip
+            pass
+
+        self.clear_modules(['selinux', 'ansible.module_utils.basic'])
+        mock_import.side_effect = _mock_import
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertFalse(mod.module_utils.basic.HAVE_SELINUX)
+
+    @patch.object(builtins, '__import__')
+    def test_module_utils_basic_import_json(self, mock_import):
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
-                raise ImportError()
-            realimport(name, *args, **kwargs)
+                raise ImportError
+            elif name == 'simplejson':
+                return MagicMock()
+            return realimport(name, *args, **kwargs)
 
-        with patch.object(builtins, '__import__', _mock_import, create=True) as m:
-            m('ansible.module_utils.basic')
-            builtins.__import__('ansible.module_utils.basic')
+        self.clear_modules(['json', 'ansible.module_utils.basic'])
+        mod = builtins.__import__('ansible.module_utils.basic')
+
+        self.clear_modules(['json', 'ansible.module_utils.basic'])
+        mock_import.side_effect = _mock_import
+        mod = builtins.__import__('ansible.module_utils.basic')
+
+    @patch.object(builtins, '__import__')
+    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
+    def test_module_utils_basic_import_literal_eval(self, mock_import):
+        def _mock_import(name, *args, **kwargs):
+            try:
+                fromlist = kwargs.get('fromlist', args[2])
+            except IndexError:
+                fromlist = []
+            if name == 'ast' and 'literal_eval' in fromlist:
+                raise ImportError
+            return realimport(name, *args, **kwargs)
+
+        mock_import.side_effect = _mock_import
+        self.clear_modules(['ast', 'ansible.module_utils.basic'])
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertEqual(mod.module_utils.basic.literal_eval("'1'"), "1")
+        self.assertEqual(mod.module_utils.basic.literal_eval("1"), 1)
+        self.assertEqual(mod.module_utils.basic.literal_eval("-1"), -1)
+        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1,2,3))
+        self.assertEqual(mod.module_utils.basic.literal_eval("[1]"), [1])
+        self.assertEqual(mod.module_utils.basic.literal_eval("True"), True)
+        self.assertEqual(mod.module_utils.basic.literal_eval("False"), False)
+        self.assertEqual(mod.module_utils.basic.literal_eval("None"), None)
+        #self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
+        self.assertRaises(ValueError, mod.module_utils.basic.literal_eval, "asdfasdfasdf")
+
+    @patch.object(builtins, '__import__')
+    def test_module_utils_basic_import_systemd_journal(self, mock_import):
+        def _mock_import(name, *args, **kwargs):
+            try:
+                fromlist = kwargs.get('fromlist', args[2])
+            except IndexError:
+                fromlist = []
+            if name == 'systemd' and 'journal' in fromlist:
+                raise ImportError
+            return realimport(name, *args, **kwargs)
+
+        self.clear_modules(['systemd', 'ansible.module_utils.basic'])
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertTrue(mod.module_utils.basic.has_journal)
+
+        self.clear_modules(['systemd', 'ansible.module_utils.basic'])
+        mock_import.side_effect = _mock_import
+        mod = builtins.__import__('ansible.module_utils.basic')
+        self.assertFalse(mod.module_utils.basic.has_journal)
 
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
@@ -60,18 +157,18 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertEqual(get_distribution(), None)
 
         with patch('platform.system', return_value='Linux'):
-            with patch('platform.linux_distribution', return_value=("foo", "1", "One")):
+            with patch('platform.linux_distribution', return_value=["foo"]):
                 self.assertEqual(get_distribution(), "Foo")
 
             with patch('os.path.isfile', return_value=True):
-                def _dist(distname='', version='', id='', supported_dists=(), full_distribution_name=1):
-                    if supported_dists != ():
-                        return ("AmazonFooBar", "", "")
-                    else:
-                        return ("", "", "")
-                 
-                with patch('platform.linux_distribution', side_effect=_dist):
+                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar",)]):
                     self.assertEqual(get_distribution(), "Amazonfoobar")
+
+                with patch('platform.linux_distribution', side_effect=(("",), ("AmazonFooBam",))):
+                    self.assertEqual(get_distribution(), "Amazon")
+
+                with patch('platform.linux_distribution', side_effect=[("",),("",)]):
+                    self.assertEqual(get_distribution(), "OtherLinux")
 
                 def _dist(distname='', version='', id='', supported_dists=(), full_distribution_name=1):
                     if supported_dists != ():
@@ -678,17 +775,269 @@ class TestModuleUtilsBasic(unittest.TestCase):
                 self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
                 am.check_mode = False
 
-        # FIXME: this isn't working yet
-        #with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-        #    with patch('os.lchmod', return_value=None) as m_os:
-        #        del m_os.lchmod
-        #        with patch('os.path.islink', return_value=False):
-        #            with patch('os.chmod', return_value=None) as m_chmod:
-        #                self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
-        #                m_chmod.assert_called_with('/path/to/file', 0o660)
-        #        with patch('os.path.islink', return_value=True):
-        #            with patch('os.chmod', return_value=None) as m_chmod:
-        #                with patch('os.stat', return_value=mock_stat2):
-        #                    self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-        #                    m_chmod.assert_called_with('/path/to/file', 0o660)
+        original_hasattr = hasattr
+        def _hasattr(obj, name):
+            if obj == os and name == 'lchmod':
+                return False
+            return original_hasattr(obj, name)
 
+        # FIXME: this isn't working yet
+        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
+            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
+                with patch('os.path.islink', return_value=False):
+                    with patch('os.chmod', return_value=None) as m_chmod:
+                        self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
+        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
+            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
+                with patch('os.path.islink', return_value=True):
+                    with patch('os.chmod', return_value=None) as m_chmod:
+                        with patch('os.stat', return_value=mock_stat2):
+                            self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
+
+    @patch('tempfile.NamedTemporaryFile')
+    @patch('os.umask')
+    @patch('shutil.copyfileobj')
+    @patch('shutil.move')
+    @patch('shutil.copy2')
+    @patch('os.rename')
+    @patch('pwd.getpwuid')
+    @patch('os.getuid')
+    @patch('os.environ')
+    @patch('os.getlogin')
+    @patch('os.chown')
+    @patch('os.chmod')
+    @patch('os.stat')
+    @patch('os.path.exists')
+    def test_module_utils_basic_ansible_module_atomic_move(
+        self,
+        _os_path_exists,
+        _os_stat,
+        _os_chmod,
+        _os_chown,
+        _os_getlogin,
+        _os_environ,
+        _os_getuid,
+        _pwd_getpwuid,
+        _os_rename,
+        _shutil_copy2,
+        _shutil_move,
+        _shutil_copyfileobj,
+        _os_umask,
+        _tempfile_NamedTemporaryFile,
+        ):
+
+        from ansible.module_utils import basic
+
+        basic.MODULE_COMPLEX_ARGS = '{}'
+        am = basic.AnsibleModule(
+            argument_spec = dict(),
+        )
+
+        environ = dict()
+        _os_environ.__getitem__ = environ.__getitem__
+        _os_environ.__setitem__ = environ.__setitem__
+
+        am.selinux_enabled = MagicMock()
+        am.selinux_context = MagicMock()
+        am.selinux_default_context = MagicMock()
+        am.set_context_if_different = MagicMock()
+
+        # test destination does not exist, no selinux, login name = 'root',
+        # no environment, os.rename() succeeds
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        am.selinux_enabled.return_value = False
+        _os_chmod.reset_mock()
+        _os_chown.reset_mock()
+        am.set_context_if_different.reset_mock()
+        am.atomic_move('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+
+        # same as above, except selinux_enabled
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        mock_context = MagicMock()
+        am.selinux_default_context.return_value = mock_context
+        am.selinux_enabled.return_value = True
+        _os_chmod.reset_mock()
+        _os_chown.reset_mock()
+        am.set_context_if_different.reset_mock()
+        am.selinux_default_context.reset_mock()
+        am.atomic_move('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+        self.assertEqual(am.selinux_default_context.call_args_list, [call('/path/to/dest')])
+        self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
+
+        # now with dest present, no selinux, also raise OSError when using
+        # os.getlogin() to test corner case with no tty
+        _os_path_exists.side_effect = [True, True]
+        _os_getlogin.side_effect = OSError()
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        environ['LOGNAME'] = 'root'
+        stat1 = MagicMock()
+        stat1.st_mode = 0o0644
+        stat1.st_uid = 0
+        stat1.st_gid = 0
+        _os_stat.side_effect = [stat1,]
+        am.selinux_enabled.return_value = False
+        _os_chmod.reset_mock()
+        _os_chown.reset_mock()
+        am.set_context_if_different.reset_mock()
+        am.atomic_move('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+
+        # dest missing, selinux enabled
+        _os_path_exists.side_effect = [True, True]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        stat1 = MagicMock()
+        stat1.st_mode = 0o0644
+        stat1.st_uid = 0
+        stat1.st_gid = 0
+        _os_stat.side_effect = [stat1,]
+        mock_context = MagicMock()
+        am.selinux_context.return_value = mock_context
+        am.selinux_enabled.return_value = True
+        _os_chmod.reset_mock()
+        _os_chown.reset_mock()
+        am.set_context_if_different.reset_mock()
+        am.selinux_default_context.reset_mock()
+        am.atomic_move('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        self.assertEqual(am.selinux_context.call_args_list, [call('/path/to/dest')])
+        self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
+
+        # now testing with exceptions raised
+        # have os.stat raise OSError which is not EPERM
+        _os_stat.side_effect = OSError()
+        _os_path_exists.side_effect = [True, True]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        self.assertRaises(OSError, am.atomic_move, '/path/to/src', '/path/to/dest')
+
+        # and now have os.stat return EPERM, which should not fail
+        _os_stat.side_effect = OSError(errno.EPERM, 'testing os stat with EPERM')
+        _os_path_exists.side_effect = [True, True]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_rename.return_value = None
+        _os_umask.side_effect = [18, 0]
+        # FIXME: we don't assert anything here yet
+        am.atomic_move('/path/to/src', '/path/to/dest')
+
+        # now we test os.rename() raising errors...
+        # first we test with a bad errno to verify it bombs out
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_umask.side_effect = [18, 0]
+        _os_rename.side_effect = OSError(errno.EIO, 'failing with EIO')
+        self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
+
+        # next we test with EPERM so it continues to the alternate code for moving
+        # test with NamedTemporaryFile raising an error first
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_umask.side_effect = [18, 0]
+        _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
+        _tempfile_NamedTemporaryFile.return_value = None
+        _tempfile_NamedTemporaryFile.side_effect = OSError()
+        am.selinux_enabled.return_value = False
+        self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
+
+        # then test with it creating a temp file
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_umask.side_effect = [18, 0]
+        _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
+        mock_stat1 = MagicMock()
+        mock_stat2 = MagicMock()
+        mock_stat3 = MagicMock()
+        _os_stat.return_value = [mock_stat1, mock_stat2, mock_stat3]
+        _os_stat.side_effect = None
+        mock_tempfile = MagicMock()
+        mock_tempfile.name = '/path/to/tempfile'
+        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
+        _tempfile_NamedTemporaryFile.side_effect = None
+        am.selinux_enabled.return_value = False
+        # FIXME: we don't assert anything here yet
+        am.atomic_move('/path/to/src', '/path/to/dest')
+
+        # same as above, but with selinux enabled
+        _os_path_exists.side_effect = [False, False]
+        _os_getlogin.return_value = 'root'
+        _os_getuid.return_value = 0
+        _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
+        _os_umask.side_effect = [18, 0]
+        _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
+        mock_tempfile = MagicMock()
+        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
+        mock_context = MagicMock()
+        am.selinux_default_context.return_value = mock_context
+        am.selinux_enabled.return_value = True
+        am.atomic_move('/path/to/src', '/path/to/dest')
+
+    def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
+
+        from ansible.module_utils import basic
+
+        basic.MODULE_COMPLEX_ARGS = '{}'
+        am = basic.AnsibleModule(
+            argument_spec = dict(),
+        )
+
+        mock_stat = MagicMock()
+
+        # FIXME: trying many more combinations here would be good
+        # directory, give full perms to all, then one group at a time
+        mock_stat.st_mode = 0o040000
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a+rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx,g+rwx,o+rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o+rwx'), 0o0007)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g+rwx'), 0o0070)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u+rwx'), 0o0700)
+
+        # same as above, but in reverse so removing permissions
+        mock_stat.st_mode = 0o040777
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a-rwx'), 0o0000)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx,g-rwx,o-rwx'), 0o0000)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o-rwx'), 0o0770)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g-rwx'), 0o0707)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u-rwx'), 0o0077)
+
+        # now using absolute assignment
+        mock_stat.st_mode = 0o040000
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'a=rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx,g=rwx,o=rwx'), 0o0777)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'o=rwx'), 0o0007)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'g=rwx'), 0o0070)
+        self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
+
+        # invalid modes
+        mock_stat.st_mode = 0o0400000
+        self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

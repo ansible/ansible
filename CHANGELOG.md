@@ -5,19 +5,73 @@ Ansible Changes By Release
 
 ###Major Changes:
 
-* added facility for modules to send back 'diff' for display when ansible is called with --diff, file, puppet and other module already implement this
+* added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
 
 ####New Modules:
 * aws: ec2_vol_facts
 * aws: ec2_vpc_dhcp_options.py
 * aws: ec2_vpc_net_facts
 * cloudstack: cs_volume
-* yumrepo
+* win_regmerge
+* win_timezone
+* yum_repository
+
 
 ####New Filters:
 * extract
 
-## 2.0 "Over the Hills and Far Away"
+####New Callbacks:
+* actionable (only shows changed and failed)
+* slack
+* json
+
+###Minor Changes:
+
+* callbacks now have access to the options with which the CLI was called
+* debug is now controlable with verbosity
+
+## 2.0.1 "Over the Hills and Far Away"
+
+* Fixes a major compatibility break in the synchronize module shipped with
+  2.0.0.x.  That version of synchronize ran sudo on the controller prior to
+  running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
+  connected to.  2.0.1 restores the 1.9.x behaviour.
+* Additionally, several other problems with where synchronize chose to run when
+  combined with delegate_to were fixed.  In particular, if a playbook targetted
+  localhost and then delegated_to a remote host the prior behavior (in 1.9.x
+  and 2.0.0.x) was to copy files between the src and destination directories on
+  the delegated host.  This has now been fixed to copy between localhost and
+  the delegated host.
+* Fix a regression where synchronize was unable to deal with unicode paths.
+* Fix a regression where synchronize deals with inventory hosts that use
+  localhost but with an alternate port.
+* Fixes a regression where the retry files feature was not implemented.
+* Fixes a regression where the any_errors_fatal option was implemented in 2.0
+  incorrectly, and also adds a feature where any_errors_fatal can be set at
+  the block level.
+* Fix tracebacks when playbooks or ansible itself were located in directories
+  with unicode characters.
+* Fix bug when sending unicode characters to an external pager for display.
+* Fix a bug with squashing loops for special modules (mostly package managers).
+  The optimization was squashing when the loop did not apply to the selection
+  of packages.  This has now been fixed.
+* Temp files created when using vault are now "shredded" using the unix shred
+  program which overwrites the file with random data.
+* Some fixes to cloudstack modules for case sensitivity
+* Fix non-newstyle modules (non-python modules and old-style modules) to
+  disabled pipelining.
+* Fix fetch module failing even if fail_on_missing is set to False
+* Fix for cornercase when local connections, sudo, and raw were used together.
+* Fix dnf module to remove dependent packages when state=absent is specified.
+  This was a feature of the 1.9.x version that was left out by mistake when the
+  module was rewritten for 2.0.
+* Fix bugs with non-english locales in yum, git, and apt modules
+* Fix a bug with the dnf module where state=latest could only upgrade, not install.
+* Fix to make implicit fact gathering task correctly inherit settings from play,
+  this might cause an error if settings environment on play depending on 'ansible_env'
+  which was previouslly ignored
+
+## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
 ###Major Changes:
 

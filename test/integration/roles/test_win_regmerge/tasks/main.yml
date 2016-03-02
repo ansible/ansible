@@ -1,0 +1,133 @@
+# test code for the win_regmerge module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# clear the area of the registry we are using for tests
+- name: remove setting
+  win_regedit:
+    key: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp'
+    state: absent
+
+# copy over some registry files to work with
+- name: copy over some registry files to work with
+  win_copy: src={{item}} dest={{win_output_dir}}\\{{item}}
+  with_items:
+     - settings1.reg
+     - settings2.reg
+     - settings3.reg
+
+# test 1 -  basic test of changed behaviour
+# merge in REG_SZ 
+- name: test 1 merge in a setting
+  win_regmerge:
+     path: "{{win_output_dir}}\\settings1.reg"
+  register: merge11_result
+
+- assert:
+    that:
+      - "merge11_result.changed == true"
+
+# re run the merge
+- name: test 1 merge in the setting again
+  win_regmerge:
+     path: "{{win_output_dir}}\\settings1.reg"
+  register: merge12_result
+
+# without a compare to key, should allways report changed
+- assert:
+    that:
+      - "merge12_result.changed == true"
+# assert changed false
+
+# prune reg key
+- name: test 1 remove setting
+  win_regedit:
+     key: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp'
+     state: absent
+
+#
+# test 2, observe behaviour when compare_to param is set
+#
+- name: test 2 merge in a setting
+  win_regmerge:
+    path: "{{win_output_dir}}\\settings1.reg"
+    compare_to: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp\Moosic\ILikeToMooveIt'
+  register: merge21_result
+
+- assert:
+    that:
+      - "merge21_result.changed == true"
+
+# re run the merge
+- name: test 2 merge in the setting again but with compare_key
+  win_regmerge:
+    path: "{{win_output_dir}}\\settings1.reg"
+    compare_to: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp\Moosic\ILikeToMooveIt'
+  register: merge22_result
+
+# with a compare to key, should now report not changed
+- assert:
+    that:
+      - "merge22_result.changed == false"
+# assert changed false
+
+# prune the contents of the registry from the parent of the compare key downwards
+- name: test 2 clean up remove setting
+  win_regedit:
+    key: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp'
+    state: absent
+
+# test 3 merge in more complex settings
+- name: test 3 merge in a setting
+  win_regmerge:
+    path: "{{win_output_dir}}\\settings3.reg"
+    compare_to: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp\Moo Monitor'
+  register: merge31_result
+
+- assert:
+    that:
+      - "merge31_result.changed == true"
+
+# re run the merge
+- name: test 3 merge in the setting again but with compare_key check
+  win_regmerge:
+    path: "{{win_output_dir}}\\settings3.reg"
+    compare_to: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp\Moo Monitor'
+  register: merge32_result
+
+# with a compare to key, should now report not changed
+- assert:
+    that:
+      - "merge32_result.changed == false"
+# assert changed false
+
+# prune the contents of the registry from the compare key downwards
+- name: test 3 clean up remove setting
+  win_regedit:
+    key: 'HKLM:\SOFTWARE\Wow6432Node\Cow Corp'
+    state: absent
+
+# clean up registry files
+
+- name: clean up registry files
+  win_file: path={{win_output_dir}}\\{{item}} state=absent
+  with_items:
+     - settings1.reg
+     - settings2.reg
+     - settings3.reg
+
+# END OF win_regmerge tests

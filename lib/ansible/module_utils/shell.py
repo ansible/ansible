@@ -19,7 +19,11 @@
 import re
 import socket
 
-from StringIO import StringIO
+# py2 vs py3; replace with six via ziploader
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 try:
     import paramiko
@@ -88,7 +92,8 @@ class Shell(object):
         self.errors.extend(CLI_ERRORS_RE)
 
     def open(self, host, port=22, username=None, password=None,
-            timeout=10, key_filename=None, pkey=None, look_for_keys=None):
+            timeout=10, key_filename=None, pkey=None, look_for_keys=None,
+            allow_agent=False):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -100,7 +105,7 @@ class Shell(object):
 
         self.ssh.connect(host, port=port, username=username, password=password,
                     timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
-                    key_filename=key_filename)
+                    key_filename=key_filename, allow_agent=allow_agent)
 
         self.shell = self.ssh.invoke_shell()
         self.shell.settimeout(10)
@@ -199,4 +204,3 @@ def get_cli_connection(module):
         module.fail_json(msg='socket timed out')
 
     return cli
-

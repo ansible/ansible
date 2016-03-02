@@ -15,6 +15,7 @@ Setting environment variables can be done with the `environment` keyword. It can
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
       SOME: value
 
+.. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
 
 
 How do I handle different machines needing different user accounts or ports to log in with?
@@ -174,7 +175,9 @@ How do I loop over a list of hosts in a group, inside of a template?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A pretty common pattern is to iterate over a list of hosts inside of a host group, perhaps to populate a template configuration
-file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this::
+file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this:
+
+.. code-block:: jinja2
 
     {% for host in groups['db_servers'] %}
         {{ host }}
@@ -184,7 +187,7 @@ If you need to access facts about these hosts, for instance, the IP address of e
 
     - hosts:  db_servers
       tasks:
-        - # doesn't matter what you do, just that they were talked to previously.
+        - debug: msg="doesn't matter what you do, just that they were talked to previously."
 
 Then you can use the facts inside your template, like this::
 
@@ -304,8 +307,6 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-.. _i_dont_see_my_question:
-
 In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
@@ -320,8 +321,33 @@ The no_log attribute can also apply to an entire play::
       no_log: True
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
-be applied to single tasks only, once a playbook is completed.   
+be applied to single tasks only, once a playbook is completed.
 
+
+.. _when_to_use_brackets:
+.. _dynamic_variables:
+.. _interpolate_variables:
+
+When should I use {{ }}? Also, howto interpolate variables or dyanmic variable names
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+A steadfast rule is 'always use {{ }} except when `when:`'.
+Conditionals are always run through Jinja2 as to resolve the expression,
+so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
+
+In most other cases you should always use the brackets, even if previouslly you could use variables without specifying (like `with_` clauses),
+as this made it hard to distinguish between an undefined variable and a string.
+
+Another rule is 'moustaches don't stack'. We often see this::
+
+     {{ somvar_{{other_var}} }}
+
+The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
+
+    {{ hostvars[inventory_hostname]['somevar_'  + other_var] }}
+
+
+.. _i_dont_see_my_question:
 
 I don't see my question here
 ++++++++++++++++++++++++++++

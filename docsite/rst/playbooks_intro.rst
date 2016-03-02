@@ -180,9 +180,9 @@ Support for running things as another user is also available (see :doc:`become`)
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
+      become: yes
 
-You can also use sudo on a particular task instead of the whole play::
+You can also use become on a particular task instead of the whole play::
 
     ---
     - hosts: webservers

@@ -23,8 +23,9 @@ import ast
 import contextlib
 import os
 import re
+from io import StringIO
 
-from ansible.compat.six import string_types, text_type, binary_type, StringIO
+from ansible.compat.six import string_types, text_type, binary_type
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -420,7 +421,13 @@ class Templar:
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
-                    ran = UnsafeProxy(",".join(ran))
+                    try:
+                        ran = UnsafeProxy(",".join(ran))
+                    except TypeError:
+                        if isinstance(ran, list) and len(ran) == 1:
+                            ran = wrap_var(ran[0])
+                        else:
+                            ran = wrap_var(ran)
 
             return ran
         else:
