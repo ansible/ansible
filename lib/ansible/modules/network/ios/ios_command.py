@@ -79,9 +79,9 @@ EXAMPLES = """
       - "result[0] contains IOS"
 
 - ios_command:
-  commands:
-    - show version
-    - show interfaces
+    commands:
+      - show version
+      - show interfaces
 
 """
 
