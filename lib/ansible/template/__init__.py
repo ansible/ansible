@@ -40,6 +40,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
+from ansible.utils.unicode import to_unicode
 
 try:
     from hashlib import sha1
@@ -255,10 +256,10 @@ class Templar:
                     if prev_idx is not None:
                         # replace the opening
                         data.seek(prev_idx, os.SEEK_SET)
-                        data.write(self.environment.comment_start_string)
+                        data.write(to_unicode(self.environment.comment_start_string))
                         # replace the closing
                         data.seek(token_start, os.SEEK_SET)
-                        data.write(self.environment.comment_end_string)
+                        data.write(to_unicode(self.environment.comment_end_string))
 
                 else:
                     raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
@@ -291,13 +292,6 @@ class Templar:
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
                 return self._clean_data(variable)
-            elif isinstance(variable, binary_type):
-                # If we're unicode sandwiching, then we shouldn't get here but
-                # seems like we are.  Will have to decide whether to turn them
-                # into text_type instead
-                raise AnsibleError("variable is str: %s" % variable)
-            #elif isinstance(variable, binary_type):
-            #    return self._clean_data(bytes(variable))
             else:
                 # Do we need to convert these into text_type as well?
                 # return self._clean_data(to_unicode(variable._obj, nonstring='passthru'))
@@ -507,8 +501,7 @@ class Templar:
                     )
                 else:
                     debug("failing because of a type error, template data is: %s" % data)
-                    import traceback
-                    raise AnsibleError("an unexpected type error occurred. Error was %s, tracback: %s" % (te, traceback.format_exc()))
+                    raise AnsibleError("an unexpected type error occurred. Error was %s" % te)
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
