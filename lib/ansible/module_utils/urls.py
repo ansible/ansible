@@ -427,7 +427,7 @@ class RequestWithMethod(urllib2.Request):
             return urllib2.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -442,17 +442,17 @@ def RedirectHandlerFactory(follow_redirects=None):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            if follow_redirects == 'urllib2':
-                return urllib2.HTTPRedirectHandler.redirect_request(self, req,
-                                                                    fp, code,
-                                                                    msg, hdrs,
-                                                                    newurl)
+            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            if handler:
+                urllib2._opener.add_handler(handler)
 
-            if follow_redirects in [None, 'no', 'none']:
+            if follow_redirects == 'urllib2':
+                return urllib2.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+            elif follow_redirects in ['no', 'none', False]:
                 raise urllib2.HTTPError(newurl, code, msg, hdrs, fp)
 
             do_redirect = False
-            if follow_redirects in ['all', 'yes']:
+            if follow_redirects in ['all', 'yes', True]:
                 do_redirect = (code >= 300 and code < 400)
 
             elif follow_redirects == 'safe':
@@ -650,15 +650,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
 
     https_request = http_request
 
-# Rewrite of fetch_url to not require the module environment
-def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-        force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None,
-        force_basic_auth=False, follow_redirects='urllib2'):
-    '''
-    Fetches a file from an HTTP/FTP server using urllib2
-    '''
-    handlers = []
+def maybe_add_ssl_handler(url, validate_certs):
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
@@ -678,9 +670,24 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        ssl_handler = SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port)
+
+# Rewrite of fetch_url to not require the module environment
+def open_url(url, data=None, headers=None, method=None, use_proxy=True,
+        force=False, last_mod_time=None, timeout=10, validate_certs=True,
+        url_username=None, url_password=None, http_agent=None,
+        force_basic_auth=False, follow_redirects=False):
+    '''
+    Fetches a file from an HTTP/FTP server using urllib2
+    '''
+    handlers = []
+    ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+    if ssl_handler:
         handlers.append(ssl_handler)
 
+    # FIXME: change the following to use the generic_urlparse function
+    #        to remove the indexed references for 'parsed'
+    parsed = urlparse.urlparse(url)
     if parsed[0] != 'ftp':
         username = url_username
 
@@ -731,8 +738,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
 
-    if follow_redirects != 'urllib2':
-        handlers.append(RedirectHandlerFactory(follow_redirects))
+    handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
@@ -821,7 +827,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     password = module.params.get('url_password', '')
     http_agent = module.params.get('http_agent', None)
     force_basic_auth = module.params.get('force_basic_auth', '')
-    follow_redirects = follow_redirects or module.params.get('follow_redirects', 'urllib2')
+
+    if not follow_redirects:
+        follow_redirects = module.params.get('follow_redirects', False)
 
     r = None
     info = dict(url=url)
