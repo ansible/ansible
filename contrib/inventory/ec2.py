@@ -388,7 +388,10 @@ class Ec2Inventory(object):
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = defaultdict(list)
         if config.has_option('ec2', 'instance_filters'):
-            for instance_filter in config.get('ec2', 'instance_filters', '').split(','):
+
+            filters = [tag for tag in config.get('ec2', 'instance_filters').split(',') if tag]
+
+            for instance_filter in filters:
                 instance_filter = instance_filter.strip()
                 if not instance_filter or '=' not in instance_filter:
                     continue
