@@ -169,6 +169,11 @@ options:
        - A list of preexisting volumes names or ids to attach to the instance
      required: false
      default: []
+   scheduler_hints:
+     description:
+        - Arbitrary key/value pairs to the scheduler for custom use
+     required: false
+     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -451,7 +456,7 @@ def _create_server(module, cloud):
     )
     for optional_param in (
             'key_name', 'availability_zone', 'network',
-            'volume_size', 'volumes'):
+            'scheduler_hints', 'volume_size', 'volumes'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
 
@@ -555,6 +560,7 @@ def main():
         boot_volume                     = dict(default=None, aliases=['root_volume']),
         terminate_volume                = dict(default=False, type='bool'),
         volumes                         = dict(default=[], type='list'),
+        scheduler_hints                 = dict(default=None),
         state                           = dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
