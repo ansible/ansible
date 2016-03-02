@@ -21,7 +21,9 @@ short_description: Manages AWS SNS topics and subscriptions
 description:
     - The M(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics.
 version_added: 2.0
-author: "Joel Thompson (@joelthompson)"
+author:
+  - "Joel Thompson (@joelthompson)"
+  - "Fernando Jose Pando (@nand0p)"
 options:
   name:
     description:
