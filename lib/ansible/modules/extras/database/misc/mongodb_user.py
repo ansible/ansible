@@ -76,8 +76,9 @@ options:
     roles:
         version_added: "1.3"
         description:
-            - "The database user roles valid values are one or more of the following: read, 'readWrite', 'dbAdmin', 'userAdmin', 'clusterAdmin', 'readAnyDatabase', 'readWriteAnyDatabase', 'userAdminAnyDatabase', 'dbAdminAnyDatabase'"
-            - This param requires mongodb 2.4+ and pymongo 2.5+
+            - "The database user roles valid values could either be one or more of the following strings: 'read', 'readWrite', 'dbAdmin', 'userAdmin', 'clusterAdmin', 'readAnyDatabase', 'readWriteAnyDatabase', 'userAdminAnyDatabase', 'dbAdminAnyDatabase'"
+            - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
+            - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
         required: false
         default: "readWrite"
     state:
@@ -119,6 +120,22 @@ EXAMPLES = '''
 
 # add a user to database in a replica set, the primary server is automatically discovered and written to
 - mongodb_user: database=burgers name=bob replica_set=belcher password=12345 roles='readWriteAnyDatabase' state=present
+
+# add a user 'oplog_reader' with read only access to the 'local' database on the replica_set 'belcher'. This is usefull for oplog access (MONGO_OPLOG_URL).
+# please notice the credentials must be added to the 'admin' database because the 'local' database is not syncronized and can't receive user credentials
+# To login with such user, the connection string should be MONGO_OPLOG_URL="mongodb://oplog_reader:oplog_reader_password@server1,server2/local?authSource=admin"
+# This syntax requires mongodb 2.6+ and pymongo 2.5+
+- mongodb_user:
+    login_user: root
+    login_password: root_password
+    database: admin
+    user: oplog_reader
+    password: oplog_reader_password
+    state: present
+    replica_set: belcher
+    roles:
+     - { db: "local"  , role: "read" }
+
 '''
 
 import ConfigParser
@@ -215,6 +232,8 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
+    login_database = module.params['login_database']
+
     replica_set = module.params['replica_set']
     db_name = module.params['database']
     user = module.params['name']
