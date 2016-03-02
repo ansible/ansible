@@ -23,7 +23,11 @@ import ast
 import contextlib
 import os
 import re
-from io import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from ansible.compat.six import string_types, text_type, binary_type
 from jinja2 import Environment
