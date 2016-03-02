@@ -257,7 +257,7 @@ class Facts(object):
                 # load raw ini
                 cp = ConfigParser.ConfigParser()
                 try:
-                    cp.readfp(StringIO.StringIO(out))
+                    cp.readfp(StringIO(out))
                 except ConfigParser.Error:
                     fact = "error loading fact - please check content"
                 else:
