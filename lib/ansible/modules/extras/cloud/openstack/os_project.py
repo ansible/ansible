@@ -156,7 +156,7 @@ def main():
 
     name = module.params['name']
     description = module.params['description']
-    domain = module.params['domain_id']
+    domain = module.params.pop('domain_id')
     enabled = module.params['enabled']
     state = module.params['state']
 
