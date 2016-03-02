@@ -353,7 +353,7 @@ class DockerImageManager:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path               = dict(required=False, default=None),
+            path               = dict(required=False, default=None, type='path'),
             dockerfile         = dict(required=False, default="Dockerfile"),
             name               = dict(required=True),
             tag                = dict(required=False, default="latest"),
