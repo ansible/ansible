@@ -1,7 +1,7 @@
 #!powershell
 # This file is part of Ansible
 #
-# Copyright 2015, Corwin Brown <corwin.brown@maxpoint.com>
+# Copyright 2015, Corwin Brown <corwin@corwinbrown.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,15 @@ $params = Parse-Args $args;
 
 $result = New-Object psobject @{
     win_uri = New-Object psobject
+}
+
+# Functions ###############################################
+
+Function ConvertTo-SnakeCase($input_string) {
+    $snake_case = $input_string -csplit "(?<!^)(?=[A-Z])" -join "_"
+    $snake_case = $snake_case.ToLower()
+
+    return $snake_case
 }
 
 # Build Arguments
@@ -64,7 +73,9 @@ try {
 }
 
 ForEach ($prop in $response.psobject.properties) {
-    Set-Attr $result $prop.Name $prop.Value
+    $result_key = ConvertTo-SnakeCase $prop.Name
+    $result_value = $prop.Value
+    Set-Attr $result $result_key $result_value
 }
 
 Exit-Json $result
