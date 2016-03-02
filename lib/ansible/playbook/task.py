@@ -229,6 +229,13 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
+    def _post_validate_register(self, attr, value, templar):
+        '''
+        Override post validation for the register args field, which is not
+        supposed to be templated
+        '''
+        return value
+
     def _post_validate_loop_args(self, attr, value, templar):
         '''
         Override post validation for the loop args field, which is templated
