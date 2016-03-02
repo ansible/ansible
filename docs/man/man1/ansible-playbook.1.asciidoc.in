@@ -125,10 +125,6 @@ environment variable.
 
 Use this file to authenticate the connection
 
-*--skip-tages=*'SKIP_TAGS'::
-
-Only run plays and tasks whose tags do not match these values.
-
 *--start-at-task=*'START_AT'::
 
 Start the playbook at the task matching this name.
