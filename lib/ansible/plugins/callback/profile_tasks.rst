@@ -55,14 +55,19 @@ No more wondering how old the results in a terminal window are.
 
        ansible <args here>
        <normal output here>
-       PLAY RECAP ******************************************************************** 
+       PLAY RECAP ********************************************************************
        Thursday 11 June 2016  22:51:00 +0100 (0:00:01.011)       0:00:43.247 *********
        ===============================================================================
-       /home/bob/ansible/roles/old_and_slow/tasks/main.yml:4 ----------------old_and_slow : install tons of packages -------------------------------- 20.03s
-       /home/bob/ansible/roles/db/tasks/main.yml:4 --------------------------db : second task to run ------------------------------------------------- 2.03s
-       None -----------------------------------------------------------------setup ------------------------------------------------------------------- 0.42s
-       /home/bob/ansible/roles/www/tasks/main.yml:1 -------------------------www : first task to run ------------------------------------------------- 0.03s
-       /home/bob/ansible/roles/fast_task.yml:1 ------------------------------fast_task : first task to run ------------------------------------------- 0.01s
+       old_and_slow : install tons of packages -------------------------------- 20.03s
+       /home/bob/ansible/roles/old_and_slow/tasks/main.yml:4 -------------------------
+       db : second task to run ------------------------------------------------- 2.03s
+       /home/bob/ansible/roles/db/tasks/main.yml:4 -----------------------------------
+       setup ------------------------------------------------------------------- 0.42s
+       None --------------------------------------------------------------------------
+       www : first task to run ------------------------------------------------- 0.03s
+       /home/bob/ansible/roles/www/tasks/main.yml:1 ----------------------------------
+       fast_task : first task to run ------------------------------------------- 0.01s
+       /home/bob/ansible/roles/fast_task.yml:1 ---------------------------------------
 
 Compatibility
 -------------
