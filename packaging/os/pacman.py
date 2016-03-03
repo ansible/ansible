@@ -60,7 +60,9 @@ options:
 
     force:
         description:
-            - Force remove package, without any checks.
+            - When removing package - force remove package, without any
+              checks. When update_cache - force redownload repo
+              databases.
         required: false
         default: no
         choices: ["yes", "no"]
@@ -143,13 +145,18 @@ def query_package(module, pacman_path, name, state="present"):
             # Return True to indicate that the package is installed locally, and the result of the version number comparison
             # to determine if the package is up-to-date.
             return True, (lversion == rversion), False
-        
+
     # package is installed but cannot fetch remote Version. Last True stands for the error
         return True, True, True
 
 
 def update_package_db(module, pacman_path):
-    cmd = "%s -Sy" % (pacman_path)
+    if module.params["force"]:
+        args = "Syy"
+    else:
+        args = "Sy"
+
+    cmd = "%s -%s" % (pacman_path, args)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
@@ -175,14 +182,13 @@ def upgrade(module, pacman_path):
         module.exit_json(changed=False, msg='Nothing to upgrade')
 
 def remove_packages(module, pacman_path, packages):
-    if module.params["recurse"]:
-        args = "Rs"
-    else:
-        args = "R"
-
-def remove_packages(module, pacman_path, packages):
-    if module.params["force"]:
-        args = "Rdd"
+    if module.params["recurse"] or module.params["force"]:
+        if module.params["recurse"]:
+            args = "Rs"
+        if module.params["force"]:
+            args = "Rdd"
+        if module.params["recurse"] and module.params["force"]:
+            args = "Rdds"
     else:
         args = "R"
 
@@ -219,7 +225,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
         installed, updated, latestError = query_package(module, pacman_path, package)
         if latestError and state == 'latest':
             package_err.append(package)
-            
+
         if installed and (state == 'present' or (state == 'latest' and updated)):
             continue
 
@@ -235,15 +241,15 @@ def install_packages(module, pacman_path, state, packages, package_files):
             module.fail_json(msg="failed to install %s" % (package))
 
         install_c += 1
-    
+
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
-    
+
     if install_c > 0:
         module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message))
-        
+
     module.exit_json(changed=False, msg="package(s) already installed. %s" % (message))
-    
+
 def check_packages(module, pacman_path, packages, state):
     would_be_changed = []
     for package in packages:
