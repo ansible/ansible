@@ -129,9 +129,10 @@ class CronVar(object):
 
         if cron_file:
             self.cron_file = ""
-            if cron_file[0] != '/':
-                self.cron_file = '/etc/cron.d/'
-            self.cron_file = self.cron_file + cron_file
+            if os.path.isabs(cron_file):
+                self.cron_file = cron_file
+            else:
+                self.cron_file = os.path.join('/etc/cron.d', cron_file)
         else:
             self.cron_file = None
 
