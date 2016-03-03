@@ -35,7 +35,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 
 class DataLoader():
 
@@ -114,15 +114,15 @@ class DataLoader():
 
     def path_exists(self, path):
         path = self.path_dwim(path)
-        return os.path.exists(path)
+        return os.path.exists(to_bytes(path))
 
     def is_file(self, path):
         path = self.path_dwim(path)
-        return os.path.isfile(path) or path == os.devnull
+        return os.path.isfile(to_bytes(path, errors='strict')) or path == os.devnull
 
     def is_directory(self, path):
         path = self.path_dwim(path)
-        return os.path.isdir(path)
+        return os.path.isdir(to_bytes(path, errors='strict'))
 
     def list_directory(self, path):
         path = self.path_dwim(path)
@@ -231,8 +231,8 @@ class DataLoader():
             basedir = unfrackpath(path)
 
             # is it a role and if so make sure you get correct base path
-            if path.endswith('tasks') and os.path.exists(os.path.join(path,'main.yml')) \
-                or os.path.exists(os.path.join(path,'tasks/main.yml')):
+            if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='strict')) \
+                or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='strict')):
                 isrole = True
                 if path.endswith('tasks'):
                     basedir = unfrackpath(os.path.dirname(path))
@@ -255,7 +255,7 @@ class DataLoader():
             search.append(self.path_dwim(source))
 
         for candidate in search:
-            if os.path.exists(candidate):
+            if os.path.exists(to_bytes(candidate, errors='strict')):
                 break
 
         return candidate
@@ -266,8 +266,8 @@ class DataLoader():
         retrieve password from STDOUT
         """
 
-        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
-        if not os.path.exists(this_path):
+        this_path = os.path.realpath(to_bytes(os.path.expanduser(vault_password_file), errors='strict'))
+        if not os.path.exists(to_bytes(this_path, errors='strict')):
             raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
 
         if self.is_executable(this_path):
