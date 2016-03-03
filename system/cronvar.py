@@ -70,7 +70,9 @@ options:
     default: root
   cron_file:
     description:
-      - If specified, uses this file in cron.d instead of an individual user's crontab.
+      - If specified, uses this file instead of an individual user's crontab.
+        Without a leading /, this is assumed to be in /etc/cron.d.  With a leading
+        /, this is taken as absolute.
     required: false
     default: null
   backup:
@@ -126,7 +128,10 @@ class CronVar(object):
         self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"', ))
 
         if cron_file:
-            self.cron_file = '/etc/cron.d/%s' % cron_file
+            self.cron_file = ""
+            if cron_file[0] != '/':
+                self.cron_file = '/etc/cron.d/'
+            self.cron_file = self.cron_file + cron_file
         else:
             self.cron_file = None
 
