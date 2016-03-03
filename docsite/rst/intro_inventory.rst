@@ -253,11 +253,11 @@ Remote host environment parameters::
       Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
-      than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
+      than one Python or not located at "/usr/bin/python" such as *BSD, or where /usr/bin/python
       is not a 2.X series Python.  We do not use the "/usr/bin/env" mechanism as that requires the remote user's
       path to be set right and also assumes the "python" executable is named python, where the executable might
       be named something like "python26".
-    ansible\_\*\_interpreter
+    ansible_*_interpreter
       Works for anything such as ruby or perl and works just like ansible_python_interpreter.
       This replaces shebang of modules which will run on that host.
 
