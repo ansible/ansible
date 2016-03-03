@@ -615,7 +615,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['before'] = ''
             elif peek_result['appears_binary']:
                 diff['dst_binary'] = 1
-            elif peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
+            elif C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
                 display.debug("Slurping the file %s" % source)
@@ -631,7 +631,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             if source_file:
                 st = os.stat(source)
-                if st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+                if C.MAX_FILE_SIZE_FOR_DIFF > 0 and st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
                     display.debug("Reading local copy of the file %s" % source)
@@ -640,6 +640,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         src_contents = src.read()
                     except Exception as e:
                         raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
+
                     if "\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
