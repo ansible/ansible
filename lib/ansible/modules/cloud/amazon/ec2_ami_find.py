@@ -299,7 +299,7 @@ def main():
                 aliases = ['search_tags', 'image_tags']),
             architecture = dict(required=False),
             hypervisor = dict(required=False),
-            is_public = dict(required=False),
+            is_public = dict(required=False, type='bool'),
             name = dict(required=False),
             platform = dict(required=False),
             sort = dict(required=False, default=None,
