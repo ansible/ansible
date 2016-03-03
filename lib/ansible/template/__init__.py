@@ -494,7 +494,7 @@ class Templar:
             try:
                 res = j2_concat(rf)
             except TypeError as te:
-                if 'StrictUndefined' in str(te):
+                if 'StrictUndefined' in to_str(te):
                     errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_str(data)
                     errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_str(te)
                     raise AnsibleUndefinedVariable(errmsg)
