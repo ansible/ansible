@@ -560,7 +560,7 @@ def main():
         boot_volume                     = dict(default=None, aliases=['root_volume']),
         terminate_volume                = dict(default=False, type='bool'),
         volumes                         = dict(default=[], type='list'),
-        scheduler_hints                 = dict(default=None),
+        scheduler_hints                 = dict(default=None, type='dict'),
         state                           = dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
