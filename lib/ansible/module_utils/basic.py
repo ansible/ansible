@@ -664,6 +664,7 @@ class AnsibleModule(object):
                                    details=str(e))
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
+        mode = stat.S_IMODE(mode)
 
         if prev_mode != mode:
             if self.check_mode:
