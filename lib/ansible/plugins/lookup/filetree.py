@@ -24,6 +24,8 @@ import grp
 import stat
 
 from ansible.plugins.lookup import LookupBase
+from __main__ import display
+warning = display.warning
 
 HAVE_SELINUX=False
 try:
@@ -31,12 +33,6 @@ try:
     HAVE_SELINUX=True
 except ImportError:
     pass
-
-try:
-    from __main__.display import warning
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 def _to_filesystem_str(path):
     '''Returns filesystem path as a str, if it wasn't already.
@@ -66,12 +62,12 @@ def selinux_context(path):
     return context
 
 def file_props(root, path):
-    ''' Returns dictionary with file properties, or return None on failure'''
+    ''' Returns dictionary with file properties, or return None on failure '''
     abspath = os.path.join(root, path)
 
     try:
         st = os.lstat(abspath)
-    except OSError, e:
+    except OSError as e:
         warning('filetree: Error using stat() on path %s (%s)' % (abspath, e))
         return None
 
@@ -86,7 +82,7 @@ def file_props(root, path):
         ret['state'] = 'file'
         ret['src'] = abspath
     else:
-        warning('filetree: Error file type of %s not support' % abspath)
+        warning('filetree: Error file type of %s is not supported' % abspath)
         return None
 
     ret['uid'] = st.st_uid
