@@ -25,6 +25,9 @@ Ansible Changes By Release
 * slack
 * json
 
+####New Inventory scripts:
+* rackhd
+
 ###Minor Changes:
 
 * callbacks now have access to the options with which the CLI was called
