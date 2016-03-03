@@ -72,24 +72,29 @@ class DataLoader():
         Creates a python datastructure from the given data, which can be either
         a JSON or YAML string.
         '''
-
-        # YAML parser will take JSON as it is a subset.
-        if isinstance(data, AnsibleUnicode):
-            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-            # they are unable to cope with our subclass.
-            # Unwrap and re-wrap the unicode so we can keep track of line
-            # numbers
-            in_data = text_type(data)
-        else:
-            in_data = data
+        new_data = None
         try:
-            new_data = self._safe_load(in_data, file_name=file_name)
-        except YAMLError as yaml_exc:
-            self._handle_error(yaml_exc, file_name, show_content)
+            # we first try to load this data as JSON
+            new_data = json.loads(data)
+        except:
+            # must not be JSON, let the rest try
+            if isinstance(data, AnsibleUnicode):
+                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+                # they are unable to cope with our subclass.
+                # Unwrap and re-wrap the unicode so we can keep track of line
+                # numbers
+                in_data = text_type(data)
+            else:
+                in_data = data
+            try:
+                new_data = self._safe_load(in_data, file_name=file_name)
+            except YAMLError as yaml_exc:
+                self._handle_error(yaml_exc, file_name, show_content)
 
-        if isinstance(data, AnsibleUnicode):
-            new_data = AnsibleUnicode(new_data)
-            new_data.ansible_pos = data.ansible_pos
+            if isinstance(data, AnsibleUnicode):
+                new_data = AnsibleUnicode(new_data)
+                new_data.ansible_pos = data.ansible_pos
+
         return new_data
 
     def load_from_file(self, file_name):
