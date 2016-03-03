@@ -1,3 +1,4 @@
+dist: precise
 sudo: required
 services:
   - docker
