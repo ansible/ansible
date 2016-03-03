@@ -382,7 +382,7 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   * Notify handlers are always run in the same order they are parsed by Ansible, `not` in the order listed in the notify-statement.
+   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement.
    * Handler names live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
