@@ -21,6 +21,7 @@ import os
 import glob
 import pwd
 import grp
+import stat
 
 from ansible.plugins.lookup import LookupBase
 
@@ -67,7 +68,7 @@ def selinux_context(path):
 def file_props(root, path):
     ''' Returns dictionary with file properties, or return None on failure'''
     abspath = os.path.join(root, path)
-    ret = dict(root=root, path=path, exists=True)
+    ret = dict(root=root, path=path)
 
     try:
         if os.path.islink(abspath):
@@ -83,19 +84,19 @@ def file_props(root, path):
         return None
 
     try:
-        stat = os.stat(abspath)
+        st = os.stat(abspath)
     except OSError as e:
         display.warning('filetree: Error using stat() on path %s  (%s)' % (abspath, e))
         return None
 
-    ret['uid'] = stat.st_uid
-    ret['gid'] = stat.st_gid
-    ret['owner'] = pwd.getpwuid(stat.st_uid).pw_name
-    ret['group'] = grp.getgrgid(stat.st_gid).gr_name
-    ret['mode'] = str(oct(stat.st_mode))
-    ret['size'] = stat.st_size
-    ret['mtime'] = stat.st_mtime
-    ret['ctime'] = stat.st_ctime
+    ret['uid'] = st.st_uid
+    ret['gid'] = st.st_gid
+    ret['owner'] = pwd.getpwuid(st.st_uid).pw_name
+    ret['group'] = grp.getgrgid(st.st_gid).gr_name
+    ret['mode'] = str(oct(stat.S_IMODE(st.st_mode)))
+    ret['size'] = st.st_size
+    ret['mtime'] = st.st_mtime
+    ret['ctime'] = st.st_ctime
 
     if HAVE_SELINUX and selinux.is_selinux_enabled() == 1:
         context = selinux_context(abspath)
