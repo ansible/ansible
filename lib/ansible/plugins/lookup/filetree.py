@@ -84,7 +84,7 @@ def file_props(root, path):
         return None
 
     try:
-        st = os.stat(abspath)
+        st = os.lstat(abspath)
     except OSError as e:
         display.warning('filetree: Error using stat() on path %s  (%s)' % (abspath, e))
         return None
