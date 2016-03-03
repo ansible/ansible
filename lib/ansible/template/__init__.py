@@ -40,7 +40,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_str
 
 try:
     from hashlib import sha1
@@ -476,10 +476,10 @@ class Templar:
             try:
                 t = myenv.from_string(data)
             except TemplateSyntaxError as e:
-                raise AnsibleError("template error while templating string: %s. String: %s" % (str(e), data))
+                raise AnsibleError("template error while templating string: %s. String: %s" % (to_str(e), to_str(data)))
             except Exception as e:
-                if 'recursion' in str(e):
-                    raise AnsibleError("recursive loop detected in template string: %s" % data)
+                if 'recursion' in to_str(e):
+                    raise AnsibleError("recursive loop detected in template string: %s" % to_str(data))
                 else:
                     return data
 
@@ -495,13 +495,12 @@ class Templar:
                 res = j2_concat(rf)
             except TypeError as te:
                 if 'StrictUndefined' in str(te):
-                    raise AnsibleUndefinedVariable(
-                        "Unable to look up a name or access an attribute in template string. " + \
-                        "Make sure your variable name does not contain invalid characters like '-'."
-                    )
+                    errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_str(data)
+                    errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_str(te)
+                    raise AnsibleUndefinedVariable(errmsg)
                 else:
-                    debug("failing because of a type error, template data is: %s" % data)
-                    raise AnsibleError("an unexpected type error occurred. Error was %s" % te)
+                    debug("failing because of a type error, template data is: %s" % to_str(data))
+                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_str(data),to_str(te)))
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
