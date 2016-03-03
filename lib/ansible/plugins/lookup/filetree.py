@@ -33,7 +33,7 @@ except ImportError:
     pass
 
 try:
-    from __main__ import display
+    from __main__.display import warning
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
@@ -68,25 +68,25 @@ def selinux_context(path):
 def file_props(root, path):
     ''' Returns dictionary with file properties, or return None on failure'''
     abspath = os.path.join(root, path)
-    ret = dict(root=root, path=path)
-
-    try:
-        if os.path.islink(abspath):
-            ret['state'] = 'link'
-            ret['src'] = os.readlink(abspath)
-        elif os.path.isdir(abspath):
-            ret['state'] = 'directory'
-        elif os.path.isfile(abspath):
-            ret['state'] = 'file'
-            ret['src'] = abspath
-    except OSError as e:
-        display.warning('filetree: Error querying path %s  (%s)' % (abspath, e))
-        return None
 
     try:
         st = os.lstat(abspath)
-    except OSError as e:
-        display.warning('filetree: Error using stat() on path %s  (%s)' % (abspath, e))
+    except OSError, e:
+        warning('filetree: Error using stat() on path %s (%s)' % (abspath, e))
+        return None
+
+    ret = dict(root=root, path=path)
+
+    if stat.S_ISLNK(st.st_mode):
+        ret['state'] = 'link'
+        ret['src'] = os.readlink(abspath)
+    elif stat.S_ISDIR(st.st_mode):
+        ret['state'] = 'directory'
+    elif stat.S_ISREG(st.st_mode):
+        ret['state'] = 'file'
+        ret['src'] = abspath
+    else:
+        warning('filetree: Error file type of %s not support' % abspath)
         return None
 
     ret['uid'] = st.st_uid
