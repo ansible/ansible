@@ -129,11 +129,12 @@ class Display:
                 msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
 
             if not stderr:
-                sys.stdout.write(msg2)
-                sys.stdout.flush()
+                fileobj = sys.stdout
             else:
-                sys.stderr.write(msg2)
-                sys.stderr.flush()
+                fileobj = sys.stderr
+
+            fileobj.write(msg2)
+            fileobj.flush()
 
         if logger and not screen_only:
             msg2 = nocolor.lstrip(u'\n')
