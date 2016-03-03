@@ -76,154 +76,154 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
-def find_dvspg_by_name(dv_switch, portgroup_name):
-    portgroups = dv_switch.portgroup
+class VMwareDvsHost(object):
+    def __init__(self, module):
+        self.module = module
+        self.dv_switch = None
+        self.uplink_portgroup = None
+        self.host = None
+        self.dv_switch = None
+        self.nic = None
+        self.content = connect_to_api(self.module)
+        self.state = self.module.params['state']
+        self.switch_name = self.module.params['switch_name']
+        self.esxi_hostname = self.module.params['esxi_hostname']
+        self.vmnics = self.module.params['vmnics']
 
-    for pg in portgroups:
-        if pg.name == portgroup_name:
-            return pg
+    def process_state(self):
+        try:
+            dvs_host_states = {
+                'absent': {
+                    'present': self.state_destroy_dvs_host,
+                    'absent': self.state_exit_unchanged,
+                },
+                'present': {
+                    'update': self.state_update_dvs_host,
+                    'present': self.state_exit_unchanged,
+                    'absent': self.state_create_dvs_host,
+                }
+            }
 
-    return None
+            dvs_host_states[self.state][self.check_dvs_host_state()]()
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+        except Exception as e:
+            self.module.fail_json(msg=str(e))
 
+    def find_dvspg_by_name(self):
+        portgroups = self.dv_switch.portgroup
 
-def find_dvs_uplink_pg(dv_switch):
-    # There should only always be a single uplink port group on
-    # a distributed virtual switch
-
-    if len(dv_switch.config.uplinkPortgroup):
-        return dv_switch.config.uplinkPortgroup[0]
-    else:
+        for pg in portgroups:
+            if pg.name == self.portgroup_name:
+                return pg
         return None
 
+    def find_dvs_uplink_pg(self):
+        # There should only always be a single uplink port group on
+        # a distributed virtual switch
 
-# operation should be edit, add and remove
-def modify_dvs_host(dv_switch, host, operation, uplink_portgroup=None, vmnics=None):
-
-    spec = vim.DistributedVirtualSwitch.ConfigSpec()
-
-    spec.configVersion = dv_switch.config.configVersion
-    spec.host = [vim.dvs.HostMember.ConfigSpec()]
-    spec.host[0].operation = operation
-    spec.host[0].host = host
-
-    if operation in ("edit", "add"):
-        spec.host[0].backing = vim.dvs.HostMember.PnicBacking()
-        count = 0
-
-        for nic in vmnics:
-            spec.host[0].backing.pnicSpec.append(vim.dvs.HostMember.PnicSpec())
-            spec.host[0].backing.pnicSpec[count].pnicDevice = nic
-            spec.host[0].backing.pnicSpec[count].uplinkPortgroupKey = uplink_portgroup.key
-            count += 1
-
-    task = dv_switch.ReconfigureDvs_Task(spec)
-    changed, result = wait_for_task(task)
-    return changed, result
-
-
-def state_destroy_dvs_host(module):
-
-    operation = "remove"
-    host = module.params['host']
-    dv_switch = module.params['dv_switch']
-
-    changed = True
-    result = None
-
-    if not module.check_mode:
-        changed, result = modify_dvs_host(dv_switch, host, operation)
-    module.exit_json(changed=changed, result=str(result))
-
-
-def state_exit_unchanged(module):
-    module.exit_json(changed=False)
-
-
-def state_update_dvs_host(module):
-    dv_switch = module.params['dv_switch']
-    uplink_portgroup = module.params['uplink_portgroup']
-    vmnics = module.params['vmnics']
-    host = module.params['host']
-    operation = "edit"
-    changed = True
-    result = None
-
-    if not module.check_mode:
-        changed, result = modify_dvs_host(dv_switch, host, operation, uplink_portgroup, vmnics)
-    module.exit_json(changed=changed, result=str(result))
-
-
-def state_create_dvs_host(module):
-    dv_switch = module.params['dv_switch']
-    uplink_portgroup = module.params['uplink_portgroup']
-    vmnics = module.params['vmnics']
-    host = module.params['host']
-    operation = "add"
-    changed = True
-    result = None
-
-    if not module.check_mode:
-        changed, result = modify_dvs_host(dv_switch, host, operation, uplink_portgroup, vmnics)
-    module.exit_json(changed=changed, result=str(result))
-
-
-def find_host_attached_dvs(esxi_hostname, dv_switch):
-    for dvs_host_member in dv_switch.config.host:
-        if dvs_host_member.config.host.name == esxi_hostname:
-            return dvs_host_member.config.host
-
-    return None
-
-
-def check_uplinks(dv_switch, host, vmnics):
-    pnic_device = []
-    
-    for dvs_host_member in dv_switch.config.host:
-        if dvs_host_member.config.host == host:
-            for pnicSpec in dvs_host_member.config.backing.pnicSpec:
-                pnic_device.append(pnicSpec.pnicDevice)
-    
-    return collections.Counter(pnic_device) == collections.Counter(vmnics)
-
-
-def check_dvs_host_state(module):
-
-    switch_name = module.params['switch_name']
-    esxi_hostname = module.params['esxi_hostname']
-    vmnics = module.params['vmnics']
-
-    content = connect_to_api(module)
-    module.params['content'] = content
-
-    dv_switch = find_dvs_by_name(content, switch_name)
-
-    if dv_switch is None:
-        raise Exception("A distributed virtual switch %s does not exist" % switch_name)
-
-    uplink_portgroup = find_dvs_uplink_pg(dv_switch)
-
-    if uplink_portgroup is None:
-        raise Exception("An uplink portgroup does not exist on the distributed virtual switch %s" % switch_name)
-
-    module.params['dv_switch'] = dv_switch
-    module.params['uplink_portgroup'] = uplink_portgroup
-
-    host = find_host_attached_dvs(esxi_hostname, dv_switch)
-
-    if host is None:
-        # We still need the HostSystem object to add the host
-        # to the distributed vswitch
-        host = find_hostsystem_by_name(content, esxi_hostname)
-        if host is None:
-            module.fail_json(msg="The esxi_hostname %s does not exist in vCenter" % esxi_hostname)
-        module.params['host'] = host
-        return 'absent'
-    else:
-        module.params['host'] = host
-        if check_uplinks(dv_switch, host, vmnics):
-            return 'present'
+        if len(self.dv_switch.config.uplinkPortgroup):
+            return self.dv_switch.config.uplinkPortgroup[0]
         else:
-            return 'update'
+            return None
+
+    # operation should be edit, add and remove
+    def modify_dvs_host(self, operation):
+        spec = vim.DistributedVirtualSwitch.ConfigSpec()
+        spec.configVersion = self.dv_switch.config.configVersion
+        spec.host = [vim.dvs.HostMember.ConfigSpec()]
+        spec.host[0].operation = operation
+        spec.host[0].host = self.host
+
+        if operation in ("edit", "add"):
+            spec.host[0].backing = vim.dvs.HostMember.PnicBacking()
+            count = 0
+
+            for nic in self.vmnics:
+                spec.host[0].backing.pnicSpec.append(vim.dvs.HostMember.PnicSpec())
+                spec.host[0].backing.pnicSpec[count].pnicDevice = nic
+                spec.host[0].backing.pnicSpec[count].uplinkPortgroupKey = self.uplink_portgroup.key
+                count += 1
+
+        task = self.dv_switch.ReconfigureDvs_Task(spec)
+        changed, result = wait_for_task(task)
+        return changed, result
+
+    def state_destroy_dvs_host(self):
+        operation = "remove"
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            changed, result = self.modify_dvs_host(operation)
+        self.module.exit_json(changed=changed, result=str(result))
+
+    def state_exit_unchanged(self):
+        self.module.exit_json(changed=False)
+
+    def state_update_dvs_host(self):
+        operation = "edit"
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            changed, result = self.modify_dvs_host(operation)
+        self.module.exit_json(changed=changed, result=str(result))
+
+    def state_create_dvs_host(self):
+        operation = "add"
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            changed, result = self.modify_dvs_host(operation)
+        self.module.exit_json(changed=changed, result=str(result))
+
+    def find_host_attached_dvs(self):
+        for dvs_host_member in self.dv_switch.config.host:
+            if dvs_host_member.config.host.name == self.esxi_hostname:
+                return dvs_host_member.config.host
+
+        return None
+
+    def check_uplinks(self):
+        pnic_device = []
+
+        for dvs_host_member in self.dv_switch.config.host:
+            if dvs_host_member.config.host == self.host:
+                for pnicSpec in dvs_host_member.config.backing.pnicSpec:
+                    pnic_device.append(pnicSpec.pnicDevice)
+
+        return collections.Counter(pnic_device) == collections.Counter(self.vmnics)
+
+    def check_dvs_host_state(self):
+        self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
+
+        if self.dv_switch is None:
+            raise Exception("A distributed virtual switch %s does not exist" % self.switch_name)
+
+        self.uplink_portgroup = self.find_dvs_uplink_pg()
+
+        if self.uplink_portgroup is None:
+            raise Exception("An uplink portgroup does not exist on the distributed virtual switch %s"
+                            % self.switch_name)
+
+        self.host = self.find_host_attached_dvs()
+
+        if self.host is None:
+            # We still need the HostSystem object to add the host
+            # to the distributed vswitch
+            self.host = find_hostsystem_by_name(self.content, self.esxi_hostname)
+            if self.host is None:
+                self.module.fail_json(msg="The esxi_hostname %s does not exist in vCenter" % self.esxi_hostname)
+            return 'absent'
+        else:
+            if self.check_uplinks():
+                return 'present'
+            else:
+                return 'update'
 
 
 def main():
@@ -239,27 +239,8 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
-    try:
-
-        dvs_host_states = {
-            'absent': {
-                'present': state_destroy_dvs_host,
-                'absent': state_exit_unchanged,
-            },
-            'present': {
-                'update': state_update_dvs_host,
-                'present': state_exit_unchanged,
-                'absent': state_create_dvs_host,
-            }
-        }
-
-        dvs_host_states[module.params['state']][check_dvs_host_state(module)](module)
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    vmware_dvs_host = VMwareDvsHost(module)
+    vmware_dvs_host.process_state()
 
 from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
