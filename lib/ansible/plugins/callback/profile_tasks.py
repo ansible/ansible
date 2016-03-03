@@ -99,7 +99,9 @@ class CallbackModule(CallbackBase):
 
         # Record the start time of the current task
         self.current = task._uuid
-        self.stats[self.current] = {'time': time.time(), 'name': task.get_name(), 'path': task.get_path()}
+        self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
+        if self._display.verbosity >= 2:
+            self.stats[self.current][ 'path'] = task.get_path()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._record_task(task)
@@ -131,10 +133,8 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            self._display.display(
-                "{0:-<70}{1:-<70}{2:->9}".format(
-                    '{0} '.format(result['path']),
-                    '{0} '.format(result['name']),
-                    ' {0:.02f}s'.format(result['time']),
-                )
-            )
+            msg = ''
+            msg="{0:-<70}{1:->9}".format('{0} '.format(result['name']),' {0:.02f}s'.format(result['time']))
+            if 'path' in result:
+                msg += "\n{0:-<79}".format( '{0} '.format(result['path']))
+            self._display.display(msg)
