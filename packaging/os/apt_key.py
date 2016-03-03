@@ -166,8 +166,11 @@ def download_key(module, url):
     except Exception:
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
 
-def import_key(module, keyserver, key_id):
-    cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
+def import_key(module, keyring, keyserver, key_id):
+    if keyring:
+        cmd = "apt-key --keyring %s adv --keyserver %s --recv %s" % (keyring, keyserver, key_id)
+    else:
+        cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
@@ -253,7 +256,7 @@ def main():
                 if filename:
                     add_key(module, filename, keyring)
                 elif keyserver:
-                    import_key(module, keyserver, key_id)
+                    import_key(module, keyring, keyserver, key_id)
                 else:
                     add_key(module, "-", keyring, data)
                 changed=False
