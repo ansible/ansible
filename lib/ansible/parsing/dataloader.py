@@ -22,10 +22,9 @@ __metaclass__ = type
 import copy
 import json
 import os
-import stat
+import json
 import subprocess
-
-from yaml import load, YAMLError
+from yaml import YAMLError
 from ansible.compat.six import text_type, string_types
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
@@ -147,7 +146,10 @@ class DataLoader():
         try:
             return loader.get_single_data()
         finally:
-            loader.dispose()
+            try:
+                loader.dispose()
+            except AttributeError:
+                pass # older versions of yaml don't have dispose function, ignore
 
     def _get_file_contents(self, file_name):
         '''
