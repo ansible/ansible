@@ -28,6 +28,7 @@ import time
 import locale
 import logging
 import getpass
+import errno
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 from multiprocessing import Lock
@@ -134,7 +135,14 @@ class Display:
                 fileobj = sys.stderr
 
             fileobj.write(msg2)
-            fileobj.flush()
+
+            try:
+                fileobj.flush()
+            except IOError as e:
+                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+                # when piping to "head -n1"
+                if e.errno != errno.EPIPE:
+                    raise
 
         if logger and not screen_only:
             msg2 = nocolor.lstrip(u'\n')
