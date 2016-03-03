@@ -32,3 +32,4 @@ RUN echo -e '[local]\nlocalhost' > /etc/ansible/hosts
 
 VOLUME /sys/fs/cgroup /run /tmp
 ENV container=docker
+CMD ["/sbin/init"]
