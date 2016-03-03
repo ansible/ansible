@@ -1,5 +1,4 @@
-dist: precise
-group: legacy
+dist: trusty
 sudo: required
 services:
   - docker
