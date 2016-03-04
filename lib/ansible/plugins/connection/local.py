@@ -127,10 +127,10 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
         try:
-            shutil.copyfile(in_path, out_path)
+            shutil.copyfile(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except shutil.Error:
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_str(in_path), to_str(out_path)))
         except IOError as e:

@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_bytes
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
@@ -54,12 +55,12 @@ def secure_hash_s(data, hash_func=sha1):
 def secure_hash(filename, hash_func=sha1):
     ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
 
-    if not os.path.exists(filename) or os.path.isdir(filename):
+    if not os.path.exists(to_bytes(filename, errors='strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
     try:
-        infile = open(filename, 'rb')
+        infile = open(to_bytes(filename, errors='strict'), 'rb')
         block = infile.read(blocksize)
         while block:
             digest.update(block)
