@@ -9,9 +9,15 @@ Ansible Changes By Release
 
 ####New Modules:
 * aws: ec2_vol_facts
-* aws: ec2_vpc_dhcp_options.py
+* aws: ec2_vpc_dhcp_options
 * aws: ec2_vpc_net_facts
 * cloudstack: cs_volume
+* cloudstack: cs_configuration
+* cloudstack: cs_resourcelimit
+* cloudstack: cs_instance_facts
+* cloudstack: cs_pod
+* cloudstack: cs_cluster
+* cloudstack: cs_zone
 * win_regmerge
 * win_timezone
 * yum_repository
@@ -32,6 +38,7 @@ Ansible Changes By Release
 
 * callbacks now have access to the options with which the CLI was called
 * debug is now controlable with verbosity
+* modules now get verbosity, diff and other flags as passed to ansible
 
 ## 2.0.1 "Over the Hills and Far Away"
 
