@@ -749,7 +749,8 @@ class Facts(object):
             if len(tokens) == 0:
                 continue
             if tokens[0] == 'nameserver':
-                self.facts['dns']['nameservers'] = []
+                if not 'nameservers' in self.facts['dns']:
+                    self.facts['dns']['nameservers'] = []
                 for nameserver in tokens[1:]:
                     self.facts['dns']['nameservers'].append(nameserver)
             elif tokens[0] == 'domain':
