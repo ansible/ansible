@@ -65,7 +65,7 @@ class ResultProcess(multiprocessing.Process):
         result = None
         starting_point = self._cur_worker
         while True:
-            (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+            (worker_prc, rslt_q) = self._workers[self._cur_worker]
             self._cur_worker += 1
             if self._cur_worker >= len(self._workers):
                 self._cur_worker = 0
