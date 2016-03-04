@@ -119,7 +119,7 @@ def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_
                 varname = "{{%s}}" % varname
 
         if isinstance(varname, basestring):
-            if '{{' in varname or '{%' in varname:
+            if ('{{' in varname and '}}' in varname ) or ( '{%' in varname and '%}' in varname ):
                 try:
                     varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
                 except errors.AnsibleError, e:
