@@ -24,27 +24,12 @@ Parameters for connecting to the API are not listed here. They are included in t
 ```
 blkio_weight:
   description:
-    - Block IO weight
-  default: null
-
-blkio_weight_devices:
-  description:
-    - List of C(DEVICE_NAME:WEIGHT) pairs
+    - Block IO (relative weight), between 10 and 1000.
   default: null
 
 capabilities:
   description:
     - List of capabilities to add to the container.
-  default: null
-
-capabilities_drop:
-  description:
-    - List of capabilities to remove from the container
-  default: null
-
-cgroup_parent:
-  description:
-    - Optional parent cgroup for the container
   default: null
 
 command:
@@ -54,12 +39,12 @@ command:
 
 cpu_period:
   description:
-    - Limit CPU CFS (Completely Fair Scheduler) period. Expressed in milliseconds.
+    - Limit CPU CFS (Completely Fair Scheduler) period 
   default: 0
 
 cpu_quota:
   description:
-    - Limit CPU CFS (Completely Fair Scheduler) quota. Expressed in milliseconds.
+    - Limit CPU CFS (Completely Fair Scheduler) quota 
   default: 0
 
 cpuset_cpus:
@@ -74,8 +59,8 @@ cpuset_mems:
 
 cpu_shares:
   description:
-    - CPU shares. Integer value.
-  default: 0
+    - CPU shares (relative weight).
+  default: null 
 
 detach:
   description:
@@ -85,27 +70,8 @@ detach:
 
 devices:
   description:
-    - List of host devices to add to the container
-  default: null
-
-device_read_bps
-  description:
-    - List. Limit read rate (bytes per second) from a device in the format C(/dev/sda:1mb)
-  default: null
-
-device_read_iops:
-  description:
-    - List. Limit read rate (IO per second) from a device in the format C(/dev/sda:1000)
-  default: null
-
-device_write_bps:
-  description:
-    - List. Limit write rate (bytes per second) to a device in the foramt C(/dev/sda:1mb)
-  default: null
-
-device_write_iops:
-  description:
-    - List. Limit write rate (IO per second) to a device C(/dev/sda:1000)
+    - List of host device bindings to add to the container. Each binding is a mapping expressed
+      in the format: <path_on_host>:<path_in_container>:<cgroup_permissions> 
   default: null
 
 dns_servers:
@@ -118,14 +84,14 @@ dns_search_domains:
     - List of custom DNS search domains.
   default: null
 
-env_vars:
+env:
   description:
     - Dictionary of key,value pairs.
   default: null
 
 entrypoint:
   description:
-    - Overwrite the default ENTRYPOINT of the image.
+    - String or list of commands that overwrite the default ENTRYPOINT of the image.
   default: null
 
 etc_hosts:
@@ -140,6 +106,8 @@ exposed_ports:
       If the port is already exposed using EXPOSE in a Dockerfile, it does not
       need to be exposed again.
   default: null
+  aliases:
+    - exposed
 
 force_kill:
   description:
@@ -149,7 +117,7 @@ force_kill:
 
 groups:
   description:
-    - List of additional groups to join.
+    - List of additional group names and/or IDs that the container process will run as. 
   default: null
 
 hostname:
@@ -191,8 +159,8 @@ keep_volumes:
 
 kill_signal:
   description:
-    - Signal used to kill a running container when state is absent.
-  default: KILL
+    - Override default signal used to kill a running container.
+  default null:
 
 kernel_memory:
   description:
@@ -202,7 +170,7 @@ kernel_memory:
 
 labels:
    description:
-     - Set meta data on the cotnainer. Dictionary of key value paris:
+     - Dictionary of key value pairs.
    default: null
 
 links:
@@ -253,7 +221,7 @@ memory_swap:
       Number is a positive integer. Unit can be one of b, k, m, or g.
   default: 0
 
-memory_swapiness:
+memory_swappiness:
     description:
       - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
     default: 0
@@ -274,10 +242,10 @@ network_mode:
     - none
   default: null
 
-net_alias:
-  description:
-    - Add network scoped alias to the container.
-  default: null
+oom_killer:
+  desription:
+    - Whether or not to disable OOM Killer for the container.
+  default: false
 
 paused:
   description:
@@ -302,6 +270,8 @@ published_ports:
     - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
     - A value of ALL will publish all exposed container ports to random host ports, ignoring
       any other mappings.
+  aliases:
+    - ports
 
 read_only:
   description:
@@ -375,8 +345,8 @@ state:
 
 stop_signal:
   description:
-    - Signal used to stop the container.
-  default: SIGINT
+    - Override default signal used to stop the container.
+  default: null 
 
 stop_timeout:
   description:
@@ -417,6 +387,11 @@ volumes:
     - SELinux hosts can additionally use C(z) or C(Z) to use a shared or 
       private label for the volume.
 default: null
+
+volume_driver:
+  description:
+    - The container's volume driver.
+  default: none
 
 volumes_from:
   description:
