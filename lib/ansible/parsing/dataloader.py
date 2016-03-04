@@ -118,7 +118,7 @@ class DataLoader():
 
     def path_exists(self, path):
         path = self.path_dwim(path)
-        return os.path.exists(to_bytes(path))
+        return os.path.exists(to_bytes(path, errors='strict'))
 
     def is_file(self, path):
         path = self.path_dwim(path)
