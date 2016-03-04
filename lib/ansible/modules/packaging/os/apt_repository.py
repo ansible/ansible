@@ -287,7 +287,22 @@ class SourcesList(object):
                     os.remove(filename)
 
     def dump(self):
-        return '\n'.join([str(i) for i in self])
+        dumpstruct = {}
+        for filename, sources in self.files.items():
+            if sources:
+                lines = []
+                for n, valid, enabled, source, comment in sources:
+                    chunks = []
+                    if not enabled:
+                        chunks.append('# ')
+                    chunks.append(source)
+                    if comment:
+                        chunks.append(' # ')
+                        chunks.append(comment)
+                    chunks.append('\n')
+                    lines.append(''.join(chunks))
+                dumpstruct[filename] = ''.join(lines)
+        return dumpstruct
 
     def _choice(self, new, old):
         if new is None:
@@ -479,7 +494,17 @@ def main():
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
 
-    if not module.check_mode and changed:
+    if changed and module._diff:
+        diff = []
+        for filename in set(sources_before.keys()).union(sources_after.keys()):
+            diff.append({'before': sources_before.get(filename, ''),
+                         'after': sources_after.get(filename, ''),
+                         'before_header': (filename, '/dev/null')[filename not in sources_before],
+                         'after_header': (filename, '/dev/null')[filename not in sources_after]})
+    else:
+        diff = {}
+
+    if changed and not module.check_mode:
         try:
             sourceslist.save()
             if update_cache:
@@ -488,7 +513,7 @@ def main():
         except OSError, err:
             module.fail_json(msg=unicode(err))
 
-    module.exit_json(changed=changed, repo=repo, state=state)
+    module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
 # import module snippets
 from ansible.module_utils.basic import *
