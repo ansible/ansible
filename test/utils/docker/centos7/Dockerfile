@@ -12,6 +12,7 @@ rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN yum -y install \
     dbus-python \
     epel-release \
+    file \
     git \
     make \
     mercurial \
@@ -34,7 +35,7 @@ RUN yum -y install \
     python-virtualenv
 RUN sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
-RUN echo -e '[local]\nlocalhost' > /etc/ansible/hosts
+RUN echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
 VOLUME /sys/fs/cgroup /run /tmp
 ENV container=docker
 CMD ["/usr/sbin/init"]
