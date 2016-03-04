@@ -21,8 +21,9 @@ MYTMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
+EUID := $(shell id -u -r)
 
-all: setup parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
+all: setup parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_connection
 
 setup:
 	rm -rf $(TEST_DIR)
@@ -71,6 +72,19 @@ environment: setup
 
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_connection: setup
+ifeq ($(EUID),0)
+	# Test connection plugins when running as root (lang unspecified).
+	                ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build' $(TEST_FLAGS)
+	# Test connection plugins when running as root (lang=C).
+	LC_ALL=C LANG=C ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build' $(TEST_FLAGS)
+else
+	# Test connection plugins when not running as root (lang unspecified).
+	                ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build !chroot' $(TEST_FLAGS)
+	# Test connection plugins when not running as root (lang=C).
+	LC_ALL=C LANG=C ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build !chroot' $(TEST_FLAGS)
+endif
 
 destructive: setup
 	ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
