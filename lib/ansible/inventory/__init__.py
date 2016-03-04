@@ -559,11 +559,20 @@ class Inventory(object):
             return False
         return os.path.exists(self.host_list)
 
+    def is_dir(self):
+        """ did inventory come from a directory? """
+        if not isinstance(self.host_list, basestring):
+            return False
+        return os.path.isdir(self.host_list)
+
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         if not self.is_file():
             return None
-        dname = os.path.dirname(self.host_list)
+        if self.is_dir():
+            dname = os.path.dirname(os.path.dirname(self.host_list))
+        else:
+            dname = os.path.dirname(self.host_list)
         if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
             return os.path.abspath(cwd) 
