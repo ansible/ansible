@@ -7,7 +7,7 @@
 - Status: New
 - Proposal type: community development process
 - Targeted Release: Forever, until we improve it more at a later date.
-- PR for Comments: (will submit update after submitted)
+- PR for Comments: https://github.com/ansible/ansible/pull/14802#
 - Estimated time to implement: 2 weeks at most
 
 Comments on this proposal prior to acceptance are accepted in the comments section of the pull request linked above.
