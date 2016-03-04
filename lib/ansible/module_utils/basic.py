@@ -891,7 +891,7 @@ class AnsibleModule(object):
                                    details=str(e))
 
         # Fixes bug 14771. Ignore upper bits of mode
-        mode = (mode & 07777)
+        mode = (mode & PERM_BITS)
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
