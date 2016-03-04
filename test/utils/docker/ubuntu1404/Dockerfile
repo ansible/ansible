@@ -24,7 +24,7 @@ RUN apt-get install -y \
     python-yaml
 RUN sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
-RUN echo -e '[local]\nlocalhost' > /etc/ansible/hosts
+RUN echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
 RUN locale-gen en_US.UTF-8
 ENV container=docker
 CMD ["/sbin/init"]
