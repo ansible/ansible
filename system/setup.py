@@ -35,7 +35,7 @@ options:
         description:
             - path used for local ansible facts (*.fact) - files in this dir
               will be run (if executable) and their results be added to ansible_local facts
-              if a file is not executable it is read.
+              if a file is not executable it is read. Check notes for Windows options. (from 2.1 on)
               File/results format can be json or ini-format
         required: false
         default: '/etc/ansible/facts.d'
@@ -55,11 +55,16 @@ notes:
       remote systems. (See also M(facter) and M(ohai).)
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
-      C(fact_path) or C(filter) as this is provided by a simpler implementation of the module.
-      Different facts are returned for Windows hosts.
+      C(filter) as this is provided by a simpler implementation of the module.
+    - If the target host is Windows you can now use C(fact_path). Make sure that this path 
+      exists on the target host. Files in this path MUST be PowerShell scripts (*.ps1) and 
+      their output must be formattable in JSON (Ansible will take care of this). Test the 
+      output of your scripts.
+      This option was added in Ansible 2.1.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
+    - "David O'Brien @david_obrien davidobrien1985"
 '''
 
 EXAMPLES = """
@@ -74,6 +79,9 @@ ansible all -m setup -a 'filter=facter_*'
 
 # Display only facts about certain interfaces.
 ansible all -m setup -a 'filter=ansible_eth[0-2]'
+
+# Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
+ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
 
 
