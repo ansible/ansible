@@ -25,6 +25,11 @@ driver:
     - Specify the type of network. Docker provides bridge and overlay drivers, but 3rd party drivers can also be used.
   default: bridge
 
+driver_options:
+  description:
+    - Dictionary of network settings. Consult docker docs for valid options and values.
+  default: null
+
 force:
   description:
     - With state 'absent' forces disconnecting all containers from the network prior to deleting the network. With
@@ -37,16 +42,21 @@ incremental:
       Use incremental to leave existing containers connected.
   default: false
 
+ipam_driver:
+  description:
+    - Specifiy an IPAM driver.
+  default: null 
+
+ipam_options:
+  description:
+    - Dictionary of IPAM options.  
+  default: null
+
 network_name:
   description:
     - Name of the network to operate on.
   default: null
   required: true
-
-options:
-  description:
-    - Dictionary of network settings. Consult docker docs for valid options and values.
-  default: null
     
 state:
   description:
