@@ -94,7 +94,7 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
             import_error = False
             if len(tokens) != 3:
                 import_error = True
-            if b" import *" not in line:
+            if (b" import *" not in line) and not (b" import AnsibleModule" in line):
                 import_error = True
             if import_error:
                 raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
