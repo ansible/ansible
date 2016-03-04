@@ -61,7 +61,7 @@ requirements: ["shade"]
 
 EXAMPLES = '''
 # Creates a object named 'fstab' in the 'config' container
-- os_object: cloud=mordred state=present name=fstab container=config file=/etc/fstab
+- os_object: cloud=mordred state=present name=fstab container=config filename=/etc/fstab
 
 # Deletes a container called config and all of its contents
 - os_object: cloud=rax-iad state=absent container=config
