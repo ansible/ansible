@@ -21,13 +21,12 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 
 from ansible.plugins import lookup_loader
-
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -35,6 +34,8 @@ from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+
+from ansible.utils.unicode import to_str
 
 try:
     from __main__ import display
@@ -168,7 +169,10 @@ class Task(Base, Conditional, Taggable, Become):
         # and the delegate_to value from the various possible forms
         # supported as legacy
         args_parser = ModuleArgsParser(task_ds=ds)
-        (action, args, delegate_to) = args_parser.parse()
+        try:
+            (action, args, delegate_to) = args_parser.parse()
+        except AnsibleParserError as e:
+            raise AnsibleParserError(to_str(e), obj=ds)
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
