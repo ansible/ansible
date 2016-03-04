@@ -125,6 +125,7 @@ Here's the approach:
         'name': 'repo’
     }
     ```
+- For roles installed from Galaxy, Galaxy should provide some measure of security against version change. Galaxy should track the commit related to a version. If the role owner changes historical versions (today tags) and thus changes the commit hash, the affected version would become un-installable.
 
 - Refactor the install process to encompass the following :
 
