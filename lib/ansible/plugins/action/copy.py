@@ -107,7 +107,7 @@ class ActionModule(ActionBase):
         source_files = []
 
         # If source is a directory populate our list else source is a file and translate it to a tuple.
-        if os.path.isdir(to_bytes(source)):
+        if os.path.isdir(to_bytes(source, errors='strict')):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
                 sz = len(source)
