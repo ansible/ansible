@@ -663,6 +663,10 @@ class AnsibleModule(object):
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
 
+                if mode != stat.S_IMODE(mode):
+                    # prevent mode from having extra info orbeing invalid long number
+                    self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
+
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
