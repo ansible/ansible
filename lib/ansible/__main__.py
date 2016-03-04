@@ -1,0 +1,124 @@
+#!/usr/bin/env python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+########################################################
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
+
+import os
+import sys
+import traceback
+
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.utils.display import Display
+from ansible.utils.unicode import to_unicode
+
+
+########################################
+### OUTPUT OF LAST RESORT ###
+class LastResort(object):
+    def display(self, msg):
+        print(msg, file=sys.stderr)
+
+    def error(self, msg, wrap_text=None):
+        print(msg, file=sys.stderr)
+
+
+########################################
+
+def main():
+    display = LastResort()
+    cli = None
+    me = os.path.basename(sys.argv[0])
+    if me == '__main__.py':
+        try:
+            cmd = sys.argv.pop(1)
+            me = 'ansible-%s' % cmd
+        except IndexError:
+            me = 'ansible'
+        sys.argv[0] = me
+
+    try:
+        display = Display()
+        display.debug("starting run")
+
+        sub = None
+        try:
+            if me.find('-') != -1:
+                target = me.split('-')
+                if len(target) > 1:
+                    sub = target[1]
+                    myclass = "%sCLI" % sub.capitalize()
+                    mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
+            elif me == 'ansible':
+                from ansible.cli.adhoc import AdHocCLI as mycli
+            else:
+                raise AnsibleError("Unknown Ansible alias: %s" % me)
+        except ImportError as e:
+            if e.message.endswith(' %s' % sub):
+                raise AnsibleError("Ansible sub-program not implemented: %s" % me)
+            else:
+                raise
+
+        cli = mycli(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
+        display.error(to_unicode(e), wrap_text=False)
+        sys.exit(5)
+    except AnsibleParserError as e:
+        display.error(to_unicode(e), wrap_text=False)
+        sys.exit(4)
+# TQM takes care of these, but leaving comment to reserve the exit codes
+#    except AnsibleHostUnreachable as e:
+#        display.error(str(e))
+#        sys.exit(3)
+#    except AnsibleHostFailed as e:
+#        display.error(str(e))
+#        sys.exit(2)
+    except AnsibleError as e:
+        display.error(to_unicode(e), wrap_text=False)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        display.error("User interrupted execution")
+        sys.exit(99)
+    except Exception as e:
+        have_cli_options = cli is not None and cli.options is not None
+        display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
+        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
+            display.display(u"the full traceback was:\n\n%s" % to_unicode(traceback.format_exc()))
+        else:
+            display.display("to see the full traceback, use -vvv")
+        sys.exit(250)
+
+if __name__ == '__main__':
+    main()
