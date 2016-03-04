@@ -136,7 +136,7 @@ def _fail_if_no_dnf(module):
     """Fail if unable to import dnf."""
     if not HAS_DNF:
         module.fail_json(
-            msg="`python-dnf` is not installed, but it is required for the Ansible dnf module.")
+            msg="`python2-dnf` is not installed, but it is required for the Ansible dnf module.")
 
 
 def _configure_base(module, base, conf_file, disable_gpg_check):
@@ -183,7 +183,6 @@ def _specify_repositories(base, disablerepo, enablerepo):
 
 def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo):
     """Return a fully configured dnf Base object."""
-    _fail_if_no_dnf(module)
     base = dnf.Base()
     _configure_base(module, base, conf_file, disable_gpg_check)
     _specify_repositories(base, disablerepo, enablerepo)
@@ -338,6 +337,8 @@ def main():
         mutually_exclusive=[['name', 'list']],
         supports_check_mode=True)
     params = module.params
+
+    _fail_if_no_dnf(module)
     if params['list']:
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
