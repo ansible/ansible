@@ -33,9 +33,9 @@ RUN yum -y install \
     python-pip \
     python-setuptools \
     python-virtualenv
-RUN sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
+RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
-RUN echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
+RUN /usr/bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
 VOLUME /sys/fs/cgroup /run /tmp
 ENV container=docker
 CMD ["/usr/sbin/init"]
