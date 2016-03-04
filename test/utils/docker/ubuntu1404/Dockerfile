@@ -1,8 +1,5 @@
 FROM ubuntu:trusty
-ENV LC_ALL en_US.UTF-8
-
 RUN apt-get clean; apt-get update -y;
-
 RUN apt-get install -y \
     debianutils \
     git \
@@ -12,7 +9,6 @@ RUN apt-get install -y \
     subversion \
     sudo \
     unzip
-
 RUN apt-get install -y \
     python-coverage \
     python-httplib2 \
@@ -25,11 +21,8 @@ RUN apt-get install -y \
     python-setuptools \
     python-virtualenv \
     python-yaml
-
 RUN sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN echo -e '[local]\nlocalhost' > /etc/ansible/hosts
-
-VOLUME /sys/fs/cgroup /run /tmp
 ENV container=docker
 CMD ["/sbin/init"]
