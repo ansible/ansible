@@ -10,6 +10,6 @@ if [ "${TARGET}" = "sanity" ]; then
 else
     docker build -t ansible_test/${TARGET} test/utils/docker/${TARGET}
     docker run -d --volume="${PWD}:/root/ansible" ${TARGET_OPTIONS} ansible_test/${TARGET} > /tmp/cid_${TARGET}
-    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c 'cd /root/ansible; . hacking/env-setup; make tests && (cd test/integration; make)'
+    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c 'cd /root/ansible; . hacking/env-setup; (cd test/integration; LC_ALL=en_US.utf-8 make)'
     docker kill $(cat /tmp/cid_${TARGET})
 fi
