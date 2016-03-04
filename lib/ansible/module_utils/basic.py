@@ -890,6 +890,9 @@ class AnsibleModule(object):
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
 
+        # Fixes bug 14771. Ignore upper bits of mode
+        mode = (mode & 07777)
+
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
