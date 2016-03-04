@@ -99,9 +99,8 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
-            self._workers.append([None, main_q, rslt_q])
+            self._workers.append([None, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -249,9 +248,8 @@ class TaskQueueManager:
         if self._result_prc:
             self._result_prc.terminate()
 
-            for (worker_prc, main_q, rslt_q) in self._workers:
+            for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
-                main_q.close()
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
