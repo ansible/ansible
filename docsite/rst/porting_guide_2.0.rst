@@ -229,16 +229,19 @@ for most callback plugins.  However, if your callback plugin makes use of
 have to store the values for these yourself as ansible no longer automatically
 populates the callback with them.  Here's a short snippet that shows you how::
 
+    import os
     from ansible.plugins.callback import CallbackBase
 
     class CallbackModule(CallbackBase):
         def __init__(self):
             self.playbook = None
+            self.playbook_name = None
             self.play = None
             self.task = None
 
         def v2_playbook_on_start(self, playbook):
             self.playbook = playbook
+            self.playbook_name = os.path.basename(self.playbook._filename)
 
         def v2_playbook_on_play_start(self, play):
             self.play = play
@@ -247,7 +250,7 @@ populates the callback with them.  Here's a short snippet that shows you how::
             self.task = task
 
         def v2_on_any(self, *args, **kwargs):
-            self._display.display('%s: %s: %s' % (self.playbook.name,
+            self._display.display('%s: %s: %s' % (self.playbook_name,
             self.play.name, self.task))
 
 
