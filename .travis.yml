@@ -17,6 +17,7 @@ matrix:
     - env: TARGET=centos6
     - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
     - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
     - env: TARGET=ubuntu1404
 addons:
   apt:
