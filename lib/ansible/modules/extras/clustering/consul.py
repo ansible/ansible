@@ -71,6 +71,16 @@ options:
           - the port on which the consul agent is running
         required: false
         default: 8500
+    scheme:
+        description:
+          - the protocol scheme on which the consul agent is running
+        required: false
+        default: http
+    verify:
+        description:
+          - whether to verify the tls certificate of the consul agent
+        required: false
+        default: True
     notes:
         description:
           - Notes to attach to check when registering it.
@@ -308,6 +318,8 @@ def remove_service(module, service_id):
 def get_consul_api(module, token=None):
     return consul.Consul(host=module.params.get('host'),
                          port=module.params.get('port'),
+                         scheme=module.params.get('scheme'),
+                         verify=module.params.get('verify'),
                          token=module.params.get('token'))
 
 
@@ -503,6 +515,8 @@ def main():
         argument_spec=dict(
             host=dict(default='localhost'),
             port=dict(default=8500, type='int'),
+            scheme=dict(required=False, default='http'),
+            verify=dict(required=False, default=True, type='bool'),
             check_id=dict(required=False),
             check_name=dict(required=False),
             check_node=dict(required=False),
