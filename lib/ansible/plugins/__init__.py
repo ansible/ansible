@@ -444,7 +444,7 @@ fragment_loader = PluginLoader(
 strategy_loader = PluginLoader(
     'StrategyModule',
     'ansible.plugins.strategy',
-    None,
+    C.DEFAULT_STRATEGY_PLUGIN_PATH,
     'strategy_plugins',
     required_base_class='StrategyBase',
 )
