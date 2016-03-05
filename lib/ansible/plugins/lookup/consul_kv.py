@@ -47,7 +47,9 @@ token: acl token to allow access to restricted values.
 
 By default this will lookup keys via the consul agent running on http://localhost:8500
 this can be changed by setting the env variable 'ANSIBLE_CONSUL_URL' to point to the url
-of the kv store you'd like to use.
+of the kv store you'd like to use. If you are running consul via https on a self-signed
+certificate you can set 'ANSIBLE_CONSUL_INSECURE_CERT' to any value and https certificates
+will not be verified.
 
 '''
 
@@ -80,6 +82,9 @@ class LookupModule(LookupBase):
         self.agent_url = 'http://localhost:8500'
         if os.getenv('ANSIBLE_CONSUL_URL') is not None:
             self.agent_url = os.environ['ANSIBLE_CONSUL_URL']
+        self.agent_verify_certificate = True
+        if os.getenv('ANSIBLE_CONSUL_INSECURE_CERT') is not None:
+            self.agent_verify_certificate = False
 
     def run(self, terms, variables=None, **kwargs):
 
@@ -87,7 +92,7 @@ class LookupModule(LookupBase):
             raise AnsibleError('python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
 
         u = urlparse(self.agent_url)
-        consul_api = consul.Consul(host=u.hostname, port=u.port)
+        consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=self.agent_verify_certificate)
 
         values = []
         try:
