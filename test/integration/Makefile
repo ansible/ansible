@@ -73,18 +73,17 @@ environment: setup
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-test_connection: setup
-ifeq ($(EUID),0)
-	# Test connection plugins when running as root (lang unspecified).
-	                ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build' $(TEST_FLAGS)
-	# Test connection plugins when running as root (lang=C).
-	LC_ALL=C LANG=C ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build' $(TEST_FLAGS)
-else
-	# Test connection plugins when not running as root (lang unspecified).
-	                ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build !chroot' $(TEST_FLAGS)
-	# Test connection plugins when not running as root (lang=C).
-	LC_ALL=C LANG=C ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build !chroot' $(TEST_FLAGS)
+# Skip connection plugins which require root when not running as root.
+ifneq ($(EUID),0)
+TEST_CONNECTION_FILTER := !chroot
 endif
+
+# Connection plugin test command to repeat with each locale setting.
+TEST_CONNECTION_CMD = $(1) ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build $(TEST_CONNECTION_FILTER)' $(TEST_FLAGS)
+
+test_connection: setup
+	$(call TEST_CONNECTION_CMD)
+	$(call TEST_CONNECTION_CMD, LC_ALL=C LANG=C)
 
 destructive: setup
 	ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
