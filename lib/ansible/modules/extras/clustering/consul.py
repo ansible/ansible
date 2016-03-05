@@ -76,11 +76,13 @@ options:
           - the protocol scheme on which the consul agent is running
         required: false
         default: http
+        version_added: "2.1"
     verify:
         description:
           - whether to verify the tls certificate of the consul agent
         required: false
         default: True
+        version_added: "2.1"
     notes:
         description:
           - Notes to attach to check when registering it.
