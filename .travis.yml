@@ -14,6 +14,7 @@ matrix:
       python: 3.4
     - env: TARGET=sanity TOXENV=py35
       python: 3.5
+    - env: TARGET=centos6
     - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
     - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
     - env: TARGET=ubuntu1404
