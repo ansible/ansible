@@ -119,7 +119,7 @@ def main():
             puppetmaster=dict(required=False, default=None),
             manifest=dict(required=False, default=None),
             logdest=dict(
-                required=False, default=['stdout'],
+                required=False, default='stdout',
                 choices=['stdout', 'syslog']),
             show_diff=dict(
                 # internal code to work with --diff, do not use
