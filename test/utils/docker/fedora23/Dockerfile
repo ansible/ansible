@@ -13,7 +13,6 @@ RUN dnf -y install \
     dbus-python \
     file \
     findutils \
-    glibc-locale-source \
     git \
     make \
     mercurial \
@@ -37,6 +36,8 @@ RUN dnf -y install \
     unzip \
     which \
     yum
+RUN localedef -f ISO-8859-1 -i pt_BR pt_BR
+RUN localedef -f ISO-8859-1 -i es_MX es_MX
 RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN /usr/bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
