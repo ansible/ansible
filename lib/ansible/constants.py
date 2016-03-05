@@ -302,3 +302,6 @@ VAULT_VERSION_MIN         = 1.0
 VAULT_VERSION_MAX         = 1.0
 TREE_DIR                  = None
 LOCALHOST                 = frozenset(['127.0.0.1', 'localhost', '::1'])
+# module search
+BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
+IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
