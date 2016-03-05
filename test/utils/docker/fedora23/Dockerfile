@@ -13,6 +13,7 @@ RUN dnf -y install \
     dbus-python \
     file \
     findutils \
+    glibc-common \
     git \
     make \
     mercurial \
