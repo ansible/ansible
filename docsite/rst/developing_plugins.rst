@@ -112,6 +112,7 @@ to /usr/share/ansible/plugins, in a subfolder for each plugin type::
     * connection_plugins
     * filter_plugins
     * vars_plugins
+    * strategy_plugins
 
 To change this path, edit the ansible configuration file.
 
