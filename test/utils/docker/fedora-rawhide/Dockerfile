@@ -1,5 +1,5 @@
-# Latest version of centos
-FROM fedora:23
+# Latest version of fedora rawhide
+FROM fedora:rawhide
 RUN dnf -y update; dnf clean all
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*; \
@@ -13,8 +13,8 @@ RUN dnf -y install \
     dbus-python \
     file \
     findutils \
-    glibc-locale-source \
     git \
+    glibc-locale-source \
     make \
     mercurial \
     procps \
@@ -37,6 +37,7 @@ RUN dnf -y install \
     unzip \
     which \
     yum
+RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8
 RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN /usr/bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
