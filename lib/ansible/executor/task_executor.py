@@ -447,19 +447,23 @@ class TaskExecutor:
 
             # helper methods for use below in evaluating changed/failed_when
             def _evaluate_changed_when_result(result):
-                if self._task.changed_when is not None:
+                if self._task.changed_when:
                     cond = Conditional(loader=self._loader)
-                    cond.when = [ self._task.changed_when ]
+                    cond.when = self._task.changed_when
                     result['changed'] = cond.evaluate_conditional(templar, vars_copy)
+                else:
+                    result['changed'] = False
 
             def _evaluate_failed_when_result(result):
-                if self._task.failed_when is not None:
+                if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
-                    cond.when = [ self._task.failed_when ]
+                    cond.when = self._task.failed_when
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
-                    return failed_when_result
-                return False
+                else:
+                    failed_when_result = False
+                    result['failed'] = False
+                return failed_when_result
 
             if 'ansible_facts' in result:
                 vars_copy.update(result['ansible_facts'])
@@ -477,7 +481,7 @@ class TaskExecutor:
 
             if attempt < retries - 1:
                 cond = Conditional(loader=self._loader)
-                cond.when = [ self._task.until ]
+                cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
