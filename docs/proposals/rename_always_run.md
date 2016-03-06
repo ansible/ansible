@@ -1,4 +1,4 @@
-# Rename always_run to checkmode_run
+# Rename always_run to ignore_checkmode
 
 *Author*: René Moser <@resmo>
 
@@ -25,10 +25,10 @@ You have a conditional but also a word that says `always`. This is a conflict in
 
 ## Solution Proposal
 
-Deprecate `always_run` by rename it to `checkmode_run`:
+Deprecate `always_run` by rename it to `ignore_checkmode`:
 
 ```
 - shell: dangerous_cleanup.sh
   when: cleanup == "yes"
-  checkmode_run: yes
+  ignore_checkmode: yes
 ```
