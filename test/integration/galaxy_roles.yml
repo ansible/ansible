@@ -1,5 +1,9 @@
+# change these to some ansible owned test roles
+- src: briancoca.oracle_java7
+  name: oracle_java7
+
 - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
-  version: v1.4
+  version: pr-10620
 
 - src: http://bitbucket.org/willthames/hg-ansible-galaxy
   scm: hg

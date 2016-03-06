@@ -16,10 +16,12 @@ You might have some templates for configuration files that are mostly the same, 
 Variables in Ansible are how we deal with differences between systems.  
 
 To understand variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
-Useful things like the "group_by" module
-and the "when" conditional can also be used with variables, and to help manage differences between systems.
+Useful things like the **group_by** module
+and the ``when`` conditional can also be used with variables, and to help manage differences between systems.
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
+
+For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
 
 .. _valid_variable_names:
 
@@ -30,11 +32,30 @@ Before we start using variables it's important to know what are valid variable n
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
-"foo_port" is a great variable.  "foo5" is fine too.  
+``foo_port`` is a great variable.  ``foo5`` is fine too.  
 
-"foo-port", "foo port", "foo.port" and "12" are not valid variable names.
+``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
-Easy enough, let's move on.
+YAML also supports dictionaries which map keys to values.  For instance::
+
+  foo:
+    field1: one
+    field2: two
+
+You can then reference a specific field in the dictionary using either bracket
+notation or dot notation::
+
+  foo['field1']
+  foo.field1
+
+These will both reference the same value ("one").  However, if you choose to
+use dot notation be aware that some keys can cause problems because they
+collide with attributes and methods of python dictionaries.  You should use
+bracket notation instead of dot notation if you use keys which start and end
+with two underscores (Those are reserved for special meanings in python) or
+are any of the known public attributes:
+
+``add``, ``append``, ``as_integer_ratio``, ``bit_length``, ``capitalize``, ``center``, ``clear``, ``conjugate``, ``copy``, ``count``, ``decode``, ``denominator``, ``difference``, ``difference_update``, ``discard``, ``encode``, ``endswith``, ``expandtabs``, ``extend``, ``find``, ``format``, ``fromhex``, ``fromkeys``, ``get``, ``has_key``, ``hex``, ``imag``, ``index``, ``insert``, ``intersection``, ``intersection_update``, ``isalnum``, ``isalpha``, ``isdecimal``, ``isdigit``, ``isdisjoint``, ``is_integer``, ``islower``, ``isnumeric``, ``isspace``, ``issubset``, ``issuperset``, ``istitle``, ``isupper``, ``items``, ``iteritems``, ``iterkeys``, ``itervalues``, ``join``, ``keys``, ``ljust``, ``lower``, ``lstrip``, ``numerator``, ``partition``, ``pop``, ``popitem``, ``real``, ``remove``, ``replace``, ``reverse``, ``rfind``, ``rindex``, ``rjust``, ``rpartition``, ``rsplit``, ``rstrip``, ``setdefault``, ``sort``, ``split``, ``splitlines``, ``startswith``, ``strip``, ``swapcase``, ``symmetric_difference``, ``symmetric_difference_update``, ``title``, ``translate``, ``union``, ``update``, ``upper``, ``values``, ``viewitems``, ``viewkeys``, ``viewvalues``, ``zfill``.
 
 .. _variables_in_inventory:
 
@@ -113,276 +134,15 @@ Jinja2 Filters
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to those, Ansible supplies many more.
-
-.. _filters_for_formatting_data:
-
-Filters For Formatting Data
----------------------------
-
-The following filters will take a data structure in a template and render it in a slightly different format.  These
-are occasionally useful for debugging::
-
-    {{ some_variable | to_nice_json }}
-    {{ some_variable | to_nice_yaml }}
-
-.. _filters_used_with_conditionals:
-
-Filters Often Used With Conditionals
-------------------------------------
-
-The following tasks are illustrative of how filters can be used with conditionals::
-
-    tasks:
-
-      - shell: /usr/bin/foo
-        register: result
-        ignore_errors: True
-
-      - debug: msg="it failed"
-        when: result|failed
-
-      # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
-        when: result|changed
-
-      - debug: msg="it succeeded"
-        when: result|success
-
-      - debug: msg="it was skipped"
-        when: result|skipped
-
-.. _forcing_variables_to_be_defined:
-
-Forcing Variables To Be Defined
--------------------------------
-
-The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
-
-This allows an explicit check with this feature off::
-
-    {{ variable | mandatory }}
-
-The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
-
-
-.. _defaulting_undefined_variables:
-
-Defaulting Undefined Variables
-------------------------------
-
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
-
-    {{ some_variable | default(5) }}
-
-In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
-being raised.
-
-
-.. _omitting_undefined_variables:
-
-Omitting Undefined Variables and Parameters
--------------------------------------------
-
-As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
-`omit` variable::
-
-    - name: touch files with an optional mode
-      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
-      with_items:
-        - path: /tmp/foo
-        - path: /tmp/bar
-        - path: /tmp/baz
-          mode: "0444"
-
-For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
-parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
-
-
-.. _list_filters:
-
-List Filters
-------------
-
-These filters all operate on list variables.
-
-.. versionadded:: 1.8
-
-To get the minimum value from list of numbers::
-
-    {{ list1 | min }}
-
-To get the maximum value from a list of numbers::
-
-    {{ [3, 4, 2] | max }}
-
-.. _set_theory_filters:
-
-Set Theory Filters
-------------------
-All these functions return a unique set from sets or lists.
-
-.. versionadded:: 1.4
-
-To get a unique set from a list::
-
-    {{ list1 | unique }}
-
-To get a union of two lists::
-
-    {{ list1 | union(list2) }}
-
-To get the intersection of 2 lists (unique list of all items in both)::
-
-    {{ list1 | intersect(list2) }}
-
-To get the difference of 2 lists (items in 1 that don't exist in 2)::
-
-    {{ list1 | difference(list2) }}
-
-To get the symmetric difference of 2 lists (items exclusive to each list)::
-
-    {{ list1 | symmetric_difference(list2) }}
-
-.. _version_comparison_filters:
-
-Version Comparison Filters
---------------------------
-
-.. versionadded:: 1.6
-
-To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
-
-The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
-
-    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
-
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
-
-The ``version_compare`` filter accepts the following operators::
-
-    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
-
-This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
-be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
-
-    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
-
-.. _random_filter:
-
-Random Number Filter
---------------------
-
-.. versionadded:: 1.6
-
-This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
-items), but can also generate a random number based on a range.
-
-To get a random item from a list::
-
-    {{ ['a','b','c']|random }} => 'c'
-
-To get a random number from 0 to supplied end::
-
-    {{ 59 |random}} * * * * root /script/from/cron
-
-Get a random number from 0 to 100 but in steps of 10::
-
-    {{ 100 |random(step=10) }}  => 70
-
-Get a random number from 1 to 100 but in steps of 10::
-
-    {{ 100 |random(1, 10) }}    => 31
-    {{ 100 |random(start=1, step=10) }}    => 51
-
-
-Shuffle Filter
---------------
-
-.. versionadded:: 1.8
-
-This filter will randomize an existing list, giving a different order every invocation.
-
-To get a random list from an existing  list::
-
-    {{ ['a','b','c']|shuffle }} => ['c','a','b']
-    {{ ['a','b','c']|shuffle }} => ['b','c','a']
-
-note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
-
-.. _other_useful_filters:
-
-Other Useful Filters
---------------------
-
-To concatenate a list into a string::
-
-   {{ list | join(" ") }}
-
-To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
-
-    {{ path | basename }}
-
-To get the directory from a path::
-
-    {{ path | dirname }}
-
-To expand a path containing a tilde (`~`) character (new in version 1.5)::
-
-    {{ path | expanduser }}
-
-To get the real path of a link (new in version 1.8)::
-
-   {{ path | readlink }}
-
-To work with Base64 encoded strings::
-
-    {{ encoded | b64decode }}
-    {{ decoded | b64encode }}
-
-To take a sha1sum of a filename::
-
-    {{ filename | sha1 }}
-
-To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
-doesn't know it is a boolean value::
-
-   - debug: msg=test
-     when: some_string_value | bool
-
-To match strings against a regex, use the "match" or "search" filter::
-
-    vars:
-      url: "http://example.com/users/foo/resources/bar"
-
-    tasks:
-        - shell: "msg='matched pattern 1'"
-          when: url | match("http://example.com/users/.*/resources/.*")
-
-        - debug: "msg='matched pattern 2'"
-          when: url | search("/users/.*/resources/.*")
-
-'match' will require a complete match in the string, while 'search' will require a match inside of the string.
-
-To replace text in a string with regex, use the "regex_replace" filter::
-
-    # convert "ansible" to "able"    
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
-
-    # convert "foobar" to "bar"
-    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
-
-A few useful filters are typically added with each new Ansible release.  The development documentation shows
-how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
-to be added to core so everyone can make use of them.
+In addition to those, Ansible supplies many more. See the :doc:`playbooks_filters` document
+for a list of available filters and example usage guide.
 
 .. _yaml_gotchas:
 
 Hey Wait, A YAML Gotcha
 ```````````````````````
 
-YAML syntax requires that if you start a value with {{ foo }} you quote the whole line, since it wants to be
+YAML syntax requires that if you start a value with ``{{ foo }}`` you quote the whole line, since it wants to be
 sure you aren't trying to start a YAML dictionary.  This is covered on the :doc:`YAMLSyntax` page.
 
 This won't work::
@@ -569,7 +329,7 @@ This will return a ginormous amount of variable data, which may look like this, 
             "type": "ether"
         }, 
         "ansible_form_factor": "Other", 
-        "ansible_fqdn": "ubuntu2", 
+        "ansible_fqdn": "ubuntu2.example.com",
         "ansible_hostname": "ubuntu2", 
         "ansible_interfaces": [
             "lo", 
@@ -614,6 +374,7 @@ This will return a ginormous amount of variable data, which may look like this, 
                 "size_total": 20079898624
             }
         ], 
+        "ansible_nodename": "ubuntu2.example.com",
         "ansible_os_family": "Debian", 
         "ansible_pkg_mgr": "apt", 
         "ansible_processor": [
@@ -648,12 +409,15 @@ In the above the model of the first harddrive may be referenced in a template or
 
 Similarly, the hostname as the system reports it is::
 
-    {{ ansible_hostname }}
+    {{ ansible_nodename }}
 
+and the unqualified hostname shows the string before the first period(.)::
+
+    {{ ansible_hostname }}
 
 Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on **group_by** for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -676,7 +440,7 @@ Local Facts (Facts.d)
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
 
-Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
+Usually these are discovered automatically by the **setup** module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
 provided data for use in Ansible variables, without writing a fact module?  
 
@@ -684,16 +448,16 @@ For instance, what if you want users to be able to control some aspect about how
 
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
-If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+If a remotely managed system has an ``/etc/ansible/facts.d`` directory, any files in this directory
+ending in ``.fact``, can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 
-For instance assume a /etc/ansible/facts.d/preferences.fact::
+For instance assume a ``/etc/ansible/facts.d/preferences.fact``::
 
     [general]
     asdf=1
     bar=2
 
-This will produce a hash variable fact named "general" with 'asdf' and 'bar' as members.
+This will produce a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members.
 To validate this, run the following::
 
     ansible <hostname> -m setup -a "filter=ansible_local"
@@ -709,7 +473,7 @@ And you will see the following fact added::
             }
      }
 
-And this data can be accessed in a template/playbook as::
+And this data can be accessed in a ``template/playbook`` as::
 
      {{ ansible_local.preferences.general.asdf }}
 
@@ -755,13 +519,18 @@ not be necessary to "hit" all servers to reference variables and information abo
 With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
 the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
 
-To configure fact caching, enable it in ansible.cfg as follows::
+To benefit from cached facts, you will want to change the ``gathering`` setting to ``smart`` or ``explicit`` or set ``gather_facts`` to ``False`` in most plays.
+
+Currently, Ansible ships with two persistent cache plugins: redis and jsonfile.
+
+To configure fact caching using redis, enable it in ``ansible.cfg`` as follows::
 
     [defaults]
+    gathering = smart
     fact_caching = redis
-    fact_caching_timeout = 86400 # seconds
+    fact_caching_timeout = 86400
+    # seconds
 
-At the time of writing, Redis is the only supported fact caching engine.  
 To get redis up and running, perform the equivalent OS commands::
 
     yum install redis
@@ -772,12 +541,26 @@ Note that the Python redis library should be installed from pip, the version pac
 
 In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
 
+To configure fact caching using jsonfile, enable it in ``ansible.cfg`` as follows::
+
+    [defaults]
+    gathering = smart
+    fact_caching = jsonfile
+    fact_caching_connection = /path/to/cachedir
+    fact_caching_timeout = 86400
+    # seconds
+
+``fact_caching_connection`` is a local filesystem path to a writeable
+directory (ansible will attempt to create the directory if one does not exist).
+
+``fact_caching_timeout`` is the number of seconds to cache the recorded facts.
+
 .. _registered_variables:
 
 Registered Variables
 ````````````````````
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of -v when executing playbooks will show possible values for the results.
+Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
 :doc:`playbooks_conditionals` chapter.
@@ -798,15 +581,17 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
+.. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
+
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-```````````````````````````````
+````````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
-them a simple {{ foo }} is not sufficient, but it is still easy to do.   Here's how we get an IP address::
+them a simple ``{{ foo }}`` is not sufficient, but it is still easy to do.   Here's how we get an IP address::
 
     {{ ansible_eth0["ipv4"]["address"] }}
 
@@ -824,10 +609,10 @@ Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
 Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
-The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
-these names themselves as they are reserved.  'environment' is also reserved.
+The most important of these are ``hostvars``, ``group_names``, and ``groups``.  Users should not use
+these names themselves as they are reserved.  ``environment`` is also reserved.
 
-Hostvars lets you ask about the variables of another host, including facts that have been gathered
+``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
 or set of playbooks, you can get at the variables, but you will not be able to see the facts.
 
@@ -836,13 +621,13 @@ assigned to another node, it's easy to do so within a template or even an action
 
     {{ hostvars['test.example.com']['ansible_distribution'] }}
 
-Additionally, *group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
+Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
 
    {% if 'webserver' in group_names %}
       # some part of a configuration file that only applies to webservers
    {% endif %}
 
-*groups* is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
+``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
 For example::
 
    {% for host in groups['app_servers'] %}
@@ -858,18 +643,20 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
 You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
-Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
-be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
-reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
+Additionally, ``inventory_hostname`` is the name of the hostname as configured in Ansible's inventory host file.  This can
+be useful for when you don't want to rely on the discovered hostname ``ansible_hostname`` or for other mysterious
+reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
 period, without the rest of the domain.
 
-*play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
-*delegate_to* is the inventory hostname of the host that the current task has been delegated to using 'delegate_to'.
+``delegate_to`` is the inventory hostname of the host that the current task has been delegated to using ``delegate_to`` keyword.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
-Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
+Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
+
+And finally, ``role_path`` will return the current role's pathname (since 1.8). This will only work inside a role.
 
 .. _variable_file_separation_details:
 
@@ -910,14 +697,14 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :doc:`intro_patterns`.
+   similar files, this is covered in :ref:`splitting_out_vars`.
 
 .. _passing_variables_on_the_command_line:
 
 Passing Variables On The Command Line
 `````````````````````````````````````
 
-In addition to `vars_prompt` and `vars_files`, it is possible to send variables over
+In addition to ``vars_prompt`` and ``vars_files``, it is possible to send variables over
 the Ansible command line.  This is particularly useful when writing a generic release playbook
 where you may want to pass in the version of the application to deploy::
 
@@ -941,9 +728,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
     --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-The key=value form is obviously simpler, but it's there if you need it!
+The ``key=value`` form is obviously simpler, but it's there if you need it!
 
-As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax::
+As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
 
     --extra-vars "@some_file.json"
 
@@ -953,12 +740,12 @@ or in a file as above.
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
-```````````````````````````````````````````````````
+````````````````````````````````````````````````````
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.  
 
-Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".  
+Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".
 Why?  Because that's not Ansible's Zen philosophy of doing things.
 
 There is only one Empire State Building. One Mona Lisa, etc.  Figure out where to define a variable, and don't make
@@ -967,23 +754,86 @@ it complicated.
 However, let's go ahead and get precedence out of the way!  It exists.  It's a real thing, and you might have
 a use for it.
 
-If multiple variables of the same name are defined in different places, they win in a certain order, which is::
+If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-    * extra vars (-e in the command line) always win
-    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
-    * then comes "most everything else" (command line switches, vars in play, included vars, etc)
-    * then comes the rest of the variables defined in inventory
-    * then comes facts discovered about a system
-    * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+.. include:: ansible_ssh_changes_note.rst
 
-.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 
-That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
-control you might want over values.
+ * "role defaults", which lose in priority to everything and are the most easily overridden 
+ * variables defined in inventory
+ * facts discovered about a system
+ * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
+ * connection variables (``ansible_user``, etc.)
+ * extra vars (``-e`` in the command line) always win
+
+.. note:: 
+
+    In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+
+In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+
+  * role defaults [1]_
+  * inventory vars [2]_
+  * inventory group_vars
+  * inventory host_vars
+  * playbook group_vars
+  * playbook host_vars
+  * host facts
+  * registered vars
+  * set_facts
+  * play vars
+  * play vars_prompt
+  * play vars_files
+  * role and include vars
+  * block vars (only for tasks in block)
+  * task vars (only for the task)
+  * extra vars (always win precedence)
+
+Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
+
+.. rubric:: Footnotes
+
+.. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
+.. [2] Variables defined in inventory file or provided by dynamic inventory.
+
+.. note:: Within any section, redefining a var will overwrite the previous instance.
+          If multiple groups have the same variable, the last one loaded wins.
+          If you define a variable twice in a play's vars: section, the 2nd one wins.
+.. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+
+
+Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+
+    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+
+This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+
+    ansible... -e "ansible_ssh_user=<user>"
+
+
+.. _variable_scopes:
+
+Variable Scopes
+````````````````
+
+Ansible has 3 main scopes:
+
+ * Global: this is set by config, environment variables and the command line
+ * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+
+.. _variable_examples:
+
+Variable Examples
+`````````````````
+
+That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
 First off, group variables are super powerful.
 
-Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
+Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
 in things like :doc:`tower` from the UI or API::
 
@@ -992,11 +842,11 @@ in things like :doc:`tower` from the UI or API::
     # this is the site wide default
     ntp_server: default-time.example.com
 
-Regional information might be defined in a 'group_vars/region' variable.  If this group is a child of the 'all' group (which it is, because all groups are), it will override the group that is higher up and more general::
+Regional information might be defined in a ``group_vars/region`` variable.  If this group is a child of the ``all`` group (which it is, because all groups are), it will override the group that is higher up and more general::
 
     ---
     # file: /etc/ansible/group_vars/boston
-    ntp_server: boston-time.example.com 
+    ntp_server: boston-time.example.com
 
 If for some crazy reason we wanted to tell just a specific host to use a specific NTP server, it would then override the group variable!::
 
@@ -1013,7 +863,7 @@ Next up: learning about role variable precedence.
 We'll pretty much assume you are using roles at this point.  You should be using roles for sure.  Roles are great.  You are using
 roles aren't you?  Hint hint.  
 
-Ok, so if you are writing a redistributable role with reasonable defaults, put those in the 'roles/x/defaults/main.yml' file.  This means
+Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
 See :doc:`playbooks_roles` for more info about this::
 
@@ -1022,8 +872,8 @@ See :doc:`playbooks_roles` for more info about this::
     # if not overridden in inventory or as a parameter, this is the value that will be used
     http_port: 80
 
-if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
-by inventory, you should put it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
+If you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
+by inventory, you should put it in ``roles/x/vars/main.yml`` like so, and inventory values cannot override it.  ``-e`` however, still will::
 
     ---
     # file: roles/x/vars/main.yml
@@ -1039,7 +889,7 @@ Parameterized roles are useful.
 If you are using a role and want to override a default, pass it as a parameter to the role like so::
 
     roles:
-       - { name: apache, http_port: 8080 }
+       - { role: apache, http_port: 8080 }
 
 This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
@@ -1061,7 +911,7 @@ So that's a bit about roles.
 
 There are a few bonus things that go on with roles.
 
-Generally speaking, variables set in one role are available to others.  This means if you have a "roles/common/vars/main.yml" you
+Generally speaking, variables set in one role are available to others.  This means if you have a ``roles/common/vars/main.yml`` you
 can set variables in there and make use of them in other roles and elsewhere in your playbook::
 
      roles:
@@ -1075,7 +925,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
-if you want to forcibly override something, use -e.
+if you want to forcibly override something, use ``-e``.
 
 If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
@@ -1083,12 +933,19 @@ how all of these things can work together.
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
+Advanced Syntax
+```````````````
+
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
+
 .. seealso::
 
    :doc:`playbooks`
        An introduction to playbooks
    :doc:`playbooks_conditionals`
        Conditional statements in playbooks
+   :doc:`playbooks_filters`
+       Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
    :doc:`playbooks_roles`

@@ -65,19 +65,6 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
      - include: wordpress.yml wp_user=alice
      - include: wordpress.yml wp_user=bob
 
-If you are running Ansible 1.4 and later, include syntax is streamlined to match roles, and also allows passing list and dictionary parameters::
-   
-    tasks:
-     - { include: wordpress.yml, wp_user: timmy, ssh_keys: [ 'keys/one.txt', 'keys/two.txt' ] }
-
-Using either syntax, variables passed in can then be used in the included files.  We'll cover them in :doc:`playbooks_variables`.
-You can reference them like this::
-
-   {{ wp_user }}
-
-(In addition to the explicitly passed-in parameters, all variables from
-the vars section are also available for use here as well.)
-
 Starting in 1.0, variables can also be passed to include files using an alternative syntax,
 which also supports structured variables::
 
@@ -86,10 +73,17 @@ which also supports structured variables::
       - include: wordpress.yml
         vars:
             wp_user: timmy
-            some_list_variable:
-              - alpha
-              - beta
-              - gamma
+            ssh_keys:
+              - keys/one.txt
+              - keys/two.txt
+
+Using either syntax, variables passed in can then be used in the included files.  We'll cover them in :doc:`playbooks_variables`.
+You can reference them like this::
+
+   {{ wp_user }}
+
+(In addition to the explicitly passed-in parameters, all variables from
+the vars section are also available for use here as well.)
 
 Playbooks can include other playbooks too, but that's mentioned in a later section.
 
@@ -138,7 +132,7 @@ Note that you cannot do variable substitution when including one playbook
 inside another.
 
 .. note::
-   You can not conditionally path the location to an include file,
+   You can not conditionally pass the location to an include file,
    like you can with 'vars_files'.  If you find yourself needing to do
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
@@ -197,11 +191,8 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
 - If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
-- Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
-- Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
-- Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
-- Any include tasks can reference files in roles/x/tasks/ without having to path them relatively or absolutely
-   
+- Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely
+
 In Ansible 1.4 and later you can configure a roles_path to search for roles.  Use this to check all of your common roles out to one location, and share
 them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
 
@@ -222,8 +213,8 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
     - hosts: webservers
       roles:
         - common
-        - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
-        - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
+        - { role: foo_app_instance, dir: '/opt/a',  app_port: 5000 }
+        - { role: foo_app_instance, dir: '/opt/b',  app_port: 5001 }
 
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
@@ -236,7 +227,7 @@ While it's probably not something you should do often, you can also conditionall
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
 the documentation.
 
-Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
+Finally, you may wish to assign tags to the roles you specify. You can do so inline::
 
     ---
 
@@ -244,6 +235,7 @@ Finally, you may wish to assign tags to the roles you specify. You can do so inl
       roles:
         - { role: foo, tags: ["bar", "baz"] }
 
+Note that this *tags all of the tasks in that role with the tags specified*, overriding any tags that are specified inside the role. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 If the play still has a 'tasks' section, those tasks are executed after roles are applied.
 
@@ -292,7 +284,7 @@ a list of roles and parameters to insert before the specified role, such as the 
     ---
     dependencies:
       - { role: common, some_parameter: 3 }
-      - { role: apache, port: 80 }
+      - { role: apache, appache_port: 80 }
       - { role: postgres, dbname: blarg, other_parameter: 12 }
 
 Role dependencies can also be specified as a full path, just like top level roles::
@@ -301,12 +293,8 @@ Role dependencies can also be specified as a full path, just like top level role
     dependencies:
        - { role: '/path/to/common/roles/foo', x: 1 }
 
-Role dependencies can also be installed from source control repos or tar files, using a comma separated format of path, an optional version (tag, commit, branch etc) and optional friendly role name (an attempt is made to derive a role name from the repo name or archive filename)::
+Role dependencies can also be installed from source control repos or tar files (via `galaxy`) using comma separated format of path, an optional version (tag, commit, branch etc) and optional friendly role name (an attempt is made to derive a role name from the repo name or archive filename). Both through the command line or via a requirements.yml passed to ansible-galaxy.
 
-    ---
-    dependencies:
-      - { role: 'git+http://git.example.com/repos/role-foo,v1.1,foo' }
-      - { role: '/path/to/tar/file.tgz,,friendly-name' }
 
 Roles dependencies are always executed before the role that includes them, and are recursive. By default, 
 roles can also only be added as a dependency once - if another role also lists it as a dependency it will

@@ -9,7 +9,7 @@ This in particular is very applicable when setting up continuous deployment infr
 
 Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
-This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <http://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
+This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
 You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
 
@@ -130,6 +130,29 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+.. _delegate_facts:
+
+Delegated facts
+```````````````
+
+.. versionadded:: 2.0
+
+By default, any fact gathered by a delegated task are assigned to the `inventory_hostname` (the current host) instead of the host which actually produced the facts (the delegated to host).
+In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
+
+
+    - hosts: app_servers
+      tasks:
+        - name: gather facts from db servers
+          setup:
+          delegate_to: "{{item}}"
+          delegate_facts: True
+          with_items: "{{groups['dbservers']}}"
+
+The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
+This way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
+
+
 .. _run_once:
 
 Run Once
@@ -159,12 +182,17 @@ This can be optionally paired with "delegate_to" to specify an individual host t
           delegate_to: web01.example.org
 
 When "run_once" is not used with "delegate_to" it will execute on the first host, as defined by inventory,
-in the group(s) of hosts targeted by the play. e.g. webservers[0] if the play targeted "hosts: webservers".
+in the group(s) of hosts targeted by the play - e.g. webservers[0] if the play targeted "hosts: webservers".
 
-This aproach is similar, although more concise and cleaner than applying a conditional to a task such as::
+This approach is similar to applying a conditional to a task such as::
 
         - command: /opt/application/upgrade_db.py
           when: inventory_hostname == webservers[0]
+
+.. note::
+     When used together with "serial", tasks marked as "run_once" will be ran on one host in *each* serial batch.
+     If it's crucial that the task is run only once regardless of "serial" mode, use
+     :code:`inventory_hostname == my_group_name[0]` construct.
 
 .. _local_playbooks:
 
@@ -175,7 +203,7 @@ It may be useful to use a playbook locally, rather than by connecting over SSH. 
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
-To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
+To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
 
     ansible-playbook playbook.yml --connection=local
 
@@ -185,11 +213,53 @@ use the default remote connection type::
     - hosts: 127.0.0.1
       connection: local
 
+.. _interrupt_execution_on_any_error:
+
+Interrupt execution on any error
+````````````````````````````````
+
+With option ''any_errors_fatal'' any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
+
+Sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
+
+For example there is a service located in many datacenters, there a some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
+
+- disable traffic on load balancers (must be turned off simultaneously)
+- gracefully stop service
+- upgrade software (this step includes tests and starting service)
+- enable traffic on load balancers (should be turned off simultaneously)
+
+Service can't be stopped with "alive" load balancers, they must be disabled, all of them. So second stage can't be played if any server failed on "stage 1".
+
+For datacenter "A" playbook can be written this way::
+
+    ---
+    - hosts: load_balancers_dc_a
+      any_errors_fatal: True
+      tasks:
+      - name: 'shutting down datacenter [ A ]'
+        command: /usr/bin/disable-dc
+    
+    - hosts: frontends_dc_a
+      tasks:
+      - name: 'stopping service'
+        command: /usr/bin/stop-software
+      - name: 'updating software'
+        command: /usr/bin/upgrade-software
+    
+    - hosts: load_balancers_dc_a
+      tasks:
+      - name: 'Starting datacenter [ A ]'
+        command: /usr/bin/enable-dc
+
+
+In this example Ansible will start software upgrade on frontends only if all load balancers are successfully disabled.
+
 .. seealso::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `Ansible Examples on GitHub <http://github.com/ansible/ansible-examples>`_
+   `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

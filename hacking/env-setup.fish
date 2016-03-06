@@ -36,6 +36,17 @@ end
 
 set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
 
+# Generate egg_info so that pkg_resources works
+pushd $ANSIBLE_HOME
+python setup.py egg_info
+if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
+    rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+end
+mv ansible*egg-info $PREFIX_PYTHONPATH
+find . -type f -name "*.pyc" -delete
+popd
+
+
 if set -q argv 
     switch $argv
     case '-q' '--quiet'

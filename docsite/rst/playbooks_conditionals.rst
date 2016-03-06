@@ -11,6 +11,8 @@ whether the hosts match other criteria.   There are many options to control exec
 
 Let's dig into what they are.
 
+.. _the_when_statement:
+
 The When Statement
 ``````````````````
 
@@ -26,6 +28,14 @@ It's actually pretty simple::
         command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
 
+You can also use parentheses to group conditions::
+
+    tasks:
+      - name: "shutdown CentOS 6 and Debian 7 systems"
+        command: /sbin/shutdown -t now
+        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
+              (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
+
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then
 decide to do something conditionally based on success or failure::
@@ -37,7 +47,7 @@ decide to do something conditionally based on success or failure::
       - command: /bin/something
         when: result|failed
       - command: /bin/something_else
-        when: result|success
+        when: result|succeeded
       - command: /bin/still/something_else
         when: result|skipped
 
@@ -80,7 +90,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
           when: foo is defined
 
         - fail: msg="Bailing out. this play requires 'bar'"
-          when: bar is not defined
+          when: bar is undefined
 
 This is especially useful in combination with the conditional import of vars
 files (see below).
@@ -109,11 +119,12 @@ Applying 'when' to roles and includes
 `````````````````````````````````````
 
 Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
-to a task include statement as below.  Note this does not work with playbook includes, just task includes.  All the tasks
-get evaluated, but the conditional is applied to each and every task::
+to a task include statement as below.  All the tasks get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
       when: "'reticulating splines' in output"
+
+.. note:: In versions prior to 2.0 this worked with task includes but not playbook includes.  2.0 allows it to work with both.
 
 Or with a role::
 
@@ -166,11 +177,11 @@ To use this conditional import feature, you'll need facter or ohai installed pri
 you can of course push this out with Ansible if you like::
 
     # for facter
-    ansible -m yum -a "pkg=facter ensure=installed"
-    ansible -m yum -a "pkg=ruby-json ensure=installed"
+    ansible -m yum -a "pkg=facter state=present"
+    ansible -m yum -a "pkg=ruby-json state=present"
 
     # for ohai
-    ansible -m yum -a "pkg=ohai ensure=installed"
+    ansible -m yum -a "pkg=ohai state=present"
 
 Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results

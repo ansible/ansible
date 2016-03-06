@@ -30,6 +30,9 @@ import os
 
 
 def openstack_argument_spec():
+    # DEPRECATED: This argument spec is only used for the deprecated old
+    # OpenStack modules. It turns out that modern OpenStack auth is WAY
+    # more complex than this.
     # Consume standard OpenStack environment variables.
     # This is mainly only useful for ad-hoc command line operation as
     # in playbooks one would assume variables would be used appropriately
@@ -67,3 +70,35 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
                     ret.append(interface_spec['addr'])
     return ret
 
+def openstack_full_argument_spec(**kwargs):
+    spec = dict(
+        cloud=dict(default=None),
+        auth_type=dict(default=None),
+        auth=dict(default=None, type='dict', no_log=True),
+        region_name=dict(default=None),
+        availability_zone=dict(default=None),
+        verify=dict(default=True, aliases=['validate_certs']),
+        cacert=dict(default=None),
+        cert=dict(default=None),
+        key=dict(default=None, no_log=True),
+        wait=dict(default=True, type='bool'),
+        timeout=dict(default=180, type='int'),
+        api_timeout=dict(default=None, type='int'),
+        endpoint_type=dict(
+            default='public', choices=['public', 'internal', 'admin']
+        )
+    )
+    spec.update(kwargs)
+    return spec
+
+
+def openstack_module_kwargs(**kwargs):
+    ret = {}
+    for key in ('mutually_exclusive', 'required_together', 'required_one_of'):
+        if key in kwargs:
+            if key in ret:
+                ret[key].extend(kwargs[key])
+            else:
+                ret[key] = kwargs[key]
+
+    return ret

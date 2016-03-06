@@ -27,6 +27,8 @@
     repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
     repo_submodule1_newer: 'https://github.com/abadger/test_submodules_subm1_newer.git'
     repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
+    repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
+    repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -65,16 +67,11 @@
   stat: path={{ checkout_dir }}/.git/HEAD
   register: head
 
-- name: check for remotes
-  stat: path={{ checkout_dir }}/.git/branches
-  register: branches
-
 - name: assert presence of tags/trunk/branches
   assert:
     that:
       - "tags.stat.isdir"
       - "head.stat.isreg"
-      - "branches.stat.isdir"
 
 - name: verify on a reclone things are marked unchanged
   assert:
@@ -91,7 +88,7 @@
 
 - name: remove known_host files
   file: state=absent path={{ item }}
-  with_items: known_host_files
+  with_items: "{{known_host_files}}"
 
 - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git: repo={{ repo_format2 }} dest={{ checkout_dir }}
@@ -146,6 +143,7 @@
   git:
     repo: '{{ repo_format1 }}'
     update: no
+    clone: no
     accept_hostkey: yes
   register: git_result
 
@@ -204,6 +202,41 @@
 - assert:
     that:
       - 'git_result.failed'
+
+# Same as the previous test, but this time we specify which ref
+# contains the SHA1
+- name: update to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: clone to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
 
 #
 # Submodule tests
@@ -315,3 +348,67 @@
 
 - assert:
     that: '{{ submodule2.stdout_lines|length }} == 4'
+# test change of repo url
+# see https://github.com/ansible/ansible-modules-core/pull/721
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: Clone example git repo
+  git:
+    repo: '{{ repo_update_url_1 }}'
+    dest: '{{ checkout_dir }}'
+
+- name: Clone repo with changed url to the same place
+  git:
+    repo: '{{ repo_update_url_2 }}'
+    dest: '{{ checkout_dir }}'
+  register: clone2
+
+- assert:
+    that: "clone2|success"
+
+- name: check url updated
+  shell: git remote show origin | grep Fetch
+  register: remote_url
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- assert:
+    that: 
+    - "'git-test-new' in remote_url.stdout"
+    - "'git-test-old' not in remote_url.stdout"
+
+- name: check for new content in git-test-new
+  stat: path={{ checkout_dir }}/newfilename
+  register: repo_content
+
+- name: assert presence of new file in repo (i.e. working copy updated)
+  assert:
+    that: "repo_content.stat.exists"
+
+# Test that checkout by branch works when the branch is not in our current repo but the sha is
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: Clone example git repo that we're going to modify
+  git:
+    repo: '{{ repo_update_url_1 }}'
+    dest: '{{ checkout_dir }}/repo'
+
+- name: Clone the repo again - this is what we test
+  git:
+    repo: '{{ checkout_dir }}/repo'
+    dest: '{{ checkout_dir }}/checkout'
+
+- name: Add a branch to the repo
+  command: git branch new-branch
+  args:
+    chdir: '{{ checkout_dir }}/repo'
+
+- name: Checkout the new branch in the checkout
+  git:
+    repo: '{{ checkout_dir}}/repo'
+    version: 'new-branch'
+    dest: '{{ checkout_dir }}/checkout'

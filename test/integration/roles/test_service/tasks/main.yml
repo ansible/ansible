@@ -6,16 +6,16 @@
   assert:
     that:
     - "install_result.dest == '/usr/sbin/ansible_test_service'"
-    - "install_result.checksum == 'baaa79448a976922c080f1971321d203c6df0961'"
+    - "install_result.checksum == '4e0164ceb9a5aeab76b38483ffd27fe791baa9f4'"
     - "install_result.state == 'file'"
     - "install_result.mode == '0755'"
 
 - include: 'sysv_setup.yml'
-  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('6', '>=') and ansible_distribution_version|version_compare('7', '<'))
 - include: 'systemd_setup.yml'
-  when: ansible_distribution == 'Fedora'
+  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('7', '>=') and ansible_distribution_version|version_compare('8', '<'))) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>='))
 - include: 'upstart_setup.yml'
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '<')
 
 - name: enable the ansible test service
   service: name=ansible_test enabled=yes
@@ -98,7 +98,7 @@
 - name: assert that the broken test failed
   assert:
     that:
-    - "broken_enable_result.failed == True"
+    - "broken_enable_result|failed"
 
 - name: remove the test daemon script
   file: path=/usr/sbin/ansible_test_service state=absent

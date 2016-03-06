@@ -72,7 +72,7 @@
       - "not unknown_result|changed"
 
 - name: run a command that takes longer than 60 seconds
-  raw: PowerShell -Command Start-Sleep -s 75
+  raw: Start-Sleep -s 75
   register: sleep_command
 
 - name: assert that the sleep command ran
@@ -83,3 +83,34 @@
       - "not sleep_command.stderr"
       - "not sleep_command|failed"
       - "not sleep_command|changed"
+
+- name: run a raw command with key=value arguments
+  raw: echo wwe=raw
+  register: raw_result
+
+- name: make sure raw is really raw and not removing key=value arguments
+  assert:
+    that:
+      - "raw_result.stdout_lines[0] == 'wwe=raw'"
+
+- name: run a raw command with unicode chars and quoted args (from https://github.com/ansible/ansible-modules-core/issues/1929)
+  raw: Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
+  register: raw_result2
+
+- name: make sure raw passes command as-is and doesn't split/rejoin args
+  assert:
+    that:
+      - "raw_result2.stdout_lines[0] == '--% icacls D:\\\\somedir\\\\ /grant \"! ЗАО. Руководство\":F'"
+
+# Assumes MaxShellsPerUser == 30 (the default)
+
+- name: test raw + with_items to verify that winrm connection is reused for each item
+  raw: echo "{{item}}"
+  with_items: "{{range(32)|list}}"
+  register: raw_with_items_result
+
+- name: check raw + with_items result
+  assert:
+    that:
+      - "not raw_with_items_result|failed"
+      - "raw_with_items_result.results|length == 32"

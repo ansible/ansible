@@ -4,18 +4,18 @@ Start and Step
 This shows a few alternative ways to run playbooks. These modes are very useful for testing new plays or debugging.
 
 
-.. _start_at_task
+.. _start_at_task:
 
 Start-at-task
 `````````````
-If you want to start executing your playbook at a particular task, you can do so with the ``--start-at`` option::
+If you want to start executing your playbook at a particular task, you can do so with the ``--start-at-task`` option::
 
-    ansible-playbook playbook.yml --start-at="install packages"
+    ansible-playbook playbook.yml --start-at-task="install packages"
 
 The above will start executing your playbook at a task named "install packages".
 
 
-.. _step
+.. _step:
 
 Step
 ````

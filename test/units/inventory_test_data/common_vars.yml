@@ -1,4 +1,0 @@
----
-duck: quack
-cow: moo
-extguard: " '$favcolor' == 'blue' "

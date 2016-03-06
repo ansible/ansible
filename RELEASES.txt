@@ -4,11 +4,20 @@ Ansible Releases at a Glance
 Active Development
 ++++++++++++++++++
 
-1.8    "You Really Got Me" ---- FALL 2014
+2.0    "Over the Hills and Far Away" - in progress
 
 Released
 ++++++++
 
+1.9.4  "Dancing In the Streets" 10-09-2015
+1.9.3  "Dancing In the Streets" 09-03-2015
+1.9.2  "Dancing In the Streets" 06-24-2015
+1.9.1  "Dancing In the Streets" 04-27-2015
+1.9.0  "Dancing In the Streets" 03-25-2015
+1.8.4  "You Really Got Me" ---- 02-19-2015
+1.8.3  "You Really Got Me" ---- 02-17-2015
+1.8.2  "You Really Got Me" ---- 12-04-2014
+1.8.1  "You Really Got Me" ---- 11-26-2014
 1.7.2  "Summer Nights" -------- 09-24-2014
 1.7.1  "Summer Nights" -------- 08-14-2014
 1.7    "Summer Nights" -------- 08-06-2014

@@ -28,6 +28,7 @@ Requires: python26-jinja2
 Requires: python26-keyczar
 Requires: python26-httplib2
 Requires: python26-setuptools
+Requires: python26-six
 %endif
 
 # RHEL == 6
@@ -45,6 +46,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # FEDORA > 17
@@ -57,6 +59,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # SuSE/openSuSE
@@ -69,6 +72,7 @@ Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 Requires: sshpass
@@ -89,6 +93,17 @@ are transferred to managed machines automatically.
 
 %install
 %{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+
+# Amazon Linux doesn't install to dist-packages but python_sitelib expands to
+# that location and the python interpreter expects things to be there.
+if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
+    DEST_DIR='%{buildroot}%{python_sitelib}'
+    SOURCE_DIR=$(echo "$DEST_DIR" | sed 's/dist-packages/site-packages/g')
+    if test -d "$SOURCE_DIR" -a ! -d "$DEST_DIR" ; then
+        mv $SOURCE_DIR $DEST_DIR
+    fi
+fi
+
 mkdir -p %{buildroot}/etc/ansible/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
@@ -109,6 +124,36 @@ rm -rf %{buildroot}
 %doc %{_mandir}/man1/ansible*
 
 %changelog
+
+* Fri Oct 09 2015 Ansible, Inc. <support@ansible.com> - 1.9.4
+- Release 1.9.4
+
+* Thu Sep 03 2015 Ansible, Inc. <support@ansible.com> - 1.9.3
+- Release 1.9.3
+
+* Wed Jun 24 2015 Ansible, Inc. <support@ansible.com> - 1.9.2
+- Release 1.9.2
+
+* Mon Apr 27 2015 Ansible, Inc. <support@ansible.com> - 1.9.1
+- Release 1.9.1
+
+* Wed Mar 25 2015 Ansible, Inc. <support@ansible.com> - 1.9.0
+- Release 1.9.0
+
+* Thu Feb 19 2015 Ansible, Inc. <support@ansible.com> - 1.8.4
+- Release 1.8.4
+
+* Tue Feb 17 2015 Ansible, Inc. <support@ansible.com> - 1.8.3
+- Release 1.8.3
+
+* Thu Dec 04 2014 Michael DeHaan <michael@ansible.com> - 1.8.2
+- Release 1.8.2
+
+* Wed Nov 26 2014 Michael DeHaan <michael@ansible.com> - 1.8.1
+- Release 1.8.1
+
+* Tue Nov 25 2014 Michael DeHaan <michael@ansible.com> - 1.8.0
+- Release 1.8.0
 
 * Wed Sep 24 2014 Michael DeHaan <michael@ansible.com> - 1.7.2
 - Release 1.7.2

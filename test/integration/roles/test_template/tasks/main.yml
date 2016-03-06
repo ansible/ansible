@@ -41,6 +41,11 @@
 
 # VERIFY CONTENTS
 
+- name: check what python version ansible is running on
+  command: python -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'
+  register: pyver
+  delegate_to: localhost
+
 - name: copy known good into place
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
@@ -96,3 +101,81 @@
       - "dir_attrs.stat.uid != 0"
       - "dir_attrs.stat.pw_name == 'nobody'"
       - "dir_attrs.stat.mode == '0755'"
+
+- name: Check that template to a dirctory where the directory does not end with a / is allowed
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group=root
+
+- name: make a symlink to the templated file
+  file:
+    path: '{{ output_dir }}/foo.symlink'
+    src: '{{ output_dir }}/foo.templated'
+    state: link
+
+- name: check that templating the symlink results in the file being templated
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the file has the correct attributes
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.mode == '0600'"
+
+- name: check that templating the symlink again makes no changes
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+
+# Test strange filenames
+
+- name: Create a temp dir for filename tests
+  file:
+    state: directory
+    dest: '{{ output_dir }}/filename-tests'
+
+- name: create a file with an unusual filename
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the unusual filename was created
+  command: "ls {{ output_dir }}/filename-tests/"
+  register: unusual_results
+
+- assert:
+    that:
+      - "\"foo t'e~m\\plated\" in unusual_results.stdout_lines"
+      - "{{unusual_results.stdout_lines| length}} == 1"
+
+- name: check that the unusual filename can be checked for changes
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+

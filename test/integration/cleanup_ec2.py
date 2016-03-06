@@ -12,6 +12,7 @@ import optparse
 import yaml
 import os.path
 import boto.ec2.elb
+import time
 
 def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
@@ -19,13 +20,44 @@ def delete_aws_resources(get_func, attr, opts):
         if re.search(opts.match_re, val):
             prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
 
+def delete_autoscaling_group(get_func, attr, opts):
+    assumeyes = opts.assumeyes
+    group_name = None
+    for item in get_func():
+        group_name = getattr(item, attr)
+        if re.search(opts.match_re, group_name):
+            if not opts.assumeyes:
+                assumeyes = raw_input("Delete matching %s? [y/n]: " % (item).lower()) == 'y'
+            break
+    if assumeyes and group_name:
+        groups = asg.get_all_groups(names=[group_name])
+        if groups:
+            group = groups[0]
+            group.max_size = 0
+            group.min_size = 0
+            group.desired_capacity = 0
+            group.update()
+            instances = True
+            while instances:
+                tmp_groups = asg.get_all_groups(names=[group_name])
+                if tmp_groups:
+                    tmp_group = tmp_groups[0]
+                    if not tmp_group.instances:
+                       instances = False
+                time.sleep(10)
+
+            group.delete()
+            while len(asg.get_all_groups(names=[group_name])):
+                time.sleep(5)
+            print ("Terminated ASG: %s" % group_name)
+
 def delete_aws_eips(get_func, attr, opts):
 
     # the file might not be there if the integration test wasn't run
     try:
       eip_log = open(opts.eip_log, 'r').read().splitlines()
     except IOError:
-      print opts.eip_log, 'not found.'
+      print('%s not found.' % opts.eip_log)
       return
 
     for item in get_func():
@@ -128,7 +160,7 @@ if __name__ == '__main__':
         delete_aws_resources(aws.get_all_security_groups, 'name', opts)
 
         # Delete matching ASGs
-        delete_aws_resources(asg.get_all_groups, 'name', opts)
+        delete_autoscaling_group(asg.get_all_groups, 'name', opts)
 
         # Delete matching launch configs
         delete_aws_resources(asg.get_all_launch_configurations, 'name', opts)
@@ -143,5 +175,5 @@ if __name__ == '__main__':
         filters = {"tag:Name":opts.match_re.replace('^',''), "instance-state-name": ['running', 'pending', 'stopped' ]}
         delete_aws_instances(aws.get_all_instances(filters=filters), opts)
 
-    except KeyboardInterrupt, e:
-        print "\nExiting on user command."
+    except KeyboardInterrupt as e:
+        print("\nExiting on user command.")

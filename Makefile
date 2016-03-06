@@ -10,7 +10,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests
+#   make tests ---------------- run the tests (see test/README.md for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -34,11 +34,17 @@ PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat VERSION | cut -f1 -d' ')
+RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 
 # Get the branch information from git
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_HASH := $(shell git log -n 1 --format="%h")
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
+GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
+else
+GITINFO = ""
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
@@ -52,15 +58,16 @@ DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
+DEB_DATE := $(shell LC_TIME=C date +"%a, %d %b %Y %T %z")
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE = 1ppa
+    DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 0.git$(DATE)
+    DEB_RELEASE = 0.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
@@ -74,9 +81,9 @@ DEB_DIST ?= unstable
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
-RPMRELEASE = 1
+RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
-    RPMRELEASE = 0.git$(DATE)
+    RPMRELEASE = 0.git$(DATE)$(GITINFO)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
@@ -86,20 +93,17 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
-NOSETESTS3 ?= nosetests-3.3
+NOSETESTS3 ?= nosetests-3.4
 
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v # Could do: --with-coverage --cover-package=ansible
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
 
-newtests:
-	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
-
-newtests-py3:
-	PYTHONPATH=./v2:./lib $(NOSETESTS3) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
+tests-py3:
+	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
 
 authors:
 	sh hacking/authors.sh
@@ -131,10 +135,11 @@ clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
 	rm -rf dist
+	rm -rf lib/ansible.egg-info/
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
-	find . -type f \( -name "*~" -or -name "#*" \) -delete
+	find . -type f -not -path ./test/units/inventory_test_data/group_vars/noparse/all.yml~ \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete
@@ -151,6 +156,7 @@ clean:
 	rm -rf docs/js
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
+	find . -type f -name '*.pyc' -delete
 
 python:
 	$(PYTHON) setup.py build
@@ -160,6 +166,9 @@ install:
 
 sdist: clean docs
 	$(PYTHON) setup.py sdist
+
+sdist_upload: clean docs
+	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
 rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
@@ -215,7 +224,7 @@ debian: sdist
 	    mkdir -p deb-build/$${DIST} ; \
 	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
 	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-	    sed -ie "s#^$(NAME) (\([^)]*\)) \([^;]*\);#ansible (\1-$(DEB_RELEASE)~$${DIST}) $${DIST};#" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+        sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
 deb: debian

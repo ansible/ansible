@@ -27,7 +27,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import pprint
+import os
+import traceback
+from libcloud.compute.providers import get_driver
 
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
@@ -90,4 +92,4 @@ def gce_connect(module, provider=None):
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    return 'Unexpected response: ' + pprint.pformat(vars(error))
+    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc(error))
