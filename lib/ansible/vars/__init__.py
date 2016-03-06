@@ -311,9 +311,6 @@ class VariableManager:
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
-            if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars())
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block._dep_chain))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         if host:
@@ -325,6 +322,9 @@ class VariableManager:
         # have higher precedence than the vars/np facts above
         if task:
             all_vars = combine_vars(all_vars, task.get_include_params())
+            if task._role:
+                all_vars = combine_vars(all_vars, task._role.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block._dep_chain))
 
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
