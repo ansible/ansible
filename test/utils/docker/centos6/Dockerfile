@@ -25,6 +25,7 @@ RUN yum -y install \
     python-pip \
     python-setuptools \
     python-virtualenv
+RUN pip install --upgrade jinja2
 RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN /bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
