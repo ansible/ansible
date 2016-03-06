@@ -387,11 +387,11 @@ class VaultEditor:
         # Create a tempfile
         _, tmp_path = tempfile.mkstemp()
 
-        if existing_data:
-            self.write_data(existing_data, tmp_path, shred=False)
-
-        # drop the user into an editor on the tmp file
         try:
+            if existing_data:
+                self.write_data(existing_data, tmp_path, shred=False)
+
+            # drop the user into an editor on the tmp file
             call(self._editor_shell_command(tmp_path))
         except:
             # whatever happens, destroy the decrypted file
