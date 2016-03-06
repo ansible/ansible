@@ -31,3 +31,12 @@ script:
   - ./test/utils/run_tests.sh
 after_success:
   - coveralls
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#ansible-notices"
+    on_success: change
+    on_failure: always
+    use_notice: true
+    skip_join: true
+    nick: ansibletravis
