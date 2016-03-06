@@ -373,7 +373,10 @@ class Templar:
         '''
         returns True if the data contains a variable pattern
         '''
-        return self.environment.block_start_string in data or self.environment.variable_start_string in data
+        for marker in  [self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string]:
+            if marker in data:
+                return True
+        return False
 
     def _convert_bare_variable(self, variable, bare_deprecated):
         '''
