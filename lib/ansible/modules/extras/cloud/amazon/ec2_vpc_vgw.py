@@ -63,8 +63,8 @@ options:
     required: false
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
-  - aws
-  - ec2
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
