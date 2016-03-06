@@ -99,6 +99,15 @@ def find_hostsystem_by_name(content, hostname):
     return None
 
 
+def find_vm_by_name(content, vm_name):
+
+    vms = get_all_objs(content, [vim.VirtualMachine])
+    for vm in vms:
+        if vm.name == vm_name:
+            return vm
+    return None
+
+
 def vmware_argument_spec():
 
     return dict(
