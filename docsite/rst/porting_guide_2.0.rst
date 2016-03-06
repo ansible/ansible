@@ -186,14 +186,14 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
   The `port` variable is reserved as a play/task directive for overriding the connection port, in previous versions this got conflated with a variable named `port` and was usable
   later in the play, this created issues if a host tried to reconnect or was using a non caching connection. Now it will be correctly identified as a directive and the `port` variable
-  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and varaibles to a role invocation..
+  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and variables to a role invocation.
 
 * Bare operations on `with_`::
 
     with_items: var1 + var2
 
-  An issue with the 'bare variable' features, which was supposed only tempate a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
-  Now you need to use proper templating and braces for all expressions everywhere except condtionals (`when`)::
+  An issue with the 'bare variable' features, which was supposed only template a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
+  Now you need to use proper templating and braces for all expressions everywhere except conditionals (`when`)::
 
     with_items: "{{var1 + var2}}"
 
