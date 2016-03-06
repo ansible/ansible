@@ -55,7 +55,7 @@ options:
     default: 320
   tags:
     description:
-        - dictionary of resource tags of the form: { tag1: value1, tag2: value2 }
+        - dictionary of resource tags
     required: false
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
