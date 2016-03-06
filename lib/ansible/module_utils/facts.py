@@ -562,7 +562,7 @@ class Facts(object):
         # also other OSs other than linux might need to check across several possible candidates
 
         # try various forms of querying pid 1
-        proc_1 = os.path.basename(get_file_content('/proc/1/comm'))
+        proc_1 = get_file_content('/proc/1/comm')
         if proc_1 is None:
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
         else:
