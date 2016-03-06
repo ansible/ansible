@@ -385,7 +385,8 @@ class VaultEditor:
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
 
         # Create a tempfile
-        _, tmp_path = tempfile.mkstemp()
+        fd, tmp_path = tempfile.mkstemp()
+        os.close(fd)
 
         try:
             if existing_data:
