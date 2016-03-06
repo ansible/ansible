@@ -96,8 +96,8 @@ entrypoint:
 
 etc_hosts:
   description:
-    - List of custom host-to-IP mappings, with each mapping in the format C(host:ip), to be
-      added to the container's /etc/hosts file.
+    - Dict of host-to-IP mappings, where each host name is key in the dictionary. Hostname will be added to the 
+      container's /etc/hosts file.
   default: null
 
 exposed_ports:
@@ -135,16 +135,6 @@ interactive:
     - Keep stdin open after a container is launched, even if not attached.
   default: false
 
-ip_address:
-  description:
-    - Container IPv4 address.
-  default: null
-
-ipv6_address:
-  description:
-    - Container IPv6 address.
-  default: null
-
 ipc_mode:
   description:
     - Set the IPC mode for the container. Can be one of 
@@ -175,7 +165,7 @@ labels:
 
 links:
   description:
-    - List of name aliases for linked containers in the format C(redis:myredis)
+    - List of name aliases for linked containers in the format C(container_name:alias)
   default: null
 
 log_driver:
@@ -240,6 +230,12 @@ network_mode:
     - container:<name|id>
     - host
     - none
+  default: null
+
+networks:
+  description:
+    - Dictionary of networks to which the container will be connected. The dictionary must have a name key (the name of the network).
+      Optional keys include: aliases (a list of container aliases), and links (a list of links in the format C(container_name:alias)).
   default: null
 
 oom_killer:
@@ -363,9 +359,9 @@ tty:
     - Allocate a psuedo-TTY.
   default: false
 
-ulimit:
+ulimits:
   description:
-    - List of ulimit options. A ulimit is specified as C(nofile=262144:262144)
+    - List of ulimit options. A ulimit is specified as C(nofile:262144:262144)
   default: null
 
 user:
