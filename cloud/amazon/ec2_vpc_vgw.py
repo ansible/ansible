@@ -35,15 +35,11 @@ options:
   name:
     description:
         - name of the vgw to be created or deleted
-    required:
-        - true when combined with a state of 'present'
-        - false when combined with a state of 'absent'
+    required: false
   type:
     description:
         - type of the virtual gateway to be created
-    required:
-        - true when combined with a state of 'present'
-        - false when combined with a state of 'absent'
+    required: false
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
@@ -63,8 +59,8 @@ options:
     required: false
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
-    - aws
-    - ec2
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
