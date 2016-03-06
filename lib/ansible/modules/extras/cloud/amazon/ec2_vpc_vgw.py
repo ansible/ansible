@@ -62,7 +62,9 @@ options:
         - dictionary of resource tags of the form: { tag1: value1, tag2: value2 }
     required: false
 author: Nick Aslanidis (@naslanidis)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -559,3 +561,4 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
+
