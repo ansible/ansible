@@ -153,7 +153,7 @@ class StrategyBase:
 
             queued = False
             while True:
-                (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+                (worker_prc, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
