@@ -676,7 +676,7 @@ def maybe_add_ssl_handler(url, validate_certs):
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         force=False, last_mod_time=None, timeout=10, validate_certs=True,
         url_username=None, url_password=None, http_agent=None,
-        force_basic_auth=False, follow_redirects=False):
+        force_basic_auth=False, follow_redirects='urllib2'):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -809,8 +809,7 @@ def url_argument_spec():
     )
 
 def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              follow_redirects=False):
+              use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
     '''
@@ -828,8 +827,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     http_agent = module.params.get('http_agent', None)
     force_basic_auth = module.params.get('force_basic_auth', '')
 
-    if not follow_redirects:
-        follow_redirects = module.params.get('follow_redirects', False)
+    follow_redirects = module.params.get('follow_redirects', 'urllib2')
 
     r = None
     info = dict(url=url)
