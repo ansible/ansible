@@ -282,6 +282,9 @@ def main():
             package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
             try:
                 rsp, info = fetch_url(module, src)
+                # If download fails, raise a proper exception
+                if rsp is None:
+                    raise Exception(info['msg'])
                 f = open(package, 'w')
                 # Read 1kb at a time to save on ram
                 while True:
