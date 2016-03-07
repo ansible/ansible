@@ -102,6 +102,7 @@ def file_props(root, path):
 
     return ret
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
@@ -116,7 +117,7 @@ class LookupModule(LookupBase):
                 for entry in dirs + files:
                     relpath = os.path.relpath(os.path.join(root, entry), path)
                     props = file_props(path, relpath)
-                    if props != None:
+                    if props is not None:
                         ret.append(props)
 
         return ret
