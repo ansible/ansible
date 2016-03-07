@@ -24,6 +24,28 @@ module: setup
 version_added: historical
 short_description: Gathers facts about remote hosts
 options:
+    gather_subset:
+        version_added: "2.1"
+        description:
+            - if supplied, restrict facts collected at the given subset.
+              Here is the possible values: all, min, hardware, network or virtual
+              Can be combined using comma (ex: gather_subset=network,virtual).
+        required: false
+        default: 'all'
+    ignore_ohai:
+        version_added: "2.1"
+        description:
+            - if supplied, do not run ohai even if present
+        required: false
+        default: no
+        choices: [ yes, no ]
+    ignore_facter:
+        version_added: "2.1"
+        description:
+            - if supplied, do not run facter even if present
+        required: false
+        default: no
+        choices: [ yes, no ]
     filter:
         version_added: "1.1"
         description:
@@ -80,6 +102,12 @@ ansible all -m setup -a 'filter=facter_*'
 # Display only facts about certain interfaces.
 ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
+# Restrict gathered facts to network and virtual.
+ansible all -m setup -a 'gather_subset=network,virtual'
+
+# Do not call puppet facter or ohai even if present.
+ansible all -m setup -a 'ignore_facter=yes ignore_ohai=yes'
+
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
 ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
@@ -95,8 +123,12 @@ def run_setup(module):
 
     # Look for the path to the facter and ohai binary and set
     # the variable to that path.
-    facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
-    ohai_path = module.get_bin_path('ohai')
+    facter_path = None
+    ohai_path   = None
+    if not module.params['ignore_facter']:
+        facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
+    if not module.params['ignore_ohai']:
+        ohai_path = module.get_bin_path('ohai')
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
@@ -139,6 +171,9 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec = dict(
+            gather_subset=dict(default="all", required=False),
+            ignore_ohai=dict(default=False, required=False),
+            ignore_facter=dict(default=False, required=False),
             filter=dict(default="*", required=False),
             fact_path=dict(default='/etc/ansible/facts.d', required=False),
         ),
