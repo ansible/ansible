@@ -58,6 +58,9 @@ class HostState:
         self.always_child_state = None
 
     def __repr__(self):
+        return "HostState(%r)" % self._blocks
+
+    def __str__(self):
         def _run_state_to_string(n):
             states = ["ITERATING_SETUP", "ITERATING_TASKS", "ITERATING_RESCUE", "ITERATING_ALWAYS", "ITERATING_COMPLETE"]
             try:
@@ -89,6 +92,20 @@ class HostState:
             self.rescue_child_state,
             self.always_child_state,
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, HostState):
+            return False
+
+        for attr in (
+            '_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
+            'cur_role', 'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
+            'tasks_child_state', 'rescue_child_state', 'always_child_state'
+            ):
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        return True
 
     def get_current_block(self):
         return self._blocks[self.cur_block]
@@ -439,7 +456,7 @@ class PlayIterator:
         the different processes, and not all data structures are preserved. This method
         allows us to find the original task passed into the executor engine.
         '''
-        def _search_block(block, task):
+        def _search_block(block):
             '''
             helper method to check a block's task lists (block/rescue/always)
             for a given task uuid. If a Block is encountered in the place of a
@@ -449,32 +466,32 @@ class PlayIterator:
             for b in (block.block, block.rescue, block.always):
                 for t in b:
                     if isinstance(t, Block):
-                        res = _search_block(t, task)
+                        res = _search_block(t)
                         if res:
                             return res
                     elif t._uuid == task._uuid:
                         return t
             return None
 
-        def _search_state(state, task):
+        def _search_state(state):
             for block in state._blocks:
-                res = _search_block(block, task)
+                res = _search_block(block)
                 if res:
                     return res
             for child_state in (state.tasks_child_state, state.rescue_child_state, state.always_child_state):
                 if child_state is not None:
-                    res = _search_state(child_state, task)
+                    res = _search_state(child_state)
                     if res:
                         return res
             return None
 
         s = self.get_host_state(host)
-        res = _search_state(s, task)
+        res = _search_state(s)
         if res:
             return res
 
         for block in self._play.handlers:
-            res = _search_block(block, task)
+            res = _search_block(block)
             if res:
                 return res
 
