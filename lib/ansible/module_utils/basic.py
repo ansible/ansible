@@ -1002,6 +1002,13 @@ class AnsibleModule(object):
         return new_mode
 
     def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms, use_umask):
+        def _apply_umask(perm, use_umask, rev_umask):
+            """Simple function to 'fake' ternary if statement"""
+            if use_umask:
+                return perm & rev_umask
+            else:
+                return perm
+
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         is_directory = stat.S_ISDIR(path_stat.st_mode)
@@ -1032,27 +1039,27 @@ class AnsibleModule(object):
 
         user_perms_to_modes = {
             'u': {
-                'r': stat.S_IRUSR if not use_umask else stat.S_IRUSR & rev_umask,
-                'w': stat.S_IWUSR if not use_umask else stat.S_IWUSR & rev_umask,
-                'x': stat.S_IXUSR if not use_umask else stat.S_IXUSR & rev_umask,
+                'r': _apply_umask(stat.S_IRUSR, use_umask, rev_umask)
+                'w': _apply_umask(stat.S_IWUSR, use_umask, rev_umask)
+                'x': _apply_umask(stat.S_IXUSR, use_umask, rev_umask)
                 's': stat.S_ISUID,
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
                 'o': (prev_mode & stat.S_IRWXO) << 6},
             'g': {
-                'r': stat.S_IRGRP if not use_umask else stat.S_IRGRP & rev_umask,
-                'w': stat.S_IWGRP if not use_umask else stat.S_IWGRP & rev_umask,
-                'x': stat.S_IXGRP if not use_umask else stat.S_IXGRP & rev_umask,
+                'r': _apply_umask(stat.S_IRGRP, use_umask, rev_umask)
+                'w': _apply_umask(stat.S_IWGRP, use_umask, rev_umask)
+                'x': _apply_umask(stat.S_IXGRP, use_umask, rev_umask)
                 's': stat.S_ISGID,
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
                 'o': (prev_mode & stat.S_IRWXO) << 3},
             'o': {
-                'r': stat.S_IROTH if not use_umask else stat.S_IROTH & rev_umask,
-                'w': stat.S_IWOTH if not use_umask else stat.S_IWOTH & rev_umask,
-                'x': stat.S_IXOTH if not use_umask else stat.S_IXOTH & rev_umask,
+                'r': _apply_umask(stat.S_IROTH, use_umask, rev_umask)
+                'w': _apply_umask(stat.S_IWOTH, use_umask, rev_umask)
+                'x': _apply_umask(stat.S_IXOTH, use_umask, rev_umask)
                 's': 0,
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
