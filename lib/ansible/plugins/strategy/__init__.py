@@ -251,6 +251,9 @@ class StrategyBase:
 
                     ret_results.append(task_result)
 
+                elif result[0] == 'emit_diff':
+                    self._tqm.send_callback('v2_on_file_diff', result[1])
+
                 elif result[0] == 'add_host':
                     result_item = result[1]
                     new_host_info = result_item.get('add_host', dict())
