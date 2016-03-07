@@ -618,6 +618,7 @@ class Runner(object):
         # since some of the variables we'll be replacing may be contained there too
         module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
         module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
+        module_vars_inject = utils.combine_vars(module_vars_inject, self.extra_vars)
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         # remove bad variables from the module vars, which may be in there due
