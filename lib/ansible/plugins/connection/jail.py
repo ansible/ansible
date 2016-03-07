@@ -23,11 +23,9 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.unicode import to_bytes
@@ -105,8 +103,7 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
+        local_cmd = [self.jexec_cmd, self.jail] + cmd
 
         display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
         local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
@@ -143,11 +140,11 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = self._prefix_login_path(out_path)
         try:
             with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command(['dd', 'of=%s' % out_path, 'bs=%s' % BUFSIZE], stdin=in_file)
                 except OSError:
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:
@@ -165,9 +162,9 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = self._prefix_login_path(in_path)
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
+            p = self._buffered_exec_command(['dd', 'if=%s' % in_path, 'bs=%s' % BUFSIZE])
         except OSError:
             raise AnsibleError("jail connection requires dd command in the jail")
 

@@ -45,6 +45,12 @@ class ShellBase(object):
     def join_path(self, *args):
         return os.path.join(*args)
 
+    def create_cmd_list(self, executable, cmd):
+        return [executable, '-c', cmd]
+
+    def join_cmd_list(self, cmd):
+        return ' '.join([pipes.quote(i) for i in cmd])
+
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
     def get_remote_filename(self, base_name):
         return base_name.strip()

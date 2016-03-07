@@ -23,6 +23,7 @@ import re
 import shlex
 
 from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.errors import AnsibleError
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
@@ -53,6 +54,14 @@ class ShellModule(object):
         if path.startswith('~'):
             return path
         return '"%s"' % path
+
+    def create_cmd_list(self, executable, cmd):
+        return cmd
+
+    def join_cmd_list(self, cmd):
+        if len(cmd) != 1:
+            raise AnsibleError('powershell requires len(cmd) = 1, cmd = %s' % cmd)
+        return cmd
 
     # powershell requires that script files end with .ps1
     def get_remote_filename(self, base_name):

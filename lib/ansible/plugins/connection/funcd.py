@@ -64,6 +64,7 @@ class Connection(object):
 
         # totally ignores privlege escalation
         vvv("EXEC %s" % (cmd), host=self.host)
+        cmd = self._shell.join_cmd_list(cmd)
         p = self.client.command.run(cmd)[self.host]
         return (p[0], p[1], p[2])
 

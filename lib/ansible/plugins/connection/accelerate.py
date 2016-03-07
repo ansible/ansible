@@ -30,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionF
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_decrypt
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -179,7 +180,6 @@ class Connection(ConnectionBase):
         data = dict(
             mode='command',
             cmd=cmd,
-            executable=C.DEFAULT_EXECUTABLE,
         )
         data = jsonify(data)
         data = keyczar_encrypt(self.key, data)
@@ -210,11 +210,11 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to remote '''
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
-        fd = file(in_path, 'rb')
-        fstat = os.stat(in_path)
+        fd = file(to_bytes(in_path, errors='strict'), 'rb')
+        fstat = os.stat(to_bytes(in_path, errors='strict'))
         try:
             display.vvv("PUT file is %d bytes" % fstat.st_size)
             last = False
@@ -262,7 +262,7 @@ class Connection(ConnectionBase):
         if self.send_data(data):
             raise AnsibleError("failed to initiate the file fetch with %s" % self._play_context.remote_addr)
 
-        fh = open(out_path, "w")
+        fh = open(to_bytes(out_path, errors='strict'), "w")
         try:
             bytes = 0
             while True:

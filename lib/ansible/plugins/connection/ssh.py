@@ -559,6 +559,8 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
+        cmd = self._shell.join_cmd_list(cmd)
+
         if in_data:
             cmd = self._build_command('ssh', self.host, cmd)
         else:

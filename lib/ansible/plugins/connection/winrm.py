@@ -64,7 +64,6 @@ class Connection(ConnectionBase):
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '')
     become_methods = []
-    allow_executable = False
 
     def __init__(self,  *args, **kwargs):
 
@@ -215,6 +214,7 @@ class Connection(ConnectionBase):
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        cmd = self._shell.join_cmd_list(cmd)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
         cmd_parts = map(to_unicode, cmd_parts)
         script = None

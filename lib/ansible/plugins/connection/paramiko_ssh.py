@@ -272,6 +272,7 @@ class Connection(ConnectionBase):
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
+        cmd = self._shell.join_cmd_list(cmd)
         cmd = to_bytes(cmd, errors='strict')
 
         no_prompt_out = ''
