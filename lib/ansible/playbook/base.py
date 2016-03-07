@@ -267,6 +267,8 @@ class Base:
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
 
+        new_me._uuid = self._uuid
+
         # if the ds value was set on the object, copy it to the new copy too
         if hasattr(self, '_ds'):
             new_me._ds = self._ds
