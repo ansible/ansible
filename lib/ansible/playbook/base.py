@@ -414,7 +414,7 @@ class Base:
         def _validate_variable_keys(ds):
             for key in ds:
                 if not isidentifier(key):
-                    raise TypeError("%s is not a valid variable name" % key)
+                    raise TypeError("'%s' is not a valid variable name" % key)
 
         try:
             if isinstance(ds, dict):
