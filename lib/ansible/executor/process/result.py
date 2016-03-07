@@ -115,6 +115,10 @@ class ResultProcess(multiprocessing.Process):
                         self._send_result(('v2_playbook_item_on_skipped', result))
                     else:
                         self._send_result(('v2_playbook_item_on_ok', result))
+
+                    if 'diff' in result._result:
+                        self._send_result(('emit_diff', result))
+
                     continue
 
                 clean_copy = strip_internal_keys(result._result)
