@@ -23,6 +23,7 @@ Other Notable Changes:
 * Fixed bug where tasks marked no_log were showing hidden values in output if
   ansible's --diff option was used.
 * Fix bug with non-english locales in git and apt modules
+* Compatibility fix for using state=absent with the pip ansible module and pip-6.1.0+
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
