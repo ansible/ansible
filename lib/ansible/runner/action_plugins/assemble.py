@@ -88,6 +88,8 @@ class ActionModule(object):
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
         regexp = options.get('regexp', None)
 
+        if self.runner.noop_on_check(inject):
+            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True))
 
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
