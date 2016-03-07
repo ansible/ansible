@@ -274,6 +274,7 @@ DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], islist=True )
 
 # colors
+COLOR_HIGHLIGHT   = get_config(p, 'colors', 'highlight', 'ANSIBLE_COLOR_HIGHLIGHT', 'white')
 COLOR_VERBOSE     = get_config(p, 'colors', 'verbose', 'ANSIBLE_COLOR_VERBOSE', 'blue')
 COLOR_WARN        = get_config(p, 'colors', 'warn', 'ANSIBLE_COLOR_WARN', 'bright purple')
 COLOR_ERROR       = get_config(p, 'colors', 'error', 'ANSIBLE_COLOR_ERROR', 'red')
