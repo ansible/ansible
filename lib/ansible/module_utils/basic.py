@@ -1039,27 +1039,27 @@ class AnsibleModule(object):
 
         user_perms_to_modes = {
             'u': {
-                'r': _apply_umask(stat.S_IRUSR, use_umask, rev_umask)
-                'w': _apply_umask(stat.S_IWUSR, use_umask, rev_umask)
-                'x': _apply_umask(stat.S_IXUSR, use_umask, rev_umask)
+                'r': _apply_umask(stat.S_IRUSR, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWUSR, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXUSR, use_umask, rev_umask),
                 's': stat.S_ISUID,
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
                 'o': (prev_mode & stat.S_IRWXO) << 6},
             'g': {
-                'r': _apply_umask(stat.S_IRGRP, use_umask, rev_umask)
-                'w': _apply_umask(stat.S_IWGRP, use_umask, rev_umask)
-                'x': _apply_umask(stat.S_IXGRP, use_umask, rev_umask)
+                'r': _apply_umask(stat.S_IRGRP, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWGRP, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXGRP, use_umask, rev_umask),
                 's': stat.S_ISGID,
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
                 'o': (prev_mode & stat.S_IRWXO) << 3},
             'o': {
-                'r': _apply_umask(stat.S_IROTH, use_umask, rev_umask)
-                'w': _apply_umask(stat.S_IWOTH, use_umask, rev_umask)
-                'x': _apply_umask(stat.S_IXOTH, use_umask, rev_umask)
+                'r': _apply_umask(stat.S_IROTH, use_umask, rev_umask),
+                'w': _apply_umask(stat.S_IWOTH, use_umask, rev_umask),
+                'x': _apply_umask(stat.S_IXOTH, use_umask, rev_umask),
                 's': 0,
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
