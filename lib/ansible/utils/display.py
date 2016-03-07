@@ -159,6 +159,9 @@ class Display:
             else:
                 logger.info(msg2)
 
+    def v(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=0)
+
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
 
