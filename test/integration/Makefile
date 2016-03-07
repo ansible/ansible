@@ -28,7 +28,7 @@ setup:
 	rm -rf $(TEST_DIR)
 	mkdir -p $(TEST_DIR)
 
-parsing:
+parsing: setup
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
 	ansible-playbook good_parsing.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
