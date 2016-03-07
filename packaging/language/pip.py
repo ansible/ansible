@@ -426,9 +426,9 @@ def main():
                     out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
                     changed = out_freeze_before != out_freeze_after
 
-            module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                             state=state, requirements=requirements, virtualenv=env,
-                             stdout=out, stderr=err)
+        module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                         state=state, requirements=requirements, virtualenv=env,
+                         stdout=out, stderr=err)
     finally:
         if old_umask != None:
             os.umask(old_umask)
