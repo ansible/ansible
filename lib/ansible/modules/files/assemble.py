@@ -20,7 +20,6 @@
 
 import os
 import os.path
-import shutil
 import tempfile
 import re
 
@@ -150,6 +149,16 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     tmp.close()
     return temp_path
 
+def cleanup(path, result=None):
+    # cleanup just in case
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except (IOError, OSError), e:
+            # don't error on possible race conditions, but keep warning
+            if result is not None:
+                result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, str(e))]
+
 # ==============================================================
 # main
 
@@ -171,7 +180,6 @@ def main():
     )
 
     changed   = False
-    path_md5    = None   # Deprecated
     path_hash   = None
     dest_hash   = None
     src       = os.path.expanduser(module.params['src'])
@@ -183,6 +191,7 @@ def main():
     ignore_hidden = module.params['ignore_hidden']
     validate = module.params.get('validate', None)
 
+    result = dict(src=src, dest=dest)
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
 
@@ -195,37 +204,46 @@ def main():
         except re.error, e:
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
+    if validate and "%s" not in validate:
+        module.fail_json(msg="validate must contain %%s: %s" % validate)
+
     path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
     path_hash = module.sha1(path)
-
-    if os.path.exists(dest):
-        dest_hash = module.sha1(dest)
-
-    if path_hash != dest_hash:
-        if backup and dest_hash is not None:
-            module.backup_local(dest)
-        if validate:
-            if "%s" not in validate:
-                module.fail_json(msg="validate must contain %%s: %s" % validate)
-            (rc, out, err) = module.run_command(validate % path)
-            if rc != 0:
-                module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
-
-        shutil.copy(path, dest)
-        changed = True
+    result['checksum'] = path_hash
 
     # Backwards compat.  This won't return data if FIPS mode is active
     try:
         pathmd5 = module.md5(path)
     except ValueError:
         pathmd5 = None
+    result['md5sum'] = pathmd5
 
-    os.remove(path)
+    if os.path.exists(dest):
+        dest_hash = module.sha1(dest)
 
+    if path_hash != dest_hash:
+        if validate:
+            (rc, out, err) = module.run_command(validate % path)
+            result['validation'] = dict(rc=rc, stdout=out, stderr=err)
+            if rc != 0:
+                cleanup(path)
+                result['msg'] = "failed to validate: rc:%s error:%s" % (rc, err)
+                module.fail_json(result)
+        if backup and dest_hash is not None:
+            result['backup_file'] = module.backup_local(dest)
+
+        module.atomic_move(path, dest)
+        changed = True
+
+    cleanup(path, result)
+
+    # handle file permissions
     file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_fs_attributes_if_different(file_args, changed)
+    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
+
     # Mission complete
-    module.exit_json(src=src, dest=dest, md5sum=pathmd5, checksum=path_hash, changed=changed, msg="OK")
+    result['msg'] = "OK"
+    module.exit_json(result)
 
 # import module snippets
 from ansible.module_utils.basic import *
