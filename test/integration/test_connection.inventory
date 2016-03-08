@@ -1,0 +1,31 @@
+[local]
+local-pipelining    ansible_ssh_pipelining=true
+local-no-pipelining ansible_ssh_pipelining=false
+[local:vars]
+ansible_host=localhost
+ansible_connection=local
+
+[chroot]
+chroot-pipelining    ansible_ssh_pipelining=true
+chroot-no-pipelining ansible_ssh_pipelining=false
+[chroot:vars]
+ansible_host=/
+ansible_connection=chroot
+
+[ssh]
+ssh-pipelining    ansible_ssh_pipelining=true
+ssh-no-pipelining ansible_ssh_pipelining=false
+[ssh:vars]
+ansible_host=localhost
+ansible_connection=ssh
+
+[paramiko_ssh]
+paramiko_ssh-pipelining    ansible_ssh_pipelining=true
+paramiko_ssh-no-pipelining ansible_ssh_pipelining=false
+[paramiko_ssh:vars]
+ansible_host=localhost
+ansible_connection=paramiko_ssh
+
+[skip-during-build:children]
+ssh
+paramiko_ssh
