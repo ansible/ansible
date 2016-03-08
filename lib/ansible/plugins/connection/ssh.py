@@ -591,7 +591,7 @@ class Connection(ConnectionBase):
                 # 0 = success
                 # 1-254 = remote command return code
                 # 255 = failure from the ssh command itself
-                if return_tuple[0] != 255 or attempt == (remaining_tries - 1):
+                if return_tuple[0] != 255:
                     break
                 else:
                     raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
