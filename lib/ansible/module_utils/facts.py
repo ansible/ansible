@@ -581,13 +581,16 @@ class Facts(object):
         else:
             proc_1 = os.path.basename(proc_1)
 
+        if proc_1 is not None:
+            proc_1 = proc_1.strip()
+
         if proc_1 == 'init' or proc_1.endswith('sh'):
             # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
             proc_1 = None
 
         # if not init/None it should be an identifiable or custom init, so we are done!
         if proc_1 is not None:
-            self.facts['service_mgr'] = proc_1.strip()
+            self.facts['service_mgr'] = proc_1
 
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':
