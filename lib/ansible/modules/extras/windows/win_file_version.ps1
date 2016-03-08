@@ -42,32 +42,34 @@ Else{
 }
 
 Try {
-    $file_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileVersion
+    $_version_fields = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+    $file_version = $_version_fields.FileVersion
     If ($file_version -eq $null){
         $file_version = ''
     }
-    $product_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).ProductVersion
+    $product_version = $_version_fields.ProductVersion
     If ($product_version -eq $null){
         $product_version= ''
     }
-    $file_major_part = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileMajorPart
+    $file_major_part = $_version_fields.FileMajorPart
     If ($file_major_part -eq $null){
         $file_major_part= ''
     }
-    $file_minor_part = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileMinorPart
+    $file_minor_part = $_version_fields.FileMinorPart
     If ($file_minor_part -eq $null){
         $file_minor_part= ''
     }
-    $file_build_part = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileBuildPart
+    $file_build_part = $_version_fields.FileBuildPart
     If ($file_build_part -eq $null){
         $file_build_part = ''
     }
-    $file_private_part = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FilePrivatePart
-    If ($file_private_part -eq $null){
+    $file_private_part = $_version_fields.FilePrivatePart
+    If ($file_private_part -eq $null)
         $file_private_part = ''
     }
 }
 Catch{
+    Fail-Json $result "Error: $_.Exception.Message"
 }
 
 Set-Attr $result.win_file_version "path" $path.toString()
