@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
@@ -19,14 +21,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pipes
 import sys
 from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open
 
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
+from ansible.utils.unicode import to_bytes, to_unicode
 
 class TestConnectionBaseClass(unittest.TestCase):
 
@@ -64,7 +70,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command('ssh')
 
-    def test_plugins_connection_ssh_exec_command(self):
+    def test_plugins_connection_ssh__exec_command(self):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = ssh.Connection(pc, new_stdin)
@@ -76,11 +82,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn._exec_command('ssh')
         res, stdout, stderr = conn._exec_command('ssh', 'this is some data')
-
-    def test_plugins_connection_ssh__exec_command(self):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
 
     @patch('select.select')
     @patch('fcntl.fcntl')
@@ -264,4 +265,104 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertFalse(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
         self.assertTrue(conn._flags['become_nopasswd_error'])
+
+    @patch('time.sleep')
+    def test_plugins_connection_ssh_exec_command(self, mock_sleep):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+        conn._build_command = MagicMock()
+        conn._exec_command = MagicMock()
+
+        C.ANSIBLE_SSH_RETRIES = 9
+
+        # test a regular, successful execution
+        conn._exec_command.return_value = (0, 'stdout', '')
+        res = conn.exec_command('ssh', 'some data')
+
+        # test a retry, followed by success
+        conn._exec_command.return_value = None
+        conn._exec_command.side_effect = [(255, '', ''), (0, 'stdout', '')]
+        res = conn.exec_command('ssh', 'some data')
+
+        # test multiple failures
+        conn._exec_command.side_effect = [(255, '', '')]*10
+        self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+
+        # test other failure from exec_command
+        conn._exec_command.side_effect = [Exception('bad')]*10
+        self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
+
+    @patch('os.path.exists')
+    def test_plugins_connection_ssh_put_file(self, mock_ospe):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+        conn._build_command = MagicMock()
+        conn._run = MagicMock()
+
+        mock_ospe.return_value = True
+        conn._build_command.return_value = 'some command to run'
+        conn._run.return_value = (0, '', '')
+        conn.host = "some_host"
+
+        # test with C.DEFAULT_SCP_IF_SSH enabled
+        C.DEFAULT_SCP_IF_SSH = True
+        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None)
+
+        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', None)
+
+        # test with C.DEFAULT_SCP_IF_SSH disabled
+        C.DEFAULT_SCP_IF_SSH = False
+        expected_in_data = b"put {0} {1}\n".format(pipes.quote('/path/to/in/file'), pipes.quote('/path/to/dest/file'))
+        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data)
+
+        expected_in_data = b"put {0} {1}\n".format(pipes.quote(to_bytes('/path/to/in/file/with/unicode-fö〩')), pipes.quote(to_bytes('/path/to/dest/file/with/unicode-fö〩')))
+        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', expected_in_data)
+
+        # test that a non-zero rc raises an error
+        conn._run.return_value = (1, 'stdout', 'some errors')
+        self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+
+        # test that a not-found path raises an error
+        mock_ospe.return_value = False
+        conn._run.return_value = (0, 'stdout', '')
+        self.assertRaises(AnsibleFileNotFound, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+
+    def test_plugins_connection_ssh_fetch_file(self):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+        conn._build_command = MagicMock()
+        conn._run = MagicMock()
+
+        conn._build_command.return_value = 'some command to run'
+        conn._run.return_value = (0, '', '')
+        conn.host = "some_host"
+
+        # test with C.DEFAULT_SCP_IF_SSH enabled
+        C.DEFAULT_SCP_IF_SSH = True
+        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None)
+
+        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', None)
+
+        # test with C.DEFAULT_SCP_IF_SSH disabled
+        C.DEFAULT_SCP_IF_SSH = False
+        expected_in_data = b"get {0} {1}\n".format(pipes.quote('/path/to/in/file'), pipes.quote('/path/to/dest/file'))
+        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data)
+
+        expected_in_data = b"get {0} {1}\n".format(pipes.quote(to_bytes('/path/to/in/file/with/unicode-fö〩')), pipes.quote(to_bytes('/path/to/dest/file/with/unicode-fö〩')))
+        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', expected_in_data)
+
+        # test that a non-zero rc raises an error
+        conn._run.return_value = (1, 'stdout', 'some errors')
+        self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
