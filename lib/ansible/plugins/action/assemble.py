@@ -100,7 +100,6 @@ class ActionModule(ActionBase):
         if boolean(remote_src):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
-
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
@@ -123,6 +122,22 @@ class ActionModule(ActionBase):
         dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
 
         diff = {}
+
+        # setup args for running modules
+        new_module_args = self._task.args.copy()
+
+        # clean assemble specific options
+        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
+            if opt in new_module_args:
+                del new_module_args[opt]
+
+        new_module_args.update(
+            dict(
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+        )
+
         if path_checksum != dest_stat['checksum']:
             resultant = file(path).read()
 
@@ -135,31 +150,13 @@ class ActionModule(ActionBase):
             if self._play_context.become and self._play_context.become_user != 'root':
                 self._remote_chmod('a+r', xfered)
 
-            # run the copy module
-
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
+            new_module_args.update( dict( src=xfered,))
 
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
             if diff:
                 res['diff'] = diff
             result.update(res)
-            return result
         else:
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
-
             result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp))
-            return result
+
+        return result
