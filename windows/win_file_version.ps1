@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# WAIT_JSON
+# WANT_JSON
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;

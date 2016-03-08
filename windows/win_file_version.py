@@ -20,16 +20,17 @@
 DOCUMENTATION = '''
 ---
 module: win_file_version
-version_added: "2.0"
+version_added: "2.1"
 short_descriptions: Get DLL or EXE file build version
 description:
   - Get DLL or EXE file build version
   - change state alway be false
 options:
-   path:
-     description:
-       - File to get version(provide absolute path)
-
+  path:
+    description:
+      - File to get version(provide absolute path)
+    required: true
+    aliases: []
 author: Sam Liu
 '''
 
@@ -44,3 +45,41 @@ EXAMPLES = '''
 - debug: msg="{{exe_file_version}}"
 
 '''
+
+RETURN = """
+win_file_version.path:
+  description: file path
+  returned: always
+  type: string
+
+win_file_version.file_version:
+  description: file version number.
+  returned: no error
+  type: string
+
+win_file_version.product_version:
+  description: the version of the product this file is distributed with.
+  returned: no error
+  type: string
+
+win_file_version.file_major_part:
+  description: the major part of the version number.
+  returned: no error
+  type: string
+
+win_file_version.file_minor_part:
+  description: the minor part of the version number of the file.
+  returned: no error
+  type: string
+
+win_file_version.file_build_part:
+  description: build number of the file.
+  returned: no error
+  type: string
+
+win_file_version.file_private_part:
+  description: file private part number.
+  returned: no error
+  type: string
+
+"""
