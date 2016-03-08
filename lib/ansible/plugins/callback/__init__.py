@@ -334,8 +334,8 @@ class CallbackBase:
         self.playbook_on_stats(stats)
 
     def v2_on_file_diff(self, result):
-        host = result._host.get_name()
         if 'diff' in result._result:
+            host = result._host.get_name()
             self.on_file_diff(host, result._result['diff'])
 
     def v2_playbook_on_include(self, included_file):
