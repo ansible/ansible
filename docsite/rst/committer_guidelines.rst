@@ -57,6 +57,7 @@ Committers are expected to continue to follow the same community and contributio
 
 
 People
+======
 Individuals who have been asked to become part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names & github IDs to this file below via pull request, indicating that they agree to act in the ways that their fellow committers trust that they will act. 
 
 * James Cammarata (RedHat/Ansible)
