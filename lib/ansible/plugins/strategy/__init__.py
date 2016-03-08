@@ -623,10 +623,10 @@ class StrategyBase:
     def _take_step(self, task, host=None):
 
         ret=False
+        msg=u'Perform task: %s ' % task
         if host:
-            msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
-        else:
-            msg = u'Perform task: %s (y/n/c): ' % task
+            msg += u'on %s ' % host
+        msg += u'(N)o/(y)es/(c)ontinue: '
         resp = display.prompt(msg)
 
         if resp.lower() in ['y','yes']:
