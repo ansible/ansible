@@ -24,6 +24,8 @@ Other Notable Changes:
   ansible's --diff option was used.
 * Fix bug with non-english locales in git and apt modules
 * Compatibility fix for using state=absent with the pip ansible module and pip-6.1.0+
+* Backported support for ansible_winrm_server_cert_validation flag to disable cert validation on Python 2.7.9+ (and support for other passthru args to pywinrm transport).
+* Backported various updates to user module (prevent accidental OS X group membership removals, various checkmode fixes).
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
