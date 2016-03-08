@@ -306,18 +306,24 @@ try:
     import requests
     import azure
     from itertools import chain
-    from azure.mgmt.common import SubscriptionCloudCredentials
-    from azure.mgmt.resource import ResourceManagementClient
+    from azure.common.credentials import BasicTokenAuthentication
+    from azure.common.exceptions import CloudError
+    from azure.mgmt.resource.resources.models import (
+        DeploymentProperties,
+        ParametersLink,
+        TemplateLink,
+        Deployment,
+        ResourceGroup,
+        Dependency
+    )
+    from azure.mgmt.resource.resources import ResourceManagementClient, ResourceManagementClientConfiguration
+    from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientConfiguration
 
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
 
 AZURE_URL = "https://management.azure.com"
-DEPLOY_URL_FORMAT = "/subscriptions/{}/resourcegroups/{}/providers/microsoft.resources/deployments/{}?api-version={}"
-RES_GROUP_URL_FORMAT = "/subscriptions/{}/resourcegroups/{}?api-version={}"
-ARM_API_VERSION = "2015-01-01"
-NETWORK_API_VERSION = "2015-06-15"
 
 
 def get_token(domain_or_tenant, client_id, client_secret):
@@ -423,30 +429,6 @@ def build_deployment_body(module):
     return dict(properties=properties)
 
 
-def follow_deployment(client, group_name, deployment):
-    state = deployment.properties.provisioning_state
-    if state == azure.mgmt.common.OperationStatus.Failed or \
-                    state == azure.mgmt.common.OperationStatus.Succeeded or \
-                    state == "Canceled" or \
-                    state == "Deleted":
-        return deployment
-    else:
-        time.sleep(30)
-        result = client.deployments.get(group_name, deployment.name)
-        return follow_deployment(client, group_name, result.deployment)
-
-
-def follow_delete(client, location):
-    result = client.get_long_running_operation_status(location)
-    if result.status == azure.mgmt.common.OperationStatus.Succeeded:
-        return True
-    elif result.status == azure.mgmt.common.OperationStatus.Failed:
-        return False
-    else:
-        time.sleep(30)
-        return follow_delete(client, location)
-
-
 def deploy_template(module, client, conn_info):
     """
     Deploy the targeted template and parameters
@@ -459,46 +441,32 @@ def deploy_template(module, client, conn_info):
     deployment_name = conn_info["deployment_name"]
     group_name = conn_info["resource_group_name"]
 
-    deploy_parameter = azure.mgmt.resource.DeploymentProperties()
-    deploy_parameter.mode = "Complete"
+    deploy_parameter = DeploymentProperties()
+    deploy_parameter.mode = module.params.get('deployment_mode')
 
     if module.params.get('parameters_link') is None:
-        deploy_parameter.parameters = json.dumps(module.params.get('parameters'), ensure_ascii=False)
+        deploy_parameter.parameters = module.params.get('parameters')
     else:
-        parameters_link = azure.mgmt.resource.ParametersLink()
-        parameters_link.uri = module.params.get('parameters_link')
+        parameters_link = ParametersLink(
+            uri = module.params.get('parameters_link')
+        )
         deploy_parameter.parameters_link = parameters_link
 
     if module.params.get('template_link') is None:
-        deploy_parameter.template = json.dumps(module.params.get('template'), ensure_ascii=False)
+        deploy_parameter.template = module.params.get('template')
     else:
-        template_link = azure.mgmt.resource.TemplateLink()
-        template_link.uri = module.params.get('template_link')
+        template_link = TemplateLink(
+            uri = module.params.get('template_link')
+        )
         deploy_parameter.template_link = template_link
 
-    deployment = azure.mgmt.resource.Deployment(properties=deploy_parameter)
-    params = azure.mgmt.resource.ResourceGroup(location=module.params.get('location'), tags=module.params.get('tags'))
+    params = ResourceGroup(location=module.params.get('location'), tags=module.params.get('tags'))
     try:
         client.resource_groups.create_or_update(group_name, params)
-        result = client.deployments.create_or_update(group_name, deployment_name, deployment)
-        return follow_deployment(client, group_name, result.deployment)
-    except azure.common.AzureHttpError as e:
+        result = client.deployments.create_or_update(group_name, deployment_name, deploy_parameter)
+        return result.result() # Blocking wait, return the Deployment object
+    except CloudError as e:
         module.fail_json(msg='Deploy create failed with status code: %s and message: "%s"' % (e.status_code, e.message))
-
-
-def deploy_url(subscription_id, resource_group_name, deployment_name, api_version=ARM_API_VERSION):
-    return AZURE_URL + DEPLOY_URL_FORMAT.format(subscription_id, resource_group_name, deployment_name, api_version)
-
-
-def res_group_url(subscription_id, resource_group_name, api_version=ARM_API_VERSION):
-    return AZURE_URL + RES_GROUP_URL_FORMAT.format(subscription_id, resource_group_name, api_version)
-
-
-def default_headers(token, with_content=False):
-    headers = {'Authorization': 'Bearer {}'.format(token), 'Accept': 'application/json'}
-    if with_content:
-        headers['Content-Type'] = 'application/json'
-    return headers
 
 
 def destroy_resource_group(module, client, conn_info):
@@ -511,27 +479,9 @@ def destroy_resource_group(module, client, conn_info):
     """
 
     try:
-        client.resource_groups.get(conn_info['resource_group_name'])
-    except azure.common.AzureMissingResourceHttpError:
-        return False
-
-    try:
-        url = res_group_url(conn_info['subscription_id'], conn_info['resource_group_name'])
-        res = requests.delete(url, headers=default_headers(conn_info['security_token']))
-        if res.status_code == 404 or res.status_code == 204:
-            return False
-
-        if res.status_code == 202:
-            location = res.headers['location']
-            follow_delete(client, location)
-            return True
-
-        if res.status_code == requests.codes.ok:
-            return True
-        else:
-            module.fail_json(
-                msg='Delete resource group and deploy failed with status code: %s and message: %s' % (res.status_code, res.text))
-    except azure.common.AzureHttpError as e:
+        result = client.resource_groups.delete(conn_info['resource_group_name'])
+        result.wait() # Blocking wait till the delete is finished
+    except CloudError as e:
         if e.status_code == 404 or e.status_code == 204:
             return True
         else:
@@ -546,67 +496,55 @@ def get_dependencies(dep_tree, resource_type):
     return matches
 
 
-def build_hierarchy(module, dependencies, tree=None):
+def build_hierarchy(dependencies, tree=None):
     tree = dict(top=True) if tree is None else tree
     for dep in dependencies:
         if dep.resource_name not in tree:
             tree[dep.resource_name] = dict(dep=dep, children=dict())
-        if isinstance(dep, azure.mgmt.resource.Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
-            build_hierarchy(module, dep.depends_on, tree[dep.resource_name]['children'])
+        if isinstance(dep, Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
+            build_hierarchy(dep.depends_on, tree[dep.resource_name]['children'])
 
     if 'top' in tree:
         tree.pop('top', None)
         keys = list(tree.keys())
         for key1 in keys:
             for key2 in keys:
-                if key2 in tree and key1 in tree[key2]['children']:
+                if key2 in tree and key1 in tree[key2]['children'] and key1 in tree:
                     tree[key2]['children'][key1] = tree[key1]
                     tree.pop(key1)
     return tree
 
 
-class ResourceId:
-    def __init__(self, **kwargs):
-        self.resource_name = kwargs.get('resource_name')
-        self.resource_provider_api_version = kwargs.get('api_version')
-        self.resource_provider_namespace = kwargs.get('resource_namespace')
-        self.resource_type = kwargs.get('resource_type')
-        self.parent_resource_path = kwargs.get('parent_resource_path')
-        pass
-
-
-def get_resource_details(client, group, name, namespace, resource_type, api_version):
-    res_id = ResourceId(resource_name=name, api_version=api_version, resource_namespace=namespace,
-                        resource_type=resource_type)
-    return client.resources.get(group, res_id).resource
-
-
 def get_ip_dict(ip):
-    p = json.loads(ip.properties)
-    d = p['dnsSettings']
     return dict(name=ip.name,
                 id=ip.id,
-                public_ip=p['ipAddress'],
-                public_ip_allocation_method=p['publicIPAllocationMethod'],
-                dns_settings=d)
+                public_ip=ip.ip_address,
+                public_ip_allocation_method=str(ip.public_ip_allocation_method),
+                dns_settings={
+                    'domain_name_label':ip.dns_settings.domain_name_label,
+                    'fqdn':ip.dns_settings.fqdn
+                })
 
 
-def get_instances(module, client, group, deployment):
-    dep_tree = build_hierarchy(module, deployment.properties.dependencies)
+def nic_to_public_ips_instance(client, group, nics):
+    return [client.public_ip_addresses.get(group, public_ip_id.split('/')[-1])
+              for nic_obj in [client.network_interfaces.get(group, nic['dep'].resource_name) for nic in nics]
+              for public_ip_id in [ip_conf_instance.public_ip_address.id for ip_conf_instance in nic_obj.ip_configurations if ip_conf_instance.public_ip_address]]
+
+
+def get_instances(client, group, deployment):
+    dep_tree = build_hierarchy(deployment.properties.dependencies)
     vms = get_dependencies(dep_tree, resource_type="Microsoft.Compute/virtualMachines")
 
-    vms_and_ips = [(vm, get_dependencies(vm['children'], "Microsoft.Network/publicIPAddresses")) for vm in vms]
-    vms_and_ips = [(vm['dep'], [get_resource_details(client,
-                                                     group,
-                                                     ip['dep'].resource_name,
-                                                     "Microsoft.Network",
-                                                     "publicIPAddresses",
-                                                     NETWORK_API_VERSION) for ip in ip_list]) for vm, ip_list in vms_and_ips if len(ip_list) > 0]
+    vms_and_nics = [(vm, get_dependencies(vm['children'], "Microsoft.Network/networkInterfaces")) for vm in vms]
+    vms_and_ips = [(vm['dep'], nic_to_public_ips_instance(client, group, nics)) for vm, nics in vms_and_nics]
 
-    return [dict(vm_name=vm.resource_name, ips=[get_ip_dict(ip) for ip in ips]) for vm, ips in vms_and_ips]
+    return [dict(vm_name=vm.resource_name, ips=[get_ip_dict(ip) for ip in ips]) for vm, ips in vms_and_ips if len(ips) > 0]
 
 
 def main():
+    # import module snippets
+    from ansible.module_utils.basic import AnsibleModule
     argument_spec = dict(
         azure_url=dict(default=AZURE_URL),
         subscription_id=dict(required=True),
@@ -620,7 +558,9 @@ def main():
         parameters=dict(default=None, type='dict'),
         template_link=dict(default=None),
         parameters_link=dict(default=None),
-        location=dict(default="West US")
+        location=dict(default="West US"),
+        deployment_mode=dict(default='Complete', choices=['Complete', 'Incremental']),
+        deployment_name=dict(default="ansible-arm")
     )
 
     module = AnsibleModule(
@@ -646,9 +586,15 @@ def main():
     if conn_info['security_token'] is None:
         module.fail_json(msg='failed to retrieve a security token from Azure Active Directory')
 
-    credentials = SubscriptionCloudCredentials(module.params.get('subscription_id'), conn_info['security_token'])
-    resource_client = ResourceManagementClient(credentials)
-    conn_info['deployment_name'] = 'ansible-arm'
+    credentials = BasicTokenAuthentication(
+        token = {
+            'access_token':conn_info['security_token']
+        }
+    )
+    subscription_id = module.params.get('subscription_id')
+    resource_client = ResourceManagementClient(ResourceManagementClientConfiguration(credentials, subscription_id))
+    network_client = NetworkManagementClient(NetworkManagementClientConfiguration(credentials, subscription_id))
+    conn_info['deployment_name'] = module.params.get('deployment_name')
 
     if module.params.get('state') == 'present':
         deployment = deploy_template(module, resource_client, conn_info)
@@ -656,17 +602,13 @@ def main():
                     group_name=conn_info['resource_group_name'],
                     id=deployment.id,
                     outputs=deployment.properties.outputs,
-                    instances=get_instances(module, resource_client, conn_info['resource_group_name'], deployment),
+                    instances=get_instances(network_client, conn_info['resource_group_name'], deployment),
                     changed=True,
                     msg='deployment created')
         module.exit_json(**data)
     else:
         destroy_resource_group(module, resource_client, conn_info)
         module.exit_json(changed=True, msg='deployment deleted')
-
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
