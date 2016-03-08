@@ -524,7 +524,7 @@ class CLI(object):
                 raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("Vault password script %s returned non-zero (%s)." % (this_path, p.returncode))
+                raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))
             vault_pass = stdout.strip('\r\n')
         else:
             try:
