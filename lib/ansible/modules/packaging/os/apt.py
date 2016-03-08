@@ -102,6 +102,7 @@ options:
     default: no
     choices: [ "yes", "no" ]
     aliases: [ 'autoclean']
+    version_added: "2.1"
 requirements: [ python-apt, aptitude ]
 author: "Matthew Williams (@mgwilliams)"
 notes:
