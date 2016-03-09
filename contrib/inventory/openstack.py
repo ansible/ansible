@@ -159,7 +159,7 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     ''' Determines if cache file has expired, or if it is still valid '''
     if refresh:
         return True
-    if os.path.isfile(cache_file):
+    if os.path.isfile(cache_file) and os.path.getsize(cache_file) > 0:
         mod_time = os.path.getmtime(cache_file)
         current_time = time.time()
         if (mod_time + cache_expiration_time) > current_time:
