@@ -32,43 +32,37 @@ options:
     description:
       - "path to the mount point, eg: C(/mnt/files)"
     required: true
-    default: null
-    aliases: []
   src:
     description:
       - device to be mounted on I(name).
     required: true
-    default: null
   fstype:
     description:
       - file-system type
     required: true
-    default: null
   opts:
     description:
-      - mount options (see fstab(8))
+      - mount options (see fstab(5))
     required: false
     default: null
   dump:
     description:
-      - "dump (see fstab(8)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
+      - "dump (see fstab(5)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
     required: false
     default: 0
   passno:
     description:
-      - "passno (see fstab(8)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
+      - "passno (see fstab(5)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
     required: false
     default: 0
   state:
     description:
-      - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
-        as needed and appropriately configured in I(fstab). 
-        C(absent) and C(present) only deal with
-        I(fstab) but will not affect current mounting. If specifying C(mounted) and the mount
-        point is not present, the mount point will be created. Similarly, specifying C(absent)        will remove the mount point directory.
+      - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted as needed and appropriately configured in I(fstab).
+      - C(absent) and C(present) only deal with I(fstab) but will not affect current mounting.
+      - If specifying C(mounted) and the mount point is not present, the mount point will be created. Similarly.
+      - Specifying C(absent) will remove the mount point directory.
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
-    default: null
   fstab:
     description:
       - file to use instead of C(/etc/fstab). You shouldn't use that option
@@ -77,9 +71,7 @@ options:
     required: false
     default: /etc/fstab
 
-notes: []
-requirements: []
-author: 
+author:
     - Ansible Core Team
     - Seth Vidal
 '''
