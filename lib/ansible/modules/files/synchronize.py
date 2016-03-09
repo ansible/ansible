@@ -141,7 +141,7 @@ options:
   use_ssh_args:
     description:
       - Use the ssh_args specified in ansible.cfg
-    default: "yes"
+    default: "no"
     choices:
       - "yes"
       - "no"
