@@ -91,7 +91,7 @@ class Connection(ConnectionBase):
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
-        local_cmd = map(to_bytes, local_cmd)
+        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
