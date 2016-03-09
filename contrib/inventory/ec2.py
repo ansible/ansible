@@ -498,9 +498,14 @@ class Ec2Inventory(object):
         try:
             conn = self.connect_to_aws(rds, region)
             if conn:
-                instances = conn.get_all_dbinstances()
-                for instance in instances:
-                    self.add_rds_instance(instance, region)
+                marker = None
+                while True:
+                    instances = conn.get_all_dbinstances(marker=marker)
+                    marker = instances.marker
+                    for instance in instances:
+                        self.add_rds_instance(instance, region)
+                    if not marker:
+                        break
         except boto.exception.BotoServerError as e:
             error = e.reason
 
