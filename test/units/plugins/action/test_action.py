@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 # (c) 2015, Florian Apolloner <florian@apolloner.eu>
 #
 # This file is part of Ansible
