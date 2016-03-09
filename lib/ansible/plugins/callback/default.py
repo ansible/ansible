@@ -114,7 +114,7 @@ class CallbackModule(CallbackBase):
         self._display.banner("NO MORE HOSTS LEFT")
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        if self._display.verbosity > 1 or task.get_name() != 'include':
+        if self._display.verbosity > 1 or task.action != 'include':
             args = ''
             # args can be specified as no_log in several places: in the task or in
             # the argument spec.  We can check whether the task is no_log but the
