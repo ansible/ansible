@@ -128,7 +128,16 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
         the argument list. The list will not contain any empty elements.
         """
-        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+        try:
+            # Python 2.6.x shlex doesn't handle unicode type so we have to
+            # convert args to byte string for that case.  More efficient to
+            # try without conversion first but python2.6 doesn't throw an
+            # exception, it merely mangles the output:
+            # >>> shlex.split(u't e')
+            # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
+            return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+        except AttributeError:
+            return [to_unicode(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
     def transport(self):
