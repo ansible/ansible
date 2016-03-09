@@ -399,7 +399,7 @@ author:
     - "Ash Wilson (@smashwilson)"
     - "Thomas Steinbach (@ThomasSteinbach)"
     - "Philippe Jandot (@zfil)"
-    - "Daan Oosterveld (@dusdanig)
+    - "Daan Oosterveld (@dusdanig)"
 requirements:
     - "python >= 2.6"
     - "docker-py >= 0.3.0"
