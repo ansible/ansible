@@ -316,11 +316,11 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
-        expected_in_data = b"put {0} {1}\n".format(pipes.quote('/path/to/in/file'), pipes.quote('/path/to/dest/file'))
+        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
         res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
-        expected_in_data = b"put {0} {1}\n".format(pipes.quote(to_bytes('/path/to/in/file/with/unicode-fö〩')), pipes.quote(to_bytes('/path/to/dest/file/with/unicode-fö〩')))
+        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
@@ -354,11 +354,11 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
-        expected_in_data = b"get {0} {1}\n".format(pipes.quote('/path/to/in/file'), pipes.quote('/path/to/dest/file'))
+        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
         res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
-        expected_in_data = b"get {0} {1}\n".format(pipes.quote(to_bytes('/path/to/in/file/with/unicode-fö〩')), pipes.quote(to_bytes('/path/to/dest/file/with/unicode-fö〩')))
+        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
