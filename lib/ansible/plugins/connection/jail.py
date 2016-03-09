@@ -71,7 +71,7 @@ class Connection(ConnectionBase):
     def _search_executable(executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise AnsibleError("%s command not found in PATH") % executable
+            raise AnsibleError("%s command not found in PATH" % executable)
         return cmd
 
     def list_jails(self):
