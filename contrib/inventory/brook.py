@@ -36,7 +36,6 @@ dictionary.
  - brook_description: str
  - brook_project: str
  - brook_template: str
- - brook_provider: str
  - brook_region: str
  - brook_image: str
  - brook_status: str
@@ -183,10 +182,11 @@ class BrookInventory:
                 template = templates_api.show_template(template_id=instance.template)
 
                 # Update hostvars
-                hostvars = self.hostvars(project, instance, image, template, instances_api)
-                if not hostvars:
+                try:
+                    meta['hostvars'][instance.name] = \
+                        self.hostvars(project, instance, image, template, instances_api)
+                except libbrook.rest.ApiException:
                     continue
-                meta['hostvars'][instance.name] = hostvars
 
                 # Group by project
                 project_group = 'project_%s' % project.name
@@ -217,7 +217,8 @@ class BrookInventory:
     def hostvars(self, project, instance, image, template, api):
         """Return the hostvars dictionary for the given instance.
 
-        If the instance has no IP address we can communicate with, return None instead.
+        Raise libbrook.rest.ApiException if it cannot retrieve all required information from the
+        Brook.io API.
         """
 
         hostvars = instance.to_dict()
@@ -225,13 +226,13 @@ class BrookInventory:
         hostvars['brook_description'] = hostvars.pop('description')
         hostvars['brook_project'] = hostvars.pop('project')
         hostvars['brook_template'] = hostvars.pop('template')
-        hostvars['brook_provider'] = hostvars.pop('provider')
         hostvars['brook_region'] = hostvars.pop('region')
         hostvars['brook_image'] = hostvars.pop('image')
         hostvars['brook_created_at'] = hostvars.pop('created_at')
         hostvars['brook_updated_at'] = hostvars.pop('updated_at')
         del hostvars['id']
         del hostvars['key']
+        del hostvars['provider']
 
         # Substitute identifiers for names
         #
@@ -253,13 +254,15 @@ class BrookInventory:
         #
         addresses = api.instance_addresses(project_id=project.id, instance_id=instance.id)
         internal_ips = [address.address for address in addresses if address.scope == 'internal']
-        external_ips = [address.address for address in addresses if address.scope == 'external']
+        external_ips = [address.address for address in addresses
+                        if address.address and address.scope == 'external']
         hostvars.update({'brook_internal_ips': internal_ips})
         hostvars.update({'brook_external_ips': external_ips})
         try:
             hostvars.update({'ansible_ssh_host': external_ips[0]})
         except IndexError:
-            return None
+            raise libbrook.rest.ApiException(status='502', reason='Instance without public IP')
+
         return hostvars
 
 
