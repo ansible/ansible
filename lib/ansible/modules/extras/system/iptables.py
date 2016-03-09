@@ -205,6 +205,7 @@ options:
         C(dscp_mark_class)."
     required: false
   set_dscp_mark_class:
+    description:
       - "This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark. Mutually exclusive with
         C(dscp_mark)."
