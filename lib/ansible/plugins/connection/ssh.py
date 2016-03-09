@@ -323,7 +323,7 @@ class Connection(ConnectionBase):
         if isinstance(cmd, (text_type, binary_type)):
             cmd = to_bytes(cmd)
         else:
-            cmd = map(to_bytes, cmd)
+            cmd = list(map(to_bytes, cmd))
 
         if not in_data:
             try:
@@ -585,7 +585,7 @@ class Connection(ConnectionBase):
 
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = "%s..." % args[0]
-        for attempt in xrange(remaining_tries):
+        for attempt in range(remaining_tries):
             try:
                 return_tuple = self._exec_command(*args, **kwargs)
                 # 0 = success
