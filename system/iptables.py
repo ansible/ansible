@@ -199,12 +199,14 @@ options:
         sctp."
     required: false
   set_dscp_mark:
+    version_added: "2.1"
     description:
       - "This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value. Mutually exclusive with
         C(dscp_mark_class)."
     required: false
   set_dscp_mark_class:
+    version_added: "2.1"
     description:
       - "This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark. Mutually exclusive with
