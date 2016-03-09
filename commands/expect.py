@@ -188,8 +188,23 @@ def main():
     startd = datetime.datetime.now()
 
     try:
-        out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
-                               events=events, cwd=chdir, echo=echo)
+        try:
+            # Prefer pexpect.run from pexpect>=4
+            out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
+                                  events=events, cwd=chdir, echo=echo,
+                                  encoding='utf-8')
+        except TypeError:
+            # Use pexpect.runu in pexpect>=3.3,<4
+            out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
+                                   events=events, cwd=chdir, echo=echo)
+    except (TypeError, AttributeError), e:
+        # This should catch all insufficient versions of pexpect
+        # We deem them insufficient for their lack of ability to specify
+        # to not echo responses via the run/runu functions, which would
+        # potentially leak sensentive information
+        module.fail_json(msg='Insufficient version of pexpect installed '
+                             '(%s), this module requires pexpect>=3.3. '
+                             'Error was %s' % (pexpect.__version__, e))
     except pexpect.ExceptionPexpect, e:
         module.fail_json(msg='%s' % e)
 
