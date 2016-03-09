@@ -116,9 +116,7 @@ class TestPlayIterator(unittest.TestCase):
 
         # lookup up an original task
         target_task = p._entries[0].tasks[0].block[0]
-        print("the task is: %s (%s)" % (target_task, target_task._uuid))
         task_copy = target_task.copy(exclude_block=True)
-        print("the copied task is: %s (%s)" % (task_copy, task_copy._uuid))
         found_task = itr.get_original_task(hosts[0], task_copy)
         self.assertEqual(target_task, found_task)
 
@@ -209,18 +207,19 @@ class TestPlayIterator(unittest.TestCase):
                     - block:
                       - block:
                         - debug: msg="this is the first task"
-                    rescue:
-                    - block:
+                        - ping:
+                      rescue:
                       - block:
                         - block:
                           - block:
-                            - debug: msg="this is the rescue task"
-                always:
-                - block:
+                            - block:
+                              - debug: msg="this is the rescue task"
+                  always:
                   - block:
                     - block:
                       - block:
-                        - debug: msg="this is the rescue task"
+                        - block:
+                          - debug: msg="this is the always task"
             """,
         })
 
@@ -254,28 +253,34 @@ class TestPlayIterator(unittest.TestCase):
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
         # get the first task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.args, dict(msg='this is the first task'))
         # fail the host
         itr.mark_host_failed(hosts[0])
         # get the resuce task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.args, dict(msg='this is the rescue task'))
         # get the always task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.args, dict(msg='this is the always task'))
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
         # end of iteration
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNone(task)
