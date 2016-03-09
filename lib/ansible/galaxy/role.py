@@ -221,7 +221,7 @@ class GalaxyRole(object):
 
                 matched_version = filter( lambda v : v['name'] == self.version , role_versions )
                 if len(matched_version) == 1 :
-                    self.src = matched_version[0].get('url', self.src) or self.src
+                    self.src = matched_version[0].get('download', self.src) or self.src
 
                 tmp_file = self.fetch(role_data)
 
