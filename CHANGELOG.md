@@ -6,6 +6,7 @@ Ansible Changes By Release
 ###Major Changes:
 
 * added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
+* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell )
 
 ####New Modules:
 * aws: ec2_vol_facts
