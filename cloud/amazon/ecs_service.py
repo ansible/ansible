@@ -327,9 +327,6 @@ def main():
     results = dict(changed=False )
     if module.params['state'] == 'present':
 
-        results['expected'] = module.params
-        results['existing'] = existing
-
         matching = False
         update = False
         if existing and 'status' in existing and existing['status']=="ACTIVE":
