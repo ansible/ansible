@@ -198,6 +198,16 @@ options:
         rule also specifies one of the following protocols: tcp, udp, dccp or
         sctp."
     required: false
+  set_dscp_mark:
+    description:
+      - "This allows specifying a DSCP mark to be added to packets.
+        It takes either an integer or hex value. Mutually exclusive with
+        C(dscp_mark_class)."
+    required: false
+  set_dscp_mark_class:
+      - "This allows specifying a predefined DiffServ class which will be
+        translated to the corresponding DSCP mark. Mutually exclusive with
+        C(dscp_mark)."
   comment:
     description:
       - "This specifies a comment that will be added to the rule"
@@ -230,6 +240,12 @@ EXAMPLES = '''
 # Allow related and established connections
 - iptables: chain=INPUT ctstate=ESTABLISHED,RELATED jump=ACCEPT
   become: yes
+
+# Tag all outbound tcp packets with DSCP mark 8
+- iptables: chain=OUTPUT jump=DSCP table=mangle set_dscp_mark=8 protocol=tcp
+
+# Tag all outbound tcp packets with DSCP DiffServ class CS1
+- iptables: chain=OUTPUT jump=DSCP table=mangle set_dscp_mark_class=CS1 protocol=tcp
 '''
 
 
@@ -267,6 +283,8 @@ def construct_rule(params):
     append_param(rule, params['source_port'], '--source-port', False)
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
+    append_param(rule, params['set_dscp_mark'], '--set-dscp', False)
+    append_param(rule, params['set_dscp_mark_class'], '--set-dscp-class', False)
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
     append_match(rule, params['ctstate'], 'state')
@@ -322,10 +340,15 @@ def main():
             source_port=dict(required=False, default=None, type='str'),
             destination_port=dict(required=False, default=None, type='str'),
             to_ports=dict(required=False, default=None, type='str'),
+            set_dscp_mark=dict(required=False,default=None, type='str'),
+            set_dscp_mark_class=dict(required=False,default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
             ctstate=dict(required=False, default=[], type='list'),
             limit=dict(required=False, default=None, type='str'),
             limit_burst=dict(required=False, default=None, type='str'),
+        ),
+        mutually_exclusive=(
+            ['set_dscp_mark', 'set_dscp_mark_class'],
         ),
     )
     args = dict(
