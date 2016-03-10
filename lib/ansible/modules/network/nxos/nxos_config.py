@@ -168,15 +168,12 @@ def build_candidate(lines, parents, config, strategy):
     candidate = list()
 
     if strategy == 'strict':
-        if len(lines) != len(config):
-            candidate = list(lines)
-        else:
-            for index, cmd in enumerate(lines):
-                try:
-                    if cmd != config[index]:
-                        candidate.append(cmd)
-                except IndexError:
+        for index, cmd in enumerate(lines):
+            try:
+                if cmd != config[index]:
                     candidate.append(cmd)
+            except IndexError:
+                candidate.append(cmd)
 
     elif strategy == 'exact':
         if len(lines) != len(config):
