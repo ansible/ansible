@@ -35,7 +35,7 @@ NET_COMMON_ARGS = dict(
     port=dict(type='int'),
     username=dict(),
     password=dict(no_log=True),
-    use_ssl=dict(default=True, type='int'),
+    use_ssl=dict(default=True, type='bool'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
     provider=dict()
 )
@@ -48,35 +48,38 @@ def to_list(val):
     else:
         return list()
 
-def get_idl():
+def get_runconfig():
     manager = OvsdbConnectionManager(settings.get('ovs_remote'),
                                      settings.get('ovs_schema'))
     manager.start()
-    idl = manager.idl
 
-    init_seq_no = 0
-    while (init_seq_no == idl.change_seqno):
-        idl.run()
+    timeout = 10
+    interval = 0
+    init_seq_no = manager.idl.change_seqno
+
+    while (init_seq_no == manager.idl.change_seqno):
+        if interval > timeout:
+            raise TypeError('timeout')
+        manager.idl.run()
+        interval += 1
         time.sleep(1)
 
-    return idl
-
-def get_schema():
-    return restparser.parseSchema(settings.get('ext_schema'))
-
-def get_runconfig():
-    idl = get_idl()
-    schema = get_schema()
-    return runconfig.RunConfigUtil(idl, schema)
+    schema = restparser.parseSchema(settings.get('ext_schema'))
+    return runconfig.RunConfigUtil(manager.idl, schema)
 
 class Response(object):
 
     def __init__(self, resp, hdrs):
-        self.body = resp.read()
+        self.body = None
         self.headers = hdrs
+
+        if resp:
+            self.body = resp.read()
 
     @property
     def json(self):
+        if not self.body:
+            return None
         try:
             return json.loads(self.body)
         except ValueError:
@@ -95,11 +98,11 @@ class Rest(object):
         if self.module.params['use_ssl']:
             proto = 'https'
             if not port:
-                port = 443
+                port = 18091
         else:
             proto = 'http'
             if not port:
-                port = 80
+                port = 8091
 
         self.baseurl = '%s://%s:%s/rest/v1' % (proto, host, port)
 
