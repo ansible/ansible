@@ -25,6 +25,8 @@ version_added: "2.0"
 short_description: Manage scheduled tasks
 description:
     - Manage scheduled tasks
+notes:
+    - This module requires Windows Server 2012 or later.
 options:
   name:
     description:
