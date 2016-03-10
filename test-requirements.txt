@@ -10,3 +10,4 @@ coveralls
 unittest2
 redis
 python-memcached
+python-systemd
