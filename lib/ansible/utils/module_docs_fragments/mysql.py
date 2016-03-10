@@ -47,6 +47,12 @@ options:
       - The path to a Unix domain socket for local connections
     required: false
     default: null
+  connect_timeout:
+    description:
+      - The connection timeout when connecting to the MySQL server.
+    required: false
+    default: 30
+    version_added: "2.1"
   config_file:
     description:
       - Specify a config file from which user and password are to be read
