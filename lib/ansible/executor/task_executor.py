@@ -458,6 +458,10 @@ class TaskExecutor:
                     cond.when = self._task.failed_when
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
+                else:
+                    failed_when_result = False
+                    result['failed'] = result.get('failed', False)
+                return failed_when_result
 
             if 'ansible_facts' in result:
                 vars_copy.update(result['ansible_facts'])
