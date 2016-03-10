@@ -194,6 +194,9 @@
 #============================================================
 # Verify mysql_variable fails with an incorrect login_host parameter
 #
+- name: lower mysql connect timeout
+  ini_file: dest="{{ansible_env.HOME}}/.my.cnf" section=client option=connect_timeout value=5
+
 - name: query mysql_variable using incorrect login_host
   mysql_variables: variable=wait_timeout login_host=12.0.0.9
   register: result
