@@ -28,7 +28,7 @@ all: setup test_test_infra parsing test_var_precedence unicode test_templating_s
 test_test_infra:
 	[ "$$(ansible-playbook -i $(INVENTORY) test_test_infra.yml -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS) | fgrep works | xargs)" = "msg: fail works (True) msg: assert works (True)" ]
 
-setup: test_test_infra
+setup:
 	rm -rf $(TEST_DIR)
 	mkdir -p $(TEST_DIR)
 
@@ -39,7 +39,7 @@ parsing: setup
 includes: setup
 	ansible-playbook test_includes.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
 
-pull: 	pull_run pull_no_127 pull_limit_inventory
+pull:	pull_run pull_no_127 pull_limit_inventory
 
 pull_run:
 	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep MAGICKEYWORD; \
