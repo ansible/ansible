@@ -1,6 +1,8 @@
 - hosts: testhost
   gather_facts: no
-  tasks: 
+  tags:
+    - always
+  tasks:
   - fail:
     ignore_errors: yes
     register: fail_out
@@ -14,7 +16,7 @@
     register: assert_out
 
   - debug:
-      msg: assert works ({{ assert_out.failed }}) 
+      msg: assert works ({{ assert_out.failed }})
 
   - fail:
       msg: fail actually failed
