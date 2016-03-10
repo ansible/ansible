@@ -216,6 +216,12 @@ class GalaxyRole(object):
                     else:
                         self.version = 'master' 
                 elif self.version != 'master':
+
+                    from pkg_resources import parse_requirements
+                    pkgs, = parse_requirements(self.name+self.version)
+                    if not pkgs.specs :
+                        pkgs, = parse_requirements("%s==%s" % (self.name, self.version))
+
                     if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
 
