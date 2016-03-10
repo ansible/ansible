@@ -127,7 +127,7 @@ class Connection(ConnectionBase):
         local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
-        local_cmd = map(to_bytes, local_cmd)
+        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -154,14 +154,14 @@ class Connection(ConnectionBase):
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         out_path = self._prefix_login_path(out_path)
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
 
         if self.can_copy_bothways:
             # only docker >= 1.8.1 can do this natively
             args = [ self.docker_cmd, "cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
-            args = map(to_bytes, args)
+            args = [to_bytes(i, errors='strict') for i in args]
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             if p.returncode != 0:
@@ -173,8 +173,8 @@ class Connection(ConnectionBase):
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
             args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
                     "dd of=%s bs=%s" % (out_path, BUFSIZE)]
-            args = map(to_bytes, args)
-            with open(in_path, 'rb') as in_file:
+            args = [to_bytes(i, errors='strict') for i in args]
+            with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
                 try:
                     p = subprocess.Popen(args, stdin=in_file,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -196,7 +196,7 @@ class Connection(ConnectionBase):
         out_dir = os.path.dirname(out_path)
 
         args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
-        args = map(to_bytes, args)
+        args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -205,7 +205,7 @@ class Connection(ConnectionBase):
         # Rename if needed
         actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
         if actual_out_path != out_path:
-            os.rename(actual_out_path, out_path)
+            os.rename(to_bytes(actual_out_path, errors='strict'), to_bytes(out_path, errors='strict'))
 
     def close(self):
         """ Terminate the connection. Nothing to do for Docker"""
