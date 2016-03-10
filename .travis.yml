@@ -26,7 +26,7 @@ addons:
     packages:
       - python2.4
 install:
-  - pip install tox redis memcached
+  - pip install tox redis pyton-memcached
 script:
   - ./test/utils/run_tests.sh
 after_success:
