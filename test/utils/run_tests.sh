@@ -1,6 +1,6 @@
 #!/bin/sh -xe
 
-if [ "${TARGET}" == "sanity" ]; then
+if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/replace-urlopen.sh .
     ./test/code-smell/use-compat-six.sh lib
     ./test/code-smell/boilerplate.sh
