@@ -23,9 +23,12 @@ VAULT_PASSWORD_FILE = vault-password
 CONSUL_RUNNING := $(shell python consul_running.py)
 EUID := $(shell id -u -r)
 
-all: setup parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_connection
+all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_connection
 
-setup:
+test_test_infra:
+	[ "$$(ansible-playbook -i $(INVENTORY) test_test_infra.yml -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS) | fgrep works | xargs)" = "msg: fail works (True) msg: assert works (True)" ]
+
+setup: test_test_infra
 	rm -rf $(TEST_DIR)
 	mkdir -p $(TEST_DIR)
 
