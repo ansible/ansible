@@ -29,13 +29,11 @@ for aclass in class_list:
 
     # build ordered list to loop over and dict with attributes
     clist.append(name)
-    oblist[name] = aobj.__dict__['_attributes']
+    oblist[name] = {x: aobj.__dict__['_attributes'][x] for x in aobj.__dict__['_attributes']  if 'private' not in x or not x.private}
 
     # loop is really with_ for users
-    if 'loop' in oblist[name]:
+    if name == 'Task':
         oblist[name]['with_<lookup_plugin>'] = True
-        del oblist[name]['loop']
-        del oblist[name]['loop_args']
 
     # local_action is implicit with action
     if 'action' in oblist[name]:
