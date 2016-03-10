@@ -23,6 +23,10 @@ You'll need this Python module installed on the execution host, usually your wor
 
 .. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
 
+Limitations and Known Issues
+````````````````````````````
+VPC support is not yet fully implemented and tested. The community is working on the VPC integration.
+
 Credentials File
 ````````````````
 You can pass credentials and the endpoint of your cloud as module arguments, however in most cases it is a far less work to store your credentials in the cloudstack.ini file.
@@ -192,9 +196,9 @@ In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to
 
 In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an exisiting VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
-In the second task we ensure the ports are opened if we give a public IP to the VM. 
+In the second task we ensure the ports are opened if we give a public IP to the VM.
 
-In the third task we add static NAT to the VMs having a public IP defined. 
+In the third task we add static NAT to the VMs having a public IP defined.
 
 
 .. Note:: The public IP addresses must have been acquired in advance, also see ``cs_ip_address``
