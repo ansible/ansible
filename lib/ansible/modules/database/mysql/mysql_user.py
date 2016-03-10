@@ -495,6 +495,7 @@ def main():
             append_privs=dict(default=False, type='bool'),
             check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
+            connect_timeout=dict(default=30, type='int'),
             config_file=dict(default="~/.my.cnf"),
             sql_log_bin=dict(default=True, type='bool'),
             ssl_cert=dict(default=None),
@@ -513,6 +514,7 @@ def main():
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
+    connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
@@ -530,12 +532,14 @@ def main():
     try:
         if check_implicit_admin:
             try:
-                cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db)
+                cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                       connect_timeout=connect_timeout)
             except:
                 pass
 
         if not cursor:
-            cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db)
+            cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                   connect_timeout=connect_timeout)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
 
