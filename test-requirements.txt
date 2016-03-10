@@ -8,3 +8,5 @@ passlib
 coverage
 coveralls
 unittest2
+redis
+python-memcached
