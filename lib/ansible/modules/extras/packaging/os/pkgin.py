@@ -42,24 +42,38 @@ options:
         description:
             - Name of package to install/remove;
             - multiple names may be given, separated by commas
-        required: true
+        required: false
+        default: null
     state:
         description:
             - Intended state of the package
         choices: [ 'present', 'absent' ]
         required: false
         default: present
+    update_cache:
+        description:
+          - Update repository database. Can be run with other steps or on it's own.
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
+        version_added: "2.1"
 '''
 
 EXAMPLES = '''
 # install package foo
 - pkgin: name=foo state=present
 
+# Update database and install "foo" package
+- pkgin: name=foo update_cache=yes
+
 # remove package foo
 - pkgin: name=foo state=absent
 
 # remove packages foo and bar
 - pkgin: name=foo,bar state=absent
+
+# Update repositories as a separate step
+- pkgin: update_cache=yes
 '''
 
 
@@ -148,7 +162,13 @@ def format_action_message(module, action, count):
         return message + "s"
 
 
-def format_pkgin_command(module, pkgin_path, command, package):
+def format_pkgin_command(module, pkgin_path, command, package=None):
+    # Not all commands take a package argument, so cover this up by passing
+    # an empty string. Some commands (e.g. 'update') will ignore extra
+    # arguments, however this behaviour cannot be relied on for others.
+    if package is None:
+        package = ""
+
     vars = { "pkgin":   pkgin_path,
              "command": command,
              "package": package }
@@ -204,13 +224,23 @@ def install_packages(module, pkgin_path, packages):
 
     module.exit_json(changed=False, msg="package(s) already present")
 
+def update_package_db(module, pkgin_path):
+    rc, out, err = module.run_command(
+        format_pkgin_command(module, pkgin_path, "update"))
+
+    if rc == 0:
+        return True
+    else:
+        module.fail_json(msg="could not update package db")
 
 
 def main():
     module = AnsibleModule(
             argument_spec    = dict(
                 state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True, type='list')),
+                name         = dict(aliases=["pkg"], type='list'),
+                update_cache = dict(default='no', type='bool')),
+            required_one_of = [['name', 'update_cache']],
             supports_check_mode = True)
 
     pkgin_path = module.get_bin_path('pkgin', True, ['/opt/local/bin'])
@@ -218,6 +248,11 @@ def main():
     p = module.params
 
     pkgs = p["name"]
+
+    if p["update_cache"]:
+        update_package_db(module, pkgin_path)
+        if not p['name']:
+            module.exit_json(changed=True, msg='updated repository database')
 
     if p["state"] == "present":
         install_packages(module, pkgin_path, pkgs)
@@ -228,4 +263,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
