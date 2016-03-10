@@ -64,7 +64,7 @@ Try {
         $file_build_part = ''
     }
     $file_private_part = $_version_fields.FilePrivatePart
-    If ($file_private_part -eq $null)
+    If ($file_private_part -eq $null){
         $file_private_part = ''
     }
 }
