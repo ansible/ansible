@@ -26,19 +26,14 @@ $result = New-Object psobject @{
     changed = $false
 }
 
+$path = Get-AnsibleParam $params "path" -failifempty $true -resultobj $result
 
-If ($params.path) {
-    $path = $params.path.ToString()
-    If (-Not (Test-Path -Path $path -PathType Leaf)){
-        Fail-Json $result "Specfied path: $path not exists or not a file"
-    }
-    $ext = [System.IO.Path]::GetExtension($path)
-    If ( $ext -notin '.exe', '.dll'){
-        Fail-Json $result "Specfied path: $path is not a vaild file type, Must be DLL or EXE."
-    }
+If (-Not (Test-Path -Path $path -PathType Leaf)){
+    Fail-Json $result "Specfied path $path does exist or is not a file."
 }
-Else{
-    Fail-Json $result "Specfied path: $path not define."
+$ext = [System.IO.Path]::GetExtension($path)
+If ( $ext -notin '.exe', '.dll'){
+    Fail-Json $result "Specfied path $path is not a vaild file type; must be DLL or EXE."
 }
 
 Try {
