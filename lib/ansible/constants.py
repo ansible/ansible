@@ -167,6 +167,7 @@ DEFAULT_NO_TARGET_SYSLOG   = get_config(p, DEFAULTS, 'no_target_syslog', 'ANSIBL
 
 # selinux
 DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs', islist=True)
+DEFAULT_LIBVIRT_LXC_NOSECLABEL = get_config(p, 'selinux', 'libvirt_lxc_noseclabel', 'LIBVIRT_LXC_NOSECLABEL', False, boolean=True)
 
 ### PRIVILEGE ESCALATION ###
 # Backwards Compat
