@@ -159,51 +159,51 @@ requirements:
 EXAMPLES = '''
 # Basic example provisioning from image.
 
-action: ovirt >
-    user=admin@internal 
-    url=https://ovirt.example.com 
-    instance_name=ansiblevm04 
-    password=secret 
-    image=centos_64 
-    zone=cluster01 
-    resource_type=template"
+ovirt:
+    user: admin@internal
+    url: https://ovirt.example.com
+    instance_name: ansiblevm04
+    password: secret
+    image: centos_64
+    zone: cluster01
+    resource_type: template"
 
 # Full example to create new instance from scratch
-action: ovirt > 
-    instance_name=testansible 
-    resource_type=new 
-    instance_type=server 
-    user=admin@internal 
-    password=secret 
-    url=https://ovirt.example.com 
-    instance_disksize=10 
-    zone=cluster01 
-    region=datacenter1 
-    instance_cpus=1 
-    instance_nic=nic1 
-    instance_network=rhevm 
-    instance_mem=1000 
-    disk_alloc=thin 
-    sdomain=FIBER01 
-    instance_cores=1 
-    instance_os=rhel_6x64 
-    disk_int=virtio"
+ovirt:
+    instance_name: testansible
+    resource_type: new
+    instance_type: server
+    user: admin@internal
+    password: secret
+    url: https://ovirt.example.com
+    instance_disksize: 10
+    zone: cluster01
+    region: datacenter1
+    instance_cpus: 1
+    instance_nic: nic1
+    instance_network: rhevm
+    instance_mem: 1000
+    disk_alloc: thin
+    sdomain: FIBER01
+    instance_cores: 1
+    instance_os: rhel_6x64
+    disk_int: virtio"
 
 # stopping an instance
-action: ovirt >
-    instance_name=testansible
-    state=stopped
-    user=admin@internal
-    password=secret
-    url=https://ovirt.example.com
+ovirt:
+    instance_name: testansible
+    state: stopped
+    user: admin@internal
+    password: secret
+    url: https://ovirt.example.com
 
 # starting an instance
-action: ovirt >
-    instance_name=testansible 
-    state=started 
-    user=admin@internal 
-    password=secret 
-    url=https://ovirt.example.com
+ovirt:
+    instance_name: testansible
+    state: started
+    user: admin@internal
+    password: secret
+    url: https://ovirt.example.com
 
 
 '''
