@@ -205,6 +205,7 @@ def main():
             master_ssl_cert=dict(default=None),
             master_ssl_key=dict(default=None),
             master_ssl_cipher=dict(default=None),
+            connect_timeout=dict(default=30, type='int'),
             config_file=dict(default="~/.my.cnf"),
             ssl_cert=dict(default=None),
             ssl_key=dict(default=None),
@@ -235,6 +236,7 @@ def main():
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
     ssl_ca = module.params["ssl_ca"]
+    connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
     config_file = os.path.expanduser(os.path.expandvars(config_file))
 
@@ -247,7 +249,8 @@ def main():
     login_user = module.params["login_user"]
 
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor')
+        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor',
+                               connect_timeout=connect_timeout)
     except Exception, e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
