@@ -217,10 +217,20 @@ class GalaxyRole(object):
                         self.version = 'master' 
                 elif self.version != 'master':
 
+                    from pkg_resources import VERSION, Requirement
+                    match = VERSION(self.version)
+                    if match :
+                        specs = match.group(*(1,2))
+                    else :
+                        specs = ('==', self.version)
+                    reqs = Requirement(self.name, (specs,), [])
+
                     from pkg_resources import parse_requirements
                     pkgs, = parse_requirements(self.name+self.version)
                     if not pkgs.specs :
                         pkgs, = parse_requirements("%s==%s" % (self.name, self.version))
+
+                    assert reqs == pkgs
 
                     role_versions = filter( lambda v : v['name'] in pkgs , role_versions )
 
