@@ -17,7 +17,7 @@
 #
 DOCUMENTATION = """
 ---
-module: ios_config
+module: ios_template
 version_added: "2.1"
 author: "Peter sprygada (@privateip)"
 short_description: Manage Cisco IOS device configurations over SSH
@@ -91,16 +91,16 @@ options:
 
 EXAMPLES = """
 - name: push a configuration onto the device
-  net_config:
+  ios_template:
     src: config.j2
 
 - name: forceable push a configuration onto the device
-  net_config:
+  ios_template:
     src: config.j2
     force: yes
 
 - name: provide the base configuration for comparision
-  net_config:
+  ios_template:
     src: candidate_config.txt
     config: current_config.txt
 """
