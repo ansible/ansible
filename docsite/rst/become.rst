@@ -7,7 +7,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 
 Become
 ``````
-Ansible allows you 'become' another user, different from the user that logged into the machine (remote user). This is done existing
+Ansible allows you 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
 privilege escalation tools, which you probably already use or have configured, like 'sudo', 'su', 'pfexec', 'doas', 'pbrun' and others.
 
 
