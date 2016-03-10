@@ -34,7 +34,7 @@ options:
         choices: ['yes', 'no']
     state:
         description:
-            - create/remove/update or powermanage your VM
+            - should this rule be added or removed
         default: "present"
         required: true
         choices: ['present', 'absent']
