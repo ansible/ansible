@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
 
         return dest_stat['checksum']
 
-    def run(self, tmp=None, task_vars=None):
+    def run(self, tmp='', task_vars=None):
         ''' handler for template operations '''
         if task_vars is None:
             task_vars = dict()
@@ -68,9 +68,6 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['msg'] = "src and dest are required"
             return result
-
-        if tmp is None:
-            tmp = self._make_tmp_path()
 
         if faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
@@ -178,8 +175,6 @@ class ActionModule(ActionBase):
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
 
-            return result
-
         else:
             # when running the file module based on the template data, we do
             # not want the source filename (the name of the template) to be used,
@@ -194,6 +189,6 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
-
             result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
-            return result
+
+        return result
