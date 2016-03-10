@@ -291,7 +291,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
-    def _execute_remote_stat(self, path, all_vars, follow):
+    def _execute_remote_stat(self, path, all_vars, follow, tmp=None):
         '''
         Get information from remote file.
         '''
@@ -302,7 +302,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
            get_checksum=True,
            checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars)
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None))
 
         if 'failed' in mystat and mystat['failed']:
             raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, mystat['msg']))
