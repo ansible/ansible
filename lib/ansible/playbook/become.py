@@ -31,7 +31,7 @@ except ImportError:
 
 class Become:
 
-    # Privlege escalation
+    # Privilege escalation
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
@@ -60,7 +60,7 @@ class Become:
 
         This is called from the Base object's preprocess_data() method which
         in turn is called pretty much anytime any sort of playbook object
-        (plays, tasks, blocks, etc) are created.
+        (plays, tasks, blocks, etc) is created.
         """
 
         self._detect_privilege_escalation_conflict(ds)
@@ -89,7 +89,6 @@ class Become:
                 del ds['su_user']
 
             display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
-
 
         return ds
 
