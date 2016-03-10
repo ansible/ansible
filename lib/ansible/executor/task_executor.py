@@ -460,7 +460,7 @@ class TaskExecutor:
                     result['failed_when_result'] = result['failed'] = failed_when_result
                 else:
                     failed_when_result = False
-                    result['failed'] = False
+                    result['failed'] = result.get('failed', False)
                 return failed_when_result
 
             if 'ansible_facts' in result:
