@@ -33,21 +33,21 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, dest, all_vars, try_directory=False, source=None):
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
         try:
-            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
+            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
             if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
         except Exception as e:
             return dict(failed=True, msg=to_bytes(e))
 
         return dest_stat['checksum']
 
-    def run(self, tmp='', task_vars=None):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
         if task_vars is None:
             task_vars = dict()
@@ -137,8 +137,13 @@ class ActionModule(ActionBase):
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
+        cleanup_remote_tmp = False
+        if not tmp:
+            tmp = self._make_tmp_path()
+            cleanup_remote_tmp = True
+
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
             result.update(remote_checksum)
@@ -170,7 +175,7 @@ class ActionModule(ActionBase):
                        follow=True,
                     ),
                 )
-                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
@@ -189,6 +194,9 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
+
+        if tmp and cleanup_remote_tmp:
+            self._remove_tmp_path(tmp)
 
         return result

@@ -97,8 +97,15 @@ class ActionModule(ActionBase):
             result['msg'] = "src and dest are required"
             return result
 
+        cleanup_remote_tmp = False
+        if not tmp:
+            tmp = self._make_tmp_path()
+            cleanup_remote_tmp = True
+
         if boolean(remote_src):
-            result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
+            if cleanup_remote_tmp:
+                self._remove_tmp_path(tmp)
             return result
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
@@ -119,7 +126,7 @@ class ActionModule(ActionBase):
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
-        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
+        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=tmp)
 
         diff = {}
 
@@ -152,11 +159,14 @@ class ActionModule(ActionBase):
 
             new_module_args.update( dict( src=xfered,))
 
-            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
             if diff:
                 res['diff'] = diff
             result.update(res)
         else:
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp))
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
+
+        if tmp and cleanup_remote_tmp:
+            self._remove_tmp_path(tmp)
 
         return result

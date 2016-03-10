@@ -169,7 +169,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get remote file info
-            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
 
             if dest_status['exists'] and dest_status['isdir']:
                 # The dest is a directory.
@@ -182,7 +182,7 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
 
             if dest_status['exists'] and not force:
                 # remote_file does not exist so continue to next iteration.
