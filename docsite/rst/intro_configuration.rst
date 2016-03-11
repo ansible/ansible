@@ -952,6 +952,17 @@ The default list is: nfs,vboxsf,fuse,ramfs::
 
     special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
 
+libvirt_lxc_noseclabel
+======================
+
+.. versionadded:: 2.1
+
+This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
+This is necessary when running on systems which do not have SELinux.
+The default behavior is no::
+
+    libvirt_lxc_noseclabel = True
+
 Galaxy Settings
 ---------------
 
