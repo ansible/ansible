@@ -31,10 +31,11 @@
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None):
     config = {
-        'host': module.params['login_host'],
-        'ssl': {
-            }
+        'host': module.params['login_host']
     }
+
+    if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
+        config['ssl'] = {}
 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
