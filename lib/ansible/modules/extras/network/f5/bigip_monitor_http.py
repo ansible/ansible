@@ -250,7 +250,7 @@ def check_integer_property(api, monitor, int_property):
 
 def set_integer_property(api, monitor, int_property):
 
-    api.LocalLB.Monitor.set_template_int_property(template_names=[monitor], values=[int_property])
+    api.LocalLB.Monitor.set_template_integer_property(template_names=[monitor], values=[int_property])
 
 
 def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
