@@ -136,7 +136,7 @@ def main():
     p = module.params
 
     global PUPPET_CMD
-    PUPPET_CMD = module.get_bin_path("puppet", False)
+    PUPPET_CMD = module.get_bin_path("puppet", False, ['/opt/puppetlabs/bin'])
 
     if not PUPPET_CMD:
         module.fail_json(
