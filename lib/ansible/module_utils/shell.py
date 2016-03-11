@@ -183,24 +183,3 @@ class Shell(object):
                 self._matched_prompt = match.group()
                 return True
 
-def get_cli_connection(module):
-    host = module.params['host']
-    port = module.params['port']
-    if not port:
-        port = 22
-
-    username = module.params['username']
-    password = module.params['password']
-
-    try:
-        cli = Cli()
-        cli.open(host, port=port, username=username, password=password)
-    except paramiko.ssh_exception.AuthenticationException, exc:
-        module.fail_json(msg=exc.message)
-    except socket.error, exc:
-        host = '%s:%s' % (host, port)
-        module.fail_json(msg=exc.strerror, errno=exc.errno, host=host)
-    except socket.timeout:
-        module.fail_json(msg='socket timed out')
-
-    return cli
