@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: win_iis_website
-version_added: "2.0"
+version_added: "2.1"
 short_description: Configures a IIS Web site.
 description:
      - Creates, Removes and configures a IIS Web site
@@ -32,6 +32,11 @@ options:
     required: true
     default: null
     aliases: []
+  site_id:
+    description:
+      - Explicitly set the IIS ID for a site.
+    required: false
+    default: null
   state:
     description:
       - State of the web site
