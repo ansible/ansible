@@ -270,7 +270,7 @@ class Connection(ConnectionBase):
 
         script_template = u'''
             begin {{
-                $path = "{0}"
+                $path = '{0}'
 
                 $DebugPreference = "Continue"
                 $ErrorActionPreference = "Stop"
