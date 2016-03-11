@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: win_iis_website
-version_added: "2.1"
+version_added: "2.0"
 short_description: Configures a IIS Web site.
 description:
      - Creates, Removes and configures a IIS Web site
@@ -36,6 +36,7 @@ options:
     description:
       - Explicitly set the IIS numeric ID for a site. Note that this value cannot be changed after the website has been created.
     required: false
+    version_added: "2.1"
     default: null
   state:
     description:
