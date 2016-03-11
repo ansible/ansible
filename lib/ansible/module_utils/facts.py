@@ -2514,7 +2514,9 @@ class LinuxVirtual(Virtual):
         if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
             modules = []
             for line in get_file_lines("/proc/modules"):
-                data = line.split(" ", 1)
+                data = line.split(" ")
+                if len(data) > 2 and data[2] == '0':
+                    continue # skip unused modules
                 modules.append(data[0])
 
             if 'kvm' in modules:
