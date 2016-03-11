@@ -849,6 +849,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError), e:
         module.fail_json(msg=str(e))
     except urllib2.HTTPError, e:
+        r = e #useful when handling exotic HTTP errors, such as requests for authentication
         info.update(dict(msg=str(e), status=e.code, **e.info()))
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
