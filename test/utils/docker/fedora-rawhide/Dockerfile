@@ -10,6 +10,7 @@ rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf -y install \
+    --allowerasing \
     dbus-python \
     file \
     findutils \
