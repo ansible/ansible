@@ -171,7 +171,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec = dict(
-            gather_subset=dict(default="all", required=False),
+            gather_subset=dict(default="all", required=False, type='list'),
             ignore_ohai=dict(default=False, required=False),
             ignore_facter=dict(default=False, required=False),
             filter=dict(default="*", required=False),
