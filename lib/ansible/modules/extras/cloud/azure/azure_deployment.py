@@ -428,6 +428,36 @@ def build_deployment_body(module):
 
     return dict(properties=properties)
 
+def get_failed_nested_operations(client, resource_group, current_operations):
+    new_operations = []
+    for operation in current_operations:
+        if operation.properties.provisioning_state == 'Failed':
+            new_operations.append(operation)
+            if operation.properties.target_resource and 'Microsoft.Resources/deployments' in operation.properties.target_resource.id:
+                nested_deployment = operation.properties.target_resource.resource_name
+                nested_operations = client.deployment_operations.list(resource_group, nested_deployment)
+                new_nested_operations = get_failed_nested_operations(client, resource_group, nested_operations)
+                new_operations += new_nested_operations
+
+    return new_operations
+
+def get_failed_deployment_operations(module, client, resource_group, deployment_name):
+    operations = client.deployment_operations.list(resource_group, deployment_name)
+    return [
+        dict(
+            id=op.id,
+            operation_id=op.operation_id,
+            status_code=op.properties.status_code,
+            status_message=op.properties.status_message,
+            target_resource = dict(
+                id=op.properties.target_resource.id,
+                resource_name=op.properties.target_resource.resource_name,
+                resource_type=op.properties.target_resource.resource_type
+            ) if op.properties.target_resource else None,
+            provisioning_state=op.properties.provisioning_state,
+        )
+        for op in get_failed_nested_operations(client, resource_group, operations)
+    ]
 
 def deploy_template(module, client, conn_info):
     """
@@ -464,10 +494,19 @@ def deploy_template(module, client, conn_info):
     try:
         client.resource_groups.create_or_update(group_name, params)
         result = client.deployments.create_or_update(group_name, deployment_name, deploy_parameter)
-        return result.result() # Blocking wait, return the Deployment object
+        deployment_result = result.result() # Blocking wait, return the Deployment object
+        if module.params.get('wait_for_deployment_completion'):
+            while not deployment_result.properties.provisioning_state in {'Canceled', 'Failed', 'Deleted', 'Succeeded'}:
+                deployment_result = client.deployments.get(group_name, deployment_name)
+                time.sleep(module.params.get('wait_for_deployment_polling_period'))
+
+        if deployment_result.properties.provisioning_state == 'Succeeded':
+            return deployment_result
+
+        failed_deployment_operations = get_failed_deployment_operations(module, client, group_name, deployment_name)
+        module.fail_json(msg='Deployment failed. Deployment id: %s' % (deployment_result.id), failed_deployment_operations=failed_deployment_operations)
     except CloudError as e:
         module.fail_json(msg='Deploy create failed with status code: %s and message: "%s"' % (e.status_code, e.message))
-
 
 def destroy_resource_group(module, client, conn_info):
     """
@@ -516,14 +555,18 @@ def build_hierarchy(dependencies, tree=None):
 
 
 def get_ip_dict(ip):
-    return dict(name=ip.name,
+    ip_dict = dict(name=ip.name,
                 id=ip.id,
                 public_ip=ip.ip_address,
-                public_ip_allocation_method=str(ip.public_ip_allocation_method),
-                dns_settings={
+                public_ip_allocation_method=str(ip.public_ip_allocation_method))
+
+    if ip.dns_settings:
+        ip_dict['dns_settings'] = {
                     'domain_name_label':ip.dns_settings.domain_name_label,
                     'fqdn':ip.dns_settings.fqdn
-                })
+        }
+
+    return ip_dict
 
 
 def nic_to_public_ips_instance(client, group, nics):
@@ -547,7 +590,7 @@ def main():
     from ansible.module_utils.basic import AnsibleModule
     argument_spec = dict(
         azure_url=dict(default=AZURE_URL),
-        subscription_id=dict(required=True),
+        subscription_id=dict(),
         client_secret=dict(no_log=True),
         client_id=dict(),
         tenant_or_domain=dict(),
@@ -560,7 +603,9 @@ def main():
         parameters_link=dict(default=None),
         location=dict(default="West US"),
         deployment_mode=dict(default='Complete', choices=['Complete', 'Incremental']),
-        deployment_name=dict(default="ansible-arm")
+        deployment_name=dict(default="ansible-arm"),
+        wait_for_deployment_completion=dict(default=True),
+        wait_for_deployment_polling_period=dict(default=30)
     )
 
     module = AnsibleModule(
@@ -591,7 +636,7 @@ def main():
             'access_token':conn_info['security_token']
         }
     )
-    subscription_id = module.params.get('subscription_id')
+    subscription_id = conn_info['subscription_id']
     resource_client = ResourceManagementClient(ResourceManagementClientConfiguration(credentials, subscription_id))
     network_client = NetworkManagementClient(NetworkManagementClientConfiguration(credentials, subscription_id))
     conn_info['deployment_name'] = module.params.get('deployment_name')
@@ -612,3 +657,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
