@@ -234,8 +234,12 @@ class GalaxyRole(object):
 
                     role_versions = filter( lambda v : v['name'] in pkgs , role_versions )
 
-                    if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
+                    if not role_versions:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
+
+                    loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
+                    loose_versions.sort()
+                    self.version = str(loose_versions[-1])
 
                 tmp_file = self.fetch(role_data)
 
