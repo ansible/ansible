@@ -74,6 +74,9 @@ whether or not to auto update roles (defaulting to False)
 
 - Adds two new keywords
 - Adds three new configuration variables for defaults
+- Appart from path(s) defined on galay.cfg, and under playbook directory, the
+  `rolesdir` adds more places to look for roles, and only after looking at the
+  playbook the full list o places can be known
 
 ### Approach 2: Allow rolesfile inclusion
 
@@ -167,6 +170,18 @@ Here's the approach:
            briancoca.oracle_java7 =>  briancoca.oracle_java7.qs3ih6x
         ```
     
+#### Caveats
+
+Adding `--force` to any automatic solution is probably a bad idea (at least
+in the way that option works on galaxy 1.9.x), and even a `--upgrade` might
+be risky.
+
+#### Disadvantages
+
+- Having multiple versions in roles directory makes very hard to know which
+  role version is used for a playbook, although that might be addressed working
+  with `galaxy list` command, and makes easier rolling back
+
 ## Conclusion
 
 Feedback is requested to improve any of the above approaches, or provide further approaches to solve this problem.
