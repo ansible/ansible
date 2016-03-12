@@ -62,7 +62,6 @@ options:
         trying the command again.
     required: false
     default: 1
-
 """
 
 EXAMPLES = """
@@ -114,11 +113,10 @@ failed_conditions:
 import time
 import shlex
 import re
-import json
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def to_lines(stdout):
+def iterlines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
@@ -155,7 +153,7 @@ def main():
 
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
-                response[index] = json.loads(response[index])
+                response[index] = module.from_json(response[index])
 
         for item in list(queue):
             if item(response):
@@ -170,7 +168,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    result['stdout_lines'] = list(iterlines(result['stdout']))
     return module.exit_json(**result)
 
 
