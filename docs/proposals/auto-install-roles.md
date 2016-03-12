@@ -21,6 +21,13 @@ ansible-playbook run-the-playbook.yml
 - Ansible-galaxy does ot sufficiently handle versioning. 
 - There is not a consistent format for specifying a role in a playbook or a dependent role in meta/main.yml.
 
+### Risks
+
+Implement automatic roles install opens the chance of broke a working ansible
+tree, either by human error (running wrong playbook) or by unexpected side
+effects (transitive dependencies). Before attempting it, some safety measures
+should be added to ansible-galaxy functionality, such as rollback ability.
+
 ## Approaches
 
 ### Approach 0: Just check if roles are available
