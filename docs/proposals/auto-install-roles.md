@@ -18,7 +18,7 @@ ansible-playbook run-the-playbook.yml
 ### Problems
 
 - The most likely step in this process to be forgotten is the middle step. While we can improve processes and documentation to try and ensure that this step is not skipped, we can improve ansible-playbook so that the step is not required.
-- Ansible-galaxy does ot sufficiently handle versioning. 
+- Ansible-galaxy does not sufficiently handle versioning (proposal on ansible/ansible#14942).
 - There is not a consistent format for specifying a role in a playbook or a dependent role in meta/main.yml.
 
 ### Risks
