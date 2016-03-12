@@ -98,7 +98,7 @@ import traceback
 
 import SocketServer
 
-from datetime import datetime
+import datetime
 from threading import Thread, Lock
 
 # import module snippets
@@ -257,7 +257,7 @@ class LocalSocketThread(Thread):
                         # shutdown sooner than expected for new cliets
                         try:
                             self.server.last_event_lock.acquire()
-                            self.server.last_event = datetime.now()
+                            self.server.last_event = datetime.datetime.now()
                         finally:
                             self.server.last_event_lock.release()
                     except Exception, e:
@@ -293,7 +293,7 @@ class ThreadWithReturnValue(Thread):
 
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
     key_list = []
-    last_event = datetime.now()
+    last_event = datetime.datetime.now()
     last_event_lock = Lock()
     def __init__(self, server_address, RequestHandlerClass, module, password, timeout, use_ipv6=False):
         self.module = module
@@ -322,7 +322,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     def send_data(self, data):
         try:
             self.server.last_event_lock.acquire()
-            self.server.last_event = datetime.now()
+            self.server.last_event = datetime.datetime.now()
         finally:
             self.server.last_event_lock.release()
 
@@ -364,7 +364,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
         try:
             self.server.last_event_lock.acquire()
-            self.server.last_event = datetime.now()
+            self.server.last_event = datetime.datetime.now()
         finally:
             self.server.last_event_lock.release()
 
@@ -402,15 +402,15 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
                 mode = data['mode']
                 response = {}
-                last_pong = datetime.now()
+                last_pong = datetime.datetime.now()
                 if mode == 'command':
                     vvvv("received a command request, running it")
                     twrv = ThreadWithReturnValue(target=self.command, args=(data,))
                     twrv.start()
                     response = None
                     while twrv.is_alive():
-                        if (datetime.now() - last_pong).seconds >= 15:
-                            last_pong = datetime.now()
+                        if (datetime.datetime.now() - last_pong).seconds >= 15:
+                            last_pong = datetime.datetime.now()
                             vvvv("command still running, sending keepalive packet")
                             data2 = json.dumps(dict(pong=True))
                             data2 = self.active_key.Encrypt(data2)
@@ -589,7 +589,7 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
             try:
                 try:
                     server.last_event_lock.acquire()
-                    td = datetime.now() - server.last_event
+                    td = datetime.datetime.now() - server.last_event
                     # older python timedelta objects don't have total_seconds(),
                     # so we use the formula from the docs to calculate it
                     total_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
