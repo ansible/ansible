@@ -92,7 +92,7 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: ['yes', 'no']
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -128,12 +128,6 @@ EXAMPLES = """
       - 20 permit ip 2.2.2.2/32 any log
       - 30 permit ip 3.3.3.3/32 any log
       - 40 permit ip 4.4.4.4/32 any log
-    parents: ['ip access-list test']
-    before: ['no ip access-list test']
-    replace: block
-
-- eos_config:
-    commands: "{{lookup('file', 'datcenter1.txt'}}"
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     replace: block
