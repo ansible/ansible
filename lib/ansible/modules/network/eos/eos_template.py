@@ -36,8 +36,7 @@ options:
         file with config or a template that will be merged during
         runtime.  By default the task will search for the source
         file in role or playbook root folder in templates directory.
-    required: false
-    default: null
+    required: true
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -46,7 +45,16 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: ['yes', 'no']
+  include_defaults:
+    description:
+      - By default when the M(eos_template) connects to the remote
+        device to retrieve the configuration it will issue the `show
+        running-config` command.  If this option is set to True then
+        the issued command will be `show running-config all`
+    required: false
+    default: false
+    choices: ['yes', 'no']
   backup:
     description:
       - When this argument is configured true, the module will backup
@@ -55,7 +63,7 @@ options:
         the root of the playbook directory.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: ['yes', 'no']
   replace:
     description:
       - This argument will cause the provided configuration to be replaced
@@ -65,7 +73,7 @@ options:
         is eapi.
     required: false
     default: false
-    choice: BOOLEANS
+    choices: ['yes', 'no']
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -138,7 +146,7 @@ def flatten(data, obj):
     return obj
 
 def get_config(module):
-    config = module.params['config'] or dict()
+    config = module.params.get('config')
     if not config and not module.params['force']:
         config = module.config
     return config
@@ -148,7 +156,7 @@ def main():
     """
 
     argument_spec = dict(
-        src=dict(),
+        src=dict(required=True),
         force=dict(default=False, type='bool'),
         include_defaults=dict(default=False, type='bool'),
         backup=dict(default=False, type='bool'),
@@ -169,9 +177,12 @@ def main():
     candidate = module.parse_config(module.params['src'])
 
     contents = get_config(module)
-    result['_backup'] = module.config
 
-    config = module.parse_config(contents)
+    if contents:
+        config = module.parse_config(contents)
+        result['_backup'] = contents
+    else:
+        config = dict()
 
     commands = collections.OrderedDict()
     toplevel = [c.text for c in config]
