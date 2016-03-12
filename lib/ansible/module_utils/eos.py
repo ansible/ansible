@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
@@ -27,7 +28,7 @@ NET_COMMON_ARGS = dict(
     auth_pass=dict(no_log=True),
     transport=dict(choices=['cli', 'eapi']),
     use_ssl=dict(default=True, type='bool'),
-    provider=dict()
+    provider=dict(type='dict')
 )
 
 def to_list(val):
@@ -144,6 +145,11 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
+        self._connected = False
+
+    @property
+    def connected(self):
+        return self._connected
 
     @property
     def config(self):
@@ -168,7 +174,7 @@ class NetworkModule(AnsibleModule):
 
         try:
             self.connection.connect()
-            self.execute('terminal length 0')
+            self.connection.send('terminal length 0')
 
             if self.params['authorize']:
                 self.connection.authorize()
@@ -176,12 +182,13 @@ class NetworkModule(AnsibleModule):
         except Exception, exc:
             self.fail_json(msg=exc.message)
 
+        self._connected = True
+
     def configure(self, commands):
         commands = to_list(commands)
         commands.insert(0, 'configure terminal')
         responses = self.execute(commands)
         responses.pop(0)
-
         return responses
 
     def config_replace(self, commands):
@@ -195,6 +202,8 @@ class NetworkModule(AnsibleModule):
 
     def execute(self, commands, **kwargs):
         try:
+            if not self.connected:
+                self.connect()
             return self.connection.send(commands, **kwargs)
         except Exception, exc:
             self.fail_json(msg=exc.message, commands=commands)
@@ -213,7 +222,7 @@ class NetworkModule(AnsibleModule):
             return self.execute(cmd)[0]
         else:
             resp = self.execute(cmd, encoding='text')
-            return resp[0]
+            return resp[0]['output']
 
 
 def get_module(**kwargs):
@@ -229,8 +238,6 @@ def get_module(**kwargs):
     # HAS_PARAMIKO is set by module_utils/shell.py
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    module.connect()
 
     return module
 
