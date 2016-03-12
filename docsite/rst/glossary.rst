@@ -71,8 +71,7 @@ Facts
 Facts are simply things that are discovered about remote nodes.  While they can be used in playbooks and templates just like variables, facts
 are things that are inferred, rather than set.  Facts are automatically discovered by Ansible when running plays by executing the internal 'setup'
 module on the remote nodes.  You never have to call the setup module explicitly, it just runs, but it can be disabled to save time if it is
-not needed.  For the convenience of users who are switching from other configuration management systems, the fact module will also pull in facts from the 'ohai' and 'facter'
-tools if they are installed, which are fact libraries from Chef and Puppet, respectively.
+not needed or to reduce to a subset. For the convenience of users who are switching from other configuration management systems, the fact module will also pull in facts from the 'ohai' and 'facter' tools if they are installed, which are fact libraries from Chef and Puppet, respectively. You can also ignore them and save time at runtime execution.
 
 Filter Plugin
 +++++++++++++

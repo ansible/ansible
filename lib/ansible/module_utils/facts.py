@@ -159,6 +159,9 @@ class Facts(object):
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
     ]
 
+    # Allowed fact subset for gather_subset options
+    ALLOWED_FACT_SUBSET = frozenset([ 'all', 'min', 'network', 'hardware', 'virtual' ])
+
     def __init__(self, load_on_init=True):
 
         self.facts = {}
@@ -3067,15 +3070,33 @@ def get_file_lines(path):
     return ret
 
 def ansible_facts(module):
+    # Retrieve module parameters
+    gather_subset = [ 'all' ]
+    if 'gather_subset' in module.params:
+        gather_subset = module.params['gather_subset']
+
+    # Retrieve all facts elements
+    if 'all' in gather_subset:
+        gather_subset = [ 'min', 'hardware', 'network', 'virtual' ]
+
+    # Check subsets and forbid unallowed name
+    for subset in gather_subset:
+        if subset not in Facts.ALLOWED_FACT_SUBSET:
+            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: %s" % (subset, ", ".join(Facts.ALLOWED_FACT_SUBSET)))
+
     facts = {}
     facts.update(Facts().populate())
-    facts.update(Hardware().populate())
-    facts.update(Network(module).populate())
-    facts.update(Virtual().populate())
+    if 'hardware' in gather_subset:
+        facts.update(Hardware().populate())
+    if 'network' in gather_subset:
+        facts.update(Network(module).populate())
+    if 'virtual' in gather_subset:
+        facts.update(Virtual().populate())
+    facts['gather_subset'] = gather_subset
     return facts
 
 # ===========================================
-
+# TODO: remove this dead code?
 def get_all_facts(module):
 
     setup_options = dict(module_setup=True)
