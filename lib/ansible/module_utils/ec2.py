@@ -26,6 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+from time import sleep
 
 try:
     import boto3
@@ -237,3 +238,27 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
+
+def paging(pause=0):
+    """ Adds paging to boto retrieval functions that support 'marker' """
+    def wrapper(f):
+        def page(*args, **kwargs):
+            results = []
+            marker = None
+            while True:
+                try:
+                    new = f(*args, marker=marker, **kwargs)
+                    marker = new.next_marker
+                    results.extend(new)
+                    if not marker:
+                        break
+                    elif pause:
+                        sleep(pause)
+                except TypeError:
+                    # Older version of boto do not allow for marker param, just run normally
+                    results = f(*args, **kwargs)
+                    break
+            return results
+        return page
+    return wrapper
+
