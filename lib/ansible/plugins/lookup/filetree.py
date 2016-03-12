@@ -86,8 +86,14 @@ def file_props(root, path):
 
     ret['uid'] = st.st_uid
     ret['gid'] = st.st_gid
-    ret['owner'] = pwd.getpwuid(st.st_uid).pw_name
-    ret['group'] = grp.getgrgid(st.st_gid).gr_name
+    try:
+        ret['owner'] = pwd.getpwuid(st.st_uid).pw_name
+    except KeyError:
+        ret['owner'] = st.st_uid
+    try:
+        ret['group'] = grp.getgrgid(st.st_gid).gr_name
+    except KeyError:
+        ret['group'] = st.st_gid
     ret['mode'] = str(oct(stat.S_IMODE(st.st_mode)))
     ret['size'] = st.st_size
     ret['mtime'] = st.st_mtime
