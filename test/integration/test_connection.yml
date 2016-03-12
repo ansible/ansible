@@ -14,18 +14,20 @@
   ### copy local file with unicode filename and content
 
   - name: create local file with unicode filename and content
-    local_action: lineinfile dest=/tmp/ansible-local-汉语 create=true line=汉语
+    local_action: lineinfile dest=/tmp/ansible-local-汉语/汉语.txt create=true line=汉语
   - name: remove remote file with unicode filename and content
-    file: path=/tmp/ansible-remote-汉语 state=absent
+    file: path=/tmp/ansible-remote-汉语/汉语.txt state=absent
+  - name: create remote directory with unicode name
+    file: path=/tmp/ansible-remote-汉语 state=directory
   - name: copy local file with unicode filename and content
-    copy: src=/tmp/ansible-local-汉语 dest=/tmp/ansible-remote-汉语
+    copy: src=/tmp/ansible-local-汉语/汉语.txt dest=/tmp/ansible-remote-汉语/汉语.txt
 
   ### fetch remote file with unicode filename and content
 
   - name: remove local file with unicode filename and content
-    local_action: file path=/tmp/ansible-local-汉语 state=absent
+    local_action: file path=/tmp/ansible-local-汉语/汉语.txt state=absent
   - name: fetch remote file with unicode filename and content
-    fetch: src=/tmp/ansible-remote-汉语 dest=/tmp/ansible-local-汉语 fail_on_missing=true validate_checksum=true flat=true
+    fetch: src=/tmp/ansible-remote-汉语/汉语.txt dest=/tmp/ansible-local-汉语/汉语.txt fail_on_missing=true validate_checksum=true flat=true
 
   ### remove local and remote temp files
 
