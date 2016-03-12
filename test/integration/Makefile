@@ -202,7 +202,32 @@ else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif
 
-test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git
+test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git test_galaxy_requirements
+
+test_galaxy_requirements: test_galaxy_requirements_fixed test_galaxy_requirements_lower
+
+test_galaxy_requirements_fixed: test_galaxy_requirements_legacy test_galaxy_requirements_equal
+
+test_galaxy_requirements_legacy:
+	mytmpdir=$(MYTMPDIR) ; \
+	ansible-galaxy install 'geerlingguy.php,2.0.0' -p $$mytmpdir/roles -vvvv && grep -q 'version: 2.0.0' $$mytmpdir/roles/geerlingguy.php/meta/.galaxy_install_info; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
+test_galaxy_requirements_equal:
+	mytmpdir=$(MYTMPDIR) ; \
+	ansible-galaxy install 'geerlingguy.php,==2.0.0' -p $$mytmpdir/roles -vvvv && grep -q 'version: 2.0.0' $$mytmpdir/roles/geerlingguy.php/meta/.galaxy_install_info; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
+test_galaxy_requirements_lower:
+	mytmpdir=$(MYTMPDIR) ; \
+	ansible-galaxy install 'geerlingguy.php,<2' -p $$mytmpdir/roles -vvvv && grep -q 'version: 1' $$mytmpdir/roles/geerlingguy.php/meta/.galaxy_install_info; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
 
 test_galaxy_spec:
 	mytmpdir=$(MYTMPDIR) ; \
