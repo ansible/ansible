@@ -231,8 +231,7 @@ SSH connection::
     ansible_ssh_extra_args
       This setting is always appended to the default ssh command line.
     ansible_ssh_pipelining
-      Determines whether or not to use SSH pipelining. This can override the
-      ``pipelining`` setting in ``ansible.cfg``.
+      Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in ``ansible.cfg``.
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
 
@@ -260,6 +259,14 @@ Remote host environment parameters::
     ansible_*_interpreter
       Works for anything such as ruby or perl and works just like ansible_python_interpreter.
       This replaces shebang of modules which will run on that host.
+
+.. versionadded:: 2.1
+
+::
+
+    ansible_executable
+      This sets the shell the ansible controller will use on the target machine, overrides ``executable`` in ``ansible.cfg`` which defaults to '/bin/sh'.
+      You should really only change it if is not possible to use '/bin/sh' (i.e. it is not in the list of allowed shells for your users).
 
 Examples from a host file::
 
