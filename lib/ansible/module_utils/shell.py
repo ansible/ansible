@@ -109,6 +109,7 @@ class Shell(object):
 
         self.shell = self.ssh.invoke_shell()
         self.shell.settimeout(10)
+        self.shell.sendall("\n")
         self.receive()
 
     def strip(self, data):
