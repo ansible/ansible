@@ -45,6 +45,15 @@ and if some role is not found (or role version not matched) stop execution
   and all included roles must be readed to search for requirements (although
   something similar will likely be required by any auto-install approach)
 
+#### Iteration
+
+If complex version requirements exists for role versions, this simple approach
+forces to trace them within the role `meta/main.yml` file, which might become
+a bit cumbersome. To handle this, the `rolesfile` keyword from approach 1 could
+be helpful. This means that besides roles used in playbook and transitive
+dependencies defined within them, the requirements from `rolesfile` must also
+be satisfied before starting the real playbook run.
+
 ### Approach 1: Specify rolesfile and rolesdir in playbook
 
 Provide new `rolesdir` and `rolesfile` keywords:
