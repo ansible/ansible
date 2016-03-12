@@ -23,6 +23,21 @@ ansible-playbook run-the-playbook.yml
 
 ## Approaches
 
+### Approach 0: Just check if roles are available
+
+Instead of autoinstall missing roles, just verify that everything is in place,
+and if some role is not found (or role version not matched) stop execution
+
+#### Advantages
+
+- No changes required from the user perspective
+
+#### Disadvantage
+
+- Roles pre-flight verification must be implemented, and at least playbook
+  and all included roles must be readed to search for requirements (although
+  something similar will likely be required by any auto-install approach)
+
 ### Approach 1: Specify rolesfile and rolesdir in playbook
 
 Provide new `rolesdir` and `rolesfile` keywords:
