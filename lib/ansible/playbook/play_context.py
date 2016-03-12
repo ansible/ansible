@@ -78,6 +78,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    su_pass          = ('ansible_su_password', 'ansible_su_pass'),
    su_exe           = ('ansible_su_exe',),
    su_flags         = ('ansible_su_flags',),
+   executable       = ('ansible_executable',),
 )
 
 SU_PROMPT_LOCALIZATIONS = [
@@ -163,6 +164,7 @@ class PlayContext(Base):
     _accelerate       = FieldAttribute(isa='bool', default=False)
     _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
+    _executable       = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -354,6 +356,12 @@ class PlayContext(Base):
         else:
             delegated_vars = dict()
 
+            # setup shell
+            for exe_var in MAGIC_VARIABLE_MAPPING.get('executable'):
+                if exe_var in variables:
+                    setattr(new_info, 'executable', variables.get(exe_var))
+
+
         attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
@@ -417,7 +425,7 @@ class PlayContext(Base):
         self.prompt = None
 
         if executable is None:
-            executable = C.DEFAULT_EXECUTABLE
+            executable = self.executable
 
         if self.become:
 
