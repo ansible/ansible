@@ -185,6 +185,14 @@ Adding `--force` to any automatic solution is probably a bad idea (at least
 in the way that option works on galaxy 1.9.x), and even a `--upgrade` might
 be risky.
 
+This approach, which is like a meld of playbook & galaxy, drops the second step
+of motivation, but actually does not solve the first problem listed. Instead
+of modify `rolesfile.yml` now we need to modify the playbook itself. In that
+sense, the melding forces that a file that rarely changes (the playbook) becomes
+a dynamic entity, just to reflect the changes in the roles it includes. In that
+sense, is conceptually simpler to keep the `requirements.yml` file, whose only
+purpose is to link the static playbook with the dynamic roles.
+
 #### Disadvantages
 
 - Having multiple versions in roles directory makes very hard to know which
