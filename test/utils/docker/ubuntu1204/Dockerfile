@@ -43,6 +43,7 @@ RUN /usr/sbin/update-rc.d -f ondemand remove; \
 
 RUN apt-get install -y \
     python-coverage \
+    python-dev \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
