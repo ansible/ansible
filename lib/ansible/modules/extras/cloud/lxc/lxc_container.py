@@ -416,7 +416,7 @@ lxc_container:
             description: resulting state of the container
             returned: success, when archive is true
             type: string
-            sample: "/tmp/test-container-config.tar",
+            sample: "/tmp/test-container-config.tar"
         clone:
             description: if the container was cloned
             returned: success, when clone_name is specified
