@@ -79,17 +79,15 @@ class Command(object):
 
 class Shell(object):
 
-    def __init__(self):
+    def __init__(self, prompts_re=None, errors_re=None, kickstart=True):
         self.ssh = None
         self.shell = None
 
+        self.kickstart = kickstart
         self._matched_prompt = None
 
-        self.prompts = list()
-        self.prompts.extend(CLI_PROMPTS_RE)
-
-        self.errors = list()
-        self.errors.extend(CLI_ERRORS_RE)
+        self.prompts = prompts_re or CLI_PROMPTS_RE
+        self.errors = errors_re or CLI_ERRORS_RE
 
     def open(self, host, port=22, username=None, password=None,
             timeout=10, key_filename=None, pkey=None, look_for_keys=None,
@@ -109,7 +107,10 @@ class Shell(object):
 
         self.shell = self.ssh.invoke_shell()
         self.shell.settimeout(10)
-        self.shell.sendall("\n")
+
+        if self.kickstart:
+            self.shell.sendall("\n")
+
         self.receive()
 
     def strip(self, data):
