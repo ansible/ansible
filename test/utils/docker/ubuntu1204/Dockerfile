@@ -8,6 +8,7 @@ RUN apt-get install -y \
     make \
     mercurial \
     ruby \
+    rubygems \
     subversion \
     sudo \
     unzip
