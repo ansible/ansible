@@ -52,6 +52,7 @@ RUN apt-get install -y \
     python-setuptools \
     python-virtualenv \
     python-yaml
+RUN RUN pip install --upgrade jinja2
 RUN rm /etc/apt/apt.conf.d/docker-clean
 RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
