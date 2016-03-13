@@ -52,7 +52,7 @@ class Cli(object):
         username = self.module.params['username']
         password = self.module.params['password']
 
-        self.shell = Shell()
+        self.shell = Shell(kickstart=False)
 
         try:
             self.shell.open(host, port=port, username=username, password=password)
