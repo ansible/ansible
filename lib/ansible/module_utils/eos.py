@@ -31,6 +31,23 @@ NET_COMMON_ARGS = dict(
     provider=dict(type='dict')
 )
 
+CLI_PROMPTS_RE = [
+    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
+]
+
 def to_list(val):
     if isinstance(val, (list, tuple)):
         return list(val)
@@ -123,9 +140,8 @@ class Cli(object):
         username = self.module.params['username']
         password = self.module.params['password']
 
-        self.shell = Shell()
-
         try:
+            self.shell = Shell(CLI_PROMPTS_RE, CLI_ERRORS_RE)
             self.shell.open(host, port=port, username=username, password=password)
         except Exception, exc:
             msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
