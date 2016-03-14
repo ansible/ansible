@@ -22,6 +22,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+import re
+
+def parse_s3_url(url):
+    "Return bucket and prefix from a s3://bucket/key type AWS S3 URL"
+    match =  re.search('^s3://([^\/]+)/?(.*)', url)
+    if match:
+        return match.group(1), match.group(2)
+
+    return None, None
+
 import datetime
 import os
 import tarfile
@@ -172,7 +183,7 @@ class GalaxyRole(object):
 
     def fetch(self, role_data):
         """
-        Downloads the archived role from github to a temp location
+        Downloads an archived role from github or a web/S3 URL to a temp location
         """
         if role_data:
 
@@ -185,12 +196,24 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
-                data = url_file.read()
-                while data:
-                    temp_file.write(data)
+                if archive_url.startswith('s3:'):
+                    bucket, prefix = parse_s3_url(archive_url)
+                    import boto3
+                    # boto3.setup_default_session(profile_name=myconfig.get('adon_aws_profile', None))
+                    s3 = boto3.resource('s3')
+                    s3_file = s3.Object(bucket, prefix).get()
+                    chunk = s3_file['Body'].read(1024*8)
+                    while chunk:
+                        temp_file.write(chunk)
+                        chunk = s3_file['Body'].read(1024*8)
+                else:
+                    url_file = open_url(archive_url, validate_certs=self._validate_certs)
                     data = url_file.read()
+                    while data:
+                        temp_file.write(data)
+                        data = url_file.read()
+
                 temp_file.close()
                 return temp_file.name
             except Exception as e:
