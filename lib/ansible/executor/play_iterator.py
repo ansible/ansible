@@ -153,18 +153,10 @@ class PlayIterator:
 
         # Default options to gather
         gather_subset = C.DEFAULT_GATHER_SUBSET
-        ignore_ohai   = C.DEFAULT_IGNORE_OHAI
-        ignore_facter = C.DEFAULT_IGNORE_FACTER
 
         # Retrieve subset to gather
         if self._play.gather_subset is not None:
             gather_subset = self._play.gather_subset
-        # ignore ohai
-        if self._play.ignore_ohai is not None:
-            ignore_ohai = self._play.ignore_ohai
-        # ignore puppet facter
-        if self._play.ignore_facter is not None:
-            ignore_facter = self._play.ignore_facter
 
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
@@ -172,8 +164,6 @@ class PlayIterator:
         setup_task.tags   = ['always']
         setup_task.args   = {
           'gather_subset': gather_subset,
-          'ignore_ohai'  : ignore_ohai,
-          'ignore_facter': ignore_facter,
         }
         setup_task.set_loader(self._play._loader)
         setup_block.block = [setup_task]
