@@ -355,7 +355,7 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
 .. versionadded:: 2.1
 
-You can specify a subset of gathered facts using the following options:
+You can specify a subset of gathered facts using the following options::
 
     gather_subset = all
 
@@ -367,7 +367,7 @@ You can specify a subset of gathered facts using the following options:
 
 You can combine them using comma separated list (ex: min,network,virtual)
 
-You can also disable puppet facter or chef ohai facts collection using following options:
+You can also disable puppet facter or chef ohai facts collection using following options::
 
     ignore_ohai = True
     ignore_facter = True
