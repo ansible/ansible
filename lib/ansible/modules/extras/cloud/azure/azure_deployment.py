@@ -476,7 +476,8 @@ def deploy_template(module, client, conn_info):
         failed_deployment_operations = get_failed_deployment_operations(module, client, group_name, deployment_name)
         module.fail_json(msg='Deployment failed. Deployment id: %s' % (deployment_result.id), failed_deployment_operations=failed_deployment_operations)
     except CloudError as e:
-        module.fail_json(msg='Deploy create failed with status code: %s and message: "%s"' % (e.status_code, e.message))
+        failed_deployment_operations = get_failed_deployment_operations(module, client, group_name, deployment_name)
+        module.fail_json(msg='Deploy create failed with status code: %s and message: "%s"' % (e.status_code, e.message),failed_deployment_operations=failed_deployment_operations)
 
 def destroy_resource_group(module, client, conn_info):
     """
@@ -613,4 +614,3 @@ from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
-
