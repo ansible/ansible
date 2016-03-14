@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: iam
 short_description: Manage IAM users, groups, roles and keys
 description:
-     - Allows for the management of IAM users, groups, roles and access keys.
+     - Allows for the management of IAM users, user API keys, groups, roles.
 version_added: "2.0"
 options:
   iam_type:
@@ -27,8 +27,7 @@ options:
       - Type of IAM resource
     required: true
     default: null
-    choices: [ "user", "group", "role"]
-    aliases: []
+    choices: ["user", "group", "role"]
   name:
     description:
       - Name of IAM resource to create or identify
