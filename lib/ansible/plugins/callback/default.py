@@ -206,10 +206,11 @@ class CallbackModule(CallbackBase):
         self._handle_warnings(result._result)
 
     def v2_playbook_item_on_skipped(self, result):
-        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
-            msg += " => %s" % self._dump_results(result._result)
-        self._display.display(msg, color=C.COLOR_SKIP)
+        if C.DISPLAY_SKIPPED_HOSTS:
+            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
