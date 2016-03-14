@@ -300,6 +300,9 @@ EXAMPLES = '''
         value: devopscleazure
 '''
 
+RETURN = '''
+'''
+
 try:
     import time
     import yaml
@@ -585,9 +588,6 @@ def get_instances(client, group, deployment):
     return [dict(vm_name=vm.resource_name, ips=[get_ip_dict(ip) for ip in ips]) for vm, ips in vms_and_ips if len(ips) > 0]
 
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-
 def main():
     argument_spec = dict(
         azure_url=dict(default=AZURE_URL),
@@ -655,6 +655,9 @@ def main():
     else:
         destroy_resource_group(module, resource_client, conn_info)
         module.exit_json(changed=True, msg='deployment deleted')
+
+# import module snippets
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
