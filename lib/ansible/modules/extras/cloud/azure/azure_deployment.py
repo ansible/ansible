@@ -20,8 +20,8 @@ short_description: Create or destroy Azure Resource Manager template deployments
 version_added: "2.0"
 description:
      - Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
-       You can find some quick start templates in GitHub here: https://github.com/azure/azure-quickstart-templates.
-       If you would like to find out more information about Azure Resource Manager templates, see: https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/.
+       You can find some quick start templates in GitHub here https://github.com/azure/azure-quickstart-templates.
+       If you would like to find out more information about Azure Resource Manager templates, see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/.
 options:
   subscription_id:
     description:
@@ -66,7 +66,7 @@ options:
     require: false
     default: West US
 
-author: "David Justice (@devigned)"
+author: "David Justice (@devigned) / Laurent Mazuel (@lmazuel) / Andre Price (@obsoleted)"
 '''
 
 EXAMPLES = '''
