@@ -3,20 +3,16 @@
 - hosts: localhost
   tags: [ 'min' ]
   connection: local
-  gather_subset: "min"
-  ignore_facter: yes
-  ignore_ohai: yes
+  gather_subset: "!all"
   gather_facts: yes
   tasks:
     - debug: var={{item}}
-      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role' ]
+      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role'  ]
 
 - hosts: localhost
   tags: [ 'network' ]
   connection: local
   gather_subset: "network"
-  ignore_facter: yes
-  ignore_ohai: yes
   gather_facts: yes
   tasks:
     - debug: var={{item}}
@@ -26,8 +22,6 @@
   tags: [ 'hardware' ]
   connection: local
   gather_subset: "hardware"
-  ignore_facter: yes
-  ignore_ohai: yes
   gather_facts: yes
   tasks:
     - debug: var={{item}}
@@ -37,8 +31,6 @@
   tags: [ 'virtual' ]
   connection: local
   gather_subset: "virtual"
-  ignore_facter: yes
-  ignore_ohai: yes
   gather_facts: yes
   tasks:
     - debug: var={{item}}

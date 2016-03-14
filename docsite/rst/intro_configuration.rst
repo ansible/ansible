@@ -355,22 +355,29 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
 .. versionadded:: 2.1
 
-You can specify a subset of gathered facts using the following options::
+You can specify a subset of gathered facts using the following option::
 
     gather_subset = all
 
-:all: gather all subsets
-:min: gather a very limited set of facts
-:network: gather min and network facts
-:hardware: gather min and hardware facts (longest facts to retrieve)
-:virtual: gather min and virtual facts
+:all: gather all subsets (the default)
+:network: gather network facts
+:hardware: gather hardware facts (longest facts to retrieve)
+:virtual: gather facts about virtual machines hosted on the machine
+:ohai: gather facts from ohai
+:facter: gather facts from facter
 
-You can combine them using comma separated list (ex: min,network,virtual)
+You can combine them using a comma separated list (ex: network,virtual,facter)
 
-You can also disable puppet facter or chef ohai facts collection using following options::
+You can also disable specific subsets by prepending with a `!` like this::
 
-    ignore_ohai = True
-    ignore_facter = True
+    # Don't gather hardware facts, facts from chef's ohai or puppet's facter
+    gather_subset = !hardware,!ohai,!facter
+
+A set of basic facts are always collected no matter which additional subsets
+are selected.  If you want to collect the minimal amount of facts, use
+`!all`::
+
+    gather_subset = !all
 
 hash_behaviour
 ==============
