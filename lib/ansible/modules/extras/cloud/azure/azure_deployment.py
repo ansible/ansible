@@ -306,10 +306,8 @@ RETURN = '''
 try:
     import time
     import yaml
-    import requests
-    import azure
     from itertools import chain
-    from azure.common.credentials import BasicTokenAuthentication
+    from azure.common.credentials import ServicePrincipalCredentials
     from azure.common.exceptions import CloudError
     from azure.mgmt.resource.resources.models import (
         DeploymentProperties,
@@ -329,35 +327,11 @@ except ImportError:
 AZURE_URL = "https://management.azure.com"
 
 
-def get_token(domain_or_tenant, client_id, client_secret):
-    """
-    Get an Azure Active Directory token for a service principal
-    :param domain_or_tenant: The domain or tenant id of your Azure Active Directory instance
-    :param client_id: The client id of your application in Azure Active Directory
-    :param client_secret: One of the application secrets created in your Azure Active Directory application
-    :return: an authenticated bearer token to be used with requests to the API
-    """
-    #  the client id we can borrow from azure xplat cli
-    grant_type = 'client_credentials'
-    token_url = 'https://login.microsoftonline.com/{}/oauth2/token'.format(domain_or_tenant)
-
-    payload = {
-        'grant_type': grant_type,
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'resource': 'https://management.core.windows.net/'
-    }
-
-    res = requests.post(token_url, data=payload)
-    return res.json()['access_token'] if res.status_code == 200 else None
-
-
 def get_azure_connection_info(module):
     azure_url = module.params.get('azure_url')
-    tenant_or_domain = module.params.get('tenant_or_domain')
+    tenant_id = module.params.get('tenant_id')
     client_id = module.params.get('client_id')
     client_secret = module.params.get('client_secret')
-    security_token = module.params.get('security_token')
     resource_group_name = module.params.get('resource_group_name')
     subscription_id = module.params.get('subscription_id')
 
@@ -379,19 +353,13 @@ def get_azure_connection_info(module):
         else:
             resource_group_name = None
 
-    if not security_token:
-        if 'AZURE_SECURITY_TOKEN' in os.environ:
-            security_token = os.environ['AZURE_SECURITY_TOKEN']
-        else:
-            security_token = None
-
-    if not tenant_or_domain:
+    if not tenant_id:
         if 'AZURE_TENANT_ID' in os.environ:
-            tenant_or_domain = os.environ['AZURE_TENANT_ID']
+            tenant_id = os.environ['AZURE_TENANT_ID']
         elif 'AZURE_DOMAIN' in os.environ:
-            tenant_or_domain = os.environ['AZURE_DOMAIN']
+            tenant_id = os.environ['AZURE_DOMAIN']
         else:
-            tenant_or_domain = None
+            tenant_id = None
 
     if not client_id:
         if 'AZURE_CLIENT_ID' in os.environ:
@@ -406,10 +374,9 @@ def get_azure_connection_info(module):
             client_secret = None
 
     return dict(azure_url=azure_url,
-                tenant_or_domain=tenant_or_domain,
+                tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
-                security_token=security_token,
                 resource_group_name=resource_group_name,
                 subscription_id=subscription_id)
 
@@ -593,9 +560,8 @@ def main():
         azure_url=dict(default=AZURE_URL),
         subscription_id=dict(),
         client_secret=dict(no_log=True),
-        client_id=dict(),
-        tenant_or_domain=dict(),
-        security_token=dict(aliases=['access_token'], no_log=True),
+        client_id=dict(required=True),
+        tenant_id=dict(required=True),
         resource_group_name=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         template=dict(default=None, type='dict'),
@@ -619,24 +585,10 @@ def main():
 
     conn_info = get_azure_connection_info(module)
 
-    if conn_info['security_token'] is None and \
-            (conn_info['client_id'] is None or conn_info['client_secret'] is None or conn_info[
-                'tenant_or_domain'] is None):
-        module.fail_json(msg='security token or client_id, client_secret and tenant_or_domain is required')
+    credentials = ServicePrincipalCredentials(client_id=conn_info['client_id'],
+                                              secret=conn_info['client_secret'],
+                                              tenant=conn_info['tenant_id'])
 
-    if conn_info['security_token'] is None:
-        conn_info['security_token'] = get_token(conn_info['tenant_or_domain'],
-                                                conn_info['client_id'],
-                                                conn_info['client_secret'])
-
-    if conn_info['security_token'] is None:
-        module.fail_json(msg='failed to retrieve a security token from Azure Active Directory')
-
-    credentials = BasicTokenAuthentication(
-        token = {
-            'access_token':conn_info['security_token']
-        }
-    )
     subscription_id = conn_info['subscription_id']
     resource_client = ResourceManagementClient(ResourceManagementClientConfiguration(credentials, subscription_id))
     network_client = NetworkManagementClient(NetworkManagementClientConfiguration(credentials, subscription_id))
