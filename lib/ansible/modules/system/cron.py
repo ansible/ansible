@@ -538,7 +538,7 @@ def main():
             insertafter=dict(required=False),
             insertbefore=dict(required=False),
         ),
-        supports_check_mode = False,
+        supports_check_mode = True,
         mutually_exclusive=[
                 ['reboot', 'special_time'],
                 ['insertafter', 'insertbefore'],
@@ -573,6 +573,17 @@ def main():
 
     module.debug('cron instantiated - name: "%s"' % name)
 
+    if module._diff:
+        diff = dict()
+        diff['before'] = crontab.render()
+        if crontab.cron_file:
+            diff['before_header'] = crontab.cron_file
+        else:
+            if crontab.user:
+                diff['before_header'] = 'crontab for user "%s"' % crontab.user
+            else:
+                diff['before_header'] = 'crontab'
+
     # --- user input validation ---
 
     if (special_time or reboot) and \
@@ -593,14 +604,22 @@ def main():
         special_time = "reboot"
 
     # if requested make a backup before making a change
-    if backup:
+    if backup and not module.check_mode:
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
 
     if crontab.cron_file and not name and not do_install:
-        changed = crontab.remove_job_file()
-        module.exit_json(changed=changed,cron_file=cron_file,state=state)
+        if module._diff:
+            diff['after'] = ''
+            diff['after_header'] = '/dev/null'
+        else:
+            diff = dict()
+        if module.check_mode:
+            changed = os.path.isfile(crontab.cron_file)
+        else:
+            changed = crontab.remove_job_file()
+        module.exit_json(changed=changed,cron_file=cron_file,state=state,diff=diff)
 
     if env:
         if ' ' in name:
@@ -642,14 +661,27 @@ def main():
     )
 
     if changed:
-        crontab.write()
+        if not module.check_mode:
+            crontab.write()
+        if module._diff:
+            diff['after'] = crontab.render()
+            if crontab.cron_file:
+                diff['after_header'] = crontab.cron_file
+            else:
+                if crontab.user:
+                    diff['after_header'] = 'crontab for user "%s"' % crontab.user
+                else:
+                    diff['after_header'] = 'crontab'
+
+            res_args['diff'] = diff
 
     # retain the backup only if crontab or cron file have changed
     if backup:
         if changed:
             res_args['backup_file'] = backup_file
         else:
-            os.unlink(backup_file)
+            if not module.check_mode:
+                os.unlink(backup_file)
 
     if cron_file:
         res_args['cron_file'] = cron_file
