@@ -74,7 +74,6 @@ options:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
     required: false
-    default: null
   delete_on_termination:
     description:
       - When set to "yes", the volume will be deleted upon instance termination.
