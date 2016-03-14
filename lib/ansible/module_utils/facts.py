@@ -163,7 +163,10 @@ class Facts(object):
 
         self.module = module
         self.facts = {}
-
+        ### TODO: Eventually, these should all get moved to populate().  But
+        # some of the values are currently being used by other subclasses (for
+        # instance, os_family and distribution).  Have to sort out what to do
+        # about those first.
         if load_on_init:
             self.get_platform_facts()
             self.get_distribution_facts()
@@ -2981,6 +2984,52 @@ class SunOSVirtual(Virtual):
             except ValueError:
                 pass
 
+class Ohai(Facts):
+    """
+    This is a subclass of Facts for including information gathered from Ohai.
+    """
+
+    def populate(self):
+        self.run_ohai()
+        return self.facts
+
+    def run_ohai(self):
+        ohai_path = self.module.get_bin_path('ohai')
+        if ohai_path is None:
+            return
+        rc, out, err = self.module.run_command(ohai_path)
+        try:
+            self.facts.update(json.loads(out))
+        except:
+            pass
+
+class Facter(Facts):
+    """
+    This is a subclass of Facts for including information gathered from Facter.
+    """
+    def populate(self):
+        self.run_facter()
+        return self.facts
+
+    def run_facter(self):
+        facter_path = self.module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
+        cfacter_path = self.module.get_bin_path('cfacter', opt_dirs=['/opt/puppetlabs/bin'])
+        # Prefer to use cfacter if available
+        if cfacter_path is not None:
+            facter_path = cfacter_path
+
+        if facter_path is None:
+            return
+
+        # if facter is installed, and we can use --json because
+        # ruby-json is ALSO installed, include facter data in the JSON
+        rc, out, err = self.module.run_command(facter_path + " --puppet --json")
+        try:
+            self.facts = json.loads(out)
+        except:
+            pass
+
+
 def get_file_content(path, default=None, strip=True):
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
@@ -3009,75 +3058,69 @@ def get_file_lines(path):
         ret = []
     return ret
 
-def ansible_facts(module):
-    # Retrieve module parameters
-    gather_subset = ('all',)
-    if 'gather_subset' in module.params:
-        gather_subset = module.params['gather_subset']
-
-    # Retrieve all facts elements
-    if 'all' in gather_subset:
-        gather_subset = FACT_SUBSETS.keys()
-    else:
-        # Check subsets and forbid unallowed name
-        for subset in gather_subset:
-            if subset not in FACT_SUBSETS.keys():
-                raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" % (subset, ", ".join(FACT_SUBSETS.keys())))
-
+def ansible_facts(module, gather_subset):
     facts = {}
-    facts['gather_subset'] = gather_subset
+    facts['gather_subset'] = list(gather_subset)
     facts.update(Facts(module).populate())
     for subset in gather_subset:
         facts.update(FACT_SUBSETS[subset](module).populate())
     return facts
 
-# ===========================================
-# TODO: remove this dead code?
 def get_all_facts(module):
 
     setup_options = dict(module_setup=True)
-    facts = ansible_facts(module)
+
+    # Retrieve module parameters
+    gather_subset = module.params['gather_subset']
+
+    # Retrieve all facts elements
+    additional_subsets = set()
+    exclude_subsets = set()
+    for subset in gather_subset:
+        if subset == 'all':
+            additional_subsets.update(VALID_SUBSETS)
+            continue
+        if subset.startswith('!'):
+            subset = subset[1:]
+            if subset == 'all':
+                exclude_subsets.update(VALID_SUBSETS)
+                continue
+            exclude = True
+        else:
+            exclude = False
+
+        if subset not in VALID_SUBSETS:
+            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" % (subset, ", ".join(FACT_SUBSETS.keys())))
+
+        if exclude:
+            exclude_subsets.add(subset)
+        else:
+            additional_subsets.add(subset)
+
+    if not additional_subsets:
+        additional_subsets.update(VALID_SUBSETS)
+
+    additional_subsets.difference_update(exclude_subsets)
+
+    # facter and ohai are given a different prefix than other subsets
+    if 'facter' in additional_subsets:
+        additional_subsets.difference_update(('facter',))
+        facter_ds = FACT_SUBSETS['facter'](module, load_on_init=False).populate()
+        if facter_ds:
+            for (k, v) in facter_ds.items():
+                setup_options['facter_%s' % k.replace('-', '_')] = v
+
+    if 'ohai' in additional_subsets:
+        additional_subsets.difference_update(('ohai',))
+        ohai_ds = FACT_SUBSETS['ohai'](module, load_on_init=False).populate()
+        if ohai_ds:
+            for (k, v) in ohai_ds.items():
+                setup_options['ohai_%s' % k.replace('-', '_')] = v
+
+    facts = ansible_facts(module, additional_subsets)
 
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v
-
-    # Look for the path to the facter, cfacter, and ohai binaries and set
-    # the variable to that path.
-
-    facter_path = module.get_bin_path('facter')
-    cfacter_path = module.get_bin_path('cfacter')
-    ohai_path = module.get_bin_path('ohai')
-
-    # Prefer to use cfacter if available
-    if cfacter_path is not None:
-        facter_path = cfacter_path
-    # if facter is installed, and we can use --json because
-    # ruby-json is ALSO installed, include facter data in the JSON
-
-    if facter_path is not None:
-        rc, out, err = module.run_command(facter_path + " --json")
-        facter = True
-        try:
-            facter_ds = json.loads(out)
-        except:
-            facter = False
-        if facter:
-            for (k,v) in facter_ds.items():
-                setup_options["facter_%s" % k] = v
-
-    # ditto for ohai
-
-    if ohai_path is not None:
-        rc, out, err = module.run_command(ohai_path)
-        ohai = True
-        try:
-            ohai_ds = json.loads(out)
-        except:
-            ohai = False
-        if ohai:
-            for (k,v) in ohai_ds.items():
-                k2 = "ohai_%s" % k.replace('-', '_')
-                setup_options[k2] = v
 
     setup_result = { 'ansible_facts': {} }
 
@@ -3090,10 +3133,13 @@ def get_all_facts(module):
 
     return setup_result
 
-### Note: have to define this at the bottom as it references classes defined earlier in this file
 # Allowed fact subset for gather_subset options and what classes they use
+# Note: have to define this at the bottom as it references classes defined earlier in this file
 FACT_SUBSETS = dict(
     hardware=Hardware,
     network=Network,
     virtual=Virtual,
+    ohai=Ohai,
+    facter=Facter,
 )
+VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
