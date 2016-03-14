@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_deployment
 short_description: Create or destroy Azure Resource Manager template deployments
-version_added: "2.0"
+version_added: "2.1"
 description:
      - Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
        You can find some quick start templates in GitHub here https://github.com/azure/azure-quickstart-templates.
@@ -496,7 +496,7 @@ def deploy_template(module, client, conn_info):
         result = client.deployments.create_or_update(group_name, deployment_name, deploy_parameter)
         deployment_result = result.result() # Blocking wait, return the Deployment object
         if module.params.get('wait_for_deployment_completion'):
-            while not deployment_result.properties.provisioning_state in {'Canceled', 'Failed', 'Deleted', 'Succeeded'}:
+            while not deployment_result.properties.provisioning_state in ['Canceled', 'Failed', 'Deleted', 'Succeeded']:
                 deployment_result = client.deployments.get(group_name, deployment_name)
                 time.sleep(module.params.get('wait_for_deployment_polling_period'))
 
@@ -585,9 +585,10 @@ def get_instances(client, group, deployment):
     return [dict(vm_name=vm.resource_name, ips=[get_ip_dict(ip) for ip in ips]) for vm, ips in vms_and_ips if len(ips) > 0]
 
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 def main():
-    # import module snippets
-    from ansible.module_utils.basic import AnsibleModule
     argument_spec = dict(
         azure_url=dict(default=AZURE_URL),
         subscription_id=dict(),
