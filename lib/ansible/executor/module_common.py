@@ -20,12 +20,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# from python and deps
-from io import BytesIO
+import base64
 import json
 import os
 import shlex
 import zipfile
+from io import BytesIO
 
 # from Ansible
 from ansible import __version__
@@ -51,24 +51,28 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 # ******************************************************************************
 
-ZIPLOADER_DATA = '''#!/usr/bin/python
+ZIPLOADER_DATA = u'''#!/usr/bin/python
 import os
 import sys
+import base64
 import tempfile
-import zipimport
 
-ZIPDATA = """%s"""
+ZIPDATA = """%(zipdata)s"""
 os.environ['MODULE_COMPLEX_ARGS'] = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 try:
-    temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_', dir='./')
-    os.write(temp_fd, ZIPDATA.decode('base64'))
+    temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_')
+    os.write(temp_fd, base64.b64decode(ZIPDATA))
     sys.path.insert(0, temp_path)
-    from ansible_ziploader_module import main
+    from ansible.module_exec.%(ansible_module)s.__main__ import main
     main()
 finally:
-    os.close(temp_fd)
-    os.remove(temp_path)
+    try:
+        os.close(temp_fd)
+        os.remove(temp_path)
+    except NameError:
+        # mkstemp failed
+        pass
 '''
 
 def _slurp(path):
@@ -79,7 +83,7 @@ def _slurp(path):
     fd.close()
     return data
 
-def _find_snippet_imports(module_data, module_path, strip_comments):
+def _find_snippet_imports(module_name, module_data, module_path, strip_comments):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -102,58 +106,64 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
 
     snippet_names = []
 
-
     if module_style == 'new' and module_path.endswith('.py'):
-        zipoutput = StringIO()
-        zf = zipfile.PyZipFile(zipoutput, mode='w')
+        zipoutput = BytesIO()
+        zf = zipfile.ZipFile(zipoutput, mode='w', compression=zipfile.ZIP_DEFLATED)
+        zf.writestr('ansible/__init__.py', b'')
+        zf.writestr('ansible/module_utils/__init__.py', b'')
+        zf.writestr('ansible/module_exec/__init__.py', b'')
+        zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
         if REPLACER in module_data:
-            module_data.replace(REPLACER, '')
-            zf.writestr('basic.py', _slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
+            module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
+            zf.writestr('ansible/module_utils/basic.py', _slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
         final_data = []
-        zf.writestr("ansible_module_temp/__init__.py", "")
         for line in lines:
-            if line.startswith('from ansible.module_utils.'):
-                tokens=line.split(".")
+            if line.startswith(b'from ansible.module_utils.'):
+                tokens=line.split(b".")
                 import_error = False
-                if len(tokens) != 3 or " import *" not in line:
-                    raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
+                #if len(tokens) != 3 or b" import *" not in line:
+                #    raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
-                fname = snippet_name + ".py"
-                zf.writestr(os.path.join("ansible_module_temp", fname), _slurp(os.path.join(_SNIPPET_PATH, fname)))
-                final_data.append('from ansible_module_temp.%s import *' % snippet_name)
+                fname = to_unicode(snippet_name + b".py")
+                zf.writestr(os.path.join("ansible/module_utils", fname), _slurp(os.path.join(_SNIPPET_PATH, fname)))
+                final_data.append(line)
             else:
                 final_data.append(line)
 
-        zf.writestr('ansible_ziploader_module.py', "\n".join(final_data))
+        zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, b"\n".join(final_data))
         zf.close()
-        output.write(ZIPLOADER_DATA % zipoutput.getvalue().encode('base64'))
+        output.write(to_bytes(ZIPLOADER_DATA % dict(
+            zipdata=base64.b64encode(zipoutput.getvalue()),
+            ansible_module=module_name,
+            )))
     else:
         for line in lines:
             if REPLACER in line:
                 output.write(_slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
-                snippet_names.append('basic')
+                snippet_names.append(b'basic')
             if REPLACER_WINDOWS in line:
                 ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
                 output.write(ps_data)
-                snippet_names.append('powershell')
-            elif line.startswith('from ansible.module_utils.'):
-                tokens=line.split(".")
+                snippet_names.append(b'powershell')
+            elif line.startswith(b'from ansible.module_utils.'):
+                tokens=line.split(b".")
                 import_error = False
                 if len(tokens) != 3:
                     import_error = True
-                if " import *" not in line:
+                if b" import *" not in line:
                     import_error = True
                 if import_error:
                     raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
-                output.write(_slurp(os.path.join(_SNIPPET_PATH, snippet_name + ".py")))
+                output.write(_slurp(os.path.join(_SNIPPET_PATH, to_unicode(snippet_name) + ".py")))
             else:
-                if strip_comments and line.startswith("#") or line == '':
+                if strip_comments and line.startswith(b"#") or line == b'':
                     pass
                 output.write(line)
-                output.write("\n")
+                output.write(b"\n")
+
 
     if not module_path.endswith(".ps1"):
         # Unixy modules
@@ -168,7 +178,7 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
 
 # ******************************************************************************
 
-def modify_module(module_path, module_args, task_vars=dict(), strip_comments=False):
+def modify_module(module_name, module_path, module_args, task_vars=dict(), strip_comments=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -211,7 +221,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
         # read in the module source
         module_data = f.read()
 
-    (module_data, module_style) = _find_snippet_imports(module_data, module_path, strip_comments)
+    (module_data, module_style) = _find_snippet_imports(module_name, module_data, module_path, strip_comments)
 
     module_args_json = to_bytes(json.dumps(module_args))
     python_repred_args = to_bytes(repr(module_args_json))
