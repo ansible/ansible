@@ -22,22 +22,23 @@ __metaclass__ = type
 import errno
 import sys
 import time
+from io import BytesIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.six import StringIO, BytesIO
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
 
 from ansible.module_utils import basic
 from ansible.module_utils.basic import AnsibleModule
 
-class OpenStringIO(StringIO):
-    """StringIO with dummy close() method
+class OpenBytesIO(BytesIO):
+    """BytesIO with dummy close() method
 
     So that you can inspect the content after close() was called.
     """
 
     def close(self):
         pass
+
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleRunCommand(unittest.TestCase):
@@ -76,7 +77,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.subprocess = patch('ansible.module_utils.basic.subprocess').start()
         self.cmd = Mock()
         self.cmd.returncode = 0
-        self.cmd.stdin = OpenStringIO()
+        self.cmd.stdin = OpenBytesIO()
         self.cmd.stdout.fileno.return_value = sentinel.stdout
         self.cmd.stderr.fileno.return_value = sentinel.stderr
         self.subprocess.Popen.return_value = self.cmd
@@ -110,10 +111,6 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         args, kwargs = self.subprocess.Popen.call_args
         self.assertEqual(args, ('ls a " b" "c "', ))
         self.assertEqual(kwargs['shell'], True)
-
-    def test_path_prefix(self):
-        self.module.run_command('foo', path_prefix='/opt/bin')
-        self.assertEqual('/opt/bin', self.os.environ['PATH'].split(':')[0])
 
     def test_cwd(self):
         self.os.getcwd.return_value = '/old'

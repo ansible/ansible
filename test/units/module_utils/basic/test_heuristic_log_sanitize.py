@@ -85,6 +85,7 @@ class TestHeuristicLogSanitize(unittest.TestCase):
         self.assertTrue(ssh_output.endswith("}"))
         self.assertIn(":********@foo.com/data'", ssh_output)
 
+    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_hides_parameter_secrets(self):
         output = heuristic_log_sanitize('token="secret", user="person", token_entry="test=secret"', frozenset(['secret']))
         self.assertNotIn('secret', output)

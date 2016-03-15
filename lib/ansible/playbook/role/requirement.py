@@ -190,6 +190,17 @@ class RoleRequirement(RoleDefinition):
         if rc != 0:
             raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
 
+        if scm == 'git' and version:
+            checkout_cmd = [scm, 'checkout', version]
+            with open('/dev/null', 'w') as devnull:
+                try:
+                    popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, name), stdout=devnull, stderr=devnull)
+                except (IOError, OSError):
+                    raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
+                rc = popen.wait()
+            if rc != 0:
+                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(checkout_cmd), tempdir, rc))
+
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
         if scm == 'hg':
             archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]

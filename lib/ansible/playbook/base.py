@@ -27,7 +27,7 @@ import uuid
 from functools import partial
 from inspect import getmembers
 
-from ansible.compat.six import iteritems, string_types, text_type
+from ansible.compat.six import iteritems, string_types
 
 from jinja2.exceptions import UndefinedError
 
@@ -36,6 +36,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.utils.boolean import boolean
 from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.unicode import to_unicode
 
 BASE_ATTRIBUTES = {}
 
@@ -48,7 +49,7 @@ class Base:
     _remote_user         = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', default=dict(), priority=100)
+    _vars                = FieldAttribute(isa='dict', priority=100)
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
@@ -75,6 +76,10 @@ class Base:
 
         # and initialize the base attributes
         self._initialize_base_attributes()
+
+        # and init vars, avoid using defaults in field declaration as it lives across plays
+        self.vars = dict()
+
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
@@ -148,7 +153,7 @@ class Base:
             setattr(Base, name, property(getter, setter, deleter))
 
             # Place the value into the instance so that the property can
-            # process and hold that value/
+            # process and hold that value.
             setattr(self, name, value.default)
 
     def preprocess_data(self, ds):
@@ -262,6 +267,8 @@ class Base:
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
 
+        new_me._uuid = self._uuid
+
         # if the ds value was set on the object, copy it to the new copy too
         if hasattr(self, '_ds'):
             new_me._ds = self._ds
@@ -310,7 +317,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = text_type(value)
+                        value = to_unicode(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
@@ -327,7 +334,10 @@ class Base:
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            value = [ value ]
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -339,11 +349,15 @@ class Base:
                     elif attribute.isa == 'set':
                         if value is None:
                             value = set()
-                        else:
-                            if not isinstance(value, (list, set)):
+                        elif not isinstance(value, (list, set)):
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                # Making a list like this handles strings of
+                                # text and bytes properly
                                 value = [ value ]
-                            if not isinstance(value, set):
-                                value = set(value)
+                        if not isinstance(value, set):
+                            value = set(value)
                     elif attribute.isa == 'dict':
                         if value is None:
                             value = dict()
@@ -409,7 +423,7 @@ class Base:
         def _validate_variable_keys(ds):
             for key in ds:
                 if not isidentifier(key):
-                    raise TypeError("%s is not a valid variable name" % key)
+                    raise TypeError("'%s' is not a valid variable name" % key)
 
         try:
             if isinstance(ds, dict):

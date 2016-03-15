@@ -1,0 +1,23 @@
+- hosts: testhost
+  gather_facts: no
+  tags:
+    - always
+  tasks:
+  - fail:
+    ignore_errors: yes
+    register: fail_out
+
+  - debug:
+      msg: fail works ({{ fail_out.failed }})
+
+  - assert:
+      that: false
+    ignore_errors: yes
+    register: assert_out
+
+  - debug:
+      msg: assert works ({{ assert_out.failed }})
+
+  - fail:
+      msg: fail actually failed
+

@@ -16,7 +16,7 @@ We believe simplicity is relevant to all sizes of environments, so we design for
 Ansible manages machines in an agent-less manner. There is never a question of how to
 upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled.  Because OpenSSH is one of the most peer-reviewed open source components, security exposure is greatly reduced. Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. If needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
 
-This documentation covers the current released version of Ansible (1.9.1) and also some development version features (2.0).  For recent features, we note in each section the version of Ansible where the feature was added.  
+This documentation covers the current released version of Ansible (2.0.1) and also some development version features (2.1).  For recent features, we note in each section the version of Ansible where the feature was added.  
 
 Ansible, Inc. releases a new major release of Ansible approximately every two months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup. However, the community around new modules and plugins being developed and contributed moves very quickly, typically adding 20 or so new modules in each release.
 
@@ -40,4 +40,5 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    faq
    glossary
    YAMLSyntax
+   porting_guide_2.0
 

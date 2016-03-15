@@ -62,6 +62,8 @@ class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
     module_implementation_preferences = ('.ps1', '')
+    become_methods = []
+    allow_executable = False
 
     def __init__(self,  *args, **kwargs):
 
@@ -72,7 +74,6 @@ class Connection(ConnectionBase):
         self._shell_type      = 'powershell'
 
         # TODO: Add runas support
-        self.become_methods_supported=[]
 
         super(Connection, self).__init__(*args, **kwargs)
 
@@ -137,20 +138,20 @@ class Connection(ConnectionBase):
                 protocol.send_message('')
                 return protocol
             except Exception as e:
-                err_msg = (str(e) or repr(e)).strip()
-                if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
+                err_msg = to_unicode(e).strip()
+                if re.search(to_unicode(r'Operation\s+?timed\s+?out'), err_msg, re.I):
                     raise AnsibleError('the connection attempt timed out')
-                m = re.search(r'Code\s+?(\d{3})', err_msg)
+                m = re.search(to_unicode(r'Code\s+?(\d{3})'), err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
                         err_msg = 'the username/password specified for this server was incorrect'
                     elif code == 411:
                         return protocol
-                errors.append('%s: %s' % (transport, err_msg))
-                display.vvvvv('WINRM CONNECTION ERROR: %s\n%s' % (err_msg, traceback.format_exc()), host=self._winrm_host)
+                errors.append(u'%s: %s' % (transport, err_msg))
+                display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_unicode(traceback.format_exc())), host=self._winrm_host)
         if errors:
-            raise AnsibleError(', '.join(errors))
+            raise AnsibleError(', '.join(map(to_str, errors)))
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
@@ -271,7 +272,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
 
-        script_template = '''
+        script_template = u'''
             begin {{
                 $path = "{0}"
 
@@ -301,11 +302,6 @@ class Connection(ConnectionBase):
             }}
         '''
 
-        # FUTURE: this sucks- why can't the module/shell stuff do this?
-        with open(in_path, 'r') as temp_file:
-            if temp_file.read(15).lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
-                out_path = out_path + '.ps1'
-
         script = script_template.format(self._shell._escape(out_path))
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
 
@@ -323,7 +319,7 @@ class Connection(ConnectionBase):
         local_sha1 = secure_hash(in_path)
 
         if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(remote_sha1, local_sha1))
+            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_str(remote_sha1), to_str(local_sha1)))
 
 
     def fetch_file(self, in_path, out_path):

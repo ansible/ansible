@@ -32,6 +32,13 @@
 # all of them and present them as one contiguous inventory.
 #
 # See the adjacent openstack.yml file for an example config file
+# There are two ansible inventory specific options that can be set in
+# the inventory section.
+# expand_hostvars controls whether or not the inventory will make extra API
+#                 calls to fill out additional information about each server
+# use_hostnames changes the behavior from registering every host with its UUID
+#               and making a group of its hostname to only doing this if the
+#               hostname in question has more than one server
 
 import argparse
 import collections
@@ -51,7 +58,7 @@ import shade.inventory
 CONFIG_FILES = ['/etc/ansible/openstack.yaml']
 
 
-def get_groups_from_server(server_vars):
+def get_groups_from_server(server_vars, namegroup=True):
     groups = []
 
     region = server_vars['region']
@@ -76,7 +83,8 @@ def get_groups_from_server(server_vars):
             groups.append(extra_group)
 
     groups.append('instance-%s' % server_vars['id'])
-    groups.append(server_vars['name'])
+    if namegroup:
+        groups.append(server_vars['name'])
 
     for key in ('flavor', 'image'):
         if 'name' in server_vars[key]:
@@ -94,9 +102,9 @@ def get_groups_from_server(server_vars):
     return groups
 
 
-def get_host_groups(inventory):
+def get_host_groups(inventory, refresh=False):
     (cache_file, cache_expiration_time) = get_cache_settings()
-    if is_cache_stale(cache_file, cache_expiration_time):
+    if is_cache_stale(cache_file, cache_expiration_time, refresh=refresh):
         groups = to_json(get_host_groups_from_cloud(inventory))
         open(cache_file, 'w').write(groups)
     else:
@@ -104,26 +112,54 @@ def get_host_groups(inventory):
     return groups
 
 
+def append_hostvars(hostvars, groups, key, server, namegroup=False):
+    hostvars[key] = dict(
+        ansible_ssh_host=server['interface_ip'],
+        openstack=server)
+    for group in get_groups_from_server(server, namegroup=namegroup):
+        groups[group].append(key)
+
+
 def get_host_groups_from_cloud(inventory):
     groups = collections.defaultdict(list)
+    firstpass = collections.defaultdict(list)
     hostvars = {}
-    for server in inventory.list_hosts():
+    list_args = {}
+    if hasattr(inventory, 'extra_config'):
+        use_hostnames = inventory.extra_config['use_hostnames']
+        list_args['expand'] = inventory.extra_config['expand_hostvars']
+    else:
+        use_hostnames = False
+
+    for server in inventory.list_hosts(**list_args):
 
         if 'interface_ip' not in server:
             continue
-        for group in get_groups_from_server(server):
-            groups[group].append(server['id'])
-        hostvars[server['id']] = dict(
-            ansible_ssh_host=server['interface_ip'],
-            openstack=server,
-        )
+        firstpass[server['name']].append(server)
+    for name, servers in firstpass.items():
+        if len(servers) == 1 and use_hostnames:
+            append_hostvars(hostvars, groups, name, servers[0])
+        else:
+            server_ids = set()
+            # Trap for duplicate results
+            for server in servers:
+                server_ids.add(server['id'])
+            if len(server_ids) == 1 and use_hostnames:
+                append_hostvars(hostvars, groups, name, servers[0])
+            else:
+                for server in servers:
+                    append_hostvars(
+                        hostvars, groups, server['id'], servers[0],
+                        namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
 
 
-def is_cache_stale(cache_file, cache_expiration_time):
+def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     ''' Determines if cache file has expired, or if it is still valid '''
-    if os.path.isfile(cache_file):
+    if refresh:
+        return True
+    if os.path.isfile(cache_file) and os.path.getsize(cache_file) > 0:
         mod_time = os.path.getmtime(cache_file)
         current_time = time.time()
         if (mod_time + cache_expiration_time) > current_time:
@@ -169,14 +205,24 @@ def main():
     try:
         config_files = os_client_config.config.CONFIG_FILES + CONFIG_FILES
         shade.simple_logging(debug=args.debug)
-        inventory = shade.inventory.OpenStackInventory(
+        inventory_args = dict(
             refresh=args.refresh,
             config_files=config_files,
             private=args.private,
         )
+        if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
+            inventory_args.update(dict(
+                config_key='ansible',
+                config_defaults={
+                    'use_hostnames': False,
+                    'expand_hostvars': True,
+                }
+            ))
+
+        inventory = shade.inventory.OpenStackInventory(**inventory_args)
 
         if args.list:
-            output = get_host_groups(inventory)
+            output = get_host_groups(inventory, refresh=args.refresh)
         elif args.host:
             output = to_json(inventory.get_host(args.host))
         print(output)

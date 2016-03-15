@@ -30,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.basic import is_executable
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -90,6 +91,7 @@ class Connection(ConnectionBase):
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -125,7 +127,7 @@ class Connection(ConnectionBase):
 
         out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
-            with open(in_path, 'rb') as in_file:
+            with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
@@ -151,7 +153,7 @@ class Connection(ConnectionBase):
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
-        with open(out_path, 'wb+') as out_file:
+        with open(to_bytes(out_path, errors='strict'), 'wb+') as out_file:
             try:
                 chunk = p.stdout.read(BUFSIZE)
                 while chunk:

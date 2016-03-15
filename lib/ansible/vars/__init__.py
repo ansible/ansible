@@ -34,7 +34,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.six import string_types
+from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.plugins import lookup_loader
@@ -43,7 +43,6 @@ from ansible.template import Templar
 from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
-from ansible.vars.hostvars import HostVars
 from ansible.vars.unsafe_proxy import wrap_var
 
 try:
@@ -171,7 +170,8 @@ class VariableManager:
 
         return data
 
-
+    # FIXME: include_hostvars is no longer used, and should be removed, but
+    #        all other areas of code calling get_vars need to be fixed too
     def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -234,7 +234,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            for group in host.get_groups():
+            for group in sorted(host.get_groups(), key=lambda g: g.depth):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
@@ -258,8 +258,6 @@ class VariableManager:
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
-
-        all_vars['vars'] = all_vars.copy()
 
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
@@ -308,6 +306,7 @@ class VariableManager:
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
+                    all_vars = combine_vars(all_vars, role.get_role_params())
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
@@ -342,6 +341,8 @@ class VariableManager:
             all_vars['ansible_delegated_vars'] = self._get_delegated_vars(loader, play, task, all_vars)
 
         #VARIABLE_CACHE[cache_entry] = all_vars
+        if task or play:
+            all_vars['vars'] = all_vars.copy()
 
         debug("done with get_vars()")
         return all_vars
@@ -361,29 +362,20 @@ class VariableManager:
         variables['playbook_dir'] = loader.get_basedir()
 
         if host:
-            variables['group_names'] = [group.name for group in host.get_groups() if group.name != 'all']
+            variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
 
             if self._inventory is not None:
                 variables['groups']  = dict()
                 for (group_name, group) in iteritems(self._inventory.groups):
                     variables['groups'][group_name] = [h.name for h in group.get_hosts()]
-
-                #if include_hostvars:
-                #    hostvars_cache_entry = self._get_cache_entry(play=play)
-                #    if hostvars_cache_entry in HOSTVARS_CACHE:
-                #        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
-                #    else:
-                #        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
-                #        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
-                #    variables['hostvars'] = hostvars
-                #    variables['vars'] = hostvars[host.get_name()]
-
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
         if task:
             if task._role:
+                variables['role_name'] = task._role.get_name()
                 variables['role_path'] = task._role._role_path
+                variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
             variables['inventory_dir'] = self._inventory.basedir()
@@ -413,7 +405,7 @@ class VariableManager:
         items = []
         if task.loop is not None:
             if task.loop in lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_ 
+                #TODO: remove convert_bare true and deprecate this in with_
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
                 except AnsibleUndefinedVariable as e:
@@ -442,8 +434,15 @@ class VariableManager:
                 continue
 
             # a dictionary of variables to use if we have to create a new host below
+            # we set the default port based on the default transport here, to make sure
+            # we use the proper default for windows
+            new_port = C.DEFAULT_REMOTE_PORT
+            if C.DEFAULT_TRANSPORT == 'winrm':
+                new_port = 5986
+
             new_delegated_host_vars = dict(
                 ansible_host=delegated_host_name,
+                ansible_port=new_port,
                 ansible_user=C.DEFAULT_REMOTE_USER,
                 ansible_connection=C.DEFAULT_TRANSPORT,
             )
@@ -601,9 +600,10 @@ class VariableManager:
         '''
         Sets a value in the vars_cache for a host.
         '''
-
         host_name = host.get_name()
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
-        self._vars_cache[host_name][varname] = value
-
+        if varname in self._vars_cache[host_name]:
+            self._vars_cache[host_name][varname] = combine_vars(self._vars_cache[host_name][varname], value)
+        else:
+            self._vars_cache[host_name][varname] = value

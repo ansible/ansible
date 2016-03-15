@@ -26,6 +26,7 @@ import textwrap
 
 from ansible.compat.six import iteritems
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins import module_loader
 from ansible.cli import CLI
@@ -40,9 +41,6 @@ except ImportError:
 
 class DocCLI(CLI):
     """ Vault command line class """
-
-    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
-    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
 
     def __init__(self, args):
 
@@ -62,7 +60,7 @@ class DocCLI(CLI):
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
         display.verbosity = self.options.verbosity
 
     def run(self):
@@ -90,12 +88,13 @@ class DocCLI(CLI):
         for module in self.args:
 
             try:
-                filename = module_loader.find_plugin(module)
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = module_loader.find_plugin(module, mod_type='.py')
                 if filename is None:
                     display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
 
-                if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
+                if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
                 try:
@@ -142,11 +141,11 @@ class DocCLI(CLI):
                     continue
                 elif os.path.isdir(module):
                     self.find_modules(module)
-                elif any(module.endswith(x) for x in self.BLACKLIST_EXTS):
+                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
                 elif module.startswith('__'):
                     continue
-                elif module in self.IGNORE_FILES:
+                elif module in C.IGNORE_FILES:
                     continue
                 elif module.startswith('_'):
                     fullpath = '/'.join([path,module])
@@ -167,7 +166,8 @@ class DocCLI(CLI):
             if module in module_docs.BLACKLIST_MODULES:
                 continue
 
-            filename = module_loader.find_plugin(module)
+            # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+            filename = module_loader.find_plugin(module, mod_type='.py')
 
             if filename is None:
                 continue

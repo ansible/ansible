@@ -69,8 +69,8 @@
       - '"json" in item.1'
       - item.0.stat.checksum == item.1.content | checksum
   with_together:
-    - pass_checksum.results
-    - pass.results
+    - "{{pass_checksum.results}}"
+    - "{{pass.results}}"
 
 
 - name: checksum fail_json
@@ -89,15 +89,21 @@
       - item.0.stat.checksum == item.1.content | checksum
       - '"json" not in item.1'
   with_together:
-    - fail_checksum.results
-    - fail.results
+    - "{{fail_checksum.results}}"
+    - "{{fail.results}}"
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
+  # kennethreitz having trouble staying up.  Eventually need to install our own
+  # certs & web server to test this... also need to install and test it with
+  # a proxy so the complications are inevitable
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
@@ -107,7 +113,7 @@
   assert:
     that:
       - "result.failed == true"
-      - "'certificate does not match ' in result.msg"
+      - "'SSL Certificate does not belong' in result.msg"
       - "stat_result.stat.exists == false"
 
 - name: Clean up any cruft from the results directory
@@ -117,10 +123,13 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
   register: result
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"
@@ -131,3 +140,67 @@
     that:
       - "stat_result.stat.exists == true"
       - "result.changed == true"
+
+- name: test redirect without follow_redirects
+  uri:
+    url: 'http://httpbin.org/redirect/2'
+    follow_redirects: 'none'
+    status_code: 302
+  register: result
+
+- name: Assert location header
+  assert:
+    that:
+      - 'result.location|default("") == "http://httpbin.org/relative-redirect/1"'
+
+- name: Check SSL with redirect
+  uri:
+    url: 'https://httpbin.org/redirect/2'
+  register: result
+
+- name: Assert SSL with redirect
+  assert:
+    that:
+      - 'result.url|default("") == "https://httpbin.org/get"'
+
+- name: redirect to bad SSL site
+  uri:
+    url: 'http://wrong.host.badssl.com'
+  register: result
+  ignore_errors: true
+
+- name: Ensure bad SSL site reidrect fails
+  assert:
+    that:
+      - result|failed
+      - '"wrong.host.badssl.com" in result.msg'
+
+- name: test basic auth
+  uri:
+    url: 'http://httpbin.org/basic-auth/user/passwd'
+    user: user
+    password: passwd
+
+- name: test basic forced auth
+  uri:
+    url: 'http://httpbin.org/hidden-basic-auth/user/passwd'
+    force_basic_auth: true
+    user: user
+    password: passwd
+
+- name: test PUT
+  uri:
+    url: 'http://httpbin.org/put'
+    method: PUT
+    body: 'foo=bar'
+
+- name: test OPTIONS
+  uri:
+    url: 'http://httpbin.org/'
+    method: OPTIONS
+  register: result
+
+- name: Assert we got an allow header
+  assert:
+    that:
+      - 'result.allow|default("") == "HEAD, OPTIONS, GET"'

@@ -191,7 +191,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a "time=\"March 14 12:23\""
+    ansible/hacking/test-module -m ./timetest.py -a "time=\"March 14 12:23\""
 
 This should return something like::
 
@@ -219,7 +219,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
     }
 
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
-A good idea might be make a module called 'site_facts' and always call it at the top of each playbook, though
+A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
 
 .. _common_module_boilerplate:
@@ -247,7 +247,7 @@ And instantiating the module class like::
         argument_spec = dict(
             state     = dict(default='present', choices=['present', 'absent']),
             name      = dict(required=True),
-            enabled   = dict(required=True, choices=BOOLEANS),
+            enabled   = dict(required=True, type='bool'),
             something = dict(aliases=['whatever'])
         )
     )
@@ -264,7 +264,7 @@ And failures are just as simple (where 'msg' is a required parameter to explain 
     module.fail_json(msg="Something fatal happened")
 
 There are also other useful functions in the module class, such as module.sha1(path).  See
-lib/ansible/module_common.py in the source checkout for implementation details.
+lib/ansible/module_utils/basic.py in the source checkout for implementation details.
 
 Again, modules developed this way are best tested with the hacking/test-module script in the git
 source checkout.  Because of the magic involved, this is really the only way the scripts
@@ -335,7 +335,7 @@ and guidelines:
 
 * If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`.
 
-* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "choices=BOOLEANS" and a module.boolean(value) casting function.
+* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "type='bool'".
 
 * Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
 
@@ -347,7 +347,7 @@ and guidelines:
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
-* Return codes from modules are not actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+* Return codes from modules are actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
@@ -479,9 +479,10 @@ Module checklist
 ````````````````
 
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
+* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
-    * If `required` is false you need to document `default`, even if the default is 'None' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code. 
+    * If `required` is false you need to document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
     * `default` is not needed for `required: true`
     * Remove unnecessary doc like `aliases: []` or `choices: []`
     * The version is not a float number and value the current development version
@@ -538,24 +539,34 @@ Windows modules checklist
 
     #!powershell
 
-then::
+  then::
+
     <GPL header>
-then::
+
+  then::
+
     # WANT_JSON
     # POWERSHELL_COMMON
     
-then, to parse all arguments into a variable modules generally use::
+  then, to parse all arguments into a variable modules generally use::
+
     $params = Parse-Args $args
 
 * Arguments:
     * Try and use state present and state absent like other modules
     * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
     * Required arguments::
+
         $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
+
     * Required arguments with name validation::
+
         $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
+
     * Optional arguments with name validation::
+
         $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
+
     * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
       using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
     * Look at existing modules for more examples of argument checking.
@@ -586,7 +597,7 @@ Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i
 _old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
-This example allows the stat module to be called with fileinfo, making the following examples equivalent
+This example allows the stat module to be called with fileinfo, making the following examples equivalent::
 
     EXAMPLES = '''
     ln -s stat.py _fileinfo.py

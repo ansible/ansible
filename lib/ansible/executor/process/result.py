@@ -65,7 +65,7 @@ class ResultProcess(multiprocessing.Process):
         result = None
         starting_point = self._cur_worker
         while True:
-            (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+            (worker_prc, rslt_q) = self._workers[self._cur_worker]
             self._cur_worker += 1
             if self._cur_worker >= len(self._workers):
                 self._cur_worker = 0
@@ -104,13 +104,28 @@ class ResultProcess(multiprocessing.Process):
                     time.sleep(0.0001)
                     continue
 
+                # send callbacks for 'non final' results
+                if '_ansible_retry' in result._result:
+                    self._send_result(('v2_playbook_retry', result))
+                    continue
+                elif '_ansible_item_result' in result._result:
+                    if result.is_failed() or result.is_unreachable():
+                        self._send_result(('v2_playbook_item_on_failed', result))
+                    elif result.is_skipped():
+                        self._send_result(('v2_playbook_item_on_skipped', result))
+                    else:
+                        self._send_result(('v2_playbook_item_on_ok', result))
+                        if 'diff' in result._result:
+                            self._send_result(('v2_on_file_diff', result))
+                    continue
+
                 clean_copy = strip_internal_keys(result._result)
                 if 'invocation' in clean_copy:
                     del clean_copy['invocation']
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('register_host_var', result._host, result._task.register, clean_copy))
+                    self._send_result(('register_host_var', result._host, result._task, clean_copy))
 
                 # send callbacks, execute other options based on the result status
                 # TODO: this should all be cleaned up and probably moved to a sub-function.
@@ -163,7 +178,7 @@ class ResultProcess(multiprocessing.Process):
 
             except queue.Empty:
                 pass
-            except (KeyboardInterrupt, IOError, EOFError):
+            except (KeyboardInterrupt, SystemExit, IOError, EOFError):
                 break
             except:
                 # TODO: we should probably send a proper callback here instead of

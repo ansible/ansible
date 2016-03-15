@@ -25,6 +25,7 @@ from ansible.errors import AnsibleParserError
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import get_all_plugin_loaders
+from ansible import constants as C
 
 try:
     from __main__ import display
@@ -44,6 +45,7 @@ class Playbook:
         self._entries = []
         self._basedir = os.getcwd()
         self._loader  = loader
+        self._file_name = None
 
     @staticmethod
     def load(file_name, variable_manager=None, loader=None):
@@ -60,6 +62,8 @@ class Playbook:
 
         # set the loaders basedir
         self._loader.set_basedir(self._basedir)
+
+        self._file_name = file_name
 
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
@@ -84,7 +88,7 @@ class Playbook:
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color='cyan')
+                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)

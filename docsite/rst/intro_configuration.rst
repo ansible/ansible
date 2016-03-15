@@ -228,6 +228,34 @@ Allows disabling of deprecating warnings in ansible-playbook output::
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
+.. _display_args_to_stdout:
+
+display_args_to_stdout
+======================
+
+.. versionadded:: 2.1.0
+
+By default, ansible-playbook will print a header for each task that is run to
+stdout.  These headers will contain the ``name:`` field from the task if you
+specified one.  If you didn't then ansible-playbook uses the task's action to
+help you tell which task is presently running.  Sometimes you run many of the
+same action and so you want more information about the task to differentiate
+it from others of the same action.  If you set this variable to ``True`` in
+the config then ansible-playbook will also include the task's arguments in the
+header.
+
+This setting defaults to ``False`` because there is a chance that you have
+sensitive values in your parameters and do not want those to be printed to
+stdout::
+
+    display_args_to_stdout=False
+
+If you set this to ``True`` you should be sure that you have secured your
+environment's stdout (no one can shoulder surf your screen and you aren't
+saving stdout to an insecure file) or made sure that all of your playbooks
+explicitly added the ``no_log: True`` parameter to tasks which have sensistive
+values   See :ref:`keep_secret_data` for more information.
+
 .. _display_skipped_hosts:
 
 display_skipped_hosts
@@ -325,6 +353,32 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
     gathering = smart
 
+.. versionadded:: 2.1
+
+You can specify a subset of gathered facts using the following option::
+
+    gather_subset = all
+
+:all: gather all subsets (the default)
+:network: gather network facts
+:hardware: gather hardware facts (longest facts to retrieve)
+:virtual: gather facts about virtual machines hosted on the machine
+:ohai: gather facts from ohai
+:facter: gather facts from facter
+
+You can combine them using a comma separated list (ex: network,virtual,facter)
+
+You can also disable specific subsets by prepending with a `!` like this::
+
+    # Don't gather hardware facts, facts from chef's ohai or puppet's facter
+    gather_subset = !hardware,!ohai,!facter
+
+A set of basic facts are always collected no matter which additional subsets
+are selected.  If you want to collect the minimal amount of facts, use
+`!all`::
+
+    gather_subset = !all
+
 hash_behaviour
 ==============
 
@@ -339,7 +393,7 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
-.. versionadded: '2.0'
+.. versionadded:: 2.0
 
 If you want to merge hashes without changing the global settings, use
 the `combine` filter described in :doc:`playbooks_filters`.
@@ -557,7 +611,7 @@ The directory will be created if it does not already exist.
 roles_path
 ==========
 
-.. versionadded: '1.4'
+.. versionadded:: 1.4
 
 The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
 roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
@@ -571,6 +625,20 @@ Additional paths can be provided separated by colon characters, in the same way 
 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
+
+.. _strategy_plugins:
+
+strategy_plugins
+==================
+
+Strategy plugin allow users to change the way in which Ansible runs tasks on targeted hosts.
+
+This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
+different locations::
+
+    strategy_plugins = ~/.ansible/plugins/strategy_plugins/:/usr/share/ansible_plugins/strategy_plugins
+
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 .. _sudo_exe:
 
@@ -587,11 +655,12 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the $HOME environment variable
-of the original user.  In some situations you may wish to add or remove flags, but in general most users
-will not need to change this setting::
+Additional flags to pass to sudo when engaging sudo support. The default is '-H -S -n' which sets the HOME environment
+variable, prompts for passwords via STDIN, and avoids prompting the user for input of any kind. Note that '-n' will conflict
+with using password-less sudo auth, such as pam_ssh_agent_auth. In some situations you may wish to add or remove flags, but
+in general most users will not need to change this setting:::
 
-   sudo_flags=-H
+   sudo_flags=-H -S -n
 
 .. _sudo_user:
 
@@ -738,6 +807,17 @@ This setting may be inefficient for large numbers of hosts, and in those situati
 instead.  Setting it to False will improve performance and is recommended when host key checking is disabled::
 
     record_host_keys=True
+
+.. _paramiko_proxy_command:
+
+proxy_command
+=============
+
+.. versionadded:: 2.1
+
+Use an OpenSSH like ProxyCommand for proxying all Paramiko SSH connections through a bastion or jump host. Requires a minimum of Paramiko version 1.9.0. On Enterprise Linux 6 this is provided by ``python-paramiko1.10`` in the EPEL repository::
+
+    proxy_command = ssh -W "%h:%p" bastion
 
 .. _openssh_settings:
 
@@ -897,3 +977,30 @@ The normal behaviour is for operations to copy the existing context or use the u
 The default list is: nfs,vboxsf,fuse,ramfs::
 
     special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
+
+libvirt_lxc_noseclabel
+======================
+
+.. versionadded:: 2.1
+
+This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
+This is necessary when running on systems which do not have SELinux.
+The default behavior is no::
+
+    libvirt_lxc_noseclabel = True
+
+Galaxy Settings
+---------------
+
+The following options can be set in the [galaxy] section of ansible.cfg:
+
+server
+======
+
+Override the default Galaxy server value of https://galaxy.ansible.com. Useful if you have a hosted version of the Galaxy web app or want to point to the testing site https://galaxy-qa.ansible.com. It does not work against private, hosted repos, which Galaxy can use for fetching and installing roles.
+
+ignore_certs
+============
+
+If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.

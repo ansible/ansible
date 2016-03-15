@@ -16,6 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: Determine if python looks like it will support modern ssl features like SNI
+  command: python -c 'from ssl import SSLContext'
+  ignore_errors: True
+  register: python_test
+
+- name: Set python_has_sslcontext if we have it
+  set_fact:
+    python_has_ssl_context: True
+  when: python_test.rc == 0
+
+- name: Set python_has_sslcontext False if we don't have it
+  set_fact:
+    python_has_ssl_context: False
+  when: python_test.rc != 0
+
 - name: test https fetch
   get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
   register: result
@@ -28,10 +43,16 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate
   get_url:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
+  # kennethreitz having trouble staying up.  Eventually need to install our own
+  # certs & web server to test this... also need to install and test it with
+  # a proxy so the complications are inevitable
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
@@ -46,10 +67,13 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
   register: result
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"
@@ -61,34 +85,68 @@
       - "result.changed == true"
       - "stat_result.stat.exists == true"
 
-# SNI Tests
-# SNI is only built into the stdlib from python-2.7.9 onwards
+# At the moment, AWS can't make an https request to velox.ch... connection
+# timed out.  So we'll use a different test until/unless the problem is resolved
+## SNI Tests
+## SNI is only built into the stdlib from python-2.7.9 onwards
+#- name: Test that SNI works
+#  get_url:
+#    # A test site that returns a page with information on what SNI information
+#    # the client sent.  A failure would have the string: did not send a TLS server name indication extension
+#    url: 'https://foo.sni.velox.ch/'
+#    dest: "{{ output_dir }}/sni.html"
+#  register: get_url_result
+#  ignore_errors: True
+#
+#- command: "grep 'sent the following TLS server name indication extension' {{ output_dir}}/sni.html"
+#  register: data_result
+#  when: "{{ python_has_ssl_context }}"
+#
+#- debug: var=get_url_result
+#- name: Assert that SNI works with this python version
+#  assert:
+#    that:
+#      - 'data_result.rc == 0'
+#      - '"failed" not in get_url_result'
+#  when: "{{ python_has_ssl_context }}"
+#
+## If the client doesn't support SNI then get_url should have failed with a certificate mismatch
+#- name: Assert that hostname verification failed because SNI is not supported on this version of python
+#  assert:
+#    that:
+#      - 'get_url_result["failed"]'
+#  when: "{{ not python_has_ssl_context }}"
+
+# These tests are just side effects of how the site is hosted.  It's not
+# specifically a test site.  So the tests may break due to the hosting changing
 - name: Test that SNI works
   get_url:
-    # A test site that returns a page with information on what SNI information
-    # the client sent.  A failure would have the string: did not send a TLS server name indication extension
-    url: 'https://foo.sni.velox.ch/'
+    url: 'https://www.mnot.net/blog/2014/05/09/if_you_can_read_this_youre_sniing'
     dest: "{{ output_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
 
-- command: "grep 'sent the following TLS server name indication extension' {{ output_dir}}/sni.html"
+- command: "grep '<h2>If You Can Read This, You.re SNIing</h2>' {{ output_dir}}/sni.html"
   register: data_result
-  when: "{{ ansible_python_version | version_compare('2.7.9', '>=') }}"
+  when: "{{ python_has_ssl_context }}"
 
-# If distros start backporting SNI, can make a new conditional based on whether this works:
-# python -c 'from ssl import SSLContext'
-- debug: msg=get_url_result
+- debug: var=get_url_result
 - name: Assert that SNI works with this python version
   assert:
     that:
       - 'data_result.rc == 0'
       - '"failed" not in get_url_result'
-  when: "{{ ansible_python_version | version_compare('2.7.9', '>=') }}"
+  when: "{{ python_has_ssl_context }}"
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
       - 'get_url_result["failed"]'
-  when: "{{ ansible_python_version | version_compare('2.7.9', '<') }}"
+  when: "{{ not python_has_ssl_context }}"
+# End hacky SNI test section
+
+- name: Test get_url with redirect
+  get_url:
+    url: 'http://httpbin.org/redirect/6'
+    dest: "{{ output_dir }}/redirect.json"

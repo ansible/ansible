@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Note: We install the yum package onto Fedora so that this will work on dnf systems
+# We want to test that for people who don't want to upgrade their systems.
 - include: 'yum.yml'
   when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 

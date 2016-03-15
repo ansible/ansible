@@ -1,18 +1,17 @@
-- name: Install docker packages (yum)
-  yum:
+- name: Install docker packages (rht family)
+  package:
     state: present
     name: docker-io,docker-registry,python-docker-py,nginx
 
-- name: Install netcat
-  yum:
+- name: Install netcat (Fedora)
+  package:
     state: present
     name: nmap-ncat
-  # RHEL7 as well...
-  when: ansible_distribution == 'Fedora'
+  when: ansible_distribution == 'Fedora' or (ansible_os_family == 'RedHat' and ansible_distribution_version|version_compare('>=', 7))
 
-- name: Install netcat
-  yum:
+- name: Install netcat (RHEL)
+  package:
     state: present
     name: nc
-  when: ansible_distribution != 'Fedora'
+  when: ansible_distribution != 'Fedora' and (ansible_os_family == 'RedHat' and ansible_distribution_version|version_compare('<', 7))
 

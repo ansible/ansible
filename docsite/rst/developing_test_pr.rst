@@ -81,27 +81,34 @@ and destination repositories. It will look something like this::
    Someuser wants to merge 1 commit into ansible:devel from someuser:feature_branch_name
 
 .. note::
-   It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch.
-   Dot releases are cherry-picked manually by ansible staff.
+   It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch.  Dot releases are cherry-picked manually by ansible staff.
 
 The username and branch at the end are the important parts, which will be turned into git commands as follows::
 
    git checkout -b testing_PRXXXX devel
    git pull https://github.com/someuser/ansible.git feature_branch_name
 
-The first command creates and switches to a new branch named testing_PRXXXX, where the XXXX is the actual issue number associated 
-with the pull request (for example, 1234). This branch is based on the devel branch. The second command pulls the new code from the 
-users feature branch into the newly created branch.
+The first command creates and switches to a new branch named testing_PRXXXX, where the XXXX is the actual issue number associated with the pull request (for example, 1234). This branch is based on the devel branch. The second command pulls the new code from the users feature branch into the newly created branch.
 
 .. note::
-   If the GitHub user interface shows that the pull request will not merge cleanly, we do not recommend proceeding if you
-   are not somewhat familiar with git and coding, as you will have to resolve a merge conflict.  This is the responsibility of
-   the original pull request contributor.
+   If the GitHub user interface shows that the pull request will not merge cleanly, we do not recommend proceeding if you are not somewhat familiar with git and coding, as you will have to resolve a merge conflict.  This is the responsibility of the original pull request contributor.
 
 .. note::
-   Some users do not create feature branches, which can cause problems when they have multiple, un-related commits in
-   their version of `devel`. If the source looks like `someuser:devel`, make sure there is only one commit listed on
-   the pull request.
+   Some users do not create feature branches, which can cause problems when they have multiple, un-related commits in their version of `devel`. If the source looks like `someuser:devel`, make sure there is only one commit listed on the pull request.
+
+Finding a Pull Request for Ansible Modules
+++++++++++++++++++++++++++++++++++++++++++
+Ansible modules are in separate repositories, which are managed as Git submodules. Here's a step by step process for checking out a PR for an Ansible extras module, for instance:
+
+1. git clone https://github.com/ansible/ansible.git
+2. cd ansible
+3. git submodule init
+4. git submodule update --recursive [ fetches the submodules ]
+5. cd lib/ansible/modules/extras
+6. git fetch origin pull/1234/head:pr/1234 [ fetches the specific PR ]
+7. git checkout pr/1234 [ do your testing here ]
+8. cd /path/to/ansible/clone
+9. git submodule update --recursive
 
 For Those About To Test, We Salute You
 ++++++++++++++++++++++++++++++++++++++
@@ -145,7 +152,7 @@ Once the files are in place, you can run the provided playbook (if there is one)
 
    ansible-playbook -vvv playbook_name.yml
 
-If there's not a playbook, you may have to copy and paste playbook snippets or run a ad-hoc command that was pasted in.
+If there's no playbook, you may have to copy and paste playbook snippets or run an ad-hoc command that was pasted in.
 
 Our issue template also included sections for "Expected Output" and "Actual Output", which should be used to gauge the output
 from the provided examples.
