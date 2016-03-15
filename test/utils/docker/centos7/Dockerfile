@@ -14,6 +14,7 @@ RUN yum -y install \
     epel-release \
     file \
     git \
+    iproute \
     make \
     mercurial \
     rubygems \
