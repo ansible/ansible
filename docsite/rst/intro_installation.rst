@@ -55,6 +55,10 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
     you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 unlimited``. Or just any time you see a "Too many open files" error.
 
 
+.. warning::
+
+    Please note that some modules and plugins have additional requirements, for modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
+
 .. _managed_node_requirements:
 
 Managed Node Requirements
