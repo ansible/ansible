@@ -1,37 +1,116 @@
 ---
 
-- hosts: localhost
-  tags: [ 'min' ]
+- hosts: facthost0
+  tags: [ 'fact_min' ]
   connection: local
   gather_subset: "!all"
   gather_facts: yes
   tasks:
-    - debug: var={{item}}
-      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role'  ]
+    - name: Test that only retrieving minimal facts work
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
 
-- hosts: localhost
-  tags: [ 'network' ]
+- hosts: facthost1
+  tags: [ 'fact_network' ]
   connection: local
   gather_subset: "network"
   gather_facts: yes
   tasks:
-    - debug: var={{item}}
-      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role' ]
+    - name: Test that retrieving network facts work
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
 
-- hosts: localhost
-  tags: [ 'hardware' ]
+- hosts: facthost2
+  tags: [ 'fact_hardware' ]
   connection: local
   gather_subset: "hardware"
   gather_facts: yes
   tasks:
-    - debug: var={{item}}
-      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role' ]
+    - name: Test that retrieving hardware facts work
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
 
-- hosts: localhost
-  tags: [ 'virtual' ]
+- hosts: facthost3
+  tags: [ 'fact_virtual' ]
   connection: local
   gather_subset: "virtual"
   gather_facts: yes
   tasks:
-    - debug: var={{item}}
-      with_items: [ 'ansible_user_id', 'ansible_interfaces', 'ansible_mounts', 'ansible_virtualization_role' ]
+    - name: Test that retrieving virtualization facts work
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+
+- hosts: facthost4
+  tags: [ 'fact_comma_string' ]
+  connection: local
+  gather_subset: "virtual,network"
+  gather_facts: yes
+  tasks:
+    - name: Test that retrieving virtualization and network as a string works
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+
+- hosts: facthost5
+  tags: [ 'fact_yaml_list' ]
+  connection: local
+  gather_subset:
+    - virtual
+    - network
+  gather_facts: yes
+  tasks:
+    - name: Test that retrieving virtualization and network as a string works
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+
+- hosts: facthost6
+  tags: [ 'fact_negation' ]
+  connection: local
+  gather_subset: "!hardware"
+  gather_facts: yes
+  tasks:
+    - name: Test that negation of fact subsets work
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+
+- hosts: facthost7
+  tags: [ 'fact_mixed_negation_addition' ]
+  connection: local
+  gather_subset: "!hardware,network"
+  gather_facts: yes
+  tasks:
+    - name: Test that negation and additional subsets work together
+      assert:
+        that:
+          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
+
