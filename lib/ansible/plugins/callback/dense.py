@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016, Dag Wieers <dag@wieers.com>
 #
 # This file is part of Ansible
 #
@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+from collections import OrderedDict
 
 try:
     from __main__ import display
@@ -57,6 +58,8 @@ import sys
 #  + Modify Ansible mechanism so we don't need to use sys.stdout directly
 #  + Remove items from result to compact the json output when using -v
 #  + Make colored output nicer
+#  + Find an elegant solution for line wrapping
+#  + Support notification handler
 
 
 # Taken from Dstat
@@ -118,10 +121,12 @@ colors = dict(
     unreachable=ansi.redbg+ansi.white
 )
 
+states = ( 'skipped', 'ok', 'changed', 'failed', 'unreachable' )
+
 class CallbackModule(CallbackModule_default):
 
     '''
-    This is the dense callback interface, which tries to save screen estate.
+    This is the dense callback interface, where screen estate is still valued.
     '''
 
     CALLBACK_VERSION = 2.0
@@ -146,7 +151,7 @@ class CallbackModule(CallbackModule_default):
         if self._display.verbosity >= 2:
             return
 
-        self.hosts = []
+        self.hosts = OrderedDict()
         self.keep = False
         self.shown_title = False
         self.tasknr = 0
@@ -157,14 +162,22 @@ class CallbackModule(CallbackModule_default):
         sys.stdout.flush()
  
     def _add_host(self, result, status):
-        self.hosts.append((result._host.get_name(), status))
-        self._display_progress(result)
+        name = result._host.get_name()
+
+        # Check if we have to update an existing state (when looping)
+        if name not in self.hosts:
+            self.hosts[name] = status
+        elif states.index(self.hosts[name]) < states.index(status):
+            self.hosts[name] = status
+
+        self._display_progress()
 
         if status in ['changed', 'failed', 'unreachable']:
             # Ensure that tasks with changes/failures stay on-screen
             self.keep = True
 
             if self._display.verbosity == 1:
+                # Print task title, if needed
                 self._display_task_banner()
 
                 # TODO: clean up result output, eg. remove changed, delta, end, start, ...
@@ -180,12 +193,12 @@ class CallbackModule(CallbackModule_default):
             self.shown_title = True
             sys.stdout.write(ansi.restore + ansi.clearline)
             sys.stdout.write(ansi.underline + 'task %d: %s' % (self.tasknr, self.task.get_name().strip()))
-            sys.stdout.write(ansi.restore + '\n' + ansi.reset + ansi.clearline)
+            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
             sys.stdout.flush()
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
-    def _display_progress(self, host=False):
+    def _display_progress(self):
         # Always rewrite the complete line
         sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
         sys.stdout.write('task %d:' % self.tasknr)
@@ -193,8 +206,8 @@ class CallbackModule(CallbackModule_default):
         sys.stdout.flush()
 
         # Print out each host with its own status-color
-        for name, status in self.hosts:
-            sys.stdout.write(colors[status] + name + ansi.default + ' ')
+        for name in self.hosts:
+            sys.stdout.write(colors[self.hosts[name]] + name + ansi.default + ' ')
             sys.stdout.flush()
 
         # Place cursor at start of the line
@@ -237,7 +250,7 @@ class CallbackModule(CallbackModule_default):
         # Reset counters at the start of each task
         self.keep = False
         self.shown_title = False
-        self.hosts = []
+        self.hosts = OrderedDict()
         self.task = task
 
         # Enumerate task if not setup (task names are too long for dense output)
@@ -290,7 +303,6 @@ class CallbackModule(CallbackModule_default):
         if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_ok(result)
 
-        # TBD
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
         else:
@@ -300,14 +312,12 @@ class CallbackModule(CallbackModule_default):
         if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_failed(result)
 
-        # TBD
         self._add_host(result, 'failed')
 
     def v2_playbook_item_on_skipped(self, result):
         if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_skipped(result)
 
-        # TBD
         self._add_host(result, 'skipped')
 
     def v2_playbook_on_no_hosts_remaining(self):
