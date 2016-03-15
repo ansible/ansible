@@ -110,6 +110,7 @@ class ansi:
 
     default = '\033[0;0m'
 
+colors = dict(ok=ansi.darkgreen, changed=ansi.darkyellow, failed=ansi.darkred, unreachable=ansi.darkred)
 
 class CallbackModule(CallbackModule_default):
 
@@ -138,24 +139,31 @@ class CallbackModule(CallbackModule_default):
         self.super_ref = super(CallbackModule, self)
         self.super_ref.__init__()
 
-        if self._display.verbosity > 1:
+        # When using -vv or higher, simply do the default action
+        if self._display.verbosity >= 2:
             return
+
         self.hosts = []
         self.keep = False
         self.shown_title = False
         self.tasknr = 0
         self.playnr = 0
+
+        # Start immediately on the first line
         sys.stdout.write(ansi.save + ansi.clearline)
         sys.stdout.flush()
  
     def _add_host(self, result, status):
         self.hosts.append((result._host.get_name(), status))
-        self._display_progress()
-        # Ensure that tasks with changes/failures stay on-screen
+        self._display_progress(result)
+
         if status in ['changed', 'failed', 'unreachable']:
+            # Ensure that tasks with changes/failures stay on-screen
             self.keep = True
+
             if self._display.verbosity == 1:
                 self._display_task_banner()
+
                 # TODO: clean up result output, eg. remove changed, delta, end, start, ...
                 if status == 'changed':
                     self.super_ref.v2_runner_on_ok(result)
@@ -174,7 +182,7 @@ class CallbackModule(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
-    def _display_progress(self):
+    def _display_progress(self, host=False):
         # Always rewrite the complete line
         sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
         sys.stdout.write('task %d:' % self.tasknr)
@@ -183,19 +191,7 @@ class CallbackModule(CallbackModule_default):
 
         # Print out each host with its own status-color
         for name, status in self.hosts:
-            if status == 'ok':
-                color = ansi.darkgreen
-            elif status == 'changed':
-                color = ansi.darkyellow
-            elif status == 'skipped':
-                color = ansi.darkcyan
-            elif status == 'failed':
-                color = ansi.darkred
-            elif status == 'unreachable':
-                color = ansi.white + ansi.redbg
-#        if self.hosts and self.hosts[-1][1] in ['changed', 'failed']:
-#            sys.stdout.write('<-' + ansi.restore + '\n' + ansi.save)
-            sys.stdout.write(color + name + ansi.default + ' ')
+            sys.stdout.write(colors[status] + name + ansi.default + ' ')
             sys.stdout.flush()
 
         # Place cursor at start of the line
@@ -206,20 +202,23 @@ class CallbackModule(CallbackModule_default):
             self.super_ref.v2_playbook_on_play_start(play)
             return
 
+        # Reset counters at the start of each play
         self.tasknr = 0
         self.playnr += 1
         self.play = play
+
         # Leave the previous task on screen (as it has changes/errors)
         if self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline + ansi.bold)
         else:
             sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
+        sys.stdout.flush()
+
+        # Write the next play on screen IN UPPERCASE, and make it permanent
         name = play.get_name().strip()
-        if name:
-            sys.stdout.write('PLAY %d: %s' % (self.playnr, name.upper()))
-        else:
-            sys.stdout.write('PLAY %d' % self.playnr)
-        # Always leave the PLAY output on screen
+        if not name:
+            name = 'unnamed'
+        sys.stdout.write('PLAY %d: %s' % (self.playnr, name.upper()))
         sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
 
@@ -232,7 +231,7 @@ class CallbackModule(CallbackModule_default):
         if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
 
-        # Reset counters at the start of each new task
+        # Reset counters at the start of each task
         self.keep = False
         self.shown_title = False
         self.hosts = []
@@ -241,22 +240,23 @@ class CallbackModule(CallbackModule_default):
         # Enumerate task if not setup (task names are too long for dense output)
         if task.get_name() != 'setup':
             self.tasknr += 1
-#        self.task = task.get_name().strip()
+
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write(ansi.restore + ansi.underline)
-        sys.stdout.write('task %d' % self.tasknr)
+        sys.stdout.write('task %d:' % self.tasknr)
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
+#        self._display_progress()
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_failed(result, ignore_errors)
             return
 
         self._add_host(result, 'failed')
 
     def v2_runner_on_ok(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_ok(result)
             return
 
@@ -266,48 +266,48 @@ class CallbackModule(CallbackModule_default):
             self._add_host(result, 'ok')
 
     def v2_runner_on_skipped(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_skipped(result)
             return
 
         self._add_host(result, 'skipped')
 
     def v2_runner_on_unreachable(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_unreachable(result)
             return
 
         self._add_host(result, 'unreachable')
 
     def v2_runner_on_include(self, included_file):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_include(included_file)
 
     def v2_playbook_item_on_ok(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_ok(result)
 
         # TBD
 
     def v2_playbook_item_on_failed(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_failed(result)
 
         # TBD
 
     def v2_playbook_item_on_skipped(self, result):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_skipped(result)
 
         # TBD
 
     def v2_playbook_on_no_hosts_remaining(self):
-        if self._display.verbosity > 1:
+        if self._display.verbosity >= 2:
             self.super_ref.v2_runner_on_no_hosts_remaining()
             return
 
         # TBD
-        if self.keep:
+        if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
