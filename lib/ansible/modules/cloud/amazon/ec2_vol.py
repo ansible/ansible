@@ -74,6 +74,7 @@ options:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
     required: false
+    default: null
   delete_on_termination:
     description:
       - When set to "yes", the volume will be deleted upon instance termination.
@@ -322,6 +323,15 @@ def boto_supports_volume_encryption():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
+def boto_supports_kms_key_id():
+    """
+    Check if Boto library supports kms_key_ids (added in 2.39.0)
+
+    Returns:
+        True if version is equal to or higher then the version needed, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
+
 
 def create_volume(module, ec2, zone):
     changed = False
@@ -555,6 +565,9 @@ def main():
 
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
+
+    if kms_key_id and not boto_supports_kms_key_id():
+        module.fail_json(msg="You must use boto >= v2.39.0 to use kms_key_id")
 
     # Here we need to get the zone info for the instance. This covers situation where
     # instance is specified but zone isn't.
