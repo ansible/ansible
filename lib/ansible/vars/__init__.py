@@ -566,6 +566,13 @@ class VariableManager:
         else:
             return dict()
 
+    def clear_facts(self, hostname):
+        '''
+        Clears the facts for a host
+        '''
+        if hostname in self._fact_cache:
+            del self._fact_cache[hostname]
+
     def set_host_facts(self, host, facts):
         '''
         Sets or updates the given facts for a host in the fact cache.
