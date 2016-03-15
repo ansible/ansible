@@ -110,7 +110,13 @@ class ansi:
 
     default = '\033[0;0m'
 
-colors = dict(ok=ansi.darkgreen, changed=ansi.darkyellow, failed=ansi.darkred, unreachable=ansi.darkred)
+colors = dict(
+    ok=ansi.darkgreen,
+    changed=ansi.darkyellow,
+    skipped=ansi.darkcyan,
+    failed=ansi.darkred,
+    unreachable=ansi.redbg+ansi.white
+)
 
 class CallbackModule(CallbackModule_default):
 
@@ -125,10 +131,7 @@ class CallbackModule(CallbackModule_default):
     def __init__(self):
 
         # From CallbackModule
-        if display:
-            self._display = display
-        else:
-            self._display = global_display
+        self._display = display
 
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
@@ -288,22 +291,28 @@ class CallbackModule(CallbackModule_default):
             self.super_ref.v2_playbook_item_on_ok(result)
 
         # TBD
+        if result._result.get('changed', False):
+            self._add_host(result, 'changed')
+        else:
+            self._add_host(result, 'ok')
 
     def v2_playbook_item_on_failed(self, result):
         if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_failed(result)
 
         # TBD
+        self._add_host(result, 'failed')
 
     def v2_playbook_item_on_skipped(self, result):
         if self._display.verbosity >= 2:
             self.super_ref.v2_playbook_item_on_skipped(result)
 
         # TBD
+        self._add_host(result, 'skipped')
 
     def v2_playbook_on_no_hosts_remaining(self):
         if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_no_hosts_remaining()
+            self.super_ref.v2_playbook_on_no_hosts_remaining()
             return
 
         # TBD
