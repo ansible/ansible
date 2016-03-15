@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         creates = self._task.args.get('creates')
         if creates:
@@ -49,6 +50,7 @@ class ActionModule(ActionBase):
             # and the filename already exists. This allows idempotence
             # of command executions.
             if self._remote_file_exists(creates):
+                self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
 
         removes = self._task.args.get('removes')
@@ -57,6 +59,7 @@ class ActionModule(ActionBase):
             # and the filename does not exist. This allows idempotence
             # of command executions.
             if not self._remote_file_exists(removes):
+                self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
         # the script name is the first item in the raw params, so we split it
@@ -87,8 +90,7 @@ class ActionModule(ActionBase):
         result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
 
         # clean up after
-        if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
-            self._remove_tmp_path(tmp)
+        self._remove_tmp_path(tmp)
 
         result['changed'] = True
 
