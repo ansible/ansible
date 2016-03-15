@@ -485,6 +485,10 @@ def main():
                 else:
                     module.exit_json(changed=False)
     else:
+        if state == "absent":
+            # the host is already deleted.
+            module.exit_json(changed=False)
+
         # Use proxy specified, or set to 0 when adding new host
         if proxy:
             proxy_id = host.get_proxyid_by_proxy_name(proxy)
