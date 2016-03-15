@@ -26,7 +26,7 @@ NET_COMMON_ARGS = dict(
     password=dict(no_log=True),
     authorize=dict(default=False, type='bool'),
     auth_pass=dict(no_log=True),
-    transport=dict(choices=['cli', 'eapi']),
+    transport=dict(default='cli', choices=['cli', 'eapi']),
     use_ssl=dict(default=True, type='bool'),
     provider=dict(type='dict')
 )
