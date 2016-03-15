@@ -757,7 +757,8 @@ class Facts(object):
                 for nameserver in tokens[1:]:
                     self.facts['dns']['nameservers'].append(nameserver)
             elif tokens[0] == 'domain':
-                self.facts['dns']['domain'] = tokens[1]
+                if len(tokens) > 1:
+                    self.facts['dns']['domain'] = tokens[1]
             elif tokens[0] == 'search':
                 self.facts['dns']['search'] = []
                 for suffix in tokens[1:]:
@@ -768,12 +769,13 @@ class Facts(object):
                     self.facts['dns']['sortlist'].append(address)
             elif tokens[0] == 'options':
                 self.facts['dns']['options'] = {}
-                for option in tokens[1:]:
-                    option_tokens = option.split(':', 1)
-                    if len(option_tokens) == 0:
-                        continue
-                    val = len(option_tokens) == 2 and option_tokens[1] or True
-                    self.facts['dns']['options'][option_tokens[0]] = val
+                if len(tokens) > 1:
+                    for option in tokens[1:]:
+                        option_tokens = option.split(':', 1)
+                        if len(option_tokens) == 0:
+                            continue
+                        val = len(option_tokens) == 2 and option_tokens[1] or True
+                        self.facts['dns']['options'][option_tokens[0]] = val
 
 class Hardware(Facts):
     """
