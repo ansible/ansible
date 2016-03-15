@@ -21,6 +21,7 @@ Ansible Changes By Release
   * cs_resourcelimit
   * cs_volume
   * cs_zone
+  * cs_zone_facts
 - windows
   * win_regmerge
   * win_timezone
@@ -182,7 +183,7 @@ allowed in future versions:
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 * WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
-* WinRM connection plugin put_file is significantly faster and no longer has file size limitations. 
+* WinRM connection plugin put_file is significantly faster and no longer has file size limitations.
 
 ####Deprecated Modules (new ones in parens):
 
@@ -952,7 +953,7 @@ New Modules:
   * apache2_module
 - cloud
   * digital_ocean_domain
-  * digital_ocean_sshkey 
+  * digital_ocean_sshkey
   * ec2_asg *(configure autoscaling groups)*
   * ec2_metric_alarm
   * ec2_scaling_policy
@@ -969,7 +970,7 @@ Other notable changes:
 * libvirt module now supports destroyed and paused as states
 * s3 module can specify metadata
 * security token additions to ec2 modules
-* setup module code moved into module_utils/, facts now accessible by other modules  
+* setup module code moved into module_utils/, facts now accessible by other modules
 * synchronize module sets relative dirs based on inventory or role path
 * misc bugfixes and other parameters
 * the ec2_key module now has wait/wait_timeout parameters
@@ -1018,7 +1019,7 @@ Major features/changes:
 * only_if, which is much older than when_foo and was deprecated, is similarly removed.
 * ssh connection plugin is now more efficient if you add 'pipelining=True' in ansible.cfg under [ssh_connection], see example.cfg
 * localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
-* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
+* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols.
 * when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
 * added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
 * acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
@@ -1027,7 +1028,7 @@ Major features/changes:
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailable, the yum module will automatically attempt to install yum-utils
-* ansible-vault: a framework for encrypting your playbooks and variable files 
+* ansible-vault: a framework for encrypting your playbooks and variable files
 * added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
 New modules:
@@ -1172,7 +1173,7 @@ Plugins:
 
 * jail connection module (FreeBSD)
 * lxc connection module
-* added inventory script for listing FreeBSD jails 
+* added inventory script for listing FreeBSD jails
 * added md5 as a Jinja2 filter:  {{ path | md5 }}
 * added a fileglob filter that will return files matching a glob pattern.  with_items: "/foo/pattern/*.txt | fileglob"
 * 'changed' filter returns whether a previous step was changed easier.  when: registered_result | changed
@@ -1187,7 +1188,7 @@ Misc changes (all module additions/fixes may not listed):
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
-* Includes now support the more standard syntax, similar to that of role includes and dependencies. 
+* Includes now support the more standard syntax, similar to that of role includes and dependencies.
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is useful when fetching files that are actively being written to, such as live log files.
 * Inventory hosts are used in the order they appear in the inventory.
