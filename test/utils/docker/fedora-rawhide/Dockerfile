@@ -15,6 +15,7 @@ RUN dnf -y install \
     findutils \
     git \
     glibc-locale-source \
+    iproute \
     make \
     mercurial \
     procps \
