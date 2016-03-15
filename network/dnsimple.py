@@ -159,7 +159,7 @@ def main():
     )
 
     if not HAS_DNSIMPLE:
-        module.fail_json("dnsimple required for this module")
+        module.fail_json(msg="dnsimple required for this module")
 
     account_email     = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
