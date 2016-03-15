@@ -26,7 +26,7 @@ short_description: Zabbix host creates/updates/deletes
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
-author: 
+author:
     - "(@cove)"
     - "Tony Minfei Ding"
     - "Harrison Gu (@harrisongu)"
@@ -240,7 +240,7 @@ class Host(object):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            self._zapi.host.delete({'hostid': host_id})
+            self._zapi.host.delete([host_id])
         except Exception, e:
             self._module.fail_json(msg="Failed to delete host %s: %s" % (host_name, e))
 
@@ -440,7 +440,7 @@ def main():
             proxy_id = host.get_proxyid_by_proxy_name(proxy)
         else:
             proxy_id = None
-        
+
         # get host id by host name
         zabbix_host_obj = host.get_host_by_host_name(host_name)
         host_id = zabbix_host_obj['hostid']
@@ -505,4 +505,3 @@ def main():
 
 from ansible.module_utils.basic import *
 main()
-
