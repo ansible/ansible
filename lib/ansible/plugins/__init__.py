@@ -329,7 +329,7 @@ class PluginLoader:
             obj = getattr(self._module_cache[path], self.class_name)
         else:
             obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
-            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__mro__]:
                 return None
 
         return obj
