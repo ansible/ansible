@@ -251,6 +251,7 @@ class GalaxyCLI(CLI):
 
                 inject = dict(
                     author = 'your name',
+                    description = 'your description',
                     company = 'your company (optional)',
                     license = 'license (GPLv2, CC-BY, etc)',
                     issue_tracker_url = 'http://example.com/issue/tracker',
