@@ -591,8 +591,12 @@ def main():
                                               tenant=conn_info['tenant_id'])
 
     subscription_id = conn_info['subscription_id']
-    resource_client = ResourceManagementClient(ResourceManagementClientConfiguration(credentials, subscription_id))
-    network_client = NetworkManagementClient(NetworkManagementClientConfiguration(credentials, subscription_id))
+    resource_configuration = ResourceManagementClientConfiguration(credentials, subscription_id)
+    resource_configuration.add_user_agent('Ansible-Deploy')
+    resource_client = ResourceManagementClient(resource_configuration)
+    network_configuration = NetworkManagementClientConfiguration(credentials, subscription_id)
+    network_configuration.add_user_agent('Ansible-Deploy')
+    network_client = NetworkManagementClient(network_configuration)
     conn_info['deployment_name'] = module.params.get('deployment_name')
 
     if module.params.get('state') == 'present':
