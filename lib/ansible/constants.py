@@ -156,6 +156,7 @@ DEFAULT_PRIVATE_ROLE_VARS = get_config(p, DEFAULTS, 'private_role_vars', 'ANSIBL
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
 DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
+DEFAULT_GATHER_SUBSET     = get_config(p, DEFAULTS, 'gather_subset', 'ANSIBLE_GATHER_SUBSET', 'all').lower()
 DEFAULT_LOG_PATH          = get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', '', ispath=True)
 DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, boolean=True)
 DEFAULT_INVENTORY_IGNORE  = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE', ["~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo"], islist=True)

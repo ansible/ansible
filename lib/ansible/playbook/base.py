@@ -334,7 +334,10 @@ class Base:
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            value = [ value ]
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -346,11 +349,15 @@ class Base:
                     elif attribute.isa == 'set':
                         if value is None:
                             value = set()
-                        else:
-                            if not isinstance(value, (list, set)):
+                        elif not isinstance(value, (list, set)):
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                # Making a list like this handles strings of
+                                # text and bytes properly
                                 value = [ value ]
-                            if not isinstance(value, set):
-                                value = set(value)
+                        if not isinstance(value, set):
+                            value = set(value)
                     elif attribute.isa == 'dict':
                         if value is None:
                             value = dict()

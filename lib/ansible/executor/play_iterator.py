@@ -151,11 +151,20 @@ class PlayIterator:
         self._play = play
         self._blocks = []
 
+        # Default options to gather
+        gather_subset = C.DEFAULT_GATHER_SUBSET
+
+        # Retrieve subset to gather
+        if self._play.gather_subset is not None:
+            gather_subset = self._play.gather_subset
+
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.tags   = ['always']
-        setup_task.args   = {}
+        setup_task.args   = {
+          'gather_subset': gather_subset,
+        }
         setup_task.set_loader(self._play._loader)
         setup_block.block = [setup_task]
 
