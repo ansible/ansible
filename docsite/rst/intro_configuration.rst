@@ -353,6 +353,32 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
     gathering = smart
 
+.. versionadded:: 2.1
+
+You can specify a subset of gathered facts using the following option::
+
+    gather_subset = all
+
+:all: gather all subsets (the default)
+:network: gather network facts
+:hardware: gather hardware facts (longest facts to retrieve)
+:virtual: gather facts about virtual machines hosted on the machine
+:ohai: gather facts from ohai
+:facter: gather facts from facter
+
+You can combine them using a comma separated list (ex: network,virtual,facter)
+
+You can also disable specific subsets by prepending with a `!` like this::
+
+    # Don't gather hardware facts, facts from chef's ohai or puppet's facter
+    gather_subset = !hardware,!ohai,!facter
+
+A set of basic facts are always collected no matter which additional subsets
+are selected.  If you want to collect the minimal amount of facts, use
+`!all`::
+
+    gather_subset = !all
+
 hash_behaviour
 ==============
 
@@ -367,7 +393,7 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
-.. versionadded: '2.0'
+.. versionadded:: 2.0
 
 If you want to merge hashes without changing the global settings, use
 the `combine` filter described in :doc:`playbooks_filters`.
@@ -585,7 +611,7 @@ The directory will be created if it does not already exist.
 roles_path
 ==========
 
-.. versionadded: '1.4'
+.. versionadded:: 1.4
 
 The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
 roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
