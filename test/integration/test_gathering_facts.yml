@@ -9,13 +9,13 @@
     - setup:
       register: facts
     - debug: var=facts
-    - name: Test that only retrieving minimal facts work
+    - name: Test that retrieving all facts works
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" != "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" != "UNDEF_VIRT"'
 
 - hosts: facthost1
   tags: [ 'fact_min' ]
@@ -26,10 +26,10 @@
     - name: Test that only retrieving minimal facts work
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" == "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" == "UNDEF_VIRT"'
 
 - hosts: facthost2
   tags: [ 'fact_network' ]
@@ -40,10 +40,10 @@
     - name: Test that retrieving network facts work
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" == "UNDEF_VIRT"'
 
 - hosts: facthost3
   tags: [ 'fact_hardware' ]
@@ -54,10 +54,10 @@
     - name: Test that retrieving hardware facts work
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" == "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" != "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" == "UNDEF_VIRT"'
 
 - hosts: facthost4
   tags: [ 'fact_virtual' ]
@@ -68,10 +68,10 @@
     - name: Test that retrieving virtualization facts work
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" == "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" != "UNDEF_VIRT"'
 
 - hosts: facthost5
   tags: [ 'fact_comma_string' ]
@@ -82,10 +82,10 @@
     - name: Test that retrieving virtualization and network as a string works
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" != "UNDEF_VIRT"'
 
 - hosts: facthost6
   tags: [ 'fact_yaml_list' ]
@@ -98,10 +98,10 @@
     - name: Test that retrieving virtualization and network as a string works
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" != "UNDEF_VIRT"'
 
 - hosts: facthost7
   tags: [ 'fact_negation' ]
@@ -112,10 +112,10 @@
     - name: Test that negation of fact subsets work
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" != "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" != "UNDEF_VIRT"'
 
 - hosts: facthost8
   tags: [ 'fact_mixed_negation_addition' ]
@@ -126,8 +126,8 @@
     - name: Test that negation and additional subsets work together
       assert:
         that:
-          - '"{{ ansible_user_id|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_interfaces|default("UNDEF") }}" != "UNDEF"'
-          - '"{{ ansible_mounts|default("UNDEF") }}" == "UNDEF"'
-          - '"{{ ansible_virtualization_role|default("UNDEF") }}" == "UNDEF"'
+          - '"{{ ansible_user_id|default("UNDEF_MIN") }}" != "UNDEF_MIN"'
+          - '"{{ ansible_interfaces|default("UNDEF_NET") }}" != "UNDEF_NET"'
+          - '"{{ ansible_mounts|default("UNDEF_HW") }}" == "UNDEF_HW"'
+          - '"{{ ansible_virtualization_role|default("UNDEF_VIRT") }}" == "UNDEF_VIRT"'
 
