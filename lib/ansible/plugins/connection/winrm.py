@@ -61,6 +61,7 @@ except ImportError:
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
+    transport = 'winrm'
     module_implementation_preferences = ('.ps1', '')
     become_methods = []
     allow_executable = False
@@ -76,11 +77,6 @@ class Connection(ConnectionBase):
         # TODO: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
-
-    @property
-    def transport(self):
-        ''' used to identify this connection object from other classes '''
-        return 'winrm'
 
     def set_host_overrides(self, host):
         '''
