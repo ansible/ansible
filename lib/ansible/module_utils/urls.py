@@ -842,7 +842,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
     except NoSSLError, e:
         distribution = get_distribution()
-        if distribution.lower() == 'redhat':
+        if distribution is not None and distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
         else:
             module.fail_json(msg='%s' % str(e))
