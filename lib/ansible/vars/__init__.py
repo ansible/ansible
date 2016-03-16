@@ -83,6 +83,8 @@ def strip_internal_keys(dirty):
     for k in dirty.keys():
         if isinstance(k, string_types) and k.startswith('_ansible_'):
             del clean[k]
+        elif isinstance(dirty[k], dict):
+            clean[k] = strip_internal_keys(dirty[k])
     return clean
 
 class VariableManager:
