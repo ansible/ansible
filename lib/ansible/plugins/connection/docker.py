@@ -35,7 +35,7 @@ from distutils.version import LooseVersion
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.unicode import to_bytes
 
 try:
@@ -43,8 +43,6 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
