@@ -122,10 +122,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object from other classes '''
-        return 'paramiko'
+    transport = 'paramiko'
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
