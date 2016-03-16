@@ -209,17 +209,18 @@ def load_mongocnf():
 
 
 def check_if_roles_changed(uinfo, roles, db_name):
-# The reason for such complicated method is a user which can read the oplog on a replicaset
-# This user must have access to the local DB, but since this DB does not have users
+# We must be aware of users which can read the oplog on a replicaset
+# Such users must have access to the local DB, but since this DB does not store users credentials
 # and is not synchronized among replica sets, the user must be stored on the admin db
+# Therefore their structure is the following :
 # {
 #     "_id" : "admin.oplog_reader",
 #     "user" : "oplog_reader",
-#     "db" : "admin",
+#     "db" : "admin",                    # <-- admin DB
 #     "roles" : [
 #         {
 #             "role" : "read",
-#             "db" : "local"
+#             "db" : "local"             # <-- local DB
 #         }
 #     ]
 # }
