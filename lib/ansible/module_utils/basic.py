@@ -1327,16 +1327,14 @@ class AnsibleModule(object):
             # Check if there are illegal characters in the user list
             # They can end up in 'users' because they are not split
             if re.match(r'[^ugo]', users):
-                return 'invalid'
-                #raise ValueError("bad symbolic permission for mode: %s" % mode)
+                raise ValueError("bad symbolic permission for mode: %s" % mode)
 
             # Now we have two list of equal length, one contains the requested
             # permissions and one with the corresponding operators.
             for idx, perms in enumerate(permlist):
                 # Check if there are illegal characters in the permissions
                 if re.match(r'[^rwxXstugo]', perms):
-                    return 'invalid'
-                    #raise ValueError("bad symbolic permission for mode: %s" % mode)
+                    raise ValueError("bad symbolic permission for mode: %s" % mode)
 
                 for user in users:
                     mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
