@@ -210,9 +210,6 @@ class CallbackModule_dense(CallbackModule_default):
                 if not result[attr]:
                     del(result[attr])
 
-        if 'cmd' in result:
-            result['cmd'] = ' '.join(result['cmd'])
-
     def _handle_exceptions(self, result):
         if 'exception' in result:
             if self._display.verbosity < 3:
