@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 ---
 module: win_file_version
 version_added: "2.1"
-short_descriptions: Get DLL or EXE file build version
+short_description: Get DLL or EXE file build version
 description:
   - Get DLL or EXE file build version
   - change state alway be false
