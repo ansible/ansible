@@ -206,6 +206,43 @@ def load_mongocnf():
 
     return creds
 
+
+
+def check_if_roles_changed(uinfo, roles, db_name):
+# The reason for such complicated method is a user which can read the oplog on a replicaset
+# This user must have access to the local DB, but since this DB does not have users
+# and is not synchronized among replica sets, the user must be stored on the admin db
+# {
+#     "_id" : "admin.oplog_reader",
+#     "user" : "oplog_reader",
+#     "db" : "admin",
+#     "roles" : [
+#         {
+#             "role" : "read",
+#             "db" : "local"
+#         }
+#     ]
+# }
+
+    def make_sure_roles_are_a_list_of_dict(roles, db_name):
+        output = list()
+        for role in roles:
+            if isinstance(role, basestring):
+                new_role = { "role": role, "db": db_name }
+                output.append(new_role)
+            else:
+                output.append(role)
+        return output
+
+    roles_as_list_of_dict = make_sure_roles_are_a_list_of_dict(roles, db_name)
+    uinfo_roles = uinfo.get('roles', [])
+
+    if sorted(roles_as_list_of_dict) == sorted(uinfo_roles):
+        return False
+    return True
+
+
+
 # =========================================
 # Module execution.
 #
@@ -278,7 +315,7 @@ def main():
         uinfo = user_find(client, user, db_name)
         if update_password != 'always' and uinfo:
             password = None
-            if list(map((lambda x: x['role']), uinfo.get('roles', []))) == roles:
+            if not check_if_roles_changed(uinfo, roles, db_name):
                 module.exit_json(changed=False, user=user)
 
         if module.check_mode:
