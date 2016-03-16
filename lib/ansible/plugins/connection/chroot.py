@@ -28,7 +28,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.module_utils.basic import is_executable
 from ansible.utils.unicode import to_bytes
 
@@ -37,8 +37,6 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):

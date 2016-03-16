@@ -42,6 +42,8 @@ except ImportError:
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
+BUFSIZE = 65536
+
 
 def ensure_connect(func):
     @wraps(func)
