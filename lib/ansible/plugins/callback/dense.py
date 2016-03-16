@@ -58,9 +58,7 @@ import sys
 #
 #  + Properly test for terminal capabilities, and fall back to default
 #  + Modify Ansible mechanism so we don't need to use sys.stdout directly
-#  + Find an elegant solution for line wrapping
-#  + Support notification handlers
-#  + Better support for item-loops (in -v mode)
+#  + Find an elegant solution for progress bar line wrapping
 
 # When using -vv or higher, simply do the default action
 
@@ -133,8 +131,8 @@ colors = dict(
     ok = ansi.darkgreen,
     changed = ansi.darkyellow,
     skipped = ansi.darkcyan,
-    ignored = ansi.redbg + ansi.cyan,
-    failed = ansi.redbg + ansi.darkred,
+    ignored = ansi.cyanbg + ansi.red,
+    failed = ansi.darkred,
     unreachable = ansi.red,
 )
 
@@ -162,9 +160,8 @@ class CallbackModule_dense(CallbackModule_default):
         self.hosts = OrderedDict()
         self.keep = False
         self.shown_title = False
-        self.playnr = 0
-        self.tasknr = 0
-        self.handlernr = 0
+        self.count = dict(play=0, handler=0, task=0)
+        self.type = 'foo'
 
         # Start immediately on the first line
         sys.stdout.write(ansi.save + ansi.reset + ansi.clearline)
@@ -173,6 +170,7 @@ class CallbackModule_dense(CallbackModule_default):
     def _add_host(self, result, status):
         name = result._host.get_name()
 
+        # Add a new status in case a failed task is ignored
         if status == 'failed' and result._task.ignore_errors:
             status = 'ignored'
 
@@ -187,11 +185,11 @@ class CallbackModule_dense(CallbackModule_default):
         if delegated_vars:
             self.hosts[name]['delegate'] = delegated_vars['ansible_host']
 
-
+        # Print progress bar
         self._display_progress(result)
 
+        # Ensure that tasks with changes/failures stay on-screen
         if status in ['changed', 'failed', 'unreachable']:
-            # Ensure that tasks with changes/failures stay on-screen
             self.keep = True
 
             if self._display.verbosity == 1:
@@ -228,11 +226,26 @@ class CallbackModule_dense(CallbackModule_default):
             del result['exception']
             return msg
 
+    def _display_progress(self, result=None):
+        # Always rewrite the complete line
+        sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
+        sys.stdout.write('%s %d:' % (self.type, self.count[self.type]))
+        sys.stdout.write(ansi.reset)
+        sys.stdout.flush()
+
+        # Print out each host in its own status-color
+        for name in self.hosts:
+            sys.stdout.write(' ')
+            if self.hosts[name].get('delegate', None):
+                sys.stdout.write(self.hosts[name]['delegate'] + '>')
+            sys.stdout.write(colors[self.hosts[name]['state']] + name + ansi.reset)
+            sys.stdout.flush()
+
     def _display_task_banner(self):
         if not self.shown_title:
             self.shown_title = True
             sys.stdout.write(ansi.restore + ansi.clearline)
-            sys.stdout.write(ansi.underline + 'task %d: %s' % (self.tasknr, self.task.get_name().strip()))
+            sys.stdout.write(ansi.underline + '%s %d: %s' % (self.type, self.count[self.type], self.task.get_name().strip()))
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
             sys.stdout.flush()
         else:
@@ -240,15 +253,17 @@ class CallbackModule_dense(CallbackModule_default):
 
     def _display_results(self, result, status):
         dump = ''
-        self._handle_warnings(result._result)
         self._clean_results(result._result)
 
         if result._task.action == 'include':
             return
-        elif status == 'ignored':
+        elif status == 'ok':
             return
         elif status == 'changed':
             color = C.COLOR_CHANGED
+        elif status == 'ignored':
+            color = C.COLOR_SKIPPED
+            dump = self._handle_exceptions(result._result)
         elif status == 'failed':
             color = C.COLOR_ERROR
             dump = self._handle_exceptions(result._result)
@@ -264,38 +279,23 @@ class CallbackModule_dense(CallbackModule_default):
             msg = "%s: %s>%s: %s" % (status, result._host.get_name(), delegated_vars['ansible_host'], dump)
         else:
             msg = "%s: %s: %s" % (status, result._host.get_name(), dump)
-        self._display.display(msg, color=color)
 
-        if result._task.ignore_errors:
-            self._display.display("...ignoring", color=C.COLOR_SKIP)
+        if result._task.loop and 'results' in result._result:
+            self._process_items(result)
+        else:
+            self._display.display(msg, color=color)
 
-    def _display_progress(self, result=None):
-        # Always rewrite the complete line
-        sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
-        sys.stdout.write('task %d:' % self.tasknr)
-        sys.stdout.write(ansi.reset)
-        sys.stdout.flush()
-
-        # Print out each host in its own status-color
-        for name in self.hosts:
-            sys.stdout.write(' ')
-            if self.hosts[name].get('delegate', None):
-                sys.stdout.write(self.hosts[name]['delegate'] + '>')
-            sys.stdout.write(colors[self.hosts[name]['state']] + name + ansi.reset)
-            sys.stdout.flush()
-
-        # Reset color
-        sys.stdout.write(ansi.reset)
+        if status == 'changed':
+            self._handle_warnings(result._result)
 
     def v2_playbook_on_play_start(self, play):
         if self._display.verbosity > 1:
             self.super_ref.v2_playbook_on_play_start(play)
             return
 
-        # Reset counters at the start of each play
-        self.tasknr = 0
-        self.handlernr = 0
-        self.playnr += 1
+        # Reset at the start of each play
+        self.count.update(dict(handler=0, task=0))
+        self.count['play'] += 1
         self.play = play
 
         # Leave the previous task on screen (as it has changes/errors)
@@ -308,7 +308,7 @@ class CallbackModule_dense(CallbackModule_default):
         name = play.get_name().strip()
         if not name:
             name = 'unnamed'
-        sys.stdout.write('PLAY %d: %s' % (self.playnr, name.upper()))
+        sys.stdout.write('PLAY %d: %s' % (self.count['play'], name.upper()))
         sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
 
@@ -319,18 +319,19 @@ class CallbackModule_dense(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.underline)
 
-        # Reset counters at the start of each task
+        # Reset at the start of each task
         self.keep = False
         self.shown_title = False
         self.hosts = OrderedDict()
         self.task = task
+        self.type = 'task'
 
         # Enumerate task if not setup (task names are too long for dense output)
         if task.get_name() != 'setup':
-            self.tasknr += 1
+            self.count['task'] += 1
 
         # Write the next task on screen (behind the prompt is the previous output)
-        sys.stdout.write('task %d.' % self.tasknr)
+        sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
@@ -341,17 +342,19 @@ class CallbackModule_dense(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.reset + ansi.underline)
 
-        # Reset counters at the start of each handler
+        # Reset at the start of each handler
         self.keep = False
         self.shown_title = False
         self.hosts = OrderedDict()
         self.task = task
+        self.type = 'handler'
 
+        # Enumerate handler if not setup (handler names may be too long for dense output)
         if task.get_name() != 'setup':
-            self.handlernr += 1
+            self.count[self.type] += 1
 
         # Write the next task on screen (behind the prompt is the previous output)
-        sys.stdout.write('handler %d.' % self.handlernr)
+        sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
@@ -380,27 +383,24 @@ class CallbackModule_dense(CallbackModule_default):
         pass
 
     def v2_playbook_item_on_ok(self, result):
-        # TBD
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
         else:
             self._add_host(result, 'ok')
 
     def v2_playbook_item_on_failed(self, result):
-        # TBD
         self._add_host(result, 'failed')
 
     def v2_playbook_item_on_skipped(self, result):
-        # TBD
         self._add_host(result, 'skipped')
 
     def v2_playbook_on_no_hosts_remaining(self):
-        # TBD
         if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
+        # Reset keep
         self.keep = False
 
         sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT' + ansi.reset)
