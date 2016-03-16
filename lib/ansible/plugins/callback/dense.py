@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 from ansible.utils.color import colorize, hostcolor
 from collections import OrderedDict
@@ -43,25 +42,41 @@ import sys
 #  + If verbosity increases, act as default output
 #    So that users can easily switch to default for troubleshooting
 #
-#  + Leave previous task output on screen
-#    - If we would clear the line at the start of a task, there would often
-#      be no information at all
-#
+#  + Rewrite the output during processing
 #    - We use the cursor to indicate where in the task we are.
-#      Output after the prompt is the output of the previous task
+#      Output after the prompt is the output of the previous task.
+#    - If we would clear the line at the start of a task, there would often
+#      be no information at all, so we leave it until it gets updated
 #
 #  + Use the same color-conventions of Ansible
+#
+#  + Ensure the verbose output (-v) is also dense.
+#    Remove information that is not essential (eg. timestamps, status)
 
 
 # TODO:
 #
-#  + Ensure all other output is properly displayed
 #  + Properly test for terminal capabilities, and fall back to default
 #  + Modify Ansible mechanism so we don't need to use sys.stdout directly
-#  + Remove items from result to compact the json output when using -v
-#  + Make colored output nicer
 #  + Find an elegant solution for line wrapping
-#  + Support notification handler
+#  + Support notification handlers
+#  + Better support for item-loops (in -v mode)
+
+# When using -vv or higher, simply do the default action
+
+# FIXME: Importing constants as C simply does not work, beats me :-/
+#from ansible import constants as C
+class C:
+    COLOR_HIGHLIGHT   = 'white'
+    COLOR_VERBOSE     = 'blue'
+    COLOR_WARN        = 'bright purple'
+    COLOR_ERROR       = 'red'
+    COLOR_DEBUG       = 'dark gray'
+    COLOR_DEPRECATE   = 'purple'
+    COLOR_SKIP        = 'cyan'
+    COLOR_UNREACHABLE = 'bright red'
+    COLOR_OK          = 'green'
+    COLOR_CHANGED     = 'yellow'
 
 
 # Taken from Dstat
@@ -115,16 +130,17 @@ class ansi:
 
 
 colors = dict(
-    ok=ansi.darkgreen,
-    changed=ansi.darkyellow,
-    skipped=ansi.darkcyan,
-    failed=ansi.darkred,
-    unreachable=ansi.redbg+ansi.white
+    ok = ansi.darkgreen,
+    changed = ansi.darkyellow,
+    skipped = ansi.darkcyan,
+    ignored = ansi.redbg + ansi.cyan,
+    failed = ansi.redbg + ansi.darkred,
+    unreachable = ansi.red,
 )
 
 states = ( 'skipped', 'ok', 'changed', 'failed', 'unreachable' )
 
-class CallbackModule(CallbackModule_default):
+class CallbackModule_dense(CallbackModule_default):
 
     '''
     This is the dense callback interface, where screen estate is still valued.
@@ -134,23 +150,14 @@ class CallbackModule(CallbackModule_default):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'dense'
 
+
     def __init__(self):
 
         # From CallbackModule
         self._display = display
 
-        if self._display.verbosity >= 4:
-            name = getattr(self, 'CALLBACK_NAME', 'unnamed')
-            ctype = getattr(self, 'CALLBACK_TYPE', 'old')
-            version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
-
         self.super_ref = super(CallbackModule, self)
         self.super_ref.__init__()
-
-        # When using -vv or higher, simply do the default action
-        if self._display.verbosity >= 2:
-            return
 
         self.hosts = OrderedDict()
         self.keep = False
@@ -166,11 +173,20 @@ class CallbackModule(CallbackModule_default):
     def _add_host(self, result, status):
         name = result._host.get_name()
 
-        # Check if we have to update an existing state (when looping)
+        if status == 'failed' and result._task.ignore_errors:
+            status = 'ignored'
+
+        # Check if we have to update an existing state (when looping over items)
         if name not in self.hosts:
-            self.hosts[name] = status
-        elif states.index(self.hosts[name]) < states.index(status):
-            self.hosts[name] = status
+            self.hosts[name] = dict(state=status)
+        elif states.index(self.hosts[name]['state']) < states.index(status):
+            self.hosts[name]['state'] = status
+
+        # Store delegated hostname, if needed
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if delegated_vars:
+            self.hosts[name]['delegate'] = delegated_vars['ansible_host']
+
 
         self._display_progress(result)
 
@@ -181,14 +197,36 @@ class CallbackModule(CallbackModule_default):
             if self._display.verbosity == 1:
                 # Print task title, if needed
                 self._display_task_banner()
+                self._display_results(result, status)
 
-                # TODO: clean up result output, eg. remove changed, delta, end, start, ...
-                if status == 'changed':
-                    self.super_ref.v2_runner_on_ok(result)
-                elif status == 'failed':
-                    self.super_ref.v2_runner_on_failed(result)
-                elif status == 'unreachable':
-                    self.super_ref.v2_runner_on_unreachable(result)
+    def _clean_results(self, result):
+        # Remove non-essential atributes
+        removed_attributes = ('changed', 'delta', 'end', 'failed', 'failed_when_result', 'invocation', 'start', 'stdout_lines')
+        for attr in removed_attributes:
+            if attr in result:
+                del(result[attr])
+
+        # Remove empty attributes (list, dict, str)
+        for attr in result.copy():
+            if type(result[attr]) in (list, dict, basestring, unicode):
+                if not result[attr]:
+                    del(result[attr])
+
+        if 'cmd' in result:
+            result['cmd'] = ' '.join(result['cmd'])
+
+    def _handle_exceptions(self, result):
+        if 'exception' in result:
+            if self._display.verbosity < 3:
+                # extract just the actual error message from the exception text
+                error = result['exception'].strip().split('\n')[-1]
+                msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
+            else:
+                msg = "An exception occurred during task execution. The full traceback is:\n" + result['exception']
+
+            # finally, remove the exception from the result so it's not shown every time
+            del result['exception']
+            return msg
 
     def _display_task_banner(self):
         if not self.shown_title:
@@ -200,21 +238,50 @@ class CallbackModule(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
-    def _display_progress(self, result):
+    def _display_results(self, result, status):
+        dump = ''
+        self._handle_warnings(result._result)
+        self._clean_results(result._result)
+
+        if result._task.action == 'include':
+            return
+        elif status == 'ignored':
+            return
+        elif status == 'changed':
+            color = C.COLOR_CHANGED
+        elif status == 'failed':
+            color = C.COLOR_ERROR
+            dump = self._handle_exceptions(result._result)
+        elif status == 'unreachable':
+            color = C.COLOR_UNREACHABLE
+            dump = result._result['msg']
+
+        if not dump:
+            dump = self._dump_results(result._result)
+
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if delegated_vars:
+            msg = "%s: %s>%s: %s" % (status, result._host.get_name(), delegated_vars['ansible_host'], dump)
+        else:
+            msg = "%s: %s: %s" % (status, result._host.get_name(), dump)
+        self._display.display(msg, color=color)
+
+        if result._task.ignore_errors:
+            self._display.display("...ignoring", color=C.COLOR_SKIP)
+
+    def _display_progress(self, result=None):
         # Always rewrite the complete line
         sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
         sys.stdout.write('task %d:' % self.tasknr)
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
-        # Print delegated hostname, if needed
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if delegated_vars:
-            sys.stdout.write(' ' + delegated_vars['ansible_host'] + '>>')
-
-        # Print out each host with its own status-color
+        # Print out each host in its own status-color
         for name in self.hosts:
-            sys.stdout.write(' ' + colors[self.hosts[name]] + name + ansi.reset)
+            sys.stdout.write(' ')
+            if self.hosts[name].get('delegate', None):
+                sys.stdout.write(self.hosts[name]['delegate'] + '>')
+            sys.stdout.write(colors[self.hosts[name]['state']] + name + ansi.reset)
             sys.stdout.flush()
 
         # Reset color
@@ -246,10 +313,6 @@ class CallbackModule(CallbackModule_default):
         sys.stdout.flush()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        if self._display.verbosity > 1:
-            self.super_ref.v2_playbook_on_task_start(task, is_conditional)
-            return
-
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
@@ -270,13 +333,8 @@ class CallbackModule(CallbackModule_default):
         sys.stdout.write('task %d.' % self.tasknr)
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
-#        self._display_progress()
 
     def v2_playbook_on_handler_task_start(self, task):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_on_handler_task_start(task)
-            return
-
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
@@ -289,80 +347,54 @@ class CallbackModule(CallbackModule_default):
         self.hosts = OrderedDict()
         self.task = task
 
+        if task.get_name() != 'setup':
+            self.handlernr += 1
+
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('handler %d.' % self.handlernr)
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
-#        self._display_progress()
 
     def v2_playbook_on_cleanup_task_start(self, task):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_on_cleanup_task_start(start)
-            return
-
-        self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())
+        # TBD
+        sys.stdout.write('cleanup.')
+        sys.stdout.write(ansi.reset)
+        sys.stdout.flush()
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_failed(result, ignore_errors)
-            return
-
         self._add_host(result, 'failed')
 
     def v2_runner_on_ok(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_ok(result)
-            return
-
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
         else:
             self._add_host(result, 'ok')
 
     def v2_runner_on_skipped(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_skipped(result)
-            return
-
         self._add_host(result, 'skipped')
 
     def v2_runner_on_unreachable(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_unreachable(result)
-            return
-
         self._add_host(result, 'unreachable')
 
     def v2_runner_on_include(self, included_file):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_runner_on_include(included_file)
+        pass
 
     def v2_playbook_item_on_ok(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_item_on_ok(result)
-
+        # TBD
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
         else:
             self._add_host(result, 'ok')
 
     def v2_playbook_item_on_failed(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_item_on_failed(result)
-
+        # TBD
         self._add_host(result, 'failed')
 
     def v2_playbook_item_on_skipped(self, result):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_item_on_skipped(result)
-
+        # TBD
         self._add_host(result, 'skipped')
 
     def v2_playbook_on_no_hosts_remaining(self):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_on_no_hosts_remaining()
-            return
-
         # TBD
         if self._display.verbosity == 0 and self.keep:
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
@@ -376,12 +408,8 @@ class CallbackModule(CallbackModule_default):
         sys.stdout.flush()
 
     def v2_playbook_on_stats(self, stats):
-        if self._display.verbosity >= 2:
-            self.super_ref.v2_playbook_on_stats(stats)
-            return
-
         # In normal mode screen output should be sufficient
-        elif self._display.verbosity == 0:
+        if self._display.verbosity == 0:
             return
 
         if self.keep:
@@ -390,10 +418,6 @@ class CallbackModule(CallbackModule_default):
             sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
 
         sys.stdout.write('SUMMARY')
-
-        # FIXME: Reports 'module' object C not having attribute 'COLOR_OK' ?? Doing default instead :-/
-        self.super_ref.v2_playbook_on_stats(stats)
-        return
 
         sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
@@ -409,3 +433,8 @@ class CallbackModule(CallbackModule_default):
                 colorize(u'failed', t['failures'], C.COLOR_ERROR)),
                 screen_only=True
             )
+
+if display.verbosity >= 2:
+    CallbackModule = CallbackModule_default
+else:
+    CallbackModule = CallbackModule_dense
