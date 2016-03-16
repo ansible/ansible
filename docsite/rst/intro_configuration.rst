@@ -626,7 +626,7 @@ Additional paths can be provided separated by colon characters, in the same way 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
 
-.. _strategy_plugins:
+.. _cfg_strategy_plugins:
 
 strategy_plugins
 ==================
