@@ -41,16 +41,25 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
 
     from collections import namedtuple
     from ansible.parsing.dataloader import DataLoader
+    from ansible.cli import CLI
     from ansible.vars import VariableManager
     from ansible.inventory import Inventory
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
 
-    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
     # initialize needed objects
     variable_manager = VariableManager()
     loader = DataLoader()
-    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
+    parser = CLI.base_parser(
+        connect_opts=True,
+        module_opts=True,
+        fork_opts=True,
+        runas_opts=True,
+        check_opts=True,
+    )
+    # ignore sys args for the sake of this example
+    options, args = parser.parse_args([])
+    options.connection = 'local'
     passwords = dict(vault_pass='secret')
 
     # create inventory and pass to var manager
