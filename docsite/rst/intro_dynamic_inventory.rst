@@ -290,7 +290,8 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
    Linode
    OpenShift
    OpenStack Nova
-   Red Hat's SpaceWalk
+   Ovirt
+   SpaceWalk
    Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
    Zabbix
 
