@@ -168,8 +168,9 @@ class PlaybookExecutor:
                 # send the stats callback for this playbook
                 if self._tqm is not None:
                     if C.RETRY_FILES_ENABLED:
-                        retries = list(set(self._tqm._failed_hosts.keys() + self._tqm._unreachable_hosts.keys()))
-                        retries.sort()
+                        retries = set(self._tqm._failed_hosts.keys())
+                        retries.update(self._tqm._unreachable_hosts.keys())
+                        retries = sorted(retries)
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
