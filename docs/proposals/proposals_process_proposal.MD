@@ -33,17 +33,20 @@ Once the process and template are approved, a PR will be submitted for documenti
 
 ### Proposed Process
 1: PROPOSAL CREATION
-- Person making the proposal creates the proposal document in ansible/docs/proposals via PR, following the proposal template.
-- Author of proposal PR updates the proposal with the PR # / link.
+- Person making the proposal creates the proposal document in ansible/proposals via PR, following the proposal template/
+- Person making the proposal creates an issue in ansible/proposals for that proposal.
+- Author of proposal PR updates the proposal with link to the created issue #. 
 - Notify the community that this proposal exists.
-- Author notifies ansible-devel mailing list for transparency, providing link to PR.
-- Author includes commentary indicating that comments should *not* be in response to this email, but rather, community members should add comments or feedback to the pull request.
+- Author notifies ansible-devel mailing list for transparency, providing link to issue.
+- Author includes commentary indicating that comments should *not* be in response to this email, but rather, community members should add comments or feedback in the issue.
+- PRs may be made to the proposal, and can merged or not at submitter's discretion, and should be discussed/linked in the issue. 
 
 2: KEEP THE PROPOSAL MOVING TOWARDS A DECISION.
+- Create tags in the ansible/proposals repo to indicate progress of the various proposal issues; ie: Discussion, Ready for meeting, Approved. (Can be used in conjunction with a board on waffle.io to show this, kanban style.)
 - Proposals use public meetings as a mechanism to keep them moving.
 - All proposals are decided on in a public meeting by a combination of folks with commit access to Ansible and any interested parties / users, as well as the author of the proposal. Time for approvals will be a portion of the overall schedule; proposals will be reviewed in the order received and may occasionally be deferred to the next meeting. If we are overwhelmed, a separate meeting may be scheduled.
 
-(Note: ample feedback in the comments of the proposal PR should allow for folks to come to broad consensus in one way or another in the meeting rather rapidly, generally without an actual counted vote. However, the decision should be made *in the meeting*, so as to avoid any questions around whether or not the approval of one Ansible maintain / committer reflects the opinions or decision of everyone.)
+(Note: ample feedback in the comments of the proposal issue should allow for folks to come to broad consensus in one way or another in the meeting rather rapidly, generally without an actual counted vote. However, the decision should be made *in the meeting*, so as to avoid any questions around whether or not the approval of one Ansible maintain / committer reflects the opinions or decision of everyone.)
 
 - *New* proposals are explicitly added to the public IRC meeting agenda for each week by the meeting organizer for for acknowledgement of ongoing discussion and existence, and/or easy approval/rejection. (Either via a separate issue somewhere tracking any meeting items, or by adding a “meeting” label to the PR.)
 - Existing new, not-yet-approved proposals are reviewed weekly by meeting organizer to check for slow-moving/stalled proposals, or for flags from the proposal owner indicating that they'd like to have it addressed in the weeks meeting
@@ -51,9 +54,9 @@ Once the process and template are approved, a PR will be submitted for documenti
 3: PROPOSAL APPROVED
 - Amendments needed to the proposal after IRC discussion should be made immediately.
 - The proposal status should be changed to Approved / In Progress in the document.
-- The proposal should be moved from /docs/proposals to a docs/roadmap folder (or similar).
-- The proposal PR comments should be updated with a note by the meeting organizer that the proposal has been accepted, and further commentary should be in the PRs implementing the code itself.
-- Proposals can also be PENDING (waiting on something), or DECLINED. 
+- The proposal should be moved from /ansible/proposals to a roadmap folder (or similar).
+- The proposal issue comments should be updated with a note by the meeting organizer that the proposal has been accepted, and further commentary should be in the PRs implementing the code itself.
+- Proposals can also be PENDING or NEEDS INFO (waiting on something), or DECLINED. 
 
 4: CODE IN PROGRESS
 - Approved proposals should be periodically checked for progress, especially if tied to a release and/or is noted as release blocking.
@@ -93,9 +96,9 @@ Other Suggested things to include:
 
 - Approval of this proposed process is needed to create the actual documentation of the process.
 - Weekly, public IRC meetings (which should probably be documented Wrt time / day of week / etc. in the contributor documentation) of the Ansible development community.
-- Creation of a “meeting” label in GitHub (or defining some other mechanism to gather items for a weekly meeting agenda, such as a separate issue in GitHub that links to the PRs.)
+- Creation of  appropriate labels in GitHub (or defining some other mechanism to gather items for a weekly meeting agenda, such as a separate issue in GitHub that links to the PRs.)
 - Coming to an agreement regarding “what qualifies as a feature or enhancement that requires a proposal, vs. just submitting a PR with code.” It could simply be that if the change is large or very complicated, our recommendation is always to file a proposal to ensure (a) transparency (b) that a contributor doesn’t waste their time on something that ultimately can’t be merged at this time.
-- Nice to have: Any new proposal PR landing in docs/proposals is automatically merged and an email automatically notifies the mailing list of the existence and location of the PR for comments.
+- Nice to have: Any new proposal PR landing in ansible/proposals is automatically merged and an email automatically notifies the mailing list of the existence and location of the proposal & related issue # for comments.
 
 ## Testing
 
@@ -103,5 +106,5 @@ Testing of this proposal will literally be via submitting this proposal through 
 
 ## Documentation:
 
-- Documentation of the process, including “what is a feature or enhancement vs. just a regular PR,” along with the steps shown above, will be added to the Ansible documentation in .rst format via PR.  The documentation should also provide guidance on the standard wording of the email notifying ansible-devel list that the proposal exists and is ready for review in the PR comments.
-- A proposal template should also be created in the docs/proposals repo directory.
+- Documentation of the process, including “what is a feature or enhancement vs. just a regular PR,” along with the steps shown above, will be added to the Ansible documentation in .rst format via PR.  The documentation should also provide guidance on the standard wording of the email notifying ansible-devel list that the proposal exists and is ready for review in the issue comments.
+- A proposal template should also be created in the ansible/proposals repo directory.
