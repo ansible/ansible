@@ -1338,7 +1338,7 @@ class AnsibleModule(object):
 
                 for user in users:
                     mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
-                    new_mode = _apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
+                    new_mode = self._apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
 
         return new_mode
 
