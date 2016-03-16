@@ -72,11 +72,71 @@ new ones.
 
 
 
-.. note:: Privilege escalation methods must also be supported by the connection plugin used, most will warn if they do not, some will just ignore it as they always run as root (jail, chroot, etc).
+Limitations
+-----------
 
-.. note:: Methods cannot be chained, you cannot use 'sudo /bin/su -' to become a user, you need to have privileges to run the command as that user in sudo or be able to su directly to it (the same for pbrun, pfexec or other supported methods).
+Although privilege escalation is mostly intuitive, there are a few limitations
+on how it works.  Users should be aware of these to avoid surprises.
 
-.. note:: Privilege escalation permissions have to be general, Ansible does not always use a specific command to do something but runs modules (code) from a temporary file name which changes every time. So if you have '/sbin/service' or '/bin/chmod' as the allowed commands this will fail with ansible.
+Becoming an Unprivileged User
+=============================
+
+Ansible has a limitation with regards to becoming an
+unprivileged user that can be a security risk if users are not aware of it.
+Ansible modules are executed on the remote machine by first substituting the
+parameters into the module file, then copying the file to the remote machine,
+and finally executing it there.  If the module file is executed without using
+become, when the become user is root, or when the connection to the remote
+machine is made as root then the module file is created with permissions that
+only allow reading by the user and root.
+
+If the become user is an unprivileged user and then Ansible has no choice but
+to make the module file world readable as there's no other way for the user
+Ansible connects as to save the file so that the user that we're becoming can
+read it.
+
+If any of the parameters passed to the module are sensitive in nature then
+those pieces of data are readable by reading the module file for the duration
+of the Ansible module execution.  Once the module is done executing Ansible
+will delete the temporary file.  If you trust the client machines then there's
+no problem here.  If you do not trust the client machines then this is
+a potential danger.
+
+Ways to resolve this include:
+
+* Use :ref:`pipelining`.  When pipelining is enabled, Ansible doesn't save the
+  module to a temporary file on the client.  Instead it pipes the module to
+  the remote python interpreter's stdin.  Pipelining does not work for
+  non-python modules.
+
+* Don't perform an action on the remote machine by becoming an unprivileged
+  user.  Temporary files are protected by UNIX file permissions when you
+  become root or do not use become.
+
+Connection Plugin Support
+=========================
+
+Privilege escalation methods must also be supported by the connection plugin
+used.   Most connection plugins will warn if they do not support become.  Some
+will just ignore it as they always run as root (jail, chroot, etc).
+
+Only one method may be enabled per host
+=======================================
+
+Methods cannot be chained.  You cannot use ``sudo /bin/su -`` to become a user,
+you need to have privileges to run the command as that user in sudo or be able
+to su directly to it (the same for pbrun, pfexec or other supported methods).
+
+Can't limit escalation to certain commands
+==========================================
+
+Privilege escalation permissions have to be general.  Ansible does not always
+use a specific command to do something but runs modules (code) from
+a temporary file name which changes every time.  If you have '/sbin/service'
+or '/bin/chmod' as the allowed commands this will fail with ansible as those
+paths won't match with the temporary file that ansible creates to run the
+module.
+
 
 .. seealso::
 
