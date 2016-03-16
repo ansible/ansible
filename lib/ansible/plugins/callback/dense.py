@@ -19,7 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
+from ansible.utils.color import colorize, hostcolor
 from collections import OrderedDict
 
 try:
@@ -111,7 +113,6 @@ class ansi:
     right = '\033[1C'
     left = '\033[1D'
 
-    default = '\033[0;0m'
 
 colors = dict(
     ok=ansi.darkgreen,
@@ -154,11 +155,12 @@ class CallbackModule(CallbackModule_default):
         self.hosts = OrderedDict()
         self.keep = False
         self.shown_title = False
-        self.tasknr = 0
         self.playnr = 0
+        self.tasknr = 0
+        self.handlernr = 0
 
         # Start immediately on the first line
-        sys.stdout.write(ansi.save + ansi.clearline)
+        sys.stdout.write(ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
  
     def _add_host(self, result, status):
@@ -170,7 +172,7 @@ class CallbackModule(CallbackModule_default):
         elif states.index(self.hosts[name]) < states.index(status):
             self.hosts[name] = status
 
-        self._display_progress()
+        self._display_progress(result)
 
         if status in ['changed', 'failed', 'unreachable']:
             # Ensure that tasks with changes/failures stay on-screen
@@ -198,20 +200,25 @@ class CallbackModule(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
-    def _display_progress(self):
+    def _display_progress(self, result):
         # Always rewrite the complete line
         sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
         sys.stdout.write('task %d:' % self.tasknr)
-        sys.stdout.write(ansi.reset + '  ')
+        sys.stdout.write(ansi.reset)
         sys.stdout.flush()
+
+        # Print delegated hostname, if needed
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if delegated_vars:
+            sys.stdout.write(' ' + delegated_vars['ansible_host'] + '>>')
 
         # Print out each host with its own status-color
         for name in self.hosts:
-            sys.stdout.write(colors[self.hosts[name]] + name + ansi.default + ' ')
+            sys.stdout.write(' ' + colors[self.hosts[name]] + name + ansi.reset)
             sys.stdout.flush()
 
-        # Place cursor at start of the line
-        sys.stdout.write(ansi.default)
+        # Reset color
+        sys.stdout.write(ansi.reset)
 
     def v2_playbook_on_play_start(self, play):
         if self._display.verbosity > 1:
@@ -220,6 +227,7 @@ class CallbackModule(CallbackModule_default):
 
         # Reset counters at the start of each play
         self.tasknr = 0
+        self.handlernr = 0
         self.playnr += 1
         self.play = play
 
@@ -228,7 +236,6 @@ class CallbackModule(CallbackModule_default):
             sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline + ansi.bold)
         else:
             sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
-        sys.stdout.flush()
 
         # Write the next play on screen IN UPPERCASE, and make it permanent
         name = play.get_name().strip()
@@ -245,7 +252,9 @@ class CallbackModule(CallbackModule_default):
 
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
+            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
+        else:
+            sys.stdout.write(ansi.restore + ansi.underline)
 
         # Reset counters at the start of each task
         self.keep = False
@@ -258,11 +267,40 @@ class CallbackModule(CallbackModule_default):
             self.tasknr += 1
 
         # Write the next task on screen (behind the prompt is the previous output)
-        sys.stdout.write(ansi.restore + ansi.underline)
-        sys.stdout.write('task %d:' % self.tasknr)
+        sys.stdout.write('task %d.' % self.tasknr)
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 #        self._display_progress()
+
+    def v2_playbook_on_handler_task_start(self, task):
+        if self._display.verbosity >= 2:
+            self.super_ref.v2_playbook_on_handler_task_start(task)
+            return
+
+        # Leave the previous task on screen (as it has changes/errors)
+        if self._display.verbosity == 0 and self.keep:
+            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
+        else:
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.underline)
+
+        # Reset counters at the start of each handler
+        self.keep = False
+        self.shown_title = False
+        self.hosts = OrderedDict()
+        self.task = task
+
+        # Write the next task on screen (behind the prompt is the previous output)
+        sys.stdout.write('handler %d.' % self.handlernr)
+        sys.stdout.write(ansi.reset)
+        sys.stdout.flush()
+#        self._display_progress()
+
+    def v2_playbook_on_cleanup_task_start(self, task):
+        if self._display.verbosity >= 2:
+            self.super_ref.v2_playbook_on_cleanup_task_start(start)
+            return
+
+        self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if self._display.verbosity >= 2:
@@ -331,6 +369,43 @@ class CallbackModule(CallbackModule_default):
         else:
             sys.stdout.write(ansi.restore + ansi.clearline)
 
-        sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT' + ansi.default)
-        sys.stdout.write(ansi.reset)
+        self.keep = False
+
+        sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT' + ansi.reset)
+        sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
+
+    def v2_playbook_on_stats(self, stats):
+        if self._display.verbosity >= 2:
+            self.super_ref.v2_playbook_on_stats(stats)
+            return
+
+        # In normal mode screen output should be sufficient
+        elif self._display.verbosity == 0:
+            return
+
+        if self.keep:
+            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline + ansi.bold)
+        else:
+            sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
+
+        sys.stdout.write('SUMMARY')
+
+        # FIXME: Reports 'module' object C not having attribute 'COLOR_OK' ?? Doing default instead :-/
+        self.super_ref.v2_playbook_on_stats(stats)
+        return
+
+        sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+        sys.stdout.flush()
+
+        hosts = sorted(stats.processed.keys())
+        for h in hosts:
+            t = stats.summarize(h)
+            self._display.display(u"%s : %s %s %s %s" % (
+                hostcolor(h, t),
+                colorize(u'ok', t['ok'], C.COLOR_OK),
+                colorize(u'changed', t['changed'], C.COLOR_CHANGED),
+                colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
+                colorize(u'failed', t['failures'], C.COLOR_ERROR)),
+                screen_only=True
+            )
