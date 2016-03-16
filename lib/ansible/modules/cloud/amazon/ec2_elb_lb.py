@@ -909,7 +909,7 @@ class ElbManager(object):
     def _set_stickiness_policy(self, elb_info, listeners_dict, policy, **policy_attrs):
         for p in getattr(elb_info.policies, policy_attrs['attr']):
             if str(p.__dict__['policy_name']) == str(policy[0]):
-                if str(p.__dict__[policy_attrs['dict_key']]) != str(policy_attrs['param_value']):
+                if str(p.__dict__[policy_attrs['dict_key']]) != str(policy_attrs['param_value'] or 0):
                     self._set_listener_policy(listeners_dict)
                     self._update_policy(policy_attrs['param_value'], policy_attrs['method'], policy_attrs['attr'], policy[0])
                     self.changed = True
