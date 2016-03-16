@@ -506,13 +506,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)
-            if 'stderr' in res and res['stderr'].startswith(u'Traceback'):
-                data['exception'] = res['stderr']
-            else:
-                data['msg'] = "MODULE FAILURE"
-                data['module_stdout'] = res.get('stdout', u'')
-                if 'stderr' in res:
-                    data['module_stderr'] = res['stderr']
+            data['msg'] = "MODULE FAILURE"
+            data['module_stdout'] = res.get('stdout', u'')
+            if 'stderr' in res:
+                data['module_stderr'] = res['stderr']
+                if res['stderr'].startswith(u'Traceback'):
+                    data['exception'] = res['stderr']
 
         # pre-split stdout into lines, if stdout is in the data and there
         # isn't already a stdout_lines value there
