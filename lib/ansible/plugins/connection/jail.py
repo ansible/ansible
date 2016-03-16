@@ -45,7 +45,7 @@ class Connection(ConnectionBase):
     transport = 'jail'
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
-    has_pipelining = False
+    has_pipelining = True
     # Some become_methods may work in v2 (sudo works for other chroot-based
     # plugins while su seems to be failing).  If some work, check chroot.py to
     # see how to disable just some methods.
@@ -118,13 +118,6 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the jail '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-
-        # TODO: Check whether we can send the command to stdin via
-        # p.communicate(in_data)
-        # If we can, then we can change this plugin to has_pipelining=True and
-        # remove the error if in_data is given.
-        if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         p = self._buffered_exec_command(cmd)
 
