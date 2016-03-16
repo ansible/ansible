@@ -79,6 +79,7 @@ options:
         match with all protocols and is taken as default when this option is
         omitted.
     required: false
+    default: null
   source:
     description:
       - Source specification. Address can be either a network name,
@@ -99,6 +100,7 @@ options:
         Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
         before the address specification inverts the sense of the address.
     required: false
+    default: null
   destination:
     description:
       - Destination specification. Address can be either a network name,
@@ -119,6 +121,7 @@ options:
         Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
         before the address specification inverts the sense of the address.
     required: false
+    default: null
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -127,6 +130,7 @@ options:
         specified as an array and work in short-circuit fashion, i.e. if one
         extension yields false, evaluation will stop.
     required: false
+    default: []
   jump:
     description:
       - This specifies the target of the rule; i.e., what to do if the packet
@@ -137,12 +141,14 @@ options:
         is not used), then matching the rule will have no effect on the
         packet's fate, but the counters on the rule will be incremented.
     required: false
+    default: null
   goto:
     description:
       - This specifies that the processing should continue in a user specified
         chain. Unlike the jump argument return will not continue processing in
         this chain but instead in the chain that called us via jump.
     required: false
+    default: null
   in_interface:
     description:
       - Name of an interface via which a packet was received (only for packets
@@ -152,6 +158,7 @@ options:
         this name will match. If this option is omitted, any interface name
         will match.
     required: false
+    default: null
   out_interface:
     description:
       - Name of an interface via which a packet is going to be sent (for
@@ -161,6 +168,7 @@ options:
         with this name will match. If this option is omitted, any interface
         name will match.
     required: false
+    default: null
   fragment:
     description:
       - This means that the rule only refers to second and further fragments
@@ -170,11 +178,13 @@ options:
         fragment argument, the rule will only match head fragments, or
         unfragmented packets.
     required: false
+    default: null
   set_counters:
     description:
       - This enables the administrator to initialize the packet and byte
         counters of a rule (during INSERT, APPEND, REPLACE operations).
     required: false
+    default: null
   source_port:
     description:
       - "Source port or port range specification. This can either be a service
@@ -183,6 +193,7 @@ options:
         if the last is omitted, '65535' is assumed. If the first port is
         greater than the second one they will be swapped."
     required: false
+    default: null
   destination_port:
     description:
       - "Destination port or port range specification. This can either be
@@ -191,6 +202,7 @@ options:
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped."
     required: false
+    default: null
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
@@ -198,6 +210,7 @@ options:
         rule also specifies one of the following protocols: tcp, udp, dccp or
         sctp."
     required: false
+    default: null
   set_dscp_mark:
     version_added: "2.1"
     description:
@@ -205,30 +218,37 @@ options:
         It takes either an integer or hex value. Mutually exclusive with
         C(dscp_mark_class)."
     required: false
+    default: null
   set_dscp_mark_class:
     version_added: "2.1"
     description:
       - "This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark. Mutually exclusive with
         C(dscp_mark)."
+    required: false
+    default: null
   comment:
     description:
       - "This specifies a comment that will be added to the rule"
     required: false
+    default: null
   ctstate:
     description:
       - "ctstate is a list of the connection states to match in the conntrack module.
         Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED', 'UNTRACKED', 'SNAT', 'DNAT'"
     required: false
+    default: []
   limit:
     description:
       - "Specifies the maximum average number of matches to allow per second. The number can specify units explicitly, using `/second', `/minute', `/hour' or `/day', or parts of them (so `5/second' is the same as `5/s')."
     required: false
+    default: null
   limit_burst:
     version_added: "2.1"
     description:
       - "Specifies the maximum burst before the above limit kicks in."
     required: false
+    default: null
 '''
 
 EXAMPLES = '''
