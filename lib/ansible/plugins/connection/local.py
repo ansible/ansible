@@ -43,10 +43,7 @@ except ImportError:
 class Connection(ConnectionBase):
     ''' Local based connections '''
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object '''
-        return 'local'
+    transport = 'local'
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
