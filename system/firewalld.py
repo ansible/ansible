@@ -260,7 +260,7 @@ def main():
         supports_check_mode=True
     )
     if module.params['source'] == None and module.params['permanent'] == None:
-        module.fail(msg='permanent is a required parameter')
+        module.fail_json(msg='permanent is a required parameter')
 
     if not HAS_FIREWALLD:
         module.fail_json(msg='firewalld and its python 2 module are required for this module')
