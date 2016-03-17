@@ -71,6 +71,9 @@ There's a useful test script in the source checkout for ansible::
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
+For instructions on setting up ansible from source, please see
+:doc:`intro_installation`.
+
 Let's run the script you just wrote with that::
 
     ansible/hacking/test-module -m ./timetest.py
