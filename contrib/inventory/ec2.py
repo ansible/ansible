@@ -83,9 +83,15 @@ When run against a specific host, this script returns the following variables:
  - ec2_state_reason
  - ec2_status
  - ec2_subnet_id
+ - ec2_subnet_name
+ - ec2_subnet_cidr
+ - ec2_subnet_tag_<tag>
  - ec2_tenancy
  - ec2_virtualization_type
  - ec2_vpc_id
+ - ec2_vpc_name
+ - ec2_vpc_cidr
+ - ec2_vpc_tag_<tag>
 
 These variables are pulled out of a boto.ec2.instance object. There is a lack of
 consistency with variable spellings (camelCase and underscores) since this
@@ -129,6 +135,7 @@ from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
+from boto import vpc
 import six
 
 from six.moves import configparser
@@ -347,8 +354,15 @@ class Ec2Inventory(object):
             'group_by_ami_id',
             'group_by_instance_type',
             'group_by_key_pair',
+            'group_by_vpc_cidr',
             'group_by_vpc_id',
+            'group_by_vpc_name',
+            'group_by_vpc_tags',
             'group_by_security_group',
+            'group_by_subnet_cidr',
+            'group_by_subnet_id',
+            'group_by_subnet_name',
+            'group_by_subnet_tags',
             'group_by_tag_keys',
             'group_by_tag_none',
             'group_by_route53_names',
@@ -364,6 +378,14 @@ class Ec2Inventory(object):
                 setattr(self, option, config.getboolean('ec2', option))
             else:
                 setattr(self, option, True)
+
+        # Will we need to lookup additional information on VPCs and subnets?
+        self.requires_vpc_info = False
+        for option in group_by_options:
+            if getattr(self, option) and \
+                    re.search('(vpc|subnet)_(cidr|name|tags)', option):
+                self.requires_vpc_info = True
+                break
 
         # Do we need to just include hosts that match a pattern?
         try:
@@ -422,6 +444,8 @@ class Ec2Inventory(object):
             self.get_route53_records()
 
         for region in self.regions:
+            if self.requires_vpc_info:
+                self.get_vpc_info(region)
             self.get_instances_by_region(region)
             if self.rds_enabled:
                 self.get_rds_instances_by_region(region)
@@ -619,9 +643,57 @@ class Ec2Inventory(object):
 
         # Select the best destination address
         if instance.subnet_id:
+            subnet_id = instance.subnet_id
+            subnet_info = self.subnet_info.get(subnet_id)
             dest = getattr(instance, self.vpc_destination_variable, None)
             if dest is None:
                 dest = getattr(instance, 'tags').get(self.vpc_destination_variable, None)
+
+            # Inventory: Group by Subnet ID
+            if self.group_by_subnet_id:
+                subnet_id_key = self.to_safe('subnet_id_' + subnet_id)
+                self.push_inventory(subnet_id_key, dest,
+                                    parent_group='subnets')
+
+            if subnet_info:
+                # Inventory: Group by Subnet Name
+                if self.group_by_subnet_name:
+                    subnet_name_key = (
+                        'subnet_name_' + subnet_info.get('name', ''))
+                    self.push_inventory(
+                        subnet_name_key, dest, parent_group='subnets')
+
+                # Inventory: Group by Subnet CIDR
+                if self.group_by_subnet_cidr:
+                    subnet_cidr_key = (
+                        'subnet_cidr_' + subnet_info.get('cidr_block', ''))
+                    self.push_inventory(
+                        subnet_cidr_key, dest, parent_group='subnets')
+                    if self.nested_groups:
+                        self.push_group(
+                            self.inventory, 'subnet_cidrs', subnet_cidr_key)
+
+                # Inventory: Group by Subnet Tags
+                if self.group_by_subnet_tags:
+                    subnet_tags = subnet_info.get('tags')
+                    for k, v in subnet_tags.items():
+                        subnet_tag_key = \
+                            self.to_safe('subnet_tag_{}'.format(k))
+                        self.push_inventory(
+                            subnet_tag_key, dest, parent_group=subnet_tag_key)
+                        if self.nested_groups:
+                            self.push_group(
+                                self.inventory, 'subnet_tags', subnet_tag_key)
+                        if v:
+                            subnet_tagval_key = \
+                                subnet_tag_key + '=' + self.to_safe(v)
+                            if self.nested_groups:
+                                self.push_group(
+                                    self.inventory, subnet_tag_key,
+                                    subnet_tagval_key)
+                            self.push_inventory(
+                                subnet_tagval_key, dest,
+                                parent_group='subnet_tags')
         else:
             dest = getattr(instance, self.destination_variable, None)
             if dest is None:
@@ -644,64 +716,88 @@ class Ec2Inventory(object):
 
         # Inventory: Group by instance ID (always a group of 1)
         if self.group_by_instance_id:
-            self.inventory[instance.id] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', instance.id)
+            self.push_inventory(instance.id, dest, parent_group='instances')
 
         # Inventory: Group by region
         if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
+            self.push_inventory(region, dest, parent_group='regions')
 
         # Inventory: Group by availability zone
         if self.group_by_availability_zone:
-            self.push(self.inventory, instance.placement, dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, instance.placement)
-                self.push_group(self.inventory, 'zones', instance.placement)
+            self.push_inventory(instance.placement, dest, parent_group='zones')
+            if self.nested_groups and self.group_by_region:
+                self.push_group(self.inventory, region, instance.placement)
 
         # Inventory: Group by Amazon Machine Image (AMI) ID
         if self.group_by_ami_id:
             ami_id = self.to_safe(instance.image_id)
-            self.push(self.inventory, ami_id, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'images', ami_id)
+            self.push_inventory(ami_id, dest, parent_group='images')
 
         # Inventory: Group by instance type
         if self.group_by_instance_type:
             type_name = self.to_safe('type_' + instance.instance_type)
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
+            self.push_inventory(type_name, dest, parent_group='types')
 
         # Inventory: Group by key pair
         if self.group_by_key_pair and instance.key_name:
             key_name = self.to_safe('key_' + instance.key_name)
-            self.push(self.inventory, key_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'keys', key_name)
+            self.push_inventory(key_name, dest, parent_group='keys')
 
-        # Inventory: Group by VPC
-        if self.group_by_vpc_id and instance.vpc_id:
-            vpc_id_name = self.to_safe('vpc_id_' + instance.vpc_id)
-            self.push(self.inventory, vpc_id_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'vpcs', vpc_id_name)
+        if instance.vpc_id:
+            vpc_detail = self.vpc_info.get(instance.vpc_id)
+            # Inventory: Group by VPC
+            if self.group_by_vpc_id:
+                vpc_id_name = self.to_safe('vpc_id_' + instance.vpc_id)
+                self.push_inventory(vpc_id_name, dest, parent_group='vpcs')
+
+            if vpc_detail:
+                # Inventory: Group by VPC Name
+                if self.group_by_vpc_name:
+                    vpc_name_key = 'vpc_name_' + vpc_detail.get('name', '')
+                    self.push_inventory(
+                        vpc_name_key, dest, parent_group='vpcs')
+
+                # Inventory: Group by VPC CIDR
+                if self.group_by_vpc_cidr:
+                    vpc_cidr_key = (
+                        'vpc_cidr_' + vpc_detail.get('cidr_block', ''))
+                    self.push_inventory(
+                        vpc_cidr_key, dest, parent_group='vpcs')
+                    if self.nested_groups:
+                        self.push_group(
+                            self.inventory, 'vpc_cidrs', vpc_cidr_key)
+
+                # Inventory: Group by VPC Tags
+                if self.group_by_vpc_tags:
+                    vpc_tags = vpc_detail.get('tags')
+                    for k, v in vpc_tags.items():
+                        vpc_tag_key = \
+                            self.to_safe('vpc_tag_{}'.format(k))
+                        self.push_inventory(
+                            vpc_tag_key, dest, parent_group=vpc_tag_key)
+                        if self.nested_groups:
+                            self.push_group(
+                                self.inventory, 'vpc_tags', vpc_tag_key)
+                        if v:
+                            vpc_tagval_key = \
+                                vpc_tag_key + '=' + self.to_safe(v)
+                            if self.nested_groups:
+                                self.push_group(
+                                    self.inventory, vpc_tag_key,
+                                    vpc_tagval_key)
+                            self.push_inventory(
+                                vpc_tagval_key, dest,
+                                parent_group='vpc_tags')
 
         # Inventory: Group by security group
         if self.group_by_security_group:
             try:
                 for group in instance.groups:
                     key = self.to_safe("security_group_" + group.name)
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
+                    self.push_inventory(key, dest, parent_group='security_groups')
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
                                             'Please upgrade boto >= 2.3.0.']))
-
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
             for k, v in instance.tags.items():
@@ -715,7 +811,7 @@ class Ec2Inventory(object):
                         key = self.to_safe("tag_" + k + "=" + v)
                     else:
                         key = self.to_safe("tag_" + k)
-                    self.push(self.inventory, key, dest)
+                    self.push_inventory(key, dest)
                     if self.nested_groups:
                         self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                         if v:
@@ -725,18 +821,14 @@ class Ec2Inventory(object):
         if self.route53_enabled and self.group_by_route53_names:
             route53_names = self.get_instance_route53_names(instance)
             for name in route53_names:
-                self.push(self.inventory, name, dest)
-                if self.nested_groups:
-                    self.push_group(self.inventory, 'route53', name)
+                self.push_inventory(name, dest, parent_group='route53')
 
         # Global Tag: instances without tags
         if self.group_by_tag_none and len(instance.tags) == 0:
-            self.push(self.inventory, 'tag_none', dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'tags', 'tag_none')
+            self.push_inventory('tag_none', dest, parent_group='tags')
 
         # Global Tag: tag all EC2 instances
-        self.push(self.inventory, 'ec2', dest)
+        self.push_inventory('ec2', dest)
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
@@ -761,46 +853,36 @@ class Ec2Inventory(object):
 
         # Inventory: Group by instance ID (always a group of 1)
         if self.group_by_instance_id:
-            self.inventory[instance.id] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', instance.id)
+            self.push_inventory(instance.id, dest, parent_group='instances')
 
         # Inventory: Group by region
         if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
+            self.push_inventory(region, dest, parent_group='regions')
 
         # Inventory: Group by availability zone
         if self.group_by_availability_zone:
-            self.push(self.inventory, instance.availability_zone, dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, instance.availability_zone)
-                self.push_group(self.inventory, 'zones', instance.availability_zone)
+            self.push_inventory(
+                instance.availability_zone, dest, parent_group='zones')
+            if self.nested_groups and self.group_by_region:
+                self.push_group(
+                    self.inventory, region, instance.availability_zone)
 
         # Inventory: Group by instance type
         if self.group_by_instance_type:
             type_name = self.to_safe('type_' + instance.instance_class)
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
+            self.push_inventory(type_name, dest, parent_group='types')
 
         # Inventory: Group by VPC
         if self.group_by_vpc_id and instance.subnet_group and instance.subnet_group.vpc_id:
             vpc_id_name = self.to_safe('vpc_id_' + instance.subnet_group.vpc_id)
-            self.push(self.inventory, vpc_id_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'vpcs', vpc_id_name)
+            self.push_inventory(vpc_id_name, dest, parent_group='vpcs')
 
         # Inventory: Group by security group
         if self.group_by_security_group:
             try:
                 if instance.security_group:
                     key = self.to_safe("security_group_" + instance.security_group.name)
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
+                    self.push_inventory(key, dest, parent_group='security_groups')
 
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
@@ -809,18 +891,18 @@ class Ec2Inventory(object):
 
         # Inventory: Group by engine
         if self.group_by_rds_engine:
-            self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'rds_engines', self.to_safe("rds_" + instance.engine))
+            self.push_inventory(self.to_safe("rds_" + instance.engine),
+                                dest, parent_group='rds_engines')
 
         # Inventory: Group by parameter group
         if self.group_by_rds_parameter_group:
-            self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'rds_parameter_groups', self.to_safe("rds_parameter_group_" + instance.parameter_group.name))
+            self.push_inventory(
+                self.to_safe("rds_parameter_group_" + \
+                             instance.parameter_group.name),
+                dest, parent_group='rds_parameter_groups')
 
         # Global Tag: all RDS instances
-        self.push(self.inventory, 'rds', dest)
+        self.push_inventory('rds', dest)
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
@@ -853,30 +935,25 @@ class Ec2Inventory(object):
 
         # Inventory: Group by instance ID (always a group of 1)
         if self.group_by_instance_id:
-            self.inventory[cluster['CacheClusterId']] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', cluster['CacheClusterId'])
+            self.push_inventory(cluster['CacheClusterId'],
+                                dest, parent_group='instances')
 
         # Inventory: Group by region
         if self.group_by_region and not is_redis:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
+            self.push_inventory(region, dest, parent_group='regions')
 
         # Inventory: Group by availability zone
         if self.group_by_availability_zone and not is_redis:
-            self.push(self.inventory, cluster['PreferredAvailabilityZone'], dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, cluster['PreferredAvailabilityZone'])
-                self.push_group(self.inventory, 'zones', cluster['PreferredAvailabilityZone'])
+            self.push_inventory(cluster['PreferredAvailabilityZone'],
+                                dest, parent_group='zones')
+            if self.nested_groups and self.group_by_region:
+                self.push_group(self.inventory, region,
+                                cluster['PreferredAvailabilityZone'])
 
         # Inventory: Group by node type
         if self.group_by_instance_type and not is_redis:
             type_name = self.to_safe('type_' + cluster['CacheNodeType'])
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
+            self.push_inventory(type_name, dest, parent_group='types')
 
         # Inventory: Group by VPC (information not available in the current
         # AWS API version for ElastiCache)
@@ -890,30 +967,29 @@ class Ec2Inventory(object):
             if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
                 for security_group in cluster['SecurityGroups']:
                     key = self.to_safe("security_group_" + security_group['SecurityGroupId'])
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
+                    self.push_inventory(key, dest, parent_group='security_groups')
 
         # Inventory: Group by engine
         if self.group_by_elasticache_engine and not is_redis:
-            self.push(self.inventory, self.to_safe("elasticache_" + cluster['Engine']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_engines', self.to_safe(cluster['Engine']))
+            self.push_inventory(
+                cluster['Engine'], dest, parent_group='elasticache_engines',
+                prefix='elasticache_', to_safe=True)
 
         # Inventory: Group by parameter group
         if self.group_by_elasticache_parameter_group:
-            self.push(self.inventory, self.to_safe("elasticache_parameter_group_" + cluster['CacheParameterGroup']['CacheParameterGroupName']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_parameter_groups', self.to_safe(cluster['CacheParameterGroup']['CacheParameterGroupName']))
+            self.push_inventory(
+                cluster['CacheParameterGroup']['CacheParameterGroupName'],
+                dest, parent_group='elasticache_parameter_groups',
+                prefix='elasticache_parameter_group_', to_safe=True)
 
         # Inventory: Group by replication group
         if self.group_by_elasticache_replication_group and 'ReplicationGroupId' in cluster and cluster['ReplicationGroupId']:
-            self.push(self.inventory, self.to_safe("elasticache_replication_group_" + cluster['ReplicationGroupId']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_replication_groups', self.to_safe(cluster['ReplicationGroupId']))
+            self.push_inventory(cluster['ReplicationGroupId'], dest,
+                parent_group='elasticache_replication_groups',
+                prefix='elasticache_replication_group_', to_safe=True)
 
         # Global Tag: all ElastiCache clusters
-        self.push(self.inventory, 'elasticache_clusters', cluster['CacheClusterId'])
+        self.push_inventory('elasticache_clusters', cluster['CacheClusterId'])
 
         host_info = self.get_host_info_dict_from_describe_dict(cluster)
 
@@ -951,24 +1027,22 @@ class Ec2Inventory(object):
 
         # Inventory: Group by region
         if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
+            self.push_inventory(region, dest, parent_group='regions')
 
         # Inventory: Group by availability zone
         if self.group_by_availability_zone:
-            self.push(self.inventory, cluster['PreferredAvailabilityZone'], dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, cluster['PreferredAvailabilityZone'])
-                self.push_group(self.inventory, 'zones', cluster['PreferredAvailabilityZone'])
+            self.push_inventory(
+                cluster['PreferredAvailabilityZone'], dest,
+                parent_group='zones')
+            if self.nested_groups and self.group_by_region:
+                self.push_group(
+                    self.inventory, region,
+                    cluster['PreferredAvailabilityZone'])
 
         # Inventory: Group by node type
         if self.group_by_instance_type:
             type_name = self.to_safe('type_' + cluster['CacheNodeType'])
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
+            self.push_inventory(type_name, dest, parent_group='types')
 
         # Inventory: Group by VPC (information not available in the current
         # AWS API version for ElastiCache)
@@ -982,15 +1056,13 @@ class Ec2Inventory(object):
             if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
                 for security_group in cluster['SecurityGroups']:
                     key = self.to_safe("security_group_" + security_group['SecurityGroupId'])
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
+                    self.push_inventory(key, dest, parent_group='security_groups')
 
         # Inventory: Group by engine
         if self.group_by_elasticache_engine:
-            self.push(self.inventory, self.to_safe("elasticache_" + cluster['Engine']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_engines', self.to_safe("elasticache_" + cluster['Engine']))
+            self.push_inventory(
+                cluster['Engine'], dest, parent_group='elasticache_engines',
+                prefix='elasticache_', to_safe=True)
 
         # Inventory: Group by parameter group (done at cluster level)
 
@@ -998,7 +1070,9 @@ class Ec2Inventory(object):
 
         # Inventory: Group by ElastiCache Cluster
         if self.group_by_elasticache_cluster:
-            self.push(self.inventory, self.to_safe("elasticache_cluster_" + cluster['CacheClusterId']), dest)
+            self.push_inventory(
+                ("elasticache_cluster_" + cluster['CacheClusterId']), dest,
+                to_safe=True)
 
         # Global Tag: all ElastiCache nodes
         self.push(self.inventory, 'elasticache_nodes', dest)
@@ -1029,15 +1103,12 @@ class Ec2Inventory(object):
 
         # Inventory: Group by ID (always a group of 1)
         if self.group_by_instance_id:
-            self.inventory[replication_group['ReplicationGroupId']] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', replication_group['ReplicationGroupId'])
+            self.push_inventory(replication_group['ReplicationGroupId'],
+                dest, parent_group='instances')
 
         # Inventory: Group by region
         if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
+            self.push_inventory(region, dest, parent_group='regions')
 
         # Inventory: Group by availability zone (doesn't apply to replication groups)
 
@@ -1051,12 +1122,14 @@ class Ec2Inventory(object):
 
         # Inventory: Group by engine (replication groups are always Redis)
         if self.group_by_elasticache_engine:
-            self.push(self.inventory, 'elasticache_redis', dest)
+            self.push_inventory('elasticache_redis', dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'elasticache_engines', 'redis')
 
         # Global Tag: all ElastiCache clusters
-        self.push(self.inventory, 'elasticache_replication_groups', replication_group['ReplicationGroupId'])
+        self.push_inventory(
+            'elasticache_replication_groups',
+            replication_group['ReplicationGroupId'])
 
         host_info = self.get_host_info_dict_from_describe_dict(replication_group)
 
@@ -1153,6 +1226,23 @@ class Ec2Inventory(object):
                 #print key
                 #print type(value)
                 #print value
+
+        # Include additional VPC context, if we have it.
+        if hasattr(instance, 'vpc_id') and instance.vpc_id and self.vpc_info:
+            vpc_detail = self.vpc_info.get(instance.vpc_id)
+            instance_vars["ec2_vpc_name"] = vpc_detail.get('name', '')
+            instance_vars["ec2_vpc_cidr"] = vpc_detail.get('cidr_block', '')
+            for k, v in vpc_detail.get('tags', {}).items():
+                instance_vars["ec2_vpc_tag_{}".format(k)] = v
+
+        if hasattr(instance, 'subnet_id') and instance.subnet_id and \
+                self.subnet_info:
+            subnet_detail = self.subnet_info.get(instance.subnet_id)
+            instance_vars["ec2_subnet_name"] = subnet_detail.get('name', '')
+            instance_vars["ec2_subnet_cidr"] = subnet_detail.get('cidr_block',
+                                                                 '')
+            for k, v in subnet_detail.get('tags', {}).items():
+                instance_vars["ec2_subnet_tag_{}".format(k)] = v
 
         return instance_vars
 
@@ -1260,6 +1350,31 @@ class Ec2Inventory(object):
         instance = self.get_instance(region, instance_id)
         return self.json_format_dict(self.get_host_info_dict_from_instance(instance), True)
 
+    def get_vpc_info(self, region):
+        '''
+        Retrieves and stores information on AWS VPCs and VPC subnets for a
+        given region
+        '''
+        self.vpc_info = self.subnet_info = defaultdict(dict)
+        conn = self.connect_to_aws(boto.vpc, region)
+
+        subnets = conn.get_all_subnets()
+        vpcs = conn.get_all_vpcs()
+
+        self.subnet_info = {
+                subnet.id: {'cidr_block': subnet.cidr_block,
+                            'name': subnet.tags.get('Name', ''),
+                            'tags': subnet.tags}
+                for subnet in subnets
+            }
+
+        self.vpc_info = {
+                vpc.id: {'cidr_block': vpc.cidr_block,
+                         'name': vpc.tags.get('Name', ''),
+                         'tags': vpc.tags}
+                for vpc in vpcs
+            }
+
     def push(self, my_dict, key, element):
         ''' Push an element onto an array that may not have been defined in
         the dict '''
@@ -1278,6 +1393,27 @@ class Ec2Inventory(object):
         child_groups = parent_group.setdefault('children', [])
         if element not in child_groups:
             child_groups.append(element)
+
+    def push_inventory(self, key, resource, parent_group=None,
+                       prefix=None, to_safe=False):
+        '''
+        Push the given resource into our inventory at the given key.
+        If a parent group is specified, and nested inventory is enabled,
+        add the resource's key to the appropriate inventory sub-group as well.
+
+        If prefix is specified, then the top level inventory entry
+        for this resource will be have the given prefix preprended to its key.
+
+        The key will remain unmodified in any subgroups.
+        If to_safe is specified, uses to_safe() on all keys
+        '''
+        prefixed = (prefix + key) if prefix else key
+        if to_safe:
+            prefixed = self.to_safe(prefixed)
+            key = self.to_safe(key)
+        self.push(self.inventory, prefixed, resource)
+        if self.nested_groups and parent_group:
+            self.push_group(self.inventory, parent_group, key)
 
     def get_inventory_from_cache(self):
         ''' Reads the inventory from the cache file and returns it as a JSON
