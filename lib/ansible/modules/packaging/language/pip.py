@@ -276,7 +276,7 @@ def main():
             editable=dict(default='yes', type='bool', required=False),
             chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
-            umask=dict(reqiured=False,default=None),
+            umask=dict(required=False,default=None),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
