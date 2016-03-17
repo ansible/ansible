@@ -1263,11 +1263,7 @@ class AnsibleModule(object):
                 return (str, None)
             return str
         try:
-            result = None
-            if not locals:
-                result = literal_eval(str)
-            else:
-                result = literal_eval(str, None, locals)
+            result = literal_eval(str)
             if include_exceptions:
                 return (result, None)
             else:
