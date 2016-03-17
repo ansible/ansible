@@ -17,3 +17,7 @@ To install the Ansible DEB package and resolve dependencies:
 
     sudo dpkg -i <package-file>
     sudo apt-get -fy install
+
+Or, if you are running Debian Stretch (or later) or Ubuntu Xenial (or later):
+
+    sudo apt install <package-file>
