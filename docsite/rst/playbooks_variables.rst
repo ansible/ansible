@@ -730,6 +730,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
 The ``key=value`` form is obviously simpler, but it's there if you need it!
 
+.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
+          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
+
 As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
 
     --extra-vars "@some_file.json"
