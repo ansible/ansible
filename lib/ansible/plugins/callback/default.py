@@ -157,7 +157,7 @@ class CallbackModule(CallbackBase):
                         self._display.display(diff)
         elif 'diff' in result._result and result._result['diff'] and result._result.get('changed', False):
             diff = self._get_diff(result._result['diff'])
-if diff:
+            if diff:
                 self._display.display(diff)
 
     def v2_playbook_item_on_ok(self, result):
