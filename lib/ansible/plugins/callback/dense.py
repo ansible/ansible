@@ -60,7 +60,6 @@ import sys
 #  + Modify Ansible mechanism so we don't need to use sys.stdout directly
 #  + Find an elegant solution for progress bar line wrapping
 
-# When using -vv or higher, simply do the default action
 
 # FIXME: Importing constants as C simply does not work, beats me :-/
 #from ansible import constants as C
@@ -157,6 +156,20 @@ class CallbackModule_dense(CallbackModule_default):
         self.super_ref = super(CallbackModule, self)
         self.super_ref.__init__()
 
+        # Attributes to remove from results for more density
+        self.removed_attributes = (
+            'changed',
+            'delta',
+            'diff',
+            'end',
+            'failed',
+            'failed_when_result',
+            'invocation',
+            'start',
+            'stdout_lines',
+        )
+
+        # Initiate data structures
         self.hosts = OrderedDict()
         self.keep = False
         self.shown_title = False
@@ -166,7 +179,7 @@ class CallbackModule_dense(CallbackModule_default):
         # Start immediately on the first line
         sys.stdout.write(ansi.save + ansi.reset + ansi.clearline)
         sys.stdout.flush()
- 
+
     def _add_host(self, result, status):
         name = result._host.get_name()
 
@@ -188,6 +201,8 @@ class CallbackModule_dense(CallbackModule_default):
         # Print progress bar
         self._display_progress(result)
 
+#        # Ensure that tasks with changes/failures stay on-screen, and during diff-mode
+#        if status in ['changed', 'failed', 'unreachable'] or (result.get('_diff_mode', False) and result._resultget('diff', False)):
         # Ensure that tasks with changes/failures stay on-screen
         if status in ['changed', 'failed', 'unreachable']:
             self.keep = True
@@ -199,8 +214,7 @@ class CallbackModule_dense(CallbackModule_default):
 
     def _clean_results(self, result):
         # Remove non-essential atributes
-        removed_attributes = ('changed', 'delta', 'end', 'failed', 'failed_when_result', 'invocation', 'start', 'stdout_lines')
-        for attr in removed_attributes:
+        for attr in self.removed_attributes:
             if attr in result:
                 del(result[attr])
 
@@ -212,16 +226,11 @@ class CallbackModule_dense(CallbackModule_default):
 
     def _handle_exceptions(self, result):
         if 'exception' in result:
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = result['exception'].strip().split('\n')[-1]
-                msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "An exception occurred during task execution. The full traceback is:\n" + result['exception']
-
-            # finally, remove the exception from the result so it's not shown every time
+            # Remove the exception from the result so it's not shown every time
             del result['exception']
-            return msg
+
+            if self._display.verbosity == 1:
+                return "An exception occurred during task execution. To see the full traceback, use -vvv."
 
     def _display_progress(self, result=None):
         # Always rewrite the complete line
@@ -237,6 +246,11 @@ class CallbackModule_dense(CallbackModule_default):
                 sys.stdout.write(self.hosts[name]['delegate'] + '>')
             sys.stdout.write(colors[self.hosts[name]['state']] + name + ansi.reset)
             sys.stdout.flush()
+
+        # If we are expecting diff output, show it on a new line
+        if result._result.get('diff', False):
+            sys.stdout.write('\n')
+            self.keep = False
 
     def _display_task_banner(self):
         if not self.shown_title:
@@ -379,6 +393,11 @@ class CallbackModule_dense(CallbackModule_default):
     def v2_runner_on_include(self, included_file):
         pass
 
+#    def v2_on_file_diff(self, result):
+#        if result._result.get('diff', False):
+#            self._display_task_banner()
+#        self.super_ref.v2_on_file_diff(result)
+
     def v2_playbook_item_on_ok(self, result):
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
@@ -431,6 +450,7 @@ class CallbackModule_dense(CallbackModule_default):
                 screen_only=True
             )
 
+# When using -vv or higher, simply do the default action
 if display.verbosity >= 2:
     CallbackModule = CallbackModule_default
 else:
