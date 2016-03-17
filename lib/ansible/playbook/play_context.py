@@ -371,12 +371,15 @@ class PlayContext(Base):
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
-                if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
-                    setattr(new_info, attr, delegated_vars[variable_name])
-                    attrs_considered.append(attr)
+                # if delegation task ONLY use delegated host vars, avoid delegated FOR host vars
+                if task.delegate_to is not None:
+                    if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
+                        setattr(new_info, attr, delegated_vars[variable_name])
+                        attrs_considered.append(attr)
                 elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
                     attrs_considered.append(attr)
+                # no else, as no other vars should be considered
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
