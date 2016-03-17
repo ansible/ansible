@@ -126,7 +126,8 @@ class CallbackModule(CallbackBase):
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             args = ' %s' % args
-        self._display.banner("TASK [%s%s]" % (task.get_name().strip(), args))
+        if C.DISPLAY_INCLUDE_TASKS or task.action != 'include':
+            self._display.banner("TASK [%s%s]" % (task.get_name().strip(), args))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
@@ -213,8 +214,9 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        self._display.display(msg, color=C.COLOR_SKIP)
+        if C.DISPLAY_INCLUDE TASKS:
+            msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")
