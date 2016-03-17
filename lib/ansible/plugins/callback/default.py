@@ -214,7 +214,7 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        if C.DISPLAY_INCLUDE TASKS:
+        if C.DISPLAY_INCLUDE_TASKS:
             msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
             self._display.display(msg, color=C.COLOR_SKIP)
 
