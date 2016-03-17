@@ -103,9 +103,9 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_ERROR)
+            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_UNREACHABLE)
         else:
-            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
+            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_UNREACHABLE)
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
