@@ -495,6 +495,24 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
+.. _ansible_version:
+
+Ansible version
+```````````````
+
+.. versionadded:: 2.0
+
+To adapt playbook behavior to specific version of ansible, a variable ansible_version is available, with the following
+structure::
+
+    "ansible_version": {
+        "full": "2.0.0.2",
+        "major": 2,
+        "minor": 0,
+        "revision": 0,
+        "string": "2.0.0.2"
+    }
+
 .. _fact_caching:
 
 Fact Caching
