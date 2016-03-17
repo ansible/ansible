@@ -256,6 +256,15 @@ saving stdout to an insecure file) or made sure that all of your playbooks
 explicitly added the ``no_log: True`` parameter to tasks which have sensistive
 values   See :ref:`keep_secret_data` for more information.
 
+.. _display_include_tasks:
+
+display_include_tasks
+=====================
+
+If set to `False`, ansible will not display any status nor task header lines for an include task that is skipped. The default behavior is to display include tasks:
+
+    display_include_tasks=True
+
 .. _display_skipped_hosts:
 
 display_skipped_hosts
