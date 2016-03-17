@@ -350,6 +350,7 @@ class Ec2Inventory(object):
             'group_by_vpc_id',
             'group_by_security_group',
             'group_by_tag_keys',
+            'group_by_tag_values',
             'group_by_tag_none',
             'group_by_route53_names',
             'group_by_rds_engine',
@@ -703,7 +704,7 @@ class Ec2Inventory(object):
                                             'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
-        if self.group_by_tag_keys:
+        if self.group_by_tag_keys or self.group_by_tag_values:
             for k, v in instance.tags.items():
                 if self.expand_csv_tags and v and ',' in v:
                     values = map(lambda x: x.strip(), v.split(','))
@@ -711,15 +712,20 @@ class Ec2Inventory(object):
                     values = [v]
 
                 for v in values:
+                    keys = []
                     if v:
-                        key = self.to_safe("tag_" + k + "=" + v)
+                        if self.group_by_tag_keys:
+                            keys.append(self.to_safe("tag_" + k + "=" + v))
+                        if self.group_by_tag_values:
+                            keys.append(self.to_safe(v))
                     else:
-                        key = self.to_safe("tag_" + k)
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                        if v:
-                            self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+                        keys.append(self.to_safe("tag_" + k))
+                    for key in keys:
+                        self.push(self.inventory, key, dest)
+                        if self.nested_groups:
+                            self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                            if v:
+                                self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
