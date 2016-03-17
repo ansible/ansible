@@ -133,6 +133,10 @@ EXAMPLES = '''
 '''
 
 
+RETURN = '''
+'''
+
+
 import datetime
 import fileinput
 import os
