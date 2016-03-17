@@ -21,6 +21,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+import copy
 import pipes
 import random
 import re
@@ -190,6 +192,57 @@ class PlayContext(Base):
     _start_at_task    = FieldAttribute(isa='string')
     _step             = FieldAttribute(isa='bool', default=False)
     _diff             = FieldAttribute(isa='bool', default=False)
+
+    DEFAULT_OPTIONS = dict(
+        verbose=0,
+        inventory=C.DEFAULT_HOST_LIST,
+        listhosts=False,
+        subset=C.DEFAULT_SUBSET,
+        module_path=C.DEFAULT_MODULE_PATH,
+        extra_vars=[],
+        forks=C.DEFAULT_FORKS,
+        ask_vault_pass=C.DEFAULT_ASK_VAULT_PASS,
+        vault_password_file=C.DEFAULT_VAULT_PASSWORD_FILE,
+        new_vault_password_file='',
+        output_file='',
+        tags='all',
+        skip_tags=False,
+        one_line=False,
+        tree=None,
+        ask_pass=C.DEFAULT_ASK_PASS,
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE,
+        remote_user=C.DEFAULT_REMOTE_USER,
+        connection=C.DEFAULT_TRANSPORT,
+        timeout=C.DEFAULT_TIMEOUT,
+        ssh_common_args=None,
+        sftp_extra_args=None,
+        scp_extra_args=None,
+        ssh_extra_args=None,
+        sudo=False,
+        sudo_user=None,
+        su=C.DEFAULT_SU,
+        su_user=C.DEFAULT_SU_USER,
+        become=C.DEFAULT_BECOME,
+        become_method=C.DEFAULT_BECOME_METHOD,
+        become_user=C.DEFAULT_BECOME_USER,
+        ask_sudo_pass=C.DEFAULT_ASK_SUDO_PASS,
+        ask_su_pass=C.DEFAULT_ASK_SU_PASS,
+        become_ask_pass=False,
+        poll_interval=C.DEFAULT_POLL_INTERVAL,
+        seconds=0,
+        check=False,
+        syntax=False,
+        diff=False,
+        force_handlers=C.DEFAULT_FORCE_HANDLERS,
+        flush_cache=False,
+    )
+
+    @classmethod
+    def options_factory(cls, **options):
+        Options = collections.namedtuple('Options', cls.DEFAULT_OPTIONS.keys())
+        with_defaults = copy.copy(cls.DEFAULT_OPTIONS)
+        with_defaults.update(options)
+        return Options(**with_defaults)
 
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
