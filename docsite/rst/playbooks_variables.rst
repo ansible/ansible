@@ -500,7 +500,7 @@ In this pattern however, you could also write a fact module as well, and may wis
 Ansible version
 ```````````````
 
-.. versionadded:: 2.0
+.. versionadded:: 1.8
 
 To adapt playbook behavior to specific version of ansible, a variable ansible_version is available, with the following
 structure::
