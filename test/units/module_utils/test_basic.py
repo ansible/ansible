@@ -99,6 +99,12 @@ class TestModuleUtilsBasic(unittest.TestCase):
         mock_import.side_effect = _mock_import
         mod = builtins.__import__('ansible.module_utils.basic')
 
+    # FIXME: doesn't work yet
+    #@patch.object(builtins, 'bytes')
+    #def test_module_utils_basic_bytes(self, mock_bytes):
+    #    mock_bytes.side_effect = NameError()
+    #    from ansible.module_utils import basic
+
     @patch.object(builtins, '__import__')
     @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic_import_literal_eval(self, mock_import):
