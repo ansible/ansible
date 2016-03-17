@@ -35,9 +35,9 @@ import sys
 #
 #  + On screen there should only be relevant stuff
 #    - How far are we ? (during run, last line)
-#    - What issues did we have
-#    - What changes have occured
-#    - Diff output
+#    - What issues occurred
+#    - What changes occurred
+#    - Diff output (in diff-mode)
 #
 #  + If verbosity increases, act as default output
 #    So that users can easily switch to default for troubleshooting
@@ -424,15 +424,16 @@ class CallbackModule_dense(CallbackModule_default):
         sys.stdout.flush()
 
     def v2_playbook_on_stats(self, stats):
-        # In normal mode screen output should be sufficient
+        if self.keep:
+            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+        else:
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+
+        # In normal mode screen output should be sufficient, summary is redundant
         if self._display.verbosity == 0:
             return
 
-        if self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline + ansi.bold)
-        else:
-            sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
-
+        sys.stdout.write(ansi.bold + ansi.underline)
         sys.stdout.write('SUMMARY')
 
         sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
