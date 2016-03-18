@@ -77,7 +77,7 @@ EXAMPLES = '''
     win_updates: category_names=SecurityUpdates
 
     # Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
-    win_updates: category_names=SecurityUpdates status=searched log_path=c:/ansible_wu.txt
+    win_updates: category_names=SecurityUpdates state=searched log_path=c:/ansible_wu.txt
 '''
 
 RETURN = '''
