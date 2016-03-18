@@ -108,7 +108,6 @@ EXAMPLES = '''
 '''
 
 import re
-import logging
 
 decimal_point = re.compile(r"(\d+)")
 
