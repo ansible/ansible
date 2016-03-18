@@ -329,7 +329,7 @@ class StrategyBase:
                                 self._variable_manager.set_nonpersistent_facts(target_host, facts)
                             else:
                                 self._variable_manager.set_host_facts(target_host, facts)
-                elif result[0].startswith('v2_playbook_item') or result[0] == 'v2_playbook_retry':
+                elif result[0].startswith('v2_runner_item') or result[0] == 'v2_runner_retry':
                     self._tqm.send_callback(result[0], result[1])
                 elif result[0] == 'v2_on_file_diff':
                     if self._diff:

@@ -106,15 +106,15 @@ class ResultProcess(multiprocessing.Process):
 
                 # send callbacks for 'non final' results
                 if '_ansible_retry' in result._result:
-                    self._send_result(('v2_playbook_retry', result))
+                    self._send_result(('v2_runner_retry', result))
                     continue
                 elif '_ansible_item_result' in result._result:
                     if result.is_failed() or result.is_unreachable():
-                        self._send_result(('v2_playbook_item_on_failed', result))
+                        self._send_result(('v2_runner_item_on_failed', result))
                     elif result.is_skipped():
-                        self._send_result(('v2_playbook_item_on_skipped', result))
+                        self._send_result(('v2_runner_item_on_skipped', result))
                     else:
-                        self._send_result(('v2_playbook_item_on_ok', result))
+                        self._send_result(('v2_runner_item_on_ok', result))
                         if 'diff' in result._result:
                             self._send_result(('v2_on_file_diff', result))
                     continue
