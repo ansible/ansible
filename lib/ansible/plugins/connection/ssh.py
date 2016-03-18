@@ -232,7 +232,7 @@ class Connection(ConnectionBase):
 
         return self._command
 
-    def _send_initial_data(self, fh, in_data):
+    def _send_initial_data(self, fh, in_data, tty=False):
         '''
         Writes initial data to the stdin filehandle of the subprocess and closes
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will
@@ -243,6 +243,8 @@ class Connection(ConnectionBase):
 
         try:
             fh.write(in_data)
+            if tty:
+                fh.write("__EOF__942d747a0772c3284ffb5920e234bd57__\n")
             fh.close()
         except (OSError, IOError):
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
@@ -305,7 +307,7 @@ class Connection(ConnectionBase):
 
         return ''.join(output), remainder
 
-    def _run(self, cmd, in_data, sudoable=True):
+    def _run(self, cmd, in_data, sudoable=True, tty=False):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -313,31 +315,15 @@ class Connection(ConnectionBase):
         display_cmd = map(to_unicode, map(pipes.quote, cmd))
         display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
 
-        # Start the given command. If we don't need to pipeline data, we can try
-        # to use a pseudo-tty (ssh will have been invoked with -tt). If we are
-        # pipelining data, or can't create a pty, we fall back to using plain
-        # old pipes.
-
-        p = None
+        # Start the given command.
 
         if isinstance(cmd, (text_type, binary_type)):
             cmd = to_bytes(cmd)
         else:
             cmd = list(map(to_bytes, cmd))
 
-        if not in_data:
-            try:
-                # Make sure stdin is a proper pty to avoid tcgetattr errors
-                master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = os.fdopen(master, 'w', 0)
-                os.close(slave)
-            except (OSError, IOError):
-                p = None
-
-        if not p:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdin = p.stdin
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdin = p.stdin
 
         # If we are using SSH password authentication, write the password into
         # the pipe we opened in _build_command.
@@ -400,7 +386,7 @@ class Connection(ConnectionBase):
         # before we call select.
 
         if states[state] == 'ready_to_send' and in_data:
-            self._send_initial_data(stdin, in_data)
+            self._send_initial_data(stdin, in_data, tty)
             state += 1
 
         while True:
@@ -498,7 +484,7 @@ class Connection(ConnectionBase):
 
             if states[state] == 'ready_to_send':
                 if in_data:
-                    self._send_initial_data(stdin, in_data)
+                    self._send_initial_data(stdin, in_data, tty)
                 state += 1
 
             # Now we're awaiting_exit: has the child process exited? If it has,
@@ -547,10 +533,10 @@ class Connection(ConnectionBase):
 
         return (p.returncode, stdout, stderr)
 
-    def _exec_command(self, cmd, in_data=None, sudoable=True):
+    def _exec_command(self, cmd, in_data=None, sudoable=True, tty=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable, tty=tty)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
 
@@ -559,12 +545,12 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        if in_data:
-            cmd = self._build_command('ssh', self.host, cmd)
-        else:
+        if tty:
             cmd = self._build_command('ssh', '-tt', self.host, cmd)
+        else:
+            cmd = self._build_command('ssh', self.host, cmd)
 
-        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable, tty=tty)
 
         return (returncode, stdout, stderr)
 

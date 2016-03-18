@@ -115,9 +115,9 @@ class Connection(ConnectionBase):
 
         return p
 
-    def exec_command(self, cmd, in_data=None, sudoable=False):
+    def exec_command(self, cmd, in_data=None, sudoable=False, tty=False):
         ''' run a command on the jail '''
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable, tty=tty)
 
         p = self._buffered_exec_command(cmd)
 

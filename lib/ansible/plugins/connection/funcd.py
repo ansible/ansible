@@ -56,7 +56,7 @@ class Connection(object):
         return self
 
     def exec_command(self, cmd, become_user=None, sudoable=False,
-                     executable='/bin/sh', in_data=None):
+                     executable='/bin/sh', in_data=None, tty=False):
         ''' run a command on the remote minion '''
 
         if in_data:
