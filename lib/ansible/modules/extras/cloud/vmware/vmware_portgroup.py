@@ -106,6 +106,9 @@ def main():
             raise SystemExit("Unable to locate Physical Host.")
         host_system = host.keys()[0]
 
+        if find_host_portgroup_by_name(host_system, portgroup_name):
+            module.exit_json(changed=False)
+
         changed = create_port_group(host_system, portgroup_name, vlan_id, switch_name)
 
         module.exit_json(changed=changed)
