@@ -289,6 +289,8 @@ This indicates the command to use to spawn a shell under a sudo environment.  Us
 
     executable = /bin/bash
 
+Starting in version 2.1 this can be overriden by the inventory var ``ansible_executable``.
+
 .. _filter_plugins:
 
 filter_plugins
