@@ -1084,8 +1084,8 @@ class LinuxHardware(Hardware):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
-            if line.startswith('/'):
-                fields = line.rstrip('\n').split()
+            fields = line.rstrip('\n').split()
+            if fields[0].startswith('/') or ':/' in fields[0]:
                 if(fields[2] != 'none'):
                     size_total, size_available = self._get_mount_size_facts(fields[1])
                     if fields[0] in uuids:
