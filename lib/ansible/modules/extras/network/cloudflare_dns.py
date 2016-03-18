@@ -18,7 +18,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
 import urllib
 
 DOCUMENTATION = '''
@@ -263,7 +270,7 @@ class CloudflareAPI(object):
             result = json.loads(content)
         except AttributeError:
             error_msg += "; The API response was empty"
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             error_msg += "; Failed to parse API response: {0}".format(content)
 
         # received an error status but no data with details on what failed
@@ -358,10 +365,10 @@ class CloudflareAPI(object):
     def delete_dns_records(self,**kwargs):
         params = {}
         for param in ['port','proto','service','solo','type','record','value','weight','zone']:
-          if param in kwargs:
-              params[param] = kwargs[param]
-          else:
-              params[param] = getattr(self,param)
+            if param in kwargs:
+                params[param] = kwargs[param]
+            else:
+                params[param] = getattr(self,param)
 
         records = []
         search_value = params['value']
