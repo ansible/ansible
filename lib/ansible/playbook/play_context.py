@@ -78,7 +78,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    su_pass          = ('ansible_su_password', 'ansible_su_pass'),
    su_exe           = ('ansible_su_exe',),
    su_flags         = ('ansible_su_flags',),
-   executable       = ('ansible_executable',),
+   executable       = ('ansible_shell_executable',),
 )
 
 SU_PROMPT_LOCALIZATIONS = [
