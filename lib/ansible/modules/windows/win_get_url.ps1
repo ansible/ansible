@@ -54,7 +54,7 @@ if($skip_certificate_validation){
 
 $force = Get-Attr -obj $params -name "force" "yes" | ConvertTo-Bool
 
-If ($force -or -not (Test-Path $dest)) {
+Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $proxy_username, $proxy_password) {
     $webClient = New-Object System.Net.WebClient
     if($proxy_url) {
         $proxy_server = New-Object System.Net.WebProxy($proxy_url, $true)
@@ -76,8 +76,18 @@ If ($force -or -not (Test-Path $dest)) {
     Catch {
         Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
     }
+
+}
+
+
+If ($force -or -not (Test-Path $dest)) {
+   Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
+
 }
 Else {
+    $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
+    $webLastMod = $null
+
     Try {
         $webRequest = [System.Net.HttpWebRequest]::Create($url)
 
@@ -85,24 +95,22 @@ Else {
             $webRequest.Credentials = New-Object System.Net.NetworkCredential($username, $password)
         }
 
-        $webRequest.IfModifiedSince = ([System.IO.FileInfo]$dest).LastWriteTime
-        $webRequest.Method = "GET"
+        $webRequest.Method = "HEAD"
         [System.Net.HttpWebResponse]$webResponse = $webRequest.GetResponse()
-        
-        $stream = New-Object System.IO.StreamReader($webResponse.GetResponseStream())
-        
-        $stream.ReadToEnd() | Set-Content -Path $dest -Force -ErrorAction Stop
-        
-        $result.changed = $true
-    }
-    Catch [System.Net.WebException] {
-        If ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotModified) {
-            Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
-        }
+
+        $webLastMod = $webResponse.GetResponseHeader("Last-Modified")
+        $webResponse.Close()
     }
     Catch {
-        Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
+        Fail-Json $result "Error when requesting Last-Modified date from $url $($_.Exception.Message)"
     }
+
+    If ((Get-Date -Date $webLastMod ) -lt $fileLastMod) {
+        $result.changed = $false
+    } Else {
+        Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
+    }
+
 }
 
 Set-Attr $result.win_get_url "url" $url
