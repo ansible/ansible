@@ -9,6 +9,11 @@ Ansible Changes By Release
 ####New Filters:
 * extract
 
+## 2.0.2 "Over the Hills and Far Away"
+
+* Workaround bug in python subprocess on El Capitan that was making vault fail
+  when attempting to encrypt a file
+
 ## 2.0.1 "Over the Hills and Far Away"
 
 * Fixes a major compatibility break in the synchronize module shipped with
