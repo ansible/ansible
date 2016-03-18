@@ -173,7 +173,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         When a command is executed, it goes through multiple commands to get
         there.  It looks approximately like this::
 
-            [LocalShell] ConnectionCommand [UsersLoginShell (*)] DEFAULT_EXECUTABLE [(BecomeCommand DEFAULT_EXECUTABLE)] Command
+            [LocalShell] ConnectionCommand [UsersLoginShell (*)] ANSIBLE_SHELL_EXECUTABLE [(BecomeCommand ANSIBLE_SHELL_EXECUTABLE)] Command
         :LocalShell: Is optional.  It is run locally to invoke the
             ``Connection Command``.  In most instances, the
             ``ConnectionCommand`` can be invoked directly instead.  The ssh
@@ -198,24 +198,25 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             to inform ansible of differences in how the ``UsersLoginShell``
             handles things like quoting if a shell has different semantics
             than the Bourne shell.
-        :DEFAULT_EXECUTABLE: This is the shell accessible via
-            ``ansible.constants.DEFAULT_EXECUTABLE``.  We explicitly invoke
-            this shell so that we have predictable quoting rules at this
-            point.  The ``DEFAULT_EXECUTABLE`` is only settable by the user
-            because some sudo setups may only allow invoking a specific Bourne
-            shell.  (For instance, ``/bin/bash`` may be allowed but
-            ``/bin/sh``, our default, may not).  We invoke this twice, once
-            after the ``ConnectionCommand`` and once after the
+        :ANSIBLE_SHELL_EXECUTABLE: This is the shell set via the inventory var
+            ``ansible_shell_executable`` or via
+            ``constants.DEFAULT_EXECUTABLE`` if the inventory var is not set.
+            We explicitly invoke this shell so that we have predictable
+            quoting rules at this point.  ``ANSIBLE_SHELL_EXECUTABLE`` is only
+            settable by the user because some sudo setups may only allow
+            invoking a specific shell.  (For instance, ``/bin/bash`` may be
+            allowed but ``/bin/sh``, our default, may not).  We invoke this
+            twice, once after the ``ConnectionCommand`` and once after the
             ``BecomeCommand``.  After the ConnectionCommand, this is run by
             the ``UsersLoginShell``.  After the ``BecomeCommand`` we specify
-            that the ``DEFAULT_EXECUTABLE`` is being invoked directly.
-        :BecomeComand DEFAULTEXECUTABLE: Is the command that performs
+            that the ``ANSIBLE_SHELL_EXECUTABLE`` is being invoked directly.
+        :BecomeComand ANSIBLE_SHELL_EXECUTABLE: Is the command that performs
             privilege escalation.  Setting this up is performed by the action
             plugin prior to running ``exec_command``. So we just get passed
             :param:`cmd` which has the BecomeCommand already added.
             (Examples: sudo, su)  If we have a BecomeCommand then we will
-            invoke a DEFAULT_EXECUTABLE shell inside of it so that we have
-            a consistent view of quoting.
+            invoke a ANSIBLE_SHELL_EXECUTABLE shell inside of it so that we
+            have a consistent view of quoting.
         :Command: Is the command we're actually trying to run remotely.
             (Examples: mkdir -p $HOME/.ansible, python $HOME/.ansible/tmp-script-file)
         """
