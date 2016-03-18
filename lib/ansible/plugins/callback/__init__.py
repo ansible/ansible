@@ -321,15 +321,15 @@ class CallbackBase:
     def v2_playbook_on_include(self, included_file):
         pass #no v1 correspondance
 
-    def v2_playbook_item_on_ok(self, result):
+    def v2_runner_item_on_ok(self, result):
         pass
 
-    def v2_playbook_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result):
         pass
 
-    def v2_playbook_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result):
         pass
 
-    def v2_playbook_retry(self, result):
+    def v2_runner_retry(self, result):
         pass
 
