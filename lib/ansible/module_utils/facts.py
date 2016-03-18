@@ -1086,7 +1086,9 @@ class LinuxHardware(Hardware):
         for line in mtab.split('\n'):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
-                if(fields[2] != 'none'):
+                samba_filesystems = ['cifs', 'smbfs']
+                # Samba filesystems start with '//' but should not be included in mounts
+                if(fields[2] != 'none' and not fields[2] in samba_filesystems):
                     size_total, size_available = self._get_mount_size_facts(fields[1])
                     if fields[0] in uuids:
                         uuid = uuids[fields[0]]
