@@ -275,8 +275,12 @@ class VaultEditor:
 
         try:
             r = call(['shred', tmp_path])
-        except OSError:
+        except (OSError, ValueError):
             # shred is not available on this system, or some other error occured.
+            # ValueError caught because OS X El Capitan is raising an
+            # exception big enough to hit a limit in python2-2.7.11 and below.
+            # Symptom is ValueError: insecure pickle when shred is not
+            # installed there.
             r = 1
 
         if r != 0:
