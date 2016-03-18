@@ -27,7 +27,7 @@ addons:
     packages:
       - python2.4
 install:
-  - pip install tox
+  - pip install tox coveralls
 script:
   - ./test/utils/run_tests.sh
 after_success:
