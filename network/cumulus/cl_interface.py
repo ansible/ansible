@@ -104,7 +104,7 @@ requirements: [ Alternate Debian network interface manager - \
 ifupdown2 @ github.com/CumulusNetworks/ifupdown2 ]
 notes:
     - because the module writes the interface directory location. Ensure that
-      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/*' or
+      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/\*' or
       whatever path is mentioned in the ``location`` attribute.
 
     - For the config to be activated, i.e installed in the kernel,
