@@ -13,6 +13,7 @@ Ansible Changes By Release
   * ec2_vol_facts
   * ec2_vpc_dhcp_options
   * ec2_vpc_net_facts
+- cloudflare_dns
 - cloudstack
   * cs_cluster
   * cs_configuration
