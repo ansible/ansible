@@ -97,7 +97,7 @@ options:
      version_added: "1.6"
   autoremove:
     description:
-     - If C(yes), remove unused dependency packages for all module states except I(build-dep).
+      - If C(yes), remove unused dependency packages for all module states except I(build-dep).
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -105,10 +105,10 @@ options:
     version_added: "2.1"
   only_upgrade:
     description:
-     - Only install/upgrade a package it it is already installed.
-     required: false
-     default: false
-     version_added: "2.1"
+      - Only install/upgrade a package it it is already installed.
+    required: false
+    default: false
+    version_added: "2.1"
 
 requirements: [ python-apt, aptitude ]
 author: "Matthew Williams (@mgwilliams)"
