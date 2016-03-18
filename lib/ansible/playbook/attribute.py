@@ -60,4 +60,6 @@ class Attribute:
 
 
 class FieldAttribute(Attribute):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(FieldAttribute, self).__init__(*args, **kwargs)
+        assert(not (self.required and self.default))
