@@ -165,7 +165,7 @@ Add the specified arguments to any ssh command-line.
 
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
-Sudo to 'SUDO_USERNAME' deafult is root. (deprecated, use become).
+Sudo to 'SUDO_USERNAME' default is root. (deprecated, use become).
 
 *--skip-tags=*'SKIP_TAGS'::
 
