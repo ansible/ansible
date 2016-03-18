@@ -267,7 +267,7 @@ ansible_shell_executable
     overrides ``executable`` in :file:`ansible.cfg` which defaults to
     :command:`/bin/sh`.  You should really only change it if is not possible
     to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
-    machine.).
+    machine or cannot be run from sudo.).
 
 Examples from a host file::
 
