@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
-        ''' orchestrates determining appropriate unarchive module and calling it '''
+        ''' handler for untar operations '''
         if task_vars is None:
             task_vars = dict()
 
@@ -38,6 +38,9 @@ class ActionModule(ActionBase):
         copy    = boolean(self._task.args.get('copy', True))
         creates = self._task.args.get('creates', None)
 
+
+        # we need this is untar is called directly, but not if unarchive already checked
+        # it's inefficent but dependable for now
         if creates:
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
@@ -70,28 +73,6 @@ class ActionModule(ActionBase):
         # source may have been upated by _copy
         new_module_args['original_basename'] = os.path.basename(source)
     
-        # execute the unarchive module and get archive type
+        # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
-        if result.get('failed') or result.get('skipped'):
-            return result
-        if result.get('archive_type'):
-            handler_for = {
-                'TarArchive':     'untar',
-                'TarBzipArchive': 'untar',
-                'TarXzArchive':   'untar',
-                'TgzArchive':     'untar',
-                'ZipArchive':     'unzip',
-            }
-            if result['archive_type'] not in handler_for:
-                result['failed'] = True
-                result['msg'] = "No handler for archive type '%s'" % result['archive_type']
-                return result
-                
-            new_module_args['archive_type'] = result['archive_type']
-            result.update(self._execute_module(module_name=handler_for[result['archive_type']], module_args=new_module_args, task_vars=task_vars))
-        else:
-            result['failed'] = True
-            result['msg'] = "Failed to determine archive type for '%s'" %  source
-            return result
-        
         return result

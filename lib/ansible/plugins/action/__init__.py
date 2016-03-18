@@ -659,3 +659,53 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff
+
+    def _copy(self,tmp=None,task_vars=None):
+        result = { }
+
+        source  = self._task.args.get('src', None)
+        dest    = self._task.args.get('dest', None)
+
+        if source is None or dest is None:
+            result['failed'] = True
+            result['msg'] = "src (or content) and dest are required"
+            return result
+
+        if not tmp:
+            tmp = self._make_tmp_path()
+
+
+        dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
+        source = os.path.expanduser(source)
+
+        if self._task._role is not None:
+            source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
+        else:
+            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+
+        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
+        if remote_checksum == '4':
+            result['failed'] = True
+            result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            return result
+        elif remote_checksum != '3':
+            result['failed'] = True
+            result['msg'] = "dest '%s' must be an existing dir" % dest
+            return result
+
+        # transfer the file to a remote tmp location
+        tmp_src = tmp + 'source'
+        self._connection.put_file(source, tmp_src)
+
+        # handle diff mode client side
+        # handle check mode client side
+        # fix file permissions when the copy is done as a different user
+        if self._play_context.become and self._play_context.become_user != 'root':
+            if not self._play_context.check_mode:
+                self._remote_chmod('a+r', tmp_src)
+    
+        result['passback'] = {
+            'tmp_src': tmp_src,
+            'source': source
+        }
+        return result
