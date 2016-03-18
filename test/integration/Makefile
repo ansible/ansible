@@ -26,7 +26,8 @@ EUID := $(shell id -u -r)
 all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_connection test_gathering_facts
 
 test_test_infra:
-	[ "$$(ansible-playbook -i $(INVENTORY) test_test_infra.yml -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS) | fgrep works | xargs)" = "msg: fail works (True) msg: assert works (True)" ]
+	# ensure fail/assert work and can stop execution with non-zero exit code
+	PB_OUT=$$(ansible-playbook -i $(INVENTORY) test_test_infra.yml -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)) ; APB_RC=$$? ; echo "$$PB_OUT" ; echo "rc was $$APB_RC (must be non-zero)" ; [ $$APB_RC -ne 0 ]
 
 setup:
 	rm -rf $(TEST_DIR)
