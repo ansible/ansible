@@ -108,6 +108,14 @@ def find_vm_by_name(content, vm_name):
     return None
 
 
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
+    return None
+
+
 def vmware_argument_spec():
 
     return dict(
