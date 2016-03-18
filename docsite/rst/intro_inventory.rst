@@ -247,7 +247,7 @@ Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for furthe
 Remote host environment parameters::
 
     ansible_shell_type
-      The shell type of the target system. You should not use this setting unless you have set the 'executable' to a non sh compatible shell.
+      The shell type of the target system. You should not use this setting unless you have set the 'ansible_shell_executable' to a non sh compatible shell.
       By default commands are formatted using 'sh'-style syntax.
       Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
@@ -264,9 +264,9 @@ Remote host environment parameters::
 
 ::
 
-    ansible_executable
-      This sets the shell the ansible controller will use on the target machine, overrides ``executable`` in ``ansible.cfg`` which defaults to '/bin/sh'.
-      You should really only change it if is not possible to use '/bin/sh' (i.e. it is not in the list of allowed shells for your users).
+    ansible_shell_executable
+      This sets the shell the ansible controller will use on the target machine, overrides ``executable`` in ``ansible.cfg`` which defaults to ``/bin/sh``.
+      You should really only change it if is not possible to use ``/bin/sh`` (i.e. ``/bin/sh`` is not installed on the target machine.).
 
 Examples from a host file::
 
