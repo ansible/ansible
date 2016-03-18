@@ -38,7 +38,7 @@ description:
     surrounded by customizable marker lines.
 notes:
   - This module supports check mode.
-  - When using 'with_' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
 options:
   dest:
     aliases: [ name, destfile ]

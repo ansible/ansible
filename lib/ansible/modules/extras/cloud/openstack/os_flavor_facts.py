@@ -54,12 +54,12 @@ options:
        - "A string used for filtering flavors based on the amount of RAM
          (in MB) desired. This string accepts the following special values:
          'MIN' (return flavors with the minimum amount of RAM), and 'MAX'
-         (return flavors with the maximum amount of RAM).
+         (return flavors with the maximum amount of RAM)."
 
-         A specific amount of RAM may also be specified. Any flavors with this
-         exact amount of RAM will be returned.
+       - "A specific amount of RAM may also be specified. Any flavors with this
+         exact amount of RAM will be returned."
 
-         A range of acceptable RAM may be given using a special syntax. Simply
+       - "A range of acceptable RAM may be given using a special syntax. Simply
          prefix the amount of RAM with one of these acceptable range values:
          '<', '>', '<=', '>='. These values represent less than, greater than,
          less than or equal to, and greater than or equal to, respectively."
