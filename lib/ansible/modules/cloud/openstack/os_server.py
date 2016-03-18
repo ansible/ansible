@@ -174,6 +174,7 @@ options:
         - Arbitrary key/value pairs to the scheduler for custom use
      required: false
      default: None
+     version_added: "2.1"
    state:
      description:
        - Should the resource be present or absent.
