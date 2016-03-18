@@ -4,10 +4,15 @@ Ansible Debian Package
 To create an Ansible DEB package:
 
     sudo apt-get install python-paramiko python-yaml python-jinja2 python-httplib2 python-setuptools python-six sshpass
-    sudo apt-get install cdbs debhelper dpkg-dev git-core reprepro dh-python fakeroot asciidoc devscripts docbook-xml xsltproc libxml2-utils
+    sudo apt-get install cdbs debhelper dpkg-dev git-core reprepro fakeroot asciidoc devscripts docbook-xml xsltproc libxml2-utils
+    sudo apt-get install dh-python
     git clone git://github.com/ansible/ansible.git
     cd ansible
     make deb
+
+On older releases that do not have `dh-python` (like Ubuntu 12.04), install `python-support` instead:
+
+    sudo apt-get install python-support
 
 The debian package file will be placed in the `../` directory. This can then be added to an APT repository or installed with `dpkg -i <package-file>`.
 
