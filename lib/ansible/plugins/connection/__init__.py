@@ -89,7 +89,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             shell_type = getattr(self, '_shell_type')
         else:
             shell_type = 'sh'
-            shell_filename = os.path.basename(self.play_context.executable)
+            shell_filename = os.path.basename(self._play_context.executable)
             for shell in shell_loader.all():
                 if shell_filename in shell.COMPATIBLE_SHELLS:
                     shell_type = shell.SHELL_FAMILY
