@@ -86,7 +86,7 @@ def merge_hash(a, b):
     for k, v in iteritems(b):
         # if there's already such key in a
         # and that key contains a MutableMapping
-        if k in result and isinstance(result[k], MutableMapping):
+        if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
         else:
