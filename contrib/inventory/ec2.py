@@ -236,10 +236,19 @@ class Ec2Inventory(object):
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+
         if config.has_option('ec2', 'hostname_variable'):
             self.hostname_variable = config.get('ec2', 'hostname_variable')
         else:
             self.hostname_variable = None
+
+        if config.has_option('ec2', 'destination_format') and \
+           config.has_option('ec2', 'destination_format_tags'):
+            self.destination_format = config.get('ec2', 'destination_format')
+            self.destination_format_tags = config.get('ec2', 'destination_format_tags').split(',')
+        else:
+            self.destination_format = None
+            self.destination_format_tags = None
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
@@ -627,7 +636,9 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
-        if instance.subnet_id:
+        if self.destination_format and self.destination_format_tags:
+            dest = self.destination_format.format(*[ getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags ])
+        elif instance.subnet_id:
             dest = getattr(instance, self.vpc_destination_variable, None)
             if dest is None:
                 dest = getattr(instance, 'tags').get(self.vpc_destination_variable, None)
