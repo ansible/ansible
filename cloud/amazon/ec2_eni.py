@@ -324,7 +324,7 @@ def compare_eni(connection, module):
 
         for eni in all_eni:
             remote_security_groups = get_sec_group_list(eni.groups)
-            if (eni.subnet_id == subnet_id) and (eni.private_ip_address == private_ip_address) and (eni.description == description) and (remote_security_groups == security_groups):
+            if (eni.subnet_id == subnet_id) and (eni.private_ip_address == private_ip_address) and (eni.description == description) and (sorted(remote_security_groups) == sorted(security_groups)):
                 return eni
 
     except BotoServerError as e:
