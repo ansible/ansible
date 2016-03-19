@@ -26,7 +26,10 @@ notes:
 dependencies:
   - An IAM role must have been created
 version_added: "2.1"
-author: Mark Chance (@java1guy)
+author:
+    - "Mark Chance (@java1guy)"
+    - "Darek Kaczynski (@kaczynskid)"
+requirements: [ json, boto, botocore, boto3 ]
 options:
     state:
         description:
@@ -99,26 +102,78 @@ EXAMPLES = '''
     cluster: new_cluster
 '''
 
-# Disabled the RETURN as it was breaking docs building.  Someone needs to fix
-# this
-RETURN = '''# '''
-'''
-# Create service
-service: On create service, it returns the new values; on delete service, it returns the values for the service being deleted.
-    clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
-    desiredCount: The desired number of instantiations of the task definition to keep running on the service.
-    loadBalancers: A list of load balancer objects
-        loadBalancerName: the name
-        containerName: The name of the container to associate with the load balancer.
-        containerPort: The port on the container to associate with the load balancer.
-    pendingCount: The number of tasks in the cluster that are in the PENDING state.
-    runningCount: The number of tasks in the cluster that are in the RUNNING state.
-    serviceArn: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
-    serviceName: A user-generated string used to identify the service
-    status: The valid values are ACTIVE, DRAINING, or INACTIVE.
-    taskDefinition: The ARN of a task definition to use for tasks in the service.
-# Delete service
-ansible_facts: When deleting a service, the values described above for the service prior to its deletion are returned.
+RETURN = '''
+service:
+    description: Details of created service.
+    returned: when creating a service
+    type: complex
+    contains:
+        clusterArn:
+            description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+            returned: always
+            type: string
+        desiredCount:
+            description: The desired number of instantiations of the task definition to keep running on the service.
+            returned: always
+            type: int
+        loadBalancers:
+            description: A list of load balancer objects
+            returned: always
+            type: complex
+            contains:
+                loadBalancerName:
+                    description: the name
+                    returned: always
+                    type: string
+                containerName:
+                    description: The name of the container to associate with the load balancer.
+                    returned: always
+                    type: string
+                containerPort:
+                    description: The port on the container to associate with the load balancer.
+                    returned: always
+                    type: int
+        pendingCount:
+            description: The number of tasks in the cluster that are in the PENDING state.
+            returned: always
+            type: int
+        runningCount:
+            description: The number of tasks in the cluster that are in the RUNNING state.
+            returned: always
+            type: int
+        serviceArn:
+            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+            returned: always
+            type: string
+        serviceName:
+            description: A user-generated string used to identify the service
+            returned: always
+            type: string
+        status:
+            description: The valid values are ACTIVE, DRAINING, or INACTIVE.
+            returned: always
+            type: string
+        taskDefinition:
+            description: The ARN of a task definition to use for tasks in the service.
+            returned: always
+            type: string
+        deployments:
+            description: list of service deployments
+            returned: always
+            type: list of complex
+        events:
+            description: lost of service events
+            returned: always
+            type: list of complex
+ansible_facts:
+    description: Facts about deleted service.
+    returned: when deleting a service
+    type: complex
+    contains:
+        service:
+            description: Details of deleted service in the same structure described above for service creation.
+            returned: when service existed and was deleted
+            type: complex
 '''
 try:
     import boto
@@ -182,6 +237,18 @@ class EcsServiceManager:
                 return c
         raise StandardError("Unknown problem describing service %s." % service_name)
 
+    def is_matching_service(self, expected, existing):
+        if expected['task_definition'] != existing['taskDefinition']:
+            return False
+
+        if (expected['load_balancers'] or []) != existing['loadBalancers']:
+            return False
+
+        if (expected['desired_count'] or 0) != existing['desiredCount']:
+            return False
+
+        return True
+
     def create_service(self, service_name, cluster_name, task_definition,
         load_balancers, desired_count, client_token, role):
         response = self.ecs.create_service(
@@ -192,9 +259,20 @@ class EcsServiceManager:
             desiredCount=desired_count,
             clientToken=client_token,
             role=role)
+        return self.jsonize(response['service'])
+
+    def update_service(self, service_name, cluster_name, task_definition,
+        load_balancers, desired_count, client_token, role):
+        response = self.ecs.update_service(
+            cluster=cluster_name,
+            service=service_name,
+            taskDefinition=task_definition,
+            desiredCount=desired_count)
+        return self.jsonize(response['service'])
+
+    def jsonize(self, service):
         # some fields are datetime which is not JSON serializable
         # make them strings
-        service = response['service']
         if 'deployments' in service:
             for d in service['deployments']:
                 if 'createdAt' in d:
@@ -248,11 +326,17 @@ def main():
 
     results = dict(changed=False )
     if module.params['state'] == 'present':
+
+        matching = False
+        update = False
         if existing and 'status' in existing and existing['status']=="ACTIVE":
-            del existing['deployments']
-            del existing['events']
-            results['service']=existing
-        else:
+            if service_mgr.is_matching_service(module.params, existing):
+                matching = True
+                results['service'] = service_mgr.jsonize(existing)
+            else:
+                update = True
+
+        if not matching:
             if not module.check_mode:
                 if module.params['load_balancers'] is None:
                     loadBalancers = []
@@ -266,20 +350,26 @@ def main():
                     clientToken = ''
                 else:
                     clientToken = module.params['client_token']
-                # doesn't exist. create it.
-                response = service_mgr.create_service(module.params['name'],
-                    module.params['cluster'],
-                    module.params['task_definition'],
-                    loadBalancers,
-                    module.params['desired_count'],
-                    clientToken,
-                    role)
-                # the bad news is the result has datetime fields that aren't JSON serializable
-                # nuk'em!
 
-                del response['deployments']
-                del response['events']
-                
+                if update:
+                    # update required
+                    response = service_mgr.update_service(module.params['name'],
+                        module.params['cluster'],
+                        module.params['task_definition'],
+                        loadBalancers,
+                        module.params['desired_count'],
+                        clientToken,
+                        role)
+                else:
+                    # doesn't exist. create it.
+                    response = service_mgr.create_service(module.params['name'],
+                        module.params['cluster'],
+                        module.params['task_definition'],
+                        loadBalancers,
+                        module.params['desired_count'],
+                        clientToken,
+                        role)
+
                 results['service'] = response
 
             results['changed'] = True
