@@ -39,6 +39,7 @@ options:
         "-currentHost" switch of the defaults commandline tool.
     required: false
     default: null
+    version_added: "2.1"
   key:
     description:
       - The key of the user preference
