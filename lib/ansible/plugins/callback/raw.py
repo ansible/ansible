@@ -35,7 +35,7 @@ class CallbackModule(CallbackBase):
         print(self._dump_results(result._result), end='')
 
     def v2_runner_on_failed(self, result):
-        print(self._dump_results(results._result), end='')
+        print(self._dump_results(result._result), end='')
 
     def v2_runner_on_unreachable(self, result):
-        print(self._dump_results(results._result), end='')
+        print(self._dump_results(result._result), end='')
