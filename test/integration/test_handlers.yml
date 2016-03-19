@@ -24,3 +24,29 @@
   connection: local
   roles:
   - { role: test_handlers }
+
+- name: test included handler
+  hosts: A
+  gather_facts: False
+  connection: local
+  tasks:
+   - name: notify included handler
+     shell: echo
+     notify:
+      - set_handler_fact_3
+      - set_handler_fact_4
+     tags: ['scenario1']
+  handlers:
+   - action: include handlers/direct1.yml handlers/direct2.yml
+
+- name: verify included handler was run
+  hosts: A
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: verify handlers 3 and 4 ran
+      assert:
+        that:
+            - "'handler3_called' in hostvars[inventory_hostname]"
+            - "'handler4_called' in hostvars[inventory_hostname]"
+      tags: ['scenario1']

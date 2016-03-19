@@ -20,8 +20,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-#from ansible.inventory.host import Host
+from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.task import Task
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class Handler(Task):
 
@@ -35,9 +41,24 @@ class Handler(Task):
         return "HANDLER: %s" % self.get_name()
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
-        t = Handler(block=block, role=role, task_include=task_include)
-        return t.load_data(data, variable_manager=variable_manager, loader=loader)
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None, play=None):
+        h = Handler(block=block, role=role, task_include=task_include)
+        h.load_data(data, variable_manager=variable_manager, loader=loader)
+        if h.action == 'include':
+            filenames = h.args['_raw_params'].strip().split()
+            retval = []
+            for filename in filenames:
+                display.debug('loading handlers from %s' % filename)
+                ds = loader.load_from_file(filename)
+                if ds is None:
+                    continue
+                elif not isinstance(ds, list):
+                    raise AnsibleError("included task files must contain a list of tasks")
+                handlers = load_list_of_tasks(ds, play=play, use_handlers=True, loader=loader)
+                retval.extend(handlers)
+            return retval
+
+        return h
 
     def flag_for_host(self, host):
         #assert instanceof(host, Host)
