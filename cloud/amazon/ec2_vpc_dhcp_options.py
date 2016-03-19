@@ -92,6 +92,7 @@ options:
     required: False
     default: None
     aliases: [ 'resource_tags']
+    version_added: "2.1"
   dhcp_options_id:
     description:
       - The resource_id of an existing DHCP options set.
@@ -99,6 +100,7 @@ options:
         (which will be updated to match) 
     required: False
     default: None
+    version_added: "2.1"
   state:
     description:
       - create/assign or remove the DHCP options.
@@ -107,6 +109,7 @@ options:
     required: False
     default: present
     choices: [ 'absent', 'present' ]
+    version_added: "2.1"
 extends_documentation_fragment: aws
 requirements:
     - boto
