@@ -140,8 +140,11 @@ def main():
     if wait and datetime.datetime.now() >= end:
         module.fail_json(msg = "wait for password timeout after %d seconds" % wait_timeout)
 
-    f = open(key_file, 'r')
-    key = RSA.importKey(f.read(), key_passphrase)
+    try:
+        f = open(key_file, 'r')
+        key = RSA.importKey(f.read(), key_passphrase)
+    finally:
+        f.close()
     cipher = PKCS1_v1_5.new(key)
     sentinel = 'password decryption failed!!!'
 
