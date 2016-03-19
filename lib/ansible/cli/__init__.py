@@ -281,6 +281,8 @@ class CLI(object):
         if output_opts:
             parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
                 help='condense output')
+            parser.add_option('-r', '--raw', dest='raw', action='store_true',
+                help='raw json output of task results')
             parser.add_option('-t', '--tree', dest='tree', default=None,
                 help='log output to this directory')
 

@@ -158,10 +158,12 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.callback: 
+        if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
+        elif self.options.raw:
+            cb = 'raw'
         else:
             cb = 'minimal'
 

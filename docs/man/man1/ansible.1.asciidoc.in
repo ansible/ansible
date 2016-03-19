@@ -132,6 +132,10 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 Use this file to authenticate the connection.
 
+*-r*, *--raw*::
+
+Output task results in raw json.
+
 *-S*, *--su*::
 
 Run operations with su (deprecated, use become).
