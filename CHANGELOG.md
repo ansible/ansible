@@ -6,7 +6,7 @@ Ansible Changes By Release
 ###Major Changes:
 
 * added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
-* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell )
+* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
 
 ####New Modules:
 - aws
@@ -43,8 +43,9 @@ Ansible Changes By Release
 ###Minor Changes:
 
 * callbacks now have access to the options with which the CLI was called
-* debug is now controlable with verbosity
+* debug now has verbosity option to control when to display by matching number of -v in command line
 * modules now get verbosity, diff and other flags as passed to ansible
+* mount facts now also show 'network mounts' that use the pattern `<host>:/<mount>`
 
 ## 2.0.1 "Over the Hills and Far Away"
 
