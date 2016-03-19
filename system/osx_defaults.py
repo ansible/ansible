@@ -33,6 +33,12 @@ options:
       - The domain is a domain name of the form com.companyname.appname.
     required: false
     default: NSGlobalDomain
+  host:
+    description:
+      - The host on which the preference should apply. The special value "currentHost" corresponds to the
+        "-currentHost" switch of the defaults commandline tool.
+    required: false
+    default: null
   key:
     description:
       - The key of the user preference
@@ -67,6 +73,7 @@ notes:
 EXAMPLES = '''
 - osx_defaults: domain=com.apple.Safari key=IncludeInternalDebugMenu type=bool value=true state=present
 - osx_defaults: domain=NSGlobalDomain key=AppleMeasurementUnits type=string value=Centimeters state=present
+- osx_defaults: domain=com.apple.screensaver host=currentHost key=showClock type=int value=1
 - osx_defaults: key=AppleMeasurementUnits type=string value=Centimeters
 - osx_defaults:
     key: AppleLanguages
@@ -155,6 +162,19 @@ class OSXDefaults(object):
 
         raise OSXDefaultsException('Type is not supported: {0}'.format(type))
 
+    """ Returns a normalized list of commandline arguments based on the "host" attribute """
+    def _host_args(self):
+        if self.host is None:
+            return []
+        elif self.host == 'currentHost':
+            return ['-currentHost']
+        else:
+            return ['-host', self.host]
+
+    """ Returns a list containing the "defaults" executable and any common base arguments """
+    def _base_command(self):
+        return [self.executable] + self._host_args()
+
     """ Converts array output from defaults to an list """
     @staticmethod
     def _convert_defaults_str_to_list(value):
@@ -176,7 +196,7 @@ class OSXDefaults(object):
     """ Reads value of this domain & key from defaults """
     def read(self):
         # First try to find out the type
-        rc, out, err = self.module.run_command([self.executable, "read-type", self.domain, self.key])
+        rc, out, err = self.module.run_command(self._base_command() + ["read-type", self.domain, self.key])
 
         # If RC is 1, the key does not exists
         if rc == 1:
@@ -190,7 +210,7 @@ class OSXDefaults(object):
         type = out.strip().replace('Type is ', '')
 
         # Now get the current value
-        rc, out, err = self.module.run_command([self.executable, "read", self.domain, self.key])
+        rc, out, err = self.module.run_command(self._base_command() + ["read", self.domain, self.key])
 
         # Strip output
         out = out.strip()
@@ -232,14 +252,14 @@ class OSXDefaults(object):
         if not isinstance(value, list):
             value = [value]
 
-        rc, out, err = self.module.run_command([self.executable, 'write', self.domain, self.key, '-' + self.type] + value)
+        rc, out, err = self.module.run_command(self._base_command() + ['write', self.domain, self.key, '-' + self.type] + value)
 
         if rc != 0:
             raise OSXDefaultsException('An error occurred while writing value to defaults: ' + out)
 
     """ Deletes defaults key from domain """
     def delete(self):
-        rc, out, err = self.module.run_command([self.executable, 'delete', self.domain, self.key])
+        rc, out, err = self.module.run_command(self._base_command() + ['delete', self.domain, self.key])
         if rc != 0:
             raise OSXDefaultsException("An error occurred while deleting key from defaults: " + out)
 
@@ -296,6 +316,10 @@ def main():
                 default="NSGlobalDomain",
                 required=False,
             ),
+            host=dict(
+                default=None,
+                required=False,
+            ),
             key=dict(
                 default=None,
             ),
@@ -338,6 +362,7 @@ def main():
     )
 
     domain = module.params['domain']
+    host = module.params['host']
     key = module.params['key']
     type = module.params['type']
     array_add = module.params['array_add']
@@ -346,7 +371,7 @@ def main():
     path = module.params['path']
 
     try:
-        defaults = OSXDefaults(module=module, domain=domain, key=key, type=type,
+        defaults = OSXDefaults(module=module, domain=domain, host=host, key=key, type=type,
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
