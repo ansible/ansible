@@ -86,19 +86,30 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
+# Tests below are destructive and need to be fixed before being re-enabled.
+# Correcting this would be easy if the git module supported SSH options
+# for GlobalKnownHostsFile and UserKnownHostsFile instead of hard-coded
+# paths: https://github.com/ansible/ansible-modules-core/issues/3281
+
 - name: remove known_host files
   file: state=absent path={{ item }}
   with_items: "{{known_host_files}}"
+  # disabled - see explanation above
+  when: false
 
 - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git: repo={{ repo_format2 }} dest={{ checkout_dir }}
   register: git_result
   ignore_errors: true
+  # disabled - see explanation above
+  when: false
 
 - assert:
     that:
       - 'git_result.failed'
       - 'git_result.msg == "github.com has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module"'
+  # disabled - see explanation above
+  when: false
 
 - name: checkout git@github.com repo with accept_hostkey (expected pass)
   git:
