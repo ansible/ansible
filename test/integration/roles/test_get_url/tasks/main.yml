@@ -148,7 +148,7 @@
 
 - name: Test that setting file modes work
   get_url:
-    url: 'http://www.ansible.com/'
+    url: 'http://httpbin.org/'
     dest: '{{ output_dir }}/test'
     mode: '0707'
   register: result
@@ -165,7 +165,7 @@
 
 - name: Test that setting file modes on an already downlaoded file work
   get_url:
-    url: 'http://www.ansible.com/'
+    url: 'http://httpbin.org/'
     dest: '{{ output_dir }}/test'
     mode: '0070'
   register: result
