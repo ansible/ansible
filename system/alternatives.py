@@ -67,8 +67,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            path = dict(required=True),
-            link = dict(required=False),
+            path = dict(required=True, type='path'),
+            link = dict(required=False, type='path'),
         ),
         supports_check_mode=True,
     )
