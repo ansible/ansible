@@ -259,31 +259,31 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[], include_params=True):
+    def get_inherited_vars(self, dep_chain=[]):
         inherited_vars = dict()
 
         if dep_chain:
             for parent in dep_chain:
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
-                if include_params:
-                    inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
-    def get_role_params(self):
+    def get_role_params(self, dep_chain=[]):
         params = {}
-        for dep in self.get_all_dependencies():
-            params = combine_vars(params, dep._role_params)
+        if dep_chain:
+            for parent in dep_chain:
+                params = combine_vars(params, parent._role_params)
+        params = combine_vars(params, self._role_params)
         return params
 
     def get_vars(self, dep_chain=[], include_params=True):
-        all_vars = self.get_inherited_vars(dep_chain, include_params=include_params)
+        all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
         all_vars = combine_vars(all_vars, self._role_vars)
         if include_params:
-            all_vars = combine_vars(all_vars, self._role_params)
+            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
 
         return all_vars
 
