@@ -1546,6 +1546,8 @@ class AnsibleModule(object):
             if p not in paths and os.path.exists(p):
                 paths.append(p)
         for d in paths:
+            if not d:
+                continue
             path = os.path.join(d, arg)
             if os.path.exists(path) and is_executable(path):
                 bin_path = path
