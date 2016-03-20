@@ -299,7 +299,7 @@ def main():
             extension = dict(default='jar'),
             repository_url = dict(default=None),
             username = dict(default=None),
-            password = dict(default=None),
+            password = dict(default=None, no_log=True),
             state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
             dest = dict(type="path", default=None),
             validate_certs = dict(required=False, default=True, type='bool'),
