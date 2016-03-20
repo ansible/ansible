@@ -23,7 +23,7 @@ VAULT_PASSWORD_FILE = vault-password
 CONSUL_RUNNING := $(shell python consul_running.py)
 EUID := $(shell id -u -r)
 
-all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_connection test_gathering_facts
+all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -82,13 +82,21 @@ environment: setup
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
+# For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
+# Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
+ifeq ($(container),docker)
+TEST_CONNECTION_FILTER := 'test_docker'
+else
+TEST_CONNECTION_FILTER := 'test_default'
+endif
+
 # Skip connection plugins which require root when not running as root.
 ifneq ($(EUID),0)
-TEST_CONNECTION_FILTER := !chroot
+TEST_CONNECTION_FILTER += !chroot
 endif
 
 # Connection plugin test command to repeat with each locale setting.
-TEST_CONNECTION_CMD = $(1) ansible-playbook test_connection.yml -i test_connection.inventory -l '!skip-during-build $(TEST_CONNECTION_FILTER)' $(TEST_FLAGS)
+TEST_CONNECTION_CMD = $(1) ansible-playbook test_connection.yml -i test_connection.inventory -l '$(TEST_CONNECTION_FILTER)' $(TEST_FLAGS)
 
 test_connection: setup
 	$(call TEST_CONNECTION_CMD)
