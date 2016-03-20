@@ -166,13 +166,13 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             command=dict(default=None, choices=['slave', 'flush', 'config']),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
             login_host=dict(default='localhost'),
-            login_port=dict(default='6379'),
+            login_port=dict(default=6379, type='int'),
             master_host=dict(default=None),
-            master_port=dict(default=None),
+            master_port=dict(default=None, type='int'),
             slave_mode=dict(default='slave', choices=['master', 'slave']),
-            db=dict(default=None),
+            db=dict(default=None, type='int'),
             flush_mode=dict(default='all', choices=['all', 'db']),
             name=dict(default=None),
             value=dict(default=None)
@@ -185,17 +185,13 @@ def main():
 
     login_password = module.params['login_password']
     login_host = module.params['login_host']
-    login_port = int(module.params['login_port'])
+    login_port = module.params['login_port']
     command = module.params['command']
 
     # Slave Command section -----------
     if command == "slave":
         master_host = module.params['master_host']
         master_port = module.params['master_port']
-        try:
-            master_port = int(module.params['master_port'])
-        except Exception:
-            pass
         mode = module.params['slave_mode']
 
         #Check if we have all the data
@@ -257,15 +253,12 @@ def main():
 
     # flush Command section -----------
     elif command == "flush":
-        try:
-            db = int(module.params['db'])
-        except Exception:
-            db = 0
+        db = module.params['db']
         mode = module.params['flush_mode']
 
         #Check if we have all the data
         if mode == "db":
-            if type(db) != int:
+            if db is None:
                 module.fail_json(
                             msg="In db mode the db number must be provided")
 
