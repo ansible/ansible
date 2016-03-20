@@ -150,3 +150,37 @@
   get_url:
     url: 'http://httpbin.org/redirect/6'
     dest: "{{ output_dir }}/redirect.json"
+
+- name: Test that setting file modes work
+  get_url:
+    url: 'http://www.ansible.com/'
+    dest: '{{ output_dir }}/test'
+    mode: '0707'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0707'"
+
+- name: Test that setting file modes on an already downlaoded file work
+  get_url:
+    url: 'http://www.ansible.com/'
+    dest: '{{ output_dir }}/test'
+    mode: '0070'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0070'"
