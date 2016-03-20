@@ -308,12 +308,12 @@ class VariableManager:
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_role_params())
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
             if task._role:
                 all_vars = combine_vars(all_vars, task._role.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block._dep_chain))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         if host:
