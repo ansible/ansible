@@ -437,6 +437,7 @@ EXAMPLES = '''
 #   on the host.
 # - bind UDP port 9001 within the container to port 8081 on the host, only
 #   listening on localhost.
+# - specify 2 ip resolutions.
 # - set the environment variable SECRET_KEY to "ssssh".
 
 - name: application container
@@ -452,6 +453,9 @@ EXAMPLES = '''
     ports:
     - "8080:9000"
     - "127.0.0.1:8081:9001/udp"
+    extra_hosts:
+      host1: "192.168.0.1"
+      host2: "192.168.0.2"
     env:
         SECRET_KEY: ssssh
 
