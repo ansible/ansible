@@ -166,3 +166,138 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
 
+class TestTaskAndVariableOverrride(unittest.TestCase):
+
+    inventory_vars = (
+            ('preferred_names',
+                dict(ansible_connection='local',
+                    ansible_user='ansibull',
+                    ansible_become_user='ansibull',
+                    ansible_become_method='su',
+                    ansible_become_pass='ansibullwuzhere',),
+                dict(connection='local',
+                    remote_user='ansibull',
+                    become_user='ansibull',
+                    become_method='su',
+                    become_pass='ansibullwuzhere',)
+            ),
+            ('alternate_names',
+                dict(ansible_become_password='ansibullwuzhere',),
+                dict(become_pass='ansibullwuzhere',)
+            ),
+            ('deprecated_names',
+                dict(ansible_ssh_user='ansibull',
+                    ansible_sudo_user='ansibull',
+                    ansible_sudo_pass='ansibullwuzhere',),
+                dict(remote_user='ansibull',
+                    become_method='sudo',
+                    become_user='ansibull',
+                    become_pass='ansibullwuzhere',)
+            ),
+            ('deprecated_names2',
+                dict(ansible_ssh_user='ansibull',
+                    ansible_su_user='ansibull',
+                    ansible_su_pass='ansibullwuzhere',),
+                dict(remote_user='ansibull',
+                    become_method='su',
+                    become_user='ansibull',
+                    become_pass='ansibullwuzhere',)
+            ),
+            ('deprecated_alt_names',
+                dict(ansible_sudo_password='ansibullwuzhere',),
+                dict(become_method='sudo',
+                    become_pass='ansibullwuzhere',)
+            ),
+            ('deprecated_alt_names2',
+                dict(ansible_su_password='ansibullwuzhere',),
+                dict(become_method='su',
+                    become_pass='ansibullwuzhere',)
+            ),
+            ('deprecated_and_preferred_names',
+                dict(ansible_user='ansibull',
+                    ansible_ssh_user='badbull',
+                    ansible_become_user='ansibull',
+                    ansible_sudo_user='badbull',
+                    ansible_become_method='su',
+                    ansible_become_pass='ansibullwuzhere',
+                    ansible_sudo_pass='badbull',
+                    ),
+                dict(connection='local',
+                    remote_user='ansibull',
+                    become_user='ansibull',
+                    become_method='su',
+                    become_pass='ansibullwuzhere',)
+            ),
+        )
+
+    def setUp(self):
+        parser = CLI.base_parser(
+            runas_opts   = True,
+            meta_opts    = True,
+            runtask_opts = True,
+            vault_opts   = True,
+            async_opts   = True,
+            connect_opts = True,
+            subset_opts  = True,
+            check_opts   = True,
+            inventory_opts = True,
+        )
+
+        (options, args) = parser.parse_args(['-vv', '--check'])
+
+        mock_play = MagicMock()
+        mock_play.connection    = 'mock'
+        mock_play.remote_user   = 'mock'
+        mock_play.port          = 1234
+        mock_play.become        = True
+        mock_play.become_method = 'mock'
+        mock_play.become_user   = 'mockroot'
+        mock_play.no_log        = True
+
+        self.play_context = PlayContext(play=mock_play, options=options)
+
+        mock_task = MagicMock()
+        mock_task.connection    = mock_play.connection
+        mock_task.remote_user   = mock_play.remote_user
+        mock_task.no_log        = mock_play.no_log
+        mock_task.become        = mock_play.become
+        mock_task.become_method = mock_play.becom_method
+        mock_task.become_user   = mock_play.become_user
+        mock_task.become_pass   = 'mocktaskpass'
+        mock_task._local_action = False
+        mock_task.delegate_to   = None
+
+        self.mock_task = mock_task
+
+        self.mock_templar = MagicMock()
+
+    def tearDown(self):
+        pass
+
+    def _check_vars_overridden(self):
+        self.assertEqual(play_context.connection, 'mock_inventory')
+        self.assertEqual(play_context.remote_user, 'mocktask')
+        self.assertEqual(play_context.port, 4321)
+        self.assertEqual(play_context.no_log, True)
+        self.assertEqual(play_context.become, True)
+        self.assertEqual(play_context.become_method, "mocktask")
+        self.assertEqual(play_context.become_user, "mocktaskroot")
+        self.assertEqual(play_context.become_pass, "mocktaskpass")
+
+        mock_task.no_log        = False
+        play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
+        self.assertEqual(play_context.no_log, False)
+
+    def test_override_magic_variables(self):
+        play_context = play_context.set_task_and_variable_override(task=self.mock_task, variables=all_vars, templar=self.mock_templar)
+
+        mock_play.connection    = 'mock'
+        mock_play.remote_user   = 'mock'
+        mock_play.port          = 1234
+        mock_play.become_method = 'mock'
+        mock_play.become_user   = 'mockroot'
+        mock_task.become_pass   = 'mocktaskpass'
+        # Inventory vars override things set from cli vars (--become, -user,
+        # etc... [notably, not --extravars])
+        for test_name, all_vars, expected in self.inventory_vars:
+            yield self._check_vars_overriden, test_name, all_vars, expected
