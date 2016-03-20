@@ -10,6 +10,8 @@ RUN apt-get install -y \
     ruby \
     subversion \
     sudo \
+    openssh-client \
+    openssh-server \
     unzip
 
 # helpful things taken from the ubuntu-upstart Dockerfile:
@@ -57,5 +59,8 @@ RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN /bin/echo -e "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts
 RUN locale-gen en_US.UTF-8
+RUN ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
+    cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
+    for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
 ENV container docker
 CMD ["/sbin/init"]
