@@ -134,8 +134,8 @@ def main():
             state=dict(default="present", choices=package_state_map.keys()),
             url=dict(default=None),
             timeout=dict(default="1m"),
-            plugin_bin=dict(default="/usr/share/elasticsearch/bin/plugin"),
-            plugin_dir=dict(default="/usr/share/elasticsearch/plugins/"),
+            plugin_bin=dict(default="/usr/share/elasticsearch/bin/plugin", type="path"),
+            plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),
             proxy_port=dict(default=None),
             version=dict(default=None)
