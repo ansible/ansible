@@ -111,12 +111,12 @@ class ansi:
     underline = '\033[4m'
 
     clear = '\033[2J'
-#   clearline = '\033[K'
+#    clearline = '\033[K'
     clearline = '\033[2K'
-#   save = '\033[s'
-#   restore = '\033[u'
-    save = '\0337'
-    restore = '\0338'
+    save = '\033[s'
+    restore = '\033[u'
+    save_all = '\0337'
+    restore_all = '\0338'
     linewrap = '\033[7h'
     nolinewrap = '\033[7l'
 
@@ -177,7 +177,7 @@ class CallbackModule_dense(CallbackModule_default):
         self.type = 'foo'
 
         # Start immediately on the first line
-        sys.stdout.write(ansi.save + ansi.reset + ansi.clearline)
+        sys.stdout.write(ansi.reset + ansi.save + ansi.clearline)
         sys.stdout.flush()
 
     def _add_host(self, result, status):
@@ -234,7 +234,7 @@ class CallbackModule_dense(CallbackModule_default):
 
     def _display_progress(self, result=None):
         # Always rewrite the complete line
-        sys.stdout.write(ansi.restore + ansi.clearline + ansi.underline)
+        sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.nolinewrap + ansi.underline)
         sys.stdout.write('%s %d:' % (self.type, self.count[self.type]))
         sys.stdout.write(ansi.reset)
         sys.stdout.flush()
@@ -249,52 +249,60 @@ class CallbackModule_dense(CallbackModule_default):
 
         # If we are expecting diff output, show it on a new line
         if result._result.get('diff', False):
-            sys.stdout.write('\n')
-            self.keep = False
+            sys.stdout.write('\n' + ansi.linewrap)
+
+        self.keep = False
 
     def _display_task_banner(self):
         if not self.shown_title:
             self.shown_title = True
-            sys.stdout.write(ansi.restore + ansi.clearline)
-            sys.stdout.write(ansi.underline + '%s %d: %s' % (self.type, self.count[self.type], self.task.get_name().strip()))
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.underline)
+            sys.stdout.write('%s %d: %s' % (self.type, self.count[self.type], self.task.get_name().strip()))
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
             sys.stdout.flush()
         else:
-            sys.stdout.write(ansi.restore + ansi.clearline)
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+        self.keep = False
 
     def _display_results(self, result, status):
-        dump = ''
+        # Leave the previous task on screen (as it has changes/errors)
+        if self.keep:
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        else:
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+        self.keep = False
+
         self._clean_results(result._result)
 
+        dump = ''
         if result._task.action == 'include':
             return
         elif status == 'ok':
             return
-        elif status == 'changed':
-            color = C.COLOR_CHANGED
         elif status == 'ignored':
-            color = C.COLOR_SKIPPED
             dump = self._handle_exceptions(result._result)
         elif status == 'failed':
-            color = C.COLOR_ERROR
             dump = self._handle_exceptions(result._result)
         elif status == 'unreachable':
-            color = C.COLOR_UNREACHABLE
             dump = result._result['msg']
 
         if not dump:
             dump = self._dump_results(result._result)
 
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if delegated_vars:
-            msg = "%s: %s>%s: %s" % (status, result._host.get_name(), delegated_vars['ansible_host'], dump)
-        else:
-            msg = "%s: %s: %s" % (status, result._host.get_name(), dump)
-
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
         else:
-            self._display.display(msg, color=color)
+            sys.stdout.write(colors[status] + status + ': ')
+
+            delegated_vars = result._result.get('_ansible_delegated_vars', None)
+            if delegated_vars:
+                sys.stdout.write(ansi.reset + result._host.get_name() + '>' + colors[status] + delegated_vars['ansible_host'])
+            else:
+                sys.stdout.write(result._host.get_name())
+
+            sys.stdout.write(': ' + dump + '\n')
+            sys.stdout.write(ansi.save + ansi.clearline)
+            sys.stdout.flush()
 
         if status == 'changed':
             self._handle_warnings(result._result)
@@ -304,31 +312,33 @@ class CallbackModule_dense(CallbackModule_default):
             self.super_ref.v2_playbook_on_play_start(play)
             return
 
+        # Leave the previous task on screen (as it has changes/errors)
+        if self.keep:
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.bold)
+        else:
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.bold)
+
         # Reset at the start of each play
+        self.keep = False
         self.count.update(dict(handler=0, task=0))
         self.count['play'] += 1
         self.play = play
-
-        # Leave the previous task on screen (as it has changes/errors)
-        if self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline + ansi.bold)
-        else:
-            sys.stdout.write(ansi.restore + ansi.clearline + ansi.bold)
 
         # Write the next play on screen IN UPPERCASE, and make it permanent
         name = play.get_name().strip()
         if not name:
             name = 'unnamed'
         sys.stdout.write('PLAY %d: %s' % (self.count['play'], name.upper()))
-        sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
         sys.stdout.flush()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.underline)
         else:
-            sys.stdout.write(ansi.restore + ansi.underline)
+            # Do not clear line, since we want to retain the previous output
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.underline)
 
         # Reset at the start of each task
         self.keep = False
@@ -343,15 +353,14 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
-        sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_handler_task_start(self, task):
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline + ansi.underline)
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.underline)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.underline)
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.underline)
 
         # Reset at the start of each handler
         self.keep = False
@@ -366,13 +375,11 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
-        sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_cleanup_task_start(self, task):
         # TBD
         sys.stdout.write('cleanup.')
-        sys.stdout.write(ansi.reset)
         sys.stdout.flush()
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
@@ -412,20 +419,23 @@ class CallbackModule_dense(CallbackModule_default):
 
     def v2_playbook_on_no_hosts_remaining(self):
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.clearline)
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
         else:
-            sys.stdout.write(ansi.restore + ansi.clearline)
+            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
 
         # Reset keep
         self.keep = False
 
-        sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT' + ansi.reset)
-        sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+        sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT')
+        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
         sys.stdout.flush()
+
+    def v2_playbook_on_include(self, included_file):
+        pass
 
     def v2_playbook_on_stats(self, stats):
         if self.keep:
-            sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
         else:
             sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
 
@@ -436,7 +446,7 @@ class CallbackModule_dense(CallbackModule_default):
         sys.stdout.write(ansi.bold + ansi.underline)
         sys.stdout.write('SUMMARY')
 
-        sys.stdout.write(ansi.restore + '\n' + ansi.save + ansi.reset + ansi.clearline)
+        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
         sys.stdout.flush()
 
         hosts = sorted(stats.processed.keys())
