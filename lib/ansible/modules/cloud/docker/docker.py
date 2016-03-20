@@ -1857,7 +1857,7 @@ def absent(manager, containers, count, name):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            count           = dict(default=1),
+            count           = dict(default=1, type='int'),
             image           = dict(required=True),
             pull            = dict(required=False, default='missing', choices=['missing', 'always']),
             entrypoint      = dict(required=False, default=None, type='str'),
@@ -1874,14 +1874,14 @@ def main():
             cpu_shares      = dict(default=0),
             docker_url      = dict(),
             use_tls         = dict(default=None, choices=['no', 'encrypt', 'verify']),
-            tls_client_cert = dict(required=False, default=None, type='str'),
-            tls_client_key  = dict(required=False, default=None, type='str'),
-            tls_ca_cert     = dict(required=False, default=None, type='str'),
+            tls_client_cert = dict(required=False, default=None, type='path'),
+            tls_client_key  = dict(required=False, default=None, type='path'),
+            tls_ca_cert     = dict(required=False, default=None, type='path'),
             tls_hostname    = dict(required=False, type='str', default=None),
             docker_api_version = dict(required=False, default=DEFAULT_DOCKER_API_VERSION, type='str'),
             docker_user     = dict(default=None),
             username        = dict(default=None),
-            password        = dict(),
+            password        = dict(no_log=True),
             email           = dict(),
             registry        = dict(),
             hostname        = dict(default=None),
@@ -1924,7 +1924,7 @@ def main():
 
     try:
         manager = DockerManager(module)
-        count = int(module.params.get('count'))
+        count = module.params.get('count')
         name = module.params.get('name')
         pull = module.params.get('pull')
 
