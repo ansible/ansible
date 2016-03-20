@@ -254,7 +254,6 @@ def extract_filename_from_headers(headers):
 # main
 
 def main():
-
     argument_spec = url_argument_spec()
     argument_spec.update(
         url = dict(required=True),
@@ -311,7 +310,6 @@ def main():
         except ValueError:
             module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>")
 
-
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
 
@@ -327,7 +325,15 @@ def main():
 
         # Not forcing redownload, unless checksum does not match
         if not force and not checksum_mismatch:
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+            # allow file attribute changes
+            module.params['path'] = dest
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = dest
+            changed = module.set_fs_attributes_if_different(file_args, False)
+
+            if changed:
+                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.
