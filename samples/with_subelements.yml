@@ -14,5 +14,5 @@
   tasks:
   - debug: msg="user={{ item.0.name }} key='{{ item.1 }}'"
     with_subelements:
-    - users
+    - "{{ users }}"
     - authorized

@@ -204,7 +204,7 @@ It might happen like so::
 
     - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
       with_subelements:
-         - users
+         - "{{ users }}"
          - authorized
 
 Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
@@ -212,7 +212,7 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
     - name: Setup MySQL users
       mysql_user: name={{ item.0.name }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
       with_subelements:
-        - users
+        - "{{ users }}"
         - mysql.hosts
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
