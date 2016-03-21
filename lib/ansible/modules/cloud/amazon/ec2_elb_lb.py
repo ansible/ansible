@@ -49,11 +49,13 @@ options:
       - List of instance ids to attach to this ELB
     required: false
     default: false
+    version_added: "2.1"
   purge_instance_ids:
     description:
       - Purge existing instance ids on ELB that are not found in instance_ids
     required: false
     default: false
+    version_added: "2.1"
   zones:
     description:
       - List of availability zones to enable on this ELB
