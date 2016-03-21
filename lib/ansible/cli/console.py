@@ -183,12 +183,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
+            check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
             play_ds = dict(
                 name = "Ansible Shell",
                 hosts = self.options.cwd,
                 gather_facts = 'no',
-                #tasks = [ dict(action=dict(module=module, args=parse_kv(module_args)), async=self.options.async, poll=self.options.poll_interval) ]
-                tasks = [ dict(action=dict(module=module, args=parse_kv(module_args)))]
+                tasks = [ dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
