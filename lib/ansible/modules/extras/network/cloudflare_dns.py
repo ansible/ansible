@@ -376,13 +376,13 @@ class CloudflareAPI(object):
         if params['type'] == 'SRV':
             search_value = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
-        if solo:
+        if params['solo']:
             search_value = None
 
         records = self.get_dns_records(params['zone'],params['type'],search_record,search_value)
 
         for rr in records:
-            if solo:
+            if params['solo']:
                 if not ((rr['type'] == params['type']) and (rr['name'] == params['record']) and (rr['content'] == params['value'])):
                     self.changed = True
                     if not self.module.check_mode:
