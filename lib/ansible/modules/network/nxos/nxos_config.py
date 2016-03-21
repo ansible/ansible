@@ -20,7 +20,7 @@ DOCUMENTATION = """
 ---
 module: nxos_config
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco NXOS configuration sections
 description:
   - Cisco NXOS configurations use a simple block indent file sytanx
@@ -221,15 +221,16 @@ def main():
     config = module.parse_config(contents)
 
     if parents:
-        for parent in parents:
-            for item in config:
-                if item.text == parent:
-                    config = item
+        _config = list()
+        for item in config:
+            p = [p.text for p in item.parents]
+            if parents == p:
+                _config.append(item)
 
         try:
-            children = [c.text for c in config.children]
+            children = [c.text for c in _config.children]
         except AttributeError:
-            children = [c.text for c in config]
+            children = [c.text for c in _config]
 
     else:
         children = [c.text for c in config if not c.parents]
