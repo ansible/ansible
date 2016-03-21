@@ -12,6 +12,7 @@
     - { role: test_gem, tags: test_gem }
     - { role: test_yum, tags: test_yum }
     - { role: test_apt, tags: test_apt }
+    - { role: test_git_destructive, tags: test_git_destructive }
     - { role: test_apt_repository, tags: test_apt_repository }
     - { role: test_postgresql, tags: test_postgresql}
     - { role: test_mysql_db, tags: test_mysql_db}

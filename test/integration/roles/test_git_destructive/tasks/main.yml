@@ -1,0 +1,111 @@
+# test code for the git module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# (c) 2016, Matt Clay <matt@mystile.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: set role facts
+  set_fact:
+    checkout_dir: '{{ output_dir }}/git'
+    repo_format2: 'git@github.com:jimi-c/test_role.git'
+    repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+    known_hosts_files:
+      - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
+      - '/etc/ssh/ssh_known_hosts'
+
+- name: verify that git is installed so this test can continue
+  shell: which git
+
+#
+# Test repo=git@github.com:/...
+# Requires variable: github_ssh_private_key
+#
+
+- name: find known_hosts files
+  stat: path={{ item }}
+  register: found_known_hosts_files
+  with_items: "{{known_hosts_files}}"
+
+- name: backup known_hosts files
+  copy: remote_src=true src={{ item.item }} dest={{ item.item }}.bak
+  when: item.stat.exists
+  with_items: "{{found_known_hosts_files.results}}"
+
+- block:
+  - name: remove known_hosts files
+    file: state=absent path={{ item.item }}
+    when: item.stat.exists
+    with_items: "{{found_known_hosts_files.results}}"
+
+  # Test for unknown hostkey
+
+  - name: clear checkout_dir
+    file: state=absent path={{ checkout_dir }}
+
+  - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
+    git: repo={{ repo_format2 }} dest={{ checkout_dir }}
+    register: git_result
+    ignore_errors: true
+
+  - name: make sure github.com has an unknown hostkey
+    assert:
+      that:
+      - 'git_result.failed'
+      - 'git_result.msg == "github.com has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module"'
+
+  # Test for accept_hostkey: true
+
+  - name: checkout git@github.com repo with accept_hostkey (expected pass)
+    git:
+      repo: '{{ repo_format2 }}'
+      dest: '{{ checkout_dir }}'
+      accept_hostkey: true
+      key_file: '{{ github_ssh_private_key }}'
+    register: git_result
+    when: github_ssh_private_key is defined
+
+  - name: make sure git checkout reports changed
+    assert:
+      that:
+        - 'git_result.changed'
+    when: not git_result|skipped
+
+  # Test for accept_hostkey: false
+
+  - name: clear checkout_dir
+    file: state=absent path={{ checkout_dir }}
+
+  - name: checkout ssh://git@github.com repo with accept_hostkey (expected pass)
+    git:
+      repo: '{{ repo_format3 }}'
+      dest: '{{ checkout_dir }}'
+      version: 'master'
+      accept_hostkey: false # should already have been accepted
+      key_file: '{{ github_ssh_private_key }}'
+    register: git_result
+    when: github_ssh_private_key is defined
+
+  - name: make sure git checkout reports changed
+    assert:
+      that:
+        - 'git_result.changed'
+    when: not git_result|skipped
+
+  always:
+    - name: restore known_hosts files
+      copy: remote_src=true src={{ item.item }}.bak dest={{ item.item }}
+      when: item.stat.exists
+      with_items: "{{found_known_hosts_files.results}}"
