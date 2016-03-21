@@ -50,8 +50,6 @@ class CallbackModule(CallbackModule_default):
         if result._result.get('changed', False):
             self.display_task_banner()
             self.super_ref.v2_runner_on_ok(result)
-        else:
-            pass
 
     def v2_runner_on_unreachable(self, result):
         self.display_task_banner()
@@ -64,8 +62,9 @@ class CallbackModule(CallbackModule_default):
         pass
 
     def v2_runner_item_on_ok(self, result):
-        self.display_task_banner()
-        self.super_ref.v2_runner_item_on_ok(result)
+        if result._result.get('changed', False):
+            self.display_task_banner()
+            self.super_ref.v2_runner_item_on_ok(result)
 
     def v2_runner_item_on_skipped(self, result):
         pass
