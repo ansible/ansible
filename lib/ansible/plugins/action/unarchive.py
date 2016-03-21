@@ -45,8 +45,9 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -81,16 +82,14 @@ class ActionModule(ActionBase):
         if copy:
             # transfer the file to a remote tmp location
             tmp_src = tmp + 'source'
-            self._connection.put_file(source, tmp_src)
+            self._transfer_file(source, tmp_src)
 
         # handle diff mode client side
         # handle check mode client side
-        # fix file permissions when the copy is done as a different user
-        if copy:
-            if self._play_context.become and self._play_context.become_user != 'root':
-                if not self._play_context.check_mode:
-                    self._remote_chmod('a+r', tmp_src)
 
+        if copy:
+            # fix file permissions when the copy is done as a different user
+            self._fixup_perms(tmp_src, remote_user, recursive=True)
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(

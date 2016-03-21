@@ -98,8 +98,9 @@ class ActionModule(ActionBase):
             return result
 
         cleanup_remote_tmp = False
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
             cleanup_remote_tmp = True
 
         if boolean(remote_src):
@@ -146,16 +147,15 @@ class ActionModule(ActionBase):
         )
 
         if path_checksum != dest_stat['checksum']:
-            resultant = file(path).read()
 
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, path, task_vars)
 
-            xfered = self._transfer_data('src', resultant)
+            remote_path = self._connection._shell.join_path(tmp, 'src')
+            xfered = self._transfer_file(remote_path, path)
 
             # fix file permissions when the copy is done as a different user
-            if self._play_context.become and self._play_context.become_user != 'root':
-                self._remote_chmod('a+r', xfered)
+            self._fixup_perms(remote_path, remote_user, recursive=True)
 
             new_module_args.update( dict( src=xfered,))
 

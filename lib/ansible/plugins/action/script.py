@@ -38,8 +38,9 @@ class ActionModule(ActionBase):
             result['msg'] = 'check mode not supported for this module'
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
 
         creates = self._task.args.get('creates')
         if creates:
@@ -76,16 +77,11 @@ class ActionModule(ActionBase):
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
-        self._connection.put_file(source, tmp_src)
+        self._transfer_file(source, tmp_src)
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if self._play_context.become and self._play_context.become_user != 'root':
-            chmod_mode = 'a+rx'
-            sudoable = False
-        else:
-            chmod_mode = '+rx'
-        self._remote_chmod(chmod_mode, tmp_src, sudoable=sudoable)
+        self._fixup_perms(tmp_src, remote_user, recursive=True)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()

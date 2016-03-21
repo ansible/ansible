@@ -192,7 +192,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
-    def _make_tmp_path(self):
+    def _make_tmp_path(self, remote_user):
         '''
         Create and return a temporary path on a remote box.
         '''
@@ -200,12 +200,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = False
 
-        if self._play_context.become and self._play_context.become_user != 'root':
+        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
             use_system_tmp = True
 
-        tmp_mode = None
-        if self._play_context.remote_user != 'root' or self._play_context.become and self._play_context.become_user != 'root':
-            tmp_mode = 0o755
+        tmp_mode = 0o700
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         result = self._low_level_execute_command(cmd, sudoable=False)
@@ -255,6 +253,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # If ssh breaks we could leave tmp directories out on the remote system.
             self._low_level_execute_command(cmd, sudoable=False)
 
+    def _transfer_file(self, local_path, remote_path):
+        self._connection.put_file(local_path, remote_path)
+        return remote_path
+
     def _transfer_data(self, remote_path, data):
         '''
         Copies the module data out to the temporary module path.
@@ -269,25 +271,65 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = to_bytes(data, errors='strict')
             afo.write(data)
         except Exception as e:
-            #raise AnsibleError("failure encoding into utf-8: %s" % str(e))
             raise AnsibleError("failure writing module data to temporary file for transfer: %s" % str(e))
 
         afo.flush()
         afo.close()
 
         try:
-            self._connection.put_file(afile, remote_path)
+            self._transfer_file(afile, remote_path)
         finally:
             os.unlink(afile)
 
         return remote_path
 
-    def _remote_chmod(self, mode, path, sudoable=False):
+    def _fixup_perms(self, remote_path, remote_user, recursive=True):
+        """
+        If the become_user is unprivileged and different from the
+        remote_user then we need to make the files we've uploaded readable by them.
+        """
+        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
+            # Unprivileged user that's different than the ssh user.  Let's get
+            # to work!
+            if remote_user == 'root':
+                # SSh'ing as root, therefore we can chown
+                self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+            else:
+                # Try to use fs acls to solve this problem
+                res = self._remote_set_user_facl(remote_path, self._play_context.become_user, 'rX', recursive=True, sudoable=False)
+                if res['rc'] != 0:
+                    print(C.ALLOW_WORLD_READABLE_TMPFILES)
+                    if C.ALLOW_WORLD_READABLE_TMPFILES:
+                        # fs acls failed -- do things this insecure way only
+                        # if the user opted in in the config file
+                        self._display.warning('Become to unprivileged user. Copying files and modules for this task as world readable. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        self._remote_chmod('a+rX', remote_path, recursive=True)
+                    else:
+                        raise AnsibleError('Become to unprivileged user. For information on working around this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+
+        return remote_path
+
+    def _remote_chmod(self, mode, path, recursive=True, sudoable=False):
         '''
         Issue a remote chmod command
         '''
+        cmd = self._connection._shell.chmod(mode, path, recursive=recursive)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        return res
 
-        cmd = self._connection._shell.chmod(mode, path)
+    def _remote_chown(self, path, user, group=None, recursive=True, sudoable=False):
+        '''
+        Issue a remote chown command
+        '''
+        cmd = self._connection._shell.chown(path, user, group, recursive=recursive)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        return res
+
+    def _remote_set_user_facl(self, path, user, mode, recursive=True, sudoable=False):
+        '''
+        Issue a remote call to setfacl
+        '''
+        cmd = self._connection._shell.set_user_facl(path, user, mode, recursive=recursive)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
@@ -417,6 +459,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             module_args['_ansible_check_mode'] = False
 
+        # Get the connection user for permission checks
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
         # set no log in the module arguments, if required
         module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
 
@@ -437,7 +482,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         remote_module_path = None
         args_file_path = None
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
 
         if tmp:
             remote_module_filename = self._connection._shell.get_remote_filename(module_name)
@@ -462,11 +507,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
-        if tmp and "tmp" in tmp and self._play_context.become and self._play_context.become_user != 'root':
-            # deal with possible umask issues once sudo'ed to other user
-            self._remote_chmod('a+r', remote_module_path)
-            if args_file_path is not None:
-                self._remote_chmod('a+r', args_file_path)
+        # Fix permissions of the tmp path and tmp files.  This should be
+        # called after all files have been transferred.
+        self._fixup_perms(tmp, remote_user, recursive=True)
 
         cmd = ""
         in_data = None
