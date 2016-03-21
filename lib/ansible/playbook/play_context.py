@@ -361,7 +361,6 @@ class PlayContext(Base):
                 if exe_var in variables:
                     setattr(new_info, 'executable', variables.get(exe_var))
 
-
         attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
@@ -377,16 +376,33 @@ class PlayContext(Base):
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
 
-        # make sure we get port defaults if needed
-        if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
-            new_info.port = int(C.DEFAULT_REMOTE_PORT)
-
-        # become legacy updates
+        # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
+
+        # become legacy updates -- from inventory file (inventory overrides
+        # commandline)
+        for become_pass_name in MAGIC_VARIABLE_MAPPING.get('become_pass'):
+            if become_pass_name in variables:
+                break
+        else:  # This is a for-else
+            if new_info.become_method == 'sudo':
+                for sudo_pass_name in MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
+                    if sudo_pass_name in variables:
+                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
+                        break
+            if new_info.become_method == 'sudo':
+                for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
+                    if su_pass_name in variables:
+                        setattr(new_info, 'become_pass', variables[su_pass_name])
+                        break
+
+        # make sure we get port defaults if needed
+        if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
+            new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
