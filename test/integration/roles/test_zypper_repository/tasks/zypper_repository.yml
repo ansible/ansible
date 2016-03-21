@@ -1,0 +1,43 @@
+- name: Delete
+  zypper_repository:
+    name: test
+    state: absent
+  register: zypper_result
+
+- name: Add repo
+  zypper_repository:
+    name: test
+    state: present
+    repo: http://dl.google.com/linux/chrome/rpm/stable/x86_64
+  register: zypper_result
+
+- debug: var=zypper_result
+
+- name: verify repo addition
+  assert:
+    that:
+      - "zypper_result.changed"
+
+- name: Add repo again
+  zypper_repository:
+    name: test
+    state: present
+    repo: http://dl.google.com/linux/chrome/rpm/stable/x86_64
+  register: zypper_result
+
+- name: verify no change on second install
+  assert:
+    that:
+      - "not zypper_result.changed"
+
+- name: Change repo URL
+  zypper_repository:
+    name: test
+    state: present
+    repo: http://download.videolan.org/pub/vlc/SuSE/Leap_42.1/
+  register: zypper_result
+
+- name: Verify change on URL only change
+  assert:
+    that:
+      - "zypper_result.changed"
