@@ -85,25 +85,33 @@ on how it works.  Users should be aware of these to avoid surprises.
 Becoming an Unprivileged User
 =============================
 
-Ansible has a limitation with regards to becoming an
+Ansible 2.0.x and below has a limitation with regards to becoming an
 unprivileged user that can be a security risk if users are not aware of it.
 Ansible modules are executed on the remote machine by first substituting the
 parameters into the module file, then copying the file to the remote machine,
-and finally executing it there.  If the module file is executed without using
-become, when the become user is root, or when the connection to the remote
-machine is made as root then the module file is created with permissions that
-only allow reading by the user and root.
+and finally executing it there.
 
-If the become user is an unprivileged user and then Ansible has no choice but
-to make the module file world readable as there's no other way for the user
-Ansible connects as to save the file so that the user that we're becoming can
-read it.
+Everything is fine if the module file is executed without using ``become``,
+when the ``become_user`` is root, or when the connection to the remote machine
+is made as root.  In these cases the module file is created with permissions
+that only allow reading by the user and root.
+
+The problem occurs when the ``become_user`` is an unprivileged user.  Ansible
+2.0.x and below make the module file world readable in this case as the module
+file is written as the user that Ansible connects as but the file needs to
+be reasable by the user Ansible is set to ``become``.
+
+.. note:: In Ansible 2.1, this window is further narrowed: If the connection
+    is made as a privileged user (root) then Ansible 2.1 and above will use
+    chown to set the file's owner to the unprivileged user being switched to.
+    This means both the user making the connection and the user being switched
+    to via ``become`` must be unprivileged in order to trigger this problem.
 
 If any of the parameters passed to the module are sensitive in nature then
-those pieces of data are readable by reading the module file for the duration
-of the Ansible module execution.  Once the module is done executing Ansible
-will delete the temporary file.  If you trust the client machines then there's
-no problem here.  If you do not trust the client machines then this is
+those pieces of data are located in a world readable module file for the
+duration of the Ansible module execution.  Once the module is done executing
+Ansible will delete the temporary file.  If you trust the client machines then
+there's no problem here.  If you do not trust the client machines then this is
 a potential danger.
 
 Ways to resolve this include:
@@ -113,9 +121,32 @@ Ways to resolve this include:
   the remote python interpreter's stdin.  Pipelining does not work for
   non-python modules.
 
+* (Available in Ansible 2.1) Install filesystem acl support on the managed
+  host.  If the temporary directory on the remote host is mounted with
+  filesystem acls enabled and the :command:`setfacl` tool is in the remote
+  ``PATH`` then Ansible will use filesystem acls to share the module file with
+  the second unprivileged instead of having to make the file readable by
+  everyone.
+
 * Don't perform an action on the remote machine by becoming an unprivileged
   user.  Temporary files are protected by UNIX file permissions when you
-  become root or do not use become.
+  ``become`` root or do not use ``become``.  In Ansible 2.1 and above, UNIX
+  file permissions are also secure if you make the connection to the managed
+  machine as root and then use ``become`` to an unprivileged account.
+
+.. versionchanged:: 2.1
+
+In addition to the additional means of doing this securely, Ansible 2.1 also
+makes it harder to unknowingly do this insecurely.  Whereas in Ansible 2.0.x
+and below, Ansible will silently allow the insecure behaviour if it was unable
+to find another way to share the files with the unprivileged user, in Ansible
+2.1 and above Ansible defaults to issuing an error if it can't do this
+securely.  If you can't make any of the changes above to resolve the problem
+and you decide that the machine you're running on is secure enough for the
+modules you want to run there to be world readable you can turn on
+``allow_world_readable_tmpfiles`` in the :file:`ansible.cfg` file.  Setting
+``allow_world_readable_tmpfiles`` will change this from an error into
+a warning and allow the task to run as it did prior to 2.1.
 
 Connection Plugin Support
 =========================

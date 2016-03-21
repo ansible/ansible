@@ -60,7 +60,7 @@ General defaults
 
 In the [defaults] section of ansible.cfg, the following settings are tunable:
 
-.. _action_plugins:
+.. _cfg_action_plugins:
 
 action_plugins
 ==============
