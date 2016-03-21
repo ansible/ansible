@@ -331,8 +331,14 @@ class Ec2Inventory(object):
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
-        self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
-        self.cache_path_index = cache_dir + "/ansible-ec2.index"
+        cache_name = 'ansible-ec2'
+        aws_profile = lambda: (self.boto_profile or
+                              os.environ.get('AWS_PROFILE') or
+                              os.environ.get('AWS_ACCESS_KEY_ID'))
+        if aws_profile():
+            cache_name = '%s-%s' % (cache_name, aws_profile())
+        self.cache_path_cache = cache_dir + "/%s.cache" % cache_name
+        self.cache_path_index = cache_dir + "/%s.index" % cache_name
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
         if config.has_option('ec2', 'expand_csv_tags'):
