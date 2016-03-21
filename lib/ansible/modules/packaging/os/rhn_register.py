@@ -344,7 +344,7 @@ def main():
         else:
             try:
                 rhn.enable()
-                rhn.register(module.params['enable_eus'] == True, activationkey)
+                rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
                 rhn.subscribe(channels)
             except Exception, e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
