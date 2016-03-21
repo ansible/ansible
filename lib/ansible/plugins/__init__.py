@@ -329,8 +329,13 @@ class PluginLoader:
             obj = getattr(self._module_cache[path], self.class_name)
         else:
             obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
-            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__mro__]:
-                return None
+            if self.base_class:
+                # The import path is hardcoded and should be the right place,
+                # so we are not expecting an ImportError.
+                module = __import__(self.package, fromlist=[self.base_class])
+                # Check whether this obj has the required base class.
+                if not issubclass(obj.__class__, getattr(module, self.base_class, None)):
+                    return None
 
         return obj
 
