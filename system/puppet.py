@@ -80,6 +80,13 @@ options:
     required: false
     default: None
     version_added: "2.1"
+  execute:
+    description:
+      - Execute a specific piece of Puppet code. It has no effect with
+        a puppetmaster.
+    required: false
+    default: None
+    version_added: "2.1"
 requirements: [ puppet ]
 author: "Monty Taylor (@emonty)"
 '''
@@ -96,6 +103,9 @@ EXAMPLES = '''
 
 # Run puppet using a specific certname
 - puppet: certname=agent01.example.com
+# Run puppet using a specific piece of Puppet code. Has no effect with a
+# puppetmaster.
+- puppet: execute='include ::mymodule'
 '''
 
 
@@ -137,10 +147,12 @@ def main():
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
             certname=dict(required=False, default=None),
+            execute=dict(required=False, default=None),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
             ('puppetmaster', 'manifest'),
+            ('puppetmaster', 'manifest', 'execute'),
         ],
     )
     p = module.params
@@ -213,6 +225,8 @@ def main():
             cmd += "--environment '%s' " % p['environment']
         if p['certname']:
             cmd += " --certname='%s'" % p['certname']
+        if p['execute']:
+            cmd += " --execute '%s'" % p['execute']
         if module.check_mode:
             cmd += "--noop "
         else:
