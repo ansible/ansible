@@ -349,6 +349,7 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
+        sys.stdout.write(v100.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_handler_task_start(self, task):
@@ -371,6 +372,7 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
+        sys.stdout.write(v100.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_cleanup_task_start(self, task):
