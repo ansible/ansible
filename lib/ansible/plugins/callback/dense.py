@@ -77,7 +77,7 @@ class C:
 
 
 # Taken from Dstat
-class ansi:
+class vt100:
     black = '\033[0;30m'
     darkred = '\033[0;31m'
     darkgreen = '\033[0;32m'
@@ -127,12 +127,12 @@ class ansi:
 
 
 colors = dict(
-    ok = ansi.darkgreen,
-    changed = ansi.darkyellow,
-    skipped = ansi.darkcyan,
-    ignored = ansi.cyanbg + ansi.red,
-    failed = ansi.darkred,
-    unreachable = ansi.red,
+    ok = vt100.darkgreen,
+    changed = vt100.darkyellow,
+    skipped = vt100.darkcyan,
+    ignored = vt100.cyanbg + vt100.red,
+    failed = vt100.darkred,
+    unreachable = vt100.red,
 )
 
 states = ( 'skipped', 'ok', 'changed', 'failed', 'unreachable' )
@@ -158,9 +158,9 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Attributes to remove from results for more density
         self.removed_attributes = (
-            'changed',
+#            'changed',
             'delta',
-            'diff',
+#            'diff',
             'end',
             'failed',
             'failed_when_result',
@@ -177,7 +177,7 @@ class CallbackModule_dense(CallbackModule_default):
         self.type = 'foo'
 
         # Start immediately on the first line
-        sys.stdout.write(ansi.reset + ansi.save + ansi.clearline)
+        sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
         sys.stdout.flush()
 
     def _add_host(self, result, status):
@@ -234,9 +234,9 @@ class CallbackModule_dense(CallbackModule_default):
 
     def _display_progress(self, result=None):
         # Always rewrite the complete line
-        sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.nolinewrap + ansi.underline)
+        sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline + vt100.nolinewrap + vt100.underline)
         sys.stdout.write('%s %d:' % (self.type, self.count[self.type]))
-        sys.stdout.write(ansi.reset)
+        sys.stdout.write(vt100.reset)
         sys.stdout.flush()
 
         # Print out each host in its own status-color
@@ -244,32 +244,32 @@ class CallbackModule_dense(CallbackModule_default):
             sys.stdout.write(' ')
             if self.hosts[name].get('delegate', None):
                 sys.stdout.write(self.hosts[name]['delegate'] + '>')
-            sys.stdout.write(colors[self.hosts[name]['state']] + name + ansi.reset)
+            sys.stdout.write(colors[self.hosts[name]['state']] + name + vt100.reset)
             sys.stdout.flush()
 
-        # If we are expecting diff output, show it on a new line
-        if result._result.get('diff', False):
-            sys.stdout.write('\n' + ansi.linewrap)
+#        if result._result.get('diff', False):
+#            sys.stdout.write('\n' + vt100.linewrap)
+        sys.stdout.write(vt100.linewrap)
 
-        self.keep = False
+#        self.keep = True
 
     def _display_task_banner(self):
         if not self.shown_title:
             self.shown_title = True
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.underline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline + vt100.underline)
             sys.stdout.write('%s %d: %s' % (self.type, self.count[self.type], self.task.get_name().strip()))
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
             sys.stdout.flush()
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline)
         self.keep = False
 
     def _display_results(self, result, status):
         # Leave the previous task on screen (as it has changes/errors)
-        if self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        if self._display.verbosity == 0 and self.keep:
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline)
         self.keep = False
 
         self._clean_results(result._result)
@@ -296,27 +296,23 @@ class CallbackModule_dense(CallbackModule_default):
 
             delegated_vars = result._result.get('_ansible_delegated_vars', None)
             if delegated_vars:
-                sys.stdout.write(ansi.reset + result._host.get_name() + '>' + colors[status] + delegated_vars['ansible_host'])
+                sys.stdout.write(vt100.reset + result._host.get_name() + '>' + colors[status] + delegated_vars['ansible_host'])
             else:
                 sys.stdout.write(result._host.get_name())
 
             sys.stdout.write(': ' + dump + '\n')
-            sys.stdout.write(ansi.save + ansi.clearline)
+            sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
             sys.stdout.flush()
 
         if status == 'changed':
             self._handle_warnings(result._result)
 
     def v2_playbook_on_play_start(self, play):
-        if self._display.verbosity > 1:
-            self.super_ref.v2_playbook_on_play_start(play)
-            return
-
         # Leave the previous task on screen (as it has changes/errors)
-        if self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.bold)
+        if self._display.verbosity == 0 and self.keep:
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline + vt100.bold)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.bold)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline + vt100.bold)
 
         # Reset at the start of each play
         self.keep = False
@@ -329,16 +325,16 @@ class CallbackModule_dense(CallbackModule_default):
         if not name:
             name = 'unnamed'
         sys.stdout.write('PLAY %d: %s' % (self.count['play'], name.upper()))
-        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         sys.stdout.flush()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.underline)
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline + vt100.underline)
         else:
             # Do not clear line, since we want to retain the previous output
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.underline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.underline)
 
         # Reset at the start of each task
         self.keep = False
@@ -358,9 +354,9 @@ class CallbackModule_dense(CallbackModule_default):
     def v2_playbook_on_handler_task_start(self, task):
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline + ansi.underline)
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline + vt100.underline)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline + ansi.underline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline + vt100.underline)
 
         # Reset at the start of each handler
         self.keep = False
@@ -400,10 +396,15 @@ class CallbackModule_dense(CallbackModule_default):
     def v2_runner_on_include(self, included_file):
         pass
 
-#    def v2_on_file_diff(self, result):
-#        if result._result.get('diff', False):
-#            self._display_task_banner()
-#        self.super_ref.v2_on_file_diff(result)
+    def v2_runner_on_file_diff(self, result, diff):
+        sys.stdout.write(vt100.bold)
+        self.super_ref.v2_runner_on_file_diff(result, diff)
+        sys.stdout.write(vt100.reset)
+
+    def v2_on_file_diff(self, result):
+        sys.stdout.write(vt100.bold)
+        self.super_ref.v2_on_file_diff(result)
+        sys.stdout.write(vt100.reset)
 
     def v2_playbook_item_on_ok(self, result):
         if result._result.get('changed', False):
@@ -419,34 +420,32 @@ class CallbackModule_dense(CallbackModule_default):
 
     def v2_playbook_on_no_hosts_remaining(self):
         if self._display.verbosity == 0 and self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
-
-        # Reset keep
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline)
         self.keep = False
 
-        sys.stdout.write(ansi.white + ansi.redbg + 'NO MORE HOSTS LEFT')
-        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        sys.stdout.write(vt100.white + vt100.redbg + 'NO MORE HOSTS LEFT')
+        sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         sys.stdout.flush()
 
     def v2_playbook_on_include(self, included_file):
         pass
 
     def v2_playbook_on_stats(self, stats):
-        if self.keep:
-            sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        if self._display.verbosity == 0 and self.keep:
+            sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         else:
-            sys.stdout.write(ansi.restore + ansi.reset + ansi.clearline)
+            sys.stdout.write(vt100.restore + vt100.reset + vt100.clearline)
 
         # In normal mode screen output should be sufficient, summary is redundant
         if self._display.verbosity == 0:
             return
 
-        sys.stdout.write(ansi.bold + ansi.underline)
+        sys.stdout.write(vt100.bold + vt100.underline)
         sys.stdout.write('SUMMARY')
 
-        sys.stdout.write(ansi.restore + ansi.reset + '\n' + ansi.save + ansi.clearline)
+        sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
         sys.stdout.flush()
 
         hosts = sorted(stats.processed.keys())
