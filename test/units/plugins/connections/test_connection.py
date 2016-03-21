@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import StringIO
+from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.playbook.play_context import PlayContext

@@ -146,6 +146,11 @@
   when: "{{ not python_has_ssl_context }}"
 # End hacky SNI test section
 
+- name: Test get_url with redirect
+  get_url:
+    url: 'http://httpbin.org/redirect/6'
+    dest: "{{ output_dir }}/redirect.json"
+
 - name: Test that setting file modes work
   get_url:
     url: 'http://httpbin.org/'

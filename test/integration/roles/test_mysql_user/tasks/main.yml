@@ -96,7 +96,7 @@
   mysql_user: name={{ item[0]  }} priv={{ item[1] }}.*:ALL append_privs=yes password={{ user_password_1 }} 
   with_nested:
     - [ '{{ user_name_1 }}' , '{{ user_name_2 }}']
-    - db_names
+    - "{{db_names}}"
 
 - name: show grants access for user1 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
@@ -104,7 +104,7 @@
 
 - name: assert grant access for user1 on multiple database
   assert: { that: "'{{ item }}' in result.stdout" }
-  with_items: db_names
+  with_items: "{{db_names}}"
 
 - name: show grants access for user2 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_2 }}'@'localhost';"
