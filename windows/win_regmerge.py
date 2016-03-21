@@ -68,4 +68,20 @@ EXAMPLES = '''
     compare_to: HKLM:\SOFTWARE\myCompany
 '''
 
-RETURN = '''# '''
+RETURN = '''
+compare_to_key_found:
+    description: whether the parent registry key has been found for comparison
+    returned: when comparison key not found in registry
+    type: boolean
+    sample: false
+difference_count:
+    description: number of differences between the registry and the file
+    returned: changed
+    type: integer
+    sample: 1
+compared:
+    description: whether a comparison has taken place between the registry and the file
+    returned: when a comparison key has been supplied and comparison has been attempted
+    type: boolean
+    sample: true
+'''
