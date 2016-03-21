@@ -38,8 +38,9 @@ class ActionModule(ActionBase):
             result['msg'] = 'check mode not supported for this module'
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
 
         module_name = self._task.action
         async_module_path  = self._connection._shell.join_path(tmp, 'async_wrapper')
@@ -54,14 +55,14 @@ class ActionModule(ActionBase):
         # configure, upload, and chmod the target module
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         self._transfer_data(remote_module_path, module_data)
-        self._remote_chmod('a+rx', remote_module_path)
 
         # configure, upload, and chmod the async_wrapper module
         (async_module_style, shebang, async_module_data) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
         self._transfer_data(async_module_path, async_module_data)
-        self._remote_chmod('a+rx', async_module_path)
 
-        argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(module_args))
+        self._fixup_perms(tmp, remote_user, recursive=True)
+
+        argsfile = self._transfer_module_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(module_args))
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))

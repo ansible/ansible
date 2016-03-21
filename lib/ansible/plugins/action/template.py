@@ -138,8 +138,9 @@ class ActionModule(ActionBase):
             return result
 
         cleanup_remote_tmp = False
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
             cleanup_remote_tmp = True
 
         local_checksum = checksum_s(resultant)
@@ -163,8 +164,7 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered)
+                self._fixup_perms(xfered, remote_user, recursive=True)
 
                 # run the copy module
                 new_module_args.update(

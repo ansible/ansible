@@ -141,9 +141,10 @@ class ActionModule(ActionBase):
         delete_remote_tmp = (len(source_files) == 1)
 
         # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not delete_remote_tmp:
             if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path()
+                tmp = self._make_tmp_path(remote_user)
 
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
@@ -196,7 +197,7 @@ class ActionModule(ActionBase):
                 # If this is recursive we already have a tmp path.
                 if delete_remote_tmp:
                     if tmp is None or "-tmp-" not in tmp:
-                        tmp = self._make_tmp_path()
+                        tmp = self._make_tmp_path(remote_user)
 
                 if self._play_context.diff and not raw:
                     diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
@@ -211,16 +212,15 @@ class ActionModule(ActionBase):
                 tmp_src = self._connection._shell.join_path(tmp, 'source')
 
                 if not raw:
-                    self._connection.put_file(source_full, tmp_src)
+                    self._transfer_file(source_full, tmp_src)
                 else:
-                    self._connection.put_file(source_full, dest_file)
+                    self._transfer_file(source_full, dest_file)
 
                 # We have copied the file remotely and no longer require our content_tempfile
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', tmp_src)
+                self._fixup_perms(tmp_src, remote_user, recursive=True)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
