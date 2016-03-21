@@ -252,10 +252,13 @@ class Role(Base, Become, Conditional, Taggable):
     def get_parents(self):
         return self._parents
 
-    def get_default_vars(self):
+    def get_default_vars(self, dep_chain=[]):
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
+        if dep_chain:
+            for parent in dep_chain:
+                default_vars = combine_vars(default_vars, parent._default_vars)
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
