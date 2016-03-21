@@ -220,7 +220,7 @@ class VariableManager:
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task and task._role is not None:
-                all_vars = combine_vars(all_vars, task._role.get_default_vars())
+                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task._block._dep_chain))
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
