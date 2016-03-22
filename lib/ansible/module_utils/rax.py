@@ -32,6 +32,7 @@ import os
 import re
 from uuid import UUID
 
+from ansible.module_utils.basic import BOOLEANS
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
