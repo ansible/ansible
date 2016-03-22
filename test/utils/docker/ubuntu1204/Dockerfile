@@ -1,6 +1,7 @@
 FROM ubuntu:precise
 RUN apt-get clean; apt-get update -y;
 RUN apt-get install -y \
+    acl \
     debianutils \
     gawk \
     git \

@@ -2,6 +2,7 @@
 FROM centos:centos6
 RUN yum -y update; yum clean all; 
 RUN yum -y install \
+    acl \
     epel-release \
     file \
     gcc \
