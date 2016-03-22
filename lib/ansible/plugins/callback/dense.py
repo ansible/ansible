@@ -180,6 +180,9 @@ class CallbackModule_dense(CallbackModule_default):
         sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
         sys.stdout.flush()
 
+    def __del__(self):
+        sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
+
     def _add_host(self, result, status):
         name = result._host.get_name()
 
@@ -349,7 +352,7 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
-        sys.stdout.write(v100.reset)
+        sys.stdout.write(vt100.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_handler_task_start(self, task):
@@ -372,7 +375,7 @@ class CallbackModule_dense(CallbackModule_default):
 
         # Write the next task on screen (behind the prompt is the previous output)
         sys.stdout.write('%s %d.' % (self.type, self.count[self.type]))
-        sys.stdout.write(v100.reset)
+        sys.stdout.write(vt100.reset)
         sys.stdout.flush()
 
     def v2_playbook_on_cleanup_task_start(self, task):
