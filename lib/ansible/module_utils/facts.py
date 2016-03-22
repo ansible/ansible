@@ -466,7 +466,7 @@ class Facts(object):
                                 elif path == '/etc/SuSE-release':
                                     if 'open' in data.lower():
                                         data = data.splitlines()
-                                        distdata = get_file_content(path).split('\n')[0]
+                                        distdata = data[0]
                                         self.facts['distribution'] = distdata.split()[0]
                                         for line in data:
                                             release = re.search('CODENAME *= *([^\n]+)', line)
