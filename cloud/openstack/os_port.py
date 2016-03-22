@@ -30,8 +30,8 @@ extends_documentation_fragment: openstack
 author: "Davide Agnello (@dagnello)"
 version_added: "2.0"
 description:
-   - Add, Update or Remove ports from an OpenStack cloud.  A state=present,
-     will ensure the port is created or updated if required.
+   - Add, Update or Remove ports from an OpenStack cloud. A I(state) of
+     'present' will ensure the port is created or updated if required.
 options:
    network:
      description:
@@ -79,11 +79,11 @@ options:
                   - ip_address: ..."
      required: false
      default: None
-   extra_dhcp_opt:
+   extra_dhcp_opts:
      description:
         - "Extra dhcp options to be assigned to this port.  Extra options are
           supported with dictionary structure.
-          e.g.  extra_dhcp_opt:
+          e.g.  extra_dhcp_opts:
                   - opt_name: opt name1
                     opt_value: value1
                   - opt_name: ..."
@@ -218,7 +218,7 @@ def _needs_update(module, port, cloud):
                       'device_owner',
                       'device_id']
     compare_dict = ['allowed_address_pairs',
-                    'extra_dhcp_opt']
+                    'extra_dhcp_opts']
     compare_list = ['security_groups']
 
     for key in compare_simple:
@@ -280,7 +280,7 @@ def _compose_port_args(module, cloud):
                            'mac_address',
                            'security_groups',
                            'allowed_address_pairs',
-                           'extra_dhcp_opt',
+                           'extra_dhcp_opts',
                            'device_owner',
                            'device_id']
     for optional_param in optional_parameters:
@@ -310,8 +310,8 @@ def main():
         mac_address=dict(default=None),
         security_groups=dict(default=None, type='list'),
         no_security_groups=dict(default=False, type='bool'),
-        allowed_address_pairs=dict(type='dict', default=None),
-        extra_dhcp_opt=dict(type='dict', default=None),
+        allowed_address_pairs=dict(type='list', default=None),
+        extra_dhcp_opts=dict(type='list', default=None),
         device_owner=dict(default=None),
         device_id=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
