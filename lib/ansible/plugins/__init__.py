@@ -348,36 +348,38 @@ class PluginLoader:
         ''' instantiates all plugins with the same arguments '''
 
         class_only = kwargs.pop('class_only', False)
+        all_matches = []
+ 
         for i in self._get_paths():
-            matches = glob.glob(os.path.join(i, "*.py"))
-            matches.sort()
-            for path in matches:
-                name, _ = os.path.splitext(path)
-                if '__init__' in name:
-                    continue
+            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
-                if path not in self._module_cache:
-                    self._module_cache[path] = self._load_module_source(name, path)
+        for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
+            name, _ = os.path.splitext(path)
+            if '__init__' in name:
+                continue
 
-                obj = getattr(self._module_cache[path], self.class_name)
-                if self.base_class:
-                    # The import path is hardcoded and should be the right place,
-                    # so we are not expecting an ImportError.
-                    module = __import__(self.package, fromlist=[self.base_class])
-                    # Check whether this obj has the required base class.
-                    try:
-                        plugin_class = getattr(module, self.base_class)
-                    except AttributeError:
-                        continue
-                    if not issubclass(obj, plugin_class):
-                        continue
+            if path not in self._module_cache:
+                self._module_cache[path] = self._load_module_source(name, path)
 
-                if not class_only:
-                    obj = obj(*args, **kwargs)
+            obj = getattr(self._module_cache[path], self.class_name)
+            if self.base_class:
+                # The import path is hardcoded and should be the right place,
+                # so we are not expecting an ImportError.
+                module = __import__(self.package, fromlist=[self.base_class])
+                # Check whether this obj has the required base class.
+                try:
+                   plugin_class = getattr(module, self.base_class)
+                except AttributeError:
+                   continue
+                if not issubclass(obj, plugin_class):
+                   continue
 
-                # set extra info on the module, in case we want it later
-                setattr(obj, '_original_path', path)
-                yield obj
+            if not class_only:
+                obj = obj(*args, **kwargs)
+
+            # set extra info on the module, in case we want it later
+            setattr(obj, '_original_path', path)
+            yield obj
 
 action_loader = PluginLoader(
     'ActionModule',
