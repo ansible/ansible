@@ -71,7 +71,7 @@ EXAMPLES = '''
 
 # Creates port eth6 and set ofport equal to 6.
 - openvswitch_port: bridge=bridge-loop port=eth6 state=present
-                    set Interface eth6 ofport_request=6
+                    set="Interface eth6 ofport_request=6"
 
 # Assign interface id server1-vifeth6 and mac address 52:54:00:30:6d:11
 # to port vifeth6 and setup port to be managed by a controller.
