@@ -60,13 +60,23 @@ People
 ======
 Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, via a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act.
 
-* James Cammarata (RedHat/Ansible)
-* Brian Coca (RedHat/Ansible)
-* Matt Davis (RedHat/Ansible)
-* Toshio Kuratomi (RedHat/Ansible)
-* Jason McKerr (RedHat/Ansible)
-* Robyn Bergeron (RedHat/Ansible)
-* Greg DeKoenigsberg (RedHat/Ansible
+* James Cammarata 
+* Brian Coca
+* Matt Davis
+* Toshio Kuratomi
+* Jason McKerr 
+* Robyn Bergeron 
+* Greg DeKoenigsberg
 * Monty Taylor
 * Matt Martz 
+* Nate Case
+* James Tanner
+* Peter Sprygata
+* Abhijit Menon-Sen
+* Michael Scherer
+* René Moser
+* David Shrewsbury
+* Sandra Wills
+* Graham Mainwaring
+* Jon Davila
 
