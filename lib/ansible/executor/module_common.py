@@ -39,8 +39,12 @@ REPLACER_COMPLEX  = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS  = b"# POWERSHELL_COMMON"
 REPLACER_WINARGS  = b"<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
 REPLACER_JSONARGS = b"<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
-REPLACER_VERSION  = b"\"<<ANSIBLE_VERSION>>\""
 REPLACER_SELINUX  = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
+# If it's okay (because they really shouldn't be used in real module code),
+# get rid of these.  They're all things substituted into the basic snippet and
+# therefore should have been accessed by python variable names rather than
+# being substituted directly into a module:
+#REPLACER_VERSION  = b"\"<<ANSIBLE_VERSION>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -109,7 +113,7 @@ def _find_snippet_imports(module_name, module_data, module_path, strip_comments)
     if module_style == 'new' and module_path.endswith('.py'):
         zipoutput = BytesIO()
         zf = zipfile.ZipFile(zipoutput, mode='w', compression=zipfile.ZIP_DEFLATED)
-        zf.writestr('ansible/__init__.py', b'')
+        zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
         zf.writestr('ansible/module_utils/__init__.py', b'')
         zf.writestr('ansible/module_exec/__init__.py', b'')
         zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
@@ -227,7 +231,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), strip
     python_repred_args = to_bytes(repr(module_args_json))
 
     # these strings should be part of the 'basic' snippet which is required to be included
-    module_data = module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
+    #module_data = module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
     module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
     module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
     module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)

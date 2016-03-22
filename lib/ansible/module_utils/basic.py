@@ -29,8 +29,6 @@
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
-ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
-
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
@@ -230,6 +228,10 @@ except ImportError:
         return _convert(node_or_string)
 
 _literal_eval = literal_eval
+
+from ansible import __version__
+# Backwards compat. New code should import and use __version__
+ANSIBLE_VERSION = __version__
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
