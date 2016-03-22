@@ -17,6 +17,6 @@ else
     docker kill $(cat /tmp/cid_${TARGET})
 
     if [ "X${TESTS_KEEP_CONTAINER}" = "X" ]; then
-        docker rm -f "${C_NAME}"
+        docker rm -vf "${C_NAME}"
     fi
 fi
