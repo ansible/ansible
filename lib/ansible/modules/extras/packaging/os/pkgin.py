@@ -63,10 +63,6 @@ EXAMPLES = '''
 '''
 
 
-import shlex
-import os
-import sys
-import pipes
 import re
 
 def query_package(module, pkgin_path, name):
@@ -214,14 +210,14 @@ def main():
     module = AnsibleModule(
             argument_spec    = dict(
                 state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True)),
+                name         = dict(aliases=["pkg"], required=True, type='list')),
             supports_check_mode = True)
 
     pkgin_path = module.get_bin_path('pkgin', True, ['/opt/local/bin'])
 
     p = module.params
 
-    pkgs = p["name"].split(",")
+    pkgs = p["name"]
 
     if p["state"] == "present":
         install_packages(module, pkgin_path, pkgs)
