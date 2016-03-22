@@ -161,6 +161,22 @@ def main():
     state = module.params['state']
 
     try:
+        if domain:
+            opcloud = shade.operator_cloud(**module.params)
+            try:
+                # We assume admin is passing domain id
+                dom = opcloud.get_domain(domain)['id']
+                domain = dom
+            except:
+                # If we fail, maybe admin is passing a domain name.
+                # Note that domains have unique names, just like id.
+                try:
+                    dom = opcloud.search_domains(filters={'name': domain})[0]['id']
+                    domain = dom
+                except:
+                    # Ok, let's hope the user is non-admin and passing a sane id
+                    pass
+        
         cloud = shade.openstack_cloud(**module.params)
         project = cloud.get_project(name)
 
