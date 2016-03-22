@@ -46,6 +46,9 @@ Ansible Changes By Release
 * debug now has verbosity option to control when to display by matching number of -v in command line
 * modules now get verbosity, diff and other flags as passed to ansible
 * mount facts now also show 'network mounts' that use the pattern `<host>:/<mount>`
+* Plugins are now sorted before loading.  This means, for instance, if you want
+  two custom callback plugins to run in a certain order you can name them
+  10-first-callback.py and 20-second-callback.py.
 
 ## 2.0.1 "Over the Hills and Far Away"
 
