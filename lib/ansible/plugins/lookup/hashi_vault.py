@@ -47,9 +47,7 @@ class HashiVault:
         except ImportError:
             AnsibleError("Please pip install hvac to use this module")
 
-        self.url = kwargs.get('url')
-        if self.url==None:
-            self.url = ANSIBLE_HASHI_VAULT_ADDR
+        self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
             
         self.token = kwargs.get('token')
         if self.token==None:
@@ -60,7 +58,7 @@ class HashiVault:
         if s==None:
             raise AnsibleError("No secret specified")
 
-        s_f = s.split(':')        
+        s_f = s.split(':')
         self.secret = s_f[0]
         if len(s_f)>=2:
             self.secret_field = s_f[1]
@@ -89,7 +87,6 @@ class HashiVault:
 
 
 class LookupModule(LookupBase):
-
     def run(self, terms, variables, **kwargs):
         vault_args = terms[0].split(' ')
         vault_dict = {}
