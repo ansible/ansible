@@ -484,6 +484,7 @@ class Facts(object):
                                             if release:
                                                 self.facts['distribution_release'] = release.group(1)
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
+                                    break
                         elif name == 'Debian':
                             data = get_file_content(path)
                             if 'Debian' in data or 'Raspbian' in data:
