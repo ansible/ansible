@@ -43,7 +43,8 @@ options:
     default: absent
   reorganize:
     description:
-      - For P(state) = I(absent), indicates if the inherited ACE's should be copied. For P(state) = I(present), indicates if the inherited ACE's should be simplified.
+      - For P(state) = I(absent), indicates if the inherited ACE's should be copied from the parent directory. This is necessary (in combination with removal) for a simple ACL instead of using multiple ACE deny entries.
+      - For P(state) = I(present), indicates if the inherited ACE's should be deduplicated compared to the parent directory. This removes complexity of the ACL structure.
     required: false
     choices:
       - no
