@@ -72,9 +72,9 @@ options:
   indexes:
     description:
       - list of dictionaries describing indexes to add to the table. global indexes can be updated. local indexes don't support updates or have throughput.
-      - required options: ['name', 'type', 'hash_key_name']
-      - valid types: ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
-      - other options: ['hash_key_type', 'range_key_name', 'range_key_type', 'includes', 'read_capacity', 'write_capacity']
+      - "required options: ['name', 'type', 'hash_key_name']"
+      - "valid types: ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']"
+      - "other options: ['hash_key_type', 'range_key_name', 'range_key_type', 'includes', 'read_capacity', 'write_capacity']"
     required: false
     default: []
     version_added: "2.1"
