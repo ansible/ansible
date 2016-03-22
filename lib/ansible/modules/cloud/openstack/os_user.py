@@ -175,6 +175,22 @@ def main():
                 module.fail_json(msg='Default project %s is not valid' % default_project)
             project_id = project['id']
 
+        if domain:
+            opcloud = shade.operator_cloud(**module.params)
+            try:
+                # We assume admin is passing domain id
+                dom = opcloud.get_domain(domain)['id']
+                domain = dom
+            except:
+                # If we fail, maybe admin is passing a domain name.
+                # Note that domains have unique names, just like id.
+                try:
+                    dom = opcloud.search_domains(filters={'name': domain})[0]['id']
+                    domain = dom
+                except:
+                    # Ok, let's hope the user is non-admin and passing a sane id
+                    pass
+
         if state == 'present':
             if user is None:
                 user = cloud.create_user(
