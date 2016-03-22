@@ -27,7 +27,8 @@ Set-Attr $result "changed" $false;
 
 $path = Get-Attr $params "path" -failifempty $true
 $state = Get-Attr $params "state" "absent" -validateSet "present","absent" -resultobj $result
-$reorganize = Get-Attr $params "reorganize" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
+$reorganize = Get-Attr $params "reorganize" "no" -validateSet "no","yes" -resultobj $result
+$reorganize = $reorganize | ConvertTo-Bool
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
