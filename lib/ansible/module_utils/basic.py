@@ -1497,9 +1497,9 @@ class AnsibleModule(object):
                 arg_val = str(arg_val)
             elif isinstance(arg_val, unicode):
                 arg_val = arg_val.encode('utf-8')
-            msg.append('%s=%s ' % (arg, arg_val))
+            msg.append('%s=%s' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % ''.join(msg)
+            msg = 'Invoked with %s' % ' '.join(msg)
         else:
             msg = 'Invoked'
 
