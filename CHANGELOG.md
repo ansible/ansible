@@ -11,6 +11,39 @@ Ansible Changes By Release
 
 ## 2.0.2 "Over the Hills and Far Away"
 
+* Backport of the 2.1 feature to ensure per-item callbacks are sent as they occur,
+  rather than all at once at the end of the task.
+* Fixed bugs related to the iteration of tasks when certain combinations of roles,
+  blocks, and includes were used, especially when handling errors in rescue/always
+  portions of blocks.
+* Fixed handling of redirects in our helper code, and ported the uri module to use
+  this helper code. This removes the httplib dependency for this module while fixing
+  some bugs related to redirects and SSL certs.
+* Fixed some bugs related to the incorrect creation of extra temp directories for
+  uploading files, which were not cleaned up properly.
+* Improved error reporting in certain situations, to provide more information such as
+  the playbook file/line.
+* Fixed a bug related to the variable precedence of role parameters, especially when
+  a role may be used both as a dependency of a role and directly by itself within the
+  same play.
+* Fixed some bugs in the 2.0 implementation of do/until.
+* Fixed some bugs related to run_once:
+  - Ensure that all hosts are marked as failed if a task marked as run_once fails.
+  - Show a warning when using the free strategy when a run_once task is encountered, as
+    there is no way for the free strategy to guarantee the task is not run more than once.
+* Fixed a bug where the assemble module was not honoring check mode in some situations.
+* Fixed a bug related to delegate_to, where we were incorrectly using variables from
+  the inventory host rather than the delegated-to host.
+* The 'package' meta-module now properly squashes items down to a single execution (as the
+  apt/yum/other package modules do).
+* Fixed a bug related to the ansible-galaxy CLI command dealing with paged results from
+  the Galaxy server.
+* Pipelining support is now available for the local and jail connection plugins, which is
+  useful for users who do not wish to have temp files/directories created when running
+  tasks with these connection types.
+* Improvements in support for additional shell types.
+* Improvements in the code which is used to calculate checksums for remote files.
+* Some speed ups and bug fixes related to the variable merging code.
 * Workaround bug in python subprocess on El Capitan that was making vault fail
   when attempting to encrypt a file
 
