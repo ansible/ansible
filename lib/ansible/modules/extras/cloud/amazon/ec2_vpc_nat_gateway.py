@@ -681,7 +681,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
 
 def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
               if_exist_do_not_create=False, wait=False, wait_timeout=0,
-              client_token=None):
+              client_token=None, check_mode=False):
     """Create an Amazon NAT Gateway.
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -747,7 +747,11 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
 
     elif eip_address or allocation_id:
         if eip_address and not allocation_id:
-            allocation_id = get_eip_allocation_id_by_address(client)
+            allocation_id = (
+                get_eip_allocation_id_by_address(
+                    client, eip_address, check_mode=check_mode
+                )
+            )
 
         existing_gateways, allocation_id_exists = (
             gateway_in_subnet_exists(client, subnet_id, allocation_id)
