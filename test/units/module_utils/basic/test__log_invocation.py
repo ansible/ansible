@@ -27,6 +27,7 @@ from ansible.compat.tests.mock import MagicMock
 
 class TestModuleUtilsBasic(unittest.TestCase):
 
+    @unittest.skip("Skipping due to unknown reason. See #15105")
     def test_module_utils_basic__log_invocation(self):
         from ansible.module_utils import basic
 
