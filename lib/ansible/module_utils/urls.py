@@ -849,7 +849,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError), e:
         module.fail_json(msg=str(e))
     except urllib2.HTTPError, e:
-        info.update(dict(msg=str(e), status=e.code, response=e, **e.info()))
+        info.update(dict(msg=str(e), status=e.code, response=e.read(), **e.info()))
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
