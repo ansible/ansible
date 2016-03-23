@@ -52,9 +52,40 @@ class ShellBase(object):
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
-    def chmod(self, mode, path):
+    def chmod(self, mode, path, recursive=True):
         path = pipes.quote(path)
-        return 'chmod %s %s' % (mode, path)
+        cmd = ['chmod', mode, path]
+        if recursive:
+            cmd.append('-R')
+        return ' '.join(cmd)
+
+    def chown(self, path, user, group=None, recursive=True):
+        path = pipes.quote(path)
+        user = pipes.quote(user)
+
+        if group is None:
+            cmd = ['chown', user, path]
+        else:
+            group = pipes.quote(group)
+            cmd = ['chown', '%s:%s' % (user, group), path]
+
+        if recursive:
+            cmd.append('-R')
+
+        return ' '.join(cmd)
+
+    def set_user_facl(self, path, user, mode, recursive=True):
+        """Only sets acls for users as that's really all we need"""
+        path = pipes.quote(path)
+        mode = pipes.quote(mode)
+        user = pipes.quote(user)
+
+        cmd = ['setfacl']
+        if recursive:
+            cmd.append('-R')
+        cmd.extend(('-m', 'u:%s:%s %s' % (user, mode, path)))
+
+        return ' '.join(cmd)
 
     def remove(self, path, recurse=False):
         path = pipes.quote(path)
