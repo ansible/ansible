@@ -23,6 +23,11 @@ Ansible Changes By Release
   * cs_volume
   * cs_zone
   * cs_zone_facts
+- openstack
+  * os_flavor_facts
+  * os_group
+  * os_ironic_inspect
+  * os_keystone_role
 - windows
   * win_regmerge
   * win_timezone
