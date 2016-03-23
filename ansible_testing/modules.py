@@ -25,7 +25,7 @@ from utils import CaptureStd, find_globals
 import yaml
 
 
-BLACKLIST_DIRS = frozenset(('.git', 'test'))
+BLACKLIST_DIRS = frozenset(('.git', 'test', '.github'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
 
