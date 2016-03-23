@@ -79,6 +79,7 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
+    version_added: "2.1"
   upgrade:
     description:
       - 'If yes or safe, performs an aptitude safe-upgrade.'
