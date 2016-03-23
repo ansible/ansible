@@ -250,10 +250,12 @@ options:
     required: false
     default: null
   uid_owner:
+    version_added: "2.1"
     description:
       - "Specifies the UID or username to use in match by owner rule."
     required: false
   reject_with:
+    version_added: "2.1"
     description:
       - "Specifies the error packet type to return while rejecting."
     required: false
