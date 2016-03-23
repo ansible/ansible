@@ -88,6 +88,18 @@ options:
           - the port on which the consul agent is running
         required: false
         default: 8500
+    scheme:
+        description:
+          - the protocol scheme on which the consul agent is running
+        required: false
+        default: http
+        version_added: "2.1"
+    validate_certs:
+        description:
+          - whether to verify the tls certificate of the consul agent
+        required: false
+        default: True
+        version_added: "2.1"
 """
 
 EXAMPLES = '''
@@ -239,6 +251,8 @@ def main():
         delay=dict(required=False,type='str', default='15s'),
         host=dict(default='localhost'),
         port=dict(default=8500, type='int'),
+        scheme=dict(required=False, default='http'),
+        validate_certs=dict(required=False, default=True),
         id=dict(required=False),
         name=dict(required=False),
         node=dict(required=False),
