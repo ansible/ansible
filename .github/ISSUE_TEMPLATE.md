@@ -25,12 +25,12 @@ managing, or say “N/A” for anything that is not platform-specific.
 -->
 
 ##### SUMMARY
-<!--- Please explain the problem briefly -->
+<!--- Explain the problem briefly -->
 
 ##### STEPS TO REPRODUCE
 <!---
-For bugs, please show exactly how to reproduce the problem. For new
-features, show how the feature would be used.
+For bugs, show exactly how to reproduce the problem.
+For new features, show how the feature would be used.
 -->
 
 ```
