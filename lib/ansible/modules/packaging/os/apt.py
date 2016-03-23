@@ -73,6 +73,12 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
+  allow_unauthenticated:
+    description:
+      - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
   upgrade:
     description:
       - 'If yes or safe, performs an aptitude safe-upgrade.'
@@ -366,7 +372,8 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False, only_upgrade=False):
+            build_dep=False, autoremove=False, only_upgrade=False,
+            allow_unauthenticated=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -424,6 +431,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             cmd += " -o APT::Install-Recommends=yes"
         # install_recommends is None uses the OS default
 
+        if allow_unauthenticated:
+            cmd += " --allow-unauthenticated"
+
         rc, out, err = m.run_command(cmd)
         if rc:
             return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
@@ -432,7 +442,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     else:
         return (True, dict(changed=False))
 
-def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
+def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
     changed=False
     deps_to_install = []
     pkgs_to_install = []
@@ -612,7 +622,8 @@ def main():
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS),
             autoremove = dict(type='bool', default=False, aliases=['autoclean']),
-            only_upgrade = dict(type='bool', default=False)
+            only_upgrade = dict(type='bool', default=False),
+            allow_unauthenticated = dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
         mutually_exclusive = [['package', 'upgrade', 'deb']],
         required_one_of = [['package', 'upgrade', 'update_cache', 'deb']],
@@ -650,6 +661,7 @@ def main():
     updated_cache = False
     updated_cache_time = 0
     install_recommends = p['install_recommends']
+    allow_unauthenticated = p['allow_unauthenticated']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
 
@@ -715,6 +727,7 @@ def main():
                 p['deb'] = download(module, p['deb'])
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
+                        allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         packages = p['package']
@@ -737,7 +750,8 @@ def main():
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options,
                     build_dep=state_builddep, autoremove=autoremove,
-                    only_upgrade=p['only_upgrade'])
+                    only_upgrade=p['only_upgrade'],
+                    allow_unauthenticated=allow_unauthenticated)
             (success, retvals) = result
             retvals['cache_updated']=updated_cache
             retvals['cache_update_time']=updated_cache_time
