@@ -75,7 +75,9 @@ class TaskExecutor:
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
-        task requires looping and either runs the task with
+        task requires looping and either runs the task with self._run_loop()
+        or self._execute(). After that, the returned results are parsed and
+        returned as a dict.
         '''
 
         display.debug("in run()")
