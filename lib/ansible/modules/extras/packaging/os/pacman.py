@@ -301,9 +301,6 @@ def main():
 
     pacman_path = module.get_bin_path('pacman', True)
 
-    if not os.path.exists(pacman_path):
-        module.fail_json(msg="cannot find pacman, in path %s" % (pacman_path))
-
     p = module.params
 
     # normalize the state parameter
