@@ -19,6 +19,10 @@ Ansible Changes By Release
 * cloudstack: cs_pod
 * cloudstack: cs_cluster
 * cloudstack: cs_zone
+* openstack: os_flavor_facts
+* openstack: os_group
+* openstack: os_ironic_inspect
+* openstack: os_keystone_role
 * win_regmerge
 * win_timezone
 * yum_repository
