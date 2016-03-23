@@ -105,7 +105,7 @@ options:
         required: false
         default: http
         version_added: "2.1"
-    verify:
+    validate_certs:
         description:
           - whether to verify the tls certificate of the consul agent
         required: false
@@ -231,7 +231,7 @@ def get_consul_api(module, token=None):
     return consul.Consul(host=module.params.get('host'),
                          port=module.params.get('port'),
                          scheme=module.params.get('scheme'),
-                         verify=module.params.get('verify'),
+                         validate_certs=module.params.get('validate_certs'),
                          token=module.params.get('token'))
 
 def test_dependencies(module):
@@ -247,7 +247,7 @@ def main():
         key=dict(required=True),
         host=dict(default='localhost'),
         scheme=dict(required=False, default='http'),
-        verify=dict(required=False, default=True),
+        validate_certs=dict(required=False, default=True),
         port=dict(default=8500, type='int'),
         recurse=dict(required=False, type='bool'),
         retrieve=dict(required=False, default=True),

@@ -94,7 +94,7 @@ options:
         required: false
         default: http
         version_added: "2.1"
-    verify:
+    validate_certs:
         description:
           - whether to verify the tls certificate of the consul agent
         required: false
@@ -252,7 +252,7 @@ def main():
         host=dict(default='localhost'),
         port=dict(default=8500, type='int'),
         scheme=dict(required=False, default='http'),
-        verify=dict(required=False, default=True),
+        validate_certs=dict(required=False, default=True),
         id=dict(required=False),
         name=dict(required=False),
         node=dict(required=False),
