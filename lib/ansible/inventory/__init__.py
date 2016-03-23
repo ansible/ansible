@@ -591,8 +591,13 @@ class Inventory(object):
             for group in self.groups:
                 group.vars = utils.combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
             # get host vars from host_vars/ files
+            ### HACK: in 2.0 subset isn't a problem.  Never port this to 2.x
+            ### Fixes: https://github.com/ansible/ansible/issues/13557
+            old_subset =  self._subset
+            self._subset = None
             for host in self.get_hosts():
                 host.vars = utils.combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+            self._subset = old_subset
             # invalidate cache
             self._vars_per_host = {}
             self._vars_per_group = {}
