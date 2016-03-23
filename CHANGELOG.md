@@ -28,6 +28,8 @@ Ansible Changes By Release
   * os_group
   * os_ironic_inspect
   * os_keystone_role
+- softlayer
+  * sl_vm
 - windows
   * win_regmerge
   * win_timezone
