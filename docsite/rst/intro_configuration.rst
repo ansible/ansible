@@ -628,6 +628,23 @@ Additional paths can be provided separated by colon characters, in the same way 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
 
+.. _cfg_squash_actions:
+
+squash_actions
+==============
+
+.. versionadded:: 2.0
+
+Ansible can optimise actions that call modules that support list parameters when using with\_ looping.
+Instead of calling the module once for each item, the module is called once with the full list.
+
+The default value for this setting is only for certain package managers, but it can be used for any module::
+
+    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+
+Currently, this is only supported for modules that have a name parameter, and only when the item is the
+only thing being passed to the parameter.
+
 .. _cfg_strategy_plugins:
 
 strategy_plugins
