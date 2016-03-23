@@ -392,27 +392,27 @@ class TestActionBase(unittest.TestCase):
 
         action_base._low_level_execute_command = MagicMock()
         action_base._low_level_execute_command.return_value = dict(rc=0, stdout='/some/path')
-        self.assertEqual(action_base._make_tmp_path(), '/some/path/')
+        self.assertEqual(action_base._make_tmp_path('root'), '/some/path/')
 
         # empty path fails
         action_base._low_level_execute_command.return_value = dict(rc=0, stdout='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # authentication failure
         action_base._low_level_execute_command.return_value = dict(rc=5, stdout='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # ssh error
         action_base._low_level_execute_command.return_value = dict(rc=255, stdout='', stderr='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
         play_context.verbosity = 5
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # general error
         action_base._low_level_execute_command.return_value = dict(rc=1, stdout='some stuff here', stderr='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
         action_base._low_level_execute_command.return_value = dict(rc=1, stdout='some stuff here', stderr='No space left on device')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
     def test_action_base__remove_tmp_path(self):
         # create our fake task
@@ -567,8 +567,8 @@ class TestActionBase(unittest.TestCase):
         action_base._make_tmp_path = MagicMock()
         action_base._transfer_data = MagicMock()
         action_base._compute_environment_string = MagicMock()
-        action_base._remote_chmod = MagicMock()
         action_base._low_level_execute_command = MagicMock()
+        action_base._fixup_perms = MagicMock()
 
         action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data')
         action_base._late_needs_tmp_path.return_value = False
