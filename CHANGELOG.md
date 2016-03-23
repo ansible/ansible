@@ -9,7 +9,12 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.5 "Dancing In the Street" - TBD
+## 1.9.6 "Dancing in the Street" - TBD
+
+* Fix a regression in the loading of inventory variables where they were not
+  found when placed inside of an inventory directory.
+
+## 1.9.5 "Dancing In the Street" - Mar 21, 2016
 
 * Compatibility fix with docker 1.8.
 * Fix a bug with the crypttab module omitting certain characters from the name of the device
