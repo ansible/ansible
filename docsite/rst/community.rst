@@ -227,6 +227,12 @@ which is our official conference series.
 
 To subscribe to a group from a non-google account, you can send an email to the subscription address requesting the subscription. For example: ansible-devel+subscribe@googlegroups.com
 
+IRC Meetings
+------------
+
+The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
+participate. For more information about Ansible meetings, consult the [Ansible community meeting page](https://github.com/ansible/community/blob/master/MEETINGS.md).
+
 Release Numbering
 -----------------
 
