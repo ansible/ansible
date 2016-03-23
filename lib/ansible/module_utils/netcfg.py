@@ -85,9 +85,8 @@ def parse(lines, indent):
 
 
 class Conditional(object):
-    ''' 
-    Used in command modules to evaluate waitfor conditions
-    ''' 
+    """Used in command modules to evaluate waitfor conditions
+    """
 
     OPERATORS = {
         'eq': ['eq', '=='],
@@ -133,13 +132,20 @@ class Conditional(object):
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
-        for key in self.key.split('.'):
-            match = re.match(r'^(.+)\[(\d+)\]', key)
+        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
+        for part in parts:
+            match = re.findall(r'\[(\S+?)\]', part)
             if match:
-                key, index = match.groups()
-                result = result[key][int(index)]
+                key = part[:part.find('[')]
+                result = result[key]
+                for m in match:
+                    try:
+                        m = int(m)
+                    except ValueError:
+                        m = str(m)
+                    result = result[m]
             else:
-                result = result.get(key)
+                result = result.get(part)
         return result
 
     def number(self, value):
