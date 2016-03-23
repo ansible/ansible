@@ -546,7 +546,7 @@ class AnsibleModule(object):
             self.aliases = self._handle_aliases()
         except Exception:
             e = get_exception()
-            # use exceptions here cause its not safe to call vail json until no_log is processed
+            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
             sys.exit(1)
 
