@@ -34,6 +34,7 @@ from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
 
 try:
     from __main__ import display
@@ -143,7 +144,7 @@ class TaskQueueManager:
 
         if isinstance(self._stdout_callback, CallbackBase):
             stdout_callback_loaded = True
-        elif isinstance(self._stdout_callback, basestring):
+        elif isinstance(self._stdout_callback, string_types):
             if self._stdout_callback not in callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:

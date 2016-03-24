@@ -607,7 +607,8 @@ class TaskExecutor:
                 try:
                     cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     (out, err) = cmd.communicate()
-                    if "Bad configuration option" in err or "Usage:" in err:
+                    err = to_unicode(err)
+                    if u"Bad configuration option" in err or u"Usage:" in err:
                         conn_type = "paramiko"
                 except OSError:
                     conn_type = "paramiko"
@@ -645,7 +646,9 @@ class TaskExecutor:
             try:
                 connection._connect()
             except AnsibleConnectionFailure:
+                display.debug('connection failed, fallback to accelerate')
                 res = handler._execute_module(module_name='accelerate', module_args=accelerate_args, task_vars=variables, delete_remote_tmp=False)
+                display.debug(res)
                 connection._connect()
 
         return connection
