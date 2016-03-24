@@ -45,9 +45,15 @@ options:
     required: true
   password:
     description:
-      - Specifies the password to use when authentication the connection to
+      - Specifies the password to use to authenticate the connection to
         the remote device.  This is a common argument used for either I(cli)
         or I(eapi) transports.
+    required: false
+    default: null
+  ssh_keyfile:
+    description:
+      - Specifies the SSH keyfile to use to authenticate the connection to
+        the remote device.  This argument is only used for I(cli) transports.
     required: false
     default: null
   authorize:
