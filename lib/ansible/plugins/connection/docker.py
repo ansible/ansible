@@ -68,10 +68,10 @@ class Connection(ConnectionBase):
         # root.
 
         if 'docker_command' in kwargs:
-            self.docker_cmd = [kwargs['docker_command']]
+            self.docker_cmd = kwargs['docker_command']
         else:
-            self.docker_cmd = [distutils.spawn.find_executable('docker')]
-            if not self.docker_cmd[0]:
+            self.docker_cmd = distutils.spawn.find_executable('docker')
+            if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
         docker_version = self._get_docker_version()
@@ -106,7 +106,13 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = self.docker_cmd + ['version']
+        cmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            cmd += self._play_context.docker_extra_args.split(' ')
+
+        cmd += ['version']
+
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
@@ -114,7 +120,10 @@ class Connection(ConnectionBase):
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = self.docker_cmd + ['version', '--format', "'{{.Server.Version}}'"]
+        new_docker_cmd = [
+            self.docker_cmd,
+            'version', '--format', "'{{.Server.Version}}'"
+        ]
 
         cmd_output = subprocess.check_output(new_docker_cmd)
 
