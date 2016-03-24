@@ -27,11 +27,9 @@ addons:
     packages:
       - python2.4
 install:
-  - pip install tox coveralls
+  - pip install tox
 script:
   - ./test/utils/run_tests.sh
-after_success:
-  - coveralls
 notifications:
   irc:
     channels:
