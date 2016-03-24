@@ -109,6 +109,7 @@ EXAMPLES = '''
 - name: Delete Kinesis Stream test-stream and wait for it to finish deleting.
   kinesis_stream:
     name: test-stream
+    state: absent
     wait: yes
     wait_timeout: 600
   register: test_stream
