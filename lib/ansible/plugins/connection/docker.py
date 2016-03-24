@@ -106,7 +106,13 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd, 'version']
+        cmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            cmd += self._play_context.docker_extra_args.split(' ')
+
+        cmd += ['version']
+
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
@@ -144,7 +150,12 @@ class Connection(ConnectionBase):
             version we are using, it will be provided to docker exec.
         """
 
-        local_cmd = [self.docker_cmd, 'exec']
+        local_cmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            local_cmd += self._play_context.docker_extra_args.split(' ')
+
+        local_cmd += ['exec']
 
         if self.remote_user is not None:
             local_cmd += ['-u', self.remote_user]

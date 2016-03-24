@@ -65,6 +65,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    become_exe       = ('ansible_become_exe',),
    become_flags     = ('ansible_become_flags',),
    ssh_common_args  = ('ansible_ssh_common_args',),
+   docker_extra_args= ('ansible_docker_extra_args',),
    sftp_extra_args  = ('ansible_sftp_extra_args',),
    scp_extra_args   = ('ansible_scp_extra_args',),
    ssh_extra_args   = ('ansible_ssh_extra_args',),
@@ -121,6 +122,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_pass',
     'become_method',
     'connection',
+    'docker_extra_args',
     'delegate_to',
     'no_log',
     'remote_user',
@@ -128,6 +130,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
 
 RESET_VARS = (
     'ansible_connection',
+    'ansible_docker_extra_args',
     'ansible_ssh_host',
     'ansible_ssh_pass',
     'ansible_ssh_port',
@@ -149,6 +152,7 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
+    _docker_extra_args  = FieldAttribute(isa='string')
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
@@ -253,6 +257,7 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+
         # privilege escalation
         self.become        = options.become
         self.become_method = options.become_method
@@ -261,7 +266,7 @@ class PlayContext(Base):
         self.check_mode = boolean(options.check)
 
         # get ssh options FIXME: make these common to all connections
-        for flag in ['ssh_common_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
             setattr(self, flag, getattr(options,flag, ''))
 
         # general flags (should we move out?)
@@ -550,4 +555,3 @@ class PlayContext(Base):
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
-
