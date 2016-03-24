@@ -247,9 +247,9 @@ class Connection(ConnectionBase):
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
-        in_size = os.path.getsize(in_path)
+        in_size = os.path.getsize(to_bytes(in_path, errors='strict'))
         offset = 0
-        with open(in_path, 'rb') as in_file:
+        with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
             for out_data in iter((lambda:in_file.read(buffer_size)), ''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
@@ -265,7 +265,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
 
         script_template = u'''
@@ -366,9 +366,9 @@ class Connection(ConnectionBase):
                     else:
                         if not out_file:
                             # If out_path is a directory and we're expecting a file, bail out now.
-                            if os.path.isdir(out_path):
+                            if os.path.isdir(to_bytes(out_path, errors='strict')):
                                 break
-                            out_file = open(out_path, 'wb')
+                            out_file = open(to_bytes(out_path, errors='strict'), 'wb')
                         out_file.write(data)
                         if len(data) < buffer_size:
                             break

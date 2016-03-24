@@ -5,3 +5,15 @@ server ansible_ssh_host=10.10.10.10 ansible_ssh_user=Administrator ansible_ssh_p
 ansible_connection=winrm
 # HTTPS uses 5986, HTTP uses 5985
 ansible_ssh_port=5985
+
+[winrm]
+winrm-pipelining    ansible_ssh_pipelining=true
+winrm-no-pipelining ansible_ssh_pipelining=false
+
+[winrm:vars]
+ansible_connection=winrm
+ansible_host=somehost
+ansible_user=someuser
+ansible_password=somepassword
+ansible_port=5986
+ansible_winrm_server_cert_validation=ignore
