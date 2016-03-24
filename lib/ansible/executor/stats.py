@@ -22,7 +22,7 @@ __metaclass__ = type
 class AggregateStats:
     ''' holds stats about per-host activity during playbook runs '''
 
-    def __init__(self):
+    def __init__(self, inventory=None):
 
         self.processed = {}
         self.failures  = {}
@@ -30,6 +30,7 @@ class AggregateStats:
         self.dark      = {}
         self.changed   = {}
         self.skipped   = {}
+        self.inventory = inventory
 
     def increment(self, what, host):
         ''' helper function to bump a statistic '''
@@ -48,4 +49,3 @@ class AggregateStats:
             changed     = self.changed.get(host, 0),
             skipped     = self.skipped.get(host, 0)
         )
-
