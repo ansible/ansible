@@ -44,6 +44,10 @@ Ansible Changes By Release
 * slack
 * json
 
+####New Tests:
+* issubset
+* issuperset
+
 ####New Inventory scripts:
 * rackhd
 
