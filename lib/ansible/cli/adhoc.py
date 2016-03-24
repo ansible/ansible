@@ -96,7 +96,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = to_unicode(self.args[0])
+        pattern = to_unicode(self.args[0], errors='strict')
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
