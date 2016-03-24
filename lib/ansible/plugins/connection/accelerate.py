@@ -30,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionF
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_decrypt
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -210,6 +211,8 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to remote '''
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
+        in_path = to_bytes(in_path, errors='strict')
+
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
@@ -262,7 +265,7 @@ class Connection(ConnectionBase):
         if self.send_data(data):
             raise AnsibleError("failed to initiate the file fetch with %s" % self._play_context.remote_addr)
 
-        fh = open(out_path, "w")
+        fh = open(to_bytes(out_path, errors='strict'), "w")
         try:
             bytes = 0
             while True:
