@@ -50,7 +50,6 @@ except ImportError:
 
 MAGIC_VARIABLE_MAPPING = dict(
    connection       = ('ansible_connection',),
-   docker_extra_args  = ('ansible_docker_extra_args',),
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
@@ -66,6 +65,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    become_exe       = ('ansible_become_exe',),
    become_flags     = ('ansible_become_flags',),
    ssh_common_args  = ('ansible_ssh_common_args',),
+   docker_extra_args= ('ansible_docker_extra_args',),
    sftp_extra_args  = ('ansible_sftp_extra_args',),
    scp_extra_args   = ('ansible_scp_extra_args',),
    ssh_extra_args   = ('ansible_ssh_extra_args',),
@@ -257,9 +257,6 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
-
-        if options.connection:
-            self.connection = options.connection
 
         # privilege escalation
         self.become        = options.become
