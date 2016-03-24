@@ -71,8 +71,7 @@ Facts
 Facts are simply things that are discovered about remote nodes.  While they can be used in playbooks and templates just like variables, facts
 are things that are inferred, rather than set.  Facts are automatically discovered by Ansible when running plays by executing the internal 'setup'
 module on the remote nodes.  You never have to call the setup module explicitly, it just runs, but it can be disabled to save time if it is
-not needed.  For the convenience of users who are switching from other configuration management systems, the fact module will also pull in facts from the 'ohai' and 'facter'
-tools if they are installed, which are fact libraries from Chef and Puppet, respectively.
+not needed or you can tell ansible to collect only a subset of the full facts via the `gather_subset:` option. For the convenience of users who are switching from other configuration management systems, the fact module will also pull in facts from the 'ohai' and 'facter' tools if they are installed, which are fact libraries from Chef and Puppet, respectively. (These may also be disabled via `gather_subset:`)
 
 Filter Plugin
 +++++++++++++
@@ -399,7 +398,7 @@ An optional conditional statement attached to a task that is used to determine i
 Van Halen
 +++++++++
 
-For no particular reason, other than the fact that Michael really likes them, all Ansible releases are codenamed after Van Halen songs.  There is no preference given to David Lee Roth vs. Sammy Lee Hagar-era songs, and instrumentals are also allowed.  It is unlikely that there will ever be a Jump release, but a Van Halen III codename release is possible.  You never know.
+For no particular reason, other than the fact that Michael really likes them, all Ansible 0.x and 1.x releases are codenamed after Van Halen songs.  There is no preference given to David Lee Roth vs. Sammy Lee Hagar-era songs, and instrumentals are also allowed.  It is unlikely that there will ever be a Jump release, but a Van Halen III codename release is possible.  You never know.
 
 Vars (Variables)
 ++++++++++++++++

@@ -22,6 +22,7 @@ __metaclass__ = type
 from yaml.constructor import Constructor, ConstructorError
 from yaml.nodes import MappingNode
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.vars.unsafe_proxy import wrap_var
 
 try:
     from __main__ import display
@@ -65,20 +66,23 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning('While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
+                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
 
         return mapping
 
-    def construct_yaml_str(self, node):
+    def construct_yaml_str(self, node, unsafe=False):
         # Override the default string handling function
         # to always return unicode objects
         value = self.construct_scalar(node)
         ret = AnsibleUnicode(value)
 
         ret.ansible_pos = self._node_position_info(node)
+
+        if unsafe:
+            ret = wrap_var(ret)
 
         return ret
 
@@ -87,6 +91,9 @@ class AnsibleConstructor(Constructor):
         yield data
         data.extend(self.construct_sequence(node))
         data.ansible_pos = self._node_position_info(node)
+
+    def construct_yaml_unsafe(self, node):
+        return self.construct_yaml_str(node, unsafe=True)
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
@@ -121,3 +128,7 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:seq',
     AnsibleConstructor.construct_yaml_seq)
+
+AnsibleConstructor.add_constructor(
+    u'!unsafe',
+    AnsibleConstructor.construct_yaml_unsafe)

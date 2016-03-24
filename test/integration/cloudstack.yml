@@ -22,3 +22,9 @@
     - { role: test_cs_account,              tags: test_cs_account }
     - { role: test_cs_firewall,             tags: test_cs_firewall }
     - { role: test_cs_loadbalancer_rule,    tags: test_cs_loadbalancer_rule }
+    - { role: test_cs_volume,               tags: test_cs_volume }
+    - { role: test_cs_instance_facts,       tags: test_cs_instance_facts }
+    - { role: test_cs_configuration,        tags: test_cs_configuration }
+    - { role: test_cs_pod,                  tags: test_cs_pod }
+    - { role: test_cs_cluster,              tags: test_cs_cluster }
+    - { role: test_cs_resourcelimit,        tags: test_cs_resourcelimit }

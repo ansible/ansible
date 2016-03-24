@@ -22,6 +22,7 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -46,7 +47,7 @@ class LookupModule(LookupBase):
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile and os.path.exists(lookupfile):
                 with open(lookupfile, 'r') as f:
-                    template_data = f.read()
+                    template_data = to_unicode(f.read())
 
                     searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     if 'role_path' in variables:

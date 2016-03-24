@@ -3,10 +3,17 @@ Python API
 
 .. contents:: Topics
 
+Please note that while we make this API available it is not intended for direct consumption, it is here
+for the support of the Ansible command line tools. We try not to make breaking changes but we reserve the
+right to do so at any time if it makes sense for the Ansible toolset.
+
+
+The following documentation is provided for those that still want to use the API directly, but be mindful this is not something the Ansible team supports.
+
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
 write various plugins, and you can plug in inventory data from external data sources.  This document
-covers the Runner and Playbook API at a basic level.
+covers the execution and Playbook API at a basic level.
 
 If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
 or have access control and logging demands, take a look at :doc:`tower` 
@@ -17,8 +24,10 @@ This chapter discusses the Python API.
 
 .. _python_api:
 
-The Python API is very powerful, and is how the ansible CLI and ansible-playbook
-are implemented. In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
+The Python API is very powerful, and is how the all the ansible CLI tools are implemented.
+In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
+
+.. note:: Ansible relies on forking processes, as such the API is not thread safe.
 
 .. _python_api_20:
 
@@ -37,11 +46,11 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
 
-    Options = namedtuple('Options', ['connection','module_path', 'forks', 'remote_user', 'private_key_file', 'ssh_common_args', 'ssh_extra_args', 'sftp_extra_args', 'scp_extra_args', 'become', 'become_method', 'become_user', 'verbosity', 'check'])
+    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
     # initialize needed objects
     variable_manager = VariableManager()
     loader = DataLoader()
-    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, remote_user=None, private_key_file=None, ssh_common_args=None, ssh_extra_args=None, sftp_extra_args=None, scp_extra_args=None, become=None, become_method=None, become_user=None, verbosity=None, check=False)
+    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
     passwords = dict(vault_pass='secret')
 
     # create inventory and pass to var manager
@@ -53,7 +62,10 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
             name = "Ansible Play",
             hosts = 'localhost',
             gather_facts = 'no',
-            tasks = [ dict(action=dict(module='debug', args=(msg='Hello Galaxy!'))) ]
+            tasks = [
+                dict(action=dict(module='shell', args='ls'), register='shell_out'),
+                dict(action=dict(module='debug', args=dict(msg='{{shell_out.stdout}}')))
+             ]
         )
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 

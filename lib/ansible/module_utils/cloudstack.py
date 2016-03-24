@@ -35,6 +35,18 @@ try:
 except ImportError:
     has_lib_cs = False
 
+CS_HYPERVISORS = [
+    "KVM", "kvm",
+    "VMware", "vmware",
+    "BareMetal", "baremetal",
+    "XenServer", "xenserver",
+    "LXC", "lxc",
+    "HyperV", "hyperv",
+    "UCS", "ucs",
+    "OVM", "ovm",
+    "Simulator", "simulator",
+    ]
+
 def cs_argument_spec():
     return dict(
         api_key = dict(default=None),
@@ -78,6 +90,10 @@ class AnsibleCloudStack(object):
         self.returns = {}
         # these values will be casted to int
         self.returns_to_int = {}
+        # these keys will be compared case sensitive in self.has_changed()
+        self.case_sensitive_keys = [
+            'id',
+        ]
 
         self.module = module
         self._connect()
@@ -138,16 +154,14 @@ class AnsibleCloudStack(object):
                 continue
 
             if key in current_dict:
-
-                # API returns string for int in some cases, just to make sure
-                if isinstance(value, int):
-                    current_dict[key] = int(current_dict[key])
-                elif isinstance(value, str):
-                    current_dict[key] = str(current_dict[key])
-
-                # Only need to detect a singe change, not every item
-                if value != current_dict[key]:
+                if self.case_sensitive_keys and key in self.case_sensitive_keys:
+                    if str(value) != str(current_dict[key]):
+                        return True
+                # Test for diff in case insensitive way
+                elif str(value).lower() != str(current_dict[key]).lower():
                     return True
+            else:
+                return True
         return False
 
 
@@ -218,7 +232,7 @@ class AnsibleCloudStack(object):
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                if vm in [ v['name'], v['displayname'], v['id'] ]:
+                if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
@@ -238,7 +252,7 @@ class AnsibleCloudStack(object):
 
         if zones:
             for z in zones['zone']:
-                if zone in [ z['name'], z['id'] ]:
+                if zone.lower() in [ z['name'].lower(), z['id'] ]:
                     self.zone = z
                     return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)

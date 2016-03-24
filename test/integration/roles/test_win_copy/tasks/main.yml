@@ -183,7 +183,7 @@
 #  assert:
 #    that:
 #      - "{{item.stat.mode}} == 0700"
-#  with_items: dir_stats.results
+#  with_items: "{{dir_stats.results}}"
 
 
 # errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.

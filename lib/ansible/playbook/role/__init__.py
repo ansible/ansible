@@ -43,7 +43,10 @@ __all__ = ['Role', 'hash_params']
 #       strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
-        return params
+        if isinstance(params, list):
+            return frozenset(params)
+        else:
+            return params
     else:
         s = set()
         for k,v in iteritems(params):
@@ -61,6 +64,7 @@ def hash_params(params):
 class Role(Base, Become, Conditional, Taggable):
 
     _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None):
         self._role_name        = None
@@ -149,7 +153,7 @@ class Role(Base, Become, Conditional, Taggable):
         current_when = getattr(self, 'when')[:]
         current_when.extend(role_include.when)
         setattr(self, 'when', current_when)
-        
+
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
         setattr(self, 'tags', current_tags)
@@ -172,16 +176,16 @@ class Role(Base, Become, Conditional, Taggable):
         task_data = self._load_role_yaml('tasks')
         if task_data:
             try:
-                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
-            except:
+                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
+            except AssertionError:
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
-                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader)
-            except:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader, variable_manager=self._variable_manager)
+            except AssertionError:
+                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -248,31 +252,41 @@ class Role(Base, Become, Conditional, Taggable):
     def get_parents(self):
         return self._parents
 
-    def get_default_vars(self):
+    def get_default_vars(self, dep_chain=[]):
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
+        if dep_chain:
+            for parent in dep_chain:
+                default_vars = combine_vars(default_vars, parent._default_vars)
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[], include_params=True):
+    def get_inherited_vars(self, dep_chain=[]):
         inherited_vars = dict()
 
-        for parent in dep_chain:
-            inherited_vars = combine_vars(inherited_vars, parent._role_vars)
-            if include_params:
-                inherited_vars = combine_vars(inherited_vars, parent._role_params)
+        if dep_chain:
+            for parent in dep_chain:
+                inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
+    def get_role_params(self, dep_chain=[]):
+        params = {}
+        if dep_chain:
+            for parent in dep_chain:
+                params = combine_vars(params, parent._role_params)
+        params = combine_vars(params, self._role_params)
+        return params
+
     def get_vars(self, dep_chain=[], include_params=True):
-        all_vars = self.get_inherited_vars(dep_chain, include_params=include_params)
+        all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
         all_vars = combine_vars(all_vars, self._role_vars)
         if include_params:
-            all_vars = combine_vars(all_vars, self._role_params)
+            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
 
         return all_vars
 
@@ -313,7 +327,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         return host.name in self._completed and not self._metadata.allow_duplicates
 
-    def compile(self, play, dep_chain=[]):
+    def compile(self, play, dep_chain=None):
         '''
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
@@ -327,18 +341,20 @@ class Role(Base, Become, Conditional, Taggable):
         block_list = []
 
         # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
         new_dep_chain = dep_chain + [self]
 
         deps = self.get_direct_dependencies()
         for dep in deps:
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
-            for dep_block in dep_blocks:
-                new_dep_block = dep_block.copy()
-                new_dep_block._dep_chain = new_dep_chain
-                new_dep_block._play = play
-                block_list.append(new_dep_block)
+            block_list.extend(dep_blocks)
 
-        block_list.extend(self._task_blocks)
+        for task_block in self._task_blocks:
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
 
         return block_list
 

@@ -20,9 +20,7 @@ __metaclass__ = type
 import base64
 import os
 import re
-import random
 import shlex
-import time
 
 from ansible.utils.unicode import to_bytes, to_unicode
 
@@ -35,6 +33,13 @@ if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
 
 class ShellModule(object):
+
+    # Common shell filenames that this plugin handles
+    # Powershell is handled differently.  It's selected when winrm is the
+    # connection
+    COMPATIBLE_SHELLS = frozenset()
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'powershell'
 
     def env_prefix(self, **kwargs):
         return ''

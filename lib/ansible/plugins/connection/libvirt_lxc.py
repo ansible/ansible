@@ -29,15 +29,14 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
@@ -65,7 +64,7 @@ class Connection(ConnectionBase):
         return cmd
 
     def _check_domain(self, domain):
-        p = subprocess.Popen([self.virsh, '-q', '-c', 'lxc:///', 'dominfo', domain],
+        p = subprocess.Popen([self.virsh, '-q', '-c', 'lxc:///', 'dominfo', to_bytes(domain)],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
         if p.returncode:
@@ -87,9 +86,15 @@ class Connection(ConnectionBase):
         return the process's exit code immediately.
         '''
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.virsh, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', executable , '-c', cmd]
+        local_cmd = [self.virsh, '-q', '-c', 'lxc:///', 'lxc-enter-namespace']
 
-        display.vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        if C.DEFAULT_LIBVIRT_LXC_NOSECLABEL:
+            local_cmd += ['--noseclabel']
+
+        local_cmd += [self.lxc, '--', executable, '-c', cmd]
+
+        display.vvv("EXEC %s" % (local_cmd,), host=self.lxc)
+        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -125,7 +130,7 @@ class Connection(ConnectionBase):
 
         out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
-            with open(in_path, 'rb') as in_file:
+            with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
@@ -151,7 +156,7 @@ class Connection(ConnectionBase):
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
-        with open(out_path, 'wb+') as out_file:
+        with open(to_bytes(out_path, errors='strict'), 'wb+') as out_file:
             try:
                 chunk = p.stdout.read(BUFSIZE)
                 while chunk:
