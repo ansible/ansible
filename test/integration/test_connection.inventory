@@ -48,9 +48,11 @@ paramiko_ssh-no-pipelining ansible_ssh_pipelining=false
 ansible_host=localhost
 ansible_connection=paramiko_ssh
 
-[skip-during-build:children]
-docker
-libvirt_lxc
-jail
+[test_default:children]
+local
+chroot
+
+[test_docker:children]
+test_default
 ssh
 paramiko_ssh
