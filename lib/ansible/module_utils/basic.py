@@ -1387,6 +1387,8 @@ class AnsibleModule(object):
                 wanted = 'str'
 
             value = self.params[k]
+            if value is None:
+                continue
 
             try:
                 type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]

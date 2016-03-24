@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
@@ -24,11 +25,20 @@ NET_COMMON_ARGS = dict(
     port=dict(type='int'),
     username=dict(required=True),
     password=dict(no_log=True),
+    ssh_keyfile=dict(type='path'),
     authorize=dict(default=False, type='bool'),
     auth_pass=dict(no_log=True),
     transport=dict(default='cli', choices=['cli', 'eapi']),
     use_ssl=dict(default=True, type='bool'),
     provider=dict(type='dict')
+)
+
+NET_ENV_ARGS = dict(
+    username='ANSIBLE_NET_USERNAME',
+    password='ANSIBLE_NET_PASSWORD',
+    ssh_keyfile='ANSIBLE_NET_SSH_KEYFILE',
+    authorize='ANSIBLE_NET_AUTHORIZE',
+    auth_pass='ANSIBLE_NET_AUTH_PASS',
 )
 
 CLI_PROMPTS_RE = [
@@ -139,12 +149,13 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        key_filename = self.module.params['ssh_keyfile']
 
         try:
             self.shell = Shell(CLI_PROMPTS_RE, CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
         except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
 
     def authorize(self):
@@ -177,9 +188,12 @@ class NetworkModule(AnsibleModule):
         params = super(NetworkModule, self)._load_params()
         provider = params.get('provider') or dict()
         for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                if not params.get(key) and value is not None:
+            if key in NET_COMMON_ARGS:
+                if params.get(key) is None and value is not None:
                     params[key] = value
+        for key, env_var in NET_ENV_ARGS.items():
+            if params.get(key) is None and env_var in os.environ:
+                params[key] = os.environ[env_var]
         return params
 
     def connect(self):
