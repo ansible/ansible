@@ -350,7 +350,7 @@ def main():
         removes = dict(required=False, default=None, type='path'),
         status_code = dict(required=False, default=[200], type='list'),
         timeout = dict(required=False, default=30, type='int'),
-        headers = dict(required=False, type='dict')
+        headers = dict(required=False, type='dict', default={})
     ))
 
     module = AnsibleModule(
