@@ -56,12 +56,12 @@ class ShellModule(object):
         return '"%s"' % path
 
     def create_cmd_list(self, executable, cmd):
-        return cmd
+        return [cmd]
 
     def join_cmd_list(self, cmd):
         if len(cmd) != 1:
             raise AnsibleError('powershell requires len(cmd) = 1, cmd = %s' % cmd)
-        return cmd
+        return cmd[0]
 
     # powershell requires that script files end with .ps1
     def get_remote_filename(self, base_name):
