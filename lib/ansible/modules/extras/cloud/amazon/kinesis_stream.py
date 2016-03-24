@@ -201,7 +201,7 @@ def make_tags_in_proper_format(tags):
         tags (list): The tags you want applied.
 
     Basic Usage:
-        >>> tags = [{u'Key': 'env', u'Value': 'development'}]
+        >>> tags = [{'Key': 'env', 'Value': 'development'}]
         >>> make_tags_in_proper_format(tags)
         {
             "env": "development",
@@ -327,7 +327,7 @@ def find_stream(client, stream_name, limit=1, check_mode=False):
                 'RetentionPeriodHours': 24,
                 'StreamName': stream_name,
                 'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(stream_name),
-                'StreamStatus': u'ACTIVE'
+                'StreamStatus': 'ACTIVE'
             }
         success = True
     except botocore.exceptions.ClientError, e:
@@ -363,31 +363,24 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
     stream = dict()
     err_msg = ""
 
-    if not check_mode:
-        while wait_timeout > time.time():
-            try:
-                find_success, find_msg, stream = (
-                    find_stream(client, stream_name)
-                )
-                if status != 'DELETING':
-                    if find_success and stream:
-                        if stream.get('StreamStatus') == status:
-                            status_achieved = True
-                            break
-                elif status == 'DELETING':
-                    if not find_success:
+    while wait_timeout > time.time():
+        try:
+            find_success, find_msg, stream = (
+                find_stream(client, stream_name, check_mode=check_mode)
+            )
+            if status != 'DELETING':
+                if find_success and stream:
+                    if stream.get('StreamStatus') == status:
                         status_achieved = True
                         break
-                else:
-                    time.sleep(polling_increment_secs)
-            except botocore.exceptions.ClientError as e:
-                err_msg = str(e)
-
-    else:
-        status_achieved = True
-        find_success, find_msg, stream = (
-            find_stream(client, stream_name, check_mode=check_mode)
-        )
+            elif status == 'DELETING':
+                if not find_success:
+                    status_achieved = True
+                    break
+            else:
+                time.sleep(polling_increment_secs)
+        except botocore.exceptions.ClientError as e:
+            err_msg = str(e)
 
     if not status_achieved:
         err_msg = "Wait time out reached, while waiting for results"
@@ -694,7 +687,7 @@ def update(client, current_stream, stream_name, retention_period=None,
                           retention_period, action='create' )
 
     Returns:
-        Tuple (bool, bool, str, dict)
+        Tuple (bool, bool, str)
     """
     success = False
     changed = False
@@ -783,9 +776,9 @@ def update(client, current_stream, stream_name, retention_period=None,
             )
         )
     if success and changed:
-        err_msg = 'Kinesis Stream {0} updated successfully'.format(stream_name)
+        err_msg = 'Kinesis Stream {0} updated successfully.'.format(stream_name)
     elif success and not changed:
-        err_msg = 'Kinesis Stream {0} did not changed'.format(stream_name)
+        err_msg = 'Kinesis Stream {0} did not changed.'.format(stream_name)
 
     return success, changed, err_msg
 
@@ -1003,7 +996,11 @@ def main():
     wait_timeout = module.params.get('wait_timeout')
 
     if state == 'present' and not shards:
-        module.fail_json(msg='shards is required when state == present.')
+        module.fail_json(msg='Shards is required when state == present.')
+
+    if retention_period:
+        if retention_period < 24:
+            module.fail_json(msg='Retention period can not be less than 24 hours.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
