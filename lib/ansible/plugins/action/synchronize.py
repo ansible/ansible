@@ -204,8 +204,8 @@ class ActionModule(ActionBase):
             dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
+        inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
         if self._task.args.get('dest_port', None) is None:
-            inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
             if inv_port is not None:
                 self._task.args['dest_port'] = inv_port
 
