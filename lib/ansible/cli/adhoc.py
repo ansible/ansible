@@ -32,6 +32,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.unicode import to_unicode
 from ansible.vars import VariableManager
 
 try:
@@ -95,7 +96,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = self.args[0]
+        pattern = to_unicode(self.args[0])
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
