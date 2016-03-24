@@ -321,12 +321,14 @@ contributions, public IRC channels, private correspondence, and public meetings.
 Ansible community members are...
 
 **Considerate**
+
 Contributions of every kind have far-ranging consequences. Just as your work depends on
 the work of others, decisions you make surrounding your contributions to the Ansible
 community will affect your fellow community members. You are strongly encouraged to take
 those consequences into account while making decisions.
 
 **Patient**
+
 Asynchronous communication can come with its own frustrations, even in the most responsive
 of communities. Please remember that our community is largely built on volunteered time,
 and that questions, contributions, and requests for support may take some time to receive
@@ -336,11 +338,13 @@ general questions. Pose your question to the community as a whole, and wait pati
 a response.
 
 **Respectful**
+
 Every community inevitably has disagreements, but remember that it is
 possible to disagree respectfully and courteously. Disagreements are never an excuse for
 rudeness, hostility, threatening behavior, abuse (verbal or physical), or personal attacks.
 
 **Kind**
+
 Everyone should feel welcome in the Ansible community, regardless of their background.
 Please be courteous, respectful and polite to fellow community members. Do not make or
 post offensive comments related to skill level, gender, gender identity or expression,
@@ -352,6 +356,7 @@ sexual attention are all strictly prohibited.  Additionally, you are encouraged 
 make assumptions about the background or identity of your fellow community members.
 
 **Inquisitive**
+
 The only stupid question is the one that does not get asked. We
 encourage our users to ask early and ask often. Rather than asking whether you can ask a
 question (the answer is always yes!), instead, simply ask your question. You are
@@ -361,6 +366,7 @@ Refrain from pasting multiple lines of code directly into the IRC channels - ins
 gist.github.com or another paste site to provide code snippets.
 
 **Helpful**
+
 The Ansible community is committed to being a welcoming environment for all users,
 regardless of skill level. We were all beginners once upon a time, and our community
 cannot grow without an environment where new users feel safe and comfortable asking questions.
@@ -372,7 +378,7 @@ documentation thoroughly. We are happy to answer questions, provide strategic gu
 and suggest effective workflows, but we are not here to do your job for you.
 
 Anti-harassment policy
-======================
+----------------------
 Harassment includes (but is not limited to) all of the following behaviors:
 
 - Offensive comments related to gender (including gender expression and identity), age, sexual orientation, disability, physical appearance, body size, race, and religion
@@ -398,7 +404,7 @@ something after you have been asked to stop, and all community members are expec
 comply with such requests immediately.
 
 Policy violations
-=================
+-----------------
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by
 contacting codeofconduct@ansible.com, to any channel operator in the community IRC
 channels, or to the local organizers of an event. Meetup organizers are encouraged to
@@ -430,7 +436,7 @@ of other open source projects, including:
 * Ubuntu
 
 Contributors License Agreement
-------------------------------
+==============================
 
 By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable
 copyright license to all users and developers of the project, present and future, pursuant to the license of the project.
