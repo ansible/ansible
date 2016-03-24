@@ -31,7 +31,7 @@ except ImportError:
 
 class Become:
 
-    # Privlege escalation
+    # Privilege escalation
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
@@ -60,7 +60,7 @@ class Become:
 
         This is called from the Base object's preprocess_data() method which
         in turn is called pretty much anytime any sort of playbook object
-        (plays, tasks, blocks, etc) are created.
+        (plays, tasks, blocks, etc) is created.
         """
 
         self._detect_privilege_escalation_conflict(ds)
@@ -90,15 +90,16 @@ class Become:
 
             display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
 
-        # if we are becoming someone else, but some fields are unset,
-        # make sure they're initialized to the default config values
-        if ds.get('become', False):
-            if ds.get('become_method', None) is None:
-                ds['become_method'] = C.DEFAULT_BECOME_METHOD
-            if ds.get('become_user', None) is None:
-                ds['become_user'] = C.DEFAULT_BECOME_USER
-
         return ds
+
+    def set_become_defaults(self, become, become_method, become_user):
+        ''' if we are becoming someone else, but some fields are unset,
+            make sure they're initialized to the default config values  '''
+        if become:
+            if become_method is None:
+                become_method = C.DEFAULT_BECOME_METHOD
+            if become_user is None:
+                become_user = C.DEFAULT_BECOME_USER
 
     def _get_attr_become(self):
         '''

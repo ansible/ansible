@@ -52,24 +52,24 @@ class CallbackModule(CallbackBase):
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception'].replace('\n','')
 
             if result._task.action in C.MODULE_NO_JSON:
-                self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'FAILED'), color='red')
+                self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'FAILED'), color=C.COLOR_ERROR)
             else:
-                self._display.display(msg, color='red')
+                self._display.display(msg, color=C.COLOR_ERROR)
 
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color='red')
+        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color=C.COLOR_ERROR)
 
     def v2_runner_on_ok(self, result):
         if result._task.action in C.MODULE_NO_JSON:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'SUCCESS'), color='green')
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'SUCCESS'), color=C.COLOR_OK)
         else:
-            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color='green')
+            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color=C.COLOR_OK)
 
 
     def v2_runner_on_unreachable(self, result):
-        self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
+        self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color=C.COLOR_UNREACHABLE)
 
     def v2_runner_on_skipped(self, result):
-        self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
+        self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)

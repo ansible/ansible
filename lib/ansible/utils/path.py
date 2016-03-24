@@ -18,9 +18,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import stat
-from time import sleep
 from errno import EEXIST
+from ansible.utils.unicode import to_bytes
 
 __all__ = ['unfrackpath']
 
@@ -35,7 +34,7 @@ def unfrackpath(path):
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
-    if not os.path.exists(path):
+    if not os.path.exists(to_bytes(path, errors='strict')):
         try:
             if mode:
                 os.makedirs(path, mode)

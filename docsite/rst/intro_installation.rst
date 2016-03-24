@@ -27,12 +27,11 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version.
 
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
-these are infrequent.
+Ansible's release cycles are usually about four months long. Due to this short release cycle,
+minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
+Major bugs will still have maintenance releases when needed, though these are infrequent.
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
@@ -53,8 +52,12 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 .. note::
 
     As of 2.0 ansible uses a few more file handles to manage its forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles unlimited``. Or just any time you see a "Too many open files" error.
 
+
+.. warning::
+
+    Please note that some modules and plugins have additional requirements, for modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
 
 .. _managed_node_requirements:
 
@@ -198,7 +201,7 @@ Fedora users can install Ansible directly, though if you are using RHEL or CentO
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, ``asciidoc``, ``git``, ``python-setuptools`` and ``python2-devel`` installed.
 
 .. code-block:: bash
 
@@ -223,6 +226,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
+.. note:: For the older version 1.9 we use this ppa:ansible/ansible-1.9
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:

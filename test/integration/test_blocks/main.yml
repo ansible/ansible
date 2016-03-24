@@ -1,0 +1,103 @@
+- name: simple block test
+  hosts: localhost
+  gather_facts: yes
+  strategy: "{{test_strategy|default('linear')}}"
+  vars:
+    block_tasks_run: false
+    block_rescue_run: false
+    block_always_run: false
+    nested_block_always_run: false
+    tasks_run_after_failure: false
+    rescue_run_after_failure: false
+    always_run_after_failure: false
+  tasks:
+  - block:
+    - name: set block tasks run flag
+      set_fact:
+        block_tasks_run: true
+    - name: fail in tasks
+      fail:
+    - name: tasks flag should not be set after failure
+      set_fact:
+        tasks_run_after_failure: true
+    rescue:
+    - name: set block rescue run flag
+      set_fact:
+        block_rescue_run: true
+    - name: fail in rescue
+      fail:
+    - name: tasks flag should not be set after failure in rescue
+      set_fact:
+        rescue_run_after_failure: true
+    always:
+    - name: set block always run flag
+      set_fact:
+        block_always_run: true
+    #- block:
+    #  - meta: noop
+    #  always:
+    #  - name: set nested block always run flag
+    #    set_fact:
+    #      nested_block_always_run: true
+    #  - name: fail in always
+    #    fail:
+    #  - name: tasks flag should not be set after failure in always
+    #    set_fact:
+    #      always_run_after_failure: true
+    - meta: clear_host_errors
+
+  post_tasks:
+  - assert:
+      that:
+      - block_tasks_run
+      - block_rescue_run
+      - block_always_run
+      #- nested_block_always_run
+      - not tasks_run_after_failure
+      - not rescue_run_after_failure
+      - not always_run_after_failure
+  - debug: msg="TEST COMPLETE"
+
+- name: block with includes
+  hosts: localhost
+  gather_facts: yes
+  strategy: "{{test_strategy|default('linear')}}"
+  vars:
+    rescue_run_after_include_fail: false
+    always_run_after_include_fail_in_rescue: false
+    tasks_run_after_failure: false
+    rescue_run_after_failure: false
+    always_run_after_failure: false
+  tasks:
+  - block:
+    - name: include fail.yml in tasks
+      include: fail.yml
+      args:
+        msg: "failed from tasks"
+    - name: tasks flag should not be set after failure
+      set_fact:
+        tasks_run_after_failure: true
+    rescue:
+    - set_fact:
+        rescue_run_after_include_fail: true
+    - name: include fail.yml in rescue
+      include: fail.yml
+      args:
+        msg: "failed from rescue"
+    - name: flag should not be set after failure in rescue
+      set_fact:
+        rescue_run_after_failure: true
+    always:
+    - set_fact:
+        always_run_after_include_fail_in_rescue: true
+    - meta: clear_host_errors
+
+  post_tasks:
+  - assert:
+      that:
+      - rescue_run_after_include_fail
+      - always_run_after_include_fail_in_rescue
+      - not tasks_run_after_failure
+      - not rescue_run_after_failure
+      - not always_run_after_failure
+  - debug: msg="TEST COMPLETE"

@@ -124,6 +124,9 @@ class InventoryParser(object):
                     del pending_declarations[groupname]
 
                 continue
+            elif line.startswith('['):
+                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + \
+                                  "in the section entry, and that there are no other invalid characters")
 
             # It's not a section, so the current state tells us what kind of
             # definition it must be. The individual parsers will raise an
@@ -264,9 +267,12 @@ class InventoryParser(object):
         # Can the given hostpattern be parsed as a host with an optional port
         # specification?
 
-        (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        if not pattern:
-            self._raise_error("Can't parse '%s' as host[:port]" % hostpattern)
+        try:
+            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
+        except:
+            # not a recognizable host pattern
+            pattern = hostpattern
+            port = None
 
         # Once we have separated the pattern, we expand it into list of one or
         # more hostnames, depending on whether it contains any [x:y] ranges.

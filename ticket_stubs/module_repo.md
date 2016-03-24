@@ -6,7 +6,7 @@ Hi!
 Thanks very much for your interest in Ansible.  It sincerely means a lot to us. 
 
 This appears to be a submission about a module, and aside from action_plugins, if you know what those are, the modules
-in ansible are now moved two separate repos.  We would appreciate if you can submit this there instead.
+in ansible are now moved to separate repos.  We would appreciate if you can submit this there instead.
 
 If this is about a new module, submit pull requests or ideas to:
 

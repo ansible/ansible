@@ -195,7 +195,7 @@
 # Verify mysql_variable fails with an incorrect login_host parameter
 #
 - name: query mysql_variable using incorrect login_host
-  mysql_variables: variable=wait_timeout login_host=12.0.0.9
+  mysql_variables: variable=wait_timeout login_host=12.0.0.9 connect_timeout=5
   register: result
   ignore_errors: true
 

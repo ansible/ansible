@@ -1,0 +1,37 @@
+- hosts: all
+  gather_facts: no
+  serial: 1
+  tasks:
+
+  ### raw with unicode arg and output
+
+  - name: raw with unicode arg and output
+    raw: echo 汉语
+    register: command
+  - name: check output of raw with unicode arg and output
+    assert: { that: "'汉语' in command.stdout" }
+
+  ### copy local file with unicode filename and content
+
+  - name: create local file with unicode filename and content
+    local_action: lineinfile dest=/tmp/ansible-local-汉语/汉语.txt create=true line=汉语
+  - name: remove remote file with unicode filename and content
+    file: path=/tmp/ansible-remote-汉语/汉语.txt state=absent
+  - name: create remote directory with unicode name
+    file: path=/tmp/ansible-remote-汉语 state=directory
+  - name: copy local file with unicode filename and content
+    copy: src=/tmp/ansible-local-汉语/汉语.txt dest=/tmp/ansible-remote-汉语/汉语.txt
+
+  ### fetch remote file with unicode filename and content
+
+  - name: remove local file with unicode filename and content
+    local_action: file path=/tmp/ansible-local-汉语/汉语.txt state=absent
+  - name: fetch remote file with unicode filename and content
+    fetch: src=/tmp/ansible-remote-汉语/汉语.txt dest=/tmp/ansible-local-汉语/汉语.txt fail_on_missing=true validate_checksum=true flat=true
+
+  ### remove local and remote temp files
+
+  - name: remove local temp file
+    local_action: file path=/tmp/ansible-local-汉语 state=absent
+  - name: remove remote temp file
+    file: path=/tmp/ansible-remote-汉语 state=absent

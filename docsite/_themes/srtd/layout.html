@@ -150,11 +150,6 @@
         </a>
       </div>
 
-      <div class="wy-side-nav-search" style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
-        <!-- <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a> -->
-        {% include "searchbox.html" %}
-      </div>
-
       <div id="menu-id" class="wy-menu wy-menu-vertical" data-spy="affix">
         {% set toctree = toctree(maxdepth=2, collapse=False) %}
         {% if toctree %}
@@ -166,7 +161,7 @@
 <!-- changeable widget -->
 <center>
 <br/>
-<a href="http://www.ansible.com/tower?utm_source=docs">
+<a href="http://www.ansible.com/docs-left?utm_source=docs">
     <img style="border-width:0px;" src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-left-rail.png" />
 </a>
 </center>
@@ -189,15 +184,17 @@
       <div class="wy-nav-content">
         <div class="rst-content">
 
-          <!-- Tower ads -->
-          <a class="DocSiteBanner" href="http://www.ansible.com/tower?utm_source=docs">
-            <div class="DocSiteBanner-imgWrapper">
-              <img src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-top-left.png">
-            </div>
-            <div class="DocSiteBanner-imgWrapper">
-              <img src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-top-right.png">
-            </div>
-          </a>
+          <!-- Banner ads -->
+          <div class="DocSiteBanner">
+            <a class="DocSiteBanner-imgWrapper"
+                href="http://www.ansible.com/docs-top?utm_source=docs">
+                <img src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-top-left.png">
+            </a>
+            <a class="DocSiteBanner-imgWrapper"
+                href="http://www.ansible.com/docs-top?utm_source=docs">
+                <img src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-top-right.png">
+            </a>
+        </div>
 
           {% include "breadcrumbs.html" %}
           <div id="page-content">

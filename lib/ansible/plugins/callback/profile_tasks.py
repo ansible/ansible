@@ -1,3 +1,4 @@
+# (C) 2016, Joel, http://github.com/jjshoe 
 # (C) 2015, Tom Paine, <github@aioue.net>
 # (C) 2014, Jharrod LaFon, @JharrodLaFon
 # (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
@@ -22,6 +23,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+import os
 import time
 
 from ansible.plugins.callback import CallbackBase
@@ -49,7 +52,7 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        self.stats[self.current] = time.time() - self.stats[self.current]
+        self.stats[self.current]['time'] = time.time() - self.stats[self.current]['time']
 
 
 def tasktime():
@@ -72,12 +75,22 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self):
-        self.stats = {}
+        self.stats = collections.OrderedDict()
         self.current = None
+        self.sort_order = os.getenv('PROFILE_TASKS_SORT_ORDER', True)
+        self.task_output_limit = os.getenv('PROFILE_TASKS_TASK_OUTPUT_LIMIT', 20)
+
+        if self.sort_order == 'ascending':
+            self.sort_order = False;
+
+        if self.task_output_limit == 'all':
+            self.task_output_limit = None
+        else:
+            self.task_output_limit = int(self.task_output_limit) 
 
         super(CallbackModule, self).__init__()
 
-    def _record_task(self, name):
+    def _record_task(self, task):
         """
         Logs the start of each task
         """
@@ -85,14 +98,16 @@ class CallbackModule(CallbackBase):
         timestamp(self)
 
         # Record the start time of the current task
-        self.current = name
-        self.stats[self.current] = time.time()
+        self.current = task._uuid
+        self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
+        if self._display.verbosity >= 2:
+            self.stats[self.current][ 'path'] = task.get_path()
 
-    def playbook_on_task_start(self, name, is_conditional):
-        self._record_task(name)
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        self._record_task(task)
 
     def v2_playbook_on_handler_task_start(self, task):
-        self._record_task('HANDLER: ' + task.name)
+        self._record_task(task)
 
     def playbook_on_setup(self):
         self._display.display(tasktime())
@@ -103,21 +118,23 @@ class CallbackModule(CallbackBase):
 
         timestamp(self)
 
-        # Sort the tasks by their running time
-        results = sorted(
-            self.stats.items(),
-            key=lambda value: value[1],
-            reverse=True,
-        )
+        results = self.stats.items() 
 
-        # Just keep the top 20
-        results = results[:20]
+        # Sort the tasks by the specified sort
+        if self.sort_order != 'none':
+            results = sorted(
+                self.stats.iteritems(),
+                key=lambda x:x[1]['time'],
+                reverse=self.sort_order,
+            )
+
+        # Display the number of tasks specified or the default of 20 
+        results = results[:self.task_output_limit]
 
         # Print the timings
-        for name, elapsed in results:
-            self._display.display(
-                "{0:-<70}{1:->9}".format(
-                    '{0} '.format(name),
-                    ' {0:.02f}s'.format(elapsed),
-                )
-            )
+        for uuid, result in results:
+            msg = ''
+            msg="{0:-<70}{1:->9}".format('{0} '.format(result['name']),' {0:.02f}s'.format(result['time']))
+            if 'path' in result:
+                msg += "\n{0:-<79}".format( '{0} '.format(result['path']))
+            self._display.display(msg)

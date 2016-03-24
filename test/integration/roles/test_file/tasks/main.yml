@@ -248,7 +248,7 @@
     that:
       - 'item.changed == true'
       - 'item.state == "file"'
-  with_items: file16_result.results
+  with_items: "{{file16_result.results}}"
 
 - name: try to force the sub-directory to a link
   file: src={{output_dir}}/testing dest={{output_dir}}/sub1 state=link force=yes

@@ -35,8 +35,8 @@ class VcaError(Exception):
 
 def vca_argument_spec():
     return dict(
-        username=dict(),
-        password=dict(),
+        username=dict(type='str', aliases=['user'], required=True),
+        password=dict(type='str', aliases=['pass','passwd'], required=True, no_log=True),
         org=dict(),
         service_id=dict(),
         instance_id=dict(),
@@ -108,7 +108,10 @@ class VcaAnsibleModule(AnsibleModule):
 
     def create_instance(self):
         service_type = self.params.get('service_type', DEFAULT_SERVICE_TYPE)
-        host = self.params.get('host', LOGIN_HOST.get('service_type'))
+        if service_type == 'vcd': 
+            host = self.params['host']
+        else:
+            host = LOGIN_HOST[service_type]
         username = self.params['username']
 
         version = self.params.get('api_version')

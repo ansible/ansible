@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.compat.six import iteritems
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -60,8 +60,15 @@ class PlaybookInclude(Base, Conditional, Taggable):
             all_vars.update(variable_manager.get_vars(loader=loader))
 
         templar = Templar(loader=loader, variables=all_vars)
-        if not new_obj.evaluate_conditional(templar=templar, all_vars=all_vars):
-            return None
+
+        try:
+            forward_conditional = False
+            if not new_obj.evaluate_conditional(templar=templar, all_vars=all_vars):
+                return None
+        except AnsibleError:
+            # conditional evaluation raised an error, so we set a flag to indicate
+            # we need to forward the conditionals on to the included play(s)
+            forward_conditional = True
 
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
@@ -84,6 +91,13 @@ class PlaybookInclude(Base, Conditional, Taggable):
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
                 entry._included_path = os.path.dirname(file_name)
+
+            # Check to see if we need to forward the conditionals on to the included
+            # plays. If so, we can take a shortcut here and simply prepend them to
+            # those attached to each block (if any)
+            if forward_conditional:
+                for task_block in entry.tasks:
+                    task_block.when = self.when[:] + task_block.when
 
         return pb
 

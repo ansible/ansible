@@ -137,7 +137,16 @@ class ModuleArgsParser:
         # than those which may be parsed/normalized next
         final_args = dict()
         if additional_args:
-            final_args.update(additional_args)
+            if isinstance(additional_args, string_types):
+                templar = Templar(loader=None)
+                if templar._contains_vars(additional_args):
+                    final_args['_variable_params'] = additional_args
+                else:
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+            elif isinstance(additional_args, dict):
+                final_args.update(additional_args)
+            else:
+                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's an 'old style' invocation.
@@ -213,18 +222,21 @@ class ModuleArgsParser:
         action = None
         args = None
 
+        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
             if 'module' in thing:
-                action = thing['module']
+                action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
+                check_raw = action in actions_allowing_raw
+                args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in actions_allowing_raw
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -289,7 +301,7 @@ class ModuleArgsParser:
                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')

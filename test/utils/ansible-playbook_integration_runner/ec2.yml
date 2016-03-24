@@ -1,0 +1,41 @@
+- name: Launch Instance
+  ec2:
+    group_id: 'sg-07bb906d' # jenkins-slave_new
+    count: 1
+    instance_type: 'm3.large'
+    image: '{{ item.image }}'
+    wait: true
+    region: 'us-east-1'
+    keypair: '{{ keypair }}'
+    aws_access_key: "{{ aws_access_key|default(lookup('env', 'AWS_ACCESS_KEY')) }}"
+    aws_secret_key: "{{ aws_secret_key|default(lookup('env', 'AWS_SECRET_KEY')) }}"
+    instance_tags:
+      jenkins: jenkins_ansible_pr_test
+  register: ec2
+  with_items: slaves
+# We could do an async here, that would speed things up
+
+
+- name: Wait for SSH
+  wait_for:
+    host: "{{ item['instances'][0]['public_ip'] }}"
+    port: 22
+    delay: 10
+    timeout: 320
+    state: started
+  with_items: ec2.results
+
+- name: Wait a little longer for centos
+  pause: seconds=20
+
+- name: Add hosts group temporary inventory group with pem path
+  add_host:
+    name: "{{ item.1.platform }}-{{ ec2.results[item.0]['instances'][0]['public_ip'] }}"
+    groups: dynamic_hosts
+    ansible_ssh_host: "{{ ec2.results[item.0]['instances'][0]['public_ip'] }}"
+    ansible_ssh_private_key_file: '{{ pem_path }}'
+    ansible_ssh_user: "{{ item.1.ssh_user }}"
+    ec2_vars: "{{ ec2.results[item.0]['instances'][0] }}"
+    ec2_instance_ids: "{{ ec2.results[item.0]['instance_ids'] }}"
+  with_indexed_items: slaves
+

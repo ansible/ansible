@@ -1,0 +1,61 @@
+---
+- name: setup domain
+  cs_domain: path={{ cs_resource_prefix }}-domain
+  register: dom
+- name: verify setup domain
+  assert:
+    that:
+    - dom|success
+
+- name: setup account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    username: "{{ cs_resource_prefix }}_username"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    network_domain: "{{ cs_resource_prefix }}-local"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: acc
+- name: verify setup account
+  assert:
+    that:
+    - acc|success
+
+- name: test failed unkonwn type
+  cs_resourcelimit:
+    type: unkonwn
+    limit: 20
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  ignore_errors: yes
+- name: verify test failed unkonwn type
+  assert:
+    that:
+    - rl|failed
+
+- name: test failed missing type
+  cs_resourcelimit:
+  register: rl
+  ignore_errors: yes
+- name: verify test failed missing type
+  assert:
+    that:
+    - rl|failed
+
+- name: setup resource limits domain
+  cs_resourcelimit:
+    type: instance
+    limit: 20
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup resource limits domain
+  assert:
+    that:
+    - rl|success
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 20
+
+- include: instance.yml
+- include: cpu.yml

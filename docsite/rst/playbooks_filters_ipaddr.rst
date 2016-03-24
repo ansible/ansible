@@ -283,6 +283,37 @@ If needed, you can extract subnet and prefix information from 'host/prefix' valu
     # {{ host_prefix | ipaddr('host/prefix') | ipaddr('prefix') }}
     [64, 24]
 
+Converting subnet masks to CIDR notation
+----------------------------------------
+
+Given a subnet in the form of network address and subnet mask, it can be converted into CIDR notation using ``ipaddr()``.  This can be useful for converting Ansible facts gathered about network configuration from subnet masks into CIDR format::
+
+    ansible_default_ipv4: {
+        address: "192.168.0.11", 
+        alias: "eth0", 
+        broadcast: "192.168.0.255", 
+        gateway: "192.168.0.1", 
+        interface: "eth0", 
+        macaddress: "fa:16:3e:c4:bd:89", 
+        mtu: 1500, 
+        netmask: "255.255.255.0", 
+        network: "192.168.0.0", 
+        type: "ether"
+    }
+
+First concatenate network and netmask::
+
+    net_mask = "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
+    '192.168.0.0/255.255.255.0'
+
+This result can be canonicalised with ``ipaddr()`` to produce a subnet in CIDR format::
+
+    # {{ net_mask | ipaddr('prefix') }}
+    '24'
+
+    # {{ net_mask | ipaddr('net') }}
+    '192.168.0.0/24'
+
 
 IP address conversion
 ---------------------

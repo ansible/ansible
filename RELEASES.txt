@@ -4,11 +4,13 @@ Ansible Releases at a Glance
 Active Development
 ++++++++++++++++++
 
-2.0    "Over the Hills and Far Away" - in progress
+2.1    "TBD" - in progress
 
 Released
 ++++++++
 
+2.0.1  "Over the Hills and Far Away" 02-24-2016
+2.0.0  "Over the Hills and Far Away" 01-12-2016
 1.9.4  "Dancing In the Streets" 10-09-2015
 1.9.3  "Dancing In the Streets" 09-03-2015
 1.9.2  "Dancing In the Streets" 06-24-2015

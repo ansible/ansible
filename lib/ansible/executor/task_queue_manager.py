@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from multiprocessing.managers import SyncManager, DictProxy
 import multiprocessing
 import os
 import tempfile
@@ -27,13 +26,16 @@ import tempfile
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
+from ansible.plugins.callback import CallbackBase
+from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
 
 try:
     from __main__ import display
@@ -56,7 +58,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -65,6 +67,8 @@ class TaskQueueManager:
         self._stats            = AggregateStats()
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
+        self._run_additional_callbacks = run_additional_callbacks
+        self._run_tree         = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
@@ -96,14 +100,9 @@ class TaskQueueManager:
     def _initialize_processes(self, num):
         self._workers = []
 
-        for i in xrange(num):
-            main_q = multiprocessing.Queue()
+        for i in range(num):
             rslt_q = multiprocessing.Queue()
-
-            prc = WorkerProcess(self, main_q, rslt_q, self._hostvars_manager, self._loader)
-            prc.start()
-
-            self._workers.append((prc, main_q, rslt_q))
+            self._workers.append([None, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -120,11 +119,18 @@ class TaskQueueManager:
         for key in self._notified_handlers.keys():
             del self._notified_handlers[key]
 
-        # FIXME: there is a block compile helper for this...
+        def _process_block(b):
+            temp_list = []
+            for t in b.block:
+                if isinstance(t, Block):
+                    temp_list.extend(_process_block(t))
+                else:
+                    temp_list.append(t)
+            return temp_list
+
         handler_list = []
         for handler_block in handlers:
-            for handler in handler_block.block:
-                handler_list.append(handler)
+            handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the handler names from the handler list
         for handler in handler_list:
@@ -144,8 +150,16 @@ class TaskQueueManager:
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
-        if self._stdout_callback not in callback_loader:
-            raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        if isinstance(self._stdout_callback, CallbackBase):
+            stdout_callback_loaded = True
+        elif isinstance(self._stdout_callback, string_types):
+            if self._stdout_callback not in callback_loader:
+                raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+            else:
+                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                stdout_callback_loaded = True
+        else:
+            raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
@@ -159,7 +173,9 @@ class TaskQueueManager:
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
+                elif callback_name == 'tree' and self._run_tree:
+                    pass
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
             self._callback_plugins.append(callback_plugin())
@@ -184,30 +200,11 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        class HostVarsManager(SyncManager):
-            pass
-
-        hostvars = HostVars(
+        self.hostvars = HostVars(
             inventory=self._inventory,
             variable_manager=self._variable_manager,
             loader=self._loader,
         )
-
-        HostVarsManager.register(
-            'hostvars',
-            callable=lambda: hostvars,
-            # FIXME: this is the list of exposed methods to the DictProxy object, plus our
-            #        special ones (set_variable_manager/set_inventory). There's probably a better way
-            #        to do this with a proper BaseProxy/DictProxy derivative
-            exposed=(
-                'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
-                'set_nonpersistent_facts', 'set_host_facts', 'set_host_variable',
-                '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
-                'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
-            ),
-        )
-        self._hostvars_manager = HostVarsManager()
-        self._hostvars_manager.start()
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
         contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
@@ -248,7 +245,6 @@ class TaskQueueManager:
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
         self._cleanup_processes()
-        self._hostvars_manager.shutdown()
         return play_return
 
     def cleanup(self):
@@ -261,10 +257,13 @@ class TaskQueueManager:
         if self._result_prc:
             self._result_prc.terminate()
 
-            for (worker_prc, main_q, rslt_q) in self._workers:
+            for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
-                main_q.close()
-                worker_prc.terminate()
+                if worker_prc and worker_prc.is_alive():
+                    try:
+                        worker_prc.terminate()
+                    except AttributeError:
+                        pass
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -288,22 +287,36 @@ class TaskQueueManager:
         self._terminated = True
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in self._callback_plugins:
+        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
                 continue
-            methods = [
-                getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'v2_on_any', None)
-            ]
+
+            # try to find v2 method, fallback to v1 method, ignore callback if no method found
+            methods = []
+            for possible in [method_name, 'v2_on_any']:
+                gotit =  getattr(callback_plugin, possible, None)
+                if gotit is None:
+                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                if gotit is not None:
+                    methods.append(gotit)
+
             for method in methods:
-                if method is not None:
-                    try:
+                try:
+                    # temporary hack, required due to a change in the callback API, so
+                    # we don't break backwards compatibility with callbacks which were
+                    # designed to use the original API
+                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
+                    if method_name == 'v2_playbook_on_start':
+                        import inspect
+                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
+                        if 'playbook' in f_args:
+                            method(*args, **kwargs)
+                        else:
+                            method()
+                    else:
                         method(*args, **kwargs)
-                    except Exception as e:
-                        try:
-                            v1_method = method.replace('v2_','')
-                            v1_method(*args, **kwargs)
-                        except Exception:
-                            display.warning('Error when using %s: %s' % (method, str(e)))
+                except Exception as e:
+                    #TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure when attempting to use callback plugin (%s): %s" % (to_unicode(callback_plugin), to_unicode(e)))

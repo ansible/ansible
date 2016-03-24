@@ -77,4 +77,3 @@
         - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
-        - "'ungrouped' == ['localhost']|map('extract',hostvars,['vars','group_names',0])|list|first"

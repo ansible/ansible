@@ -17,15 +17,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-- name: clean out the test directory
-  file: name={{output_dir|mandatory}} state=absent
-  always_run: True
-  tags:
-    - prepare
-
-- name: create the test directory
-  file: name={{output_dir}} state=directory
-  always_run: True
-  tags:
-    - prepare
-
+#- name: clean out the test directory
+#  file: name={{output_dir|mandatory}} state=absent
+#  always_run: True
+#  tags:
+#    - prepare
+#  when: clean_working_dir|default("yes")|bool
+#
+#- name: create the test directory
+#  file: name={{output_dir}} state=directory
+#  always_run: True
+#  tags:
+#    - prepare

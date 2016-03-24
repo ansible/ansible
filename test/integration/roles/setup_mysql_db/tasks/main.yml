@@ -28,12 +28,17 @@
 
 - name: install mysqldb_test rpm dependencies
   yum: name={{ item }} state=latest
-  with_items: mysql_packages
+  with_items: "{{mysql_packages}}"
   when: ansible_pkg_mgr  ==  'yum'
+
+- name: install mysqldb_test rpm dependencies
+  dnf: name={{ item }} state=latest
+  with_items: "{{mysql_packages}}"
+  when: ansible_pkg_mgr  ==  'dnf'
 
 - name: install mysqldb_test debian dependencies
   apt: name={{ item }} state=latest
-  with_items:  mysql_packages
+  with_items: "{{mysql_packages}}"
   when: ansible_pkg_mgr  ==  'apt'
 
 - name: start mysql_db service if not running

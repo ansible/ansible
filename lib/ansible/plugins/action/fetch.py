@@ -25,6 +25,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_bytes
 
 
 class ActionModule(ActionBase):
@@ -70,7 +71,7 @@ class ActionModule(ActionBase):
         if remote_checksum in ('1', '2', None):
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('failed'):
-                if remote_checksum == '1' and not fail_on_missing:
+                if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                     result['msg'] = "the remote file does not exist, not transferring, ignored"
                     result['file'] = source
                     result['changed'] = False
@@ -158,7 +159,7 @@ class ActionModule(ActionBase):
                 self._connection.fetch_file(source, dest)
             else:
                 try:
-                    f = open(dest, 'w')
+                    f = open(to_bytes(dest, errors='strict'), 'w')
                     f.write(remote_data)
                     f.close()
                 except (IOError, OSError) as e:
@@ -171,7 +172,9 @@ class ActionModule(ActionBase):
                 new_md5 = None
 
             if validate_checksum and new_checksum != remote_checksum:
-                result.update(dict(failed=True, md5sum=new_md5, msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+                result.update(dict(failed=True, md5sum=new_md5,
+                    msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
+                    checksum=new_checksum, remote_checksum=remote_checksum))
             else:
                 result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
         else:

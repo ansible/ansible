@@ -177,7 +177,7 @@
 
 - name: Test that retrieving a url with invalid cert fails
   set_fact:
-    web_data: "{{ lookup('url', 'https://kennethreitz.org/') }}"
+    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/') }}"
   ignore_errors: True
   register: url_invalid_cert
 
@@ -188,9 +188,29 @@
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
-    web_data: "{{ lookup('url', 'https://kennethreitz.org/', validate_certs=False) }}"
+    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/', validate_certs=False) }}"
   register: url_no_validate_cert
 
 - assert:
     that:
-      - "'kennethreitz.org' in web_data"
+      - "'www.kennethreitz.org' in web_data"
+
+- name: Test cartesian lookup
+  debug: var={{item}}
+  with_cartesian:
+    - ["A", "B", "C"]
+    - ["1", "2", "3"]
+  register: product
+
+- name: Verify cartesian lookup
+  assert:
+    that:
+        - product.results[0]['item'] == ["A", "1"]
+        - product.results[1]['item'] == ["A", "2"]
+        - product.results[2]['item'] == ["A", "3"]
+        - product.results[3]['item'] == ["B", "1"]
+        - product.results[4]['item'] == ["B", "2"]
+        - product.results[5]['item'] == ["B", "3"]
+        - product.results[6]['item'] == ["C", "1"]
+        - product.results[7]['item'] == ["C", "2"]
+        - product.results[8]['item'] == ["C", "3"]

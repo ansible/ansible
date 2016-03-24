@@ -9,13 +9,13 @@
 
 # Make sure we start fresh
 - name: remove rpm dependencies for postgresql test
-  yum: name={{ item }} state=absent
-  with_items: postgresql_packages
-  when: ansible_pkg_mgr  ==  'yum'
+  package: name={{ item }} state=absent
+  with_items: "{{postgresql_packages}}"
+  when: ansible_os_family == "RedHat"
 
 - name: remove dpkg dependencies for postgresql test
   apt: name={{ item }} state=absent
-  with_items:  postgresql_packages
+  with_items: "{{postgresql_packages}}"
   when: ansible_pkg_mgr  ==  'apt'
 
 - name: remove old db (red hat)
@@ -35,13 +35,13 @@
   when: ansible_os_family == "Debian"
 
 - name: install rpm dependencies for postgresql test
-  yum: name={{ item }} state=latest
-  with_items: postgresql_packages
-  when: ansible_pkg_mgr  ==  'yum'
+  package: name={{ item }} state=latest
+  with_items: "{{postgresql_packages}}"
+  when: ansible_os_family == "RedHat"
 
 - name: install dpkg dependencies for postgresql test
   apt: name={{ item }} state=latest
-  with_items:  postgresql_packages
+  with_items: "{{postgresql_packages}}"
   when: ansible_pkg_mgr  ==  'apt'
 
 - name: Initialize postgres (systemd)

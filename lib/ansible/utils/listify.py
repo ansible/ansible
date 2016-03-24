@@ -31,9 +31,8 @@ __all__ = ['listify_lookup_plugin_terms']
 def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=False, convert_bare=True):
 
     if isinstance(terms, string_types):
-        stripped = terms.strip()
         # TODO: warn/deprecation on bare vars in with_ so we can eventually remove fail on undefined override
-        terms = templar.template(terms, convert_bare=convert_bare, fail_on_undefined=fail_on_undefined)
+        terms = templar.template(terms.strip(), convert_bare=convert_bare, fail_on_undefined=fail_on_undefined)
     else:
         terms = templar.template(terms, fail_on_undefined=fail_on_undefined)
 

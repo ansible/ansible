@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+from ansible.errors import AnsibleParserError, AnsibleError
 
 # Components that match a numeric or alphanumeric begin:end or begin:end:step
 # range expression inside square brackets.
@@ -162,6 +163,7 @@ patterns = {
             $
         '''.format(label=label), re.X|re.I|re.UNICODE
     ),
+
 }
 
 def parse_address(address, allow_ranges=False):
@@ -183,8 +185,8 @@ def parse_address(address, allow_ranges=False):
     # First, we extract the port number if one is specified.
 
     port = None
-    for type in ['bracketed_hostport', 'hostport']:
-        m = patterns[type].match(address)
+    for matching in ['bracketed_hostport', 'hostport']:
+        m = patterns[matching].match(address)
         if m:
             (address, port) = m.groups()
             port = int(port)
@@ -194,22 +196,20 @@ def parse_address(address, allow_ranges=False):
     # numeric ranges, or a hostname with alphanumeric ranges.
 
     host = None
-    for type in ['ipv4', 'ipv6', 'hostname']:
-        m = patterns[type].match(address)
+    for matching in ['ipv4', 'ipv6', 'hostname']:
+        m = patterns[matching].match(address)
         if m:
             host = address
             continue
 
     # If it isn't any of the above, we don't understand it.
-
     if not host:
-        return (None, None)
+        raise AnsibleError("Not a valid network hostname: %s" % address)
 
-    # If we get to this point, we know that any included ranges are valid. If
-    # the caller is prepared to handle them, all is well. Otherwise we treat
-    # it as a parse failure.
-
+    # If we get to this point, we know that any included ranges are valid.
+    # If the caller is prepared to handle them, all is well.
+    # Otherwise we treat it as a parse failure.
     if not allow_ranges and '[' in host:
-        return (None, None)
+        raise AnsibleParserError("Detected range in host but was asked to ignore ranges")
 
     return (host, port)

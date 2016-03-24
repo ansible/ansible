@@ -1,0 +1,2 @@
+testhost ansible_connection=local
+

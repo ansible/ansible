@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: Chris Meyers
+  description: install ansible integration test dependencies
+  company: Ansible
+  license: license (GPLv2, CC-BY, etc)
+  min_ansible_version: 1.2
+  platforms:
+  - name: EL
+    versions:
+    - 6
+    - 7
+  - name: Ubuntu
+    versions:
+    - precise
+    - trusty
+  galaxy_tags:
+    - testing
+    - integration
+    - ansible
+    - dependencies
+dependencies: []
+  

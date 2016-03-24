@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -69,7 +70,7 @@ class VaultCLI(CLI):
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
         display.verbosity = self.options.verbosity
 
         can_output = ['encrypt', 'decrypt']
@@ -157,7 +158,12 @@ class VaultCLI(CLI):
     def execute_view(self):
 
         for f in self.args:
-            self.pager(self.editor.plaintext(f))
+            # Note: vault should return byte strings because it could encrypt
+            # and decrypt binary files.  We are responsible for changing it to
+            # unicode here because we are displaying it and therefore can make
+            # the decision that the display doesn't have to be precisely what
+            # the input was (leave that to decrypt instead)
+            self.pager(to_unicode(self.editor.plaintext(f)))
 
     def execute_rekey(self):
         for f in self.args:

@@ -96,7 +96,7 @@ And you want to print every user's name and phone number.  You can loop through 
 Looping over Files
 ``````````````````
 
-``with_file`` iterates over a list of files, setting `item` to the content of each file in sequence.  It can be used like this::
+``with_file`` iterates over the content of a list of files, `item` will be set to the content of each file in sequence.  It can be used like this::
 
     ---
     - hosts: all
@@ -204,7 +204,7 @@ It might happen like so::
 
     - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
       with_subelements:
-         - users
+         - "{{ users }}"
          - authorized
 
 Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
@@ -212,7 +212,7 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
     - name: Setup MySQL users
       mysql_user: name={{ item.0.name }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
       with_subelements:
-        - users
+        - "{{ users }}"
         - mysql.hosts
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
@@ -536,11 +536,11 @@ There is also a specific lookup plugin ``inventory_hostname`` that can be used l
 
     # show all the hosts in the inventory
     - debug: msg={{ item }}
-      with_inventory_hostname: all
+      with_inventory_hostnames: all
 
     # show all the hosts matching the pattern, ie all but the group www
     - debug: msg={{ item }}
-      with_inventory_hostname: all:!www
+      with_inventory_hostnames: all:!www
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
@@ -550,8 +550,8 @@ Loops and Includes
 ``````````````````
 
 In 2.0 you are able to use `with_` loops and task includes (but not playbook includes), this adds the ability to loop over the set of tasks in one shot.
-There are a couple of things that you need to keep in mind, a included task that has it's own `with_` loop will overwrite the value of the special `item` variable.
-So if you want access to both the include's `item` and the current task's `item` you should use `set_fact` to create a alias to the outer one.::
+There are a couple of things that you need to keep in mind, an included task that has its own `with_` loop will overwrite the value of the special `item` variable.
+So if you want access to both the include's `item` and the current task's `item` you should use `set_fact` to create an alias to the outer one.::
 
 
     - include: test.yml

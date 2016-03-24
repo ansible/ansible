@@ -32,6 +32,7 @@ import tempfile
 import traceback
 import fcntl
 import sys
+import re
 
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
@@ -42,6 +43,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -54,6 +56,9 @@ paramiko: The authenticity of host '%s' can't be established.
 The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
 """
+
+# SSH Options Regex
+SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -121,10 +126,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object from other classes '''
-        return 'paramiko'
+    transport = 'paramiko'
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -136,6 +138,51 @@ class Connection(ConnectionBase):
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
+
+    def _parse_proxy_command(self, port=22):
+        proxy_command = None
+        # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
+        ssh_args = [
+            getattr(self._play_context, 'ssh_extra_args', ''),
+            getattr(self._play_context, 'ssh_common_args', ''),
+            getattr(self._play_context, 'ssh_args', ''),
+        ]
+        if ssh_args is not None:
+            args = self._split_ssh_args(' '.join(ssh_args))
+            for i, arg in enumerate(args):
+                if arg.lower() == 'proxycommand':
+                    # _split_ssh_args split ProxyCommand from the command itself
+                    proxy_command = args[i + 1]
+                else:
+                    # ProxyCommand and the command itself are a single string
+                    match = SETTINGS_REGEX.match(arg)
+                    if match:
+                        if match.group(1).lower() == 'proxycommand':
+                            proxy_command = match.group(2)
+
+                if proxy_command:
+                    break
+
+        proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+
+        sock_kwarg = {}
+        if proxy_command:
+            replacers = {
+                '%h': self._play_context.remote_addr,
+                '%p': port,
+                '%r': self._play_context.remote_user
+            }
+            for find, replace in replacers.items():
+                proxy_command = proxy_command.replace(find, str(replace))
+            try:
+                sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
+                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self._play_context.remote_addr)
+            except AttributeError:
+                display.warning('Paramiko ProxyCommand support unavailable. '
+                                'Please upgrade to Paramiko 1.9.0 or newer. '
+                                'Not using configured ProxyCommand')
+
+        return sock_kwarg
 
     def _connect_uncached(self):
         ''' activates the connection object '''
@@ -151,12 +198,16 @@ class Connection(ConnectionBase):
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
-            try:
-                #TODO: check if we need to look at several possible locations, possible for loop
-                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
-            except IOError:
-                pass # file was not found, but not required to function
+            for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
+                try:
+                    #TODO: check if we need to look at several possible locations, possible for loop
+                    ssh.load_system_host_keys(ssh_known_hosts)
+                    break
+                except IOError:
+                    pass # file was not found, but not required to function
             ssh.load_system_host_keys()
+
+        sock_kwarg = self._parse_proxy_command(port)
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
@@ -179,6 +230,7 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
+                **sock_kwarg
             )
         except Exception as e:
             msg = str(e)
@@ -219,6 +271,8 @@ class Connection(ConnectionBase):
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
+
+        cmd = to_bytes(cmd, errors='strict')
 
         no_prompt_out = ''
         no_prompt_err = ''
@@ -268,7 +322,7 @@ class Connection(ConnectionBase):
 
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         try:
@@ -277,7 +331,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(in_path, out_path)
+            self.sftp.put(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
@@ -303,7 +357,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)", e)
 
         try:
-            self.sftp.get(in_path, out_path)
+            self.sftp.get(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 

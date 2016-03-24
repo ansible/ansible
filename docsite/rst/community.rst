@@ -227,6 +227,12 @@ which is our official conference series.
 
 To subscribe to a group from a non-google account, you can send an email to the subscription address requesting the subscription. For example: ansible-devel+subscribe@googlegroups.com
 
+IRC Meetings
+------------
+
+The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
+participate. For more information about Ansible meetings, consult the [Ansible community meeting page](https://github.com/ansible/community/blob/master/MEETINGS.md).
+
 Release Numbering
 -----------------
 
@@ -251,7 +257,12 @@ channel or the general project mailing list.
 IRC Channel
 -----------
 
-Ansible has an IRC channel #ansible on irc.freenode.net.
+Ansible has several IRC channels on Freenode (irc.freenode.net):
+
+- #ansible - For general use questions and support.
+- #ansible-devel - For discussions on developer topics and code related to features/bugs.
+- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists.
+- #ansible-notices - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
 -----------------------

@@ -26,9 +26,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+from time import sleep
 
 try:
     import boto3
+    import botocore
     HAS_BOTO3 = True
 except:
     HAS_BOTO3 = False
@@ -46,8 +48,6 @@ class AnsibleAWSError(Exception):
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
-    params['aws_session_token'] = params.pop('security_token', None)
-    params['verify'] = params.pop('validate_certs', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
@@ -138,10 +138,16 @@ def get_aws_connection_info(module, boto3=False):
         elif 'EC2_REGION' in os.environ:
             region = os.environ['EC2_REGION']
         else:
-            # boto.config.get returns None if config not found
-            region = boto.config.get('Boto', 'aws_region')
-            if not region:
-                region = boto.config.get('Boto', 'ec2_region')
+            if not boto3:
+                # boto.config.get returns None if config not found
+                region = boto.config.get('Boto', 'aws_region')
+                if not region:
+                    region = boto.config.get('Boto', 'ec2_region')
+            elif HAS_BOTO3:
+                # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
+                region = botocore.session.get_session().get_config_variable('region')
+            else:
+                module.fail_json("Boto3 is required for this module. Please install boto3 and try again")
 
     if not security_token:
         if 'AWS_SECURITY_TOKEN' in os.environ:
@@ -156,8 +162,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
                            aws_session_token=security_token)
-        if validate_certs:
-            boto_params['verify'] = validate_certs
+        boto_params['verify'] = validate_certs
 
         if profile_name:
             boto_params['profile_name'] = profile_name
@@ -174,7 +179,7 @@ def get_aws_connection_info(module, boto3=False):
                 module.fail_json("boto does not support profile_name before 2.24")
             boto_params['profile_name'] = profile_name
 
-        if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
+        if HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
 
     for param, value in boto_params.items():
@@ -233,3 +238,27 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
+
+def paging(pause=0):
+    """ Adds paging to boto retrieval functions that support 'marker' """
+    def wrapper(f):
+        def page(*args, **kwargs):
+            results = []
+            marker = None
+            while True:
+                try:
+                    new = f(*args, marker=marker, **kwargs)
+                    marker = new.next_marker
+                    results.extend(new)
+                    if not marker:
+                        break
+                    elif pause:
+                        sleep(pause)
+                except TypeError:
+                    # Older version of boto do not allow for marker param, just run normally
+                    results = f(*args, **kwargs)
+                    break
+            return results
+        return page
+    return wrapper
+
