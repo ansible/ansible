@@ -78,6 +78,11 @@ class ActionModule(ActionBase):
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
+                if not os.path.exists(source) and self._task._block._dep_chain:
+                    for dep in sorted(self._task._block.get_dep_chain(), reverse=True):
+                        source = self._loader.path_dwim_relative(dep, 'templates', source)
+                        if os.path.exists(source):
+                            break
             else:
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
 
@@ -123,7 +128,10 @@ class ActionModule(ActionBase):
             # loader, so that it knows about the other paths to find template files
             searchpath = [self._loader._basedir, os.path.dirname(source)]
             if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                if self._task._block._dep_chain:
+                    new_sp = sorted(self._task._block.get_dep_chain(), reverse=True)
+                    new_sp.extend(searchpath)
+                    searchpath =  new_sp
                 searchpath.insert(1, self._task._role._role_path)
 
             self._templar.environment.loader.searchpath = searchpath
