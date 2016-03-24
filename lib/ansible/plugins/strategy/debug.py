@@ -1,4 +1,7 @@
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import cmd
 import pprint
 import sys
@@ -141,7 +144,7 @@ class Debugger(cmd.Cmd):
     def execute(self, args):
         try:
             code = compile(args + '\n', '<stdin>', 'single')
-            exec code in globals(), self.scope
+            exec(code, globals(), self.scope)
         except:
             t, v = sys.exc_info()[:2]
             if type(t) == type(''):
