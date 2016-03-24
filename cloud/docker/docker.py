@@ -392,7 +392,6 @@ author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
     - "Pavel Antonov (@softzilla)"
-    - "Ash Wilson (@smashwilson)"
     - "Thomas Steinbach (@ThomasSteinbach)"
     - "Philippe Jandot (@zfil)"
     - "Daan Oosterveld (@dusdanig)"
