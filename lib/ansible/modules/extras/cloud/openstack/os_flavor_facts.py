@@ -23,6 +23,9 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from distutils.version import StrictVersion
+
+
 DOCUMENTATION = '''
 ---
 module: os_flavor_facts
@@ -200,6 +203,9 @@ def main():
             if ram:
                 filters['ram'] = ram
             if filters:
+                # Range search added in 1.5.0
+                if StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
+                    module.fail_json(msg="Shade >= 1.5.0 needed for this functionality")
                 flavors = cloud.range_search(flavors, filters)
 
         if limit is not None:
