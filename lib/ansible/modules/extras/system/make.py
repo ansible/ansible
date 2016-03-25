@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-# import module snippets
-from ansible.module_utils.basic import *
-
 DOCUMENTATION = '''
 ---
 module: make
@@ -117,6 +114,8 @@ def main():
 
     run_make(make_path, module, args)
     module.exit_json(**args)
+
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
