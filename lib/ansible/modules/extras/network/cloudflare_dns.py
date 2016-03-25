@@ -3,7 +3,7 @@
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
 #
-# This file is (intends to be) part of Ansible
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ options:
 '''
 
 EXAMPLES = '''
-# create a test.my.com A record to point to 127.0.0.01
+# create a test.my.com A record to point to 127.0.0.1
 - cloudflare_dns:
     zone: my.com
     record: test
@@ -427,7 +427,6 @@ class CloudflareAPI(object):
         # set module value
         if (not value) and (value is not None):
             value = self.value
-
 
         zone_id = self._get_zone_id()
         api_call = '/zones/{0}/dns_records'.format(zone_id)
