@@ -33,8 +33,13 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_unicode
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 REPLACER          = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
-REPLACER_ARGS     = b"\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX  = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS  = b"# POWERSHELL_COMMON"
 REPLACER_WINARGS  = b"<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
@@ -45,6 +50,10 @@ REPLACER_SELINUX  = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 # therefore should have been accessed by python variable names rather than
 # being substituted directly into a module:
 #REPLACER_VERSION  = b"\"<<ANSIBLE_VERSION>>\""
+
+# This wasn't in use in Ansible-2.0 so should be removed regardless of the
+# rest
+#REPLACER_ARGS     = b"\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -87,7 +96,7 @@ def _slurp(path):
     fd.close()
     return data
 
-def _find_snippet_imports(module_name, module_data, module_path, strip_comments):
+def _find_snippet_imports(module_name, module_data, module_path, strip_comments, module_compression):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -111,8 +120,13 @@ def _find_snippet_imports(module_name, module_data, module_path, strip_comments)
     snippet_names = []
 
     if module_style == 'new' and module_path.endswith('.py'):
+        try:
+            compression_method = getattr(zipfile, module_compression)
+        except AttributeError:
+            display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
+            compression_method = zipfile.ZIP_STORED
         zipoutput = BytesIO()
-        zf = zipfile.ZipFile(zipoutput, mode='w', compression=zipfile.ZIP_DEFLATED)
+        zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
         zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
         zf.writestr('ansible/module_utils/__init__.py', b'')
         zf.writestr('ansible/module_exec/__init__.py', b'')
@@ -182,7 +196,7 @@ def _find_snippet_imports(module_name, module_data, module_path, strip_comments)
 
 # ******************************************************************************
 
-def modify_module(module_name, module_path, module_args, task_vars=dict(), strip_comments=False):
+def modify_module(module_name, module_path, module_args, task_vars=dict(), strip_comments=False, module_compression='ZIP_STORED'):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -225,7 +239,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), strip
         # read in the module source
         module_data = f.read()
 
-    (module_data, module_style) = _find_snippet_imports(module_name, module_data, module_path, strip_comments)
+    (module_data, module_style) = _find_snippet_imports(module_name, module_data, module_path, strip_comments, module_compression)
 
     module_args_json = to_bytes(json.dumps(module_args))
     python_repred_args = to_bytes(repr(module_args_json))
