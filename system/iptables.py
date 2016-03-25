@@ -249,6 +249,16 @@ options:
       - "Specifies the maximum burst before the above limit kicks in."
     required: false
     default: null
+  uid_owner:
+    version_added: "2.1"
+    description:
+      - "Specifies the UID or username to use in match by owner rule."
+    required: false
+  reject_with:
+    version_added: "2.1"
+    description:
+      - "Specifies the error packet type to return while rejecting."
+    required: false
 '''
 
 EXAMPLES = '''
@@ -291,6 +301,11 @@ def append_match(rule, param, match):
         rule.extend(['-m', match])
 
 
+def append_jump(rule, param, jump):
+    if param:
+        rule.extend(['-j', jump])
+
+
 def construct_rule(params):
     rule = []
     append_param(rule, params['protocol'], '-p', False)
@@ -315,6 +330,10 @@ def construct_rule(params):
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
+    append_match(rule, params['uid_owner'], 'owner')
+    append_param(rule, params['uid_owner'], '--uid-owner', False)
+    append_jump(rule, params['reject_with'], 'REJECT')
+    append_param(rule, params['reject_with'], '--reject-with', False)
     return rule
 
 
@@ -369,6 +388,8 @@ def main():
             ctstate=dict(required=False, default=[], type='list'),
             limit=dict(required=False, default=None, type='str'),
             limit_burst=dict(required=False, default=None, type='str'),
+            uid_owner=dict(required=False, default=None, type='str'),
+            reject_with=dict(required=False, default=None, type='str'),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
