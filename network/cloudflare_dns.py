@@ -438,7 +438,7 @@ class CloudflareAPI(object):
                 "port": params['port'],
                 "weight": params['weight'],
                 "priority": params['priority'],
-                "name": params['record'],
+                "name": params['record'][:-len('.' + params['zone'])],
                 "proto": params['proto'],
                 "service": params['service']
             }
