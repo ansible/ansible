@@ -41,6 +41,15 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+try:
+    import boto3
+except ImportError:
+    try:
+        import boto
+    except ImportError:
+        pass
+
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -199,14 +208,22 @@ class GalaxyRole(object):
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 if archive_url.startswith('s3:'):
                     bucket, prefix = parse_s3_url(archive_url)
-                    import boto3
-                    # boto3.setup_default_session(profile_name=myconfig.get('adon_aws_profile', None))
-                    s3 = boto3.resource('s3')
-                    s3_file = s3.Object(bucket, prefix).get()
-                    chunk = s3_file['Body'].read(1024*8)
-                    while chunk:
-                        temp_file.write(chunk)
+                    try: # attempt to use boto3
+                        s3 = boto3.resource('s3')
+                        s3_file = s3.Object(bucket, prefix).get()
                         chunk = s3_file['Body'].read(1024*8)
+                        while chunk:
+                            temp_file.write(chunk)
+                            chunk = s3_file['Body'].read(1024*8)
+                    except NameError: # try using boto instead
+                        try:
+                            s3 = boto.connect_s3()
+                            bucket = s3.lookup(bucket)
+                            key = bucket.lookup(prefix)
+                            for data in key:
+                                temp_file.write(data)
+                        except NameError:
+                            display.error("boto or boto3 is required to download %s" % archive_url)
                 else:
                     url_file = open_url(archive_url, validate_certs=self._validate_certs)
                     data = url_file.read()
