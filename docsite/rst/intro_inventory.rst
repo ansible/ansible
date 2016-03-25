@@ -289,18 +289,18 @@ This connector can be used to deploy the playbook to the control machine itself.
 
 **docker**
 
-This connector deploys the playbook directly into Docker containers using the local Docker client. Following parameters are processed by this connector::
+This connector deploys the playbook directly into Docker containers using the local Docker client. Following parameters are processed by this connector:
 
 ansible_host
-  The name of the Docker container to connect to.
+    The name of the Docker container to connect to.
 ansible_user
-  The user name to operate within the container. The user must exist inside the container.
+    The user name to operate within the container. The user must exist inside the container.
 ansible_become
-  If set to ``true`` the ``become_user`` will be used to operate within the container.
+    If set to ``true`` the ``become_user`` will be used to operate within the container.
 ansible_docker_extra_args
-  Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
+    Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
 
-Here an example of how to instantly depoloy to created containers:
+Here an example of how to instantly depoloy to created containers::
 
   - name: create jenkins container
     docker:
