@@ -66,7 +66,7 @@ class ShellModule(object):
         path = self._unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
-    def chmod(self, mode, path):
+    def chmod(self, mode, path, recursive=True):
         return ''
 
     def remove(self, path, recurse=False):
