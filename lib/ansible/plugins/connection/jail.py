@@ -94,7 +94,7 @@ class Connection(ConnectionBase):
         ''' connect to the jail; nothing to do here '''
         super(Connection, self)._connect()
         if not self._connected:
-            display.vvv("THIS IS A LOCAL JAIL DIR", host=self.jail)
+            display.vvv(u"ESTABLISH JAIL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self.jail)
             self._connected = True
 
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
@@ -105,8 +105,16 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
+
+        local_cmd = [self.jexec_cmd]
+        set_env = ''
+
+        if self._play_context.remote_user is not None:
+            local_cmd += ['-U', self._play_context.remote_user]
+            # update HOME since -U does not update the jail environment
+            set_env = 'HOME=~' + self._play_context.remote_user + ' '
+
+        local_cmd += [self.jail, self._play_context.executable, '-c', set_env + cmd]
 
         display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
         local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
