@@ -74,13 +74,19 @@ def merge_hash(a, b):
     """
 
     _validate_mutable_mappings(a, b)
+
+    # if a is empty or equal to b, return b
+    if a == {} or a == b:
+        return b.copy()
+
+    # if b is empty the below unfolds quickly
     result = a.copy()
 
     # next, iterate over b keys and values
     for k, v in iteritems(b):
         # if there's already such key in a
         # and that key contains a MutableMapping
-        if k in result and isinstance(result[k], MutableMapping):
+        if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
         else:

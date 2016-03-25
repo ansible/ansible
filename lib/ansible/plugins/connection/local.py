@@ -19,9 +19,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import select
 import shutil
 import subprocess
-import select
 import fcntl
 import getpass
 
@@ -43,10 +43,8 @@ except ImportError:
 class Connection(ConnectionBase):
     ''' Local based connections '''
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object '''
-        return 'local'
+    transport = 'local'
+    has_pipelining = True
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
@@ -68,8 +66,6 @@ class Connection(ConnectionBase):
 
         display.debug("in local.exec_command()")
 
-        if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
         display.vvv(u"{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
@@ -83,7 +79,7 @@ class Connection(ConnectionBase):
 
         p = subprocess.Popen(
             cmd,
-            shell=isinstance(cmd, basestring),
+            shell=isinstance(cmd, (text_type, binary_type)),
             executable=executable, #cwd=...
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -115,7 +111,7 @@ class Connection(ConnectionBase):
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         display.debug("getting output with communicate()")
-        stdout, stderr = p.communicate()
+        stdout, stderr = p.communicate(in_data)
         display.debug("done communicating")
 
         display.debug("done with local.exec_command()")
@@ -127,10 +123,10 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
         try:
-            shutil.copyfile(in_path, out_path)
+            shutil.copyfile(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except shutil.Error:
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_str(in_path), to_str(out_path)))
         except IOError as e:

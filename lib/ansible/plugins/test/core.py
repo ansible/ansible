@@ -62,26 +62,27 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
-def regex(value='', pattern='', ignorecase=False, match_type='search'):
+def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
         This is likely only useful for `search` and `match` which already
         have their own filters.
     '''
+    flags = 0
     if ignorecase:
-        flags = re.I
-    else:
-        flags = 0
+        flags |= re.I
+    if multiline:
+        flags |= re.M
     _re = re.compile(pattern, flags=flags)
     _bool = __builtins__.get('bool')
     return _bool(getattr(_re, match_type, 'search')(value))
 
-def match(value, pattern='', ignorecase=False):
+def match(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.match` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'match')
+    return regex(value, pattern, ignorecase, multiline, 'match')
 
-def search(value, pattern='', ignorecase=False):
+def search(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.search` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'search')
+    return regex(value, pattern, ignorecase, multiline, 'search')
 
 class TestModule(object):
     ''' Ansible core jinja2 tests '''

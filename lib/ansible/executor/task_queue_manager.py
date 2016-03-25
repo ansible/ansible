@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from multiprocessing.managers import SyncManager, DictProxy
 import multiprocessing
 import os
 import tempfile
@@ -27,14 +26,16 @@ import tempfile
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
 
 try:
     from __main__ import display
@@ -100,9 +101,8 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
-            self._workers.append([None, main_q, rslt_q])
+            self._workers.append([None, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -119,11 +119,18 @@ class TaskQueueManager:
         for key in self._notified_handlers.keys():
             del self._notified_handlers[key]
 
-        # FIXME: there is a block compile helper for this...
+        def _process_block(b):
+            temp_list = []
+            for t in b.block:
+                if isinstance(t, Block):
+                    temp_list.extend(_process_block(t))
+                else:
+                    temp_list.append(t)
+            return temp_list
+
         handler_list = []
         for handler_block in handlers:
-            for handler in handler_block.block:
-                handler_list.append(handler)
+            handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the handler names from the handler list
         for handler in handler_list:
@@ -144,11 +151,13 @@ class TaskQueueManager:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
         if isinstance(self._stdout_callback, CallbackBase):
-            self._callback_plugins.append(self._stdout_callback)
             stdout_callback_loaded = True
-        elif isinstance(self._stdout_callback, basestring):
+        elif isinstance(self._stdout_callback, string_types):
             if self._stdout_callback not in callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+            else:
+                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
@@ -248,11 +257,13 @@ class TaskQueueManager:
         if self._result_prc:
             self._result_prc.terminate()
 
-            for (worker_prc, main_q, rslt_q) in self._workers:
+            for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
-                main_q.close()
                 if worker_prc and worker_prc.is_alive():
-                    worker_prc.terminate()
+                    try:
+                        worker_prc.terminate()
+                    except AttributeError:
+                        pass
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -276,40 +287,36 @@ class TaskQueueManager:
         self._terminated = True
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in self._callback_plugins:
+        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
                 continue
-            methods = [
-                getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'v2_on_any', None)
-            ]
+
+            # try to find v2 method, fallback to v1 method, ignore callback if no method found
+            methods = []
+            for possible in [method_name, 'v2_on_any']:
+                gotit =  getattr(callback_plugin, possible, None)
+                if gotit is None:
+                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                if gotit is not None:
+                    methods.append(gotit)
+
             for method in methods:
-                if method is not None:
-                    try:
-                        # temporary hack, required due to a change in the callback API, so
-                        # we don't break backwards compatibility with callbacks which were
-                        # designed to use the original API
-                        # FIXME: target for removal and revert to the original code here
-                        #        after a year (2017-01-14)
-                        if method_name == 'v2_playbook_on_start':
-                            import inspect
-                            (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                            if 'playbook' in f_args:
-                                method(*args, **kwargs)
-                            else:
-                                method()
-                        else:
+                try:
+                    # temporary hack, required due to a change in the callback API, so
+                    # we don't break backwards compatibility with callbacks which were
+                    # designed to use the original API
+                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
+                    if method_name == 'v2_playbook_on_start':
+                        import inspect
+                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
+                        if 'playbook' in f_args:
                             method(*args, **kwargs)
-                    except Exception as e:
-                        import traceback
-                        orig_tb = traceback.format_exc()
-                        try:
-                            v1_method = method.replace('v2_','')
-                            v1_method(*args, **kwargs)
-                        except Exception:
-                            if display.verbosity >= 3:
-                                display.warning(orig_tb, formatted=True)
-                            else:
-                                display.warning('Error when using %s: %s' % (method, str(e)))
+                        else:
+                            method()
+                    else:
+                        method(*args, **kwargs)
+                except Exception as e:
+                    #TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure when attempting to use callback plugin (%s): %s" % (to_unicode(callback_plugin), to_unicode(e)))

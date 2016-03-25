@@ -159,7 +159,7 @@ class InventoryDirectory(object):
         if 'ungrouped' in self.groups:
             ungrouped = self.groups['ungrouped']
             # loop on a copy of ungrouped hosts, as we want to change that list
-            for host in ungrouped.hosts[:]:
+            for host in frozenset(ungrouped.hosts):
                 if len(host.groups) > 1:
                     host.groups.remove(ungrouped)
                     ungrouped.hosts.remove(host)

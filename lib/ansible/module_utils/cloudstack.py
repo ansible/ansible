@@ -35,6 +35,18 @@ try:
 except ImportError:
     has_lib_cs = False
 
+CS_HYPERVISORS = [
+    "KVM", "kvm",
+    "VMware", "vmware",
+    "BareMetal", "baremetal",
+    "XenServer", "xenserver",
+    "LXC", "lxc",
+    "HyperV", "hyperv",
+    "UCS", "ucs",
+    "OVM", "ovm",
+    "Simulator", "simulator",
+    ]
+
 def cs_argument_spec():
     return dict(
         api_key = dict(default=None),

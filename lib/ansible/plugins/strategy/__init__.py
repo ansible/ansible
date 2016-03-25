@@ -153,7 +153,7 @@ class StrategyBase:
 
             queued = False
             while True:
-                (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+                (worker_prc, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
@@ -210,8 +210,10 @@ class StrategyBase:
                                 [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
                             else:
                                 iterator.mark_host_failed(host)
-                            (state, tmp_task) = iterator.get_next_task_for_host(host, peek=True)
-                            if not state or state.run_state != PlayIterator.ITERATING_RESCUE:
+
+                            # only add the host to the failed list officially if it has
+                            # been failed by the iterator
+                            if iterator.is_failed(host):
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
                         else:
@@ -327,7 +329,11 @@ class StrategyBase:
                                 self._variable_manager.set_nonpersistent_facts(target_host, facts)
                             else:
                                 self._variable_manager.set_host_facts(target_host, facts)
-
+                elif result[0].startswith('v2_runner_item') or result[0] == 'v2_runner_retry':
+                    self._tqm.send_callback(result[0], result[1])
+                elif result[0] == 'v2_on_file_diff':
+                    if self._diff:
+                        self._tqm.send_callback('v2_on_file_diff', result[1])
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
 
@@ -450,7 +456,7 @@ class StrategyBase:
             block_list = load_list_of_blocks(
                 data,
                 play=included_file._task._block._play,
-                parent_block=included_file._task._block,
+                parent_block=None,
                 task_include=included_file._task,
                 role=included_file._task._role,
                 use_handlers=is_handler,
@@ -476,11 +482,7 @@ class StrategyBase:
         # set the vars for this task from those specified as params to the include
         for b in block_list:
             # first make a copy of the including task, so that each has a unique copy to modify
-            # FIXME: not sure if this is the best way to fix this, as we might be losing
-            #        information in the copy. Previously we assigned the include params to
-            #        the block variables directly, which caused other problems, so we may
-            #        need to figure out a third option if this also presents problems.
-            b._task_include = b._task_include.copy(exclude_block=True)
+            b._task_include = b._task_include.copy()
             # then we create a temporary set of vars to ensure the variable reference is unique
             temp_vars = b._task_include.vars.copy()
             temp_vars.update(included_file._args.copy())
@@ -489,7 +491,7 @@ class StrategyBase:
             # error so that users know not to specify them both ways
             tags = temp_vars.pop('tags', [])
             if isinstance(tags, string_types):
-                tags = [ tags ]
+                tags = tags.split(',')
             if len(tags) > 0:
                 if len(b._task_include.tags) > 0:
                     raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
@@ -545,7 +547,10 @@ class StrategyBase:
         #    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
         #    result = False
         #    break
+        saved_name = handler.name
+        handler.name = handler_name
         self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+        handler.name = saved_name
 
         if notified_hosts is None:
             notified_hosts = self._notified_handlers[handler_name]
@@ -618,10 +623,10 @@ class StrategyBase:
     def _take_step(self, task, host=None):
 
         ret=False
+        msg=u'Perform task: %s ' % task
         if host:
-            msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
-        else:
-            msg = u'Perform task: %s (y/n/c): ' % task
+            msg += u'on %s ' % host
+        msg += u'(N)o/(y)es/(c)ontinue: '
         resp = display.prompt(msg)
 
         if resp.lower() in ['y','yes']:
@@ -653,5 +658,10 @@ class StrategyBase:
             self._inventory.refresh_inventory()
         #elif meta_action == 'reset_connection':
         #    connection_info.connection.close()
+        elif meta_action == 'clear_host_errors':
+            self._tqm._failed_hosts = dict()
+            self._tqm._unreachable_hosts = dict()
+            for host in iterator._host_states:
+                iterator._host_states[host].fail_state = iterator.FAILED_NONE
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)

@@ -38,48 +38,139 @@ class ConfigLine(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
 def parse(lines, indent):
-        toplevel = re.compile(r'\S')
-        childline = re.compile(r'^\s*(.+)$')
-        repl = r'([{|}|;])'
+    toplevel = re.compile(r'\S')
+    childline = re.compile(r'^\s*(.+)$')
+    repl = r'([{|}|;])'
 
-        ancestors = list()
-        config = list()
+    ancestors = list()
+    config = list()
 
-        for line in str(lines).split('\n'):
-            text = str(re.sub(repl, '', line)).strip()
+    for line in str(lines).split('\n'):
+        text = str(re.sub(repl, '', line)).strip()
 
-            cfg = ConfigLine(text)
-            cfg.raw = line
+        cfg = ConfigLine(text)
+        cfg.raw = line
 
-            if not text or text[0] in ['!', '#']:
+        if not text or text[0] in ['!', '#']:
+            continue
+
+        # handle top level commands
+        if toplevel.match(line):
+            ancestors = [cfg]
+
+        # handle sub level commands
+        else:
+            match = childline.match(line)
+            line_indent = match.start(1)
+            level = int(line_indent / indent)
+            parent_level = level - 1
+
+            cfg.parents = ancestors[:level]
+
+            if level > len(ancestors):
+                config.append(cfg)
                 continue
 
-            # handle top level commands
-            if toplevel.match(line):
-                ancestors = [cfg]
+            for i in range(level, len(ancestors)):
+                ancestors.pop()
 
-            # handle sub level commands
+            ancestors.append(cfg)
+            ancestors[parent_level].children.append(cfg)
+
+        config.append(cfg)
+
+    return config
+
+
+class Conditional(object):
+    """Used in command modules to evaluate waitfor conditions
+    """
+
+    OPERATORS = {
+        'eq': ['eq', '=='],
+        'neq': ['neq', 'ne', '!='],
+        'gt': ['gt', '>'],
+        'ge': ['ge', '>='],
+        'lt': ['lt', '<'],
+        'le': ['le', '<='],
+        'contains': ['contains']
+    }
+
+    def __init__(self, conditional):
+        self.raw = conditional
+
+        key, op, val = shlex.split(conditional)
+        self.key = key
+        self.func = self.func(op)
+        self.value = self._cast_value(val)
+
+    def __call__(self, data):
+        try:
+            value = self.get_value(dict(result=data))
+            return self.func(value)
+        except Exception:
+            raise ValueError(self.key)
+
+    def _cast_value(self, value):
+        if value in BOOLEANS_TRUE:
+            return True
+        elif value in BOOLEANS_FALSE:
+            return False
+        elif re.match(r'^\d+\.d+$', value):
+            return float(value)
+        elif re.match(r'^\d+$', value):
+            return int(value)
+        else:
+            return unicode(value)
+
+    def func(self, oper):
+        for func, operators in self.OPERATORS.items():
+            if oper in operators:
+                return getattr(self, func)
+        raise AttributeError('unknown operator: %s' % oper)
+
+    def get_value(self, result):
+        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
+        for part in parts:
+            match = re.findall(r'\[(\S+?)\]', part)
+            if match:
+                key = part[:part.find('[')]
+                result = result[key]
+                for m in match:
+                    try:
+                        m = int(m)
+                    except ValueError:
+                        m = str(m)
+                    result = result[m]
             else:
-                match = childline.match(line)
-                line_indent = match.start(1)
-                level = int(line_indent / indent)
-                parent_level = level - 1
+                result = result.get(part)
+        return result
 
-                cfg.parents = ancestors[:level]
+    def number(self, value):
+        if '.' in str(value):
+            return float(value)
+        else:
+            return int(value)
 
-                if level > len(ancestors):
-                    config.append(cfg)
-                    continue
+    def eq(self, value):
+        return value == self.value
 
-                for i in range(level, len(ancestors)):
-                    ancestors.pop()
+    def neq(self, value):
+        return value != self.value
 
-                ancestors.append(cfg)
-                ancestors[parent_level].children.append(cfg)
+    def gt(self, value):
+        return self.number(value) > self.value
 
-            config.append(cfg)
+    def ge(self, value):
+        return self.number(value) >= self.value
 
-        return config
+    def lt(self, value):
+        return self.number(value) < self.value
 
+    def le(self, value):
+        return self.number(value) <= self.value
 
+    def contains(self, value):
+        return self.value in value

@@ -145,3 +145,42 @@
       - 'get_url_result["failed"]'
   when: "{{ not python_has_ssl_context }}"
 # End hacky SNI test section
+
+- name: Test get_url with redirect
+  get_url:
+    url: 'http://httpbin.org/redirect/6'
+    dest: "{{ output_dir }}/redirect.json"
+
+- name: Test that setting file modes work
+  get_url:
+    url: 'http://httpbin.org/'
+    dest: '{{ output_dir }}/test'
+    mode: '0707'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0707'"
+
+- name: Test that setting file modes on an already downlaoded file work
+  get_url:
+    url: 'http://httpbin.org/'
+    dest: '{{ output_dir }}/test'
+    mode: '0070'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0070'"

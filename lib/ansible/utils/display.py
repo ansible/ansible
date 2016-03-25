@@ -28,6 +28,7 @@ import time
 import locale
 import logging
 import getpass
+import errno
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 from multiprocessing import Lock
@@ -48,18 +49,17 @@ except NameError:
 # These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
 debug_lock = Lock()
 
+logger = None
 #TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
-        print("[WARNING]: log file at %s is not writeable, aborting\n" % path, file=sys.stderr)
-
-    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-    mypid = str(os.getpid())
-    user = getpass.getuser()
-    logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
-else:
-    logger = None
+    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+        mypid = str(os.getpid())
+        user = getpass.getuser()
+        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+    else:
+        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
 
 class Display:
@@ -112,6 +112,7 @@ class Display:
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
+        nocolor = msg
         if color:
             msg = stringc(msg, color)
 
@@ -129,14 +130,22 @@ class Display:
                 msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
 
             if not stderr:
-                sys.stdout.write(msg2)
-                sys.stdout.flush()
+                fileobj = sys.stdout
             else:
-                sys.stderr.write(msg2)
-                sys.stderr.flush()
+                fileobj = sys.stderr
+
+            fileobj.write(msg2)
+
+            try:
+                fileobj.flush()
+            except IOError as e:
+                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+                # when piping to "head -n1"
+                if e.errno != errno.EPIPE:
+                    raise
 
         if logger and not screen_only:
-            msg2 = msg.lstrip(u'\n')
+            msg2 = nocolor.lstrip(u'\n')
 
             msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
@@ -149,6 +158,9 @@ class Display:
                 logger.error(msg2)
             else:
                 logger.info(msg2)
+
+    def v(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=0)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
@@ -188,12 +200,12 @@ class Display:
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
-            raise AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
         wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
@@ -279,13 +291,12 @@ class Display:
         else:
             return input(prompt_string)
 
-    @classmethod
-    def do_var_prompt(cls, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
         result = None
         if sys.__stdin__.isatty():
 
-            do_prompt = cls.prompt
+            do_prompt = self.prompt
 
             if prompt and default is not None:
                 msg = "%s [%s]: " % (prompt, default)
@@ -300,12 +311,12 @@ class Display:
                     second = do_prompt("confirm " + msg, private)
                     if result == second:
                         break
-                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
+                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
             else:
                 result = do_prompt(msg, private)
         else:
             result = None
-            display.warning("Not prompting as we are not in interactive mode")
+            self.warning("Not prompting as we are not in interactive mode")
 
         # if result is false and default is not None
         if not result and default is not None:

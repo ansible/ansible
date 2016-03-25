@@ -92,6 +92,9 @@ class PullCLI(CLI):
             help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
                  ' This needs the corresponding VCS module to support such an operation')
 
+        # for pull we don't wan't a default
+        self.parser.set_defaults(inventory=None)
+
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if not self.options.dest:
@@ -136,8 +139,8 @@ class PullCLI(CLI):
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
 
         # Attempt to use the inventory passed in as an argument
-        # It might not yet have been downloaded so use localhost if note
-        if not self.options.inventory or not os.path.exists(self.options.inventory):
+        # It might not yet have been downloaded so use localhost as default
+        if not self.options.inventory or ( ',' not in self.options.inventory and not os.path.exists(self.options.inventory)):
             inv_opts = 'localhost,'
         else:
             inv_opts = self.options.inventory
@@ -160,15 +163,13 @@ class PullCLI(CLI):
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
 
-
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" "%s"' % (
-            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts
-        )
+        # hardcode local and inventory/host as this is just meant to fetch the repo
+        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
@@ -210,6 +211,8 @@ class PullCLI(CLI):
             cmd += ' -t "%s"' % self.options.tags
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
+        else:
+            cmd += ' -l "%s"' % limit_opts
 
         os.chdir(self.options.dest)
 

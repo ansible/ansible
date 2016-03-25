@@ -66,4 +66,4 @@
 - name: assert that the file was removed by the script
   assert:
     that:
-      - "script_result1.changed != True"
+      - "script_result1|changed"

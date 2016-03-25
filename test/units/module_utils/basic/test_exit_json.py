@@ -23,9 +23,9 @@ __metaclass__ = type
 import copy
 import json
 import sys
+from io import BytesIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.six import StringIO
 
 from ansible.module_utils import basic
 from ansible.module_utils.basic import heuristic_log_sanitize
@@ -41,7 +41,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         basic.MODULE_COMPLEX_ARGS = '{}'
 
         self.old_stdout = sys.stdout
-        self.fake_stream = StringIO()
+        self.fake_stream = BytesIO()
         sys.stdout = self.fake_stream
 
         self.module = basic.AnsibleModule(argument_spec=dict())
@@ -127,7 +127,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     def test_exit_json_removes_values(self):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
-            sys.stdout = StringIO()
+            sys.stdout = BytesIO()
             basic.MODULE_COMPLEX_ARGS = json.dumps(args)
             module = basic.AnsibleModule(
                 argument_spec = dict(
@@ -146,7 +146,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             expected = copy.deepcopy(expected)
             del expected['changed']
             expected['failed'] = True
-            sys.stdout = StringIO()
+            sys.stdout = BytesIO()
             basic.MODULE_COMPLEX_ARGS = json.dumps(args)
             module = basic.AnsibleModule(
                 argument_spec = dict(

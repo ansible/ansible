@@ -20,9 +20,7 @@ __metaclass__ = type
 import base64
 import os
 import re
-import random
 import shlex
-import time
 
 from ansible.utils.unicode import to_bytes, to_unicode
 
@@ -36,6 +34,13 @@ if _powershell_version:
 
 class ShellModule(object):
 
+    # Common shell filenames that this plugin handles
+    # Powershell is handled differently.  It's selected when winrm is the
+    # connection
+    COMPATIBLE_SHELLS = frozenset()
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'powershell'
+
     def env_prefix(self, **kwargs):
         return ''
 
@@ -47,7 +52,7 @@ class ShellModule(object):
         path = '\\'.join(parts)
         if path.startswith('~'):
             return path
-        return '"%s"' % path
+        return '\'%s\'' % path
 
     # powershell requires that script files end with .ps1
     def get_remote_filename(self, base_name):
@@ -61,7 +66,7 @@ class ShellModule(object):
         path = self._unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
-    def chmod(self, mode, path):
+    def chmod(self, mode, path, recursive=True):
         return ''
 
     def remove(self, path, recurse=False):

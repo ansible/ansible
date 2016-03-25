@@ -71,6 +71,9 @@ There's a useful test script in the source checkout for ansible::
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
+For instructions on setting up ansible from source, please see
+:doc:`intro_installation`.
+
 Let's run the script you just wrote with that::
 
     ansible/hacking/test-module -m ./timetest.py
@@ -264,7 +267,7 @@ And failures are just as simple (where 'msg' is a required parameter to explain 
     module.fail_json(msg="Something fatal happened")
 
 There are also other useful functions in the module class, such as module.sha1(path).  See
-lib/ansible/module_common.py in the source checkout for implementation details.
+lib/ansible/module_utils/basic.py in the source checkout for implementation details.
 
 Again, modules developed this way are best tested with the hacking/test-module script in the git
 source checkout.  Because of the magic involved, this is really the only way the scripts
@@ -479,6 +482,7 @@ Module checklist
 ````````````````
 
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
+* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
     * If `required` is false you need to document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.

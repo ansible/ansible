@@ -48,6 +48,7 @@ from ansible.playbook.task import Task
 from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
 
 from ansible.utils.debug import debug
+from ansible.utils.unicode import to_unicode
 
 __all__ = ['WorkerProcess']
 
@@ -112,6 +113,7 @@ class WorkerProcess(multiprocessing.Process):
                 self._new_stdin,
                 self._loader,
                 self._shared_loader_obj,
+                self._rslt_q
             ).run()
 
             debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
@@ -131,15 +133,15 @@ class WorkerProcess(multiprocessing.Process):
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
-            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt)) or isinstance(e, TemplateNotFound):
+            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
+                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
                 except:
-                    debug("WORKER EXCEPTION: %s" % e)
-                    debug("WORKER EXCEPTION: %s" % traceback.format_exc())
+                    debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
+                    debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
 
         debug("WORKER PROCESS EXITING")
 

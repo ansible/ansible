@@ -47,7 +47,12 @@ class Cli(object):
         password = self.module.params['password']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+
+        try:
+            self.shell.open(host, port=port, username=username, password=password)
+        except Exception, exc:
+            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            self.module.fail_json(msg=msg)
 
     def send(self, commands):
         return self.shell.send(commands)
@@ -77,7 +82,8 @@ class NetworkModule(AnsibleModule):
     def connect(self):
         self.connection = Cli(self)
         self.connection.connect()
-        self.execute('cli')
+        if self.connection.shell._matched_prompt.strip().endswith('%'):
+            self.execute('cli')
         self.execute('set cli screen-length 0')
 
     def configure(self, commands):

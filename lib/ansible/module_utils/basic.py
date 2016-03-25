@@ -3,27 +3,27 @@
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
-# 
+#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification, 
+# Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-#    * Redistributions of source code must retain the above copyright 
+#    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice, 
-#      this list of conditions and the following disclaimer in the documentation 
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
@@ -65,6 +65,7 @@ import grp
 import pwd
 import platform
 import errno
+import datetime
 from itertools import repeat, chain
 
 try:
@@ -111,6 +112,12 @@ else:
     # Python 2
     def iteritems(d):
         return d.iteritems()
+
+try:
+    reduce
+except NameError:
+    # Python 3
+    from functools import reduce
 
 try:
     NUMBERTYPES = (int, long, float)
@@ -184,15 +191,15 @@ except ImportError:
         pass
 
 try:
-    from ast import literal_eval as _literal_eval
+    from ast import literal_eval
 except ImportError:
-    # a replacement for literal_eval that works with python 2.4. from: 
+    # a replacement for literal_eval that works with python 2.4. from:
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
     # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
     from compiler import ast, parse
 
-    def _literal_eval(node_or_string):
+    def literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
         expression.  The string or node provided may only consist of the  following
@@ -222,10 +229,11 @@ except ImportError:
             raise ValueError('malformed string')
         return _convert(node_or_string)
 
+_literal_eval = literal_eval
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
-    mode = dict(),
+    mode = dict(type='raw'),
     owner = dict(),
     group = dict(),
     seuser = dict(),
@@ -423,9 +431,12 @@ def remove_values(value, no_log_strings):
         for omit_me in no_log_strings:
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+    elif isinstance(value, datetime.datetime):
+        value = value.isoformat()
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
     return value
+
 
 def heuristic_log_sanitize(data, no_log_values=None):
     ''' Remove strings that look like passwords from log messages '''
@@ -516,6 +527,9 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._verbosity = 0
+        # May be used to set modifications to the environment for any
+        # run_command invocation
+        self.run_command_environ_update = {}
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity']
@@ -532,7 +546,7 @@ class AnsibleModule(object):
             self.aliases = self._handle_aliases()
         except Exception:
             e = get_exception()
-            # use exceptions here cause its not safe to call vail json until no_log is processed
+            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
             sys.exit(1)
 
@@ -567,6 +581,7 @@ class AnsibleModule(object):
                 'int': self._check_type_int,
                 'float': self._check_type_float,
                 'path': self._check_type_path,
+                'raw': self._check_type_raw,
             }
         if not bypass_checks:
             self._check_required_arguments()
@@ -875,6 +890,10 @@ class AnsibleModule(object):
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
 
+                if mode != stat.S_IMODE(mode):
+                    # prevent mode from having extra info orbeing invalid long number
+                    self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
+
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
@@ -928,7 +947,7 @@ class AnsibleModule(object):
     def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
         new_mode = stat.S_IMODE(path_stat.st_mode)
 
-        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst]*|[ugo])$')
+        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst-]*|[ugo])$')
         for mode in symbolic_mode.split(','):
             match = mode_re.match(mode)
             if match:
@@ -945,14 +964,14 @@ class AnsibleModule(object):
             else:
                 raise ValueError("bad symbolic permission for mode: %s" % mode)
         return new_mode
-    
+
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
         if operator  ==  '=':
             if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
             elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
             elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
-            
-            # mask out u, g, or o permissions from current_mode and apply new permissions   
+
+            # mask out u, g, or o permissions from current_mode and apply new permissions
             inverse_mask = mask ^ PERM_BITS
             new_mode = (current_mode & inverse_mask) | mode_to_apply
         elif operator == '+':
@@ -960,10 +979,10 @@ class AnsibleModule(object):
         elif operator == '-':
             new_mode = current_mode - (current_mode & mode_to_apply)
         return new_mode
-        
+
     def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
-        
+
         is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
@@ -1150,6 +1169,10 @@ class AnsibleModule(object):
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
+            #clean up internal params:
+            if k.startswith('_ansible_'):
+                del self.params[k]
+
     def _count_terms(self, check):
         count = 0
         for term in check:
@@ -1240,11 +1263,7 @@ class AnsibleModule(object):
                 return (str, None)
             return str
         try:
-            result = None
-            if not locals:
-                result = _literal_eval(str)
-            else:
-                result = _literal_eval(str, None, locals)
+            result = literal_eval(str)
             if include_exceptions:
                 return (result, None)
             else:
@@ -1349,15 +1368,23 @@ class AnsibleModule(object):
         value = self._check_type_str(value)
         return os.path.expanduser(os.path.expandvars(value))
 
+    def _check_type_raw(self, value):
+        return value
+
 
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.items():
             wanted = v.get('type', None)
-            if wanted is None:
-                continue
             if k not in self.params:
                 continue
+            if wanted is None:
+                # Mostly we want to default to str.
+                # For values set to None explicitly, return None instead as
+                # that allows a user to unset a parameter
+                if self.params[k] is None:
+                    continue
+                wanted = 'str'
 
             value = self.params[k]
 
@@ -1470,9 +1497,9 @@ class AnsibleModule(object):
                 arg_val = str(arg_val)
             elif isinstance(arg_val, unicode):
                 arg_val = arg_val.encode('utf-8')
-            msg.append('%s=%s ' % (arg, arg_val))
+            msg.append('%s=%s' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % ''.join(msg)
+            msg = 'Invoked with %s' % ' '.join(msg)
         else:
             msg = 'Invoked'
 
@@ -1486,7 +1513,7 @@ class AnsibleModule(object):
                 raise
             return cwd
         except:
-            # we don't have access to the cwd, probably because of sudo. 
+            # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
@@ -1495,9 +1522,9 @@ class AnsibleModule(object):
                         return cwd
                 except:
                     pass
-        # we won't error here, as it may *not* be a problem, 
+        # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
-        return None    
+        return None
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -1519,6 +1546,8 @@ class AnsibleModule(object):
             if p not in paths and os.path.exists(p):
                 paths.append(p)
         for d in paths:
+            if not d:
+                continue
             path = os.path.join(d, arg)
             if os.path.exists(path) and is_executable(path):
                 bin_path = path
@@ -1589,6 +1618,19 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(1)
+
+    def fail_on_missing_params(self, required_params=None):
+        ''' This is for checking for required params when we can not check via argspec because we
+        need more information than is simply given in the argspec.
+        '''
+        if not required_params:
+            return
+        missing_params = []
+        for required_param in required_params:
+            if not self.params.get(required_param):
+                missing_params.append(required_param)
+        if missing_params:
+            self.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
@@ -1664,7 +1706,7 @@ class AnsibleModule(object):
                 e = get_exception()
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
 
-    def atomic_move(self, src, dest):
+    def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
@@ -1704,43 +1746,63 @@ class AnsibleModule(object):
             os.rename(src, dest)
         except (IOError, OSError):
             e = get_exception()
-            # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
-            # and 26 (text file busy) which happens on vagrant synced folders
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
+                # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
+                # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-
-            dest_dir = os.path.dirname(dest)
-            dest_file = os.path.basename(dest)
-            try:
-                tmp_dest = tempfile.NamedTemporaryFile(
-                    prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
-            except (OSError, IOError):
-                e = get_exception()
-                self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
-
-            try: # leaves tmp file behind when sudo and  not root
-                if switched_user and os.getuid() != 0:
-                    # cleanup will happen by 'rm' of tempdir
-                    # copy2 will preserve some metadata
-                    shutil.copy2(src, tmp_dest.name)
-                else:
-                    shutil.move(src, tmp_dest.name)
-                if self.selinux_enabled():
-                    self.set_context_if_different(
-                        tmp_dest.name, context, False)
+            else:
+                dest_dir = os.path.dirname(dest)
+                dest_file = os.path.basename(dest)
                 try:
-                    tmp_stat = os.stat(tmp_dest.name)
-                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                        os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
-                except OSError:
+                    tmp_dest = tempfile.NamedTemporaryFile(
+                        prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+                except (OSError, IOError):
                     e = get_exception()
-                    if e.errno != errno.EPERM:
-                        raise
-                os.rename(tmp_dest.name, dest)
-            except (shutil.Error, OSError, IOError):
-                e = get_exception()
-                self.cleanup(tmp_dest.name)
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (dest_dir, e))
+
+                try: # leaves tmp file behind when sudo and  not root
+                    if switched_user and os.getuid() != 0:
+                        # cleanup will happen by 'rm' of tempdir
+                        # copy2 will preserve some metadata
+                        shutil.copy2(src, tmp_dest.name)
+                    else:
+                        shutil.move(src, tmp_dest.name)
+                    if self.selinux_enabled():
+                        self.set_context_if_different(
+                            tmp_dest.name, context, False)
+                    try:
+                        tmp_stat = os.stat(tmp_dest.name)
+                        if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                            os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                    except OSError:
+                        e = get_exception()
+                        if e.errno != errno.EPERM:
+                            raise
+                    os.rename(tmp_dest.name, dest)
+                except (shutil.Error, OSError, IOError):
+                    e = get_exception()
+                    # sadly there are some situations where we cannot ensure atomicity, but only if
+                    # the user insists and we get the appropriate error we update the file unsafely
+                    if unsafe_writes and e.errno == errno.EBUSY:
+                        #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+                        try:
+                            try:
+                                out_dest = open(dest, 'wb')
+                                in_src = open(src, 'rb')
+                                shutil.copyfileobj(in_src, out_dest)
+                            finally: # assuring closed files in 2.4 compatible way
+                                if out_dest:
+                                    out_dest.close()
+                                if in_src:
+                                    in_src.close()
+                        except (shutil.Error, OSError, IOError):
+                            e = get_exception()
+                            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+
+                    else:
+                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+                    self.cleanup(tmp_dest.name)
 
         if creating:
             # make sure the file has the correct permissions
@@ -1788,7 +1850,9 @@ class AnsibleModule(object):
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
         elif isinstance(args, basestring):
-            args = shlex.split(args.encode('utf-8'))
+            if isinstance(args, unicode):
+                args = args.encode('utf-8')
+            args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
@@ -1802,7 +1866,7 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args if x is not None ]
 
         rc = 0
         msg = None
@@ -1810,6 +1874,10 @@ class AnsibleModule(object):
 
         # Manipulate the environ we'll send to the new process
         old_env_vals = {}
+        # We can set this from both an attribute and per call
+        for key, val in self.run_command_environ_update.items():
+            old_env_vals[key] = os.environ.get(key, None)
+            os.environ[key] = val
         if environ_update:
             for key, val in environ_update.items():
                 old_env_vals[key] = os.environ.get(key, None)
@@ -1884,7 +1952,6 @@ class AnsibleModule(object):
                 else:
                     running = args
                 self.log('Executing: ' + running)
-
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that

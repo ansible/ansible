@@ -67,7 +67,7 @@
         region: 'us-east-1'
         instance_ids: "{{ hostvars[item]['ec2_instance_ids'] }}"
       when: hostvars[item]['ec2_instance_ids'] is defined and item == inventory_hostname
-      with_items: groups['dynamic_hosts']
+      with_items: "{{groups['dynamic_hosts']}}"
 
     - set_fact:
         ansible_connection: local
