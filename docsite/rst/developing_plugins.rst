@@ -88,7 +88,7 @@ and is guaranteed to entertain and/or annoy coworkers.
 Configuring
 +++++++++++
 
-To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`.
+To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`. Plugin load order is alphanumeric in nature. If you have a plugin you want to run first consider naming it `1_first.py`, or if you have a plugin you want to run last consider naming it `z_last.py`. 
 
 .. _callback_development:
 
