@@ -184,12 +184,12 @@ command_warnings
 
 .. versionadded:: 1.8
 
-By default since Ansible 1.8, Ansible will warn when usage of the shell and
-command module appear to be simplified by using a default Ansible module
-instead.  This can include reminders to use the 'git' module instead of
-shell commands to execute 'git'.  Using modules when possible over arbitrary
-shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks::
+By default since Ansible 1.8, Ansible will issue a warning when the shell or 
+command module is used and the command appears to be similar to an existing 
+Ansible module. For example, this can include reminders to use the 'git' module
+instead of shell commands to execute 'git'.  Using modules when possible over 
+arbitrary shell commands can lead to more reliable and consistent playbook runs, 
+and also easier to maintain playbooks::
 
     command_warnings = False
 
