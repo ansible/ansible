@@ -30,18 +30,17 @@ from ansible import constants as C
 class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
+        original_path = path
+
         if self._task._role is not None:
-            original_path = path
+            path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
+        else:
+            path = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', path)
 
-            if self._task._role is not None:
-                path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
-            else:
-                path = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', path)
-
-            if original_path and original_path[-1] == '/' and path[-1] != '/':
-                # make sure the dwim'd path ends in a trailing "/"
-                # if the original path did
-                path += '/'
+        if original_path and original_path[-1] == '/' and path[-1] != '/':
+            # make sure the dwim'd path ends in a trailing "/"
+            # if the original path did
+            path += '/'
 
         return path
 
