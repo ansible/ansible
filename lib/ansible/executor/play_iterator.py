@@ -56,6 +56,7 @@ class HostState:
         self.tasks_child_state  = None
         self.rescue_child_state = None
         self.always_child_state = None
+        self.did_start_at_task  = False
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -79,7 +80,7 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s" % (
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s, did start at task? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
@@ -91,6 +92,7 @@ class HostState:
             self.tasks_child_state,
             self.rescue_child_state,
             self.always_child_state,
+            self.did_start_at_task,
         )
 
     def __eq__(self, other):
@@ -112,14 +114,15 @@ class HostState:
 
     def copy(self):
         new_state = HostState(self._blocks)
-        new_state.cur_block        = self.cur_block
+        new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
-        new_state.cur_rescue_task  = self.cur_rescue_task
-        new_state.cur_always_task  = self.cur_always_task
-        new_state.cur_role         = self.cur_role
-        new_state.run_state        = self.run_state
-        new_state.fail_state       = self.fail_state
-        new_state.pending_setup    = self.pending_setup
+        new_state.cur_rescue_task = self.cur_rescue_task
+        new_state.cur_always_task = self.cur_always_task
+        new_state.cur_role = self.cur_role
+        new_state.run_state = self.run_state
+        new_state.fail_state = self.fail_state
+        new_state.pending_setup = self.pending_setup
+        new_state.did_start_at_task = self.did_start_at_task
         if self.cur_dep_chain is not None:
             new_state.cur_dep_chain = self.cur_dep_chain[:]
         if self.tasks_child_state is not None:
@@ -199,7 +202,9 @@ class PlayIterator:
                         self.get_next_task_for_host(host)
 
                 # finally, reset the host's state to ITERATING_SETUP
-                self._host_states[host.name].run_state = self.ITERATING_SETUP
+                if start_at_matched:
+                    self._host_states[host.name].did_start_at_task = True
+                    self._host_states[host.name].run_state = self.ITERATING_SETUP
 
         if start_at_matched:
             # we have our match, so clear the start_at_task field on the
@@ -300,12 +305,13 @@ class PlayIterator:
                     # the run state to ITERATING_TASKS
                     state.pending_setup = False
 
-                    state.cur_block += 1
-                    state.cur_regular_task = 0
-                    state.cur_rescue_task  = 0
-                    state.cur_always_task  = 0
                     state.run_state = self.ITERATING_TASKS
-                    state.child_state = None
+                    if not state.did_start_at_task:
+                        state.cur_block += 1
+                        state.cur_regular_task = 0
+                        state.cur_rescue_task  = 0
+                        state.cur_always_task  = 0
+                        state.child_state = None
 
             elif state.run_state == self.ITERATING_TASKS:
                 # clear the pending setup flag, since we're past that and it didn't fail
