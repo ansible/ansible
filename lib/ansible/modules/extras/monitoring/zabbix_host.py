@@ -47,6 +47,18 @@ options:
         description:
             - Zabbix user password.
         required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+        version_added: "2.1"
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+        version_added: "2.1"
     host_name:
         description:
             - Name of the host in Zabbix.
@@ -158,8 +170,8 @@ except ImportError:
 class ZabbixAPIExtends(ZabbixAPI):
     hostinterface = None
 
-    def __init__(self, server, timeout, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout)
+    def __init__(self, server, timeout, user, passwd, **kwargs):
+        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
         self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
 
 
@@ -405,6 +417,8 @@ def main():
             login_user=dict(rtype='str', equired=True),
             login_password=dict(type='str', required=True, no_log=True),
             host_name=dict(type='str', required=True),
+            http_login_user=dict(type='str', required=False, default=None),
+            http_login_password=dict(type='str', required=False, default=None, no_log=True),
             host_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
             status=dict(default="enabled", choices=['enabled', 'disabled']),
@@ -424,6 +438,8 @@ def main():
     server_url = module.params['server_url']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    http_login_user = module.params['http_login_user']
+    http_login_password = module.params['http_login_password']
     host_name = module.params['host_name']
     host_groups = module.params['host_groups']
     link_templates = module.params['link_templates']
@@ -441,7 +457,7 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

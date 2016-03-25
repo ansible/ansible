@@ -52,6 +52,18 @@ options:
         description:
             - Zabbix user password.
         required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+        version_added: "2.1"
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+        version_added: "2.1"
     host_names:
         description:
             - Hosts to manage maintenance window for.
@@ -91,6 +103,11 @@ options:
             - Type of maintenance. With data collection, or without.
         required: false
         default: "true"
+    timeout:
+        description:
+            - The timeout of API request (seconds).
+        default: 10
+        version_added: "2.1"
 notes:
     - Useful for setting hosts in maintenance mode before big update,
       and removing maintenance window after update.
@@ -260,9 +277,12 @@ def main():
             host_groups=dict(type='list', required=False, default=None, aliases=['host_group']),
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
+            http_login_user=dict(type='str', required=False, default=None),
+            http_login_password=dict(type='str', required=False, default=None, no_log=True),
             name=dict(type='str', required=True),
             desc=dict(type='str', required=False, default="Created by Ansible"),
             collect_data=dict(type='bool', required=False, default=True),
+            timeout=dict(type='int', default=10),
         ),
         supports_check_mode=True,
     )
@@ -275,18 +295,22 @@ def main():
     state = module.params['state']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    http_login_user = module.params['http_login_user']
+    http_login_password = module.params['http_login_password']
     minutes = module.params['minutes']
     name = module.params['name']
     desc = module.params['desc']
     server_url = module.params['server_url']
     collect_data = module.params['collect_data']
+    timeout = module.params['timeout']
+
     if collect_data:
         maintenance_type = 0
     else:
         maintenance_type = 1
 
     try:
-        zbx = ZabbixAPI(server_url)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
     except BaseException as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

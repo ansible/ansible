@@ -49,6 +49,18 @@ options:
         description:
             - Zabbix user password.
         required: true
+    http_login_user:
+        description:
+            - Basic Auth login
+        required: false
+        default: None
+        version_added: "2.1"
+    http_login_password:
+        description:
+            - Basic Auth password
+        required: false
+        default: None
+        version_added: "2.1"
     state:
         description:
             - Create or delete host group.
@@ -153,6 +165,8 @@ def main():
             server_url=dict(type='str', required=True, aliases=['url']),
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
+            http_login_user=dict(type='str',required=False, default=None),
+            http_login_password=dict(type='str',required=False, default=None, no_log=True),
             host_groups=dict(type='list', required=True, aliases=['host_group']),
             state=dict(default="present", choices=['present','absent']),
             timeout=dict(type='int', default=10)
@@ -166,6 +180,8 @@ def main():
     server_url = module.params['server_url']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    http_login_user = module.params['http_login_user']
+    http_login_password = module.params['http_login_password']
     host_groups = module.params['host_groups']
     state = module.params['state']
     timeout = module.params['timeout']
@@ -174,7 +190,7 @@ def main():
 
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
