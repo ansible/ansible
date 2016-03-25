@@ -461,23 +461,19 @@ class CloudflareAPI(object):
         # in theory this should be impossible as cloudflare does not allow
         # the creation of duplicate records but lets cover it anyways
         if len(records) > 1:
-            return records,self.changed
-        # record already exists, check if ttl must be updated
+            self.module.fail_json(msg="More than one record already exists for the given attributes. That should be impossible, please open an issue!")
+        # record already exists, check if it must be updated
         if len(records) == 1:
             cur_record = records[0]
             do_update = False
             if (params['ttl'] is not None) and (cur_record['ttl'] != params['ttl'] ):
-                cur_record['ttl'] = params['ttl']
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
-                cur_record['priority'] = params['priority']
                 do_update = True
             if ('data' in new_record) and ('data' in cur_record):
                 if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
-                    cur_record['data'] = new_record['data']
                     do_update = True
             if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
-                cur_record['content'] = new_record['content']
                 do_update = True
             if do_update:
                 if not self.module.check_mode:
