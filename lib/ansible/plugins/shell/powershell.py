@@ -94,6 +94,22 @@ class ShellModule(object):
             script = 'Write-Host "%s"' % self._escape(user_home_path)
         return self._encode_script(script)
 
+    def exists(self, path):
+        path = self._escape(self._unquote(path))
+        script = '''
+            If (Test-Path "%s")
+            {
+                $res = 0;
+            }
+            Else
+            {
+                $res = 1;
+            }
+            Write-Host "$res";
+            Exit $res;
+         ''' % path
+        return self._encode_script(script)
+
     def checksum(self, path, *args, **kwargs):
         path = self._escape(self._unquote(path))
         script = '''
