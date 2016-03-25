@@ -58,6 +58,10 @@ EXAMPLES = '''
       BACKEND: lapack
 '''
 
+# TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
+# fix this
+RETURN = '''# '''
+
 
 def format_params(params):
     return [k + '=' + str(v) for k, v in params.iteritems()]
