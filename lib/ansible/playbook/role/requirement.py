@@ -181,6 +181,11 @@ class RoleRequirement(RoleDefinition):
             raise AnsibleError("- scm %s is not currently supported" % scm)
         tempdir = tempfile.mkdtemp()
         clone_cmd = [scm, 'clone', src, name]
+        if version != 'HEAD':
+            if scm == 'git':
+                clone_cmd += ['-b', version]
+            elif scm == 'hg':
+                clone_cmd += ['-u', version]
         with open('/dev/null', 'w') as devnull:
             try:
                 popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
