@@ -181,7 +181,11 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        for host in inventory.get_hosts(self._play.hosts):
+        if self._play.gather_facts == 'ignore_restrictions':
+            hosts = inventory.get_hosts(self._play.hosts, ignore_limits_and_restrictions=True)
+        else:
+            hosts = inventory.get_hosts(self._play.hosts)
+        for host in hosts:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
@@ -285,7 +289,9 @@ class PlayIterator:
                     # NOT explicitly set gather_facts to False.
 
                     gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+                    implied = (self._play.gather_facts is None or
+                               self._play.gather_facts == 'True' or
+                               self._play.gather_facts == 'ignore_restrictions')
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \

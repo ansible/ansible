@@ -26,6 +26,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
+from ansible.executor.play_iterator import PlayIterator
 
 try:
     from __main__ import display
@@ -58,7 +59,21 @@ class StrategyModule(StrategyBase):
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
-            hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
+            if iterator._play.gather_facts == 'ignore_restrictions':
+                hosts_left = [
+                    host for host in self._inventory.get_hosts(
+                        iterator._play.hosts,
+                        ignore_limits_and_restrictions=True
+                    ) if host.name not in self._tqm._unreachable_hosts and
+                    not iterator.is_failed(host)
+                ]
+            else:
+                hosts_left = [
+                    host for host in
+                    self._inventory.get_hosts(iterator._play.hosts) if
+                    host.name not in self._tqm._unreachable_hosts and not
+                    iterator.is_failed(host)
+                ]
             if len(hosts_left) == 0:
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
@@ -80,7 +95,14 @@ class StrategyModule(StrategyBase):
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state)
                 display.debug("free host task: %s" % task)
-                if host_name not in self._tqm._unreachable_hosts and task:
+                if (iterator._play.gather_facts == 'ignore_restrictions' and
+                    state.run_state is not PlayIterator.ITERATING_SETUP and
+                    host not in self._inventory._restriction):
+
+                    display.debug(
+                        "%s is restricted, skipping for now" % host_name)
+
+                elif host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done

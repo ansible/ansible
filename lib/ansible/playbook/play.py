@@ -63,7 +63,7 @@ class Play(Base, Taggable, Become):
     _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
 
     # Connection
-    _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    _gather_facts        = FieldAttribute(isa='string', default=None, always_post_validate=True)
     _gather_subset       = FieldAttribute(isa='list', default=None, always_post_validate=True)
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
