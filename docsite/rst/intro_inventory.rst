@@ -244,6 +244,18 @@ ansible_become_user
 ansible_become_pass
     Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password
 
+Accelerated Mode (see :doc:`Accelerated Mode<playbooks_acceleration>` for further details):
+
+.. versionadded:: 2.0
+
+ansible_accelerate_port
+    Set the port used for the accelerated connection. Equivalent to ``accelerate_port`` in your playbook.
+
+.. versionadded:: 2.1
+
+ansible_accelerate
+    Enable accelerated mode. Equivalent to ``accelerate`` in your playbook.
+
 Remote host environment parameters:
 
 ansible_shell_type

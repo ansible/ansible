@@ -56,6 +56,8 @@ In order to use accelerated mode, simply add `accelerate: true` to your play::
         - bar
         - baz
 
+As of Ansible version `2.1`, you can also set `ansible_accelerate` in your inventory file.
+
 If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerated_port` option::
 
     ---
@@ -69,6 +71,8 @@ The `accelerate_port` option can also be specified in the environment variable A
 
     [accelerate]
     accelerate_port = 5099
+
+As of Ansible version `2.0`, you can also set `ansible_accelerate_port` in your inventory file.
 
 As noted above, accelerated mode also supports running tasks via sudo, however there are two important caveats:
 
