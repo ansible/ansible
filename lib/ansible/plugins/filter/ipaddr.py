@@ -675,6 +675,7 @@ def ip4_hex(arg):
     numbers = list(map(int, arg.split('.')))
     return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
 
+# ---- Ansible filters ----
 
 class FilterModule(object):
     ''' IP address and network manipulation filters '''
