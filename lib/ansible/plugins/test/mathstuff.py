@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 __metaclass__ = type
+from __future__ import (absolute_import, division, print_function)
 
 def issubset(a, b):
     return set(a) <= set(b)
@@ -23,7 +24,7 @@ def issubset(a, b):
 def issuperset(a, b):
     return set(a) >= set(b)
 
-class TestModule(object):
+class TestModule:
     ''' Ansible math jinja2 tests '''
 
     def tests(self):
