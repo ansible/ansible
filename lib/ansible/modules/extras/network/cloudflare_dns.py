@@ -177,12 +177,94 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-records:
-    description: >
-      List containing the records for a zone or the data for a newly created record.
-      For details see https://api.cloudflare.com/#dns-records-for-a-zone-properties.
-    returned: success/changed after record creation
-    type: list
+record:
+    description: dictionary containing the record data
+    returned: success, except on record deletion
+    type: dictionary
+    contains:
+        content:
+            description: the record content (details depend on record type)
+            returned: success
+            type: string
+            sample: 192.168.100.20
+        created_on:
+            description: the record creation date
+            returned: success
+            type: string
+            sample: 2016-03-25T19:09:42.516553Z
+        data:
+            description: additional record data
+            returned: success, if type is SRV
+            type: dictionary
+            sample: {
+                name: "jabber",
+                port: 8080,
+                priority: 10,
+                proto: "_tcp",
+                service: "_xmpp",
+                target: "jabberhost.sample.com",
+                weight: 5,
+            }
+        id:
+            description: the record id
+            returned: success
+            type: string
+            sample: f9efb0549e96abcb750de63b38c9576e
+        locked:
+            description: No documentation available
+            returned: success
+            type: boolean
+            sample: False
+        meta:
+            description: No documentation available
+            returned: success
+            type: dictionary
+            sample: { auto_added: false }
+        modified_on:
+            description: record modification date
+            returned: success
+            type: string
+            sample: 2016-03-25T19:09:42.516553Z
+        name:
+            description: the record name as FQDN (including _service and _proto for SRV)
+            returned: success
+            type: string
+            sample: www.sample.com
+        priority:
+            description: priority of the MX record
+            returned: success, if type is MX
+            type: int
+            sample: 10
+        proxiable:
+            description: whether this record can be proxied through cloudflare
+            returned: success
+            type: boolean
+            sample: False
+        proxied:
+            description: whether the record is proxied through cloudflare
+            returned: success
+            type: boolean
+            sample: False
+        ttl:
+            description: the time-to-live for the record
+            returned: success
+            type: int
+            sample: 300
+        type:
+            description: the record type
+            returned: success
+            type: string
+            sample: A
+        zone_id:
+            description: the id of the zone containing the record
+            returned: success
+            type: string
+            sample: abcede0bf9f0066f94029d2e6b73856a
+        zone_name:
+            description: the name of the zone containing the record
+            returned: success
+            type: string
+            sample: sample.com
 '''
 
 class CloudflareAPI(object):
@@ -538,7 +620,10 @@ def main():
         if cf_api.is_solo:
             changed = cf_api.delete_dns_records(solo=cf_api.is_solo)
         result,changed = cf_api.ensure_dns_record()
-        module.exit_json(changed=changed,result={'records': result})
+        if isinstance(result,list):
+            module.exit_json(changed=changed,result={'record': result[0]})
+        else:
+            module.exit_json(changed=changed,result={'record': result})
     else:
         # force solo to False, just to be sure
         changed = cf_api.delete_dns_records(solo=False)
