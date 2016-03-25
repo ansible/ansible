@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
             is a different host (for instance, an ssh tunnelled port or an
             alternative ssh port to a vagrant host.)
         """
-        transport = self._play_context.connection
+        transport = self._connection.transport
         if host not in C.LOCALHOST or transport != "local":
             if port_matches_localhost_port and host in C.LOCALHOST:
                 self._task.args['_substitute_controller'] = True
@@ -144,13 +144,13 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        # self._play_context.connection accounts for delegate_to so
+        # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
         # between the controller and the delegate_to host or the controller
         # and the remote_host if delegate_to isn't set.
 
         remote_transport = False
-        if self._play_context.connection != 'local':
+        if self._connection.transport != 'local':
             remote_transport = True
 
         try:
@@ -160,9 +160,9 @@ class ActionModule(ActionBase):
 
         # ssh paramiko and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._play_context.connection not in ('ssh', 'paramiko', 'smart', 'local'):
+        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._play_context.connection
+            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
             return result
 
         use_ssh_args = self._task.args.pop('use_ssh_args', None)
