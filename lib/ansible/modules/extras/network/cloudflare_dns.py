@@ -412,6 +412,14 @@ class CloudflareAPI(object):
         if (params['type'] in [ 'A','AAAA','CNAME','TXT','MX','NS','SPF']):
             if not params['value']:
                 self.module.fail_json(msg="You must provide a non-empty value to create this record type")
+
+            # there can only be one CNAME per record
+            # ignoring the value when searching for existing
+            # CNAME records allows us to update the value if it
+            # changes
+            if params['type'] == 'CNAME':
+                search_value = None
+
             new_record = {
                 "type": params['type'],
                 "name": params['record'],
@@ -468,6 +476,9 @@ class CloudflareAPI(object):
                 if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
                     cur_record['data'] = new_record['data']
                     do_update = True
+            if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
+                cur_record['content'] = new_record['content']
+                do_update = True
             if do_update:
                 if not self.module.check_mode:
                     result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id,records[0]['id']),'PUT',new_record)
