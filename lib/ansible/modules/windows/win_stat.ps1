@@ -31,7 +31,8 @@ If ($path -eq $FALSE)
 }
 
 $get_md5 = Get-Attr $params "get_md5" $TRUE | ConvertTo-Bool;
-$get_checksum = Get-Attr $params "get_checksum" $TRUE | ConvertTo-Bool;
+# until we support real aliasing, get the default value from get_md5
+$get_checksum = Get-Attr $params "get_checksum" $get_md5 | ConvertTo-Bool;
 
 $result = New-Object psobject @{
     stat = New-Object psobject
@@ -64,7 +65,8 @@ Else
     Set-Attr $result.stat "exists" $FALSE;
 }
 
-If (($get_checksum -or $get_md5) -and $result.stat.exists -and -not $result.stat.isdir)
+# only check get_checksum- it either got its value from get_md5 or was set directly.
+If (($get_checksum) -and $result.stat.exists -and -not $result.stat.isdir)
 {
     $hash = Get-FileChecksum($path);
     Set-Attr $result.stat "md5" $hash;
