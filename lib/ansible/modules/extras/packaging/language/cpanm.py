@@ -170,15 +170,15 @@ def _get_cpanm_path(module):
 def main():
     arg_spec = dict(
         name=dict(default=None, required=False, aliases=['pkg']),
-        from_path=dict(default=None, required=False),
+        from_path=dict(default=None, required=False, type='path'),
         notest=dict(default=False, type='bool'),
-        locallib=dict(default=None, required=False),
+        locallib=dict(default=None, required=False, type='path'),
         mirror=dict(default=None, required=False),
         mirror_only=dict(default=False, type='bool'),
         installdeps=dict(default=False, type='bool'),
         system_lib=dict(default=False, type='bool', aliases=['use_sudo']),
         version=dict(default=None, required=False),
-        executable=dict(required=False, type='str'),
+        executable=dict(required=False, type='path'),
     )
 
     module = AnsibleModule(
