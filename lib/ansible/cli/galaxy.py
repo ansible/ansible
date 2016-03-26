@@ -152,7 +152,6 @@ class GalaxyCLI(CLI):
                 continue
 
             if isinstance(role_info[k], dict):
-                text += "\t%s: \n" % (k)
                 text.append(u"\t%s:" % (k))
                 for key in sorted(role_info[k].keys()):
                     if key in self.SKIP_INFO_KEYS:
