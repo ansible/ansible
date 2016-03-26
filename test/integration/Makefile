@@ -227,6 +227,11 @@ cloudstack:
 	RC=$$? ; \
 	exit $$RC;
 
+cloudflare: $(CREDENTIALS_FILE)
+	ansible-playbook cloudflare.yml -i $(INVENTORY) -e @$(VARS_FILE) -e @$(CREDENTIALS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
 $(CONSUL_RUNNING):
 
 consul:
