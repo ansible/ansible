@@ -262,3 +262,24 @@ def paging(pause=0):
         return page
     return wrapper
 
+
+def camel_dict_to_snake_dict(camel_dict):
+
+    def camel_to_snake(name):
+
+        import re
+
+        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+        all_cap_re = re.compile('([a-z0-9])([A-Z])')
+        s1 = first_cap_re.sub(r'\1_\2', name)
+
+        return all_cap_re.sub(r'\1_\2', s1).lower()
+
+
+    snake_dict = {}
+    for k, v in camel_dict.iteritems():
+        if isinstance(v, dict):
+            v = camel_dict_to_snake_dict(v)
+        snake_dict[camel_to_snake(k)] = v
+
+    return snake_dict
