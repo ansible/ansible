@@ -340,11 +340,11 @@ as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this::
 
-     {{ somvar_{{other_var}} }}
+     {{ somevar_{{other_var}} }}
 
 The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
 
-    {{ hostvars[inventory_hostname]['somevar_'  + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
 
 .. _i_dont_see_my_question:
