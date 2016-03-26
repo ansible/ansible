@@ -5,12 +5,32 @@ services:
 language: python
 matrix:
   include:
-    - env: TARGET=centos6
-    - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-    - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-    - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-    - env: TARGET=ubuntu1204
-    - env: TARGET=ubuntu1404
+# Functional Tests
+    - env: TARGET=centos6 TESTSET_NAME="testset1"
+    - env: TARGET=centos6 TESTSET_NAME="testset2"
+    - env: TARGET=centos6 TESTSET_NAME="testset3"
+
+    - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset1"
+    - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset2"
+    - env: TARGET=centos7 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset3"
+
+    - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset1"
+    - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset2"
+    - env: TARGET=fedora23 TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset3"
+
+    - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset1"
+    - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset2"
+    - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro" TESTSET_NAME="testset3"
+
+    - env: TARGET=ubuntu1204 TESTSET_NAME="testset1"
+    - env: TARGET=ubuntu1204 TESTSET_NAME="testset2"
+    - env: TARGET=ubuntu1204 TESTSET_NAME="testset3"
+
+    - env: TARGET=ubuntu1404 TESTSET_NAME="testset1"
+    - env: TARGET=ubuntu1404 TESTSET_NAME="testset2"
+    - env: TARGET=ubuntu1404 TESTSET_NAME="testset3"
+
+# Code checks
     - env: TARGET=sanity TOXENV=py26
       python: 2.6
     - env: TARGET=sanity TOXENV=py27
@@ -20,6 +40,7 @@ matrix:
     - env: TARGET=sanity TOXENV=py35
       python: 3.5
     - env: TARGET=sanity TOXENV=py24
+
 addons:
   apt:
     sources:
