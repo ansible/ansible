@@ -3,7 +3,7 @@
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
 #
-# This file is (intends to be) part of Ansible
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ options:
 '''
 
 EXAMPLES = '''
-# create a test.my.com A record to point to 127.0.0.01
+# create a test.my.com A record to point to 127.0.0.1
 - cloudflare_dns:
     zone: my.com
     record: test
@@ -177,12 +177,94 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-records:
-    description: >
-      List containing the records for a zone or the data for a newly created record.
-      For details see https://api.cloudflare.com/#dns-records-for-a-zone-properties.
-    returned: success/changed after record creation
-    type: list
+record:
+    description: dictionary containing the record data
+    returned: success, except on record deletion
+    type: dictionary
+    contains:
+        content:
+            description: the record content (details depend on record type)
+            returned: success
+            type: string
+            sample: 192.168.100.20
+        created_on:
+            description: the record creation date
+            returned: success
+            type: string
+            sample: 2016-03-25T19:09:42.516553Z
+        data:
+            description: additional record data
+            returned: success, if type is SRV
+            type: dictionary
+            sample: {
+                name: "jabber",
+                port: 8080,
+                priority: 10,
+                proto: "_tcp",
+                service: "_xmpp",
+                target: "jabberhost.sample.com",
+                weight: 5,
+            }
+        id:
+            description: the record id
+            returned: success
+            type: string
+            sample: f9efb0549e96abcb750de63b38c9576e
+        locked:
+            description: No documentation available
+            returned: success
+            type: boolean
+            sample: False
+        meta:
+            description: No documentation available
+            returned: success
+            type: dictionary
+            sample: { auto_added: false }
+        modified_on:
+            description: record modification date
+            returned: success
+            type: string
+            sample: 2016-03-25T19:09:42.516553Z
+        name:
+            description: the record name as FQDN (including _service and _proto for SRV)
+            returned: success
+            type: string
+            sample: www.sample.com
+        priority:
+            description: priority of the MX record
+            returned: success, if type is MX
+            type: int
+            sample: 10
+        proxiable:
+            description: whether this record can be proxied through cloudflare
+            returned: success
+            type: boolean
+            sample: False
+        proxied:
+            description: whether the record is proxied through cloudflare
+            returned: success
+            type: boolean
+            sample: False
+        ttl:
+            description: the time-to-live for the record
+            returned: success
+            type: int
+            sample: 300
+        type:
+            description: the record type
+            returned: success
+            type: string
+            sample: A
+        zone_id:
+            description: the id of the zone containing the record
+            returned: success
+            type: string
+            sample: abcede0bf9f0066f94029d2e6b73856a
+        zone_name:
+            description: the name of the zone containing the record
+            returned: success
+            type: string
+            sample: sample.com
 '''
 
 class CloudflareAPI(object):
@@ -346,7 +428,6 @@ class CloudflareAPI(object):
         if (not value) and (value is not None):
             value = self.value
 
-
         zone_id = self._get_zone_id()
         api_call = '/zones/{0}/dns_records'.format(zone_id)
         query = {}
@@ -371,19 +452,21 @@ class CloudflareAPI(object):
                 params[param] = getattr(self,param)
 
         records = []
-        search_value = params['value']
+        content = params['value']
         search_record = params['record']
         if params['type'] == 'SRV':
-            search_value = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
+            content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
         if params['solo']:
             search_value = None
+        else:
+            search_value = content
 
         records = self.get_dns_records(params['zone'],params['type'],search_record,search_value)
 
         for rr in records:
             if params['solo']:
-                if not ((rr['type'] == params['type']) and (rr['name'] == params['record']) and (rr['content'] == params['value'])):
+                if not ((rr['type'] == params['type']) and (rr['name'] == search_record) and (rr['content'] == content)):
                     self.changed = True
                     if not self.module.check_mode:
                         result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(rr['zone_id'],rr['id']),'DELETE')
@@ -410,6 +493,14 @@ class CloudflareAPI(object):
         if (params['type'] in [ 'A','AAAA','CNAME','TXT','MX','NS','SPF']):
             if not params['value']:
                 self.module.fail_json(msg="You must provide a non-empty value to create this record type")
+
+            # there can only be one CNAME per record
+            # ignoring the value when searching for existing
+            # CNAME records allows us to update the value if it
+            # changes
+            if params['type'] == 'CNAME':
+                search_value = None
+
             new_record = {
                 "type": params['type'],
                 "name": params['record'],
@@ -438,7 +529,7 @@ class CloudflareAPI(object):
                 "port": params['port'],
                 "weight": params['weight'],
                 "priority": params['priority'],
-                "name": params['record'],
+                "name": params['record'][:-len('.' + params['zone'])],
                 "proto": params['proto'],
                 "service": params['service']
             }
@@ -451,21 +542,20 @@ class CloudflareAPI(object):
         # in theory this should be impossible as cloudflare does not allow
         # the creation of duplicate records but lets cover it anyways
         if len(records) > 1:
-            return records,self.changed
-        # record already exists, check if ttl must be updated
+            self.module.fail_json(msg="More than one record already exists for the given attributes. That should be impossible, please open an issue!")
+        # record already exists, check if it must be updated
         if len(records) == 1:
             cur_record = records[0]
             do_update = False
             if (params['ttl'] is not None) and (cur_record['ttl'] != params['ttl'] ):
-                cur_record['ttl'] = params['ttl']
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
-                cur_record['priority'] = params['priority']
                 do_update = True
             if ('data' in new_record) and ('data' in cur_record):
                 if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
-                    cur_record['data'] = new_record['data']
                     do_update = True
+            if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
+                do_update = True
             if do_update:
                 if not self.module.check_mode:
                     result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id,records[0]['id']),'PUT',new_record)
@@ -529,7 +619,10 @@ def main():
         if cf_api.is_solo:
             changed = cf_api.delete_dns_records(solo=cf_api.is_solo)
         result,changed = cf_api.ensure_dns_record()
-        module.exit_json(changed=changed,result={'records': result})
+        if isinstance(result,list):
+            module.exit_json(changed=changed,result={'record': result[0]})
+        else:
+            module.exit_json(changed=changed,result={'record': result})
     else:
         # force solo to False, just to be sure
         changed = cf_api.delete_dns_records(solo=False)
