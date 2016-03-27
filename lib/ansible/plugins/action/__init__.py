@@ -618,10 +618,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
-        if self._connection.allow_executable:
-            if executable is None:
-                executable = self._play_context.executable
-            cmd = executable + ' -c ' + pipes.quote(cmd)
+        if executable is None:
+            executable = self._play_context.executable
+
+        cmd = self._connection._shell.create_cmd_list(executable, cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)

@@ -27,7 +27,6 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import re
 
@@ -178,7 +177,7 @@ class Connection(ConnectionBase):
         """ Run a command on the docker host """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
+        local_cmd = self._build_exec_cmd(cmd)
 
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
         local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
@@ -212,12 +211,11 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
 
-        out_path = pipes.quote(out_path)
         # Older docker doesn't have native support for copying files into
         # running containers, so we use docker exec to implement this
         # Although docker version 1.8 and later provide support, the
         # owner and group of the files are always set to root
-        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
+        args = self._build_exec_cmd(['dd', 'of=%s' % out_path, 'bs=%s' % BUFSIZE])
         args = [to_bytes(i, errors='strict') for i in args]
         with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
             try:

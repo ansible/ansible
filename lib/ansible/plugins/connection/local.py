@@ -25,10 +25,6 @@ import subprocess
 import fcntl
 import getpass
 
-from ansible.compat.six import text_type, binary_type
-
-import ansible.constants as C
-
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.unicode import to_bytes, to_str
@@ -66,21 +62,14 @@ class Connection(ConnectionBase):
 
         display.debug("in local.exec_command()")
 
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
-
         display.vvv(u"{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         display.debug("opening command with Popen()")
 
-        if isinstance(cmd, (text_type, binary_type)):
-            cmd = to_bytes(cmd)
-        else:
-            cmd = map(to_bytes, cmd)
+        cmd = [to_bytes(i, errors='strict') for i in cmd]
 
         p = subprocess.Popen(
             cmd,
-            shell=isinstance(cmd, (text_type, binary_type)),
-            executable=executable, #cwd=...
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

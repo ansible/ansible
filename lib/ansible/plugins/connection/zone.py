@@ -124,6 +124,8 @@ class Connection(ConnectionBase):
         ''' run a command on the zone '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
+        cmd = self._shell.join_cmd_list(cmd)
+
         p = self._buffered_exec_command(cmd)
 
         stdout, stderr = p.communicate(in_data)
