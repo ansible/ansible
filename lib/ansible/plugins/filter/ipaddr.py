@@ -670,6 +670,11 @@ def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
             ' installed on the ansible controller'.format(f_name))
 
+def ip4_hex(arg):
+    ''' Convert an IPv4 address to Hexadecimal notation '''
+    numbers = list(map(int, arg.split('.')))
+    return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
+
 # ---- Ansible filters ----
 
 class FilterModule(object):
@@ -683,6 +688,7 @@ class FilterModule(object):
         'ipsubnet': ipsubnet,
         'nthhost': nthhost,
         'slaac': slaac,
+        'ip4_hex': ip4_hex,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
