@@ -63,8 +63,8 @@ options:
         I(transport) argument is configured as nxapi.  If the transport
         argument is not nxapi, this value is ignored
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   provider:
     description:
       - Convience method that allows all M(nxos) arguments to be passed as
