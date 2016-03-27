@@ -116,7 +116,7 @@ openstack_image:
             returned: success
             type: string
         is_public:
-            description: Is plubic flag of the image.
+            description: Is public flag of the image.
             returned: success
             type: boolean
         deleted_at:
