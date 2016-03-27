@@ -39,6 +39,7 @@ Ansible Changes By Release
 
 ####New Filters:
 * extract
+* ip4_hex
 
 ####New Callbacks:
 * actionable (only shows changed and failed)
