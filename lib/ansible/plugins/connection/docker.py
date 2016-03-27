@@ -170,7 +170,7 @@ class Connection(ConnectionBase):
         super(Connection, self)._connect()
         if not self._connected:
             display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
-                self.actual_user or '?', host=self._play_context.remote_addr)
+                self.actual_user or '?'), host=self._play_context.remote_addr
             )
             self._connected = True
 

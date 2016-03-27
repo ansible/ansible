@@ -55,7 +55,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
             self._connected = True
         return self
 
@@ -68,7 +68,7 @@ class Connection(ConnectionBase):
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        display.vvv(u"{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
+        display.vvv(u"EXEC {0}".format(cmd), host=self._play_context.remote_addr)
         # FIXME: cwd= needs to be set to the basedir of the playbook
         display.debug("opening command with Popen()")
 
@@ -122,7 +122,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv(u"{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
         try:
@@ -137,7 +137,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv(u"{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         self.put_file(in_path, out_path)
 
     def close(self):

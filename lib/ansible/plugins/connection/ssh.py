@@ -608,7 +608,7 @@ class Connection(ConnectionBase):
                     else:
                         msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
 
-                    display.vv(msg)
+                    display.vv(msg, host=self.host)
 
                     time.sleep(pause)
                     continue
