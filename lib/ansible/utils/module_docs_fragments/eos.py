@@ -56,8 +56,8 @@ options:
         before sending any commands.  If not specified, the device will
         attempt to excecute all commands in non-priviledged mode.
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
@@ -78,8 +78,8 @@ options:
         I(transport) argument is configured as eapi.  If the transport
         argument is not eapi, this value is ignored
     required: false
-    default: true
-    choices: BOOLEANS
+    default: yes
+    choices: ['yes', 'no']
   provider:
     description:
       - Convience method that allows all M(eos) arguments to be passed as

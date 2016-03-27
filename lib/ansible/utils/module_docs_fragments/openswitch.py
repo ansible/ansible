@@ -68,8 +68,8 @@ options:
         I(transport) argument is configured as rest.  If the transport
         argument is not rest, this value is ignored
     required: false
-    default: true
-    choices: BOOLEANS
+    default: yes
+    choices: ['yes', 'no']
   provider:
     description:
       - Convience method that allows all M(openswitch) arguments to be passed as

@@ -54,8 +54,8 @@ options:
         before sending any commands.  If not specified, the device will
         attempt to excecute all commands in non-priviledged mode.
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
