@@ -26,12 +26,6 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
-    def _get_remote_raw_stat(self, path):
-        cmd = ['test', '-e', path]
-        result = self._low_level_execute_command(cmd=' '.join(cmd), sudoable=True)
-        if result['rc'] == 0:
-            return True
-        return False
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
@@ -54,7 +48,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            if self._get_remote_raw_stat(creates):
+            if self._remote_file_exists(creates):
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
 
         removes = self._task.args.get('removes')
@@ -62,7 +56,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            if self._get_remote_raw_stat(removes):
+            if self._remote_file_exists(removes):
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
         # the script name is the first item in the raw params, so we split it
