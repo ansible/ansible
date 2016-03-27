@@ -272,7 +272,7 @@ def main():
                 cached          = dict(default=False, type='bool'),
                 annotation      = dict(default="", required=False),
                 pkgsite         = dict(default="", required=False),
-                rootdir         = dict(default="", required=False)),
+                rootdir         = dict(default="", required=False, type='path')),
             supports_check_mode = True)
 
     pkgng_path = module.get_bin_path('pkg', True)
