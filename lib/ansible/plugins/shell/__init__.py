@@ -94,6 +94,10 @@ class ShellBase(object):
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
+    def exists(self, path):
+        cmd = ['test', '-e', pipes.quote(path)]
+        return ' '.join(cmd)
+
     def mkdtemp(self, basefile=None, system=False, mode=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
