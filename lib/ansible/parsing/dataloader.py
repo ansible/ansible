@@ -216,7 +216,7 @@ class DataLoader():
             basedir = to_unicode(self._basedir, errors='strict')
             return os.path.abspath(os.path.join(basedir, given))
 
-    def path_dwim_relative(self, path, dirname, source):
+    def path_dwim_relative(self, path, dirname, source, path_stack=None):
         '''
         find one file in either a role or playbook dir with or without
         explicitly named dirname subdirs
@@ -226,33 +226,33 @@ class DataLoader():
         '''
 
         search = []
-        isrole = False
 
         # I have full path, nothing else needs to be looked at
         if source.startswith('~') or source.startswith('/'):
             search.append(self.path_dwim(source))
         else:
-            # base role/play path + templates/files/vars + relative filename
-            search.append(os.path.join(path, dirname, source))
-
-            basedir = unfrackpath(path)
-
-            # is it a role and if so make sure you get correct base path
-            if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='strict')) \
-                or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='strict')):
-                isrole = True
-                if path.endswith('tasks'):
-                    basedir = unfrackpath(os.path.dirname(path))
-
+            # save while we mangle basedir for searchpath 
             cur_basedir = self._basedir
+
+            # handle role paths and deps
+            if path_stack is not None:
+                for role_path in path_stack:
+                    basedir = unfrackpath(os.path.dirname(path))
+                    self.set_basedir(basedir)
+                    search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
+                    if source.endswith(dirname):
+                        search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
+
+            # handle play path
+            basedir = unfrackpath(path)
             self.set_basedir(basedir)
-            # resolved base role/play path + templates/files/vars + relative filename
             search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
+
+            # restore to normal
             self.set_basedir(cur_basedir)
 
-            if isrole and not source.endswith(dirname):
-                # look in role's tasks dir w/o dirname
-                search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
+            # base rplay path + templates/files/vars + relative filename
+            search.append(os.path.join(path, dirname, source))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
             search.append(self.path_dwim(os.path.join(dirname,source)))
@@ -261,11 +261,16 @@ class DataLoader():
             # try to create absolute path for loader basedir + filename
             search.append(self.path_dwim(source))
 
+        # return path if it exists, otherwise return None and paths searched
+        final = None
         for candidate in search:
+            print(candidate)
             if os.path.exists(to_bytes(candidate, errors='strict')):
+                final = candidate
                 break
 
-        return candidate
+        return final, [os.path.dirname(x) for x in search]
+
 
     def read_vault_password_file(self, vault_password_file):
         """
