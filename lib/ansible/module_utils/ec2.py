@@ -283,3 +283,95 @@ def camel_dict_to_snake_dict(camel_dict):
         snake_dict[camel_to_snake(k)] = v
 
     return snake_dict
+
+
+def ansible_dict_to_boto3_filter_list(filters_dict):
+
+    """ Convert an Ansible dict of filters to list of dicts that boto3 can use
+    Args:
+        filters_dict (dict): Dict of AWS filters.
+    Basic Usage:
+        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> ansible_dict_to_boto3_filter_list(filters)
+        {
+            'some-aws-id': 'i-01234567'
+        }
+    Returns:
+        List: List of AWS filters and their values
+        [
+            {
+                'Name': 'some-aws-id',
+                'Values': [
+                    'i-01234567',
+                ]
+            }
+        ]
+    """
+
+    filters_list = []
+    for k,v in filters_dict.iteritems():
+        filter_dict = {'Name': k}
+        if isinstance(v, basestring):
+            filter_dict['Values'] = [v]
+        else:
+            filter_dict['Values'] = v
+
+        filters_list.append(filter_dict)
+
+    return filters_list
+
+
+def boto3_tag_list_to_ansible_dict(tags_list):
+
+    """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
+    Args:
+        tags_list (list): List of dicts representing AWS tags.
+    Basic Usage:
+        >>> tags_list = [{'Key': 'MyTagKey', 'Value': 'MyTagValue'}]
+        >>> boto3_tag_list_to_ansible_dict(tags_list)
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    Returns:
+        Dict: Dict of key:value pairs representing AWS tags
+         {
+            'MyTagKey': 'MyTagValue',
+        }
+    """
+
+    tags_dict = {}
+    for tag in tags_list:
+        tags_dict[tag['Key']] = tag['Value']
+
+    return tags_dict
+
+
+def ansible_dict_to_boto3_tag_list(tags_dict):
+
+    """ Convert a flat dict of key:value pairs representing AWS resource tags to a boto3 list of dicts
+    Args:
+        tags_dict (dict): Dict representing AWS resource tags.
+    Basic Usage:
+        >>> tags_dict = {'MyTagKey': 'MyTagValue'}
+        >>> ansible_dict_to_boto3_tag_list(tags_dict)
+        {
+            'MyTagKey': 'MyTagValue'
+        }
+    Returns:
+        List: List of dicts containing tag keys and values
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    """
+
+    tags_list = []
+    for k,v in tags_dict.iteritems():
+        tags_list.append({'Key': k, 'Value': v})
+
+    return tags_list
