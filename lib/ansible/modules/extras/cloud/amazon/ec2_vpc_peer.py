@@ -33,6 +33,10 @@ options:
     description:
       - The AWS account number for cross account peering.
     required: false
+  tags:
+    description:
+      - Dictionary of tags to look for and apply when creating a Peering Connection.
+    required: false    
   state:
     description:
       - Create, delete, accept, reject a peering connection.
@@ -51,6 +55,10 @@ EXAMPLES = '''
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix       
   register: vpc_peer
 
 - name: Accept local VPC peering request
@@ -67,6 +75,10 @@ EXAMPLES = '''
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix           
   register: vpc_peer
 
 - name: delete a local VPC peering Connection
@@ -84,6 +96,10 @@ EXAMPLES = '''
     peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix         
   register: vpc_peer
 
 - name: Accept peering connection from remote account
@@ -101,6 +117,10 @@ EXAMPLES = '''
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix          
   register: vpc_peer
 
 - name: Reject a local VPC peering Connection
@@ -117,6 +137,10 @@ EXAMPLES = '''
     peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix        
   register: vpc_peer
 
 - name: Accept a cross account VPC peering connection request
@@ -135,6 +159,10 @@ EXAMPLES = '''
     peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix         
   register: vpc_peer
 
 - name: Reject a cross account VPC peering Connection
@@ -159,6 +187,28 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+
+def tags_changed(pcx_id, client, module):
+    changed = False
+    tags = dict()
+    if module.params.get('tags'):
+        tags = module.params.get('tags')
+    pcx = find_pcx_by_id(pcx_id, client, module)
+    if pcx['VpcPeeringConnections']:
+        pcx_values = [t.values() for t in pcx['VpcPeeringConnections'][0]['Tags']]
+        pcx_tags = [item for sublist in pcx_values for item in sublist]
+        tag_values = [[key, str(value)] for key, value in tags.iteritems()]
+        tags = [item for sublist in tag_values for item in sublist]
+        if sorted(pcx_tags) == sorted(tags):
+            changed = False
+            return changed
+        else:
+            delete_tags(pcx_id, client, module)
+            create_tags(pcx_id, client, module)
+            changed = True
+            return changed
+    return changed
 
 
 def describe_peering_connections(params, client):
@@ -192,12 +242,18 @@ def create_peer_connection(client, module):
     params['DryRun'] = module.check_mode
     peering_conns = describe_peering_connections(params, client)
     for peering_conn in peering_conns['VpcPeeringConnections']:
+        pcx_id = peering_conn['VpcPeeringConnectionId']
+        if tags_changed(pcx_id, client, module):
+            changed = True
         if is_active(peering_conn):
             return (changed, peering_conn['VpcPeeringConnectionId'])
         if is_pending(peering_conn):
             return (changed, peering_conn['VpcPeeringConnectionId'])
     try:
         peering_conn = client.create_vpc_peering_connection(**params)
+        pcx_id = peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId']
+        if module.params.get('tags'):
+            create_tags(pcx_id, client, module)
         changed = True
         return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
     except botocore.exceptions.ClientError as e:
@@ -227,8 +283,37 @@ def accept_reject_delete(state, client, module):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
-    
     return changed, params['VpcPeeringConnectionId']
+
+
+def load_tags(module):
+    tags = []
+    if module.params.get('tags'):
+        for name, value in module.params.get('tags').iteritems():
+            tags.append({'Key': name, 'Value': str(value)})
+    return tags
+
+
+def create_tags(pcx_id, client, module):
+    try:
+        delete_tags(pcx_id, client, module)
+        client.create_tags(Resources=[pcx_id], Tags=load_tags(module))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
+
+
+def delete_tags(pcx_id, client, module):
+    try:
+        client.delete_tags(Resources=[pcx_id])
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
+
+
+def find_pcx_by_id(pcx_id, client, module):
+    try:
+        return client.describe_vpc_peering_connections(VpcPeeringConnectionIds=[pcx_id])
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
 
 
 def main():
@@ -238,6 +323,7 @@ def main():
         peer_vpc_id=dict(),
         peering_id=dict(),
         peer_owner_id=dict(),
+        tags=dict(required=False, type='dict'),
         profile=dict(),
         state=dict(default='present', choices=['present', 'absent', 'accept', 'reject'])
         )
