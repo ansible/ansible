@@ -621,7 +621,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._connection.allow_executable:
             if executable is None:
                 executable = self._play_context.executable
-            cmd = executable + ' -c ' + pipes.quote(cmd)
+            if executable:
+                cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
