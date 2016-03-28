@@ -76,29 +76,29 @@ options:
     description:
       - Do not add the packages to the world file (--oneshot)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   noreplace:
     description:
       - Do not re-emerge installed packages (--noreplace)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   nodeps:
     description:
       - Only merge packages but not their dependencies (--nodeps)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   onlydeps:
     description:
       - Only merge packages' dependencies but not the packages (--onlydeps)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   depclean:
     description:
@@ -106,22 +106,22 @@ options:
       - If no package is specified, clean up the world's dependencies
       - Otherwise, --depclean serves as a dependency aware version of --unmerge
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   quiet:
     description:
       - Run emerge in quiet mode (--quiet)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   verbose:
     description:
       - Run emerge in verbose mode (--verbose)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   sync:
     description:
@@ -130,21 +130,21 @@ options:
       - If web, perform "emerge-webrsync"
     required: false
     default: null
-    choices: [ "yes", "web" ]
+    choices: [ "yes", "web", "no" ]
 
   getbinpkg:
     description:
       - Prefer packages specified at PORTAGE_BINHOST in make.conf
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
   usepkgonly:
     description:
       - Merge only binaries (no compiling). This sets getbinpkg=yes.
     required: false
-    deafult: null
-    choices: [ "yes" ]
+    default: False
+    choices: [ "yes", "no" ]
 
 requirements: [ gentoolkit ]
 author: 
@@ -401,21 +401,21 @@ def main():
                 default=portage_present_states[0],
                 choices=portage_present_states + portage_absent_states,
             ),
-            update=dict(default=None, choices=['yes']),
-            deep=dict(default=None, choices=['yes']),
-            newuse=dict(default=None, choices=['yes']),
-            changed_use=dict(default=None, choices=['yes']),
-            oneshot=dict(default=None, choices=['yes']),
-            noreplace=dict(default=None, choices=['yes']),
-            nodeps=dict(default=None, choices=['yes']),
-            onlydeps=dict(default=None, choices=['yes']),
-            depclean=dict(default=None, choices=['yes']),
-            quiet=dict(default=None, choices=['yes']),
-            verbose=dict(default=None, choices=['yes']),
+            update=dict(default=False, type='bool'),
+            deep=dict(default=False, type='bool'),
+            newuse=dict(default=False, type='bool'),
+            changed_use=dict(default=False, type='bool'),
+            oneshot=dict(default=False, type='bool'),
+            noreplace=dict(default=False, type='bool'),
+            nodeps=dict(default=False, type='bool'),
+            onlydeps=dict(default=False, type='bool'),
+            depclean=dict(default=False, type='bool'),
+            quiet=dict(default=False, type='bool'),
+            verbose=dict(default=False, type='bool'),
             sync=dict(default=None, choices=['yes', 'web']),
-            getbinpkg=dict(default=None, choices=['yes']),
-            usepkgonly=dict(default=None, choices=['yes']),
-            usepkg=dict(default=None, choices=['yes']),
+            getbinpkg=dict(default=False, type='bool'),
+            usepkgonly=dict(default=False, type='bool'),
+            usepkg=dict(default=False, type='bool'),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
         mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
