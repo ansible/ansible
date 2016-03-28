@@ -18,10 +18,41 @@ ansible-playbook run-the-playbook.yml
 ### Problems
 
 - The most likely step in this process to be forgotten is the middle step. While we can improve processes and documentation to try and ensure that this step is not skipped, we can improve ansible-playbook so that the step is not required.
-- Ansible-galaxy does ot sufficiently handle versioning. 
+- Ansible-galaxy does not sufficiently handle versioning (proposal on ansible/ansible#14942).
 - There is not a consistent format for specifying a role in a playbook or a dependent role in meta/main.yml.
 
+### Risks
+
+Implement automatic roles install opens the chance of broke a working ansible
+tree, either by human error (running wrong playbook) or by unexpected side
+effects (transitive dependencies). Before attempting it, some safety measures
+should be added to ansible-galaxy functionality, such as rollback ability.
+
 ## Approaches
+
+### Approach 0: Just check if roles are available
+
+Instead of autoinstall missing roles, just verify that everything is in place,
+and if some role is not found (or role version not matched) stop execution
+
+#### Advantages
+
+- No changes required from the user perspective
+
+#### Disadvantage
+
+- Roles pre-flight verification must be implemented, and at least playbook
+  and all included roles must be readed to search for requirements (although
+  something similar will likely be required by any auto-install approach)
+
+#### Iteration
+
+If complex version requirements exists for role versions, this simple approach
+forces to trace them within the role `meta/main.yml` file, which might become
+a bit cumbersome. To handle this, the `rolesfile` keyword from approach 1 could
+be helpful. This means that besides roles used in playbook and transitive
+dependencies defined within them, the requirements from `rolesfile` must also
+be satisfied before starting the real playbook run.
 
 ### Approach 1: Specify rolesfile and rolesdir in playbook
 
@@ -52,6 +83,9 @@ whether or not to auto update roles (defaulting to False)
 
 - Adds two new keywords
 - Adds three new configuration variables for defaults
+- Appart from path(s) defined on galay.cfg, and under playbook directory, the
+  `rolesdir` adds more places to look for roles, and only after looking at the
+  playbook the full list o places can be known
 
 ### Approach 2: Allow rolesfile inclusion
 
@@ -145,6 +179,26 @@ Here's the approach:
            briancoca.oracle_java7 =>  briancoca.oracle_java7.qs3ih6x
         ```
     
+#### Caveats
+
+Adding `--force` to any automatic solution is probably a bad idea (at least
+in the way that option works on galaxy 1.9.x), and even a `--upgrade` might
+be risky.
+
+This approach, which is like a meld of playbook & galaxy, drops the second step
+of motivation, but actually does not solve the first problem listed. Instead
+of modify `rolesfile.yml` now we need to modify the playbook itself. In that
+sense, the melding forces that a file that rarely changes (the playbook) becomes
+a dynamic entity, just to reflect the changes in the roles it includes. In that
+sense, is conceptually simpler to keep the `requirements.yml` file, whose only
+purpose is to link the static playbook with the dynamic roles.
+
+#### Disadvantages
+
+- Having multiple versions in roles directory makes very hard to know which
+  role version is used for a playbook, although that might be addressed working
+  with `galaxy list` command, and makes easier rolling back
+
 ## Conclusion
 
 Feedback is requested to improve any of the above approaches, or provide further approaches to solve this problem.
