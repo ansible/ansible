@@ -93,6 +93,9 @@ class TestSplitter_Gen:
             (u'a=café b=eñyei',
                 [u'a=café', u'b=eñyei'],
                 {u'a': u'café', u'b': u'eñyei'}),
+            (u'a={{ foo | some_filter(\' \', " ") }} b=bar',
+                [u'a={{ foo | some_filter(\' \', " ") }}', u'b=bar'],
+                {u'a': u'{{ foo | some_filter(\' \', " ") }}', u'b': u'bar'}),
             )
 
     def check_split_args(self, args, expected):
