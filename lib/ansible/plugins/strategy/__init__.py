@@ -216,6 +216,20 @@ class StrategyBase:
                             if iterator.is_failed(host):
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
+                            else:
+                                # otherwise, we grab the current state and if we're iterating on
+                                # the rescue portion of a block then we save the failed task in a
+                                # special var for use within the rescue/always
+                                state, _ = iterator.get_next_task_for_host(host, peek=True)
+                                if state.run_state == iterator.ITERATING_RESCUE:
+                                    original_task = iterator.get_original_task(host, task)
+                                    self._variable_manager.set_nonpersistent_facts(
+                                        host,
+                                        dict(
+                                            ansible_failed_task=original_task.serialize(),
+                                            ansible_failed_result=task_result._result,
+                                        ),
+                                    )
                         else:
                             self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=task.ignore_errors)
