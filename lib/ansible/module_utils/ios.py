@@ -29,6 +29,21 @@ NET_COMMON_ARGS = dict(
     provider=dict()
 )
 
+CLI_PROMPTS_RE = [
+    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+]
+
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -52,12 +67,13 @@ class Cli(object):
         username = self.module.params['username']
         password = self.module.params['password']
 
-        self.shell = Shell(kickstart=False)
-
         try:
-            self.shell.open(host, port=port, username=username, password=password)
+            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
+                    errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username,
+                    password=password)
         except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
 
     def authorize(self):
