@@ -208,7 +208,7 @@ class DataLoader():
         given = unquote(given)
         given = to_unicode(given, errors='strict')
 
-        if given.startswith(u"/"):
+        if given.startswith(os.path.sep):
             return os.path.abspath(given)
         elif given.startswith(u"~"):
             return os.path.abspath(os.path.expanduser(given))
@@ -228,7 +228,7 @@ class DataLoader():
         search = []
 
         # I have full path, nothing else needs to be looked at
-        if source.startswith('~') or source.startswith('/'):
+        if source.startswith(u'~') or source.startswith(os.path.sep):
             search.append(self.path_dwim(source))
         else:
             # save while we mangle basedir for searchpath 
