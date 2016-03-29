@@ -393,11 +393,11 @@ def main():
 
     # sanity check user supplied values
 
-    if (host and not port) or (port and not host):
+    if (host and port is None) or (port is not None and not host):
         module.fail_json(msg="both host and port must be supplied")
 
-    if 1 > port > 65535:
-        module.fail_json(msg="valid ports must be in range 1 - 65535")
+    if 0 > port or port > 65535:
+        module.fail_json(msg="valid ports must be in range 0 - 65535")
 
     if monitors:
         if len(monitors) == 1:
@@ -505,6 +505,10 @@ def main():
                         set_action_on_service_down(api, pool, service_down_action)
                     result = {'changed': True}
                 if (host and port) and not member_exists(api, pool, address, port):
+                    if not module.check_mode:
+                        add_pool_member(api, pool, address, port)
+                    result = {'changed': True}
+                if (host and port == 0) and not member_exists(api, pool, address, port):
                     if not module.check_mode:
                         add_pool_member(api, pool, address, port)
                     result = {'changed': True}
