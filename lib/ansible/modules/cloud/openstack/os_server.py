@@ -555,7 +555,7 @@ def main():
         config_drive                    = dict(default=False, type='bool'),
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None, type='list'),
-        floating_ip_pools               = dict(default=None),
+        floating_ip_pools               = dict(default=None, type='list'),
         volume_size                     = dict(default=False, type='int'),
         boot_from_volume                = dict(default=False, type='bool'),
         boot_volume                     = dict(default=None, aliases=['root_volume']),
