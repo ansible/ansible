@@ -308,11 +308,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # to work!
             if remote_user == 'root':
                 # SSh'ing as root, therefore we can chown
-                self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+                res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+                if res['rc'] != 0:
+                    raise AnsibleError('Failed to set owner on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
                 if execute:
                     # root can read things that don't have read bit but can't
                     # execute them.
-                    self._remote_chmod('u+x', remote_path, recursive=recursive)
+                    res = self._remote_chmod('u+x', remote_path, recursive=recursive)
+                    if res['rc'] != 0:
+                        raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
             else:
                 if execute:
                     mode = 'rx'
@@ -325,14 +329,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         # fs acls failed -- do things this insecure way only
                         # if the user opted in in the config file
                         self._display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
-                        self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
+                        res = self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
+                        if res['rc'] != 0:
+                            raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
                     else:
                         raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user. For information on working around this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
         elif execute:
             # Can't depend on the file being transferred with execute
             # permissions.  Only need user perms because no become was
             # used here
-            self._remote_chmod('u+x', remote_path, recursive=recursive)
+            res = self._remote_chmod('u+x', remote_path, recursive=recursive)
+            if res['rc'] != 0:
+                raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
 
         return remote_path
 
@@ -569,7 +577,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # not sudoing to root, so maybe can't delete files as that other user
                 # have to clean up temp files as original user in a second step
                 cmd2 = self._connection._shell.remove(tmp, recurse=True)
-                self._low_level_execute_command(cmd2, sudoable=False)
+                res2 = self._low_level_execute_command(cmd2, sudoable=False)
+                if res2['rc'] != 0:
+                    display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(res2['rc'], res2['stderr']))
 
         try:
             data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', u'')))
