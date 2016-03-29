@@ -68,7 +68,7 @@ options:
     description:
       - Wait for operation to complete before returning
     required: false
-    default: true
+    default: false
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out
@@ -95,14 +95,14 @@ EXAMPLES = '''
 
 - name: Create new nat gateway with client token
   ec2_vpc_nat_gateway:
-  state: present
-  subnet_id: subnet-12345678
-  eip_address: 52.1.1.1
-  region: ap-southeast-2
-  client_token: abcd-12345678
+    state: present
+    subnet_id: subnet-12345678
+    eip_address: 52.1.1.1
+    region: ap-southeast-2
+    client_token: abcd-12345678
   register: new_nat_gateway
 
-- name: Create new nat gateway allocation-id
+- name: Create new nat gateway using an allocation-id
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -110,16 +110,7 @@ EXAMPLES = '''
     region: ap-southeast-2
   register: new_nat_gateway
 
-- name: Create new nat gateway with when condition
-  ec2_vpc_nat_gateway:
-    state: present
-    subnet_id: subnet-12345678
-    eip_address: 52.1.1.1
-    region: ap-southeast-2
-  register: new_nat_gateway
-  when: existing_nat_gateways.result == []
-
-- name: Create new nat gateway and wait for available status
+- name: Create new nat gateway, using an eip address  and wait for available status
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -218,98 +209,98 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-import time
 import datetime
+import random
+import time
+
+from dateutil.tz import tzutc
+
+DRY_RUN_GATEWAYS = [
+    {
+        "nat_gateway_id": "nat-123456789",
+        "subnet_id": "subnet-123456789",
+        "nat_gateway_addresses": [
+            {
+                "public_ip": "55.55.55.55",
+                "network_interface_id": "eni-1234567",
+                "private_ip": "10.0.0.102",
+                "allocation_id": "eipalloc-1234567"
+            }
+        ],
+        "state": "available",
+        "create_time": "2016-03-05T05:19:20.282000+00:00",
+        "vpc_id": "vpc-12345678"
+    }
+]
+DRY_RUN_GATEWAY_UNCONVERTED = [
+    {
+        'VpcId': 'vpc-12345678',
+        'State': 'available',
+        'NatGatewayId': 'nat-123456789',
+        'SubnetId': 'subnet-123456789',
+        'NatGatewayAddresses': [
+            {
+                'PublicIp': '55.55.55.55',
+                'NetworkInterfaceId': 'eni-1234567',
+                'AllocationId': 'eipalloc-1234567',
+                'PrivateIp': '10.0.0.102'
+            }
+        ],
+        'CreateTime': datetime.datetime(2016, 3, 5, 5, 19, 20, 282000, tzinfo=tzutc())
+    }
+]
+
+DRY_RUN_ALLOCATION_UNCONVERTED = {
+    'Addresses': [
+        {
+            'PublicIp': '55.55.55.55',
+            'Domain': 'vpc',
+            'AllocationId': 'eipalloc-1234567'
+        }
+    ]
+}
+
+DRY_RUN_MSGS = 'DryRun Mode:'
 
 def convert_to_lower(data):
     """Convert all uppercase keys in dict with lowercase_
     Args:
         data (dict): Dictionary with keys that have upper cases in them
-            Example.. NatGatewayAddresses == nat_gateway_addresses
+            Example.. FooBar == foo_bar
             if a val is of type datetime.datetime, it will be converted to
             the ISO 8601
 
     Basic Usage:
-        >>> test = {'NatGatewaysAddresses': []}
+        >>> test = {'FooBar': []}
         >>> test = convert_to_lower(test)
         {
-            'nat_gateways_addresses': []
+            'foo_bar': []
         }
 
     Returns:
         Dictionary
     """
     results = dict()
-    for key, val in data.items():
-        key = re.sub('([A-Z]{1})', r'_\1', key).lower()[1:]
-        if isinstance(val, datetime.datetime):
-            results[key] = val.isoformat()
-        else:
-            results[key] = val
+    if isinstance(data, dict):
+        for key, val in data.items():
+            key = re.sub(r'(([A-Z]{1,3}){1})', r'_\1', key).lower()
+            if key[0] == '_':
+                key = key[1:]
+            if isinstance(val, datetime.datetime):
+                results[key] = val.isoformat()
+            elif isinstance(val, dict):
+                results[key] = convert_to_lower(val)
+            elif isinstance(val, list):
+                converted = list()
+                for item in val:
+                    converted.append(convert_to_lower(item))
+                results[key] = converted
+            else:
+                results[key] = val
     return results
 
-def formatted_nat_gw_output(data):
-    """Format the results of NatGateways into lowercase with underscores.
-    Args:
-        data (list): List of dictionaries with keys that have upper cases in
-            them. Example.. NatGatewayAddresses == nat_gateway_addresses
-            if a val is of type datetime.datetime, it will be converted to
-            the ISO 8601
-
-    Basic Usage:
-        >>> test = [
-            {
-                'VpcId': 'vpc-12345',
-                'State': 'available',
-                'NatGatewayId': 'nat-0b2f9f2ac3f51a653',
-                'SubnetId': 'subnet-12345',
-                'NatGatewayAddresses': [
-                    {
-                        'PublicIp': '52.52.52.52',
-                        'NetworkInterfaceId': 'eni-12345',
-                        'AllocationId': 'eipalloc-12345',
-                        'PrivateIp': '10.0.0.100'
-                    }
-                ],
-                'CreateTime': datetime.datetime(2016, 3, 5, 5, 19, 20, 282000, tzinfo=tzutc())
-            }
-        ]
-        >>> test = formatted_nat_gw_output(test)
-            [
-                {
-                    'nat_gateway_id': 'nat-0b2f9f2ac3f51a653',
-                    'subnet_id': 'subnet-12345',
-                    'nat_gateway_addresses': [
-                        {
-                            'public_ip': '52.52.52.52',
-                            'network_interface_id': 'eni-12345',
-                            'private_ip': '10.0.0.100',
-                            'allocation_id': 'eipalloc-12345'
-                        }
-                    ],
-                    'state': 'available',
-                    'create_time': '2016-03-05T05:19:20.282000+00:00',
-                    'vpc_id': 'vpc-12345'
-                }
-            ]
-
-    Returns:
-        List
-    """
-    results = list()
-    for gw in data:
-        output = dict()
-        ng_addresses = gw.pop('NatGatewayAddresses')
-        output = convert_to_lower(gw)
-        output['nat_gateway_addresses'] = []
-        for address in ng_addresses:
-            gw_data = convert_to_lower(address)
-            output['nat_gateway_addresses'].append(gw_data)
-        results.append(output)
-
-    return results
-
-def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None):
+def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
+                     states=None, check_mode=False):
     """Retrieve a list of NAT Gateways
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -317,29 +308,31 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None):
     Kwargs:
         subnet_id (str): The subnet_id the nat resides in.
         nat_gateway_id (str): The Amazon nat id.
+        states (list): States available (pending, failed, available, deleting, and deleted)
+            default=None
 
     Basic Usage:
         >>> client = boto3.client('ec2')
-        >>> subnet_id = 'subnet-w4t12897'
+        >>> subnet_id = 'subnet-12345678'
         >>> get_nat_gateways(client, subnet_id)
         [
             true,
             "",
             {
-                "nat_gateway_id": "nat-03835afb6e31df79b",
-                "subnet_id": "subnet-w4t12897",
+                "nat_gateway_id": "nat-123456789",
+                "subnet_id": "subnet-123456789",
                 "nat_gateway_addresses": [
                     {
-                        "public_ip": "52.87.29.36",
-                        "network_interface_id": "eni-5579742d",
+                        "public_ip": "55.55.55.55",
+                        "network_interface_id": "eni-1234567",
                         "private_ip": "10.0.0.102",
-                        "allocation_id": "eipalloc-36014da3"
+                        "allocation_id": "eipalloc-1234567"
                     }
                 ],
                 "state": "deleted",
                 "create_time": "2016-03-05T00:33:21.209000+00:00",
                 "delete_time": "2016-03-05T00:36:37.329000+00:00",
-                "vpc_id": "vpc-w68571b5"
+                "vpc_id": "vpc-12345678"
             }
 
     Returns:
@@ -348,6 +341,8 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None):
     params = dict()
     err_msg = ""
     gateways_retrieved = False
+    if not states:
+        states = ['available', 'pending']
     if nat_gateway_id:
         params['NatGatewayIds'] = [nat_gateway_id]
     else:
@@ -355,19 +350,39 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None):
             {
                 'Name': 'subnet-id',
                 'Values': [subnet_id]
+            },
+            {
+                'Name': 'state',
+                'Values': states
             }
         ]
 
     try:
-        gateways = client.describe_nat_gateways(**params)['NatGateways']
-        existing_gateways = formatted_nat_gw_output(gateways)
-        gateways_retrieved = True
-    except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        if not check_mode:
+            gateways = client.describe_nat_gateways(**params)['NatGateways']
+            existing_gateways = list()
+            if gateways:
+                for gw in gateways:
+                    existing_gateways.append(convert_to_lower(gw))
+            gateways_retrieved = True
+        else:
+            gateways_retrieved = True
+            existing_gateways = []
+            if nat_gateway_id:
+                if DRY_RUN_GATEWAYS[0]['nat_gateway_id'] == nat_gateway_id:
+                    existing_gateways = DRY_RUN_GATEWAYS
+            elif subnet_id:
+                if DRY_RUN_GATEWAYS[0]['subnet_id'] == subnet_id:
+                    existing_gateways = DRY_RUN_GATEWAYS
+            err_msg = '{0} Retrieving gateways'.format(DRY_RUN_MSGS)
+
+    except botocore.exceptions.ClientError, e:
+            err_msg = str(e)
 
     return gateways_retrieved, err_msg, existing_gateways
 
-def wait_for_status(client, wait_timeout, nat_gateway_id, status):
+def wait_for_status(client, wait_timeout, nat_gateway_id, status,
+                    check_mode=False):
     """Wait for the Nat Gateway to reach a status
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -378,27 +393,27 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status):
 
     Basic Usage:
         >>> client = boto3.client('ec2')
-        >>> subnet_id = 'subnet-w4t12897'
-        >>> allocation_id = 'eipalloc-36014da3'
+        >>> subnet_id = 'subnet-12345678'
+        >>> allocation_id = 'eipalloc-12345678'
         >>> wait_for_status(client, subnet_id, allocation_id)
         [
             true,
             "",
             {
-                "nat_gateway_id": "nat-03835afb6e31df79b",
-                "subnet_id": "subnet-w4t12897",
+                "nat_gateway_id": "nat-123456789",
+                "subnet_id": "subnet-1234567",
                 "nat_gateway_addresses": [
                     {
-                        "public_ip": "52.87.29.36",
-                        "network_interface_id": "eni-5579742d",
+                        "public_ip": "55.55.55.55",
+                        "network_interface_id": "eni-1234567",
                         "private_ip": "10.0.0.102",
-                        "allocation_id": "eipalloc-36014da3"
+                        "allocation_id": "eipalloc-12345678"
                     }
                 ],
                 "state": "deleted",
                 "create_time": "2016-03-05T00:33:21.209000+00:00",
                 "delete_time": "2016-03-05T00:36:37.329000+00:00",
-                "vpc_id": "vpc-w68571b5"
+                "vpc_id": "vpc-12345677"
             }
         ]
 
@@ -409,25 +424,40 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status):
     wait_timeout = time.time() + wait_timeout
     status_achieved = False
     nat_gateway = list()
+    states = ['pending', 'failed', 'available', 'deleting', 'deleted']
     err_msg = ""
 
     while wait_timeout > time.time():
         try:
             gws_retrieved, err_msg, nat_gateway = (
-                get_nat_gateways(client, nat_gateway_id=nat_gateway_id)
+                get_nat_gateways(
+                    client, nat_gateway_id=nat_gateway_id,
+                    states=states, check_mode=check_mode
+                )
             )
             if gws_retrieved and nat_gateway:
-                if nat_gateway[0].get('state') == status:
+                nat_gateway = nat_gateway[0]
+                if check_mode:
+                    nat_gateway['state'] = status
+
+                if nat_gateway.get('state') == status:
                     status_achieved = True
                     break
 
-                elif nat_gateway[0].get('state') == 'failed':
-                    err_msg = nat_gateway[0].get('failure_message')
+                elif nat_gateway.get('state') == 'failed':
+                    err_msg = nat_gateway.get('failure_message')
                     break
+
+                elif nat_gateway.get('state') == 'pending':
+                    if nat_gateway.has_key('failure_message'):
+                        err_msg = nat_gateway.get('failure_message')
+                        status_achieved = False
+                        break
 
             else:
                 time.sleep(polling_increment_secs)
-        except botocore.exceptions.ClientError as e:
+
+        except botocore.exceptions.ClientError, e:
             err_msg = str(e)
 
     if not status_achieved:
@@ -435,7 +465,8 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status):
 
     return status_achieved, err_msg, nat_gateway
 
-def gateway_in_subnet_exists(client, subnet_id, allocation_id=None):
+def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
+                             check_mode=False):
     """Retrieve all NAT Gateways for a subnet.
     Args:
         subnet_id (str): The subnet_id the nat resides in.
@@ -446,26 +477,26 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None):
 
     Basic Usage:
         >>> client = boto3.client('ec2')
-        >>> subnet_id = 'subnet-w4t12897'
-        >>> allocation_id = 'eipalloc-36014da3'
+        >>> subnet_id = 'subnet-1234567'
+        >>> allocation_id = 'eipalloc-1234567'
         >>> gateway_in_subnet_exists(client, subnet_id, allocation_id)
         (
             [
                 {
-                    "nat_gateway_id": "nat-03835afb6e31df79b",
-                    "subnet_id": "subnet-w4t12897",
+                    "nat_gateway_id": "nat-123456789",
+                    "subnet_id": "subnet-123456789",
                     "nat_gateway_addresses": [
                         {
-                            "public_ip": "52.87.29.36",
-                            "network_interface_id": "eni-5579742d",
+                            "public_ip": "55.55.55.55",
+                            "network_interface_id": "eni-1234567",
                             "private_ip": "10.0.0.102",
-                            "allocation_id": "eipalloc-36014da3"
+                            "allocation_id": "eipalloc-1234567"
                         }
                     ],
                     "state": "deleted",
                     "create_time": "2016-03-05T00:33:21.209000+00:00",
                     "delete_time": "2016-03-05T00:36:37.329000+00:00",
-                    "vpc_id": "vpc-w68571b5"
+                    "vpc_id": "vpc-1234567"
                 }
             ],
             False
@@ -476,18 +507,22 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None):
     """
     allocation_id_exists = False
     gateways = []
-    gws_retrieved, _, gws = get_nat_gateways(client, subnet_id)
+    states = ['available', 'pending']
+    gws_retrieved, _, gws = (
+        get_nat_gateways(
+            client, subnet_id, states=states, check_mode=check_mode
+        )
+    )
     if not gws_retrieved:
         return gateways, allocation_id_exists
     for gw in gws:
         for address in gw['nat_gateway_addresses']:
-            if gw.get('state') == 'available' or gw.get('state') == 'pending':
-                if allocation_id:
-                    if address.get('allocation_id') == allocation_id:
-                        allocation_id_exists = True
-                        gateways.append(gw)
-                else:
+            if allocation_id:
+                if address.get('allocation_id') == allocation_id:
+                    allocation_id_exists = True
                     gateways.append(gw)
+            else:
+                gateways.append(gw)
 
     return gateways, allocation_id_exists
 
@@ -511,22 +546,40 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
         Tuple (str, str)
     """
     params = {
-        'PublicIps': [eip_address]
+        'PublicIps': [eip_address],
     }
     allocation_id = None
     err_msg = ""
-    if check_mode:
-        return "eipalloc-123456", err_msg
     try:
-        allocation = client.describe_addresses(**params)['Addresses'][0]
-        if not allocation.get('Domain') != 'vpc':
-            err_msg = (
-                "EIP provided is a non-VPC EIP, please allocate a VPC scoped EIP"
-            )
+        if not check_mode:
+            allocations = client.describe_addresses(**params)['Addresses']
+            if len(allocations) == 1:
+                allocation = allocations[0]
+            else:
+                allocation = None
         else:
-            allocation_id = allocation.get('AllocationId')
-    except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+            dry_run_eip = (
+                DRY_RUN_ALLOCATION_UNCONVERTED['Addresses'][0]['PublicIp']
+            )
+            if dry_run_eip == eip_address:
+                allocation = DRY_RUN_ALLOCATION_UNCONVERTED['Addresses'][0]
+            else:
+                allocation = None
+        if allocation:
+            if allocation.get('Domain') != 'vpc':
+                err_msg = (
+                    "EIP {0} is a non-VPC EIP, please allocate a VPC scoped EIP"
+                    .format(eip_address)
+                )
+            else:
+                allocation_id = allocation.get('AllocationId')
+        else:
+            err_msg = (
+                "EIP {0} does not exist".format(eip_address)
+            )
+
+    except botocore.exceptions.ClientError, e:
+            err_msg = str(e)
 
     return allocation_id, err_msg
 
@@ -547,20 +600,28 @@ def allocate_eip_address(client, check_mode=False):
     Returns:
         Tuple (bool, str)
     """
-    if check_mode:
-        return True, "eipalloc-123456"
-
     ip_allocated = False
+    new_eip = None
+    err_msg = ''
     params = {
-        'Domain': 'vpc'
+        'Domain': 'vpc',
     }
     try:
-        new_eip = client.allocate_address(**params)
-        ip_allocated = True
-    except botocore.exceptions.ClientError:
-        pass
+        if check_mode:
+            ip_allocated = True
+            random_numbers = (
+                ''.join(str(x) for x in random.sample(range(0, 9), 7))
+            )
+            new_eip = 'eipalloc-{0}'.format(random_numbers)
+        else:
+            new_eip = client.allocate_address(**params)['AllocationId']
+            ip_allocated = True
+        err_msg = 'eipalloc id {0} created'.format(new_eip)
 
-    return ip_allocated, new_eip['AllocationId']
+    except botocore.exceptions.ClientError, e:
+        err_msg = str(e)
+
+    return ip_allocated, err_msg, new_eip
 
 def release_address(client, allocation_id, check_mode=False):
     """Release an EIP from your EIP Pool
@@ -597,7 +658,8 @@ def release_address(client, allocation_id, check_mode=False):
     return ip_released
 
 def create(client, subnet_id, allocation_id, client_token=None,
-           wait=False, wait_timeout=0, if_exist_do_not_create=False):
+           wait=False, wait_timeout=0, if_exist_do_not_create=False,
+           check_mode=False):
     """Create an Amazon NAT Gateway.
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -617,27 +679,27 @@ def create(client, subnet_id, allocation_id, client_token=None,
 
     Basic Usage:
         >>> client = boto3.client('ec2')
-        >>> subnet_id = 'subnet-w4t12897'
-        >>> allocation_id = 'eipalloc-36014da3'
+        >>> subnet_id = 'subnet-1234567'
+        >>> allocation_id = 'eipalloc-1234567'
         >>> create(client, subnet_id, allocation_id, if_exist_do_not_create=True, wait=True, wait_timeout=500)
         [
             true,
             "",
             {
-                "nat_gateway_id": "nat-03835afb6e31df79b",
-                "subnet_id": "subnet-w4t12897",
+                "nat_gateway_id": "nat-123456789",
+                "subnet_id": "subnet-1234567",
                 "nat_gateway_addresses": [
                     {
-                        "public_ip": "52.87.29.36",
-                        "network_interface_id": "eni-5579742d",
+                        "public_ip": "55.55.55.55",
+                        "network_interface_id": "eni-1234567",
                         "private_ip": "10.0.0.102",
-                        "allocation_id": "eipalloc-36014da3"
+                        "allocation_id": "eipalloc-1234567"
                     }
                 ],
                 "state": "deleted",
                 "create_time": "2016-03-05T00:33:21.209000+00:00",
                 "delete_time": "2016-03-05T00:36:37.329000+00:00",
-                "vpc_id": "vpc-w68571b5"
+                "vpc_id": "vpc-1234567"
             }
         ]
 
@@ -650,6 +712,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
     }
     request_time = datetime.datetime.utcnow()
     changed = False
+    success = False
     token_provided = False
     err_msg = ""
 
@@ -658,17 +721,34 @@ def create(client, subnet_id, allocation_id, client_token=None,
         params['ClientToken'] = client_token
 
     try:
-        result = client.create_nat_gateway(**params)["NatGateway"]
+        if not check_mode:
+            result = client.create_nat_gateway(**params)["NatGateway"]
+        else:
+            result = DRY_RUN_GATEWAY_UNCONVERTED[0]
+            result['CreateTime'] = datetime.datetime.utcnow()
+            result['NatGatewayAddresses'][0]['AllocationId'] = allocation_id
+            result['SubnetId'] = subnet_id
+
+        success = True
         changed = True
         create_time = result['CreateTime'].replace(tzinfo=None)
         if token_provided and (request_time > create_time):
             changed = False
         elif wait:
-            status_achieved, err_msg, result = (
+            success, err_msg, result = (
                 wait_for_status(
-                    client, wait_timeout, result['NatGatewayId'], 'available'
+                    client, wait_timeout, result['NatGatewayId'], 'available',
+                    check_mode=check_mode
                 )
             )
+            if success:
+                err_msg = (
+                    'Nat gateway {0} created'.format(result['nat_gateway_id'])
+                )
+            if check_mode:
+                result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
+                result['subnet_id'] = subnet_id
+
     except botocore.exceptions.ClientError as e:
         if "IdempotentParameterMismatch" in e.message:
             err_msg = (
@@ -676,8 +756,10 @@ def create(client, subnet_id, allocation_id, client_token=None,
             )
         else:
             err_msg = str(e)
+            success = False
+            changed = False
 
-    return changed, err_msg, result
+    return success, changed, err_msg, result
 
 def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
               if_exist_do_not_create=False, wait=False, wait_timeout=0,
@@ -729,45 +811,74 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
         ]
 
     Returns:
-        Tuple (bool, str, list)
+        Tuple (bool, bool, str, list)
     """
+    success = False
     changed = False
     err_msg = ""
     results = list()
 
     if not allocation_id and not eip_address:
         existing_gateways, allocation_id_exists = (
-            gateway_in_subnet_exists(client, subnet_id)
+            gateway_in_subnet_exists(client, subnet_id, check_mode=check_mode)
         )
+
         if len(existing_gateways) > 0 and if_exist_do_not_create:
-            results = existing_gateways
-            return changed, err_msg, results
+            success = True
+            changed = False
+            results = existing_gateways[0]
+            err_msg = (
+                'Nat Gateway {0} already exists in subnet_id {1}'
+                .format(
+                    existing_gateways[0]['nat_gateway_id'], subnet_id
+                )
+            )
+            return success, changed, err_msg, results
         else:
-            _, allocation_id = allocate_eip_address(client)
+            success, err_msg, allocation_id = (
+                allocate_eip_address(client, check_mode=check_mode)
+            )
+            if not success:
+                return success, 'False', err_msg, dict()
 
     elif eip_address or allocation_id:
         if eip_address and not allocation_id:
-            allocation_id = (
+            allocation_id, err_msg = (
                 get_eip_allocation_id_by_address(
                     client, eip_address, check_mode=check_mode
                 )
             )
+            if not allocation_id:
+                success = False
+                changed = False
+                return success, changed, err_msg, dict()
 
         existing_gateways, allocation_id_exists = (
-            gateway_in_subnet_exists(client, subnet_id, allocation_id)
+            gateway_in_subnet_exists(
+                client, subnet_id, allocation_id, check_mode=check_mode
+            )
         )
         if len(existing_gateways) > 0 and (allocation_id_exists or if_exist_do_not_create):
-            results = existing_gateways
-            return changed, err_msg, results
+            success = True
+            changed = False
+            results = existing_gateways[0]
+            err_msg = (
+                'Nat Gateway {0} already exists in subnet_id {1}'
+                .format(
+                    existing_gateways[0]['nat_gateway_id'], subnet_id
+                )
+            )
+            return success, changed, err_msg, results
 
-    changed, err_msg, results = create(
+    success, changed, err_msg, results = create(
         client, subnet_id, allocation_id, client_token,
-        wait, wait_timeout,if_exist_do_not_create
+        wait, wait_timeout, if_exist_do_not_create, check_mode=check_mode
     )
 
-    return changed, err_msg, results
+    return success, changed, err_msg, results
 
-def remove(client, nat_gateway_id, wait=False, wait_timeout=0, release_eip=False):
+def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
+           release_eip=False, check_mode=False):
     """Delete an Amazon NAT Gateway.
     Args:
         client (botocore.client.EC2): Boto3 client
@@ -809,47 +920,71 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0, release_eip=False
     params = {
         'NatGatewayId': nat_gateway_id
     }
+    success = False
     changed = False
     err_msg = ""
     results = list()
+    states = ['pending', 'available' ]
     try:
-        exist, _, gw = get_nat_gateways(client, nat_gateway_id=nat_gateway_id)
+        exist, _, gw = (
+            get_nat_gateways(
+                client, nat_gateway_id=nat_gateway_id,
+                states=states, check_mode=check_mode
+            )
+        )
         if exist and len(gw) == 1:
             results = gw[0]
-            result = client.delete_nat_gateway(**params)
-            result = convert_to_lower(result)
+            if not check_mode:
+                client.delete_nat_gateway(**params)
+
             allocation_id = (
                 results['nat_gateway_addresses'][0]['allocation_id']
             )
             changed = True
+            success = True
+            err_msg = (
+                'Nat gateway {0} is in a deleting state. Delete was successfull'
+                .format(nat_gateway_id)
+            )
+
+            if wait:
+                status_achieved, err_msg, results = (
+                    wait_for_status(
+                        client, wait_timeout, nat_gateway_id, 'deleted',
+                        check_mode=check_mode
+                    )
+                )
+                if status_achieved:
+                    err_msg = (
+                        'Nat gateway {0} was deleted successfully'
+                        .format(nat_gateway_id)
+                    )
+
     except botocore.exceptions.ClientError as e:
         err_msg = str(e)
 
-    if wait and not err_msg:
-        status_achieved, err_msg, results = (
-            wait_for_status(client, wait_timeout, nat_gateway_id, 'deleted')
-        )
-
     if release_eip:
-        eip_released = release_address(client, allocation_id)
+        eip_released = (
+            release_address(client, allocation_id, check_mode=check_mode)
+        )
         if not eip_released:
             err_msg = "Failed to release eip %s".format(allocation_id)
 
-    return changed, err_msg, results
+    return success, changed, err_msg, results
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        subnet_id=dict(),
-        eip_address=dict(),
-        allocation_id=dict(),
+        subnet_id=dict(type='str'),
+        eip_address=dict(type='str'),
+        allocation_id=dict(type='str'),
         if_exist_do_not_create=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent']),
-        wait=dict(type='bool', default=True),
+        wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=320, required=False),
         release_eip=dict(type='bool', default=False),
-        nat_gateway_id=dict(),
-        client_token=dict(),
+        nat_gateway_id=dict(type='str'),
+        client_token=dict(type='str'),
         )
     )
     module = AnsibleModule(
@@ -890,40 +1025,40 @@ def main():
         module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
 
     changed = False
-    err_msg = None
+    err_msg = ''
 
     #Ensure resource is present
     if state == 'present':
         if not subnet_id:
             module.fail_json(msg='subnet_id is required for creation')
 
-        elif check_mode:
-            changed =  True
-            results = 'Would have created NAT Gateway if not in check mode'
-        else:
-            changed, err_msg, results = (
-                pre_create(
-                    client, subnet_id, allocation_id, eip_address,
-                    if_exist_do_not_create, wait, wait_timeout,
-                    client_token
-                )
+        success, changed, err_msg, results = (
+            pre_create(
+                client, subnet_id, allocation_id, eip_address,
+                if_exist_do_not_create, wait, wait_timeout,
+                client_token, check_mode=check_mode
             )
+        )
     else:
         if not nat_gateway_id:
             module.fail_json(msg='nat_gateway_id is required for removal')
 
-        elif check_mode:
-            changed = True
-            results = 'Would have deleted NAT Gateway if not in check mode'
         else:
-            changed, err_msg, results = (
-                remove(client, nat_gateway_id, wait, wait_timeout, release_eip)
+            success, changed, err_msg, results = (
+                remove(
+                    client, nat_gateway_id, wait, wait_timeout, release_eip,
+                    check_mode=check_mode
+                )
             )
 
-    if err_msg:
-        module.fail_json(msg=err_msg)
+    if not success:
+        module.exit_json(
+            msg=err_msg, success=success, changed=changed
+        )
     else:
-        module.exit_json(changed=changed, **results[0])
+        module.exit_json(
+            msg=err_msg, success=success, changed=changed, **results
+        )
 
 # import module snippets
 from ansible.module_utils.basic import *
