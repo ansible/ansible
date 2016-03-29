@@ -498,6 +498,8 @@ def _check_floating_ips(module, cloud, server):
                 auto_ip=auto_ip,
                 ips=floating_ips,
                 ip_pool=floating_ip_pools,
+                wait=module.params['wait'],
+                timeout=module.params['timeout'],
             )
             changed = True
         elif floating_ips:
@@ -508,7 +510,9 @@ def _check_floating_ips(module, cloud, server):
                 if ip not in ips:
                     missing_ips.append(ip)
             if missing_ips:
-                server = cloud.add_ip_list(server, missing_ips)
+                server = cloud.add_ip_list(server, missing_ips,
+                                           wait=module.params['wait'],
+                                           timeout=module.params['timeout'])
                 changed = True
             extra_ips = []
             for ip in ips:
