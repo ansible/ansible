@@ -54,23 +54,29 @@ class ShellBase(object):
 
     def chmod(self, mode, path, recursive=True):
         path = pipes.quote(path)
-        cmd = ['chmod', mode, path]
+        cmd = ['chmod']
+
         if recursive:
-            cmd.append('-R')
+            cmd.append('-R') # many chmods require -R before file list
+
+        cmd.extend([mode, path])
+
         return ' '.join(cmd)
 
     def chown(self, path, user, group=None, recursive=True):
         path = pipes.quote(path)
         user = pipes.quote(user)
 
-        if group is None:
-            cmd = ['chown', user, path]
-        else:
-            group = pipes.quote(group)
-            cmd = ['chown', '%s:%s' % (user, group), path]
+        cmd = ['chown']
 
         if recursive:
-            cmd.append('-R')
+            cmd.append('-R') # many chowns require -R before file list
+
+        if group is None:
+            cmd.extend([user, path])
+        else:
+            group = pipes.quote(group)
+            cmd.extend(['%s:%s' % (user, group), path])
 
         return ' '.join(cmd)
 
