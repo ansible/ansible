@@ -127,7 +127,7 @@ def main():
         owner             = dict(default=None),
         min_disk          = dict(type='int', default=0),
         min_ram           = dict(type='int', default=0),
-        is_public         = dict(default=False),
+        is_public         = dict(type='bool', default=False),
         filename          = dict(default=None),
         ramdisk           = dict(default=None),
         kernel            = dict(default=None),
