@@ -22,17 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
 import re
-
-def parse_s3_url(url):
-    "Return bucket and prefix from a s3://bucket/key type AWS S3 URL"
-    match =  re.search('^s3://([^\/]+)/?(.*)', url)
-    if match:
-        return match.group(1), match.group(2)
-
-    return None, None
-
 import datetime
 import os
 import tarfile
@@ -61,7 +51,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-
+def parse_s3_url(url):
+    "Return bucket and prefix from a s3://bucket/key type AWS S3 URL"
+    match =  re.search('^s3://([^\/]+)/?(.*)', url)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
+    
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
