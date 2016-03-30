@@ -460,9 +460,10 @@ def main():
             s3 = boto.connect_walrus(walrus, **aws_connect_kwargs)
         else:
             aws_connect_kwargs['is_secure'] = True
-            s3 = connect_to_aws(boto.s3, location, **aws_connect_kwargs)
-            # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
-            if s3 is None:
+            try:
+                s3 = connect_to_aws(boto.s3, location, **aws_connect_kwargs)
+            except AnsibleAWSError:
+                # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
                 s3 = boto.connect_s3(**aws_connect_kwargs)
 
     except boto.exception.NoAuthHandlerFound, e:
