@@ -662,7 +662,7 @@ def main():
             proxy_password=dict(no_log=True),
             proxy_username=dict(),
             repo_gpgcheck=dict(type='bool'),
-            reposdir=dict(default='/etc/yum.repos.d'),
+            reposdir=dict(default='/etc/yum.repos.d', type='path'),
             retries=dict(),
             s3_enabled=dict(type='bool'),
             skip_if_unavailable=dict(type='bool'),
