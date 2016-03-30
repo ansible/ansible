@@ -158,8 +158,7 @@ class PluginLoader:
 
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
-            configured_paths = self.config.split(os.pathsep)
-            for path in configured_paths:
+            for path in self.config:
                 path = os.path.realpath(os.path.expanduser(path))
                 contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                 for c in contents:
