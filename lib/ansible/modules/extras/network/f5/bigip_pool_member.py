@@ -371,11 +371,11 @@ def main():
 
     # sanity check user supplied values
 
-    if (host and not port) or (port and not host):
+    if (host and port is None) or (port is not None and not host):
         module.fail_json(msg="both host and port must be supplied")
 
-    if 1 > port > 65535:
-        module.fail_json(msg="valid ports must be in range 1 - 65535")
+    if 0 > port or port > 65535:
+        module.fail_json(msg="valid ports must be in range 0 - 65535")
 
     try:
         api = bigip_api(server, user, password, validate_certs)
@@ -457,4 +457,3 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.f5 import *
 main()
-
