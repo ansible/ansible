@@ -13,18 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import sys
-try:
-    import ovh
-    import ovh.exceptions
-    from ovh.exceptions import APIError
-    HAS_OVH = True
-except ImportError:
-    HAS_OVH = False
-
-# import module snippets
-from ansible.module_utils.basic import *
-
 DOCUMENTATION = '''
 ---
 module: ovh_ip_loadbalancing_backend
@@ -107,6 +95,15 @@ application_secret=yoursecret consumer_key=yourconsumerkey
 
 RETURN = '''
 '''
+
+import sys
+try:
+    import ovh
+    import ovh.exceptions
+    from ovh.exceptions import APIError
+    HAS_OVH = True
+except ImportError:
+    HAS_OVH = False
 
 def getOvhClient(ansibleModule):
     endpoint = ansibleModule.params.get('endpoint')
@@ -295,6 +292,9 @@ def main():
 
     # We should never reach here
     module.fail_json(msg='Internal ovh_ip_loadbalancing_backend module error')
+
+# import module snippets
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
