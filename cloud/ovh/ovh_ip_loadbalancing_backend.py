@@ -93,15 +93,17 @@ options:
 '''
 
 EXAMPLES = '''
-# Adds or modify a backend to a loadbalancing
-- ovh_ip_loadbalancing name=ip-1.1.1.1 ip=212.1.1.1 state=present \
-probe=none weight=8 \
+# Adds or modify the backend '212.1.1.1' to a \
+loadbalancing 'ip-1.1.1.1'
+- ovh_ip_loadbalancing name=ip-1.1.1.1 backend=212.1.1.1 \
+state=present probe=none weight=8 \
 endpoint=ovh-eu application_key=yourkey \
 application_secret=yoursecret consumer_key=yourconsumerkey
 
-# Removes a backend from a loadbalancing
-- ovh_ip_loadbalancing name=ip-1.1.1.1 ip=212.1.1.1 state=absent \
-endpoint=ovh-eu application_key=yourkey \
+# Removes a backend '212.1.1.1' from a loadbalancing \
+'ip-1.1.1.1'
+- ovh_ip_loadbalancing name=ip-1.1.1.1 backend=212.1.1.1
+state=absent endpoint=ovh-eu application_key=yourkey \
 application_secret=yoursecret consumer_key=yourconsumerkey
 '''
 
