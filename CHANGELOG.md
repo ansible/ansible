@@ -29,6 +29,7 @@ Ansible Changes By Release
   * os_group
   * os_ironic_inspect
   * os_keystone_role
+  * os_user_role
 - softlayer
   * sl_vm
 - windows
