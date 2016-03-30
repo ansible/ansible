@@ -91,6 +91,9 @@ EXAMPLES = '''
     domain: newyork
 '''
 
+RETURN = '''
+#
+'''
 
 def _system_state_change(state, assignment):
     if state == 'present' and not assignment:
