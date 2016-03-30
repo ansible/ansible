@@ -57,7 +57,6 @@ options:
         description:
           - Path to the LXC configuration file.
         required: false
-        default: /etc/lxc/default.conf
     lv_name:
         description:
           - Name of the logical volume, defaults to the container name.
@@ -1687,7 +1686,6 @@ def main():
             ),
             config=dict(
                 type='str',
-                default='/etc/lxc/default.conf'
             ),
             vg_name=dict(
                 type='str',
