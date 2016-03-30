@@ -105,6 +105,8 @@ endpoint=ovh-eu application_key=yourkey \
 application_secret=yoursecret consumer_key=yourconsumerkey
 '''
 
+RETURN = '''
+'''
 
 def getOvhClient(ansibleModule):
     endpoint = ansibleModule.params.get('endpoint')
