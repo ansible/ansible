@@ -620,7 +620,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not cmd:
             # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
             display.debug("_low_level_execute_command(): no command, exiting")
-            return dict(stdout='', stderr='')
+            return dict(stdout='', stderr='', rc=254)
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
