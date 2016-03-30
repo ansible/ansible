@@ -31,7 +31,7 @@ module: ovh_ip_loadbalancing_backend
 short_description: Manage OVH IP LoadBalancing backends
 description:
     - Manage OVH (French European hosting provider) LoadBalancing IP backends
-version_added: "2.0"
+version_added: "2.1"
 author: Pascal HERAUD @pascalheraud
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh). \
