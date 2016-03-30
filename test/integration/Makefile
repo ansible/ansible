@@ -23,7 +23,18 @@ VAULT_PASSWORD_FILE = vault-password
 CONSUL_RUNNING := $(shell python consul_running.py)
 EUID := $(shell id -u -r)
 
-all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts
+# Split the tests into a number of groups so seperate executions can take place
+# with Travis. See .travis.yml for more details
+#
+# The first target is what "make" (with no arguments) calls, so must be first
+all: testset1 testset2 testset3
+
+# FIXME Is it correct to run "setup" and "test_test_infra" twice, this means for "all" we will run them multiple times
+testset1: setup test_test_infra non_destructive
+testset2: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts
+testset3: setup test_test_infra destructive
+
+
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code

@@ -13,7 +13,7 @@ else
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
     docker pull ansible/ansible:${TARGET}
     docker run -d --volume="${PWD}:/root/ansible:Z"  --name "${C_NAME}" ${TARGET_OPTIONS} ansible/ansible:${TARGET} > /tmp/cid_${TARGET}
-    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS}'; cd /root/ansible; . hacking/env-setup; (cd test/integration; LC_ALL=en_US.utf-8 make)"
+    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS}'; cd /root/ansible; . hacking/env-setup; (cd test/integration; LC_ALL=en_US.utf-8 make ${TESTSET_NAME})"
     docker kill $(cat /tmp/cid_${TARGET})
 
     if [ "X${TESTS_KEEP_CONTAINER}" = "X" ]; then
