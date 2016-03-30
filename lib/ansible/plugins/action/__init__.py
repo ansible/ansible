@@ -576,11 +576,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if self._play_context.become and self._play_context.become_user != 'root':
                 # not sudoing to root, so maybe can't delete files as that other user
                 # have to clean up temp files as original user in a second step
-                cmd2 = self._connection._shell.remove(tmp, recurse=True)
-                res2 = self._low_level_execute_command(cmd2, sudoable=False)
-                if res2['rc'] != 0:
-                    display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(res2['rc'], res2['stderr']))
+                tmp_rm_cmd = self._connection._shell.remove(tmp, recurse=True)
+                tmp_rm_res = self._low_level_execute_command(tmp_rm_cmd, sudoable=False)
+                tmp_rm_data = self._parse_returned_data(tmp_rm_res)
+                if tmp_rm_data.get('rc', 0) != 0:
+                    display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
 
+        # parse the main result
+        data = self._parse_returned_data(res)
+
+        # pre-split stdout into lines, if stdout is in the data and there
+        # isn't already a stdout_lines value there
+        if 'stdout' in data and 'stdout_lines' not in data:
+            data['stdout_lines'] = data.get('stdout', u'').splitlines()
+
+        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
+        return data
+
+    def _parse_returned_data(self, res):
         try:
             data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', u'')))
         except ValueError:
@@ -592,13 +605,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
-
-        # pre-split stdout into lines, if stdout is in the data and there
-        # isn't already a stdout_lines value there
-        if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', u'').splitlines()
-
-        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='replace'):
