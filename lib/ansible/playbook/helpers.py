@@ -183,10 +183,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
-                    # Remove the raw params field from the module args, so it won't show up
-                    # later when getting the vars for this task/childen
-                    t.args.pop('_raw_params', None)
-
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
