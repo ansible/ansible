@@ -656,6 +656,9 @@ class StrategyBase:
             self.run_handlers(iterator, play_context)
         elif meta_action == 'refresh_inventory':
             self._inventory.refresh_inventory()
+        elif meta_action == 'clear_facts':
+            for host in iterator._host_states:
+                self._variable_manager.clear_facts(host)
         #elif meta_action == 'reset_connection':
         #    connection_info.connection.close()
         elif meta_action == 'clear_host_errors':
