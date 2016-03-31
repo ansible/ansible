@@ -27,23 +27,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# == BEGIN DYNAMICALLY INSERTED CODE ==
-
-MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
-MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
-
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
-SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
-
 # ansible modules can be written in any language.  To simplify
-# development of Python modules, the functions available here
-# can be inserted in any module source automatically by including
-# #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
-# of an ansible module. The source of this common code lives
-# in ansible/executor/module_common.py
+# development of Python modules, the functions available here can
+# be used to do many common tasks
 
 import locale
 import os
@@ -230,8 +220,25 @@ except ImportError:
 _literal_eval = literal_eval
 
 from ansible import __version__
-# Backwards compat. New code should import and use __version__
+# Backwards compat. New code should just import and use __version__
 ANSIBLE_VERSION = __version__
+
+try:
+    # MODULE_COMPLEX_ARGS is an old name kept for backwards compat
+    MODULE_COMPLEX_ARGS = os.environ.pop('ANSIBLE_MODULE_ARGS')
+except KeyError:
+    # This file might be used for its utility functions.  So don't fail if
+    # running outside of a module environment (will fail in _load_params()
+    # instead)
+    MODULE_COMPLEX_ARGS = None
+
+try:
+    # ARGS are for parameters given in the playbook.  Constants are for things
+    # that ansible needs to configure controller side but are passed to all
+    # modules.
+    MODULE_CONSTANTS = os.environ.pop('ANSIBLE_MODULE_CONSTANTS')
+except KeyError:
+    MODULE_CONSTANTS = None
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
@@ -541,7 +548,8 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        self.params = self._load_params()
+        self._load_constants()
+        self._load_params()
 
         # append to legal_inputs and then possibly check against them
         try:
@@ -756,7 +764,7 @@ class AnsibleModule(object):
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
 
             if path_mount_point == mount_point:
-                for fs in SELINUX_SPECIAL_FS.split(','):
+                for fs in self.constants['SELINUX_SPECIAL_FS']:
                     if fs in fstype:
                         special_context = self.selinux_context(path_mount_point)
                         return (True, special_context)
@@ -1414,19 +1422,38 @@ class AnsibleModule(object):
                     self.params[k] = default
 
     def _load_params(self):
-        ''' read the input and return a dictionary and the arguments string '''
-        try:
-            params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-        except:
-            params = json_dict_unicode_to_bytes(json.loads(os.environ['MODULE_COMPLEX_ARGS']))
+        ''' read the input and set the params attribute'''
+        if MODULE_COMPLEX_ARGS is None:
+            # This helper used too early for fail_json to work.
+            print('{"msg": "Error: ANSIBLE_MODULE_ARGS not found in environment.  Unable to figure out what parameters were passed", "failed": true}')
+            sys.exit(1)
+
+        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
         if params is None:
             params = dict()
-        return params
+        self.params = params
+
+    def _load_constants(self):
+        ''' read the input and set the constants attribute'''
+        if MODULE_CONSTANTS is None:
+            # This helper used too early for fail_json to work.
+            print('{"msg": "Error: ANSIBLE_MODULE_CONSTANTS not found in environment.  Unable to figure out what constants were passed", "failed": true}')
+            sys.exit(1)
+
+        # Make constants into "native string"
+        if sys.version_info >= (3,):
+            constants = json_dict_bytes_to_unicode(json.loads(MODULE_CONSTANTS))
+        else:
+            constants = json_dict_unicode_to_bytes(json.loads(MODULE_CONSTANTS))
+        if constants is None:
+            constants = dict()
+        self.constants = constants
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
             module = 'ansible-%s' % os.path.basename(__file__)
-            syslog.openlog(str(module), 0, syslog.LOG_USER)
+            facility = getattr(syslog, self.constants.get('SYSLOG_FACILITY', 'LOG_USER'), syslog.LOG_USER)
+            syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
 
     def debug(self, msg):

@@ -52,7 +52,6 @@ python_module_replacers = b"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
-#MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 #MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 #SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
@@ -61,7 +60,7 @@ from ansible.module_utils.basic import *
 """
 
 powershell_module_replacers = b"""
-WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
+WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 # POWERSHELL_COMMON
 """
 
