@@ -165,9 +165,9 @@ else:
 # MongoDB module specific support methods.
 #
 
-def user_find(client, user):
+def user_find(client, user, db_name):
     for mongo_user in client["admin"].system.users.find():
-        if mongo_user['user'] == user:
+        if mongo_user['user'] == user and mongo_user['db'] == db_name:
             return mongo_user
     return False
 
@@ -175,6 +175,7 @@ def user_add(module, client, db_name, user, password, roles):
     #pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
     #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
+
     if roles is None:
         db.add_user(user, password, False)
     else:
@@ -187,7 +188,7 @@ def user_add(module, client, db_name, user, password, roles):
             module.fail_json(msg=err_msg)
 
 def user_remove(module, client, db_name, user):
-    exists = user_find(client, user)
+    exists = user_find(client, user, db_name)
     if exists:
         if module.check_mode:
             module.exit_json(changed=True, user=user)
@@ -210,6 +211,44 @@ def load_mongocnf():
         return False
 
     return creds
+
+
+
+def check_if_roles_changed(uinfo, roles, db_name):
+# We must be aware of users which can read the oplog on a replicaset
+# Such users must have access to the local DB, but since this DB does not store users credentials
+# and is not synchronized among replica sets, the user must be stored on the admin db
+# Therefore their structure is the following :
+# {
+#     "_id" : "admin.oplog_reader",
+#     "user" : "oplog_reader",
+#     "db" : "admin",                    # <-- admin DB
+#     "roles" : [
+#         {
+#             "role" : "read",
+#             "db" : "local"             # <-- local DB
+#         }
+#     ]
+# }
+
+    def make_sure_roles_are_a_list_of_dict(roles, db_name):
+        output = list()
+        for role in roles:
+            if isinstance(role, basestring):
+                new_role = { "role": role, "db": db_name }
+                output.append(new_role)
+            else:
+                output.append(role)
+        return output
+
+    roles_as_list_of_dict = make_sure_roles_are_a_list_of_dict(roles, db_name)
+    uinfo_roles = uinfo.get('roles', [])
+
+    if sorted(roles_as_list_of_dict) == sorted(uinfo_roles):
+        return False
+    return True
+
+
 
 # =========================================
 # Module execution.
@@ -281,8 +320,11 @@ def main():
         if password is None and update_password == 'always':
             module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
 
-        if update_password != 'always' and user_find(client, user):
+        uinfo = user_find(client, user, db_name)
+        if update_password != 'always' and uinfo:
             password = None
+            if not check_if_roles_changed(uinfo, roles, db_name):
+                module.exit_json(changed=False, user=user)
 
         if module.check_mode:
             module.exit_json(changed=True, user=user)
@@ -291,6 +333,11 @@ def main():
             user_add(module, client, db_name, user, password, roles)
         except OperationFailure, e:
             module.fail_json(msg='Unable to add or update user: %s' % str(e))
+
+            # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
+            #newuinfo = user_find(client, user, db_name)
+            #if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
+            #    module.exit_json(changed=False, user=user)
 
     elif state == 'absent':
         try:
