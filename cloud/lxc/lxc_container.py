@@ -571,7 +571,7 @@ def create_script(command):
         f.close()
 
     # Ensure the script is executable.
-    os.chmod(script_file, 1755)
+    os.chmod(script_file, 0700)
 
     # Get temporary directory.
     tempdir = tempfile.gettempdir()
