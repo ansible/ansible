@@ -276,11 +276,28 @@ def camel_dict_to_snake_dict(camel_dict):
         return all_cap_re.sub(r'\1_\2', s1).lower()
 
 
+    def value_is_list(camel_list):
+
+        checked_list = []
+        for item in camel_list:
+            if isinstance(item, dict):
+                checked_list.append(camel_dict_to_snake_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+
+        return checked_list
+
+
     snake_dict = {}
     for k, v in camel_dict.iteritems():
         if isinstance(v, dict):
-            v = camel_dict_to_snake_dict(v)
-        snake_dict[camel_to_snake(k)] = v
+            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
+        elif isinstance(v, list):
+            snake_dict[camel_to_snake(k)] = value_is_list(v)
+        else:
+            snake_dict[camel_to_snake(k)] = v
 
     return snake_dict
 
