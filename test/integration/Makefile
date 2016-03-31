@@ -102,6 +102,13 @@ test_connection: setup
 	$(call TEST_CONNECTION_CMD)
 	$(call TEST_CONNECTION_CMD, LC_ALL=C LANG=C)
 
+# Connection plugin test command to repeat with each locale setting. WinRM specific version.
+TEST_CONNECTION_WINRM_CMD = $(1) ansible-playbook test_connection_winrm.yml -i inventory.winrm $(TEST_FLAGS)
+
+test_connection_winrm: setup
+	$(call TEST_CONNECTION_WINRM_CMD)
+	$(call TEST_CONNECTION_WINRM_CMD, LC_ALL=C LANG=C)
+
 destructive: setup
 	ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
