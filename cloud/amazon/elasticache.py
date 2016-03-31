@@ -227,8 +227,8 @@ class ElastiCacheManager(object):
                                                       port=self.cache_port)
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
-        cache_cluster_data = response['CreateCacheClusterResponse']['CreateCacheClusterResult']['CacheCluster']
-        self._refresh_data(cache_cluster_data)
+
+        self._refresh_data()
 
         self.changed = True
         if self.wait:
@@ -304,8 +304,7 @@ class ElastiCacheManager(object):
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
 
-        cache_cluster_data = response['ModifyCacheClusterResponse']['ModifyCacheClusterResult']['CacheCluster']
-        self._refresh_data(cache_cluster_data)
+        self._refresh_data()
 
         self.changed = True
         if self.wait:
@@ -333,8 +332,7 @@ class ElastiCacheManager(object):
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
 
-        cache_cluster_data = response['RebootCacheClusterResponse']['RebootCacheClusterResult']['CacheCluster']
-        self._refresh_data(cache_cluster_data)
+        self._refresh_data()
 
         self.changed = True
         if self.wait:
@@ -384,23 +382,23 @@ class ElastiCacheManager(object):
             'EngineVersion': self.cache_engine_version
         }
         for key, value in modifiable_data.iteritems():
-            if self.data[key] != value:
+            if value is not None and self.data[key] != value:
                 return True
 
         # Check cache security groups
         cache_security_groups = []
         for sg in self.data['CacheSecurityGroups']:
             cache_security_groups.append(sg['CacheSecurityGroupName'])
-            if set(cache_security_groups) - set(self.cache_security_groups):
-                return True
+        if set(cache_security_groups) != set(self.cache_security_groups):
+            return True
 
         # check vpc security groups
         vpc_security_groups = []
         security_groups = self.data['SecurityGroups'] or []
         for sg in security_groups:
             vpc_security_groups.append(sg['SecurityGroupId'])
-            if set(vpc_security_groups) - set(self.security_group_ids):
-                return True
+        if set(vpc_security_groups) != set(self.security_group_ids):
+            return True
 
         return False
 
@@ -417,7 +415,7 @@ class ElastiCacheManager(object):
         if self.zone is not None:
             unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
         for key, value in unmodifiable_data.iteritems():
-            if getattr(self, key) != value:
+            if getattr(self, key) is not None and getattr(self, key) != value:
                 return True
         return False
 
