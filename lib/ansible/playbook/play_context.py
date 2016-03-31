@@ -528,6 +528,12 @@ class PlayContext(Base):
                 #FIXME: make shell independant
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
+            elif self.become_method == 'dzdo':
+
+                exe = self.become_exe or 'dzdo'
+
+                becomecmd = '%s -u %s %s -c %s' % (exe, self.become_user, executable, success_cmd)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
