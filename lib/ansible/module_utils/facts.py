@@ -493,9 +493,10 @@ class Facts(object):
 
                             if self.facts['distribution'].lower() == 'coreos':
                                 data = get_file_content('/etc/coreos/update.conf')
-                                release = re.search("^GROUP=(.*)", data)
-                                if release:
-                                    self.facts['distribution_release'] = release.group(1).strip('"')
+                                if data:
+                                    release = re.search("^GROUP=(.*)", data)
+                                    if release:
+                                        self.facts['distribution_release'] = release.group(1).strip('"')
                     else:
                         self.facts['distribution'] = name
         machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
