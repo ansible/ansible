@@ -71,15 +71,20 @@ class ActionModule(ActionBase):
 
         if faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
-                return result
+            paths = faf
         else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
+            path_stack = []
+            if self._task._block._dep_chain:
+                path_stack.append(self._task._role._role_path) # append current role
+                path_stack.extend(reversed([x._role_path for x in self._task._block.get_dep_chain()])) # append role deps
+
+            # find file in all this mess
+            source, paths = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source, path_stack)
+
+            if source is None:
+             result['failed'] = True
+             result['msg'] = "Could not find src in:\n%s" % paths
+             return result
 
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest)
@@ -121,12 +126,7 @@ class ActionModule(ActionBase):
 
             # Create a new searchpath list to assign to the templar environment's file
             # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                searchpath.insert(1, self._task._role._role_path)
-
-            self._templar.environment.loader.searchpath = searchpath
+            self._templar.environment.loader.searchpath = paths
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
