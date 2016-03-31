@@ -216,7 +216,7 @@ options:
     description:
       - "This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value. Mutually exclusive with
-        C(dscp_mark_class)."
+        C(set_dscp_mark_class)."
     required: false
     default: null
   set_dscp_mark_class:
@@ -224,7 +224,7 @@ options:
     description:
       - "This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark. Mutually exclusive with
-        C(dscp_mark)."
+        C(set_dscp_mark)."
     required: false
     default: null
   comment:
