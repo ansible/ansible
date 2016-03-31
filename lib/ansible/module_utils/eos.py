@@ -20,7 +20,7 @@ import os
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.shell import Shell, Command, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
 from ansible.module_utils.urls import fetch_url
@@ -30,22 +30,14 @@ NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
-    ssh_keyfile=dict(type='path'),
-    authorize=dict(default=False, type='bool'),
-    auth_pass=dict(no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
     transport=dict(default='cli', choices=['cli', 'eapi']),
     use_ssl=dict(default=True, type='bool'),
     provider=dict(type='dict')
-)
-
-NET_ENV_ARGS = dict(
-    username='ANSIBLE_NET_USERNAME',
-    password='ANSIBLE_NET_PASSWORD',
-    ssh_keyfile='ANSIBLE_NET_SSH_KEYFILE',
-    authorize='ANSIBLE_NET_AUTHORIZE',
-    auth_pass='ANSIBLE_NET_AUTH_PASS',
 )
 
 CLI_PROMPTS_RE = [
@@ -200,9 +192,6 @@ class NetworkModule(AnsibleModule):
             if key in NET_COMMON_ARGS:
                 if self.params.get(key) is None and value is not None:
                     self.params[key] = value
-        for key, env_var in NET_ENV_ARGS.items():
-            if self.params.get(key) is None and env_var in os.environ:
-                self.params[key] = os.environ[env_var]
 
     def connect(self):
         try:
