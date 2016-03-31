@@ -516,6 +516,18 @@ def is_executable(path):
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 
+class AnsibleFallbackNotFound(Exception):
+    pass
+
+def env_fallback(*args, **kwargs):
+    ''' Load value from environment '''
+    for arg in args:
+        if arg in os.environ:
+            return os.environ[arg]
+    else:
+        raise AnsibleFallbackNotFound
+
+
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
@@ -550,6 +562,7 @@ class AnsibleModule(object):
 
         self._load_constants()
         self._load_params()
+        self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
         try:
@@ -1420,6 +1433,23 @@ class AnsibleModule(object):
                 # make sure things without a default still get set None
                 if k not in self.params:
                     self.params[k] = default
+
+    def _set_fallbacks(self):
+        for k,v in self.argument_spec.items():
+            fallback = v.get('fallback', (None,))
+            fallback_strategy = fallback[0]
+            fallback_args = []
+            fallback_kwargs = {}
+            if k not in self.params and fallback_strategy is not None:
+                for item in fallback[1:]:
+                    if isinstance(item, dict):
+                        fallback_kwargs = item
+                    else:
+                        fallback_args = item
+                try:
+                    self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
+                except AnsibleFallbackNotFound:
+                    continue
 
     def _load_params(self):
         ''' read the input and set the params attribute'''
