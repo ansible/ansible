@@ -758,18 +758,19 @@ If multiple variables of the same name are defined in different places, they get
 
 .. include:: ansible_ssh_changes_note.rst
 
-In 1.x, the precedence is as follows (and last listed wins prioritization):
+In 1.x the precedence is (last listed wins):
 
- * "role defaults", which lose in priority to everything
- * variables defined in inventory
- * facts discovered about a system
- * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
- * connection variables (``ansible_user``, etc.)
+ * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+ * then come the variables defined in inventory
+ * then come the facts discovered about a system
+ * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+ * then come connection variables (``ansible_user``, etc)
  * extra vars (``-e`` in the command line) always win
 
 .. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-In 2.x we have made the order of precedence more specific (and last listed wins prioritization):
+
+In 2.x we have made the order of precedence more specific (last listed wins):
 
   * role defaults [1]_
   * inventory vars [2]_
