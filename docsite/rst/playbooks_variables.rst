@@ -586,7 +586,7 @@ in Ansible.  Effectively registered variables are just like facts.
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-````````````````````````````````
+```````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
