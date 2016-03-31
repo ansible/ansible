@@ -54,7 +54,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            if self._remote_file_exists(removes):
+            if not self._remote_file_exists(removes):
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
         # the script name is the first item in the raw params, so we split it
