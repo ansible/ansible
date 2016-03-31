@@ -460,7 +460,8 @@ class StrategyBase:
                 task_include=included_file._task,
                 role=included_file._task._role,
                 use_handlers=is_handler,
-                loader=self._loader
+                loader=self._loader,
+                variable_manager=self._variable_manager,
             )
 
             # since we skip incrementing the stats when the task result is
