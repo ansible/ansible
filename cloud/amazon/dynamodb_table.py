@@ -18,6 +18,7 @@ DOCUMENTATION = """
 ---
 module: dynamodb_table
 short_description: Create, update or delete AWS Dynamo DB tables.
+version_added: "2.0"
 description:
   - Create or delete AWS Dynamo DB tables.
   - Can update the provisioned throughput on existing tables.
