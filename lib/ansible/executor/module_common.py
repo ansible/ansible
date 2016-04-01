@@ -63,15 +63,44 @@ import base64
 import tempfile
 
 ZIPDATA = """%(zipdata)s"""
+
+def debug(command, zipped_mod):
+    # Okay to use __file__ here because we're running from a kept file
+    basedir = os.path.dirname(__file__)
+    if command == 'explode':
+        import zipfile
+        z = zipfile.ZipFile(zipped_mod)
+        for filename in z.namelist():
+            if filename.startswith('/'):
+                raise Exception('Something wrong with this module zip file: should not contain absolute paths')
+            dest_filename = os.path.join(basedir, filename)
+            if dest_filename.endswith(os.path.sep) and not os.path.exists(dest_filename):
+                os.makedirs(dest_filename)
+            else:
+                directory = os.path.dirname(dest_filename)
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                f = open(dest_filename, 'w')
+                f.write(z.read(filename))
+                f.close()
+        print('Module expanded into: %%s' %% os.path.join(basedir, 'ansible'))
+    elif command == 'execute':
+        sys.path.insert(0, basedir)
+        from ansible.module_exec.%(ansible_module)s.__main__ import main
+        main()
+
 os.environ['ANSIBLE_MODULE_ARGS'] = %(args)s
 os.environ['ANSIBLE_MODULE_CONSTANTS'] = %(constants)s
 
 try:
     temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_')
     os.write(temp_fd, base64.b64decode(ZIPDATA))
-    sys.path.insert(0, temp_path)
-    from ansible.module_exec.%(ansible_module)s.__main__ import main
-    main()
+    if len(sys.argv) == 2:
+        debug(sys.argv[1], temp_path)
+    else:
+        sys.path.insert(0, temp_path)
+        from ansible.module_exec.%(ansible_module)s.__main__ import main
+        main()
 finally:
     try:
         os.close(temp_fd)
