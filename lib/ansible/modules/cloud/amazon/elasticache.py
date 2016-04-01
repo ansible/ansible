@@ -68,7 +68,7 @@ options:
   cache_subnet_group:
     description:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
-    required: conditional
+    required: false
     default: None
     version_added: "1.7"
   security_group_ids:

@@ -41,7 +41,8 @@ options:
    password:
      description:
         - Password for the user
-     required: true when I(state) is present
+        - Required when I(state) is present
+     required: false
      default: None
    email:
      description:

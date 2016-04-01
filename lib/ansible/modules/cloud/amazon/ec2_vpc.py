@@ -24,8 +24,8 @@ version_added: "1.4"
 options:
   cidr_block:
     description:
-      - "The cidr block representing the VPC, e.g. 10.0.0.0/16"
-    required: false, unless state=present
+      - "The cidr block representing the VPC, e.g. 10.0.0.0/16", required when I(state) is 'present'.
+    required: false
   instance_tenancy:
     description:
       - "The supported tenancy options for instances launched into the VPC."
