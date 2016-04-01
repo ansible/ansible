@@ -55,6 +55,10 @@ uses key=value escaping which has not changed.  The other option is to check for
     # Output
     "msg": "Testing some things"
 
+* Behavior of templating DOS-type text files changes with Ansible v2.
+
+  A bug in Ansible v1 causes DOS-type text files (using a carriage return and newline) to be templated to Unix-type text files (using only a newline). In Ansible v2 this long-standing bug was finally fixed and DOS-type text files are preserved correctly. This may be confusing when you expect your playbook to not show any differences when migrating to Ansible v2, while in fact you will see every DOS-type file being completely replaced (with what appears to be the exact same content).
+
 * When specifying complex args as a variable, the variable must use the full jinja2
   variable syntax (```{{var_name}}```) - bare variable names there are no longer accepted.
   In fact, even specifying args with variables has been deprecated, and will not be
