@@ -96,7 +96,7 @@ TEST_CONNECTION_FILTER += !chroot
 endif
 
 # Connection plugin test command to repeat with each locale setting.
-TEST_CONNECTION_CMD = $(1) ansible-playbook test_connection.yml -i test_connection.inventory -l '$(TEST_CONNECTION_FILTER)' $(TEST_FLAGS)
+TEST_CONNECTION_CMD = $(1) ansible-playbook test_connection.yml -i test_connection.inventory -l '$(TEST_CONNECTION_FILTER)' -v $(TEST_FLAGS)
 
 test_connection: setup
 	$(call TEST_CONNECTION_CMD)
