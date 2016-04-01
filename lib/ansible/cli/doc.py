@@ -219,7 +219,10 @@ class DocCLI(CLI):
             opt = doc['options'][o]
             desc = CLI.tty_ify(" ".join(opt['description']))
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 s = o + "="
             else:
                 s = o
@@ -252,7 +255,10 @@ class DocCLI(CLI):
         for o in sorted(doc['option_keys']):
             opt = doc['options'][o]
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 opt_leadin = "="
             else:
                 opt_leadin = "-"
