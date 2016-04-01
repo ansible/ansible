@@ -319,4 +319,4 @@ class TaskQueueManager:
                         method(*args, **kwargs)
                 except Exception as e:
                     #TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure when attempting to use callback plugin (%s): %s" % (to_unicode(callback_plugin), to_unicode(e)))
+                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_unicode(method_name), to_unicode(callback_plugin), to_unicode(e)))
