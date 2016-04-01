@@ -29,7 +29,7 @@ try:
 except ImportError:
     HAS_OPS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.shell import Shell, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
@@ -39,8 +39,9 @@ NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 NET_COMMON_ARGS = dict(
     host=dict(),
     port=dict(type='int'),
-    username=dict(),
-    password=dict(no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     use_ssl=dict(default=True, type='bool'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
     provider=dict()
@@ -154,9 +155,10 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        key_filename = self.module.params['ssh_keyfile']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+        self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
 
     def send(self, commands, encoding='text'):
         return self.shell.send(commands)
