@@ -56,13 +56,13 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 # ******************************************************************************
 
 ZIPLOADER_DATA = u'''%(shebang)s
+# -*- coding: utf-8 -*-'
 import os
 import sys
 import base64
 import tempfile
 
 ZIPDATA = """%(zipdata)s"""
-# -*- coding: utf-8 -*-'
 os.environ['ANSIBLE_MODULE_ARGS'] = %(args)s
 os.environ['ANSIBLE_MODULE_CONSTANTS'] = %(constants)s
 
@@ -123,10 +123,13 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     """
 
     module_substyle = module_style = 'old'
-    if b'from ansible.module_utils.' in module_data:
+    # Do REPLACER before from ansible.module_utils because we need make sure
+    # we substitute "from ansible.module_utils basic" for REPLACER
+    if REPLACER in module_data:
         module_style = 'new'
         module_substyle = 'python'
-    elif REPLACER in module_data:
+        module_data = module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
+    elif b'from ansible.module_utils.' in module_data:
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in module_data:
@@ -172,16 +175,11 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         zf.writestr('ansible/module_exec/__init__.py', b'')
 
         zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
-        if REPLACER in module_data:
-            module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
-            zf.writestr('ansible/module_utils/basic.py', _slurp(os.path.join(_SNIPPET_PATH, "basic.py")))
         final_data = []
+
         for line in lines:
             if line.startswith(b'from ansible.module_utils.'):
                 tokens=line.split(b".")
-                import_error = False
-                #if len(tokens) != 3 or b" import *" not in line:
-                #    raise AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.<lib name> import *'" % module_path)
                 snippet_name = tokens[2].split()[0]
                 snippet_names.add(snippet_name)
                 fname = to_unicode(snippet_name + b".py")
