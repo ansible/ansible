@@ -42,7 +42,8 @@ options:
    network_name:
      description:
         - Name of the network to which the subnet should be attached
-     required: true when state is 'present'
+        - requried when I(state) is 'present'
+     required: false
    name:
      description:
        - The name of the subnet that should be created. Although Neutron
@@ -52,8 +53,8 @@ options:
    cidr:
      description:
         - The CIDR representation of the subnet that should be assigned to
-          the subnet.
-     required: true when state is 'present'
+          the subnet. Required when I(state) is 'present'
+     required: false
      default: None
    ip_version:
      description:
