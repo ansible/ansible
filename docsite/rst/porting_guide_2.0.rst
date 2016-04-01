@@ -199,6 +199,10 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
   The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it difficult to display a proper error.
 
+* Behavior of templating DOS-type text files changes with Ansible v2.
+
+  A bug in Ansible v1 causes DOS-type text files (using a carriage return and newline) to be converted to Unix-type text files (using only a newline). In Ansible v2 this long-standing bug was finally fixed and DOS-type text files are preserved correctly. This may be confusing when you expect your playbook to not show any differences when migrating to Ansible v2, while in fact you will see every DOS-type file being completely replaced (with what appears to be the exact same content).
+
 Porting plugins
 ===============
 
