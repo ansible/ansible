@@ -34,6 +34,7 @@ Ansible Changes By Release
 - softlayer
   * sl_vm
 - windows
+  * win_owner
   * win_regmerge
   * win_timezone
 - yum_repository
