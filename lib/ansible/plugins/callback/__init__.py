@@ -99,6 +99,10 @@ class CallbackBase:
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
             del abridged_result['invocation']
 
+        # remove diff information from screen output
+        if self._display.verbosity < 3 and 'diff' in result:
+            del abridged_result['diff']
+
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
