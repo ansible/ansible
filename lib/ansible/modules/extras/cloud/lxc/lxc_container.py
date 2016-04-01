@@ -57,6 +57,7 @@ options:
         description:
           - Path to the LXC configuration file.
         required: false
+        default: null
     lv_name:
         description:
           - Name of the logical volume, defaults to the container name.
