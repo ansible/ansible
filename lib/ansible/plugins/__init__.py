@@ -61,9 +61,13 @@ class PluginLoader:
         self.class_name         = class_name
         self.base_class         = required_base_class
         self.package            = package
-        self.config             = config
         self.subdir             = subdir
         self.aliases            = aliases
+
+        if not isinstance(config, list):
+            config = [config]
+
+        self.config = config
 
         if not class_name in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
