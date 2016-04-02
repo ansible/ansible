@@ -55,7 +55,7 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 # ******************************************************************************
 
-ZIPLOADER_DATA = u'''%(shebang)s
+ZIPLOADER_TEMPLATE = u'''%(shebang)s
 # -*- coding: utf-8 -*-'
 import os
 import sys
@@ -65,6 +65,14 @@ import tempfile
 ZIPDATA = """%(zipdata)s"""
 
 def debug(command, zipped_mod):
+    # The code here normally doesn't run.  It's only used for debugging on the
+    # remote machine. Run with ANSIBLE_KEEP_REMOTE_FILES=1 envvar and -vvv
+    # to save the module file remotely.  Login to the remote machine and use
+    # /path/to/module explode to extract the ZIPDATA payload into source
+    # files.  Edit the source files to instrument the code or experiment with
+    # different values.  Then use /path/to/module execute to run the extracted
+    # files you've edited instead of the actual zipped module.
+    #
     # Okay to use __file__ here because we're running from a kept file
     basedir = os.path.dirname(__file__)
     if command == 'explode':
@@ -109,6 +117,19 @@ finally:
         # mkstemp failed
         pass
 '''
+
+def _strip_comments(source):
+    # Strip comments and blank lines from the wrapper
+    buf = []
+    for line in source.splitlines():
+        l = line.strip()
+        if not l or l.startswith(u'#'):
+            continue
+        buf.append(line)
+    return u'\n'.join(buf)
+
+# ZIPLOADER_TEMPLATE stripped of comments for smaller over the wire size
+STRIPPED_ZIPLOADER_TEMPLATE = _strip_comments(ZIPLOADER_TEMPLATE)
 
 def _slurp(path):
     if not os.path.exists(path):
@@ -220,7 +241,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, b"\n".join(final_data))
         zf.close()
         shebang = _get_shebang(u'/usr/bin/python', task_vars) or u'#!/usr/bin/python'
-        output.write(to_bytes(ZIPLOADER_DATA % dict(
+        output.write(to_bytes(STRIPPED_ZIPLOADER_TEMPLATE % dict(
             zipdata=base64.b64encode(zipoutput.getvalue()),
             ansible_module=module_name,
             args=python_repred_args,
