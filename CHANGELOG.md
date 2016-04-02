@@ -46,6 +46,9 @@ Ansible Changes By Release
 * Some speed ups and bug fixes related to the variable merging code.
 * Workaround bug in python subprocess on El Capitan that was making vault fail
   when attempting to encrypt a file
+* Fix lxc_container module having predictable temp file names and setting file
+  permissions on the temporary file too leniently on a temporary file that was
+  executed as a script.  Addresses CVE-2016-3096
 
 ## 2.0.1 "Over the Hills and Far Away"
 
