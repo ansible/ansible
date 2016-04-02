@@ -64,8 +64,10 @@ class PluginLoader:
         self.subdir             = subdir
         self.aliases            = aliases
 
-        if not isinstance(config, list):
+        if config and not isinstance(config, list):
             config = [config]
+        else:
+            config = []
 
         self.config = config
 
