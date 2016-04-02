@@ -83,7 +83,7 @@ EXAMPLES = '''
 - osx_defaults: domain=com.geekchimp.macable key=ExampleKeyToRemove state=absent
 '''
 
-from datetime import datetime
+import datetime
 
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
@@ -141,7 +141,7 @@ class OSXDefaults(object):
             raise OSXDefaultsException("Invalid boolean value: {0}".format(repr(value)))
         elif type == "date":
             try:
-                return datetime.strptime(value.split("+")[0].strip(), "%Y-%m-%d %H:%M:%S")
+                return datetime.datetime.strptime(value.split("+")[0].strip(), "%Y-%m-%d %H:%M:%S")
             except ValueError:
                 raise OSXDefaultsException(
                     "Invalid date value: {0}. Required format yyy-mm-dd hh:mm:ss.".format(repr(value))
@@ -240,7 +240,7 @@ class OSXDefaults(object):
             value = str(self.value)
         elif self.array_add and self.current_value is not None:
             value = list(set(self.value) - set(self.current_value))
-        elif isinstance(self.value, datetime):
+        elif isinstance(self.value, datetime.datetime):
             value = self.value.strftime('%Y-%m-%d %H:%M:%S')
         else:
             value = self.value
