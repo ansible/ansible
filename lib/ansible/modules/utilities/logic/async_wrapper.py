@@ -122,8 +122,11 @@ if __name__ == '__main__':
     jid = "%s.%d" % (sys.argv[1], os.getpid())
     time_limit = sys.argv[2]
     wrapped_module = sys.argv[3]
-    argsfile = sys.argv[4]
-    cmd = "%s %s" % (wrapped_module, argsfile)
+    if len(sys.argv) >= 5:
+        argsfile = sys.argv[4]
+        cmd = "%s %s" % (wrapped_module, argsfile)
+    else:
+        cmd = wrapped_module
     step = 5
 
     # setup job output directory
