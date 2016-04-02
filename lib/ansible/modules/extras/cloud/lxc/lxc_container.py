@@ -144,7 +144,7 @@ options:
         description:
           - Path the save the archived container. If the path does not exist
             the archive method will attempt to create it.
-        default: /tmp
+        default: null
     archive_compression:
         choices:
           - gzip
@@ -557,13 +557,8 @@ def create_script(command):
     import subprocess
     import tempfile
 
-    # Ensure that the directory /opt exists.
-    if not path.isdir('/opt'):
-        os.mkdir('/opt')
-
-    # Create the script.
-    script_file = path.join('/opt', '.lxc-attach-script')
-    f = open(script_file, 'wb')
+    (fd, script_file) = tempfile.mkstemp(prefix='lxc-attach-script')
+    f = os.fdopen(fd, 'wb')
     try:
         f.write(ATTACH_TEMPLATE % {'container_command': command})
         f.flush()
@@ -573,14 +568,11 @@ def create_script(command):
     # Ensure the script is executable.
     os.chmod(script_file, 0700)
 
-    # Get temporary directory.
-    tempdir = tempfile.gettempdir()
-
     # Output log file.
-    stdout_file = open(path.join(tempdir, 'lxc-attach-script.log'), 'ab')
+    stdout_file = os.fdopen(tempfile.mkstemp(prefix='lxc-attach-script-log')[0], 'ab')
 
     # Error log file.
-    stderr_file = open(path.join(tempdir, 'lxc-attach-script.err'), 'ab')
+    stderr_file = os.fdopen(tempfile.mkstemp(prefix='lxc-attach-script-err')[0], 'ab')
 
     # Execute the script command.
     try:
@@ -1747,7 +1739,6 @@ def main():
             ),
             archive_path=dict(
                 type='str',
-                default='/tmp'
             ),
             archive_compression=dict(
                 choices=LXC_COMPRESSION_MAP.keys(),
@@ -1755,6 +1746,9 @@ def main():
             )
         ),
         supports_check_mode=False,
+        required_if = ([
+            ('archive', True, ['archive_path'])
+        ]),
     )
 
     if not HAS_LXC:
