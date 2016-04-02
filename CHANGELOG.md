@@ -13,6 +13,7 @@ Other Notable Changes:
 
 * Fix a regression in the loading of inventory variables where they were not
   found when placed inside of an inventory directory.
+* Fix lxc_container having predictable temp file names.  Addresses CVE-2016-3096
 
 ## 1.9.5 "Dancing In the Street" - Mar 21, 2016
 
