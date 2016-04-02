@@ -40,7 +40,7 @@ options:
   linode_id:
     description:
      - Unique ID of a linode server
-    aliases: lid
+    aliases: [ 'lid' ]
     default: null
     type: integer
   plan:

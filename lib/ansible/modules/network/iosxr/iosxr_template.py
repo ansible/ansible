@@ -47,7 +47,7 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: [ "true", "false" ]
   backup:
     description:
       - When this argument is configured true, the module will backup
@@ -56,7 +56,7 @@ options:
         the root of the playbook directory.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: [ "true", "false" ]
   config:
     description:
       - The module, by default, will connect to the remote device and
