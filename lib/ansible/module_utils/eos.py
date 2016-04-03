@@ -129,7 +129,7 @@ class Eapi(object):
         response = self.module.from_json(response.read())
         if 'error' in response:
             err = response['error']
-            self.module.fail_json(msg='json-rpc error', **err)
+            self.module.fail_json(msg='json-rpc error', commands=commands, **err)
 
         if self.enable:
             response['result'].pop(0)
