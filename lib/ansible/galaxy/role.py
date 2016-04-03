@@ -50,8 +50,10 @@ class GalaxyRole(object):
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
 
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None, full_path=None):
 
+        display.vvvvv("GalaxyRole __init__ galaxy=%s name=%s src=%s version=%s scm=%s path=%s full_path=%s" % 
+                      (galaxy, name, src, version, scm, path, full_path))
         self._metadata = None
         self._install_info = None
         self._validate_certs = not galaxy.options.ignore_certs
@@ -65,23 +67,53 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.path = path
+        # 'path' can be a dir from roles_path, while full_path is the
+        # path to the role itself (ie, /etc/ansible/roles/someuser.somerole/)
+        self.full_path = None
 
-        if path is not None:
-            if self.name not in path:
-                path = os.path.join(path, self.name)
-            self.path = path
-        else:
-            for role_path_dir in galaxy.roles_paths:
-                role_path = os.path.join(role_path_dir, self.name)
-                if os.path.exists(role_path):
-                    self.path = role_path
-                    break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
+        display.vvvvv('%s' % self)
 
     def __eq__(self, other):
         return self.name == other.name
+
+    def __repr__(self):
+        return "GalaxyRole(galaxy=%s, name=%s, src=%s, version=%s, scm=%s, path=%s, full_path=%s" % \
+                      (self.galaxy, self.name, self.src, self.version, self.scm, self.path, self.full_path)
+
+    @classmethod
+    def from_name(cls, galaxy, name):
+        role = cls(galaxy, name)
+        for role_path_dir in galaxy.roles_paths:
+            role_path = os.path.join(role_path_dir, role.name)
+            if os.path.exists(role_path):
+                role.path = role_path
+                break
+            else:
+                # use the first path by default
+                role.path = os.path.join(galaxy.roles_paths[0], role.name)
+        return role
+
+    @classmethod
+    def from_name_and_path(cls, galaxy, name, path):
+        role = cls(galaxy, name)
+        role.path = path
+        return role
+
+    @classmethod
+    def from_requirement(cls, galaxy, requirement):
+        if 'name' not in requirement and 'scm' not in requirement:
+            raise AnsibleError("Must specify name or src for role")
+        role = cls(galaxy, **requirement)
+        return role
+
+    @property
+    def installable_from_galaxy(self):
+        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+            # we know we can skip this, as it's not going to
+            # be found on galaxy.ansible.com
+            return False
+        return True
 
     @property
     def metadata(self):
@@ -109,6 +141,8 @@ class GalaxyRole(object):
         Returns role install info
         """
         if self._install_info is None:
+            if self.path is None:
+                return None
 
             info_path = os.path.join(self.path, self.META_INSTALL)
             if os.path.isfile(info_path):

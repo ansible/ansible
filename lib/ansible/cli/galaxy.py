@@ -279,9 +279,11 @@ class GalaxyCLI(CLI):
         data = ''
         for role in self.args:
 
-            role_info = {'path': roles_path}
-            gr = GalaxyRole(self.galaxy, role)
+            role_info = {'path_s': roles_path}
+            gr = GalaxyRole.from_name(self.galaxy, role)
+            role_info.update({'path': gr.path})
 
+            display.vvvvv('%s' % gr)
             install_info = gr.install_info
             if install_info:
                 if 'version' in install_info:
@@ -350,9 +352,8 @@ class GalaxyCLI(CLI):
                     for role in required_roles:
                         role = RoleRequirement.role_yaml_parse(role)
                         display.vvv('found role %s in yaml file' % str(role))
-                        if 'name' not in role and 'scm' not in role:
-                            raise AnsibleError("Must specify name or src for role")
-                        roles_left.append(GalaxyRole(self.galaxy, **role))
+                        # TODO: from_name_and_scm
+                        roles_left.append(GalaxyRole.from_requirement(self.galaxy, role))
                 else:
                     display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
@@ -370,12 +371,15 @@ class GalaxyCLI(CLI):
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
                 role = RoleRequirement.role_yaml_parse(rname.strip())
+                display.vvvvv('install role=%s' % role)
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
+        display.vvvvv('roles_left %s' % roles_left)
         for role in roles_left:
             display.vvv('Installing role %s ' % role.name)
             # query the galaxy API for the role data
 
+            display.vvvvv('installng role=%s' % role)
             if role.install_info is not None and not force:
                 display.display('- %s is already installed, skipping.' % role.name)
                 continue
@@ -387,7 +391,6 @@ class GalaxyCLI(CLI):
                 self.exit_without_ignore()
                 continue
 
-            # install dependencies, if we want them
             if not no_deps and installed:
                 role_dependencies = role.metadata.get('dependencies') or []
                 for dep in role_dependencies:
@@ -395,13 +398,15 @@ class GalaxyCLI(CLI):
                     dep_req = RoleRequirement()
                     dep_info = dep_req.role_yaml_parse(dep)
                     dep_role = GalaxyRole(self.galaxy, **dep_info)
-                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                    if not dep_role.installable_from_galaxy:
                         # we know we can skip this, as it's not going to
                         # be found on galaxy.ansible.com
                         continue
+                    # if role isn't installed 
                     if dep_role.install_info is None or force:
                         if dep_role not in roles_left:
                             display.display('- adding dependency: %s' % dep_role.name)
+                            # FIXME: changing list while iter over it?
                             roles_left.append(dep_role)
                         else:
                             display.display('- dependency %s already pending installation.' % dep_role.name)
@@ -424,7 +429,8 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError('- you must specify at least one role to remove.')
 
         for role_name in self.args:
-            role = GalaxyRole(self.galaxy, role_name)
+            role = GalaxyRole.from_name(self.galaxy, role_name)
+            # TODO: If roles_path, build from_name_and_full_path
             try:
                 if role.remove():
                     display.display('- successfully removed %s' % role_name)
@@ -443,46 +449,74 @@ class GalaxyCLI(CLI):
         be shown.
         """
 
-        if len(self.args) > 1:
-            raise AnsibleOptionsError("- please specify only one role to list, or specify no roles to see a full list")
+        # make list of roles to list
 
-        if len(self.args) == 1:
-            # show only the request role, if it exists
-            name = self.args.pop()
-            gr = GalaxyRole(self.galaxy, name)
-            if gr.metadata:
-                install_info = gr.install_info
+        list_all = True
+        if self.args:
+            list_all = False
+
+        roles_to_list = []
+
+        if list_all:
+            roles_paths = self.get_opt('roles_path')
+            roles_to_list.extend(self.find_roles_to_list_from_paths(roles_paths))
+        else:
+            role_names = self.args or []
+            roles_to_list.extend(self.find_roles_to_list_from_names(role_names))
+
+        self._display_roles_list(roles_to_list)
+        return 0
+
+    def find_roles_to_list_from_names(self, role_names):
+        roles_to_list = []
+        for role_name in role_names:
+            gr = GalaxyRole.from_name(self.galaxy, role_name)
+            roles_to_list.append(gr)
+        return roles_to_list
+
+    def find_roles_to_list_from_paths(self, roles_paths, ):
+        roles_to_list = []
+        for roles_path in roles_paths:
+            # NOTE: this check raises exceptions
+            # TODO: collect all errors then show them at once
+            self.check_roles_path_is_dir(roles_path)
+            path_files = os.listdir(roles_path)
+            for path_file in path_files:
+                name = path_file
+                full_path = os.path.join(roles_path, name)
+                gr = GalaxyRole.from_name_and_path(self.galaxy, name, full_path)
+                roles_to_list.append(gr)
+        return roles_to_list
+
+    def _display_roles_list(self, roles_to_list):
+        role_display_msgs = []
+        for role_to_list in roles_to_list:
+            if role_to_list.metadata:
+                install_info = role_to_list.install_info
                 version = None
                 if install_info:
                     version = install_info.get("version", None)
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                display.display("- %s, %s" % (name, version))
+                role_display_msg = "- %s, %s %s" % (role_to_list.name,
+                                                    version, role_to_list.path)
             else:
-                display.display("- the role %s was not found" % name)
-        else:
-            # show all valid roles in the roles_path directory
-            roles_path = self.get_opt('roles_path')
-            for path in roles_path:
-                role_path = os.path.expanduser(path)
-                if not os.path.exists(role_path):
-                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % role_path)
-                elif not os.path.isdir(role_path):
-                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % role_path)
-                path_files = os.listdir(role_path)
-                for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, path_file)
-                    if gr.metadata:
-                        install_info = gr.install_info
-                        version = None
-                        if install_info:
-                            version = install_info.get("version", None)
-                        if not version:
-                            version = "(unknown version)"
-                        display.display("- %s, %s" % (path_file, version))
+                role_display_msg = "- the role %s was not found" % role_to_list.name
+
+            if role_display_msg:
+                role_display_msgs.append(role_display_msg)
+
+        for role_msg in role_display_msgs:
+            display.display(role_msg)
         return 0
 
+    def check_roles_path_is_dir(self, roles_path):
+        if not os.path.exists(roles_path):
+            raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
+        elif not os.path.isdir(roles_path):
+            raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
+    
     def execute_search(self):
         page_size = 1000
         search = None
