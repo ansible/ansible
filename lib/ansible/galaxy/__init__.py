@@ -26,11 +26,13 @@ __metaclass__ = type
 import os
 
 from ansible.compat.six import string_types
-
 from ansible.errors import AnsibleError
 
-#      default_readme_template
-#      default_meta_template
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class Galaxy(object):
@@ -40,8 +42,10 @@ class Galaxy(object):
 
         self.options = options
         roles_paths = getattr(self.options, 'roles_path', [])
+        self.roles_paths = roles_paths
         if isinstance(roles_paths, string_types):
             self.roles_paths = [os.path.expanduser(roles_path) for roles_path in roles_paths.split(os.pathsep)]
+        display.vvv("roles_paths: {0}".format(roles_paths))
 
         self.roles =  {}
 
