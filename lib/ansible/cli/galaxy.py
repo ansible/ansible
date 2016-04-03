@@ -120,7 +120,11 @@ class GalaxyCLI(CLI):
 
         # options that apply to more than one action
         if not self.action in ("delete","import","init","login","setup"):
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
+            # NOTE: while the option type=str, the default is a list, and the
+            # callback will set the value to a list.
+            self.parser.add_option('-p', '--roles-path', dest='roles_path',
+                                   action="callback", callback=CLI.expand_paths,
+                                   type=str, default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
