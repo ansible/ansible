@@ -67,8 +67,8 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
-            for path in galaxy.roles_paths:
-                role_path = os.path.join(path, self.name)
+            for role_path_dir in galaxy.roles_paths:
+                role_path = os.path.join(role_path_dir, self.name)
                 if os.path.exists(role_path):
                     self.path = role_path
                     break

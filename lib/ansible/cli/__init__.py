@@ -228,6 +228,18 @@ class CLI(object):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
+    def expand_paths(option, opt, value, parser):
+        """optparse action callback to convert a PATH style string arg to a list of path strings.
+
+        For ex, cli arg of '-p /blip/foo:/foo/bar' would be split on the
+        default os.pathsep and the option value would be set to
+        the list ['/blip/foo', '/foo/bar']. Each path string in the list
+        will also have '~/' values expand via os.path.expanduser()."""
+        path_entries = value.split(os.pathsep)
+        expanded_path_entries = [os.path.expanduser(path_entry) for path_entry in path_entries]
+        setattr(parser.values, option.dest, expanded_path_entries)
+
+    @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
             async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
         ''' create an options parser for most ansible scripts '''
@@ -548,6 +560,8 @@ class CLI(object):
             data = getattr(self.options, k)
         except:
             return defval
+        # FIXME: Can this be removed if cli and/or constants ensures it's a
+        # list?
         if k == "roles_path":
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]
