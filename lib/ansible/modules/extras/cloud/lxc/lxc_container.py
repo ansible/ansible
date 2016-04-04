@@ -1366,6 +1366,8 @@ class LxcContainerManagement(object):
         :type source_dir: ``str``
         """
 
+        old_umask = os.umask(0077)
+
         archive_path = self.module.params.get('archive_path')
         if not os.path.isdir(archive_path):
             os.makedirs(archive_path)
@@ -1396,6 +1398,9 @@ class LxcContainerManagement(object):
             build_command=build_command,
             unsafe_shell=True
         )
+
+        os.umask(old_umask)
+
         if rc != 0:
             self.failure(
                 err=err,
