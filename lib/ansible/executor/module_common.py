@@ -271,6 +271,8 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                 ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
                 output.write(ps_data)
                 snippet_names.add(b'powershell')
+                continue
+            output.write(line)
         module_data = output.getvalue()
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
