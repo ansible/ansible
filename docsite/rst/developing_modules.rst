@@ -23,6 +23,51 @@ repo for more established and widely used modules.  "Extras" modules may be prom
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
 
+Ansible Module Guidelines
+`````````````````````````
+
+These are the guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR (proposal?).
+
+Documentation
++++++++++++++
+
+Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
+
+Document the return. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
+
+Predictable user interface 
++++++++++++++++++++++++++++
+
+This is a particularly important section as it is also an area where we need significant improvements.
+
+- Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
+- Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
+- Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
+- Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
+
+
+Informative responses
+++++++++++++++++++++++
+
+Please note, that for  >= 2.0, it is required that return data to be documented.
+
+- Always return useful data, even when there is no change.
+- Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
+- Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
+- return diff is in diff mode?
+
+Code
+++++
+
+This applies to all code in general, but often seems to be missing from modules. Please keep the following in mind as you work:
+
+- Validate upfront--fail fast and return useful and clear error messages.
+- Defensive programming--modules should be designed simply enough that this should be easy. Modules should always handle errors gracefully and avoid direct stacktraces. Ansible deals with this better in 2.0 and returns them in the results.
+- Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+- Modules should not do the job of other modules, that is what roles are for. Less magic is more.
+- Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
+- Support check mode. 
+
 .. _module_dev_tutorial:
 
 Tutorial
@@ -63,7 +108,7 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 .. _module_testing:
 
 Testing Modules
-```````````````
+````````````````
 
 There's a useful test script in the source checkout for ansible::
 
@@ -200,7 +245,7 @@ This should return something like::
 .. _module_provided_facts:
 
 Module Provided 'Facts'
-```````````````````````
+````````````````````````
 
 The 'setup' module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
