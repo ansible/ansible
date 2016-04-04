@@ -23,13 +23,43 @@ import csv
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+class CSVRecoder:
+    """
+    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    """
+    def __init__(self, f, encoding='utf-8'):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode("utf-8")
+
+class CSVReader:
+    """
+    A CSV reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
+        f = CSVRecoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, 'utf-8') for s in row]
+
+    def __iter__(self):
+        return self
+
 class LookupModule(LookupBase):
 
     def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
 
         try:
-            f = codecs.open(filename, 'r', encoding=encoding)
-            creader = csv.reader(f, delimiter=str(delimiter))
+            f = open(filename, 'r')
+            creader = CSVReader(f, delimiter=str(delimiter), encoding=encoding)
 
             for row in creader:
                 if row[0] == key:
