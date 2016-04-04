@@ -101,7 +101,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             user=dict(required=True),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             to=dict(required=True),
             msg=dict(required=True),
             host=dict(required=False),
