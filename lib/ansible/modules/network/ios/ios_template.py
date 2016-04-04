@@ -68,14 +68,6 @@ options:
     required: false
     default: false
     choices: BOOLEANS
-  ignore_missing:
-    description:
-      - This flag instruts the module to ignore lines that are missing
-        from the device configuration.  In some instances, the config
-        command doesn't show up in the running-config because it is the
-    required: false
-    default: false
-    choices: BOOLEANS
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -119,33 +111,6 @@ responses:
   sample: ['...', '...']
 """
 
-def compare(this, other, ignore_missing=False):
-    parents = [item.text for item in this.parents]
-    for entry in other:
-        if this == entry:
-            return None
-    if not ignore_missing:
-        return this
-
-def expand(obj, queue):
-    block = [item.raw for item in obj.parents]
-    block.append(obj.raw)
-
-    current_level = queue
-    for b in block:
-        if b not in current_level:
-            current_level[b] = collections.OrderedDict()
-        current_level = current_level[b]
-    for c in obj.children:
-        if c.raw not in current_level:
-            current_level[c.raw] = collections.OrderedDict()
-
-def flatten(data, obj):
-    for k, v in data.items():
-        obj.append(k)
-        flatten(v, obj)
-    return obj
-
 def get_config(module):
     config = module.params['config'] or dict()
     if not config and not module.params['force']:
@@ -161,7 +126,6 @@ def main():
         force=dict(default=False, type='bool'),
         include_defaults=dict(default=True, type='bool'),
         backup=dict(default=False, type='bool'),
-        ignore_missing=dict(default=False, type='bool'),
         config=dict(),
     )
 
@@ -171,33 +135,19 @@ def main():
                         mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
-    ignore_missing = module.params['ignore_missing']
-
     result = dict(changed=False)
 
-    candidate = module.parse_config(module.params['src'])
+    candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     contents = get_config(module)
-    result['_backup'] = module.config
+    if contents:
+        config = NetworkConfig(contents=contents, indent=1)
+        result['_backup'] = contents
 
-    config = module.parse_config(contents)
-
-    commands = collections.OrderedDict()
-    toplevel = [c.text for c in config]
-
-    for line in candidate:
-        if line.text in ['!', '']:
-            continue
-
-        if not line.parents:
-            if line.text not in toplevel:
-                expand(line, commands)
-        else:
-            item = compare(line, config, ignore_missing)
-            if item:
-                expand(item, commands)
-
-    commands = flatten(commands, list())
+    if not module.params['force']:
+        commands = candidate.difference(config)
+    else:
+        commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
@@ -207,7 +157,7 @@ def main():
         result['changed'] = True
 
     result['updates'] = commands
-    return module.exit_json(**result)
+    module.exit_json(**result)
 
 
 from ansible.module_utils.basic import *
