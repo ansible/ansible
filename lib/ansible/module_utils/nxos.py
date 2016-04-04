@@ -33,6 +33,24 @@ NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
 
 NXAPI_ENCODINGS = ['json', 'xml']
 
+CLI_PROMPTS_RE = [
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"syntax error"),
+    re.compile(r"unknown command")
+]
+
 def to_list(val):
     if isinstance(val, (list, tuple)):
         return list(val)
@@ -143,7 +161,8 @@ class Cli(object):
         password = self.module.params['password']
 
         try:
-            self.shell = Shell()
+            self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE,
+                    kickstart=False)
             self.shell.open(host, port=port, username=username, password=password)
         except Exception, exc:
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
