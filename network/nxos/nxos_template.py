@@ -19,7 +19,7 @@ DOCUMENTATION = """
 ---
 module: nxos_template
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco NXOS device configurations
 description:
   - Manages network device configurations over SSH or NXAPI.  This module
@@ -109,32 +109,6 @@ responses:
   sample: ['...', '...']
 """
 
-def compare(this, other):
-    parents = [item.text for item in this.parents]
-    for entry in other:
-        if this == entry:
-            return None
-    return this
-
-def expand(obj, queue):
-    block = [item.raw for item in obj.parents]
-    block.append(obj.raw)
-
-    current_level = queue
-    for b in block:
-        if b not in current_level:
-            current_level[b] = collections.OrderedDict()
-        current_level = current_level[b]
-    for c in obj.children:
-        if c.raw not in current_level:
-            current_level[c.raw] = collections.OrderedDict()
-
-def flatten(data, obj):
-    for k, v in data.items():
-        obj.append(k)
-        flatten(v, obj)
-    return obj
-
 def get_config(module):
     config = module.params['config'] or dict()
     if not config and not module.params['force']:
@@ -159,28 +133,17 @@ def main():
 
     result = dict(changed=False)
 
-    candidate = module.parse_config(module.params['src'])
+    candidate = NetworkConfig(contents=module.params['src'], indent=2)
 
     contents = get_config(module)
-    result['_backup'] = contents
-    config = module.parse_config(contents)
+    if contents:
+        config = NetworkConfig(contents=contents, indent=2)
+        result['_backup'] = contents
 
-    commands = collections.OrderedDict()
-    toplevel = [c.text for c in config]
-
-    for line in candidate:
-        if line.text.startswith('!') or line.text == '':
-            continue
-
-        if not line.parents:
-            if line.text not in toplevel:
-                expand(line, commands)
-        else:
-            item = compare(line, config)
-            if item:
-                expand(item, commands)
-
-    commands = flatten(commands, list())
+    if not module.params['force']:
+        commands = candidate.difference(config)
+    else:
+        commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
@@ -190,7 +153,7 @@ def main():
         result['changed'] = True
 
     result['updates'] = commands
-    return module.exit_json(**result)
+    module.exit_json(**result)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
