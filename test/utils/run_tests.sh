@@ -9,6 +9,11 @@ if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/required-and-default-attributes.sh
     if test x"$TOXENV" != x'py24' ; then tox ; fi
     if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce).py' lib/ansible/module_utils ; fi
+elif [ "${TARGET}" = "builds" ]; then
+    make deb-src
+    make deb
+    make srpm
+    make rpm
 else
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
     docker pull ansible/ansible:${TARGET}
