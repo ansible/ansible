@@ -71,7 +71,7 @@ class Nxapi(object):
         self.url = None
         self._nxapi_auth = None
 
-    def _get_body(self, commands, command_type, encoding, version='1.2', chunk='0', sid=None):
+    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
         """Encodes a NXAPI JSON request message
         """
         if isinstance(commands, (list, set, tuple)):
