@@ -66,7 +66,7 @@ This applies to all code in general, but often seems to be missing from modules.
 - Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
 - Modules should not do the job of other modules, that is what roles are for. Less magic is more.
 - Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
-- Support check mode. 
+- Support check mode. For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.
 
 .. _module_dev_tutorial:
 
