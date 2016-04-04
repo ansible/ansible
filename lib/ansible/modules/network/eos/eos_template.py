@@ -119,32 +119,6 @@ responses:
 
 import re
 
-def compare(this, other):
-    parents = [item.text for item in this.parents]
-    for entry in other:
-        if this == entry:
-            return None
-    return this
-
-def expand(obj, queue):
-    block = [item.raw for item in obj.parents]
-    block.append(obj.raw)
-
-    current_level = queue
-    for b in block:
-        if b not in current_level:
-            current_level[b] = collections.OrderedDict()
-        current_level = current_level[b]
-    for c in obj.children:
-        if c.raw not in current_level:
-            current_level[c.raw] = collections.OrderedDict()
-
-def flatten(data, obj):
-    for k, v in data.items():
-        obj.append(k)
-        flatten(v, obj)
-    return obj
-
 def get_config(module):
     config = module.params.get('config')
     if not config and not module.params['force']:
@@ -174,32 +148,18 @@ def main():
 
     result = dict(changed=False)
 
-    candidate = module.parse_config(module.params['src'])
+    candidate = NetworkConfig(contents=module.params['src'], indent=3)
 
     contents = get_config(module)
-
     if contents:
-        config = module.parse_config(contents)
+        config = NetworkConfig(contents=contents, indent=3)
         result['_backup'] = contents
+
+
+    if not module.params['force']:
+        commands = candidate.difference(config)
     else:
-        config = dict()
-
-    commands = collections.OrderedDict()
-    toplevel = [c.text for c in config]
-
-    for line in candidate:
-        if line.text in ['!', '']:
-            continue
-
-        if not line.parents:
-            if line.text not in toplevel:
-                expand(line, commands)
-        else:
-            item = compare(line, config)
-            if item:
-                expand(item, commands)
-
-    commands = flatten(commands, list())
+        commands = str(candidate).split('\n')
 
     # Filter out configuration mode commands followed immediately by an
     # exit command indented by one level only, e.g.
@@ -236,7 +196,7 @@ def main():
         result['changed'] = True
 
     result['updates'] = commands
-    return module.exit_json(**result)
+    module.exit_json(**result)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
