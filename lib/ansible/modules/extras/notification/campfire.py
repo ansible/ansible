@@ -73,7 +73,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             subscription=dict(required=True),
-            token=dict(required=True),
+            token=dict(required=True, no_log=True),
             room=dict(required=True),
             msg=dict(required=True),
             notify=dict(required=False,
