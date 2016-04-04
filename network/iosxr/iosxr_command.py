@@ -20,14 +20,14 @@ DOCUMENTATION = """
 ---
 module: iosxr_command
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary commands on ios devices.
 description:
   - Sends arbitrary commands to an IOSXR node and returns the results
     read from the device. The M(iosxr_command) module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-extends_documentation_fragment: ios
+extends_documentation_fragment: iosxr
 options:
   commands:
     description:
@@ -62,7 +62,6 @@ options:
         trying the command again.
     required: false
     default: 1
-
 """
 
 EXAMPLES = """
@@ -83,7 +82,7 @@ EXAMPLES = """
     - show version
     - show interfaces
   waitfor:
-    - "result[2] contains MgmtEth0/0/CPU0/0"
+    - "result[1] contains MgmtEth0/0/CPU0/0"
     - "result[0] contains 6.0.0"
 
 """
@@ -111,11 +110,10 @@ failed_conditions:
 import time
 import shlex
 import re
-import json
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def to_lines(stdout):
+def iterlines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
@@ -165,7 +163,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    result['stdout_lines'] = list(iterlines(result['stdout']))
     return module.exit_json(**result)
 
 
