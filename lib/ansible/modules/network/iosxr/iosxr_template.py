@@ -20,7 +20,7 @@ DOCUMENTATION = """
 module: iosxr_template
 version_added: "2.1"
 author: "Peter sprygada (@privateip)"
-short_description: Manage Cisco IOS device configurations over SSH
+short_description: Manage Cisco IOSXR device configurations over SSH
 description:
   - Manages network device configurations over SSH.  This module
     allows implementors to work with the device running-config.  It
@@ -90,40 +90,18 @@ EXAMPLES = """
 """
 
 RETURN = """
-
-commands:
+updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: [...]
+  sample: ['...', '...']
 
+responses:
+  description: The set of responses from issuing the commands on the device
+  retured: when not check_mode
+  type: list
+  sample: ['...', '...']
 """
-
-def compare(this, other):
-    parents = [item.text for item in this.parents]
-    for entry in other:
-        if this == entry:
-            return None
-    return this
-
-def expand(obj, queue):
-    block = [item.raw for item in obj.parents]
-    block.append(obj.raw)
-
-    current_level = queue
-    for b in block:
-        if b not in current_level:
-            current_level[b] = collections.OrderedDict()
-        current_level = current_level[b]
-    for c in obj.children:
-        if c.raw not in current_level:
-            current_level[c.raw] = collections.OrderedDict()
-
-def flatten(data, obj):
-    for k, v in data.items():
-        obj.append(k)
-        flatten(v, obj)
-    return obj
 
 def get_config(module):
     config = module.params['config'] or dict()
@@ -150,38 +128,27 @@ def main():
 
     result = dict(changed=False)
 
-    candidate = module.parse_config(module.params['src'])
+    candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     contents = get_config(module)
-    result['_backup'] = module.config
+    if contents:
+        config = NetworkConfig(contents=contents, indent=1)
+        result['_backup'] = contents
 
-    config = module.parse_config(contents)
-
-    commands = collections.OrderedDict()
-    toplevel = [c.text for c in config]
-
-    for line in candidate:
-        if line.text in ['!', '']:
-            continue
-
-        if not line.parents:
-            if line.text not in toplevel:
-                expand(line, commands)
-        else:
-            item = compare(line, config)
-            if item:
-                expand(item, commands)
-
-    commands = flatten(commands, list())
+    if not module.params['force']:
+        commands = candidate.difference(config)
+    else:
+        commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
-            updates = [str(c).strip() for c in commands]
-            response = module.configure(updates)
+            commands = [str(c).strip() for c in commands]
+            response = module.configure(commands)
+            result['responses'] = response
         result['changed'] = True
 
     result['updates'] = commands
-    return module.exit_json(**result)
+    module.exit_json(**result)
 
 
 from ansible.module_utils.basic import *
