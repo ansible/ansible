@@ -127,6 +127,8 @@ class NetworkModule(AnsibleModule):
     def execute(self, commands, **kwargs):
         try:
             return self.connection.send(commands, **kwargs)
+        except ShellError, exc:
+            self.fail_json(msg=exc.message, command=exc.command)
         except Exception, exc:
             self.fail_json(msg=exc.message, commands=commands)
 
