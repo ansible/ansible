@@ -177,7 +177,7 @@ class Shell(object):
     def read(self, response):
         for regex in self.errors:
             if regex.search(response):
-                raise ShellError('%s' % response)
+                raise ShellError('matched error in response: %s' % response)
 
         for regex in self.prompts:
             match = regex.search(response)
