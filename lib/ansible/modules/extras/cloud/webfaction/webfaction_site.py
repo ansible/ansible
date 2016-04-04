@@ -115,8 +115,8 @@ def main():
             # You can specify an IP address or hostname.
             host = dict(required=True),
             https = dict(required=False, type='bool', default=False),
-            subdomains = dict(required=False, default=[]),
-            site_apps = dict(required=False, default=[]),
+            subdomains = dict(required=False, type='list', default=[]),
+            site_apps = dict(required=False, type='list', default=[]),
             login_name = dict(required=True),
             login_password = dict(required=True),
         ),
