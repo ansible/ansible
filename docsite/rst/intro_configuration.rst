@@ -602,9 +602,9 @@ retry_files_save_path
 =====================
 
 The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
-The default location is ~/ and can be changed to any writeable path::
+The default location is adjacent to the play (~/ in versions older than 2.0) and can be changed to any writeable path::
 
-    retry_files_save_path = ~/.ansible-retry
+    retry_files_save_path = ~/.ansible/retry-files
 
 The directory will be created if it does not already exist.
 
