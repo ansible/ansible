@@ -25,10 +25,10 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def read_csv(self, filename, key, delimiter, dflt=None, col=1):
+    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
 
         try:
-            f = codecs.open(filename, 'r', encoding='utf-8')
+            f = codecs.open(filename, 'r', encoding=encoding)
             creader = csv.reader(f, delimiter=str(delimiter))
 
             for row in creader:
@@ -50,10 +50,11 @@ class LookupModule(LookupBase):
             key = params[0]
 
             paramvals = {
-                'file' : 'ansible.csv',
+                'col' : "1",          # column to return
                 'default' : None,
                 'delimiter' : "TAB",
-                'col' : "1",          # column to return
+                'file' : 'ansible.csv',
+                'encoding' : 'utf-8',
             }
 
             # parameters specified?
@@ -69,7 +70,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, str(paramvals['delimiter']), paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, str(paramvals['delimiter']), paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:
