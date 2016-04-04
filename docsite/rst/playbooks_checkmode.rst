@@ -1,3 +1,5 @@
+.. _check_mode_dry:
+
 Check Mode ("Dry Run")
 ======================
 
