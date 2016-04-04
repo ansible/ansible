@@ -120,7 +120,7 @@ import re
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def to_lines(stdout):
+def iterlines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
@@ -160,8 +160,9 @@ def main():
         try:
             response = module.execute(commands, **kwargs)
             result['stdout'] = response
-        except ShellError:
-            module.fail_json(msg='failed to run commands')
+        except ShellError, exc:
+            module.fail_json(msg='failed to run commands', exc=exc.message,
+                    command=exc.command)
 
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
@@ -169,8 +170,8 @@ def main():
                     response[index] = module.from_json(response[index])
                 except ValueError, exc:
                     module.fail_json(msg='failed to parse json response',
-                            exc_type=str(type(exc)), exc_message=str(exc),
-                            response=response[index])
+                            exc_message=str(exc), response=response[index],
+                            cmd=cmd, response_dict=response)
 
         for item in list(queue):
             if item(response):
@@ -185,7 +186,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    result['stdout_lines'] = list(iterlines(result['stdout']))
     return module.exit_json(**result)
 
 
