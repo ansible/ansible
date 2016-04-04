@@ -26,7 +26,7 @@ library. Hence, such dependency must be installed in the system to run this scri
 The default configuration file is named 'brook.ini' and is located alongside this script. You can
 choose any other file by setting the BROOK_INI_PATH environment variable.
 
-If param 'brook_project' is left blank in 'brook.ini', the inventory includes all the instances in
+If param 'project_id' is left blank in 'brook.ini', the inventory includes all the instances in
 projects where the requesting user belongs. Otherwise, only instances from the given project are
 included, provided the requesting user belongs to it.
 
@@ -37,7 +37,6 @@ dictionary.
  - brook_project: str
  - brook_template: str
  - brook_region: str
- - brook_image: str
  - brook_status: str
  - brook_tags: list(str)
  - brook_internal_ips: list(str)
@@ -64,8 +63,8 @@ Examples:
   Install nginx on all debian web servers tagged with 'www'
   $ ansible -i brook.py tag_www -m apt -a "name=nginx state=present"
 
-  Run site.yml playbook
-  $ ansible-playbook -i brook.py site.yml
+  Run site.yml playbook on web servers
+  $ ansible-playbook -i brook.py site.yml -l tag_www
 
 Support:
   This script is tested on Python 2.7 and 3.4. It may work on other versions though.
@@ -116,21 +115,16 @@ class BrookInventory:
         brook_ini_path = os.environ.get('BROOK_INI_PATH', brook_ini_default_path)
 
         config = ConfigParser(defaults={
-            'organization_domain': '',
-            'account_email': '',
-            'account_token': '',
+            'api_token': '',
             'project_id': ''
         })
         config.read(brook_ini_path)
-
-        self.organization = config.get('brook', 'organization_domain').split('.')[0]
-        self.account_email = config.get('brook', 'account_email')
-        self.account_token = config.get('brook', 'account_token')
+        self.api_token = config.get('brook', 'api_token')
         self.project_id = config.get('brook', 'project_id')
 
-        if not self.organization or not self.account_email or not self.account_token:
-            print('You must provide (at least) your Brook.io organization domain name, account '
-                  'email, and account token to generate the dynamic inventory.')
+        if not self.api_token:
+            print('You must provide (at least) your Brook.io API token to generate the dynamic '
+                  'inventory.')
             sys.exit(1)
 
     def get_api_client(self):
@@ -139,16 +133,17 @@ class BrookInventory:
 
         # Get JWT token from API token
         #
-        #unauthenticated_client = libbrook.ApiClient(host=self._API_ENDPOINT)
-        #token_api = libbrook.TokensApi(unauthenticated_client)
-        #token = token_api.login(self.account_email, self.account_token)
-        token = ''
+        unauthenticated_client = libbrook.ApiClient(host=self._API_ENDPOINT)
+        auth_api = libbrook.AuthApi(unauthenticated_client)
+        api_token = libbrook.AuthTokenRequest()
+        api_token.token = self.api_token
+        jwt = auth_api.auth_token(token=api_token)
 
         # Create authenticated API client
         #
         return libbrook.ApiClient(host=self._API_ENDPOINT,
                                   header_name='Authorization',
-                                  header_value='Bearer %s' % token)
+                                  header_value='Bearer %s' % jwt.token)
 
     def get_inventory(self):
         """Generate Ansible inventory.
@@ -160,7 +155,6 @@ class BrookInventory:
 
         instances_api = libbrook.InstancesApi(self.client)
         projects_api = libbrook.ProjectsApi(self.client)
-        images_api = libbrook.ImagesApi(self.client)
         templates_api = libbrook.TemplatesApi(self.client)
 
         # If no project is given, get all projects the requesting user has access to
@@ -175,16 +169,13 @@ class BrookInventory:
         for project_id in projects:
             project = projects_api.show_project(project_id=project_id)
             for instance in instances_api.index_instances(project_id=project_id):
-                # Get image and template used for this instance
-                images = images_api.index_images(provider_id=instance.provider,
-                                                 region_id=instance.region)
-                image = [image for image in images if image.id == instance.image][0]
+                # Get template used for this instance
                 template = templates_api.show_template(template_id=instance.template)
 
                 # Update hostvars
                 try:
                     meta['hostvars'][instance.name] = \
-                        self.hostvars(project, instance, image, template, instances_api)
+                        self.hostvars(project, instance, template, instances_api)
                 except libbrook.rest.ApiException:
                     continue
 
@@ -214,7 +205,7 @@ class BrookInventory:
         groups['_meta'] = meta
         return groups
 
-    def hostvars(self, project, instance, image, template, api):
+    def hostvars(self, project, instance, template, api):
         """Return the hostvars dictionary for the given instance.
 
         Raise libbrook.rest.ApiException if it cannot retrieve all required information from the
@@ -227,18 +218,17 @@ class BrookInventory:
         hostvars['brook_project'] = hostvars.pop('project')
         hostvars['brook_template'] = hostvars.pop('template')
         hostvars['brook_region'] = hostvars.pop('region')
-        hostvars['brook_image'] = hostvars.pop('image')
         hostvars['brook_created_at'] = hostvars.pop('created_at')
         hostvars['brook_updated_at'] = hostvars.pop('updated_at')
         del hostvars['id']
         del hostvars['key']
         del hostvars['provider']
+        del hostvars['image']
 
         # Substitute identifiers for names
         #
         hostvars['brook_project'] = project.name
         hostvars['brook_template'] = template.name
-        hostvars['brook_image'] = image.image_name
 
         # Retrieve instance state
         #
