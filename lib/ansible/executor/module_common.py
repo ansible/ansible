@@ -173,9 +173,16 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     """
 
     module_substyle = module_style = 'old'
-    # Do REPLACER before from ansible.module_utils because we need make sure
-    # we substitute "from ansible.module_utils basic" for REPLACER
+
+    # module_style is something important to calling code (ActionBase).  It
+    # determines how arguments are formatted (json vs k=v) and whether
+    # a separate arguments file needs to be sent over the wire.
+    # module_substyle is extra information that's useful internally.  It tells
+    # us what we have to look to substitute in the module files and whether
+    # we're using module replacer or ziploader to format the module itself.
     if REPLACER in module_data:
+        # Do REPLACER before from ansible.module_utils because we need make sure
+        # we substitute "from ansible.module_utils basic" for REPLACER
         module_style = 'new'
         module_substyle = 'python'
         module_data = module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
