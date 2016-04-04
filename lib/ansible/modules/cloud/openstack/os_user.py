@@ -169,13 +169,6 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
         user = cloud.get_user(name)
 
-        project_id = None
-        if default_project:
-            project = cloud.get_project(default_project)
-            if not project:
-                module.fail_json(msg='Default project %s is not valid' % default_project)
-            project_id = project['id']
-
         if domain:
             opcloud = shade.operator_cloud(**module.params)
             try:
@@ -193,6 +186,13 @@ def main():
                     pass
 
         if state == 'present':
+            project_id = None
+            if default_project:
+                project = cloud.get_project(default_project)
+                if not project:
+                    module.fail_json(msg='Default project %s is not valid' % default_project)
+                project_id = project['id']
+
             if user is None:
                 user = cloud.create_user(
                     name=name, password=password, email=email,
