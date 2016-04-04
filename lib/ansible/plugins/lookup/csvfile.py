@@ -22,6 +22,7 @@ import csv
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.unicode import to_bytes, to_str, to_unicode
 
 class CSVRecoder:
     """
@@ -48,7 +49,7 @@ class CSVReader:
 
     def next(self):
         row = self.reader.next()
-        return [unicode(s, 'utf-8') for s in row]
+        return [to_unicode(s) for s in row]
 
     def __iter__(self):
         return self
@@ -59,13 +60,13 @@ class LookupModule(LookupBase):
 
         try:
             f = open(filename, 'r')
-            creader = CSVReader(f, delimiter=str(delimiter), encoding=encoding)
+            creader = CSVReader(f, delimiter=to_bytes(delimiter), encoding=encoding)
 
             for row in creader:
                 if row[0] == key:
                     return row[int(col)]
         except Exception as e:
-            raise AnsibleError("csvfile: %s" % str(e))
+            raise AnsibleError("csvfile: %s" % to_str(e))
 
         return dflt
 
@@ -100,7 +101,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, str(paramvals['delimiter']), paramvals['encoding'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:
