@@ -90,6 +90,12 @@ EXAMPLES = '''
 - zfs_permissions: name=rpool/myfs state=absent everyone=yes
 '''
 
+# This module does not return anything other than the standard
+# changed/state/msg/stdout
+RETURN = '''
+
+'''
+
 
 import sys
 
@@ -257,8 +263,6 @@ def main():
 
 
     zfs_permissions = ZfsPermissions(module)
-
-    sys.exit(0)
 
 
 # import module snippets
