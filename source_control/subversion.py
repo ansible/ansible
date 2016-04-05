@@ -216,7 +216,10 @@ def main():
     export = module.params['export']
     switch = module.params['switch']
 
-    os.environ['LANG'] = 'C'
+    # We screenscrape a huge amount of svn commands so use C locale anytime we
+    # call run_command()
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
     if export or not os.path.exists(dest):
