@@ -411,16 +411,28 @@ class CallbackModule_dense(CallbackModule_default):
         self.super_ref.v2_on_file_diff(result)
         sys.stdout.write(vt100.reset)
 
+    # Old definition in v2.0
     def v2_playbook_item_on_ok(self, result):
+        self.v2_runner_item_on_ok(result)
+
+    def v2_runner_item_on_ok(self, result):
         if result._result.get('changed', False):
             self._add_host(result, 'changed')
         else:
             self._add_host(result, 'ok')
 
+    # Old definition in v2.0
     def v2_playbook_item_on_failed(self, result):
+        self.v2_runner_item_on_failed(result)
+
+    def v2_runner_item_on_failed(self, result):
         self._add_host(result, 'failed')
 
+    # Old definition in v2.0
     def v2_playbook_item_on_skipped(self, result):
+        self.v2_runner_item_on_skipped(result)
+
+    def v2_runner_item_on_skipped(self, result):
         self._add_host(result, 'skipped')
 
     def v2_playbook_on_no_hosts_remaining(self):
