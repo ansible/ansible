@@ -51,10 +51,12 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
         self._loader = loader
         self._variable_manager = variable_manager
+        variable_manager._hostvars = self
         self._cached_result = dict()
 
     def set_variable_manager(self, variable_manager):
         self._variable_manager = variable_manager
+        variable_manager._hostvars = self
 
     def set_inventory(self, inventory):
         self._inventory = inventory
