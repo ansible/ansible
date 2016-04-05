@@ -57,10 +57,13 @@ except:
     import simplejson as json
 
 base_dir  = os.path.dirname(os.path.realpath(__file__))
+default_ini_file = os.path.join(base_dir, "spacewalk.ini")
+
 SW_REPORT = '/usr/bin/spacewalk-report'
 CACHE_DIR = os.path.join(base_dir, ".spacewalk_reports")
 CACHE_AGE = 300 # 5min
-INI_FILE = os.path.join(base_dir, "spacewalk.ini")
+INI_FILE = os.path.expanduser(os.path.expandvars(os.environ.get("SPACEWALK_INI_PATH", default_ini_file)))
+
 
 # Sanity check
 if not os.path.exists(SW_REPORT):
