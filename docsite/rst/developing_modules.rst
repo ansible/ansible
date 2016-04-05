@@ -23,51 +23,6 @@ repo for more established and widely used modules.  "Extras" modules may be prom
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
 
-Ansible Module Guidelines
-`````````````````````````
-
-These are the guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR (proposal?).
-
-Documentation
-+++++++++++++
-
-Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
-
-Document the return. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
-
-Predictable user interface 
-+++++++++++++++++++++++++++
-
-This is a particularly important section as it is also an area where we need significant improvements.
-
-- Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
-- Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
-- Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
-- Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
-
-
-Informative responses
-++++++++++++++++++++++
-
-Please note, that for  >= 2.0, it is required that return data to be documented.
-
-- Always return useful data, even when there is no change.
-- Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
-- Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
-- return diff is in diff mode?
-
-Code
-++++
-
-This applies to all code in general, but often seems to be missing from modules. Please keep the following in mind as you work:
-
-- Validate upfront--fail fast and return useful and clear error messages.
-- Defensive programming--modules should be designed simply enough that this should be easy. Modules should always handle errors gracefully and avoid direct stacktraces. Ansible deals with this better in 2.0 and returns them in the results.
-- Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
-- Modules should not do the job of other modules, that is what roles are for. Less magic is more.
-- Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
-- Support check mode. For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.
-
 .. _module_dev_tutorial:
 
 Tutorial
@@ -528,9 +483,12 @@ gives them slightly higher development priority (though they'll work in exactly 
 Module checklist
 ````````````````
 
+The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
+
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
 * Documentation: Make sure it exists
+    * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * `required` should always be present, be it true or false
     * If `required` is false you need to document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
     * `default` is not needed for `required: true`
@@ -544,8 +502,25 @@ Module checklist
     * GPL 3 License header
     * Does module use check_mode? Could it be modified to use it? Document it
     * Examples: make sure they are reproducible
-    * Return: document the return structure of the module
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
+    * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
+* Predictable user interface: This is a particularly important section as it is also an area where we need significant improvements.
+    * Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
+    * Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
+    * Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
+    * Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
+* Informative responses: Please note, that for  >= 2.0, it is required that return data to be documented.
+    * Always return useful data, even when there is no change.
+    * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
+    * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
+    * Return diff if in diff mode
+* Code: This applies to all code in general, but often seems to be missing from modules, so please keep the following in mind as you work.
+    * Validate upfront--fail fast and return useful and clear error messages.
+    * Defensive programming--modules should be designed simply enough that this should be easy. Modules should always handle errors gracefully and avoid direct stacktraces. Ansible deals with this better in 2.0 and returns them in the results.
+    * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+    * Modules should not do the job of other modules, that is what roles are for. Less magic is more.
+    * Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
+    * Support check mode. For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.        
 * Exceptions: The module must handle them. (exceptions are bugs)
     * Give out useful messages on what you were doing and you can add the exception message to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
