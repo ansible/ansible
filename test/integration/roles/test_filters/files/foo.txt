@@ -52,6 +52,8 @@ files to exist and are passthrus to the python os.path functions
 /etc/motd with basename = motd
 /etc/motd with dirname  = /etc
 
+<xml_password>a&lt;&amp;&gt;b</xml_password>
+
 TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
