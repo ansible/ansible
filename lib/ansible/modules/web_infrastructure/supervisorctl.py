@@ -120,6 +120,9 @@ def main():
     password = module.params.get('password')
     supervisorctl_path = module.params.get('supervisorctl_path')
 
+    # we check error message for a pattern, so we need to make sure that's in C locale
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     if supervisorctl_path:
         if os.path.exists(supervisorctl_path) and is_executable(supervisorctl_path):
             supervisorctl_args = [supervisorctl_path]
