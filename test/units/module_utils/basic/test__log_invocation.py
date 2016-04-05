@@ -33,6 +33,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # test basic log invocation
         basic.MODULE_COMPLEX_ARGS = json.dumps(dict(foo=False, bar=[1,2,3], bam="bam", baz=u'baz'))
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec=dict(
                 foo = dict(default=True, type='bool'),

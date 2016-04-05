@@ -267,6 +267,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
@@ -282,6 +283,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # should test ok
         basic.MODULE_COMPLEX_ARGS = '{"foo":"hello"}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = arg_spec,
             mutually_exclusive = mut_ex,
@@ -296,6 +298,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # fail, because a required param was not specified
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.assertRaises(
             SystemExit,
             basic.AnsibleModule,
@@ -310,6 +313,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # fail because of mutually exclusive parameters
         basic.MODULE_COMPLEX_ARGS = '{"foo":"hello", "bar": "bad", "bam": "bad"}'
+        basic.MODULE_CONSTANTS = '{}'
         self.assertRaises(
             SystemExit, 
             basic.AnsibleModule,
@@ -324,6 +328,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # fail because a param required due to another param was not specified
         basic.MODULE_COMPLEX_ARGS = '{"bam":"bad"}'
+        basic.MODULE_CONSTANTS = '{}'
         self.assertRaises(
             SystemExit,
             basic.AnsibleModule,
@@ -340,6 +345,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -389,6 +395,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -409,6 +416,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -423,6 +431,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -455,6 +464,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -491,6 +501,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -533,10 +544,11 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.SELINUX_SPECIAL_FS = 'nfs,nfsd,foos'
+        basic.MODULE_CONSTANTS = '{"SELINUX_SPECIAL_FS": "nfs,nfsd,foos"}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
+        print(am.constants)
 
         def _mock_find_mount_point(path):
             if path.startswith('/some/path'):
@@ -574,6 +586,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -585,6 +598,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -600,6 +614,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -624,6 +639,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -669,6 +685,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -747,6 +764,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -835,6 +853,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -1013,6 +1032,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )

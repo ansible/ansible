@@ -146,7 +146,7 @@ class Shell(object):
                 cmd = '%s\r' % str(command)
                 self.shell.sendall(cmd)
                 responses.append(self.receive(command))
-        except socket.timeout, exc:
+        except socket.timeout:
             raise ShellError("timeout trying to send command", cmd)
         return responses
 

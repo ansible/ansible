@@ -131,7 +131,10 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
     if check:
          complex_args['_ansible_check_mode'] = True
 
+    modname = os.path.basename(modfile)
+    modname = os.path.splitext(modname)[0]
     (module_data, module_style, shebang) = module_common.modify_module(
+        modname,
         modfile,
         complex_args,
         task_vars=task_vars

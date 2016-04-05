@@ -17,6 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(default=22, type='int'),

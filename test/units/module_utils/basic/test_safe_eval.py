@@ -29,6 +29,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         from ansible.module_utils import basic
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )

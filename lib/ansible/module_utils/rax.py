@@ -32,6 +32,8 @@ import os
 import re
 from uuid import UUID
 
+from ansible import __version__
+from ansible.module_utils.basic import BOOLEANS
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
@@ -262,7 +264,7 @@ def rax_required_together():
 
 def setup_rax_module(module, rax_module, region_required=True):
     """Set up pyrax in a standard way for all modules"""
-    rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
+    rax_module.USER_AGENT = 'ansible/%s %s' % (__version__,
                                                rax_module.USER_AGENT)
 
     api_key = module.params.get('api_key')

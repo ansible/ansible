@@ -42,7 +42,9 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 
     def setUp(self):
         self.complex_args_token = basic.MODULE_COMPLEX_ARGS
+        self.constants_sentinel = basic.MODULE_CONSTANTS
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -54,6 +56,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 
     def tearDown(self):
         basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        basic.MODULE_CONSTANTS = self.constants_sentinel
         basic.has_journal = self.has_journal
 
     def test_smoketest_syslog(self):
@@ -73,13 +76,16 @@ class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
     def setUp(self):
         self.complex_args_token = basic.MODULE_COMPLEX_ARGS
+        self.constants_sentinel = basic.MODULE_CONSTANTS
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
 
     def tearDown(self):
         basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        basic.MODULE_CONSTANTS = self.constants_sentinel
 
     @unittest.skipUnless(basic.has_journal, 'python systemd bindings not installed')
     def test_smoketest_journal(self):
@@ -116,7 +122,9 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
 
     def setUp(self):
         self.complex_args_token = basic.MODULE_COMPLEX_ARGS
+        self.constants_sentinel = basic.MODULE_CONSTANTS
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -127,6 +135,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
 
     def tearDown(self):
         basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        basic.MODULE_CONSTANTS = self.constants_sentinel
         basic.has_journal = self.has_journal
 
     @patch('syslog.syslog', autospec=True)
@@ -168,7 +177,9 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
 
     def setUp(self):
         self.complex_args_token = basic.MODULE_COMPLEX_ARGS
+        self.constants_sentinel = basic.MODULE_CONSTANTS
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -188,6 +199,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
 
     def tearDown(self):
         basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        basic.MODULE_CONSTANTS = self.constants_sentinel
         basic.has_journal = self.has_journal
         if self.module_patcher:
             self.module_patcher.stop()

@@ -29,6 +29,8 @@
 
 import os
 import traceback
+
+from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
 USER_AGENT_PRODUCT="Ansible-gce"

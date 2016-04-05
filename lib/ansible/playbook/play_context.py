@@ -80,6 +80,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    su_exe           = ('ansible_su_exe',),
    su_flags         = ('ansible_su_flags',),
    executable       = ('ansible_shell_executable',),
+   module_compression = ('ansible_module_compression',),
 )
 
 SU_PROMPT_LOCALIZATIONS = [
@@ -169,6 +170,7 @@ class PlayContext(Base):
     _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
     _executable       = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')

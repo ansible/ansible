@@ -81,6 +81,18 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
+import httplib
+import netrc
+import os
+import re
+import sys
+import socket
+import platform
+import tempfile
+import base64
+
+from ansible.module_utils.basic import get_distribution
+
 try:
     import urllib2
     HAS_URLLIB2 = True
@@ -150,8 +162,6 @@ if not HAS_MATCH_HOSTNAME:
     ###
 
     """The match_hostname() function from Python 3.4, essential when using SSL."""
-
-    import re
 
     class CertificateError(ValueError):
         pass
@@ -255,17 +265,6 @@ if not HAS_MATCH_HOSTNAME:
     ###
 
     HAS_MATCH_HOSTNAME = True
-
-
-import httplib
-import netrc
-import os
-import re
-import sys
-import socket
-import platform
-import tempfile
-import base64
 
 
 # This is a dummy cacert provided for Mac OS since you need at least 1

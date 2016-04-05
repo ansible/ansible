@@ -21,6 +21,8 @@ try:
 except ImportError:
     HAS_PYVCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+
 SERVICE_MAP = {'vca': 'ondemand', 'vchs': 'subscription', 'vcd': 'vcd'}
 LOGIN_HOST = {'vca': 'vca.vmware.com', 'vchs': 'vchs.vmware.com'}
 

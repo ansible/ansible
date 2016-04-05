@@ -62,6 +62,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
         self.module = AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
