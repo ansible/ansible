@@ -75,3 +75,16 @@ class TestErrors(unittest.TestCase):
         #with patch('glob.glob', mock_glob):
         #    pass
 
+    def assertPluginLoaderConfigBecomes(self, arg, expected):
+        pl = PluginLoader('test', '', arg, 'test_plugin')
+        self.assertEqual(pl.config, expected)
+
+    def test_plugin__init_config_list(self):
+        config = ['/one', '/two']
+        self.assertPluginLoaderConfigBecomes(config, config)
+
+    def test_plugin__init_config_str(self):
+        self.assertPluginLoaderConfigBecomes('test', ['test'])
+
+    def test_plugin__init_config_none(self):
+        self.assertPluginLoaderConfigBecomes(None, [])
