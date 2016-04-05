@@ -40,7 +40,6 @@ from ansible.inventory.host import Host
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
-from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.unsafe_proxy import wrap_var
@@ -98,6 +97,7 @@ class VariableManager:
         self._host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
         self._inventory = None
+        self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
     def __getstate__(self):
@@ -172,8 +172,6 @@ class VariableManager:
 
         return data
 
-    # FIXME: include_hostvars is no longer used, and should be removed, but
-    #        all other areas of code calling get_vars need to be fixed too
     def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -194,10 +192,10 @@ class VariableManager:
         - extra vars
         '''
 
-        debug("in VariableManager get_vars()")
+        display.debug("in VariableManager get_vars()")
         cache_entry = self._get_cache_entry(play=play, host=host, task=task)
         if cache_entry in VARIABLE_CACHE and use_cache:
-            debug("vars are cached, returning them now")
+            display.debug("vars are cached, returning them now")
             return VARIABLE_CACHE[cache_entry]
 
         all_vars = dict()
@@ -346,7 +344,7 @@ class VariableManager:
         if task or play:
             all_vars['vars'] = all_vars.copy()
 
-        debug("done with get_vars()")
+        display.debug("done with get_vars()")
         return all_vars
 
     def invalidate_hostvars_cache(self, play):
@@ -395,6 +393,9 @@ class VariableManager:
         variables['omit'] = self._omit_token
         variables['ansible_version'] = CLI.version_info(gitinfo=False)
 
+        if self._hostvars is not None and include_hostvars:
+            variables['hostvars'] = self._hostvars
+
         return variables
 
     def _get_delegated_vars(self, loader, play, task, existing_variables):
@@ -407,16 +408,14 @@ class VariableManager:
         items = []
         if task.loop is not None:
             if task.loop in lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_
                 try:
+                    #TODO: remove convert_bare true and deprecate this in with_
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
+                    items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable as e:
-                    if 'has no attribute' in str(e):
-                        loop_terms = []
-                        display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
-                    else:
-                        raise
-                items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    # This task will be skipped later due to this, so we just setup
+                    # a dummy array for the later code so it doesn't fail
+                    items = [None]
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
         else:

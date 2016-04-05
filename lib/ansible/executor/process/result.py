@@ -141,7 +141,7 @@ class ResultProcess(multiprocessing.Process):
                     if result._task.loop:
                         # this task had a loop, and has more than one result, so
                         # loop over all of them instead of a single result
-                        result_items = result._result['results']
+                        result_items = result._result.get('results', [])
                     else:
                         result_items = [ result._result ]
 

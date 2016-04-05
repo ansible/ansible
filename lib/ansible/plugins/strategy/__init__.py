@@ -141,7 +141,6 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
 
-        task_vars['hostvars'] = self._tqm.hostvars
         # and then queue the new task
         display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
