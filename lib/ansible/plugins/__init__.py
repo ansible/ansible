@@ -66,7 +66,7 @@ class PluginLoader:
 
         if config and not isinstance(config, list):
             config = [config]
-        else:
+        elif not config:
             config = []
 
         self.config = config
