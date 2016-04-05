@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import base64
 import json
 import os
@@ -194,6 +195,38 @@ finally:
         pass
 '''
 
+class ModuleDepFinder(ast.NodeVisitor):
+    # Caveats:
+    # This code currently does not handle:
+    # * relative imports from py2.6+ from . import urls
+    # * python packages (directories with __init__.py in them)
+    IMPORT_PREFIX_SIZE = len('ansible.module_utils.')
+
+    def __init__(self, *args, **kwargs):
+        super(ModuleDepFinder, self).__init__(*args, **kwargs)
+        self.module_files = set()
+
+    def visit_Import(self, node):
+        # import ansible.module_utils.MODLIB[.other]
+        for alias in (a for a in node.names if a.name.startswith('ansible.module_utils.')):
+            py_mod = alias.name[self.IMPORT_PREFIX_SIZE:].split('.', 1)[0]
+            self.module_files.add(py_mod)
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node):
+        if node.module.startswith('ansible.module_utils'):
+            where_from = node.module[self.IMPORT_PREFIX_SIZE:]
+            # from ansible.module_utils.MODLIB[.other] import foo
+            if where_from:
+                py_mod = where_from.split('.', 1)[0]
+                self.module_files.add(py_mod)
+            else:
+                # from ansible.module_utils import MODLIB
+                for alias in node.names:
+                    self.module_files.add(alias.name)
+        self.generic_visit(node)
+
+
 def _strip_comments(source):
     # Strip comments and blank lines from the wrapper
     buf = []
@@ -242,6 +275,24 @@ def _get_facility(task_vars):
         facility = task_vars['ansible_syslog_facility']
     return facility
 
+def meta_finder(data, snippet_names, snippet_data, zf):
+    tree = ast.parse(data)
+    finder = ModuleDepFinder()
+    finder.visit(tree)
+
+    new_snippets = set()
+    for snippet_name in finder.module_files.difference(snippet_names):
+        fname = '%s.py' % snippet_name
+        new_snippets.add(snippet_name)
+        if snippet_name not in snippet_data:
+            snippet_data[snippet_name] = _slurp(os.path.join(_SNIPPET_PATH, fname))
+        zf.writestr(os.path.join("ansible/module_utils", fname), snippet_data[snippet_name])
+    snippet_names.update(new_snippets)
+
+    for snippet_name in tuple(new_snippets):
+        meta_finder(snippet_data[snippet_name], snippet_names, snippet_data, zf)
+        del snippet_data[snippet_name]
+
 def _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -283,8 +334,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     module_args_json = to_bytes(json.dumps(module_args))
 
     output = BytesIO()
-    lines = module_data.split(b'\n')
-
     snippet_names = set()
 
     if module_substyle == 'python':
@@ -308,20 +357,10 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         zf.writestr('ansible/module_exec/__init__.py', b'')
 
         zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
-        final_data = []
+        zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, module_data)
 
-        for line in lines:
-            if line.startswith(b'from ansible.module_utils.'):
-                tokens=line.split(b".")
-                snippet_name = tokens[2].split()[0]
-                snippet_names.add(snippet_name)
-                fname = to_unicode(snippet_name + b".py")
-                zf.writestr(os.path.join("ansible/module_utils", fname), _slurp(os.path.join(_SNIPPET_PATH, fname)))
-                final_data.append(line)
-            else:
-                final_data.append(line)
-
-        zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, b"\n".join(final_data))
+        snippet_data = dict()
+        meta_finder(module_data, snippet_names, snippet_data, zf)
         zf.close()
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
@@ -341,11 +380,12 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         # modules that use ziploader may implement their own helpers and not
         # need basic.py.  All the constants that we substituted into basic.py
         # for module_replacer are now available in other, better ways.
-        if b'basic' not in snippet_names:
+        if 'basic' not in snippet_names:
             raise AnsibleError("missing required import in %s: Did not import ansible.module_utils.basic for boilerplate helper code" % module_path)
 
     elif module_substyle == 'powershell':
         # Module replacer for jsonargs and windows
+        lines = module_data.split(b'\n')
         for line in lines:
             if REPLACER_WINDOWS in line:
                 ps_data = _slurp(os.path.join(_SNIPPET_PATH, "powershell.ps1"))
