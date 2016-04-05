@@ -32,7 +32,7 @@ Set-StrictMode -Version 2.0
 # JSON; assign them to an environment variable and redefine $args so existing
 # modules will continue to work.
 $complex_args = @'
-<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>
+<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
 '@
 Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
 $args = @('env:MODULE_COMPLEX_ARGS')

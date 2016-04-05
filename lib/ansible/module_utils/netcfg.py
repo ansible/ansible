@@ -20,6 +20,9 @@
 import re
 import collections
 import itertools
+import shlex
+
+from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 

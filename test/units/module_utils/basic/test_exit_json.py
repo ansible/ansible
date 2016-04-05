@@ -39,6 +39,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
     def setUp(self):
         self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
         basic.MODULE_COMPLEX_ARGS = '{}'
+        basic.MODULE_CONSTANTS = '{}'
 
         self.old_stdout = sys.stdout
         self.fake_stream = BytesIO()
@@ -129,6 +130,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
         for args, return_val, expected in self.dataset:
             sys.stdout = BytesIO()
             basic.MODULE_COMPLEX_ARGS = json.dumps(args)
+            basic.MODULE_CONSTANTS = '{}'
             module = basic.AnsibleModule(
                 argument_spec = dict(
                     username=dict(),
@@ -148,6 +150,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             expected['failed'] = True
             sys.stdout = BytesIO()
             basic.MODULE_COMPLEX_ARGS = json.dumps(args)
+            basic.MODULE_CONSTANTS = '{}'
             module = basic.AnsibleModule(
                 argument_spec = dict(
                     username=dict(),

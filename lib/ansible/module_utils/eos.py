@@ -18,6 +18,13 @@
 #
 import os
 
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.shell import Shell, Command, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+from ansible.module_utils.urls import fetch_url
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
