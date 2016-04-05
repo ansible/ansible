@@ -80,6 +80,11 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
+        self._connected = False
+
+    @property
+    def connected(self):
+        return self._connected
 
     @property
     def config(self):
@@ -99,7 +104,8 @@ class NetworkModule(AnsibleModule):
         try:
             self.connection = Cli(self)
             self.connection.connect()
-            self.execute('terminal length 0')
+            self.connection.send('terminal length 0')
+            self._connected = True
         except Exception, exc:
             self.fail_json(msg=exc.message)
 
@@ -114,12 +120,15 @@ class NetworkModule(AnsibleModule):
 
     def execute(self, commands, **kwargs):
         try:
+            if not self.connected:
+                self.connect()
             return self.connection.send(commands)
         except ShellError, exc:
             self.fail_json(msg=exc.message, command=exc.command)
 
     def disconnect(self):
         self.connection.close()
+        self._connected = False
 
     def parse_config(self, cfg):
         return parse(cfg, indent=1)
@@ -140,6 +149,5 @@ def get_module(**kwargs):
     if not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
-    module.connect()
     return module
 
