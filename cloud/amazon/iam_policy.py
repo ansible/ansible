@@ -184,7 +184,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
   except boto.exception.BotoServerError as e:
     if e.error_code == "NoSuchEntity":
       # Role doesn't exist so it's safe to assume the policy doesn't either
-      module.exit_json(changed=False)
+      module.exit_json(changed=False, msg="No such role, policy will be skipped.")
     else:
       module.fail_json(msg=e.message)
 
@@ -211,6 +211,8 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
           changed = False
           module.exit_json(changed=changed,
                            msg="%s policy is already absent" % policy_name)
+        else:
+          module.fail_json(msg=err.message)
 
     updated_policies = [cp for cp in iam.list_role_policies(name).
                                         list_role_policies_result.
