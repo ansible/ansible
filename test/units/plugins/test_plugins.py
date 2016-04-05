@@ -75,3 +75,7 @@ class TestErrors(unittest.TestCase):
         #with patch('glob.glob', mock_glob):
         #    pass
 
+    def test_plugin__config(self):
+        config = ['/one', '/two']
+        pl = PluginLoader('test', '', config, 'test_plugin')
+        self.assertEqual(pl.config, config)
