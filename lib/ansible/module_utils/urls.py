@@ -118,6 +118,15 @@ try:
 except ImportError:
     HAS_SSLCONTEXT = False
 
+try:
+    try:
+        from urllib3.contrib.pyopenssl import ssl_wrap_socket
+    except ImportError:
+        from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
+    HAS_URLLIB3_SNI_SUPPORT = True
+except ImportError:
+    HAS_URLLIB3_SNI_SUPPORT = False
+
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
 
@@ -340,6 +349,8 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
 
             if HAS_SSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
+            elif HAS_URLLIB3_SNI_SUPPORT:
+                self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL, server_hostname=server_hostname)
             else:
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
@@ -607,6 +618,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
+                    elif HAS_URLLIB3_SNI_SUPPORT:
+                        ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
@@ -616,6 +629,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
                 s.connect((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
+                elif HAS_URLLIB3_SNI_SUPPORT:
+                    ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                 else:
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                     match_hostname(ssl_s.getpeercert(), self.hostname)
@@ -631,13 +646,27 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     ' Make sure your managed systems have a valid CA'
                     ' certificate installed.  If the website serving the url'
                     ' uses SNI you need python >= 2.7.9 on your managed'
-                    ' machine.  You can use validate_certs=False if you do'
+                    ' machine or you can install `urllib3`, `pyopenssl`,'
+                    ' `ndg-httpsclient`, and `pyasn1` to perform SNI'
+                    ' verification in python >= 2.6.  You can use'
+                    ' validate_certs=False if you do'
                     ' not need to confirm the server\s identity but this is'
                     ' unsafe and not recommended'
                     ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
                 )
         except CertificateError:
-            raise SSLValidationError("SSL Certificate does not belong to %s.  Make sure the url has a certificate that belongs to it or use validate_certs=False (insecure)" % self.hostname)
+            raise SSLValidationError('Failed to validate the SSL certificate for %s:%s.'
+                ' Make sure your managed systems have a valid CA'
+                ' certificate installed.  If the website serving the url'
+                ' uses SNI you need python >= 2.7.9 on your managed'
+                ' machine or you can install `urllib3`, `pyopenssl`,'
+                ' `ndg-httpsclient`, and `pyasn1` to perform SNI'
+                ' verification in python >= 2.6.  You can use'
+                ' validate_certs=False if you do'
+                ' not need to confirm the server\s identity but this is'
+                ' unsafe and not recommended'
+                ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
+            )
 
         try:
             # cleanup the temp file created, don't worry
