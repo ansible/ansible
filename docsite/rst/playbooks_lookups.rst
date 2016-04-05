@@ -135,9 +135,10 @@ appears exactly once in column 0 (the first column, 0-indexed) of the table. All
 Field        Default        Description
 ----------   ------------   -----------------------------------------------------------------------------------------
 file         ansible.csv    Name of the file to load
-delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
 col          1              The column to output, indexed by 0
-default      empty string   return value if the key is not in the csv file
+delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
+default      empty string   Default return value if the key is not in the csv file
+encoding     utf-8          Encoding (character set) of the used CSV file (added in version 2.1)
 ==========   ============   =========================================================================================
 
 .. note:: The default delimiter is TAB, *not* comma.
