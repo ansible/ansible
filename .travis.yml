@@ -11,6 +11,7 @@ matrix:
     - env: TARGET=fedora-rawhide TARGET_OPTIONS="--volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
     - env: TARGET=ubuntu1204
     - env: TARGET=ubuntu1404
+    - env: TARGET=build
     - env: TARGET=sanity TOXENV=py26
       python: 2.6
     - env: TARGET=sanity TOXENV=py27
