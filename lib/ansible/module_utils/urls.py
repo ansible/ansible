@@ -487,6 +487,33 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     return RedirectHandler
 
 
+def build_ssl_validation_error(hostname, port, paths):
+    '''Inteligently build out the SSLValidationError based on what support
+    you have installed
+    '''
+
+    msg = [
+        ('Failed to validate the SSL certificate for %s:%s.'
+         ' Make sure your managed systems have a valid CA'
+         ' certificate installed.')
+    ]
+    if not HAS_SSLCONTEXT:
+        msg.append('If the website serving the url uses SNI you need'
+                   ' python >= 2.7.9 on your managed machine')
+        if not HAS_URLLIB3_SNI_SUPPORT:
+            msg.append('or you can install the `urllib3`, `pyopenssl`,'
+                       ' `ndg-httpsclient`, and `pyasn1` python modules')
+
+        msg.append('to perform SNI verification in python >= 2.6.')
+
+    msg.append('You can use validate_certs=False if you do'
+               ' not need to confirm the servers identity but this is'
+               ' unsafe and not recommended.'
+               ' Paths checked for this platform: %s')
+
+    raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
+
+
 class SSLValidationHandler(urllib2.BaseHandler):
     '''
     A custom handler class for SSL validation.
@@ -642,31 +669,9 @@ class SSLValidationHandler(urllib2.BaseHandler):
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
             else:
-                raise SSLValidationError('Failed to validate the SSL certificate for %s:%s.'
-                    ' Make sure your managed systems have a valid CA'
-                    ' certificate installed.  If the website serving the url'
-                    ' uses SNI you need python >= 2.7.9 on your managed'
-                    ' machine or you can install `urllib3`, `pyopenssl`,'
-                    ' `ndg-httpsclient`, and `pyasn1` to perform SNI'
-                    ' verification in python >= 2.6.  You can use'
-                    ' validate_certs=False if you do'
-                    ' not need to confirm the server\s identity but this is'
-                    ' unsafe and not recommended'
-                    ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
-                )
+                build_ssl_validation_error(self.hostname, self.port, paths_checked)
         except CertificateError:
-            raise SSLValidationError('Failed to validate the SSL certificate for %s:%s.'
-                ' Make sure your managed systems have a valid CA'
-                ' certificate installed.  If the website serving the url'
-                ' uses SNI you need python >= 2.7.9 on your managed'
-                ' machine or you can install `urllib3`, `pyopenssl`,'
-                ' `ndg-httpsclient`, and `pyasn1` to perform SNI'
-                ' verification in python >= 2.6.  You can use'
-                ' validate_certs=False if you do'
-                ' not need to confirm the server\s identity but this is'
-                ' unsafe and not recommended'
-                ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
-            )
+            build_ssl_validation_error(self.hostname, self.port, paths_checked)
 
         try:
             # cleanup the temp file created, don't worry
