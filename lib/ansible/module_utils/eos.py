@@ -194,16 +194,15 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS:
-                if params.get(key) is None and value is not None:
-                    params[key] = value
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
         for key, env_var in NET_ENV_ARGS.items():
-            if params.get(key) is None and env_var in os.environ:
-                params[key] = os.environ[env_var]
-        return params
+            if self.params.get(key) is None and env_var in os.environ:
+                self.params[key] = os.environ[env_var]
 
     def connect(self):
         try:
