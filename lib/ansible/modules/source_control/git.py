@@ -706,6 +706,7 @@ def main():
     if not dest and allow_clone:
         module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
+        dest = os.path.abspath(dest)
         if bare:
             gitconfig = os.path.join(dest, 'config')
         else:
