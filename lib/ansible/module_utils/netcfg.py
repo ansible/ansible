@@ -96,9 +96,10 @@ def parse(lines, indent, comment_tokens=None):
 
 class NetworkConfig(object):
 
-    def __init__(self, indent=None, contents=None):
+    def __init__(self, indent=None, contents=None, device_os=None):
         self.indent = indent or 1
         self._config = list()
+        self._device_os = device_os
 
         if contents:
             self.load(contents)
@@ -225,6 +226,9 @@ class NetworkConfig(object):
                         updates.extend(config)
                         break
 
+        if self._device_os == 'junos':
+            return updates
+
         diffs = dict()
         for update in updates:
             if replace == 'block' and update.parents:
@@ -278,8 +282,9 @@ class Conditional(object):
         'contains': ['contains']
     }
 
-    def __init__(self, conditional):
+    def __init__(self, conditional, encoding='json'):
         self.raw = conditional
+        self.encoding = encoding
 
         key, op, val = shlex.split(conditional)
         self.key = key
@@ -287,11 +292,8 @@ class Conditional(object):
         self.value = self._cast_value(val)
 
     def __call__(self, data):
-        try:
-            value = self.get_value(dict(result=data))
-            return self.func(value)
-        except Exception:
-            raise ValueError(self.key)
+        value = self.get_value(dict(result=data))
+        return self.func(value)
 
     def _cast_value(self, value):
         if value in BOOLEANS_TRUE:
@@ -312,6 +314,33 @@ class Conditional(object):
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
+        if self.encoding in ['json', 'text']:
+            return self.get_json(result)
+        elif self.encoding == 'xml':
+            return self.get_xml(result.get('result'))
+
+    def get_xml(self, result):
+        parts = self.key.split('.')
+
+        value_index = None
+        match = re.match(r'^\S+(\[)(\d+)\]', parts[-1])
+        if match:
+            start, end = match.regs[1]
+            parts[-1] = parts[-1][0:start]
+            value_index = int(match.group(2))
+
+        path = '/'.join(parts[1:])
+        path = '/%s' % path
+        path += '/text()'
+
+        index = int(re.match(r'result\[(\d+)\]', parts[0]).group(1))
+        values = result[index].xpath(path)
+
+        if value_index is not None:
+            return values[value_index].strip()
+        return [v.strip() for v in values]
+
+    def get_json(self, result):
         parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
         for part in parts:
             match = re.findall(r'\[(\S+?)\]', part)
