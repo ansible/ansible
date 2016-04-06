@@ -212,14 +212,15 @@ class TestActionBase(unittest.TestCase):
 
         # test python module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))) as m:
-            mock_task.args = dict(a=1, foo='fö〩')
-            mock_connection.module_implementation_preferences = ('',)
-            (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
-            self.assertEqual(style, "new")
-            self.assertEqual(shebang, b"#!/usr/bin/python")
+            with patch.object(os, 'rename') as m:
+                mock_task.args = dict(a=1, foo='fö〩')
+                mock_connection.module_implementation_preferences = ('',)
+                (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
+                self.assertEqual(style, "new")
+                self.assertEqual(shebang, b"#!/usr/bin/python")
 
-            # test module not found
-            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+                # test module not found
+                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
 
         # test powershell module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))) as m:

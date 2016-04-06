@@ -33,6 +33,7 @@ from ansible import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.plugins.strategy import action_write_locks
 
 try:
     from __main__ import display
@@ -275,7 +276,11 @@ def _get_facility(task_vars):
         facility = task_vars['ansible_syslog_facility']
     return facility
 
-def meta_finder(data, snippet_names, snippet_data, zf):
+def recursive_finder(data, snippet_names, snippet_data, zf):
+    """
+    Using ModuleDepFinder, make sure we have all of the module_utils files that
+    the module its module_utils files needs.
+    """
     tree = ast.parse(data)
     finder = ModuleDepFinder()
     finder.visit(tree)
@@ -290,7 +295,7 @@ def meta_finder(data, snippet_names, snippet_data, zf):
     snippet_names.update(new_snippets)
 
     for snippet_name in tuple(new_snippets):
-        meta_finder(snippet_data[snippet_name], snippet_names, snippet_data, zf)
+        recursive_finder(snippet_data[snippet_name], snippet_names, snippet_data, zf)
         del snippet_data[snippet_name]
 
 def _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression):
@@ -350,23 +355,61 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         except AttributeError:
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
-        zipoutput = BytesIO()
-        zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-        zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
-        zf.writestr('ansible/module_utils/__init__.py', b'')
-        zf.writestr('ansible/module_exec/__init__.py', b'')
 
-        zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
-        zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, module_data)
+        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ziploader_cache')
+        if not os.path.exists(lookup_path):
+            os.mkdir(lookup_path)
+        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
 
-        snippet_data = dict()
-        meta_finder(module_data, snippet_names, snippet_data, zf)
-        zf.close()
+        zipdata = None
+        # Optimization -- don't lock if the module has already been cached
+        if os.path.exists(cached_module_filename):
+            zipdata = open(cached_module_filename, 'rb').read()
+            # Fool the check later... I think we should just remove the check
+            snippet_names.add('basic')
+        else:
+            with action_write_locks[module_name]:
+                # Check that no other process has created this while we were
+                # waiting for the lock
+                if not os.path.exists(cached_module_filename):
+                    # Create the module zip data
+                    zipoutput = BytesIO()
+                    zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
+                    zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
+                    zf.writestr('ansible/module_utils/__init__.py', b'')
+                    zf.writestr('ansible/module_exec/__init__.py', b'')
+
+                    zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
+                    zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, module_data)
+
+                    snippet_data = dict()
+                    recursive_finder(module_data, snippet_names, snippet_data, zf)
+                    zf.close()
+                    zipdata = base64.b64encode(zipoutput.getvalue())
+
+                    # Write the assembled module to a temp file (write to temp
+                    # so that no one looking for the file reads a partially
+                    # written file)
+                    with open(cached_module_filename + '-part', 'w') as f:
+                        f.write(zipdata)
+
+                    # Rename the file into its final position in the cache so
+                    # future users of this module can read it off the
+                    # filesystem instead of constructing from scratch.
+                    os.rename(cached_module_filename + '-part', cached_module_filename)
+
+            if zipdata is None:
+                # Another process wrote the file while we were waiting for
+                # the write lock.  Go ahead and read the data from disk
+                # instead of re-creating it.
+                zipdata = open(cached_module_filename, 'rb').read()
+                # Fool the check later... I think we should just remove the check
+                snippet_names.add('basic')
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
         output.write(to_bytes(STRIPPED_ZIPLOADER_TEMPLATE % dict(
-            zipdata=base64.b64encode(zipoutput.getvalue()),
+            zipdata=zipdata,
             ansible_module=module_name,
             args=python_repred_args,
             constants=python_repred_constants,
@@ -450,17 +493,6 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     which results in the inclusion of the common code from powershell.ps1
 
     """
-    ### TODO: Optimization ideas if this code is actually a source of slowness:
-    # * Fix comment stripping: Currently doesn't preserve shebangs and encoding info (but we unconditionally add encoding info)
-    # * Use pyminifier if installed
-    # * comment stripping/pyminifier needs to have config setting to turn it
-    #   off for debugging purposes (goes along with keep remote but should be
-    #   separate otherwise users wouldn't be able to get info on what the
-    #   minifier output)
-    # * Only split into lines and recombine into strings once
-    # * Cache the modified module?  If only the args are different and we do
-    #   that as the last step we could cache all the work up to that point.
-
     with open(module_path, 'rb') as f:
 
         # read in the module source
