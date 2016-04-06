@@ -20,6 +20,9 @@
 import re
 import collections
 import itertools
+import shlex
+
+from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 
@@ -105,7 +108,7 @@ class NetworkConfig(object):
         return self._config
 
     def __str__(self):
-        config = dict()
+        config = collections.OrderedDict()
         for item in self._config:
             self.expand(item, config)
         return '\n'.join(self.flatten(config))

@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+import re
+
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import parse
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
@@ -116,8 +124,6 @@ class Nxapi(object):
             msg = 'invalid command_type, received %s, exceped one of %s' % \
                     (command_type, ','.join(NXAPI_COMMAND_TYPES))
             self.module_fail_json(msg=msg)
-
-        debug = dict()
 
         data = self._get_body(clist, command_type, encoding)
         data = self.module.jsonify(data)

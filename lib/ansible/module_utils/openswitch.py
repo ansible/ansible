@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import re
 import time
 import json
 
@@ -27,6 +28,11 @@ try:
     HAS_OPS = True
 except ImportError:
     HAS_OPS = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 

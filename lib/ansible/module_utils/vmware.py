@@ -25,7 +25,7 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
