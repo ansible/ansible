@@ -125,42 +125,7 @@ def get_config(module):
         config = module.config
     return config
 
-def main():
-    """ main entry point for module execution
-    """
-
-    argument_spec = dict(
-        src=dict(required=True),
-        force=dict(default=False, type='bool'),
-        include_defaults=dict(default=False, type='bool'),
-        backup=dict(default=False, type='bool'),
-        replace=dict(default=False, type='bool'),
-        config=dict()
-    )
-
-    mutually_exclusive = [('config', 'backup'), ('config', 'force')]
-
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
-                        supports_check_mode=True)
-
-    replace = module.params['replace']
-
-    result = dict(changed=False)
-
-    candidate = NetworkConfig(contents=module.params['src'], indent=3)
-
-    contents = get_config(module)
-    if contents:
-        config = NetworkConfig(contents=contents, indent=3)
-        result['_backup'] = contents
-
-
-    if not module.params['force']:
-        commands = candidate.difference(config)
-    else:
-        commands = str(candidate).split('\n')
-
+def filter_exit(commands):
     # Filter out configuration mode commands followed immediately by an
     # exit command indented by one level only, e.g.
     #     - route-map map01 permit 10
@@ -182,16 +147,56 @@ def main():
         temp.append(c)
         ind_prev = ind_this
         count += 1
+    return temp
 
-    commands = temp
+def main():
+    """ main entry point for module execution
+    """
+
+    argument_spec = dict(
+        src=dict(required=True),
+        force=dict(default=False, type='bool'),
+        include_defaults=dict(default=False, type='bool'),
+        backup=dict(default=False, type='bool'),
+        replace=dict(default=False, type='bool'),
+        config=dict()
+    )
+
+    mutually_exclusive = [('config', 'backup'), ('config', 'force')]
+
+    module = get_module(argument_spec=argument_spec,
+                        mutually_exclusive=mutually_exclusive,
+                        supports_check_mode=True)
+
+    replace = module.params['replace']
+
+    commands = list()
+    running = None
+
+    result = dict(changed=False)
+
+    candidate = NetworkConfig(contents=module.params['src'], indent=3)
+
+    if replace:
+        if module.params['transport'] == 'cli':
+            module.fail_json(msg='config replace is only supported over eapi')
+        commands = str(candidate).split('\n')
+    else:
+        contents = get_config(module)
+        if contents:
+            running = NetworkConfig(contents=contents, indent=3)
+            result['_backup'] = contents
+
+        if not module.params['force']:
+            commands = candidate.difference((running or list()))
+        else:
+            commands = str(candidate).split('\n')
 
     if commands:
+        commands = filter_exit(commands)
         if not module.check_mode:
             commands = [str(c).strip() for c in commands]
-            if replace:
-                response = module.config_replace(commands)
-            else:
-                response = module.configure(commands)
+            response = module.configure(commands, replace=replace)
             result['responses'] = response
         result['changed'] = True
 
