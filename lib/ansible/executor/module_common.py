@@ -61,6 +61,12 @@ import os
 import sys
 import base64
 import tempfile
+import subprocess
+
+if sys.version_info < (3,):
+    bytes = str
+else:
+    unicode = str
 
 ZIPDATA = """%(zipdata)s"""
 
@@ -93,9 +99,20 @@ def debug(command, zipped_mod):
                 f.close()
         print('Module expanded into: %%s' %% os.path.join(basedir, 'ansible'))
     elif command == 'execute':
-        sys.path.insert(0, basedir)
-        from ansible.module_exec.%(ansible_module)s.__main__ import main
-        main()
+        pythonpath = os.environ.get('PYTHONPATH')
+        if pythonpath:
+            os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
+        else:
+            os.environ['PYTHONPATH'] = basedir
+        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        if not isinstance(stderr, (bytes, unicode)):
+            stderr = stderr.read()
+        if not isinstance(stdout, (bytes, unicode)):
+            stdout = stdout.read()
+        sys.stderr.write(stderr)
+        sys.stdout.write(stdout)
+        sys.exit(p.returncode)
 
 os.environ['ANSIBLE_MODULE_ARGS'] = %(args)s
 os.environ['ANSIBLE_MODULE_CONSTANTS'] = %(constants)s
@@ -106,9 +123,21 @@ try:
     if len(sys.argv) == 2:
         debug(sys.argv[1], temp_path)
     else:
-        sys.path.insert(0, temp_path)
-        from ansible.module_exec.%(ansible_module)s.__main__ import main
-        main()
+        pythonpath = os.environ.get('PYTHONPATH')
+        if pythonpath:
+            os.environ['PYTHONPATH'] = ':'.join((temp_path, pythonpath))
+        else:
+            os.environ['PYTHONPATH'] = temp_path
+        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        if not isinstance(stderr, (bytes, unicode)):
+            stderr = stderr.read()
+        if not isinstance(stdout, (bytes, unicode)):
+            stdout = stdout.read()
+        sys.stderr.write(stderr)
+        sys.stdout.write(stdout)
+        sys.exit(p.returncode)
+
 finally:
     try:
         os.close(temp_fd)
@@ -150,7 +179,7 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
     interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter)
 
     if interpreter_config not in task_vars:
-        return None
+        return (None, interpreter)
 
     interpreter = task_vars[interpreter_config]
     shebang = u'#!' + interpreter
@@ -158,7 +187,7 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
     if args:
         shebang = shebang + u' ' + u' '.join(args)
 
-    return shebang
+    return (shebang, interpreter)
 
 def _get_facility(task_vars):
     facility = C.DEFAULT_SYSLOG_FACILITY
@@ -247,13 +276,16 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 
         zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, b"\n".join(final_data))
         zf.close()
-        shebang = _get_shebang(u'/usr/bin/python', task_vars) or u'#!/usr/bin/python'
+        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
+        if shebang is None:
+            shebang = u'#!/usr/bin/python'
         output.write(to_bytes(STRIPPED_ZIPLOADER_TEMPLATE % dict(
             zipdata=base64.b64encode(zipoutput.getvalue()),
             ansible_module=module_name,
             args=python_repred_args,
             constants=python_repred_constants,
             shebang=shebang,
+            interpreter=interpreter,
             )))
         module_data = output.getvalue()
 
@@ -356,7 +388,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
             interpreter = args[0]
             interpreter = to_bytes(interpreter)
 
-            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, args[1:]), errors='strict', nonstring='passthru')
+            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, args[1:])[0], errors='strict', nonstring='passthru')
             if new_shebang:
                 lines[0] = shebang = new_shebang
 
