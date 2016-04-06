@@ -159,8 +159,10 @@ class Cli(object):
         key_filename = self.module.params['ssh_keyfile']
 
         try:
-            self.shell = Shell(CLI_PROMPTS_RE, CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+            self.shell = Shell(prompts_re=CLI_PROMPTS_RE,
+                    errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username,
+                    password=password, key_filename=key_filename)
         except Exception, exc:
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
@@ -204,24 +206,30 @@ class NetworkModule(AnsibleModule):
         return params
 
     def connect(self):
-        if self.params['transport'] == 'eapi':
-            self.connection = Eapi(self)
-        else:
-            self.connection = Cli(self)
-
         try:
+            cls = globals().get(str(self.params['transport']).capitalize())
+            self.connection = cls(self)
+
             self.connection.connect()
             self.connection.send('terminal length 0')
 
             if self.params['authorize']:
                 self.connection.authorize()
-
+        except AttributeError, exc:
+            self.fail_json(msg=exc.message)
         except Exception, exc:
             self.fail_json(msg=exc.message)
 
         self._connected = True
 
-    def configure(self, commands):
+    def configure(self, commands, replace=False):
+        if replace:
+            responses = self.config_replace(commands)
+        else:
+            responses = self.config_terminal(commands)
+        return responses
+
+    def config_terminal(self, commands):
         commands = to_list(commands)
         commands.insert(0, 'configure terminal')
         responses = self.execute(commands)
@@ -231,11 +239,10 @@ class NetworkModule(AnsibleModule):
     def config_replace(self, commands):
         if self.params['transport'] == 'cli':
             self.fail_json(msg='config replace only supported over eapi')
-
         cmd = 'configure replace terminal:'
         commands = '\n'.join(to_list(commands))
         command = dict(cmd=cmd, input=commands)
-        self.execute(command)
+        return self.execute(command)
 
     def execute(self, commands, **kwargs):
         try:
