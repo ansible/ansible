@@ -141,7 +141,7 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
 
     POST_URL = api + NOTIFY_URI_V2
 
-    url = POST_URL.replace('{id_or_name}', room)
+    url = POST_URL.replace('{id_or_name}', urllib.pathname2url(room))
     data = json.dumps(body)
 
     if module.check_mode:
