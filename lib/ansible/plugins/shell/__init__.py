@@ -31,11 +31,15 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 class ShellBase(object):
 
     def __init__(self):
-        self.env = dict(
-            LANG        = C.DEFAULT_MODULE_LANG,
-            LC_ALL      = C.DEFAULT_MODULE_LANG,
-            LC_MESSAGES = C.DEFAULT_MODULE_LANG,
-        )
+        self.env = dict()
+        if C.DEFAULT_MODULE_SET_LOCALE:
+            self.env.update(
+                dict(
+                    LANG        = C.DEFAULT_MODULE_LANG,
+                    LC_ALL      = C.DEFAULT_MODULE_LANG,
+                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                )
+            )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()

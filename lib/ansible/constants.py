@@ -140,6 +140,7 @@ DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,   
 DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, integer=True)
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      os.getenv('LANG', 'en_US.UTF-8'))
+DEFAULT_MODULE_SET_LOCALE = get_config(p, DEFAULTS, 'module_set_locale','ANSIBLE_MODULE_SET_LOCALE',True, boolean=True)
 DEFAULT_MODULE_COMPRESSION= get_config(p, DEFAULTS, 'module_compression', None, 'ZIP_DEFLATED')
 DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, integer=True)
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, integer=True)
