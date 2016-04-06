@@ -211,6 +211,13 @@ options:
         sctp."
     required: false
     default: null
+  to_destination:
+    version_added: "2.1"
+    description:
+      - "This specifies a destination address to use with DNAT: without
+        this, the destination address is never altered."
+    required: false
+    default: null
   set_dscp_mark:
     version_added: "2.1"
     description:
@@ -313,6 +320,7 @@ def construct_rule(params):
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
     append_param(rule, params['jump'], '-j', False)
+    append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['goto'], '-g', False)
     append_param(rule, params['in_interface'], '-i', False)
     append_param(rule, params['out_interface'], '-o', False)
@@ -372,6 +380,7 @@ def main():
             protocol=dict(required=False, default=None, type='str'),
             source=dict(required=False, default=None, type='str'),
             destination=dict(required=False, default=None, type='str'),
+            to_destination=dict(required=False, default=None, type='str'),
             match=dict(required=False, default=[], type='list'),
             jump=dict(required=False, default=None, type='str'),
             goto=dict(required=False, default=None, type='str'),
