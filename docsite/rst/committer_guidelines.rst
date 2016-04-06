@@ -80,4 +80,6 @@ Individuals who've been asked to become a part of this group have generally been
 * Graham Mainwaring
 * Jon Davila
 * Chris Houseknecht
+* Trond Hindenes
+* Jon Hawkesworth
 
