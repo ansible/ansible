@@ -48,7 +48,7 @@ REPLACER_SELINUX  = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
-ENCODING_STRING = b'# -*- coding: utf-8 -*-'
+ENCODING_STRING = u'# -*- coding: utf-8 -*-'
 
 # we've moved the module_common relative to the snippets, so fix the path
 _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
@@ -56,7 +56,7 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 # ******************************************************************************
 
 ZIPLOADER_TEMPLATE = u'''%(shebang)s
-# -*- coding: utf-8 -*-'
+%(coding)s
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -333,6 +333,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             constants=python_repred_constants,
             shebang=shebang,
             interpreter=interpreter,
+            coding=ENCODING_STRING,
             )))
         module_data = output.getvalue()
 
@@ -440,7 +441,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
                 lines[0] = shebang = new_shebang
 
             if os.path.basename(interpreter).startswith(b'python'):
-                lines.insert(1, ENCODING_STRING)
+                lines.insert(1, to_bytes(ENCODING_STRING))
         else:
             # No shebang, assume a binary module?
             pass
