@@ -1376,7 +1376,7 @@ class AnsibleModule(object):
 
     def _check_type_path(self, value):
         value = self._check_type_str(value)
-        return os.path.expanduser(os.path.expandvars(value))
+        return os.path.abspath(os.path.expanduser(os.path.expandvars(value)))
 
     def _check_type_raw(self, value):
         return value
