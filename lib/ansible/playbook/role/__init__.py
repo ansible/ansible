@@ -200,21 +200,26 @@ class Role(Base, Become, Conditional, Taggable):
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-    def _load_role_yaml(self, subdir):
-        file_path = os.path.join(self._role_path, subdir)
+    def _load_role_yaml(self, item):
+        # try to find enclosed file (like 'tasks/main.yml')
+        file_path = os.path.join(self._role_path, item)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             main_file = self._resolve_main(file_path)
             if self._loader.path_exists(main_file):
                 return self._loader.load_from_file(main_file)
+        # try to find not folded file (like 'tasks.yml')
+        main_file = self._resolve_main(self._role_path, filename=item)
+        if self._loader.path_exists(main_file):
+            return self._loader.load_from_file(main_file)
         return None
 
-    def _resolve_main(self, basepath):
+    def _resolve_main(self, basepath, filename='main'):
         ''' flexibly handle variations in main filenames '''
         possible_mains = (
-            os.path.join(basepath, 'main.yml'),
-            os.path.join(basepath, 'main.yaml'),
-            os.path.join(basepath, 'main.json'),
-            os.path.join(basepath, 'main'),
+            os.path.join(basepath, '%s.yml' % filename),
+            os.path.join(basepath, '%s.yaml' % filename),
+            os.path.join(basepath, '%s.json' % filename),
+            os.path.join(basepath, '%s' % filename),
         )
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
