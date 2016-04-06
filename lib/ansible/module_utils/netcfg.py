@@ -108,7 +108,7 @@ class NetworkConfig(object):
         return self._config
 
     def __str__(self):
-        config = dict()
+        config = collections.OrderedDict()
         for item in self._config:
             self.expand(item, config)
         return '\n'.join(self.flatten(config))
