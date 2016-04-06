@@ -197,13 +197,12 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                if not params.get(key) and value is not None:
-                    params[key] = value
-        return params
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
 
     def connect(self):
         if self.params['transport'] == 'nxapi':
