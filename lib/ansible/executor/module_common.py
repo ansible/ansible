@@ -104,7 +104,7 @@ def debug(command, zipped_mod):
             os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
         else:
             os.environ['PYTHONPATH'] = basedir
-        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
         if not isinstance(stderr, (bytes, unicode)):
             stderr = stderr.read()
@@ -128,7 +128,7 @@ try:
             os.environ['PYTHONPATH'] = ':'.join((temp_path, pythonpath))
         else:
             os.environ['PYTHONPATH'] = temp_path
-        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
         if not isinstance(stderr, (bytes, unicode)):
             stderr = stderr.read()
