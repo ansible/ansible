@@ -49,6 +49,8 @@ class TestVariableManager(unittest.TestCase):
             del vars['vars']
         if 'ansible_version' in vars:
             del vars['ansible_version']
+        if 'ansible_check_mode' in vars:
+            del vars['ansible_check_mode']
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 
