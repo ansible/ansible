@@ -295,6 +295,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         If the become_user is unprivileged and different from the
         remote_user then we need to make the files we've uploaded readable by them.
         """
+        if self._connection._shell.SHELL_FAMILY == 'powershell':
+            # This won't work on Powershell as-is, so we'll just completely skip until
+            # we have a need for it, at which point we'll have to do something different.
+            return remote_path
+
         if remote_path is None:
             # Sometimes code calls us naively -- it has a var which could
             # contain a path to a tmp dir but doesn't know if it needs to
