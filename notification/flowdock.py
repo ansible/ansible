@@ -113,7 +113,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            token=dict(required=True),
+            token=dict(required=True, no_log=True),
             msg=dict(required=True),
             type=dict(required=True, choices=["inbox","chat"]),
             external_user_name=dict(required=False),
