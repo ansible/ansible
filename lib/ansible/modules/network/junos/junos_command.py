@@ -20,32 +20,40 @@ DOCUMENTATION = """
 ---
 module: junos_command
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
-short_description: Execute arbitrary commands on Juniper JUNOS devices
+author: "Peter Sprygada (@privateip)"
+short_description: Execute arbitrary commands on a remote device running Junos
 description:
-  - Netork devices running Juniper JUNOS can execute a variety of commands
-    to display both configuration and state data.  This module will take
-    an ordered set of commands and execute them in JUNOS and return the
-    command results.  It also supports adding conditionals the
-    argument set to force the module to meet a set of criteria before
-    proceeding.
+  - Network devices running the Junos operating system provide a command
+    driven interface both over CLI and RPC.  This module provides an
+    interface to execute commands using these functions and return the
+    results to the Ansible playbook.  In addition, the M(junos_command)
+    module can specify a set of conditionals to be evaluated against the
+    returned output, only returning control to the playbook once the
+    entire set of conditionals has been met.
 extends_documentation_fragment: junos
 options:
   commands:
     description:
-      - The commands to send to the remote JUNOS device over the
-        configured provider.  The resulting output from the command
-        is returned.  If the I(waitfor) argument is provided, the
-        module is not returned until the condition is satisfied or
-        the number of retires as expired.
-    required: true
+      - An ordered set of CLI commands to be executed on the remote
+        device.  The output from the commands is then returned to
+        the playbook in the task results.
+    required: false
+    default: null
+  rpcs:
+    description:
+      - The O(rpcs) argument accepts a list of RPCs to be executed
+        over a netconf session and the results from the RPC execution
+        is return to the playbook via the modules results dictionary.
+    required: false
+    default: null
   waitfor:
     description:
       - Specifies what to evaluate from the output of the command
         and what conditionals to apply.  This argument will cause
-        the task to wait for a particular conditional to be true
-        before moving forward.   If the conditional is not true
-        by the configured retries, the task fails.  See examples.
+        the task to wait for a particular conditional or set of
+        considitonals to be true before moving forward.   If the
+        conditional is not true by the configured retries, the
+        task fails.  See examples.
     required: false
     default: null
   retries:
@@ -64,6 +72,19 @@ options:
         trying the command again.
     required: false
     default: 1
+  format:
+    description:
+      - Configures the encoding scheme to use when serializing output
+        from the device.  This handles how to properly understand the
+        output and apply the conditionals path to the result set.
+    required: false
+    default: 'xml'
+    choices: ['xml', 'text']
+requirements:
+  - junos-eznc
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
@@ -78,10 +99,15 @@ EXAMPLES = """
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0 | display json
+      - show interfaces fxp0
     waitfor:
-      - "result[1].interface-information[0].physical-interface[0].name[0].data
-        eq fxp0"
+      - "result[1].interface-information.physical-interface.name eq fxp0"
+
+- name: collect interface information using rpc
+  junos_command:
+    rpcs:
+      - "get_interface_information interface=em0 media=True"
+      - "get_interface_information interface=fxp0 media=True"
 """
 
 RETURN = """
@@ -97,136 +123,92 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...', '...']]
 
+xml:
+  description: The raw XML reply from the device
+  returned: when format is xml
+  type: list
+  sample: [['...', '...'], ['...', '...']]
+
 failed_conditionals:
   description: the conditionals that failed
   retured: failed
   type: list
   sample: ['...', '...']
 """
-
-import time
 import shlex
-import re
-import json
-import itertools
 
-INDEX_RE = re.compile(r'(\[\d+\])')
+def split(value):
+    lex = shlex.shlex(value)
+    lex.quotes = '"'
+    lex.whitespace_split = True
+    lex.commenters = ''
+    return list(lex)
 
-class Conditional(object):
-
-    OPERATORS = {
-        'eq': ['eq', '=='],
-        'neq': ['neq', 'ne', '!='],
-        'gt': ['gt', '>'],
-        'ge': ['ge', '>='],
-        'lt': ['lt', '<'],
-        'le': ['le', '<='],
-        'contains': ['contains', 'in']
-    }
-
-    def __init__(self, conditional):
-        self.raw = conditional
-
-        key, op, val = shlex.split(conditional)
-        self.key = key
-        self.func = self.func(op)
-        self.value = self._cast_value(val)
-
-    def __call__(self, data):
-        try:
-            value = self.get_value(dict(result=data))
-            return self.func(value)
-        except Exception:
-            raise
-
-    def _cast_value(self, value):
-        if value in BOOLEANS_TRUE:
-            return True
-        elif value in BOOLEANS_FALSE:
-            return False
-        elif re.match(r'^\d+\.d+$', value):
-            return float(value)
-        elif re.match(r'^\d+$', value):
-            return int(value)
+def rpc_args(args):
+    kwargs = dict()
+    args = split(args)
+    name = args.pop(0)
+    for arg in args:
+        key, value = arg.split('=')
+        if str(value).upper() in ['TRUE', 'FALSE']:
+            kwargs[key] = bool(value)
+        elif re.match(r'\d+', value):
+            kwargs[key] = int(value)
         else:
-            return unicode(value)
+            kwargs[key] = str(value)
+    return (name, kwargs)
 
-    def func(self, oper):
-        for func, operators in self.OPERATORS.items():
-            if oper in operators:
-                return getattr(self, func)
-        raise AttributeError('unknown operator: %s' % oper)
+def parse_rpcs(rpcs):
+    parsed = list()
+    for rpc in (rpcs or list()):
+        parsed.append(rpc_args(rpc))
+    return parsed
 
-    def get_value(self, result):
-        for key in self.key.split('.'):
-            match = re.match(r'^(.+)\[(\d+)\]', key)
-            if match:
-                key, index = match.groups()
-                result = result[key][int(index)]
-            else:
-                result = result.get(key)
-        return result
-
-    def number(self, value):
-        if '.' in str(value):
-            return float(value)
+def run_rpcs(module, items, format):
+    response = list()
+    for name, kwargs in items:
+        kwargs['format'] = format
+        result = module.connection.rpc(name, **kwargs)
+        if format == 'text':
+            response.append(result.text)
         else:
-            return int(value)
+            response.append(result)
+    return response
 
-    def eq(self, value):
-        return value == self.value
-
-    def neq(self, value):
-        return value != self.value
-
-    def gt(self, value):
-        return self.number(value) > self.value
-
-    def ge(self, value):
-        return self.number(value) >= self.value
-
-    def lt(self, value):
-        return self.number(value) < self.value
-
-    def le(self, value):
-        return self.number(value) <= self.value
-
-    def contains(self, value):
-        return self.value in value
-
-def parse_response(module, responses):
-    commands = module.params['commands']
-    result = dict(stdout_json=list(), stdout=list(), stdout_lines=list())
-    for cmd, resp in itertools.izip(commands, responses):
-        result['stdout'].append(resp)
-        if cmd.endswith('json'):
-            result['stdout_json'].append(module.jsonify(resp))
-        else:
-            result['stdout_lines'].append(resp.split('\n'))
-    return result
-
-def to_lines(stdout):
+def iterlines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
         yield item
 
 def main():
+    """main entry point for Ansible module
+    """
+
     spec = dict(
         commands=dict(type='list'),
+        rpcs=dict(type='list'),
+        format=dict(default='xml', choices=['text', 'xml']),
         waitfor=dict(type='list'),
         retries=dict(default=10, type='int'),
-        interval=dict(default=1, type='int')
+        interval=dict(default=1, type='int'),
+        transport=dict(default='netconf', choices=['netconf'])
     )
 
+    mutually_exclusive = [('commands', 'rpcs')]
+
     module = get_module(argument_spec=spec,
+                        mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
 
     commands = module.params['commands']
+    rpcs = parse_rpcs(module.params['rpcs'])
 
+    encoding = module.params['format']
     retries = module.params['retries']
     interval = module.params['interval']
+
 
     try:
         queue = set()
@@ -238,15 +220,18 @@ def main():
     result = dict(changed=False)
 
     while retries > 0:
-        try:
-            response = module.execute(commands)
-            result['stdout'] = response
-        except ShellError:
-            module.fail_json(msg='failed to run commands')
+        if commands:
+            response = module.run_commands(commands, format=encoding)
+        else:
+            response = run_rpcs(module, rpcs, format=encoding)
 
-        for index, cmd in enumerate(commands):
-            if cmd.endswith('json'):
-                response[index] = json.loads(response[index])
+        result['stdout'] = response
+        xmlout = list()
+
+        for index in range(0, len(response)):
+            if encoding == 'xml':
+                xmlout.append(xml_to_string(response[index]))
+                response[index] = xml_to_json(response[index])
 
         for item in list(queue):
             if item(response):
@@ -261,13 +246,17 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result['stdout_lines'] = list(to_lines(result['stdout']))
-    return module.exit_json(**result)
+    if xmlout:
+        result['xml'] = xmlout
+
+    result['stdout_lines'] = list(iterlines(result['stdout']))
+    module.exit_json(**result)
 
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
+from ansible.module_utils.netcfg import *
 from ansible.module_utils.junos import *
+
 if __name__ == '__main__':
-        main()
+    main()
 
