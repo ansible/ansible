@@ -103,7 +103,7 @@ class Inventory(object):
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
         # empty: in this case we will subsequently an the implicit 'localhost' to it.
 
-        ungrouped = Group(name='ungrouped')
+        ungrouped = Group('ungrouped')
         all = Group('all')
         all.add_child_group(ungrouped)
 
@@ -138,11 +138,12 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
-        # get group vars from group_vars/ files and vars plugins
-        for group in self.groups.values():
+        # set group vars from group_vars/ files and vars plugins
+        for g in self.groups:
+            group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
-        # get host vars from host_vars/ files and vars plugins
+        # set host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
