@@ -109,6 +109,10 @@ def debug(command, zipped_mod):
     # Okay to use __file__ here because we're running from a kept file
     basedir = os.path.dirname(__file__)
     if command == 'explode':
+        # transform the ZIPDATA into an exploded directory of code and then
+        # print the path to the code.  This is an easy way for people to look
+        # at the code on the remote machine for debugging it in that
+        # environment
         import zipfile
         z = zipfile.ZipFile(zipped_mod)
         for filename in z.namelist():
@@ -124,8 +128,12 @@ def debug(command, zipped_mod):
                 f = open(dest_filename, 'w')
                 f.write(z.read(filename))
                 f.close()
-        print('Module expanded into: %%s' %% os.path.join(basedir, 'ansible'))
+        print('Module expanded into:')
+        print('%%s' %% os.path.join(basedir, 'ansible'))
     elif command == 'execute':
+        # Execute the exploded code instead of executing the module from the
+        # embedded ZIPDATA.  This allows people to easily run their modified
+        # code on the remote machine to see how changes will affect it.
         pythonpath = os.environ.get('PYTHONPATH')
         if pythonpath:
             os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
@@ -140,6 +148,18 @@ def debug(command, zipped_mod):
         sys.stderr.write(stderr)
         sys.stdout.write(stdout)
         sys.exit(p.returncode)
+    elif command == 'excommunicate':
+        # This attempts to run the module in-process (by importing a main
+        # function and then calling it).  It is not the way ansible generally
+        # invokes the module so it won't work in every case.  It is here to
+        # aid certain debuggers which work better when the code doesn't change
+        # from one process to another but there may be problems that occur
+        # when using this that are only artifacts of how we're invoking here,
+        # not actual bugs (as they don't affect the real way that we invoke
+        # ansible modules)
+        sys.path.insert(0, basedir)
+        from ansible.module_exec.%(ansible_module)s.__main__ import main
+        main()
 
 os.environ['ANSIBLE_MODULE_ARGS'] = %(args)s
 os.environ['ANSIBLE_MODULE_CONSTANTS'] = %(constants)s
