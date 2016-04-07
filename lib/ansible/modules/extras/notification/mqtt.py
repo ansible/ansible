@@ -113,14 +113,14 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             server = dict(default = 'localhost'),
-            port = dict(default = 1883),
+            port = dict(default = 1883, type='int'),
             topic = dict(required = True),
             payload = dict(required = True),
             client_id = dict(default = None),
             qos = dict(default="0", choices=["0", "1", "2"]),
             retain = dict(default=False, type='bool'),
             username = dict(default = None),
-            password = dict(default = None),
+            password = dict(default = None, no_log=True),
         ),
         supports_check_mode=True
     )
