@@ -143,7 +143,10 @@ class InventoryParser(object):
             # applied to the current group.
             elif state == 'vars':
                 (k, v) = self._parse_variable_definition(line)
-                self.groups[groupname].set_variable(k, v)
+                if k != 'ansible_group_priority':
+                    self.groups[groupname].set_variable(k, v)
+                else:
+                    self.groups[groupname].set_priority(v)
 
             # [groupname:children] contains subgroup names that must be
             # added as children of the current group. The subgroup names

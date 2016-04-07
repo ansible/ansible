@@ -24,12 +24,11 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
+#FIXME: make into plugins
 from ansible.inventory.ini import InventoryParser as InventoryINIParser
+from ansible.inventory.yaml import InventoryParser as InventoryYAMLParser
 from ansible.inventory.script import InventoryScript
 
 __all__ = ['get_file_parser']
@@ -53,6 +52,8 @@ def get_file_parser(hostsfile, groups, loader):
     except:
         pass
 
+    #FIXME: make this 'plugin loop'
+    # script
     if loader.is_executable(hostsfile):
         try:
             parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
@@ -62,6 +63,19 @@ def get_file_parser(hostsfile, groups, loader):
                             "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % hostsfile)
             myerr.append(str(e))
 
+    # YAML/JSON
+    if not processed and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
+        try:
+            parser = InventoryYAMLParser(loader=loader, groups=groups, filename=hostsfile)
+            processed = True
+        except Exception as e:
+            if shebang_present and not loader.is_executable(hostsfile):
+                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
+                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+            else:
+                myerr.append(str(e))
+
+    # ini
     if not processed:
         try:
             parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
