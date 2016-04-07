@@ -111,6 +111,13 @@ def load_extra_vars(loader, options):
         extra_vars = combine_vars(extra_vars, data)
     return extra_vars
 
+def load_options_vars(options):
+    options_vars = {}
+    # For now only return check mode, but we can easily return more
+    # options if we need variables for them
+    options_vars['ansible_check_mode'] = options.check
+    return options_vars
+
 def isidentifier(ident):
     """
     Determines, if string is valid Python identifier using the ast module.
