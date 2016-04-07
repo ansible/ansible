@@ -43,7 +43,7 @@ options:
     aliases: []
   data:
     description:
-      - Registry Value Data
+      - Registry Value Data.  Binary data should be expressed as comma separated hex values.  An easy way to generate this is to run regedit.exe and use the 'Export' option to save the registry values to a file.  In the file binary values will look something like this: hex:be,ef,be,ef.  The 'hex:' prefix is optional. 
     required: false
     default: null
     aliases: []
@@ -93,6 +93,15 @@ EXAMPLES = '''
     value: hello
     data: 1337
     datatype: dword
+
+  # Creates Registry Key called MyCompany,
+  # a value within MyCompany Key called "hello", and
+  # binary data for the value "hello" as type "binary".
+  win_regedit:
+    key: HKCU:\Software\MyCompany
+    value: hello
+    data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
+    datatype: binary
 
   # Delete Registry Key MyCompany
   # NOTE: Not specifying a value will delete the root key which means

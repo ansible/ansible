@@ -56,6 +56,45 @@ Function Test-RegistryValueData {
     }
 }
 
+
+# Simplified version of Convert-HexStringToByteArray from
+# https://cyber-defense.sans.org/blog/2010/02/11/powershell-byte-array-hex-convert
+# Expects a hex in the format you get when you run reg.exe export,
+# and converts to a byte array so powershell can modify binary registry entries
+function Convert-RegExportHexStringToByteArray
+{
+    Param (
+     [parameter(Mandatory=$true))] [String] $String
+    )
+
+# remove 'hex:' from the front of the string if present
+$String = $String.ToLower() -replace '^hex\:', ''
+
+#remove whitespace and any other non-hex crud.
+$String = $String.ToLower() -replace '[^a-f0-9\\,x\-\:]',''
+
+# turn commas into colons
+$String = $String -replace ',',':'
+
+#Maybe there's nothing left over to convert...
+if ($String.Length -eq 0) { ,@() ; return }
+
+#Split string with or without colon delimiters.
+if ($String.Length -eq 1)
+{ ,@([System.Convert]::ToByte($String,16)) }
+elseif (($String.Length % 2 -eq 0) -and ($String.IndexOf(":") -eq -1))
+{ ,@($String -split '([a-f0-9]{2})' | foreach-object { if ($_) {[System.Convert]::ToByte($_,16)}}) }
+elseif ($String.IndexOf(":") -ne -1)
+{ ,@($String -split ':+' | foreach-object {[System.Convert]::ToByte($_,16)}) }
+else
+{ ,@() }
+
+}
+
+if($registryDataType -eq "binary" -and $registryData -ne $null) {
+   $registryData = Convert-RegExportHexStringToByteArray($registryData)
+}
+
 if($state -eq "present") {
     if ((Test-Path $registryKey) -and $registryValue -ne $null)
     {
