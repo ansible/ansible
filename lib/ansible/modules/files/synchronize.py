@@ -176,6 +176,8 @@ notes:
      are what was expected.
    - To exclude files and directories from being synchronized, you may add 
      C(.rsync-filter) files to the source directory.
+   - rsync daemon must be up and running with correct permission when using
+     rsync protocol in source or destination path.
 
 
 author: "Timothy Appnel (@tima)"
@@ -184,6 +186,22 @@ author: "Timothy Appnel (@tima)"
 EXAMPLES = '''
 # Synchronization of src on the control machine to dest on the remote hosts
 synchronize: src=some/relative/path dest=/some/absolute/path
+
+# Synchronization using rsync protocol (push)
+synchronize: src=some/relative/path/ dest=rsync://somehost.com/path/
+
+# Synchronization using rsync protocol (pull)
+synchronize: mode=pull src=rsync://somehost.com/path/ dest=/some/absolute/path/
+
+# Synchronization using rsync protocol on delegate host (push)
+synchronize: >
+    src=/some/absolute/path/ dest=rsync://somehost.com/path/
+    delegate_to: delegate.host
+
+# Synchronization using rsync protocol on delegate host (pull)
+synchronize: >
+    mode=pull src=rsync://somehost.com/path/ dest=/some/absolute/path/
+    delegate_to: delegate.host
 
 # Synchronization without any --archive options enabled
 synchronize: src=some/relative/path dest=/some/absolute/path archive=no
@@ -389,10 +407,14 @@ def main():
     if ssh_args:
       ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
-    if dest_port != 22:
-        cmd += " --rsh '%s %s %s -o Port=%s'" % (ssh, private_key, ssh_opts, dest_port)
-    else:
-        cmd += " --rsh '%s %s %s'" % (ssh, private_key, ssh_opts)  # need ssh param
+    if source.startswith('rsync://') and dest.startswith('rsync://'):
+        module.fail_json(msg='either src or dest must be a localhost', rc=1)
+
+    if not source.startswith('rsync://') and not dest.startswith('rsync://'):
+        if dest_port != 22:
+            cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
+        else:
+            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)  # need ssh param
 
     if rsync_path:
         cmd = cmd + " --rsync-path=%s" % (rsync_path)
