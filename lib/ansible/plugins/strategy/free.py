@@ -148,7 +148,7 @@ class StrategyModule(StrategyBase):
                 if last_host == starting_host:
                     break
 
-            results = self._wait_on_pending_results(iterator)
+            results = self._process_pending_results(iterator)
             host_results.extend(results)
 
             try:
