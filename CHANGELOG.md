@@ -49,6 +49,10 @@ Ansible Changes By Release
 * Fix lxc_container module having predictable temp file names and setting file
   permissions on the temporary file too leniently on a temporary file that was
   executed as a script.  Addresses CVE-2016-3096
+* Fix a bug in the uri module where setting headers via module params that
+  start with HEADER_ were causing a traceback.
+* Fix bug in the free strategy that was causing it to synchronize its workers
+  after every task (making it a lot more like linear than it should have been).
 
 ## 2.0.1 "Over the Hills and Far Away"
 
