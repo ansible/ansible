@@ -121,6 +121,11 @@ $job_body = {
             $update.AcceptEula()
           }
 
+          if($update.IsHidden) {
+            Write-DebugLog "Skipping hidden update $($update.Title)"
+            continue
+          }
+
           Write-DebugLog "Adding update $($update.Identity.UpdateID) - $($update.Title)"
           $res = $updates_to_install.Add($update)
 
