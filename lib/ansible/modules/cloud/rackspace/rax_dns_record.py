@@ -50,6 +50,7 @@ options:
         record with matching name. If there are already multiple records with
         matching name and overwrite=true, this module will fail.
     default: true
+    version_added: 2.1
   priority:
     description:
       - Required for MX and SRV records, but forbidden for other record types.
