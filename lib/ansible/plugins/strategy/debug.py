@@ -7,7 +7,6 @@ import pprint
 import sys
 
 from ansible.plugins.strategy import linear
-from ansible.plugins.strategy import StrategyBase
 
 try:
     from __main__ import display
@@ -26,13 +25,10 @@ class NextAction(object):
         self.result = result
 
 
-class StrategyModule(linear.StrategyModule, StrategyBase):
-    # Usually inheriting linear.StrategyModule is enough. However, StrategyBase class must be
-    # direct ancestor to be considered as strategy plugin, and so we inherit the class here.
-
+class StrategyModule(linear.StrategyModule):
     def __init__(self, tqm):
         self.curr_tqm = tqm
-        StrategyBase.__init__(self, tqm)
+        super(StrategyModule, self).__init__(tqm)
 
     def _queue_task(self, host, task, task_vars, play_context):
         self.curr_host = host
@@ -40,14 +36,14 @@ class StrategyModule(linear.StrategyModule, StrategyBase):
         self.curr_task_vars = task_vars
         self.curr_play_context = play_context
 
-        StrategyBase._queue_task(self, host, task, task_vars, play_context)
+        super(StrategyModule, self)._queue_task(host, task, task_vars, play_context)
 
     def _process_pending_results(self, iterator, one_pass=False):
         if not hasattr(self, "curr_host"):
-            return StrategyBase._process_pending_results(self, iterator, one_pass)
+            return super(StrategyModule, self)._process_pending_results(iterator, one_pass)
 
         prev_host_state = iterator.get_host_state(self.curr_host)
-        results = StrategyBase._process_pending_results(self, iterator, one_pass)
+        results = super(StrategyModule, self)._process_pending_results(iterator, one_pass)
 
         while self._need_debug(results):
             next_action = NextAction()
@@ -64,8 +60,8 @@ class StrategyModule(linear.StrategyModule, StrategyBase):
                     self._tqm._stats.dark[self.curr_host.name] -= 1
 
                 # redo
-                StrategyBase._queue_task(self, self.curr_host, self.curr_task, self.curr_task_vars, self.curr_play_context)
-                results = StrategyBase._process_pending_results(self, iterator, one_pass)
+                super(StrategyModule, self)._queue_task(self.curr_host, self.curr_task, self.curr_task_vars, self.curr_play_context)
+                results = super(StrategyModule, self)._process_pending_results(iterator, one_pass)
             elif next_action.result == NextAction.CONTINUE:
                 break
             elif next_action.result == NextAction.EXIT:
