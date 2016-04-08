@@ -40,6 +40,9 @@ Ansible Changes By Release
 - yum_repository
 
 
+####New Strategies:
+* debug
+
 ####New Filters:
 * extract
 * ip4_hex
