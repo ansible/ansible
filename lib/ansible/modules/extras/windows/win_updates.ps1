@@ -280,7 +280,7 @@ Function DestroyScheduledJob {
       $running_tasks = @($schedserv.GetRunningTasks(0) | Where-Object { $_.Name -eq $job_name })
 
       Foreach($task_to_stop in $running_tasks) {
-          Write-DebugLog "Stopping running task $($task_to_stop.InstanceId)..."
+          Write-DebugLog "Stopping running task $($task_to_stop.InstanceGuid)..."
           $task_to_stop.Stop()
       }
 
