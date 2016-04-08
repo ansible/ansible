@@ -7,7 +7,10 @@ from multiprocessing import Process, Manager, Pipe, RLock
 
 from ansible.playbook.play import Play
 from ansible.playbook.task import Task
-from ansible.utils.debug import debug
+
+from ansible.utils.display import Display
+display = Display()
+debug = display.debug
 
 NUM_WORKERS = 50
 NUM_HOSTS   = 2500

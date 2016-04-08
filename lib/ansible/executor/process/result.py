@@ -35,7 +35,12 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.utils.debug import debug
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 __all__ = ['ResultProcess']
 
@@ -57,9 +62,9 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug(u"sending result: %s" % ([text_type(x) for x in result],))
+        display.debug(u"sending result: %s" % ([text_type(x) for x in result],))
         self._final_q.put(result)
-        debug("done sending result")
+        display.debug("done sending result")
 
     def _read_worker_result(self):
         result = None
@@ -72,9 +77,9 @@ class ResultProcess(multiprocessing.Process):
 
             try:
                 if not rslt_q.empty():
-                    debug("worker %d has data to read" % self._cur_worker)
+                    display.debug("worker %d has data to read" % self._cur_worker)
                     result = rslt_q.get()
-                    debug("got a result from worker %d: %s" % (self._cur_worker, result))
+                    display.debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
                 pass

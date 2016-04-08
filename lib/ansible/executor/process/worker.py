@@ -46,9 +46,13 @@ from ansible.executor.task_result import TaskResult
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
-
-from ansible.utils.debug import debug
 from ansible.utils.unicode import to_unicode
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['WorkerProcess']
 
@@ -104,7 +108,7 @@ class WorkerProcess(multiprocessing.Process):
 
         try:
             # execute the task and build a TaskResult from the result
-            debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
             executor_result = TaskExecutor(
                 self._host,
                 self._task,
@@ -116,15 +120,15 @@ class WorkerProcess(multiprocessing.Process):
                 self._rslt_q
             ).run()
 
-            debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
             self._host.vars = dict()
             self._host.groups = []
             task_result = TaskResult(self._host, self._task, executor_result)
 
             # put the result on the result queue
-            debug("sending task result")
+            display.debug("sending task result")
             self._rslt_q.put(task_result)
-            debug("done sending task result")
+            display.debug("done sending task result")
 
         except AnsibleConnectionFailure:
             self._host.vars = dict()
@@ -140,8 +144,8 @@ class WorkerProcess(multiprocessing.Process):
                     task_result = TaskResult(self._host, self._task, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
                 except:
-                    debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
-                    debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
+                    display.debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
 
-        debug("WORKER PROCESS EXITING")
+        display.debug("WORKER PROCESS EXITING")
 
