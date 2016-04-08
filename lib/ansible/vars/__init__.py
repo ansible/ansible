@@ -407,7 +407,7 @@ class VariableManager:
         variables['omit'] = self._omit_token
         variables['ansible_version'] = CLI.version_info(gitinfo=False)
         # Set options vars
-        for option, option_value in self._options_vars.iteritems():
+        for option, option_value in iteritems(self._options_vars):
             variables[option] = option_value
 
         if self._hostvars is not None and include_hostvars:
