@@ -31,7 +31,6 @@ import getpass
 import errno
 from struct import unpack, pack
 from termios import TIOCGWINSZ
-from multiprocessing import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -39,15 +38,21 @@ from ansible.utils.color import stringc
 from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
+    from __main__ import debug_lock
+except ImportError:
+    # for those not using a CLI, though ...
+    # this might not work well after fork
+    from multiprocessing import Lock
+    debug_lock = Lock()
+
+try:
     # Python 2
     input = raw_input
 except NameError:
-    # Python 3
+    # Python 3, we already have raw_input
     pass
 
 
-# These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
-debug_lock = Lock()
 
 logger = None
 #TODO: make this a logging callback instead
