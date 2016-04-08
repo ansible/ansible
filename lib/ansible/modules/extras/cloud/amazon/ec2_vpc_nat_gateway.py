@@ -264,6 +264,7 @@ DRY_RUN_MSGS = 'DryRun Mode:'
 
 def convert_to_lower(data):
     """Convert all uppercase keys in dict with lowercase_
+
     Args:
         data (dict): Dictionary with keys that have upper cases in them
             Example.. FooBar == foo_bar
@@ -758,6 +759,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
             err_msg = str(e)
             success = False
             changed = False
+            result = None
 
     return success, changed, err_msg, result
 
