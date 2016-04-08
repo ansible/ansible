@@ -375,6 +375,7 @@
     that:
       - "win_user_invalid_group_result|failed"
       - "win_user_invalid_group_result.msg"
+      - win_user_invalid_group_result.msg | match("group 'Userz' not found")
 
 - name: remove test user when finished
   win_user: name="{{ test_win_user_name }}" state="absent"
