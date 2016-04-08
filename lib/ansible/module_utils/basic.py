@@ -136,10 +136,10 @@ except ImportError:
     try:
         import simplejson as json
     except ImportError:
-        print('{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
+        print('\n{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
         sys.exit(1)
     except SyntaxError:
-        print('{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
+        print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
 
 HAVE_SELINUX=False
@@ -574,7 +574,7 @@ class AnsibleModule(object):
         except Exception:
             e = get_exception()
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
-            print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
+            print('\n{"failed": true, "msg": "Module alias error: %s"}' % str(e))
             sys.exit(1)
 
         # Save parameter values that should never be logged
@@ -1497,7 +1497,7 @@ class AnsibleModule(object):
             params = json.loads(buffer.decode('utf-8'))
         except ValueError:
             # This helper used too early for fail_json to work.
-            print('{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
+            print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
             sys.exit(1)
 
         if sys.version_info < (3,):
@@ -1508,7 +1508,7 @@ class AnsibleModule(object):
             self.constants = params['ANSIBLE_MODULE_CONSTANTS']
         except KeyError:
             # This helper used too early for fail_json to work.
-            print('{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS and ANSIBLE_MODULE_CONSTANTS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
+            print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS and ANSIBLE_MODULE_CONSTANTS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
             sys.exit(1)
 
     def _log_to_syslog(self, msg):
@@ -1700,7 +1700,7 @@ class AnsibleModule(object):
             kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
-        print(self.jsonify(kwargs))
+        print('\n%s' % self.jsonify(kwargs))
         sys.exit(0)
 
     def fail_json(self, **kwargs):
@@ -1712,7 +1712,7 @@ class AnsibleModule(object):
             kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
-        print(self.jsonify(kwargs))
+        print('\n%s' % self.jsonify(kwargs))
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):
