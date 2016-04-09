@@ -74,16 +74,16 @@ when a term comes up on the mailing list.
     Executor
         A core software component of Ansible that is the power behind
         :command:`/usr/bin/ansible` directly -- and corresponds to the
-        invocation of each task in a :term:`playbook`.  The Executor is
-        something Ansible developers may talk about, but it's not really user
-        land vocabulary.
+        invocation of each task in a :term:`playbook <playbooks>`.  The
+        Executor is something Ansible developers may talk about, but it's not
+        really user land vocabulary.
 
     Facts
         Facts are simply things that are discovered about remote nodes.  While
         they can be used in :term:`playbooks` and templates just like
         variables, facts are things that are inferred, rather than set.  Facts
         are automatically discovered by Ansible when running plays by
-        executing the internal :ref:`setup_module` on the remote nodes.  You
+        executing the internal :ref:`setup module <setup>` on the remote nodes.  You
         never have to call the setup module explicitly, it just runs, but it
         can be disabled to save time if it is not needed or you can tell
         ansible to collect only a subset of the full facts via the
@@ -236,7 +236,7 @@ when a term comes up on the mailing list.
         servers to one particular server.
 
     Local Action
-        A local_action directive in a :term:`playbook <playooks>` targeting
+        A local_action directive in a :term:`playbook <playbooks>` targeting
         remote machines means that the given step will actually occur on the
         local machine, but that the variable ``{{ ansible_hostname }}`` can be
         passed in to reference the remote hostname being referred to in that
@@ -260,7 +260,7 @@ when a term comes up on the mailing list.
         Generally, Ansible is not a programming language. It prefers to be
         more declarative, though various constructs like ``with_items`` allow
         a particular task to be repeated for multiple items in a list.
-        Certain modules, like :ref:`yum` and :ref:`apt`, are actually
+        Certain modules, like :ref:`yum <yum>` and :ref:`apt <apt>`, are actually
         optimized for this, and can install all packages given in those lists
         within a single transaction, dramatically speeding up total time to
         configuration.
@@ -290,7 +290,7 @@ when a term comes up on the mailing list.
     Notify
         The act of a :term:`task <tasks>` registering a change event and
         informing a :term:`handler <handlers>` task that another
-        :term:`action` needs to be run at the end of the :term:`play`.  If
+        :term:`action` needs to be run at the end of the :term:`play <plays>`.  If
         a handler is notified by multiple tasks, it will still be run only
         once.  Handlers are run in the order they are listed, not in the order
         that they are notified.
@@ -361,15 +361,15 @@ when a term comes up on the mailing list.
 
     Resource Model
         Ansible modules work in terms of resources.   For instance, the
-        :ref:`file` module will select a particular file and ensure that the
-        attributes of that resource match a particular model. As an example,
-        we might wish to change the owner of :file:`/etc/motd` to ``root`` if
-        it is not already set to ``root``, or set its mode to ``0644`` if it
-        is not already set to ``0644``.  The resource models are
-        :term:`idempotent` meaning change commands are not run unless needed,
-        and Ansible will bring the system back to a desired state regardless
-        of the actual state -- rather than you having to tell it how to get to
-        the state.
+        :ref:`file module <file>` will select a particular file and ensure
+        that the attributes of that resource match a particular model. As an
+        example, we might wish to change the owner of :file:`/etc/motd` to
+        ``root`` if it is not already set to ``root``, or set its mode to
+        ``0644`` if it is not already set to ``0644``.  The resource models
+        are :term:`idempotent <idempotency>` meaning change commands are not
+        run unless needed, and Ansible will bring the system back to a desired
+        state regardless of the actual state -- rather than you having to tell
+        it how to get to the state.
 
     Roles
         Roles are units of organization in Ansible.  Assigning a role to
@@ -405,8 +405,8 @@ when a term comes up on the mailing list.
         perform many operations wrapped in a sudo command, and can work with
         both password-less and password-based sudo.  Some operations that
         don't normally work with sudo (like scp file transfer) can be achieved
-        with Ansible's :ref:`copy`, :ref:`template`, and :ref:`fetch` modules
-        while running in sudo mode.
+        with Ansible's :ref:`copy <copy>`, :ref:`template <template>`, and
+        :ref:`fetch <fetch>` modules while running in sudo mode.
 
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
