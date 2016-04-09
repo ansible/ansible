@@ -15,18 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 DOCUMENTATION = """
 ---
 module: junos_template
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
-short_description: Manage Juniper JUNOS device configurations
+author: "Peter Sprygada (@privateip)"
+short_description: Manage configuration on remote devices running Junos
 description:
-  - Manages network device configurations over SSH.  This module
-    allows implementors to work with the device configuration.  It
-    provides a way to push a set of commands onto a network device
-    by evaluting the current configuration and only pushing
-    commands that are not already configured.
+  - The M(junos_template) module will load a candidate configuration
+    from a template file onto a remote device running Junos.  The
+    module will return the differences in configuration if the diff
+    option is specified on the Ansible command line
 extends_documentation_fragment: junos
 options:
   src:
@@ -35,17 +35,8 @@ options:
         file with config or a template that will be merged during
         runtime.  By default the task will search for the source
         file in role or playbook root folder in templates directory.
-    required: false
+    required: true
     default: null
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices configuration.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-    required: false
-    default: false
-    choices: [ "true", "false" ]
   backup:
     description:
       - When this argument is configured true, the module will backup
@@ -54,127 +45,128 @@ options:
         the root of the playbook directory.
     required: false
     default: false
-    choices: [ "true", "false" ]
-  config:
+    choices: ["true", "false"]
+  confirm:
     description:
-      - The module, by default, will connect to the remote device and
-        retrieve the current configuration to use as a base for comparing
-        against the contents of source.  There are times when it is not
-        desirable to have the task get the current configuration for
-        every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+      - The C(confirm) argument will configure a time out value for
+        the commit to be confirmed before it is automatically
+        rolled back.  If the C(confirm) argument is set to False, this
+        argument is silently ignored.  If the value for this argument
+        is set to 0, the commit is confirmed immediately.
+    required: false
+    default: 0
+  comment:
+    description:
+      - The C(comment) argument specifies a text string to be used
+        when committing the configuration.  If the C(confirm) argument
+        is set to False, this argument is silently ignored.
+    required: false
+    default: configured by junos_template
+  merge:
+    description:
+      - The C(merge) argument instructs the module to merge the contents
+        of C(src) with the configuration running on the remote device.  If
+        both C(merge) and C(overwrite) are set to false, the configuration
+        is replaced.
+    required: false
+    default: true
+  overwrite:
+    description:
+      - The C(overwrite) argument will overwrite the entire configuration
+        on the remote device with the contents loaded from C(src).  If
+        both C(merge) and C(overwrite) are set to false, the configuration
+        is replaced.
+    required: false
+    default: false
+  config_format:
+    description:
+      - The C(format) argument specifies the format of the configuration
+        template specified in C(src).  If the format argument is not
+        specified, the module will attempt to infer the configuration
+        format based of file extension.  Files that end in I(xml) will set
+        the format to xml.  Files that end in I(set) will set the format
+        to set and all other files will default the format to text.
     required: false
     default: null
+    choices: ['text', 'xml', 'set']
+requirements:
+  - junos-eznc
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
-
-- name: push a configuration onto the device
-  junos_template:
+- junos_template:
     src: config.j2
+    comment: update system config
 
-- name: forceable push a configuration onto the device
-  junos_template:
+- name: replace config hierarchy
     src: config.j2
-    force: yes
+    replace: yes
 
-- name: provide the base configuration for comparision
-  junos_template:
-    src: candidate_config.txt
-    config: current_config.txt
-
+- name: overwrite the config
+    src: config.j2
+    overwrite: yes
 """
 
-RETURN = """
-
-commands:
-  description: The set of commands that will be pushed to the remote device
-  returned: always
-  type: list
-  sample: [...]
-
-"""
-
-def compare(this, other):
-    parents = [item.text for item in this.parents]
-    for entry in other:
-        if this == entry:
-            return None
-    return this
-
-def expand(obj, action='set'):
-    cmd = [action]
-    cmd.extend([p.text for p in obj.parents])
-    cmd.append(obj.text)
-    return ' '.join(cmd)
-
-def flatten(data, obj):
-    for k, v in data.items():
-        obj.append(k)
-        flatten(v, obj)
-    return obj
-
-def to_lines(config):
-    lines = list()
-    for item in config:
-        if item.raw.endswith(';'):
-            line = [p.text for p in item.parents]
-            line.append(item.text)
-            lines.append(' '.join(line))
-    return lines
-
-def get_config(module):
-    config = module.params['config'] or list()
-    if not config and not module.params['force']:
-        config = module.config
-    return config
+DEFAULT_COMMENT = 'configured by junos_template'
 
 def main():
-    """ main entry point for module execution
-    """
 
     argument_spec = dict(
-        src=dict(),
-        force=dict(default=False, type='bool'),
+        src=dict(required=True, type='path'),
+        confirm=dict(default=0, type='int'),
+        comment=dict(default=DEFAULT_COMMENT),
+        merge=dict(default=True, type='bool'),
+        overwrite=dict(default=False, type='bool'),
+        config_format=dict(choices=['text', 'set', 'xml']),
         backup=dict(default=False, type='bool'),
-        config=dict(),
+        transport=dict(default='netconf', choices=['netconf'])
     )
 
-    mutually_exclusive = [('config', 'backup'), ('config', 'force')]
+    mutually_exclusive = [('merge', 'overwrite')]
 
     module = get_module(argument_spec=argument_spec,
                         mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
-    result = dict(changed=False)
+    comment = module.params['comment']
+    confirm = module.params['confirm']
+    commit = not module.check_mode
 
-    parsed = module.parse_config(module.params['src'])
-    commands = to_lines(parsed)
+    merge = module.params['merge']
+    overwrite = module.params['overwrite']
 
-    contents = get_config(module)
-    result['_backup'] = module.config
+    src = module.params['src']
+    fmt = module.params['config_format']
 
-    parsed = module.parse_config(contents)
-    config = to_lines(parsed)
+    if overwrite and fmt == 'set':
+        module.fail_json(msg="overwrite cannot be used when format is "
+            "set per junos documentation")
 
-    candidate = list()
-    for item in commands:
-        if item not in config:
-            candidate.append('set %s' % item)
+    if merge:
+        action = 'merge'
+    elif overwrite:
+        action = 'overwrite'
+    else:
+        action = 'replace'
 
-    if candidate:
-        if not module.check_mode:
-            module.configure(candidate)
-        result['changed'] = True
+    results = dict(changed=False)
+    results['_backup'] = str(module.get_config()).strip()
 
-    result['updates'] = candidate
-    return module.exit_json(**result)
+    diff = module.load_config(src, action=action, comment=comment,
+            format=fmt, commit=commit, confirm=confirm)
+
+    if diff:
+        results['changed'] = True
+        results['diff'] = dict(prepared=diff)
+
+    module.exit_json(**results)
 
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
 from ansible.module_utils.junos import *
+
 if __name__ == '__main__':
     main()
