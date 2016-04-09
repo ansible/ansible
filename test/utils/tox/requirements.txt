@@ -12,3 +12,6 @@ redis
 python-memcached
 python-systemd
 pycrypto
+pyyaml
+six
+requests
