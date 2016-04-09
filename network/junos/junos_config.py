@@ -20,9 +20,12 @@ DOCUMENTATION = """
 ---
 module: junos_config
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
-short_description: Manage Juniper JUNOS configuration sections
+author: "Peter Sprygada (@privateip)"
+short_description: Manage configuration on remote devices running Junos
 description:
+  - The M(junos_config) module provides an abstraction for working
+    with the configuration running on remote devices.  It can perform
+    operations that influence the confiugration state.
   - This module provides an implementation for configuring Juniper
     JUNOS devices.  The configuration statements must start with either
     `set` or `delete` and are compared against the current device
@@ -31,148 +34,208 @@ extends_documentation_fragment: junos
 options:
   lines:
     description:
-      - The ordered set of commands that should be configured in the
-        section.  The commands must be the exact same commands as found
-        in the device config.  Be sure to note the configuration
-        command syntanx as some commands are automatically modified by the
-        device config parser.
-    required: true
-  before:
-    description:
-      - The ordered set of commands to push on to the command stack if
-        a change needs to be made.  This allows the playbook designer
-        the opportunity to perform configuration commands prior to pushing
-        any changes without affecting how the set of commands are matched
-        against the system
+      - The path to the config source.  The source can be either a
+        file with config or a template that will be merged during
+        runtime.  By default the task will search for the source
+        file in role or playbook root folder in templates directory.
     required: false
     default: null
-  after:
+  backup:
     description:
-      - The ordered set of commands to append to the end of the command
-        stack if a changed needs to be made.  Just like with I(before) this
-        allows the playbook designer to append a set of commands to be
-        executed after the command set.
-    required: false
-    default: null
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current device config.  When set to true, this will cause the
-        module to push the contents of I(src) into the device without
-        first checking if already configured.
+      - When this argument is configured true, the module will backup
+        the configuration from the node prior to making any changes.
+        The backup file will be written to backup_{{ hostname }} in
+        the root of the playbook directory.
     required: false
     default: false
-    choices: [ "true", "false" ]
-  config:
+    choices: ["true", "false"]
+  rollback:
     description:
-      - The module, by default, will connect to the remote device and
-        retrieve the current config to use as a base for comparing
-        against the contents of source.  There are times when it is not
-        desirable to have the task get the current running-config for
-        every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+      - The C(rollback) argument instructs the module to rollback the
+        current configuration to the identifier specified in the
+        argument.  If the specified rollback identifier does not
+        exist on the remote device, the module will fail.  To rollback
+        to the most recent commit, set the C(rollback) argument to 0
     required: false
     default: null
+  zeroize:
+    description:
+      - The C(zeroize) argument is used to completely ssantaize the
+        remote device configuration back to initial defaults.  This
+        argument will effectively remove all current configuration
+        statements on the remote device
+    required: false
+    default: null
+  confirm:
+    description:
+      - The C(confirm) argument will configure a time out value for
+        the commit to be confirmed before it is automatically
+        rolled back.  If the C(confirm) argument is set to False, this
+        argument is silently ignored.  If the value for this argument
+        is set to 0, the commit is confirmed immediately.
+    required: false
+    default: 0
+  comment:
+    description:
+      - The C(comment) argument specifies a text string to be used
+        when committing the configuration.  If the C(confirm) argument
+        is set to False, this argument is silently ignored.
+    required: false
+    default: configured by junos_config
+  action:
+    description:
+      - The C(action) argument instructs the module how to load the
+        configuration into the remote device.  When action is set to
+        I(merge) the C(src) template file is merged with the current
+        device configuration.  When the I(replace) action is used,
+        the current device configuration is replaced by the C(src).
+        Finally when C(overwrite) is used, the device configuration will
+        be overwritten.
+    required: true
+    default: merge
+    choices: ['merge', 'replace', 'overwrite']
+  replace:
+    description:
+      - The C(replace) argument will instruct the remote device to
+        replace the current configuration hierarchy with the one specified
+        in the corresponding hierarchy of the source configuraiton loaded
+        from this module.
+    required: true
+    default: false
+  overwrite:
+    description:
+
+  format:
+    description:
+      - The C(format) argument specifies the format of the configuration
+        template specified in C(src).  If the format argument is not
+        specified, the module will attempt to infer the configuration
+        format based of file extension.  Files that end in I(xml) will set
+        the format to xml.  Files that end in I(set) will set the format
+        to set and all other files will default the format to text.
+    required: false
+    default: text
+    choices: ['text', 'xml', 'set']
+requirements:
+  - junos-eznc
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed
 """
 
 EXAMPLES = """
-- junos_config:
-    lines: ['set system host-name {{ inventory_hostname }}']
+- name: load configuration lines in device
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname }}
+      - delete interfaces ge-0/0/0 description
+    comment: update config
+
+- name: rollback the configuration to id 10
+  junos_config:
+    rollback: 10
+
+- name: zero out the current configuration
+  junos_config:
+    zeroize: yes
+
+- name: confirm a candidate configuration
+  junos_config:
 """
 
-RETURN = """
-updates:
-  description: The set of commands that will be pushed to the remote device
-  returned: always
-  type: list
-  sample: ['...', '...']
-
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: always
-  type: list
-  sample: ['...', '...']
-"""
 import re
-import itertools
 
-def get_config(module):
-    config = module.params['config'] or dict()
-    if not config and not module.params['force']:
-        config = module.config
-    return config
+DEFAULT_COMMENT = 'configured by junos_config'
 
-def to_lines(config):
-    lines = list()
-    for item in config:
-        if item.raw.endswith(';'):
-            line = [p.text for p in item.parents]
-            line.append(item.text)
-            lines.append(' '.join(line))
-    return lines
+def diff_config(candidate, config):
 
-def main():
+    updates = set()
 
-    argument_spec = dict(
-        lines=dict(aliases=['commands'], required=True, type='list'),
-        before=dict(type='list'),
-        after=dict(type='list'),
-        force=dict(default=False, type='bool'),
-        config=dict()
-    )
-
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
-
-    lines = module.params['lines']
-
-    before = module.params['before']
-    after = module.params['after']
-
-    contents = get_config(module)
-    parsed = module.parse_config(contents)
-    config = to_lines(parsed)
-
-    result = dict(changed=False)
-
-    candidate = list()
-    for line in lines:
+    for line in candidate:
         parts = line.split()
         action = parts[0]
         cfgline = ' '.join(parts[1:])
 
         if action not in ['set', 'delete']:
             module.fail_json(msg='line must start with either `set` or `delete`')
+
         elif action == 'set' and cfgline not in config:
-            candidate.append(line)
+            updates.add(line)
+
         elif action == 'delete' and not config:
-            candidate.append(line)
+            updates.add(line)
+
         elif action == 'delete':
-            regexp = re.compile(r'^%s$' % cfgline)
             for cfg in config:
-                if regexp.match(cfg):
-                    candidate.append(line)
-                    break
+                if cfg.startswith(cfgline):
+                    updates.add(cfgline)
 
-    if candidate:
-        if before:
-            candidate[:0] = before
+    return list(updates)
 
-        if after:
-            candidate.extend(after)
+def main():
 
+    argument_spec = dict(
+        lines=dict(type='list'),
+        rollback=dict(type='int'),
+        zeroize=dict(default=False, type='bool'),
+        confirm=dict(default=0, type='int'),
+        comment=dict(default=DEFAULT_COMMENT),
+        replace=dict(default=False, type='bool'),
+        transport=dict(default='netconf', choices=['netconf'])
+    )
+
+    mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
+                          ('rollback', 'zeroize')]
+
+    module = get_module(argument_spec=argument_spec,
+                        mutually_exclusive=mutually_exclusive,
+                        supports_check_mode=True)
+
+    rollback = module.params['rollback']
+    zeroize = module.params['zeroize']
+
+    comment = module.params['comment']
+    confirm = module.params['confirm']
+
+    if module.params['replace']:
+        action = 'replace'
+    else:
+        action = 'merge'
+
+    lines = module.params['lines']
+    commit = not module.check_mode
+
+    results = dict(changed=False)
+
+    if lines:
+        config = str(module.get_config(config_format='set')).split('\n')
+        updates = diff_config(lines, config)
+
+        if updates:
+            updates = '\n'.join(updates)
+            diff = module.load_config(updates, action=action, comment=comment,
+                    format='set', commit=commit, confirm=confirm)
+
+            if diff:
+                results['changed'] = True
+                results['diff'] = dict(prepared=diff)
+
+    elif rollback is not None:
+        diff = module.rollback_config(rollback, commit=commit)
+        if diff:
+            results['changed'] = True
+            results['diff'] = dict(prepared=diff)
+
+    elif zeroize:
         if not module.check_mode:
-            response = module.configure(candidate)
-            result['responses'] = response
-        result['changed'] = True
+            module.run_commands('request system zeroize')
+        results['changed'] = True
 
-    result['updates'] = candidate
-    return module.exit_json(**result)
+    module.exit_json(**results)
+
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
 from ansible.module_utils.junos import *
+
 if __name__ == '__main__':
     main()
