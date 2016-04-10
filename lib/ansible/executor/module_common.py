@@ -97,9 +97,35 @@ if sys.version_info < (3,):
 else:
     unicode = str
 
+try:
+    # Python-2.6+
+    from io import BytesIO as IOStream
+except ImportError:
+    # Python < 2.6
+    from StringIO import StringIO as IOStream
+
 ZIPDATA = """%(zipdata)s"""
 
-def debug(command, zipped_mod):
+def invoke_module(module_path, json_params):
+    pythonpath = os.environ.get('PYTHONPATH')
+    if pythonpath:
+        os.environ['PYTHONPATH'] = ':'.join((module_path, pythonpath))
+    else:
+        os.environ['PYTHONPATH'] = module_path
+
+    p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    (stdout, stderr) = p.communicate(json_params)
+
+    if not isinstance(stderr, (bytes, unicode)):
+        stderr = stderr.read()
+    if not isinstance(stdout, (bytes, unicode)):
+        stdout = stdout.read()
+    sys.stderr.write(stderr)
+    sys.stdout.write(stdout)
+
+    return p.returncode
+
+def debug(command, zipped_mod, json_params):
     # The code here normally doesn't run.  It's only used for debugging on the
     # remote machine. Run with ANSIBLE_KEEP_REMOTE_FILES=1 envvar and -vvv
     # to save the module file remotely.  Login to the remote machine and use
@@ -107,7 +133,7 @@ def debug(command, zipped_mod):
     # files.  Edit the source files to instrument the code or experiment with
     # different values.  Then use /path/to/module execute to run the extracted
     # files you've edited instead of the actual zipped module.
-    #
+
     # Okay to use __file__ here because we're running from a kept file
     basedir = os.path.dirname(__file__)
     if command == 'explode':
@@ -120,6 +146,7 @@ def debug(command, zipped_mod):
         for filename in z.namelist():
             if filename.startswith('/'):
                 raise Exception('Something wrong with this module zip file: should not contain absolute paths')
+
             dest_filename = os.path.join(basedir, filename)
             if dest_filename.endswith(os.path.sep) and not os.path.exists(dest_filename):
                 os.makedirs(dest_filename)
@@ -130,26 +157,17 @@ def debug(command, zipped_mod):
                 f = open(dest_filename, 'w')
                 f.write(z.read(filename))
                 f.close()
+
         print('Module expanded into:')
         print('%%s' %% os.path.join(basedir, 'ansible'))
+        exitcode = 0
+
     elif command == 'execute':
         # Execute the exploded code instead of executing the module from the
         # embedded ZIPDATA.  This allows people to easily run their modified
         # code on the remote machine to see how changes will affect it.
-        pythonpath = os.environ.get('PYTHONPATH')
-        if pythonpath:
-            os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
-        else:
-            os.environ['PYTHONPATH'] = basedir
-        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        if not isinstance(stderr, (bytes, unicode)):
-            stderr = stderr.read()
-        if not isinstance(stdout, (bytes, unicode)):
-            stdout = stdout.read()
-        sys.stderr.write(stderr)
-        sys.stdout.write(stdout)
-        sys.exit(p.returncode)
+        exitcode = invoke_module(basedir, json_params)
+
     elif command == 'excommunicate':
         # This attempts to run the module in-process (by importing a main
         # function and then calling it).  It is not the way ansible generally
@@ -159,41 +177,41 @@ def debug(command, zipped_mod):
         # when using this that are only artifacts of how we're invoking here,
         # not actual bugs (as they don't affect the real way that we invoke
         # ansible modules)
+        sys.stdin = IOStream(json_params)
         sys.path.insert(0, basedir)
         from ansible.module_exec.%(ansible_module)s.__main__ import main
         main()
-
-os.environ['ANSIBLE_MODULE_ARGS'] = %(args)s
-os.environ['ANSIBLE_MODULE_CONSTANTS'] = %(constants)s
-
-try:
-    temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_')
-    os.write(temp_fd, base64.b64decode(ZIPDATA))
-    if len(sys.argv) == 2:
-        debug(sys.argv[1], temp_path)
+        print('WARNING: Module returned to wrapper instead of exiting')
+        sys.exit(1)
     else:
-        pythonpath = os.environ.get('PYTHONPATH')
-        if pythonpath:
-            os.environ['PYTHONPATH'] = ':'.join((temp_path, pythonpath))
-        else:
-            os.environ['PYTHONPATH'] = temp_path
-        p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        if not isinstance(stderr, (bytes, unicode)):
-            stderr = stderr.read()
-        if not isinstance(stdout, (bytes, unicode)):
-            stdout = stdout.read()
-        sys.stderr.write(stderr)
-        sys.stdout.write(stdout)
-        sys.exit(p.returncode)
+        print('WARNING: Unknown debug command.  Doing nothing.')
+        exitcode = 0
 
-finally:
+    return exitcode
+
+if __name__ == '__main__':
+    ZIPLOADER_PARAMS = %(params)s
+
     try:
+        temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_')
+        os.write(temp_fd, base64.b64decode(ZIPDATA))
         os.close(temp_fd)
-        os.remove(temp_path)
-    except NameError:
-        # mkstemp failed
-        pass
+        if len(sys.argv) == 2:
+            exitcode = debug(sys.argv[1], temp_path, ZIPLOADER_PARAMS)
+        else:
+            exitcode = invoke_module(temp_path, ZIPLOADER_PARAMS)
+    finally:
+        try:
+            try:
+                os.close(temp_fd)
+            except OSError:
+                # Already closed
+                pass
+            os.remove(temp_path)
+        except NameError:
+            # mkstemp failed
+            pass
+    sys.exit(exitcode)
 '''
 
 class ModuleDepFinder(ast.NodeVisitor):
@@ -336,19 +354,21 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     if module_style in ('old', 'non_native_want_json'):
         return module_data, module_style, shebang
 
-    module_args_json = to_bytes(json.dumps(module_args))
-
     output = BytesIO()
     snippet_names = set()
 
     if module_substyle == 'python':
         # ziploader for new-style python classes
-        python_repred_args = to_bytes(repr(module_args_json))
         constants = dict(
                 SELINUX_SPECIAL_FS=C.DEFAULT_SELINUX_SPECIAL_FS,
                 SYSLOG_FACILITY=_get_facility(task_vars),
                 )
-        python_repred_constants = to_bytes(repr(json.dumps(constants)), errors='strict')
+        params = dict(ANSIBLE_MODULE_ARGS=module_args,
+                ANSIBLE_MODULE_CONSTANTS=constants,
+                )
+        #python_repred_args = to_bytes(repr(module_args_json))
+        #python_repred_constants = to_bytes(repr(json.dumps(constants)), errors='strict')
+        python_repred_params = to_bytes(repr(json.dumps(params)), errors='strict')
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -411,8 +431,9 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         output.write(to_bytes(STRIPPED_ZIPLOADER_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
-            args=python_repred_args,
-            constants=python_repred_constants,
+            #args=python_repred_args,
+            #constants=python_repred_constants,
+            params=python_repred_params,
             shebang=shebang,
             interpreter=interpreter,
             coding=ENCODING_STRING,
@@ -437,6 +458,8 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                 continue
             output.write(line + b'\n')
         module_data = output.getvalue()
+
+        module_args_json = to_bytes(json.dumps(module_args))
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
         # Sanity check from 1.x days.  This is currently useless as we only
@@ -447,11 +470,14 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             raise AnsibleError("missing required import in %s: # POWERSHELL_COMMON" % module_path)
 
     elif module_substyle == 'jsonargs':
+        module_args_json = to_bytes(json.dumps(module_args))
+
         # these strings could be included in a third-party module but
         # officially they were included in the 'basic' snippet for new-style
         # python modules (which has been replaced with something else in
         # ziploader) If we remove them from jsonargs-style module replacer
         # then we can remove them everywhere.
+        python_repred_args = to_bytes(repr(module_args_json))
         module_data = module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
         module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
         module_data = module_data.replace(REPLACER_SELINUX, to_bytes(','.join(C.DEFAULT_SELINUX_SPECIAL_FS)))
