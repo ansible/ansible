@@ -65,12 +65,14 @@ options:
         - The physical network where this network object is implemented.
      required: false
      default: None
+     version_added: "2.1"
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
      choices: ['flat', 'vlan', 'vxlan', 'gre']
      required: false
      default: None
+     version_added: "2.1"
    provider_segmentation_id:
      description:
         - An isolated segment on the physical network. The I(network_type)
@@ -79,6 +81,7 @@ options:
           the I(network_type) value is gre, this ID is a gre key.
      required: false
      default: None
+     version_added: "2.1"
 requirements: ["shade"]
 '''
 
