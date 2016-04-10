@@ -211,8 +211,8 @@ def main():
 
     if not p['manifest']:
         cmd = ("%(base_cmd)s agent --onetime"
-               " --ignorecache --no-daemonize --no-usecacheonfailure"
-               " --no-splay --detailed-exitcodes --verbose") % dict(
+               " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
+               " --detailed-exitcodes --verbose --color 0") % dict(
                    base_cmd=base_cmd,
                    )
         if p['puppetmaster']:
@@ -250,7 +250,7 @@ def main():
 
     if rc == 0:
         # success
-        module.exit_json(rc=rc, changed=False, stdout=stdout)
+        module.exit_json(rc=rc, changed=False, stdout=stdout, stderr=stderr)
     elif rc == 1:
         # rc==1 could be because it's disabled
         # rc==1 could also mean there was a compilation failure
