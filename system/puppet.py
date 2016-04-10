@@ -80,6 +80,12 @@ options:
     required: false
     default: None
     version_added: "2.1"
+  tags:
+    description:
+      - A comma-separated list of puppet tags to be used.
+    required: false
+    default: None
+    version_added: "2.1"
   execute:
     description:
       - Execute a specific piece of Puppet code. It has no effect with
@@ -106,6 +112,9 @@ EXAMPLES = '''
 # Run puppet using a specific piece of Puppet code. Has no effect with a
 # puppetmaster.
 - puppet: execute='include ::mymodule'
+
+# Run puppet using a specific tags
+- puppet: tags=update,nginx
 '''
 
 
@@ -147,6 +156,7 @@ def main():
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
             certname=dict(required=False, default=None),
+            tags=dict(required=False, default=None, type='list'),
             execute=dict(required=False, default=None),
         ),
         supports_check_mode=True,
@@ -211,6 +221,8 @@ def main():
             cmd += " --show_diff"
         if p['environment']:
             cmd += " --environment '%s'" % p['environment']
+        if p['tags']:
+            cmd += " --tags '%s'" % ','.join(p['tags'])
         if p['certname']:
             cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
@@ -227,6 +239,8 @@ def main():
             cmd += " --certname='%s'" % p['certname']
         if p['execute']:
             cmd += " --execute '%s'" % p['execute']
+        if p['tags']:
+            cmd += " --tags '%s'" % ','.join(p['tags'])
         if module.check_mode:
             cmd += "--noop "
         else:
