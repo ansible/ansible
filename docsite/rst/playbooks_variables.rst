@@ -632,7 +632,7 @@ these names themselves as they are reserved.  ``environment`` is also reserved.
 
 ``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can get at the variables, but you will not be able to see the facts.
+or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
