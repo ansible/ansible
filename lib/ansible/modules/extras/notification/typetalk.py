@@ -104,7 +104,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             client_id=dict(required=True),
-            client_secret=dict(required=True),
+            client_secret=dict(required=True, no_log=True),
             topic=dict(required=True, type='int'),
             msg=dict(required=True),
         ),
