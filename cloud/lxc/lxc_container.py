@@ -424,6 +424,8 @@ lxc_container:
             sample: True
 """
 
+import re
+
 try:
     import lxc
 except ImportError:
@@ -748,9 +750,10 @@ class LxcContainerManagement(object):
             key = key.strip()
             value = value.strip()
             new_entry = '%s = %s\n' % (key, value)
+            keyre = re.compile(r'%s(\s+)?=' % key)
             for option_line in container_config:
                 # Look for key in config
-                if option_line.startswith(key):
+                if keyre.match(option_line):
                     _, _value = option_line.split('=', 1)
                     config_value = ' '.join(_value.split())
                     line_index = container_config.index(option_line)
