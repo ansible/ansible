@@ -745,6 +745,8 @@ class LxcContainerManagement(object):
 
         config_change = False
         for key, value in parsed_options:
+            key = key.strip()
+            value = value.strip()
             new_entry = '%s = %s\n' % (key, value)
             for option_line in container_config:
                 # Look for key in config
