@@ -37,7 +37,7 @@ description:
 options:
   src:
     description:
-      - Path of a Jinja2 formatted template on the local server. This can be a relative or absolute path.
+      - Path of a Jinja2 formatted template on the Ansible controller. This can be a relative or absolute path.
     required: true
   dest:
     description:
