@@ -31,7 +31,7 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
-from ansible.utils.unicode import to_str
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -248,7 +248,7 @@ class PluginLoader:
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
-                display.warning("Error accessing plugin paths: %s" % to_str(e))
+                display.warning("Error accessing plugin paths: %s" % to_unicode(e))
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
@@ -370,7 +370,7 @@ class PluginLoader:
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
             except AttributeError as e:
-                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_str(e)))
+                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_unicode(e)))
 
             if self.base_class:
                 # The import path is hardcoded and should be the right place,
