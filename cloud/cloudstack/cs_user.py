@@ -413,7 +413,7 @@ def main():
         email = dict(default=None),
         first_name = dict(default=None),
         last_name = dict(default=None),
-        password = dict(default=None),
+        password = dict(default=None, no_log=True),
         timezone = dict(default=None),
         poll_async = dict(type='bool', default=True),
     ))
