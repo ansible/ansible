@@ -168,7 +168,7 @@ options:
   display_text:
     description:
       - Display text of the template.
-    required: true
+    required: false
     default: null
   state:
     description:
