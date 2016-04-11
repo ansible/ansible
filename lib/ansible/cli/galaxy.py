@@ -149,8 +149,9 @@ class GalaxyCLI(CLI):
         
         super(GalaxyCLI, self).run()
 
+        # install will setup the API if needed later on
         # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup","delete") or \
+        if self.action in ("import","info","search","login","setup","delete") or \
             (self.action == 'init' and not self.options.offline):
             self.api = GalaxyAPI(self.galaxy)
 
