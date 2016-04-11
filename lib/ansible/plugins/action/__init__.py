@@ -210,7 +210,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
             use_system_tmp = True
 
-        tmp_mode = 0o700
+        tmp_mode = 0o711
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         result = self._low_level_execute_command(cmd, sudoable=False)
