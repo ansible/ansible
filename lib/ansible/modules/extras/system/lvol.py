@@ -79,6 +79,9 @@ EXAMPLES = '''
 # Create a logical volume of 512m with disks /dev/sda and /dev/sdb
 - lvol: vg=firefly lv=test size=512 pvs=/dev/sda,/dev/sdb
 
+# Create cache pool logical volume
+- lvol: vg=firefly lv=lvcache size=512m opts='--type cache-pool'
+
 # Create a logical volume of 512g.
 - lvol: vg=firefly lv=test size=512g
 
@@ -122,7 +125,7 @@ def parse_lvs(data):
     for line in data.splitlines():
         parts = line.strip().split(';')
         lvs.append({
-            'name': parts[0],
+            'name': parts[0].replace('[','').replace(']',''),
             'size': int(decimal_point.match(parts[1]).group(1))
         })
     return lvs
@@ -245,7 +248,7 @@ def main():
     # Get information on logical volume requested
     lvs_cmd = module.get_bin_path("lvs", required=True)
     rc, current_lvs, err = module.run_command(
-        "lvs --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
+        "%s -a --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (lvs_cmd, unit, vg))
 
     if rc != 0:
         if state == 'absent':
