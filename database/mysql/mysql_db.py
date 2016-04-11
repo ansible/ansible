@@ -57,6 +57,11 @@ options:
         files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz (Added in 2.0) compressed files are supported.
     required: false
 author: "Ansible Core Team"
+requirements:
+   - mysql (command line binary)
+   - mysqldump (command line binary)
+notes:
+   - Requires the python-mysqldb package on the remote host, as well as mysql and mysqldump binaries.
 extends_documentation_fragment: mysql
 '''
 
