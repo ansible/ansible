@@ -470,6 +470,12 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
 
     def register_template(self):
+        required_params = [
+            'format',
+            'url',
+            'hypervisor',
+        ]
+        self.module.fail_on_missing_params(required_params=required_params)
         template = self.get_template()
         if not template:
             self.result['changed'] = True
@@ -536,9 +542,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         args['url']    = self.module.params.get('url')
         args['mode']   = self.module.params.get('mode')
         args['zoneid'] = self.get_zone(key='id')
-
-        if not args['url']:
-            self.module.fail_json(msg="Missing required arguments: url")
 
         self.result['changed'] = True
 
@@ -613,14 +616,9 @@ def main():
         poll_async = dict(type='bool', choices=BOOLEANS, default=True),
     ))
 
-    required_together = cs_required_together()
-    required_together.extend([
-        ['format', 'url', 'hypervisor'],
-    ])
-
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=required_together,
+        required_together=cs_required_together(),
         mutually_exclusive = (
             ['url', 'vm'],
             ['zone', 'cross_zones'],
