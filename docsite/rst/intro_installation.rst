@@ -322,6 +322,10 @@ your version of Python, you can get pip by::
 Then install Ansible with [1]_::
 
    $ sudo pip install ansible
+   
+Or if you are looking for the latest development version::
+    
+    pip install git+git://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
