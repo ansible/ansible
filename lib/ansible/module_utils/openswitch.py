@@ -21,9 +21,10 @@ import time
 import json
 
 try:
-    from runconfig import runconfig
-    from opsrest.settings import settings
-    from opsrest.manager import OvsdbConnectionManager
+    import ovs.poller
+    import ops.dc
+    from ops.settings import settings
+    from opsr
     from opslib import restparser
     HAS_OPS = True
 except ImportError:
@@ -55,23 +56,21 @@ def to_list(val):
         return list()
 
 def get_runconfig():
-    manager = OvsdbConnectionManager(settings.get('ovs_remote'),
-                                     settings.get('ovs_schema'))
-    manager.start()
+    extschema = restparser.parseSchema(settings.get('ext_schema'))
+    ovsschema = settings.get('ovs_schema')
+    ovsremote = settings.get('ovs_remote')
+    opsidl = ops.dc.register(self._extschema, ovsschema, ovsremote)
 
-    timeout = 10
-    interval = 0
-    init_seq_no = manager.idl.change_seqno
+    init_seqno_no = opsidl.change_seqno
+    while True:
+        opsidl.run()
+        if init_seqno != opsidl.change_seqno:
+            break
+        poller = ovs.poller.Poller()
+        opsidl.wait(poller)
+        poller.block()
 
-    while (init_seq_no == manager.idl.change_seqno):
-        if interval > timeout:
-            raise TypeError('timeout')
-        manager.idl.run()
-        interval += 1
-        time.sleep(1)
-
-    schema = restparser.parseSchema(settings.get('ext_schema'))
-    return runconfig.RunConfigUtil(manager.idl, schema)
+    return (extschema, opsidl)
 
 class Response(object):
 
@@ -167,7 +166,8 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
-        self._runconfig = None
+        self._opsidl = None
+        self._extschema = None
 
     @property
     def config(self):
@@ -202,9 +202,9 @@ class NetworkModule(AnsibleModule):
             path = '/system/full-configuration'
             return self.connection.put(path, data=config)
         else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            self._runconfig.write_config_to_db(config)
+            if not self._opsidl:
+                (self._extschema, self._opsidl) = get_opsidl()
+            ops.dc.write(config, self._extschema, self._opsidl)
 
     def execute(self, commands, **kwargs):
         try:
@@ -227,9 +227,9 @@ class NetworkModule(AnsibleModule):
             return resp.json
 
         else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            return self._runconfig.get_running_config()
+            if not self._opsidl:
+                (self._extschema, self._opsidl) = get_opsidl()
+            return ops.dc.read(self._extschema, self._opsidl)
 
 
 def get_module(**kwargs):
