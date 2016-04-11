@@ -78,20 +78,6 @@ class CLI(object):
         self.action = None
         self.callback = callback
 
-    def _terminate(self, signum=None, framenum=None):
-        if signum == signal.SIGTERM:
-            if hasattr(os, 'getppid'):
-                display.debug("Termination requested in parent, shutting down gracefully")
-                signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            else:
-                display.debug("Term signal in child, harakiri!")
-                signal.signal(signal.SIGTERM, signal.SIG_IGN)
-
-            raise SystemExit
-
-        #NOTE: if ever want to make this immediately kill children use on parent:
-        #os.killpg(os.getpgid(0), signal.SIGTERM)
-
     def set_action(self):
         """
         Get the action the user wants to execute from the sys argv list.
@@ -124,8 +110,6 @@ class CLI(object):
             else:
                 display.display(u"No config file found; using defaults")
 
-        # Manage user interruptions
-        #signal.signal(signal.SIGTERM, self._terminate)
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
