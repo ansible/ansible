@@ -396,7 +396,7 @@ def main():
     if (host and port is None) or (port is not None and not host):
         module.fail_json(msg="both host and port must be supplied")
 
-    if 0 > port or port > 65535:
+    if port is not None and (0 > port or port > 65535):
         module.fail_json(msg="valid ports must be in range 0 - 65535")
 
     if monitors:
@@ -522,4 +522,3 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.f5 import *
 main()
-
