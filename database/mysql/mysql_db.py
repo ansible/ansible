@@ -217,20 +217,20 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             login_user=dict(default=None),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             name=dict(required=True, aliases=['db']),
             encoding=dict(default=""),
             collation=dict(default=""),
-            target=dict(default=None),
+            target=dict(default=None, type='path'),
             state=dict(default="present", choices=["absent", "present","dump", "import"]),
-            ssl_cert=dict(default=None),
-            ssl_key=dict(default=None),
-            ssl_ca=dict(default=None),
+            ssl_cert=dict(default=None, type='path'),
+            ssl_key=dict(default=None, type='path'),
+            ssl_ca=dict(default=None, type='path'),
             connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf"),
+            config_file=dict(default="~/.my.cnf", type='path'),
         ),
         supports_check_mode=True
     )
@@ -252,14 +252,9 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
-    config_file = os.path.expanduser(os.path.expandvars(config_file))
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
-
-    # make sure the target path is expanded for ~ and $HOME
-    if target is not None:
-        target = os.path.expandvars(os.path.expanduser(target))
 
     if state in ['dump','import']:
         if target is None:
