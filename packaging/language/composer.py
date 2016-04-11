@@ -220,11 +220,11 @@ def main():
 
     if rc != 0:
         output = parse_out(err)
-        module.fail_json(msg=output)
+        module.fail_json(msg=output, stdout=err)
     else:
         # Composer version > 1.0.0-alpha9 now use stderr for standard notification messages
         output = parse_out(out + err)
-        module.exit_json(changed=has_changed(output), msg=output)
+        module.exit_json(changed=has_changed(output), msg=output, stdout=out+err)
 
 # import module snippets
 from ansible.module_utils.basic import *
