@@ -4,11 +4,11 @@
 Modules
 =======
 
-This is an in-depth dive into understanding Ansible's program flow to execute
-modules.  It will be of use to people working on the portions of the Core
-Ansible Engine that execute a module, it may be of interest to people writing
-Ansible Modules, and people simply wanting to use Ansible Modules will likely
-not find anything helpful here.
+This in-depth dive helps you understand Ansible's program flow to execute
+modules. It is written for people working on the portions of the Core Ansible
+Engine that execute a module. Those writing Ansible Modules may also find this
+in-depth dive to be of interest, but individuals simply using Ansible Modules
+will not likely find this to be helpful.
 
 .. _flow_types_of_modules:
 
@@ -16,7 +16,7 @@ Types of Modules
 ================
 
 Ansible supports several different types of modules in its code base.  Some of
-these are for backwards compatibility and others to enable flexibility.
+these are for backwards compatibility and others are to enable flexibility.
 
 .. _flow_action_plugins:
 
@@ -25,21 +25,20 @@ Action Plugins
 
 Action Plugins look like modules to end users who are writing :term:`playbooks` but
 they're distinct entities for the purposes of this paper.  Action Plugins
-always execute on the controller. They sometimes are able to do all work there
+always execute on the controller and are sometimes able to do all work there
 (for instance, the debug Action Plugin which prints some text for the user to
 see or the assert Action Plugin which can test whether several values in
 a playbook satisfy certain criteria.)
 
-More often, Action Plugins set up some values and environment on the controller
-and then invoke an actual module on the managed node that does something with
-these values.  An easy to understand version of this is the
-:ref:`template Action Plugin <template>`.  The
-:ref:`template Action Plugin <template>` takes values from the user to
-construct a file in a temporary location on the controller using variables
-from the playbook environment.  It then transfers the temporary file to
-a temporary file on the remote system.  After that, it invokes the
+More often, Action Plugins set up some values on the controller, then invoke an
+actual module on the managed node that does something with these values.  An
+easy to understand version of this is the :ref:`template Action Plugin
+<template>`.  The :ref:`template Action Plugin <template>` takes values from
+the user to construct a file in a temporary location on the controller using
+variables from the playbook environment.  It then transfers the temporary file
+to a temporary file on the remote system.  After that, it invokes the
 :ref:`copy module <copy>` which operates on the remote system to move the file
-into its final location, set file permissions, and so on.
+into its final location, sets file permissions, and so on.
 
 .. _flow_new_style_modules:
 
@@ -49,8 +48,8 @@ New-style Modules
 All of the modules that ship with Ansible fall into this category.
 
 New-style modules have the arguments to the module embedded inside of them in
-some manner.  Non-new-style modules have to copy a separate file over to the
-managed node which is less efficient as it requires two over-the-wire
+some manner.  Non-new-style modules must copy a separate file over to the
+managed node, which is less efficient as it requires two over-the-wire
 connections instead of only one.
 
 .. _flow_python_modules:
@@ -63,12 +62,12 @@ modules.  All official modules (shipped with Ansible) use either this or the
 :ref:`powershell module framework <flow_powershell_modules>`.
 
 These modules use imports from :code:`ansible.module_utils` in order to pull in
-a lot of boilerplate module code such as argument parsing, formatting of return
+boilerplate module code, such as argument parsing, formatting of return
 values as :term:`JSON`, and various file operations.
 
-.. note:: In Ansible up to 2.0 the official python modules used the
+.. note:: In Ansible, up to version 2.0.x, the official python modules used the
     :ref:`module_replacer` framework.  For module authors, :ref:`ziploader` is
-    largely a superset of :ref:`module_replacer` functionality so you usually
+    largely a superset of :ref:`module_replacer` functionality, so you usually
     do not need to know about one versus the other.
 
 .. _flow_powershell_modules:
@@ -87,7 +86,7 @@ JSONARGS
 
 Scripts can arrange for an argument string to be placed within them by placing
 the string ``<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>`` somewhere inside of the
-file.  The module will typically set a variable to that value like this::
+file.  The module typically sets a variable to that value like this::
 
     json_arguments = """<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"""
 
@@ -98,7 +97,7 @@ Which is expanded as::
 .. note:: Ansible outputs a :term:`JSON` string with bare quotes.  Double quotes are
        used to quote string values, double quotes inside of string values are
        backslash escaped, and single quotes may appear unescaped inside of
-       a string value.  To use JSONARGS your scripting language must have a way
+       a string value.  To use JSONARGS, your scripting language must have a way
        to handle this type of string.  The example uses python's triple quoted
        strings to do this.  Other scripting languages may have a similar quote
        character that won't be confused by any quotes in the JSON or it may
