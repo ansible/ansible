@@ -139,7 +139,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             account_sid=dict(required=True),
-            auth_token=dict(required=True),
+            auth_token=dict(required=True, no_log=True),
             msg=dict(required=True),
             from_number=dict(required=True),
             to_number=dict(required=True),
