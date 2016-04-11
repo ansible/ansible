@@ -205,6 +205,8 @@ class Crypttab(object):
         for line in self._lines:
             lines.append(str(line))
         crypttab = '\n'.join(lines)
+        if len(crypttab) == 0:
+            crypttab += '\n'
         if crypttab[-1] != '\n':
             crypttab += '\n'
         return crypttab
