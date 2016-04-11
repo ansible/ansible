@@ -10,6 +10,7 @@ Learn how to build modules of your own in any language, and also how to extend A
    developing_inventory
    developing_modules
    developing_plugins
+   developing_core
    developing_test_pr
    developing_releases
 
