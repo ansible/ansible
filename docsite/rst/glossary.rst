@@ -11,15 +11,15 @@ when a term comes up on the mailing list.
 
     Action
         An action is a part of a task that specifies which of the modules to
-        run and the arguments to pass to that module.  Each task can have only
-        one action, but it may also have other parameters.
+        run and which arguments to pass to that module.  Each task can have
+        only one action, but it may also have other parameters.
 
     Ad Hoc
         Refers to running Ansible to perform some quick command, using
         :command:`/usr/bin/ansible`, rather than the :term:`orchestration`
         language, which is :command:`/usr/bin/ansible-playbook`.  An example
-        of an ad-hoc command might be rebooting 50 machines in your
-        infrastructure.  Anything you can do ad-hoc can be accomplished by
+        of an ad hoc command might be rebooting 50 machines in your
+        infrastructure.  Anything you can do ad hoc can be accomplished by
         writing a :term:`playbook <playbooks>` and playbooks can also glue
         lots of other operations together.
 
@@ -28,8 +28,8 @@ when a term comes up on the mailing list.
         than waiting for completion.  If you have a long process that would
         run longer than the SSH timeout, it would make sense to launch that
         task in async mode.  Async modes can poll for completion every so many
-        seconds, or can be configured to "fire and forget" in which case
-        Ansible will not even check on the task again, it will just kick it
+        seconds or can be configured to "fire and forget", in which case
+        Ansible will not even check on the task again; it will just kick it
         off and proceed to future steps.  Async modes work with both
         :command:`/usr/bin/ansible` and :command:`/usr/bin/ansible-playbook`.
 
@@ -46,29 +46,30 @@ when a term comes up on the mailing list.
         analogous to so-called "dry run" modes in other systems, though the
         user should be warned that this does not take into account unexpected
         command failures or cascade effects (which is true of similar modes in
-        other systems).  Use this to get an idea of what might happen, but it
-        is not a substitute for a good staging environment.
+        other systems).  Use this to get an idea of what might happen, but do
+        not substitute it for a good staging environment.
 
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
-        libraries.  Ansible supports native OpenSSH (:term:`SSH (Native)`), or
+        libraries.  Ansible supports native OpenSSH (:term:`SSH (Native)`) or
         a Python implementation called :term:`paramiko`.  OpenSSH is preferred
         if you are using a recent version, and also enables some features like
-        Kerberos and jump hosts.  This is covered in the getting started
-        section.  There are also other connection types like ``accelerate``
-        mode, which must be bootstrapped over one of the SSH-based connection
-        types but is very fast, and local mode, which acts on the local
-        system.  Users can also write their own connection plugins.
+        Kerberos and jump hosts.  This is covered in the :ref:`getting
+        started section <remote_connection_information>`.  There are also
+        other connection types like ``accelerate`` mode, which must be
+        bootstrapped over one of the SSH-based connection types but is very
+        fast, and local mode, which acts on the local system.  Users can also
+        write their own connection plugins.
 
     Conditionals
         A conditional is an expression that evaluates to true or false that
-        decides whether a given task will be executed on a given machine or
-        not.   Ansible's conditionals are powered by the 'when' statement, and
-        are discussed in the :doc:`playbook documentation <playbooks>`.
+        decides whether a given task is executed on a given machine or not.
+        Ansible's conditionals are powered by the 'when' statement, which are
+        discussed in the :doc:`playbook documentation <playbooks>`.
 
     Diff Mode
         A ``--diff`` flag can be passed to Ansible to show how template files
-        change when they are overwritten, or how they might change when used
+        change when they are overwritten or how they might change when used
         with ``--check`` mode.   These diffs come out in unified diff format.
 
     Executor
@@ -103,10 +104,10 @@ when a term comes up on the mailing list.
 
     Forks
         Ansible talks to remote nodes in parallel and the level of parallelism
-        can be set either by passing ``--forks``, or editing the default in
-        a configuration file.  The default is a very conservative 5 forks,
-        though if you have a lot of RAM, you can easily set this to a value
-        like 50 for increased parallelism.
+        can be set either by passing ``--forks`` or editing the default in
+        a configuration file.  The default is a very conservative five (5)
+        forks, though if you have a lot of RAM, you can easily set this to
+        a value like 50 for increased parallelism.
 
     Gather Facts (Boolean)
         :term:`Facts` are mentioned above.  Sometimes when running a multi-play
@@ -120,19 +121,20 @@ when a term comes up on the mailing list.
         than the name of the host specifically, or the name of the group they
         are in.  For instance, it is possible to select ``ww*`` to match all
         hosts starting with ``www``.   This concept is pulled directly from
-        :program:`Func`, one of Michael's earlier projects.  In addition to basic
-        globbing, various set operations are also possible, such as 'hosts in
-        this group and not in another group', and so on.
+        :program:`Func`, one of Michael DeHaan's (an Ansible Founder) earlier
+        projects.  In addition to basic globbing, various set operations are
+        also possible, such as 'hosts in this group and not in another group',
+        and so on.
 
     Group
         A group consists of several hosts assigned to a pool that can be
-        conveniently targeted together, and also given variables that they
+        conveniently targeted together, as well as given variables that they
         share in common.
 
     Group Vars
         The :file:`group_vars/` files are files that live in a directory
         alongside an inventory file, with an optional filename named after
-        each group.  This is a convenient place to put variables that will be
+        each group.  This is a convenient place to put variables that are
         provided to a given group, especially complex data structures, so that
         these variables do not have to be embedded in the :term:`inventory`
         file or :term:`playbook <playbooks>`.
@@ -141,7 +143,7 @@ when a term comes up on the mailing list.
         Handlers are just like regular tasks in an Ansible
         :term:`playbook <playbooks>` (see :term:`Tasks`) but are only run if
         the Task contains a ``notify`` directive and also indicates that it
-        changed something.  For example, if a config file is changed then the
+        changed something.  For example, if a config file is changed, then the
         task referencing the config file templating operation may notify
         a service restart handler.  This means services can be bounced only if
         they need to be restarted.  Handlers can be used for things other than
@@ -151,7 +153,7 @@ when a term comes up on the mailing list.
         A host is simply a remote machine that Ansible manages.  They can have
         individual variables assigned to them, and can also be organized in
         groups.  All hosts have a name they can be reached at (which is either
-        an IP address or a domain name) and optionally a port number if they
+        an IP address or a domain name) and, optionally, a port number, if they
         are not to be accessed on the default SSH port.
 
     Host Specifier
@@ -457,14 +459,6 @@ when a term comes up on the mailing list.
         determine if the task should run or not. If the expression following
         the ``when:`` keyword evaluates to false, the task will be ignored.
 
-    Van Halen
-        For no particular reason, other than the fact that Michael really
-        likes them, all Ansible 0.x and 1.x releases are codenamed after Van
-        Halen songs.  There is no preference given to David Lee Roth vs. Sammy
-        Lee Hagar-era songs, and instrumentals are also allowed.  It is
-        unlikely that there will ever be a Jump release, but a Van Halen III
-        codename release is possible.  You never know.
-
     Vars (Variables)
         As opposed to :term:`Facts`, variables are names of values (they can
         be simple scalar values -- integers, booleans, strings) or complex
@@ -480,10 +474,10 @@ when a term comes up on the mailing list.
         files.  YAML is nice because it has a minimum of syntax and is very
         clean and easy for people to skim.  It is a good data format for
         configuration files and humans, but also machine readable.  Ansible's
-        usage of YAML stemmed from Michael's first use of it inside of Cobbler
-        around 2006.  YAML is fairly popular in the dynamic language community
-        and the format has libraries available for serialization in many
-        languages (Python, Perl, Ruby, etc.).
+        usage of YAML stemmed from Michael DeHaan's first use of it inside of
+        Cobbler around 2006.  YAML is fairly popular in the dynamic language
+        community and the format has libraries available for serialization in
+        many languages (Python, Perl, Ruby, etc.).
 
 .. seealso::
 
