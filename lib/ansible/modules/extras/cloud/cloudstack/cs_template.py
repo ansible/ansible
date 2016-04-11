@@ -89,8 +89,8 @@ options:
     default: false
   cross_zones:
     description:
-      - Whether the template should be syned across zones.
-      - Only used if C(state) is present.
+      - Whether the template should be syned or removed across zones.
+      - Only used if C(state) is present or absent.
     required: false
     default: false
   project:
@@ -220,6 +220,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_template
     name: systemvm-4.2
+    cross_zones: yes
     state: absent
 '''
 
@@ -560,7 +561,9 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
             args            = {}
             args['id']      = template['id']
-            args['zoneid']  = self.get_zone(key='id')
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid']  = self.get_zone(key='id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteTemplate(**args)
@@ -620,6 +623,7 @@ def main():
         required_together=required_together,
         mutually_exclusive = (
             ['url', 'vm'],
+            ['zone', 'cross_zones'],
         ),
         supports_check_mode=True
     )
