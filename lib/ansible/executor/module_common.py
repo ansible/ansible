@@ -89,6 +89,8 @@ ZIPLOADER_TEMPLATE = u'''%(shebang)s
 import os
 import sys
 import base64
+import shutil
+import zipfile
 import tempfile
 import subprocess
 
@@ -106,14 +108,14 @@ except ImportError:
 
 ZIPDATA = """%(zipdata)s"""
 
-def invoke_module(module_path, json_params):
+def invoke_module(module, modlib_path, json_params):
     pythonpath = os.environ.get('PYTHONPATH')
     if pythonpath:
-        os.environ['PYTHONPATH'] = ':'.join((module_path, pythonpath))
+        os.environ['PYTHONPATH'] = ':'.join((modlib_path, pythonpath))
     else:
-        os.environ['PYTHONPATH'] = module_path
+        os.environ['PYTHONPATH'] = modlib_path
 
-    p = subprocess.Popen(['%(interpreter)s', '-m', 'ansible.module_exec.%(ansible_module)s.__main__'], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = subprocess.Popen(['%(interpreter)s', module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     (stdout, stderr) = p.communicate(json_params)
 
     if not isinstance(stderr, (bytes, unicode)):
@@ -141,7 +143,6 @@ def debug(command, zipped_mod, json_params):
         # print the path to the code.  This is an easy way for people to look
         # at the code on the remote machine for debugging it in that
         # environment
-        import zipfile
         z = zipfile.ZipFile(zipped_mod)
         for filename in z.namelist():
             if filename.startswith('/'):
@@ -166,7 +167,7 @@ def debug(command, zipped_mod, json_params):
         # Execute the exploded code instead of executing the module from the
         # embedded ZIPDATA.  This allows people to easily run their modified
         # code on the remote machine to see how changes will affect it.
-        exitcode = invoke_module(basedir, json_params)
+        exitcode = invoke_module(os.path.join(basedir, 'ansible_module_%(ansible_module)s.py'), basedir, json_params)
 
     elif command == 'excommunicate':
         # This attempts to run the module in-process (by importing a main
@@ -193,23 +194,25 @@ if __name__ == '__main__':
     ZIPLOADER_PARAMS = %(params)s
 
     try:
-        temp_fd, temp_path = tempfile.mkstemp(prefix='ansible_')
-        os.write(temp_fd, base64.b64decode(ZIPDATA))
-        os.close(temp_fd)
+        temp_path = tempfile.mkdtemp(prefix='ansible_')
+        zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
+        modlib = open(zipped_mod, 'wb')
+        modlib.write(base64.b64decode(ZIPDATA))
+        modlib.close()
         if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], temp_path, ZIPLOADER_PARAMS)
+            exitcode = debug(sys.argv[1], zipped_mod, ZIPLOADER_PARAMS)
         else:
-            exitcode = invoke_module(temp_path, ZIPLOADER_PARAMS)
+            z = zipfile.ZipFile(zipped_mod)
+            module = os.path.join(temp_path, 'ansible_module_%(ansible_module)s.py')
+            f = open(module, 'wb')
+            f.write(z.read('ansible_module_%(ansible_module)s.py'))
+            f.close()
+            exitcode = invoke_module(module, zipped_mod, ZIPLOADER_PARAMS)
     finally:
         try:
-            try:
-                os.close(temp_fd)
-            except OSError:
-                # Already closed
-                pass
-            os.remove(temp_path)
-        except NameError:
-            # mkstemp failed
+            shutil.rmtree(temp_path)
+        except OSError:
+            # tempdir creation probably failed
             pass
     sys.exit(exitcode)
 '''
@@ -397,10 +400,8 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
                     zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
                     zf.writestr('ansible/module_utils/__init__.py', b'')
-                    zf.writestr('ansible/module_exec/__init__.py', b'')
 
-                    zf.writestr('ansible/module_exec/%s/__init__.py' % module_name, b"")
-                    zf.writestr('ansible/module_exec/%s/__main__.py' % module_name, module_data)
+                    zf.writestr('ansible_module_%s.py' % module_name, module_data)
 
                     snippet_data = dict()
                     recursive_finder(module_data, snippet_names, snippet_data, zf)
