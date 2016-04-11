@@ -67,6 +67,13 @@ options:
         description:
             - for pkgng versions 1.5 and later, pkg will install all packages
               within the specified root directory
+            - can not be used together with 'chroot' option
+        required: false
+    chroot:
+        version_added: "2.1"
+        description:
+            - pkg will chroot in the specified environment
+            - can not be used together with 'rootdir' option
         required: false
 author: "bleader (@bleader)" 
 notes:
@@ -90,9 +97,9 @@ import os
 import re
 import sys
 
-def query_package(module, pkgng_path, name, rootdir_arg):
+def query_package(module, pkgng_path, name, dir_arg):
 
-    rc, out, err = module.run_command("%s %s info -g -e %s" % (pkgng_path, rootdir_arg, name))
+    rc, out, err = module.run_command("%s %s info -g -e %s" % (pkgng_path, dir_arg, name))
 
     if rc == 0:
         return True
@@ -116,19 +123,19 @@ def pkgng_older_than(module, pkgng_path, compare_version):
     return not new_pkgng
 
 
-def remove_packages(module, pkgng_path, packages, rootdir_arg):
+def remove_packages(module, pkgng_path, packages, dir_arg):
     
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, pkgng_path, package, rootdir_arg):
+        if not query_package(module, pkgng_path, package, dir_arg):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s %s delete -y %s" % (pkgng_path, rootdir_arg, package))
+            rc, out, err = module.run_command("%s %s delete -y %s" % (pkgng_path, dir_arg, package))
 
-        if not module.check_mode and query_package(module, pkgng_path, package, rootdir_arg):
+        if not module.check_mode and query_package(module, pkgng_path, package, dir_arg):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
     
         remove_c += 1
@@ -140,7 +147,7 @@ def remove_packages(module, pkgng_path, packages, rootdir_arg):
     return (False, "package(s) already absent")
 
 
-def install_packages(module, pkgng_path, packages, cached, pkgsite, rootdir_arg):
+def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
 
     install_c = 0
 
@@ -160,21 +167,21 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, rootdir_arg)
         if old_pkgng:
             rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
         else:
-            rc, out, err = module.run_command("%s update" % (pkgng_path))
+            rc, out, err = module.run_command("%s %s update" % (pkgng_path, dir_arg))
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
 
     for package in packages:
-        if query_package(module, pkgng_path, package, rootdir_arg):
+        if query_package(module, pkgng_path, package, dir_arg):
             continue
 
         if not module.check_mode:
             if old_pkgng:
                 rc, out, err = module.run_command("%s %s %s install -g -U -y %s" % (batch_var, pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s %s %s install %s -g -U -y %s" % (batch_var, pkgng_path, rootdir_arg, pkgsite, package))
+                rc, out, err = module.run_command("%s %s %s install %s -g -U -y %s" % (batch_var, pkgng_path, dir_arg, pkgsite, package))
 
-        if not module.check_mode and not query_package(module, pkgng_path, package, rootdir_arg):
+        if not module.check_mode and not query_package(module, pkgng_path, package, dir_arg):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
@@ -184,20 +191,20 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, rootdir_arg)
 
     return (False, "package(s) already present")
 
-def annotation_query(module, pkgng_path, package, tag, rootdir_arg):
-    rc, out, err = module.run_command("%s %s info -g -A %s" % (pkgng_path, rootdir_arg, package))
+def annotation_query(module, pkgng_path, package, tag, dir_arg):
+    rc, out, err = module.run_command("%s %s info -g -A %s" % (pkgng_path, dir_arg, package))
     match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' % tag, out, flags=re.MULTILINE)
     if match:
         return match.group('value')
     return False
 
 
-def annotation_add(module, pkgng_path, package, tag, value, rootdir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, rootdir_arg)
+def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
+    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not _value:
         # Annotation does not exist, add it.
         rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
-            % (pkgng_path, rootdir_arg, package, tag, value))
+            % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
             module.fail_json("could not annotate %s: %s"
                 % (package, out), stderr=err)
@@ -212,19 +219,19 @@ def annotation_add(module, pkgng_path, package, tag, value, rootdir_arg):
         # Annotation exists, nothing to do
         return False
 
-def annotation_delete(module, pkgng_path, package, tag, value, rootdir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, rootdir_arg)
+def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
+    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if _value:
         rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
-            % (pkgng_path, rootdir_arg, package, tag))
+            % (pkgng_path, dir_arg, package, tag))
         if rc != 0:
             module.fail_json("could not delete annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
     return False
 
-def annotation_modify(module, pkgng_path, package, tag, value, rootdir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, rootdir_arg)
+def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
+    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not value:
         # No such tag
         module.fail_json("could not change annotation to %s: tag %s does not exist"
@@ -234,14 +241,14 @@ def annotation_modify(module, pkgng_path, package, tag, value, rootdir_arg):
         return False
     else:
         rc,out,err = module.run_command('%s %s annotate -y -M %s %s "%s"'
-            % (pkgng_path, rootdir_arg, package, tag, value))
+            % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
             module.fail_json("could not change annotation annotation to %s: %s"
                 % (package, out), stderr=err)
         return True
 
 
-def annotate_packages(module, pkgng_path, packages, annotation, rootdir_arg):
+def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
     annotate_c = 0
     annotations = map(lambda _annotation:
         re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
@@ -272,8 +279,10 @@ def main():
                 cached          = dict(default=False, type='bool'),
                 annotation      = dict(default="", required=False),
                 pkgsite         = dict(default="", required=False),
-                rootdir         = dict(default="", required=False, type='path')),
-            supports_check_mode = True)
+                rootdir         = dict(default="", required=False, type='path'),
+                chroot          = dict(default="", required=False, type='path')),
+            supports_check_mode = True,
+            mutually_exclusive  =[["rootdir", "chroot"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 
@@ -283,27 +292,30 @@ def main():
 
     changed = False
     msgs = []
-    rootdir_arg = ""
+    dir_arg = ""
 
     if p["rootdir"] != "":
         old_pkgng = pkgng_older_than(module, pkgng_path, [1, 5, 0])
         if old_pkgng:
             module.fail_json(msg="To use option 'rootdir' pkg version must be 1.5 or greater")
         else:
-            rootdir_arg = "--rootdir %s" % (p["rootdir"])
+            dir_arg = "--rootdir %s" % (p["rootdir"])
+
+    if p["chroot"] != "":
+      dir_arg = '--chroot %s' % (p["chroot"])
 
     if p["state"] == "present":
-        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], rootdir_arg)
+        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg)
         changed = changed or _changed
         msgs.append(_msg)
 
     elif p["state"] == "absent":
-        _changed, _msg = remove_packages(module, pkgng_path, pkgs, rootdir_arg)
+        _changed, _msg = remove_packages(module, pkgng_path, pkgs, dir_arg)
         changed = changed or _changed
         msgs.append(_msg)
 
     if p["annotation"]:
-        _changed, _msg = annotate_packages(module, pkgng_path, pkgs, p["annotation"], rootdir_arg)
+        _changed, _msg = annotate_packages(module, pkgng_path, pkgs, p["annotation"], dir_arg)
         changed = changed or _changed
         msgs.append(_msg)
 
