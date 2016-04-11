@@ -142,8 +142,13 @@ options:
             - Pool member ratio weight. Valid values range from 1 through 100. New pool members -- unless overriden with this value -- default to 1.
         required: false
         default: null
-        choices: []
-        aliases: []
+    preserve_node:
+        description:
+            - When state is absent and the pool member is no longer referenced in other pools, the default behavior removes the unused node object. Setting this to 'yes' disables this behavior.
+        required: false
+        default: 'no'
+        choices: ['yes', 'no']
+        version_added: 2.1
 '''
 
 EXAMPLES = '''
@@ -347,7 +352,8 @@ def main():
             connection_limit = dict(type='int'),
             description = dict(type='str'),
             rate_limit = dict(type='int'),
-            ratio = dict(type='int')
+            ratio = dict(type='int'),
+            preserve_node = dict(type='bool', default=False)
         )
     )
 
@@ -367,6 +373,7 @@ def main():
     host = module.params['host']
     address = fq_name(partition, host)
     port = module.params['port']
+    preserve_node = module.params['preserve_node']
 
 
     # sanity check user supplied values
@@ -387,8 +394,11 @@ def main():
             if member_exists(api, pool, address, port):
                 if not module.check_mode:
                     remove_pool_member(api, pool, address, port)
-                    deleted = delete_node_address(api, address)
-                    result = {'changed': True, 'deleted': deleted}
+                    if preserve_node:
+                        result = {'changed': True}
+                    else:
+                        deleted = delete_node_address(api, address)
+                        result = {'changed': True, 'deleted': deleted}
                 else:
                     result = {'changed': True}
 
