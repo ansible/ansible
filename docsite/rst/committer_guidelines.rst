@@ -71,7 +71,7 @@ Individuals who've been asked to become a part of this group have generally been
 * Matt Martz 
 * Nate Case
 * James Tanner
-* Peter Sprygata
+* Peter Sprygada
 * Abhijit Menon-Sen
 * Michael Scherer
 * René Moser
