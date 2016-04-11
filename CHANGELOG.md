@@ -29,7 +29,9 @@ Ansible Changes By Release
   * os_flavor_facts
   * os_group
   * os_ironic_inspect
+  * os_keystone_domain_facts
   * os_keystone_role
+  * os_user_facts
   * os_user_role
 - softlayer
   * sl_vm
