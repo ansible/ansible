@@ -481,7 +481,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             login_user=dict(default=None),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
@@ -496,11 +496,11 @@ def main():
             check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
             connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf"),
+            config_file=dict(default="~/.my.cnf", type='path'),
             sql_log_bin=dict(default=True, type='bool'),
-            ssl_cert=dict(default=None),
-            ssl_key=dict(default=None),
-            ssl_ca=dict(default=None),
+            ssl_cert=dict(default=None, type='path'),
+            ssl_key=dict(default=None, type='path'),
+            ssl_ca=dict(default=None, type='path'),
         ),
         supports_check_mode=True
     )
@@ -524,7 +524,6 @@ def main():
     db = 'mysql'
     sql_log_bin = module.params["sql_log_bin"]
 
-    config_file = os.path.expanduser(os.path.expandvars(config_file))
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
 
