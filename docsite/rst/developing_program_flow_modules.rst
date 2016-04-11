@@ -192,7 +192,7 @@ which lives in :file:`plugins/action/__init__.py`.  It makes use of Connection
 and Shell objects to do its work.
 
 .. note::
-    When a :term:`task <tasks>` are run with the ``async:`` parameter, Ansible
+    When :term:`tasks <tasks>` are run with the ``async:`` parameter, Ansible
     uses the ``async`` Action Plugin instead of the ``normal`` Action Plugin
     to invoke it.  That program flow is currently not documented.  Read the
     source for information on how that works.
