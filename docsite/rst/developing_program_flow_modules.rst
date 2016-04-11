@@ -57,7 +57,7 @@ connections instead of only one.
 Python
 ^^^^^^
 
-New-style python modules use the :ref:`ziploader` framework for constructing
+New-style Python modules use the :ref:`ziploader` framework for constructing
 modules.  All official modules (shipped with Ansible) use either this or the
 :ref:`powershell module framework <flow_powershell_modules>`.
 
@@ -65,7 +65,7 @@ These modules use imports from :code:`ansible.module_utils` in order to pull in
 boilerplate module code, such as argument parsing, formatting of return
 values as :term:`JSON`, and various file operations.
 
-.. note:: In Ansible, up to version 2.0.x, the official python modules used the
+.. note:: In Ansible, up to version 2.0.x, the official Python modules used the
     :ref:`module_replacer` framework.  For module authors, :ref:`ziploader` is
     largely a superset of :ref:`module_replacer` functionality, so you usually
     do not need to know about one versus the other.
@@ -98,7 +98,7 @@ Which is expanded as::
        used to quote string values, double quotes inside of string values are
        backslash escaped, and single quotes may appear unescaped inside of
        a string value.  To use JSONARGS, your scripting language must have a way
-       to handle this type of string.  The example uses python's triple quoted
+       to handle this type of string.  The example uses Python's triple quoted
        strings to do this.  Other scripting languages may have a similar quote
        character that won't be confused by any quotes in the JSON or it may
        allow you to define your own start-of-quote and end-of-quote characters.
@@ -106,20 +106,20 @@ Which is expanded as::
        a :ref:`non-native JSON module <flow_want_json_modules>` or
        :ref:`Old-style module <flow_old_style_modules>` instead.
 
-The module will typically parse the contents of ``json_arguments`` using a json
+The module typically parses the contents of ``json_arguments`` using a JSON
 library and then use them as native variables throughout the rest of its code.
 
 .. _flow_want_json_modules:
 
-Non-native want json modules
+Non-native want JSON modules
 ----------------------------
 
-If a module has the string ``WANT_JSON`` in it anywhere then Ansible will treat
+If a module has the string ``WANT_JSON`` in it anywhere, Ansible treats
 it as a non-native module that accepts a filename as its only command line
 parameter.  The filename is for a temporary file containing a :term:`JSON`
-string containing th module's parameters.  The module needs to open the file,
+string containing the module's parameters.  The module needs to open the file,
 read and parse the parameters, operate on the data, and print its return data
-as a json encoded dictionary to stdout before exiting.
+as a JSON encoded dictionary to stdout before exiting.
 
 These types of modules are self-contained entities.  As of Ansible 2.1, Ansible
 only modifies them to change a shebang line if present.
@@ -132,11 +132,12 @@ only modifies them to change a shebang line if present.
 Old-style Modules
 -----------------
 
-Old-style modules are similar to :ref:`want JSON modules <flow_want_json_modules>` except that the
-file that they take contains ``key=value`` pairs for their parameters instead of
+Old-style modules are similar to
+:ref:`want JSON modules <flow_want_json_modules>`, except that the file that
+they take contains ``key=value`` pairs for their parameters instead of
 :term:`JSON`.
 
-Ansible decides that a module is old style when it doesn't have any of the
+Ansible decides that a module is old-style when it doesn't have any of the
 markers that would show that it is one of the other types.
 
 .. _flow_how_modules_are_executed:
@@ -156,12 +157,12 @@ executor/task_executor
 ----------------------
 
 The TaskExecutor receives the module name and parameters that were parsed from
-the :term:`playbook <playbooks>` (or command line in the case of
+the :term:`playbook <playbooks>` (or from the command line in the case of
 :command:`/usr/bin/ansible`).  It uses the name to decide whether it's looking
-at a module or an :ref:`Action Plugin <flow_action_plugins>`.  If it's a module, it loads the
-:ref:`Normal Action Plugin <flow_normal_action_plugin>` and passes the name,
-variables, and other information about the task and play to that Action Plugin
-for further processing.
+at a module or an :ref:`Action Plugin <flow_action_plugins>`.  If it's
+a module, it loads the :ref:`Normal Action Plugin <flow_normal_action_plugin>`
+and passes the name, variables, and other information about the task and play
+to that Action Plugin for further processing.
 
 .. _flow_normal_action_plugin:
 
@@ -175,19 +176,18 @@ the managed machine.
 * It takes care of creating a connection to the managed machine by
   instantiating a Connection class according to the inventory configuration for
   that host.
-* It adds any internal ansible variables to the module's parameters (for
+* It adds any internal Ansible variables to the module's parameters (for
   instance, the ones that pass along ``no_log`` to the module).
 * It takes care of creating any temporary files on the remote machine and
   cleans up afterwards.
 * It does the actual work of pushing the module and module parameters to the
-  remote host although the :ref:`module_common <flow_executor_module_common>`
+  remote host, although the :ref:`module_common <flow_executor_module_common>`
   code described next does the work of deciding which format those will take.
-* Handles any special cases regarding modules (for instance, various
-  complications around Windows modules that need to have the same names as
-  python modules so that internal calling of modules from other Action Plugins
-  work.)
+* It handles any special cases regarding modules (for instance, various
+  complications around Windows modules that must have the same names as Python
+  modules, so that internal calling of modules from other Action Plugins work.)
 
-Much of this functionality comes from the :code:`BaseAction`BaseAction class
+Much of this functionality comes from the :class:`BaseAction` class,
 which lives in :file:`plugins/action/__init__.py`.  It makes use of Connection
 and Shell objects to do its work.
 
@@ -201,28 +201,29 @@ to be shipped to the managed node.  The module is first read in, then examined
 to determine its type.  :ref:`PowerShell <flow_powershell_modules>` and
 :ref:`JSON-args modules <flow_jsonargs_modules>` are passed through
 :ref:`Module Replacer <module_replacer>`.  New-style
-:ref:`python modules <flow_python_modules>` are are assembled by
-:ref:`ziploader`.
-:ref:`Non-native-want-json <flow_want_json_modules>` and
+:ref:`Python modules <flow_python_modules>` are assembled by :ref:`ziploader`.
+:ref:`Non-native-want-JSON <flow_want_json_modules>` and
 :ref:`Old-Style modules <flow_old_style_modules>` aren't touched by either of
 these and pass through unchanged.  After the assembling step, one final
-modification is made to all modules that have a shebang line.  We check
+modification is made to all modules that have a shebang line.  Ansible checks
 whether the interpreter in the shebang line has a specific path configured via
-an ``ansible_$X_interpreter`` inventory variable.  If it does we substitute that
-path for the interpreter path given in the module.  After this we return the
-complete module data and the module type to the Normal Action which continues
-execution of the module.
+an ``ansible_$X_interpreter`` inventory variable.  If it does, Ansible
+substitutes that path for the interpreter path given in the module.  After
+this Ansible returns the complete module data and the module type to the
+:ref:`Normal Action <_flow_normal_action_plugin>` which continues execution of
+the module.
 
 Next we'll go into some details of the two assembler frameworks.
 
 .. _module_replacer:
 
-module replacer
+Module Replacer
 ^^^^^^^^^^^^^^^
 
-Module replacer is essentially a preprocessor (like the C Preprocessor for
-those familiar with that language).  It does straight substitutions of specific
-substring patterns in the module file.  There are two types of substitutions:
+The Module Replacer is essentially a preprocessor (like the C Preprocessor for
+those familiar with that language).  It does straight substitutions of
+specific substring patterns in the module file.  There are two types of
+substitutions:
 
 * Replacements that only happen in the module file.  These are public
   replacement strings that modules can utilize to get helpful boilerplate or
@@ -230,42 +231,42 @@ substring patterns in the module file.  There are two types of substitutions:
 
   - :code:`from ansible.module_utils.MOD_LIB_NAME import *` is replaced with the
     contents of the :file:`ansible/module_utils/MOD_LIB_NAME.py`  These should
-    only be used with :ref:`new-style python modules <flow_python_modules>`.
+    only be used with :ref:`new-style Python modules <flow_python_modules>`.
   - :code:`#<<INCLUDE_ANSIBLE_MODULE_COMMON>>` is equivalent to
     :code:`from ansible.module_utils.basic import *` and should also only apply
-    to new-style python modules.
+    to new-style Python modules.
   - :code:`# POWERSHELL_COMMON` substitutes the contents of
     :file:`ansible/module_utils/powershell.ps1`.  It should only be used with
     :ref:`new-style Powershell modules <flow_powershell_modules>`.
 
-* Replacements that are used by ansible ``module_utils`` code.  These are internal
-  replacement patterns.  They may be used internally in the above public
-  replacements but shouldn't be used directly by modules.
+* Replacements that are used by ``ansible.module_utils`` code.  These are internal
+  replacement patterns.  They may be used internally, in the above public
+  replacements, but shouldn't be used directly by modules.
 
-  - :code:`"<<ANSIBLE_VERSION>>"` is substituted with the ansible version.  In
-    a new-style python module, it's better to use ``from ansible import
+  - :code:`"<<ANSIBLE_VERSION>>"` is substituted with the Ansible version.  In
+    a new-style Python module, it's better to use ``from ansible import
     __version__`` and then use ``__version__`` instead.
   - :code:`"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"` is substituted with
-    a string which is the python ``repr`` of the :term:`JSON` encoded module
-    parameters.  Using repr on the JSON string makes it safe to embed in
-    a python file.  In :ref:`new-style python modules <flow_python_modules>`
-    under :ref:`ziploader` this will be passed in via an environment variable
+    a string which is the Python ``repr`` of the :term:`JSON` encoded module
+    parameters.  Using ``repr`` on the JSON string makes it safe to embed in
+    a Python file.  In :ref:`new-style Python modules <flow_python_modules>`
+    under :ref:`ziploader` this is passed in via an environment variable
     instead.
   - :code:`<<SELINUX_SPECIAL_FILESYSTEMS>>` substitutes a string which is
-    a comma separated list of filesystems which have a file system dependent
-    security context in selinux.  In new-style python modules, this will be
-    found by looking up ``SELINUX_SPECIAL_FS`` from the
+    a comma separated list of file systems which have a file system dependent
+    security context in SELinux.  In new-style Python modules, this is found
+    by looking up ``SELINUX_SPECIAL_FS`` from the
     :envvar:`ANSIBLE_MODULE_CONSTANTS` environment variable.  See the
     :ref:`ziploader` documentation for details.
   - :code:`<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>` substitutes the module
-    parameters as a json string.  Care must be taken to properly quote the
-    string as JSON data may contain quotes.  JSON_ARGS is not substituted in
-    new-style python modules as they can get the module parameters via the
+    parameters as a JSON string.  Care must be taken to properly quote the
+    string as JSON data may contain quotes.  This pattern is not substituted
+    in new-style Python modules as they can get the module parameters via the
     environment variable.
   - the string :code:`syslog.LOG_USER` is replaced wherever it occurs with the
     value of ``syslog_facility`` from the :file:`ansible.cfg` or any
     ``ansible_syslog_facility`` inventory variable that applies to this host.  In
-    new-style python modules you can get the value of the ``syslog_facility``
+    new-style Python modules, you can get the value of the ``syslog_facility``
     by looking up ``SYSLOG_FACILITY`` in the :envvar:`ANSIBLE_MODULE_CONSTANTS`
     environment variable.  See the :ref:`ziploader` documentation for details.
 
@@ -274,32 +275,32 @@ substring patterns in the module file.  There are two types of substitutions:
 ziploader
 ^^^^^^^^^
 
-Ziploader differs from :ref:`module_replacer` in that it uses real python
+Ziploader differs from :ref:`module_replacer` in that it uses real Python
 imports of things in module_utils instead of merely preprocessing the module.
-It does this by constructing a zipfile of the module, files in
-:file:`ansible/module_utils` that are imported by the module, and some
-boilerplate to pass in the constants.  The zipfile is then base64 encoded and
-wrapped in a small python script which unzips the file on the managed node and
-then invokes python on the file.  (We have to wrap the zipfile in the python
+It does this by constructing a zipfile--which includes the module file, files
+in :file:`ansible/module_utils` that are imported by the module, and some
+boilerplate to pass in the constants.  The zipfile is then Base64 encoded and
+wrapped in a small Python script which unzips the file on the managed node and
+then invokes Python on the file.  (Ansible wraps the zipfile in the Python
 script so that pipelining will work.)
 
-In ziploader, any imports of python modules from the ``ansible.module_utils``
-package trigger inclusion of that python file into the zipfile.  Instances of
+In ziploader, any imports of Python modules from the ``ansible.module_utils``
+package trigger inclusion of that Python file into the zipfile.  Instances of
 :code:`#<<INCLUDE_ANSIBLE_MODULE_COMMON>>` in the module are turned into
 :code:`from ansible.module_utils.basic import *` and
 :file:`ansible/module-utils/basic.py` is then included in the zipfile.  Files
 that are included from module_utils are themselves scanned for imports of other
-python modules from module_utils to be included in the zipfile as well.
+Python modules from module_utils to be included in the zipfile as well.
 
 .. warning::
     At present, there are two caveats to how ziploader determines other files
-    to import.
+    to import:
 
     * Ziploader cannot determine whether an import should be included if it is
       a relative import.  Always use an absolute import that has
       ``ansible.module_utils`` in it to allow ziploader to determine that the
       file should be included.
-    * Ziploader does not include python packages (directories with
+    * Ziploader does not include Python packages (directories with
       :file:`__init__.py`` in them).  Ziploader only works on :file:`*.py`
       files that are directly in the :file:`ansible/module_utils` directory.
 
@@ -308,14 +309,14 @@ python modules from module_utils to be included in the zipfile as well.
 Passing args
 ~~~~~~~~~~~~
 
-In :ref:`module_replacer`, module arguments are turned into a json-ified
+In :ref:`module_replacer`, module arguments are turned into a JSON-ified
 string and substituted into the combined module file.  In :ref:`ziploader`,
-the json-ified string is placed in the the :envvar:`ANSIBLE_MODULE_ARGS`
-environment variable.  When :code:`ansible.module_utils.basic` is imported
+the JSON-ified string is placed in the the :envvar:`ANSIBLE_MODULE_ARGS`
+environment variable.  When :code:`ansible.module_utils.basic` is imported,
 it places this string in the global variable
 ``ansible.module_utils.basic.MODULE_COMPLEX_ARGS`` and removes it from the
-environment.  Modules probably should not access this variable directly.
-Instead, they should instantiate an :class:`AnsibleModule()` and use
+environment.  Modules should not access this variable directly.  Instead, they
+should instantiate an :class:`AnsibleModule()` and use
 :meth:`AnsibleModule.params` to access the parsed version of the arguments.
 
 .. _flow_passing_module_constants:
@@ -323,8 +324,8 @@ Instead, they should instantiate an :class:`AnsibleModule()` and use
 Passing constants
 ~~~~~~~~~~~~~~~~~
 
-Currently there are three constants passed from the controller to the modules:
-``ANSIBLE_VERSION``, ``SELINUX_SPECIAL_FS`` and ``SYSLOG_FACILITY``.  In
+Currently, there are three constants passed from the controller to the modules:
+``ANSIBLE_VERSION``, ``SELINUX_SPECIAL_FS``, and ``SYSLOG_FACILITY``.  In
 :ref:`module_replacer`, ``ANSIBLE_VERSION`` and ``SELINUX_SPECIAL_FS`` were
 substituted into the global variables
 :code:`ansible.module_utils.basic.ANSIBLE_VERSION` and
@@ -334,35 +335,35 @@ get placed into a variable.  Instead, any occurrences of the string
 followed by the string contained in ``SYSLOG_FACILITY``.  All of these have
 changed in :ref:`ziploader`.
 
-The ansible verison can now be used by a module by importing ``__version__``
+The Ansible verison can now be used by a module by importing ``__version__``
 from ansible::
 
     from ansible import __version__
     module.exit_json({'msg': 'module invoked by ansible %s' % __version__})
 
-For now :code:`ANSIBLE_VERSION` is also available at its old location inside of
-``ansible.module_utils.basic`` but that will eventually be removed.
+For now, :code:`ANSIBLE_VERSION` is also available at its old location inside of
+``ansible.module_utils.basic``, but that will eventually be removed.
 
 ``SELINUX_SPECIAL_FS`` and  ``SYSLOG_FACILITY`` have changed much more.
-:ref:`ziploader` passes these as another json-ified string inside of the
+:ref:`ziploader` passes these as another JSON-ified string inside of the
 :envvar:`ANSIBLE_MODULE_CONSTANTS` environment variable.  When
-``ansible.module_utils.basic`` is imported it places this string in the global
+``ansible.module_utils.basic`` is imported, it places this string in the global
 variable :code:`ansible.module_utils.basic.MODULE_CONSTANTS` and removes it from
 the environment.  The constants are parsed when an :class:`AnsibleModule` is
-instantiated.  Modules shouldn't access any of those directly.  Instead they
+instantiated.  Modules shouldn't access any of those directly.  Instead, they
 should instantiate an :class:`AnsibleModule` and use
 :attr:`AnsibleModule.constants` to access the parsed version of these values.
 
-Unlike the ``ANSIBLE_ARGS`` and ``ANSIBLE_VERSION`` where some efforts were
+Unlike the ``ANSIBLE_ARGS`` and ``ANSIBLE_VERSION``, where some efforts were
 made to keep the old backwards compatible globals available, these two
 constants are not available at their old names.  This is a combination of the
-degree to which these are internal to the needs of ``module_utils.basic`` and
-(in the case of ``SYSLOG_FACILITY``) how hacky and unsafe the previous
+degree to which these are internal to the needs of ``module_utils.basic`` and,
+in the case of ``SYSLOG_FACILITY``, how hacky and unsafe the previous
 implementation was.
 
 Porting code from the :ref:`module_replacer` method of getting
 ``SYSLOG_FACILITY`` to the new one is a little more tricky than the other
-constants and args due to just how hacky the old way was.  Here's an example
+constants and args, due to just how hacky the old way was.  Here's an example
 of using it in the new way::
 
         import syslog
@@ -380,12 +381,15 @@ Special Considerations
 Pipelining
 ^^^^^^^^^^
 
-Ansible can transfer a module to a remote machine in two ways.  Either it can
-write out the module to a temporary file on the remote host and then use
-a second connection to the remote host to execute it with the interpreter that
-the module needs or it can use what's known as pipelining to execute the module
-by piping it into the remote interpreter's stdin.  Pipelining only works with
-modules written in python at this time because Ansible only knows that python
-supports this mode of operation.  Supporting pipelining means that whatever
-format the module payload takes before being sent over the wire must be
-executable by python via stdin.
+Ansible can transfer a module to a remote machine in one of two ways:
+
+* it can write out the module to a temporary file on the remote host and then
+  use a second connection to the remote host to execute it with the
+  interpreter that the module needs
+* or it can use what's known as pipelining to execute the module by piping it
+  into the remote interpreter's stdin.
+
+Pipelining only works with modules written in Python at this time because
+Ansible only knows that Python supports this mode of operation.  Supporting
+pipelining means that whatever format the module payload takes before being
+sent over the wire must be executable by Python via stdin.
