@@ -79,7 +79,7 @@ except ImportError:
 
 def main():
 
-    if not HAS_BOTO:
+    if not HAS_BOTO3:
         module.fail_json(msg='boto required for this module')
 ```
 
