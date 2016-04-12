@@ -41,6 +41,7 @@
     - { role: test_get_url, tags: test_get_url }
     - { role: test_embedded_module, tags: test_embedded_module }
     - { role: test_add_host, tags: test_add_host }
+    - { role: test_apache2_module, tags: test_apache2_module }
     # Turn on test_binary when we start testing v2
     #- { role: test_binary, tags: test_binary }
 
