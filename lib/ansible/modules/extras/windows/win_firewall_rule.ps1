@@ -212,6 +212,7 @@ $action=Get-Attr $params "action" "";
 $misArg = ''
 # Check the arguments
 if ($enable -ne $null) {
+    $enable=ConvertTo-Bool $enable;
     if ($enable -eq $true) {
         $fwsettings.Add("Enabled", "yes");
     } elseif ($enable -eq $false) {
