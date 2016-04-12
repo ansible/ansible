@@ -93,9 +93,9 @@ options:
     version_added: "1.9"
   identifier:
     description:
-      - Weighted and latency-based resource record sets only. An identifier
+      - Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier
         that differentiates among multiple resource record sets that have the
-        same combination of DNS name and type.
+        same combination of DNS name and type. 
     required: false
     default: null
     version_added: "2.0"
@@ -126,7 +126,7 @@ options:
   failover:
     description:
       - Failover resource record sets only. Whether this is the primary or
-        secondary resource record set.
+        secondary resource record set. Allowed values are PRIMARY and SECONDARY
     required: false
     default: null
     version_added: "2.0"
@@ -372,7 +372,7 @@ def main():
             weight                       = dict(required=False, type='int'),
             region                       = dict(required=False),
             health_check                 = dict(required=False),
-            failover                     = dict(required=False),
+            failover                     = dict(required=False,choices=['PRIMARY','SECONDARY']),
             vpc_id                       = dict(required=False),
             wait                         = dict(required=False, type='bool', default=False),
             wait_timeout                 = dict(required=False, type='int', default=300),
@@ -431,6 +431,16 @@ def main():
               module.fail_json(msg = "parameter 'value' must contain a single dns name for alias create/delete")
           elif not alias_hosted_zone_id_in:
               module.fail_json(msg = "parameter 'alias_hosted_zone_id' required for alias create/delete")
+	elif ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
+	  module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
+
+    if command_in == 'create':
+        if ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
+          module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
+        elif  ( weight_in==None and region_in==None and failover_in==None ) and identifier_in!=None:
+          module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
+        
+
 
     if vpc_id_in and not private_zone_in:
         module.fail_json(msg="parameter 'private_zone' must be true when specifying parameter"
@@ -531,7 +541,10 @@ def main():
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
-        module.fail_json(msg = txt)
+        if "but it already exists" in txt:
+                module.exit_json(changed=False)
+        else:   
+                module.fail_json(msg = txt)
     except TimeoutError:
         module.fail_json(msg='Timeout waiting for changes to replicate')
 
