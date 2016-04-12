@@ -163,7 +163,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            token=dict(required=True),
+            token=dict(required=True, no_log=True),
             room=dict(required=True),
             msg=dict(required=True),
             msg_from=dict(default="Ansible", aliases=['from']),
