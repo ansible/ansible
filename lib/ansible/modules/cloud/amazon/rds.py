@@ -1080,7 +1080,7 @@ def main():
         module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
 
     # set port to per db defaults if not specified
-    if module.params['port'] is None and module.params['command'] in ['create', 'replicate']:
+    if module.params['port'] is None and module.params['db_engine'] is not None and module.params['command'] == 'create':
         if '-' in module.params['db_engine']:
             engine = module.params['db_engine'].split('-')[0]
         else:
