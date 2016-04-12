@@ -31,6 +31,7 @@ Ansible Changes By Release
   * os_ironic_inspect
   * os_keystone_domain_facts
   * os_keystone_role
+  * os_port_facts
   * os_user_facts
   * os_user_role
 - softlayer
