@@ -20,9 +20,13 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import errno
+import json
 import sys
 import time
-from io import BytesIO
+from io import BytesIO, StringIO
+
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_bytes
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
@@ -61,8 +65,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path == '/inaccessible':
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
         self.module = AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
