@@ -231,10 +231,10 @@ def mount(module, **kwargs):
     mount_bin = module.get_bin_path('mount')
 
     name = kwargs['name']
-    
+
     cmd = [ mount_bin, ]
-    
-    if os.path.ismount(name):
+
+    if ismount(name):
         cmd += [ '-o', 'remount', ]
 
     if get_platform().lower() == 'freebsd':
@@ -311,7 +311,7 @@ def main():
     if state == 'absent':
         name, changed = unset_mount(module, **args)
         if changed and not module.check_mode:
-            if os.path.ismount(name):
+            if ismount(name):
                 res,msg  = umount(module, **args)
                 if res:
                     module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
@@ -325,7 +325,7 @@ def main():
         module.exit_json(changed=changed, **args)
 
     if state == 'unmounted':
-        if os.path.ismount(name):
+        if ismount(name):
             if not module.check_mode:
                 res,msg  = umount(module, **args)
                 if res:
@@ -345,7 +345,7 @@ def main():
         name, changed = set_mount(module, **args)
         if state == 'mounted':
             res = 0
-            if os.path.ismount(name):
+            if ismount(name):
                 if changed and not module.check_mode:
                     res,msg = mount(module, **args)
             elif 'bind' in args.get('opts', []):
@@ -375,4 +375,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.ismount import *
+
 main()
