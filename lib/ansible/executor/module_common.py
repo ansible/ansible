@@ -180,7 +180,7 @@ def debug(command, zipped_mod, json_params):
         # ansible modules)
         sys.stdin = IOStream(json_params)
         sys.path.insert(0, basedir)
-        from ansible.module_exec.%(ansible_module)s.__main__ import main
+        from ansible_module_%(ansible_module)s import main
         main()
         print('WARNING: Module returned to wrapper instead of exiting')
         sys.exit(1)
