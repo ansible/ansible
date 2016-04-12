@@ -22,18 +22,38 @@ __metaclass__ = type
 
 import sys
 import json
+from io import BytesIO, StringIO
+
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_bytes
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock
 
 class TestModuleUtilsBasic(unittest.TestCase):
+    def setUp(self):
+        self.real_stdin = sys.stdin
+        args = json.dumps(
+            dict(
+                ANSIBLE_MODULE_ARGS=dict(
+                    foo=False, bar=[1,2,3], bam="bam", baz=u'baz'),
+                ANSIBLE_MODULE_CONSTANTS=dict()
+                )
+            )
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
+    def tearDown(self):
+        sys.stdin = self.real_stdin
+
     @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic__log_invocation(self):
         from ansible.module_utils import basic
 
         # test basic log invocation
-        basic.MODULE_COMPLEX_ARGS = json.dumps(dict(foo=False, bar=[1,2,3], bam="bam", baz=u'baz'))
-        basic.MODULE_CONSTANTS = '{}'
         am = basic.AnsibleModule(
             argument_spec=dict(
                 foo = dict(default=True, type='bool'),

@@ -1435,9 +1435,13 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and set the params attribute.  Sets the constants as well.'''
-        buffer = sys.stdin.read()
+        # Avoid tracebacks when locale is non-utf8
+        if sys.version_info < (3,):
+            buffer = sys.stdin.read()
+        else:
+            buffer = sys.stdin.buffer.read()
         try:
-            params = json.loads(buffer)
+            params = json.loads(buffer.decode('utf-8'))
         except ValueError:
             # This helper used too early for fail_json to work.
             print('{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
@@ -1450,31 +1454,6 @@ class AnsibleModule(object):
             # This helper used too early for fail_json to work.
             print('{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS and ANSIBLE_MODULE_CONSTANTS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
             sys.exit(1)
-
-#        import select
-#        buffer = ''
-#        while True:
-#            input_list = select.select([sys.stdin], [],  [], 5.0)[0]
-#            if sys.stdin not in input_list:
-#                # This helper used too early for fail_json to work.
-#                print('{"msg": "Error: Module unable to read arguments from stdin.  Unable to figure out what parameters were passed", "failed": true}')
-#                sys.exit(1)
-#            buffer += sys.stdin.read()
-#            if json.loads(buffer):
-#
-#        for line in sys.stdin:
-#            if line is None:
-#                print('s')
-#        data = sys.stdin.read()
-#        if MODULE_COMPLEX_ARGS is None:
-#            # This helper used too early for fail_json to work.
-#            print('{"msg": "Error: ANSIBLE_MODULE_ARGS not found in environment.  Unable to figure out what parameters were passed", "failed": true}')
-#            sys.exit(1)
-#
-#        params = json_dict_unicode_to_bytes(json.loads(data))
-#        if params is None:
-#            params = dict()
-#        self.params = params
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
