@@ -44,6 +44,7 @@
 # Test repo=https://github.com/...
 #
 
+
 - name: initial checkout
   git: repo={{ repo_format1 }} dest={{ checkout_dir }}
   register: git_result
@@ -508,4 +509,47 @@
   shell: git checkout 79624b4
   args:
     chdir: '{{ checkout_dir }}'
+
+# test for  https://github.com/ansible/ansible-modules-core/issues/527
+# clone a repo, add a tag to the same commit and try to checkout the new commit
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout example repo
+  git: repo={{ repo_format1 }} dest={{ checkout_dir }}
+
+- name: clone example repo locally
+  git: repo={{ checkout_dir }} dest={{checkout_dir}}.copy
+
+- name: get tags of head
+  command: git tag --contains chdir="{{ checkout_dir }}.copy"
+  register: listoftags
+
+- name: make sure the tag does not yet exist
+  assert:
+    that:
+      - "'newtag' not in listoftags.stdout_lines"
+
+- name: add tag in orig repo
+  command: git tag newtag chdir="{{ checkout_dir }}"
+
+- name: update copy with new tag
+  git: repo={{ checkout_dir }} dest={{checkout_dir}}.copy version=newtag
+  register: update_new_tag
+
+- name: get tags of new head
+  command: git tag --contains chdir="{{ checkout_dir }}.copy"
+  register: listoftags
+
+- name: check new head
+  assert:
+    that:
+      - not update_new_tag|changed
+      - "'newtag' in listoftags.stdout_lines"
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
 
