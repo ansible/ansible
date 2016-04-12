@@ -163,7 +163,7 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
@@ -350,7 +350,7 @@ class StrategyModule(StrategyBase):
                 display.debug("checking for any_errors_fatal")
                 failed_hosts = []
                 for res in results:
-                    if res.is_failed() or res.is_unreachable():
+                    if res.is_failed():
                         failed_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
