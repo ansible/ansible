@@ -48,19 +48,20 @@ EXAMPLES = '''
   action: debug msg="This instance is a t1.micro"
   when: ansible_ec2_instance_type == "t1.micro"
 '''
-   
+
 import socket
 import re
 
 socket.setdefaulttimeout(5)
 
-class Ec2Metadata(object):
 
+class Ec2Metadata(object):
     ec2_metadata_uri = 'http://169.254.169.254/latest/meta-data/'
-    ec2_sshdata_uri  = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
+    ec2_sshdata_uri = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
     ec2_userdata_uri = 'http://169.254.169.254/latest/user-data/'
 
     AWS_REGIONS = ('ap-northeast-1',
+                   'ap-northeast-2',
                    'ap-southeast-1',
                    'ap-southeast-2',
                    'eu-central-1',
@@ -73,12 +74,12 @@ class Ec2Metadata(object):
                    )
 
     def __init__(self, module, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None):
-        self.module   = module
+        self.module = module
         self.uri_meta = ec2_metadata_uri or self.ec2_metadata_uri
         self.uri_user = ec2_userdata_uri or self.ec2_userdata_uri
-        self.uri_ssh  =  ec2_sshdata_uri or self.ec2_sshdata_uri
-        self._data     = {}
-        self._prefix   = 'ansible_ec2_%s'
+        self.uri_ssh = ec2_sshdata_uri or self.ec2_sshdata_uri
+        self._data = {}
+        self._prefix = 'ansible_ec2_%s'
 
     def _fetch(self, url):
         (response, info) = fetch_url(self.module, url, force=True)
@@ -101,7 +102,7 @@ class Ec2Metadata(object):
         for pattern in filter_patterns:
             for key in new_fields.keys():
                 match = re.search(pattern, key)
-                if match: 
+                if match:
                     new_fields.pop(key)
         return new_fields
 
@@ -121,7 +122,7 @@ class Ec2Metadata(object):
                 content = self._fetch(new_uri)
                 if field == 'security-groups':
                     sg_fields = ",".join(content.split('\n'))
-                    self._data['%s' % (new_uri)]  = sg_fields
+                    self._data['%s' % (new_uri)] = sg_fields
                 else:
                     self._data['%s' % (new_uri)] = content
 
@@ -129,7 +130,7 @@ class Ec2Metadata(object):
         """Change ':'' and '-' to '_' to ensure valid template variable names"""
         for (key, value) in data.items():
             if ':' in key or '-' in key:
-                newkey = key.replace(':','_').replace('-','_')
+                newkey = key.replace(':', '_').replace('-', '_')
                 del data[key]
                 data[newkey] = value
 
@@ -153,7 +154,7 @@ class Ec2Metadata(object):
             data['ansible_ec2_placement_region'] = region
 
     def run(self):
-        self.fetch(self.uri_meta) # populate _data
+        self.fetch(self.uri_meta)  # populate _data
         data = self._mangle_fields(self._data, self.uri_meta)
         data[self._prefix % 'user-data'] = self._fetch(self.uri_user)
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
@@ -161,18 +162,20 @@ class Ec2Metadata(object):
         self.add_ec2_region(data)
         return data
 
+
 def main():
     argument_spec = url_argument_spec()
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
-        supports_check_mode = True,
+            argument_spec=argument_spec,
+            supports_check_mode=True,
     )
 
     ec2_facts = Ec2Metadata(module).run()
     ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
 
     module.exit_json(**ec2_facts_result)
+
 
 # import module snippets
 from ansible.module_utils.basic import *
