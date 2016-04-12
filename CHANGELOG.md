@@ -24,6 +24,10 @@ Ansible Changes By Release
   * cs_volume
   * cs_zone
   * cs_zone_facts
+- gitlab
+  * gitlab_group
+  * gitlab_project
+  * gitlab_user
 - make
 - openstack
   * os_flavor_facts
