@@ -1447,6 +1447,9 @@ class AnsibleModule(object):
             print('{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
             sys.exit(1)
 
+        if sys.version_info < (3,):
+            params = json_dict_unicode_to_bytes(params)
+
         try:
             self.params = params['ANSIBLE_MODULE_ARGS']
             self.constants = params['ANSIBLE_MODULE_CONSTANTS']
