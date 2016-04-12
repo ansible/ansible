@@ -36,7 +36,7 @@ options:
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
         description:
-            - Allow traffic over insecure http
+            - Enable or disable https server certificate verification when connecting to C(server_hostname)
         required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     rhsm_baseurl:
