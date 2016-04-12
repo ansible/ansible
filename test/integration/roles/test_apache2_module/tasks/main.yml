@@ -24,25 +24,33 @@
   register: disable
 
 - name: ensure apache2_module is idempotent
-  assert: not disable|changed
+  assert:
+    that:
+      - 'not disable.changed'
 
 - name: enable alias module
   apache2_module: name=alias state=present
   register: enable
 
 - name: ensure changed on successful enable
-  assert: enable|changed
+  assert:
+    that:
+      - 'enable.changed'
 
 - name: enable alias module, second run
   apache2_module: name=alias state=present
   register: enabletwo
 
 - name: ensure apache2_module is idempotent
-  assert: not enable|changed
+  assert:
+    that:
+      - 'not enabletwo.changed'
 
 - name: disable alias module, final run
   apache2_module: name=alias state=absent
   register: disablefinal
 
 - name: ensure changed on successful disable
-  assert: disablefinal|changed
+  assert:
+    that:
+      - 'disablefinal.changed'
