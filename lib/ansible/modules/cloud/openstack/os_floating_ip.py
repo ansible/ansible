@@ -162,10 +162,33 @@ def main():
                 msg="server {0} not found".format(server_name_or_id))
 
         if state == 'present':
-            fip_address = cloud.get_server_public_ip(server)
-            f_ip = _get_floating_ip(cloud, fip_address)
+            # If f_ip already assigned to server, check that it matches
+            # requirements.
+            f_ip = cloud.get_server_public_ip(server)
+            f_ip = _get_floating_ip(cloud, f_ip) if f_ip else f_ip
             if f_ip:
-                module.exit_json(changed=False, floating_ip=f_ip)
+                if network:
+                    network_id = cloud.get_network(name_or_id=network)["id"]
+                else:
+                    network_id = None
+                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
+                        network, f_ip.network != network_id]):
+                    # Current state definitely conflicts with requirements
+                    module.fail_json(msg="server {server} already has a "
+                                         "floating-ip on requested "
+                                         "interface but it doesn't match "
+                                         "requested network {network: {fip}"
+                                     .format(server=server_name_or_id,
+                                             network=network,
+                                             fip=remove_values(f_ip,
+                                                               module.no_log_values)))
+                if not network or f_ip.network == network_id:
+                    # Requirements are met
+                    module.exit_json(changed=False, floating_ip=f_ip)
+
+                # Requirments are vague enough to ignore exisitng f_ip and try
+                # to create a new f_ip to the server.
+
             server = cloud.add_ips_to_server(
                 server=server, ips=floating_ip_address, ip_pool=network,
                 reuse=reuse, fixed_address=fixed_address, wait=wait,
@@ -177,22 +200,27 @@ def main():
 
         elif state == 'absent':
             if floating_ip_address is None:
-                module.fail_json(msg="floating_ip_address is required")
+                if not server_name_or_id:
+                    module.fail_json(msg="either server or floating_ip_address are required")
+                server = cloud.get_server(server_name_or_id)
+                floating_ip_address = cloud.get_server_public_ip(server)
 
             f_ip = _get_floating_ip(cloud, floating_ip_address)
 
             if not f_ip:
                 # Nothing to detach
                 module.exit_json(changed=False)
-
-            cloud.detach_ip_from_server(
-                server_id=server['id'], floating_ip_id=f_ip['id'])
-            # Update the floating IP status
-            f_ip = cloud.get_floating_ip(id=f_ip['id'])
+            changed = False
+            if f_ip["fixed_ip_address"]:
+                cloud.detach_ip_from_server(
+                    server_id=server['id'], floating_ip_id=f_ip['id'])
+                # Update the floating IP status
+                f_ip = cloud.get_floating_ip(id=f_ip['id'])
+                changed = True
             if purge:
                 cloud.delete_floating_ip(f_ip['id'])
                 module.exit_json(changed=True)
-            module.exit_json(changed=True, floating_ip=f_ip)
+            module.exit_json(changed=changed, floating_ip=f_ip)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
