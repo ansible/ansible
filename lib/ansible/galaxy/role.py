@@ -30,6 +30,7 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -53,6 +54,13 @@ class GalaxyRole(object):
 
         self._metadata = None
         self._install_info = None
+
+        self._validate_certs = not C.GALAXY_IGNORE_CERTS
+
+        # set validate_certs
+        if galaxy.options.ignore_certs:
+            self._validate_certs = False
+        display.vvv('Validate TLS certificates: %s' % self._validate_certs)
 
         self.options = galaxy.options
         self.galaxy  = galaxy
@@ -168,7 +176,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url)
+                url_file = open_url(archive_url, validate_certs=self._validate_certs)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
