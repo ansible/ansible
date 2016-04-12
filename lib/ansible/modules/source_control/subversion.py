@@ -28,6 +28,7 @@ version_added: "0.7"
 author: "Dane Summers (@dsummersl) <njharman@gmail.com>"
 notes:
    - Requires I(svn) to be installed on the client.
+   - This module does not handle externals
 requirements: []
 options:
   repo:
