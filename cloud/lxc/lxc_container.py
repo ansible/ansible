@@ -1684,7 +1684,6 @@ def main():
             ),
             config=dict(
                 type='path',
-                default='/etc/lxc/default.conf'
             ),
             vg_name=dict(
                 type='str',
