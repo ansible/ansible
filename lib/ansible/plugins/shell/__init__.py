@@ -112,7 +112,7 @@ class ShellBase(object):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
-        if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
+        if system:
             basetmp = self.join_path('/tmp', basefile)
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
