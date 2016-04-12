@@ -87,6 +87,15 @@ options:
       - Mutually exclusive with C(template) option.
     required: false
     default: null
+  template_filter:
+    description:
+      - Name of the filter used to search for the template or iso.
+      - Used for params C(iso) or C(template) on C(state=present).
+    required: false
+    default: 'executable'
+    choices: [ 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community' ]
+    aliases: [ 'iso_filter' ]
+    version_added: '2.1'
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
@@ -450,7 +459,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             if self.template:
                 return self._get_by_key(key, self.template)
 
-            args['templatefilter'] = 'executable'
+            args['templatefilter'] = self.module.params.get('template_filter')
             templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
@@ -462,7 +471,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         elif iso:
             if self.iso:
                 return self._get_by_key(key, self.iso)
-            args['isofilter'] = 'executable'
+            args['isofilter'] = self.module.params.get('template_filter')
             isos = self.cs.listIsos(**args)
             if isos:
                 for i in isos['iso']:
@@ -913,6 +922,7 @@ def main():
         memory = dict(default=None, type='int'),
         template = dict(default=None),
         iso = dict(default=None),
+        template_filter = dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         networks = dict(type='list', aliases=[ 'network' ], default=None),
         ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
         ip_address = dict(defaul=None),
