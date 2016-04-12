@@ -699,7 +699,7 @@ class DockerManager(object):
         self.binds = None
         self.volumes = None
         if self.module.params.get('volumes'):
-            self.binds = {}
+            self.binds = []
             self.volumes = []
             vols = self.module.params.get('volumes')
             for vol in vols:
@@ -717,7 +717,7 @@ class DockerManager(object):
                             self.module.fail_json(msg='invalid bind mode ' + parts[2])
                         else:
                             mode = parts[2]
-                    self.binds[parts[0]] = {'bind': parts[1], 'mode': mode }
+                    self.binds.append((parts[0], {'bind': parts[1], 'mode': mode}))
                 else:
                     self.module.fail_json(msg='volumes support 1 to 3 arguments')
 
@@ -1370,7 +1370,7 @@ class DockerManager(object):
 
             expected_binds = set()
             if self.binds:
-                for host_path, config in self.binds.iteritems():
+                for host_path, config in self.binds:
                     if isinstance(config, dict):
                         container_path = config['bind']
                         mode = config['mode']
