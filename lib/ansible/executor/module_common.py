@@ -96,9 +96,10 @@ import subprocess
 
 if sys.version_info < (3,):
     bytes = str
+    PY3 = False
 else:
     unicode = str
-
+    PY3 = True
 try:
     # Python-2.6+
     from io import BytesIO as IOStream
@@ -122,9 +123,12 @@ def invoke_module(module, modlib_path, json_params):
         stderr = stderr.read()
     if not isinstance(stdout, (bytes, unicode)):
         stdout = stdout.read()
-    sys.stderr.write(stderr)
-    sys.stdout.write(stdout)
-
+    if PY3:
+        sys.stderr.buffer.write(stderr)
+        sys.stdout.buffer.write(stdout)
+    else:
+        sys.stderr.write(stderr)
+        sys.stdout.write(stdout)
     return p.returncode
 
 def debug(command, zipped_mod, json_params):
@@ -192,7 +196,8 @@ def debug(command, zipped_mod, json_params):
 
 if __name__ == '__main__':
     ZIPLOADER_PARAMS = %(params)s
-
+    if PY3:
+        ZIPLOADER_PARAMS = ZIPLOADER_PARAMS.encode('utf-8')
     try:
         temp_path = tempfile.mkdtemp(prefix='ansible_')
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
