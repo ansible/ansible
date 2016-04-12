@@ -228,17 +228,25 @@ def create_image(module, ec2):
                   'description': description,
                   'no_reboot': no_reboot}
 
+        images = ec2.get_all_images(filters={'name': name})
+
+        if images and images[0]:
+            module.exit_json(msg="AMI name already present", image_id=images[0].id, state=images[0].state, changed=False)
+
+        if device_mapping:
+            bdm = BlockDeviceMapping()
+            for device in device_mapping:
+                if 'device_name' not in device:
+                    module.fail_json(msg = 'Device name must be set for volume')
+                device_name = device['device_name']
+                del device['device_name']
+                bd = BlockDeviceType(**device)
+                bdm[device_name] = bd
+            params['block_device_mapping'] = bdm
+
         image_id = ec2.create_image(**params)
     except boto.exception.BotoServerError, e:
-        if e.error_code == 'InvalidAMIName.Duplicate':
-            images = ec2.get_all_images()
-            for img in images:
-                if img.name == name:
-                    module.exit_json(msg="AMI name already present", image_id=img.id, state=img.state, changed=False)
-            else:
-                module.fail_json(msg="Error in retrieving duplicate AMI details")
-        else:
-            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
