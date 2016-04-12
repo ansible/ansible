@@ -22,7 +22,7 @@ import os
 
 from ansible import constants as C
 from ansible.compat.six import string_types
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleSequence
 
 try:
@@ -166,11 +166,27 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         else:
                             include_file = loader.path_dwim(include_target)
 
-                    data = loader.load_from_file(include_file)
-                    if data is None:
-                        return []
-                    elif not isinstance(data, list):
-                        raise AnsibleError("included task files must contain a list of tasks", obj=data)
+                    try:
+                        data = loader.load_from_file(include_file)
+                        if data is None:
+                            return []
+                        elif not isinstance(data, list):
+                            raise AnsibleError("included task files must contain a list of tasks", obj=data)
+                    except AnsibleFileNotFound as e:
+                        if t.static or \
+                           C.DEFAULT_TASK_INCLUDES_STATIC or \
+                           C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
+                            raise
+                        display.deprecated(
+                            "Included file '%s' not found, however since this include is not " \
+                            "explicitly marked as 'static: yes', we will try and include it dynamically " \
+                            "later. In the future, this will be an error unless 'static: no' is used " \
+                            "on the include task. If you do not want missing includes to be considered " \
+                            "dynamic, use 'static: yes' on the include or set the global ansible.cfg " \
+                            "options to make all inclues static for tasks and/or handlers" % include_file,
+                        )
+                        task_list.append(t)
+                        continue
 
                     included_blocks = load_list_of_blocks(
                         data,
