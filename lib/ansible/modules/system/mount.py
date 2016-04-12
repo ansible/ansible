@@ -268,7 +268,7 @@ def main():
             state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
             name   = dict(required=True),
             opts   = dict(default=None),
-            passno = dict(default=None),
+            passno = dict(default=None, type='str'),
             dump   = dict(default=None),
             src    = dict(required=True),
             fstype = dict(required=True),
