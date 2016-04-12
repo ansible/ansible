@@ -214,8 +214,8 @@ class Connection(ConnectionBase):
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansble.cfg), and we try
-        # to initialise from the calling environment
-        if C.PARAMIKO_PTY:
+        # to initialise from the calling environment when sudoable is enabled
+        if C.PARAMIKO_PTY and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
