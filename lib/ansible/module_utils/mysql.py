@@ -36,9 +36,7 @@ except ImportError:
     mysqldb_found = False
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None, connect_timeout=30):
-    config = {
-        'host': module.params['login_host']
-    }
+    config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
         config['ssl'] = {}
@@ -46,6 +44,7 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
     else:
+        config['host'] = module.params['login_host']
         config['port'] = module.params['login_port']
 
     if os.path.exists(config_file):
