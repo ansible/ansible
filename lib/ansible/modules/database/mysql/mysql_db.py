@@ -56,6 +56,18 @@ options:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz (Added in 2.0) compressed files are supported.
     required: false
+  single_transaction:
+    description:
+      - Execute the dump in a single transaction
+    required: false
+    default: false
+    version_added: "2.1"
+  quick:
+    description:
+      - Option used for dumping large tables
+    required: false
+    default: false
+    version_added: "2.1"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -105,7 +117,7 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
+def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, single_transaction=None, quick=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -129,6 +141,10 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --all-databases"
     else:
         cmd += " %s" % pipes.quote(db_name)
+    if single_transaction:
+        cmd += " --single-transaction=true"
+    if quick:
+        cmd += " --quick"
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -231,6 +247,8 @@ def main():
             ssl_ca=dict(default=None, type='path'),
             connect_timeout=dict(default=30, type='int'),
             config_file=dict(default="~/.my.cnf", type='path'),
+            single_transaction=dict(default=False, type='bool'),
+            quick=dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -255,6 +273,8 @@ def main():
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
+    single_transaction = module.params["single_transaction"]
+    quick = module.params["quick"]
 
     if state in ['dump','import']:
         if target is None:
