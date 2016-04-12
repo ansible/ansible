@@ -202,7 +202,6 @@ def main():
     installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
-        out_cpanm = err_cpanm = ''
         cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
@@ -210,7 +209,7 @@ def main():
         if rc_cpanm != 0:
             module.fail_json(msg=err_cpanm, cmd=cmd)
 
-        if err_cpanm and 'is up to date' not in err_cpanm:
+        if (err_cpanm.find('is up to date') == -1 and out_cpanm.find('is up to date') == -1):
             changed = True
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
