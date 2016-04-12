@@ -145,7 +145,7 @@ def _get_most_recent_snapshot(snapshots, max_snapshot_age_secs=None, now=None):
     if not now:
         now = datetime.datetime.utcnow()
 
-    youngest_snapshot = min(snapshots, key=_get_snapshot_starttime)
+    youngest_snapshot = max(snapshots, key=_get_snapshot_starttime)
 
     # See if the snapshot is younger that the given max age
     snapshot_start = datetime.datetime.strptime(youngest_snapshot.start_time, '%Y-%m-%dT%H:%M:%S.000Z')
