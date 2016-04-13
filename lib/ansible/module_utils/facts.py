@@ -353,7 +353,7 @@ class Facts(object):
                                 self.facts['distribution'] = name
                             else:
                                 self.facts['distribution'] = data.split()[0]
-                            break  
+                            break
                         elif name == 'Slackware':
                             data = get_file_content(path)
                             if 'Slackware' in data:
@@ -361,7 +361,7 @@ class Facts(object):
                                 version = re.findall('\w+[.]\w+', data)
                                 if version:
                                     self.facts['distribution_version'] = version[0]
-                            break      
+                            break
                         elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
@@ -700,9 +700,9 @@ class Facts(object):
                 self.facts['selinux']['type'] = 'unknown'
 
     def get_caps_facts(self):
-        capsh_path = module.get_bin_path('capsh')
+        capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
-            rc, out, err = module.run_command([capsh_path, "--print"])
+            rc, out, err = self.module.run_command([capsh_path, "--print"])
             enforced_caps = []
             enforced = 'NA'
             for line in out.split('\n'):
@@ -1105,9 +1105,9 @@ class LinuxHardware(Hardware):
         uuids = dict()
         self.facts['mounts'] = []
         bind_mounts = []
-        findmntPath = module.get_bin_path("findmnt")
+        findmntPath = self.module.get_bin_path("findmnt")
         if findmntPath:
-            rc, out, err = module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
+            rc, out, err = self.module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
             if rc == 0:
                 # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
                 for line in out.split('\n'):
