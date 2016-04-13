@@ -35,7 +35,7 @@ from distutils.version import LooseVersion
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.unicode import to_bytes
 
 try:
@@ -43,8 +43,6 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
@@ -76,15 +74,31 @@ class Connection(ConnectionBase):
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
-        self.can_copy_bothways = False
-
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
-        # Docker cp in 1.8.0 sets the owner and group to root rather than the
-        # user that the docker container is set to use by default.
-        #if LooseVersion(docker_version) >= LooseVersion('1.8.0'):
-        #    self.can_copy_bothways = True
+
+        # The remote user we will request from docker (if supported)
+        self.remote_user = None
+        # The actual user which will execute commands in docker (if known)
+        self.actual_user = None
+
+        if self._play_context.remote_user is not None:
+            if LooseVersion(docker_version) >= LooseVersion('1.7'):
+                # Support for specifying the exec user was added in docker 1.7
+                self.remote_user = self._play_context.remote_user
+                self.actual_user = self.remote_user
+            else:
+                self.actual_user = self._get_docker_remote_user()
+
+                if self.actual_user != self._play_context.remote_user:
+                    display.warning('docker {0} does not support remote_user, using container default: {1}'
+                                    .format(docker_version, self.actual_user or '?'))
+        elif self._display.verbosity > 2:
+            # Since we're not setting the actual_user, look it up so we have it for logging later
+            # Only do this if display verbosity is high enough that we'll need the value
+            # This saves overhead from calling into docker when we don't need to
+            self.actual_user = self._get_docker_remote_user()
 
     @staticmethod
     def _sanitize_version(version):
@@ -92,7 +106,13 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd, 'version']
+        cmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            cmd += self._play_context.docker_extra_args.split(' ')
+
+        cmd += ['version']
+
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
@@ -109,12 +129,48 @@ class Connection(ConnectionBase):
 
         return self._sanitize_version(cmd_output)
 
+    def _get_docker_remote_user(self):
+        """ Get the default user configured in the docker container """
+        p = subprocess.Popen([self.docker_cmd, 'inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        out, err = p.communicate()
+
+        if p.returncode != 0:
+            display.warning('unable to retrieve default user from docker container: %s' % out + err)
+            return None
+
+        # The default exec user is root, unless it was changed in the Dockerfile with USER
+        return out.strip() or 'root'
+
+    def _build_exec_cmd(self, cmd):
+        """ Build the local docker exec command to run cmd on remote_host
+
+            If remote_user is available and is supported by the docker
+            version we are using, it will be provided to docker exec.
+        """
+
+        local_cmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            local_cmd += self._play_context.docker_extra_args.split(' ')
+
+        local_cmd += ['exec']
+
+        if self.remote_user is not None:
+            local_cmd += ['-u', self.remote_user]
+
+        # -i is needed to keep stdin open which allows pipelining to work
+        local_cmd += ['-i', self._play_context.remote_addr] + cmd
+
+        return local_cmd
+
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
             display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
-                self._play_context.remote_user, host=self._play_context.remote_addr)
+                self.actual_user or '?'), host=self._play_context.remote_addr
             )
             self._connected = True
 
@@ -122,12 +178,10 @@ class Connection(ConnectionBase):
         """ Run a command on the docker host """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
+        local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
-        local_cmd = map(to_bytes, local_cmd)
+        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -154,36 +208,27 @@ class Connection(ConnectionBase):
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         out_path = self._prefix_login_path(out_path)
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
 
-        if self.can_copy_bothways:
-            # only docker >= 1.8.1 can do this natively
-            args = [ self.docker_cmd, "cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
-            args = map(to_bytes, args)
-            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out_path = pipes.quote(out_path)
+        # Older docker doesn't have native support for copying files into
+        # running containers, so we use docker exec to implement this
+        # Although docker version 1.8 and later provide support, the
+        # owner and group of the files are always set to root
+        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
+        args = [to_bytes(i, errors='strict') for i in args]
+        with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
+            try:
+                p = subprocess.Popen(args, stdin=in_file,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError:
+                raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
+
             if p.returncode != 0:
                 raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
-        else:
-            out_path = pipes.quote(out_path)
-            # Older docker doesn't have native support for copying files into
-            # running containers, so we use docker exec to implement this
-            executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
-                    "dd of=%s bs=%s" % (out_path, BUFSIZE)]
-            args = map(to_bytes, args)
-            with open(in_path, 'rb') as in_file:
-                try:
-                    p = subprocess.Popen(args, stdin=in_file,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                except OSError:
-                    raise AnsibleError("docker connection with docker < 1.8.1 requires dd command in the chroot")
-                stdout, stderr = p.communicate()
-
-                if p.returncode != 0:
-                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
@@ -196,7 +241,7 @@ class Connection(ConnectionBase):
         out_dir = os.path.dirname(out_path)
 
         args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
-        args = map(to_bytes, args)
+        args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -205,7 +250,7 @@ class Connection(ConnectionBase):
         # Rename if needed
         actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
         if actual_out_path != out_path:
-            os.rename(actual_out_path, out_path)
+            os.rename(to_bytes(actual_out_path, errors='strict'), to_bytes(out_path, errors='strict'))
 
     def close(self):
         """ Terminate the connection. Nothing to do for Docker"""

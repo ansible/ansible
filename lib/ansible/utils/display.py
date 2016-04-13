@@ -28,9 +28,9 @@ import time
 import locale
 import logging
 import getpass
+import errno
 from struct import unpack, pack
 from termios import TIOCGWINSZ
-from multiprocessing import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -38,15 +38,21 @@ from ansible.utils.color import stringc
 from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
+    from __main__ import debug_lock
+except ImportError:
+    # for those not using a CLI, though ...
+    # this might not work well after fork
+    from multiprocessing import Lock
+    debug_lock = Lock()
+
+try:
     # Python 2
     input = raw_input
 except NameError:
-    # Python 3
+    # Python 3, we already have raw_input
     pass
 
 
-# These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
-debug_lock = Lock()
 
 logger = None
 #TODO: make this a logging callback instead
@@ -129,11 +135,19 @@ class Display:
                 msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
 
             if not stderr:
-                sys.stdout.write(msg2)
-                sys.stdout.flush()
+                fileobj = sys.stdout
             else:
-                sys.stderr.write(msg2)
-                sys.stderr.flush()
+                fileobj = sys.stderr
+
+            fileobj.write(msg2)
+
+            try:
+                fileobj.flush()
+            except IOError as e:
+                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+                # when piping to "head -n1"
+                if e.errno != errno.EPIPE:
+                    raise
 
         if logger and not screen_only:
             msg2 = nocolor.lstrip(u'\n')
@@ -149,6 +163,9 @@ class Display:
                 logger.error(msg2)
             else:
                 logger.info(msg2)
+
+    def v(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=0)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
@@ -188,12 +205,12 @@ class Display:
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
-            raise AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
         wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"

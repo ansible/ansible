@@ -109,11 +109,11 @@ class CloudStackInventory(object):
             project_id = self.get_project_id(options.project)
 
         if options.host:
-            data = self.get_host(options.host)
+            data = self.get_host(options.host, project_id)
             print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list()
+            data = self.get_list(project_id)
             print(json.dumps(data, indent=2))
         else:
             print("usage: --list | --host <hostname> [--project <project>]",

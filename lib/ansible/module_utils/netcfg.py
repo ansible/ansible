@@ -19,6 +19,12 @@
 
 import re
 import collections
+import itertools
+import shlex
+
+from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+
+DEFAULT_COMMENT_TOKENS = ['#', '!']
 
 class ConfigLine(object):
 
@@ -38,8 +44,12 @@ class ConfigLine(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+def ignore_line(text, tokens=None):
+    for item in (tokens or DEFAULT_COMMENT_TOKENS):
+        if text.startswith(item):
+            return True
 
-def parse(lines, indent):
+def parse(lines, indent, comment_tokens=None):
     toplevel = re.compile(r'\S')
     childline = re.compile(r'^\s*(.+)$')
     repl = r'([{|}|;])'
@@ -53,7 +63,7 @@ def parse(lines, indent):
         cfg = ConfigLine(text)
         cfg.raw = line
 
-        if not text or text[0] in ['!', '#']:
+        if not text or ignore_line(text, comment_tokens):
             continue
 
         # handle top level commands
@@ -84,10 +94,179 @@ def parse(lines, indent):
     return config
 
 
+class NetworkConfig(object):
+
+    def __init__(self, indent=None, contents=None):
+        self.indent = indent or 1
+        self._config = list()
+
+        if contents:
+            self.load(contents)
+
+    @property
+    def items(self):
+        return self._config
+
+    def __str__(self):
+        config = collections.OrderedDict()
+        for item in self._config:
+            self.expand(item, config)
+        return '\n'.join(self.flatten(config))
+
+    def load(self, contents):
+        self._config = parse(contents, indent=self.indent)
+
+    def load_from_file(self, filename):
+        self.load(open(filename).read())
+
+    def get(self, path):
+        if isinstance(path, basestring):
+            path = [path]
+        for item in self._config:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def search(self, regexp, path=None):
+        regex = re.compile(r'^%s' % regexp, re.M)
+
+        if path:
+            parent = self.get(path)
+            if not parent or not parent.children:
+                return
+            children = [c.text for c in parent.children]
+            data = '\n'.join(children)
+        else:
+            data = str(self)
+
+        match = regex.search(data)
+        if match:
+            if match.groups():
+                values = match.groupdict().values()
+                groups = list(set(match.groups()).difference(values))
+                return (groups, match.groupdict())
+            else:
+                return match.group()
+
+    def findall(self, regexp):
+        regexp = r'%s' % regexp
+        return re.findall(regexp, str(self))
+
+    def expand(self, obj, items):
+        block = [item.raw for item in obj.parents]
+        block.append(obj.raw)
+
+        current_level = items
+        for b in block:
+            if b not in current_level:
+                current_level[b] = collections.OrderedDict()
+            current_level = current_level[b]
+        for c in obj.children:
+            if c.raw not in current_level:
+                current_level[c.raw] = collections.OrderedDict()
+
+    def flatten(self, data, obj=None):
+        if obj is None:
+            obj = list()
+        for k, v in data.items():
+            obj.append(k)
+            self.flatten(v, obj)
+        return obj
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def get_children(self, path):
+        obj = self.get_object(path)
+        if obj:
+            return obj.children
+
+    def difference(self, other, path=None, match='line', replace='line'):
+        updates = list()
+
+        config = self.items
+        if path:
+            config = self.get_children(path) or list()
+
+        if match == 'line':
+            for item in config:
+                if item not in other.items:
+                    updates.append(item)
+
+        elif match == 'strict':
+            if path:
+                current = other.get_children(path) or list()
+            else:
+                current = other.items
+
+            for index, item in enumerate(config):
+                try:
+                    if item != current[index]:
+                        updates.append(item)
+                except IndexError:
+                    updates.append(item)
+
+        elif match == 'exact':
+            if path:
+                current = other.get_children(path) or list()
+            else:
+                current = other.items
+
+            if len(current) != len(config):
+                updates.extend(config)
+            else:
+                for ours, theirs in itertools.izip(config, current):
+                    if ours != theirs:
+                        updates.extend(config)
+                        break
+
+        diffs = dict()
+        for update in updates:
+            if replace == 'block' and update.parents:
+                update = update.parents[-1]
+            self.expand(update, diffs)
+
+        return self.flatten(diffs)
+
+    def _build_children(self, children, parents=None, offset=0):
+        for item in children:
+            line = ConfigLine(item)
+            line.raw = item.rjust(len(item) + offset)
+            if parents:
+                line.parents = parents
+                parents[-1].children.append(line)
+            yield line
+
+    def add(self, lines, parents=None):
+        offset = 0
+
+        config = list()
+        parent = None
+        parents = parents or list()
+
+        for item in parents:
+            line = ConfigLine(item)
+            line.raw = item.rjust(len(item) + offset)
+            config.append(line)
+            if parent:
+                parent.children.append(line)
+                line.parents.append(parent)
+            parent = line
+            offset += self.indent
+
+        self._config.extend(config)
+        self._config.extend(list(self._build_children(lines, config, offset)))
+
+
+
 class Conditional(object):
-    ''' 
-    Used in command modules to evaluate waitfor conditions
-    ''' 
+    """Used in command modules to evaluate waitfor conditions
+    """
 
     OPERATORS = {
         'eq': ['eq', '=='],
@@ -133,13 +312,20 @@ class Conditional(object):
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
-        for key in self.key.split('.'):
-            match = re.match(r'^(.+)\[(\d+)\]', key)
+        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
+        for part in parts:
+            match = re.findall(r'\[(\S+?)\]', part)
             if match:
-                key, index = match.groups()
-                result = result[key][int(index)]
+                key = part[:part.find('[')]
+                result = result[key]
+                for m in match:
+                    try:
+                        m = int(m)
+                    except ValueError:
+                        m = str(m)
+                    result = result[m]
             else:
-                result = result.get(key)
+                result = result.get(part)
         return result
 
     def number(self, value):
@@ -168,3 +354,7 @@ class Conditional(object):
 
     def contains(self, value):
         return self.value in value
+
+
+
+

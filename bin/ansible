@@ -36,6 +36,10 @@ import os
 import sys
 import traceback
 
+# for debug
+from multiprocessing import Lock
+debug_lock = Lock()
+
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode

@@ -81,6 +81,18 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
+import httplib
+import netrc
+import os
+import re
+import sys
+import socket
+import platform
+import tempfile
+import base64
+
+from ansible.module_utils.basic import get_distribution
+
 try:
     import urllib2
     HAS_URLLIB2 = True
@@ -105,6 +117,15 @@ try:
     HAS_SSLCONTEXT = True
 except ImportError:
     HAS_SSLCONTEXT = False
+
+try:
+    try:
+        from urllib3.contrib.pyopenssl import ssl_wrap_socket
+    except ImportError:
+        from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
+    HAS_URLLIB3_SNI_SUPPORT = True
+except ImportError:
+    HAS_URLLIB3_SNI_SUPPORT = False
 
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
@@ -150,8 +171,6 @@ if not HAS_MATCH_HOSTNAME:
     ###
 
     """The match_hostname() function from Python 3.4, essential when using SSL."""
-
-    import re
 
     class CertificateError(ValueError):
         pass
@@ -257,16 +276,6 @@ if not HAS_MATCH_HOSTNAME:
     HAS_MATCH_HOSTNAME = True
 
 
-import httplib
-import os
-import re
-import sys
-import socket
-import platform
-import tempfile
-import base64
-
-
 # This is a dummy cacert provided for Mac OS since you need at least 1
 # ca cert, regardless of validity, for Python on Mac OS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
@@ -340,6 +349,8 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
 
             if HAS_SSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
+            elif HAS_URLLIB3_SNI_SUPPORT:
+                self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL, server_hostname=server_hostname)
             else:
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
@@ -417,7 +428,7 @@ class RequestWithMethod(urllib2.Request):
     def __init__(self, url, method, data=None, headers=None):
         if headers is None:
             headers = {}
-        self._method = method
+        self._method = method.upper()
         urllib2.Request.__init__(self, url, data, headers)
 
     def get_method(self):
@@ -425,6 +436,82 @@ class RequestWithMethod(urllib2.Request):
             return self._method
         else:
             return urllib2.Request.get_method(self)
+
+
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+    """This is a class factory that closes over the value of
+    ``follow_redirects`` so that the RedirectHandler class has access to
+    that value without having to use globals, and potentially cause problems
+    where ``open_url`` or ``fetch_url`` are used multiple times in a module.
+    """
+
+    class RedirectHandler(urllib2.HTTPRedirectHandler):
+        """This is an implementation of a RedirectHandler to match the
+        functionality provided by httplib2. It will utilize the value of
+        ``follow_redirects`` that is passed into ``RedirectHandlerFactory``
+        to determine how redirects should be handled in urllib2.
+        """
+
+        def redirect_request(self, req, fp, code, msg, hdrs, newurl):
+            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            if handler:
+                urllib2._opener.add_handler(handler)
+
+            if follow_redirects == 'urllib2':
+                return urllib2.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+            elif follow_redirects in ['no', 'none', False]:
+                raise urllib2.HTTPError(newurl, code, msg, hdrs, fp)
+
+            do_redirect = False
+            if follow_redirects in ['all', 'yes', True]:
+                do_redirect = (code >= 300 and code < 400)
+
+            elif follow_redirects == 'safe':
+                m = req.get_method()
+                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
+
+            if do_redirect:
+                # be conciliant with URIs containing a space
+                newurl = newurl.replace(' ', '%20')
+                newheaders = dict((k,v) for k,v in req.headers.items()
+                                  if k.lower() not in ("content-length", "content-type")
+                                 )
+                return urllib2.Request(newurl,
+                                       headers=newheaders,
+                                       origin_req_host=req.get_origin_req_host(),
+                                       unverifiable=True)
+            else:
+                raise urllib2.HTTPError(req.get_full_url(), code, msg, hdrs,
+                                        fp)
+
+    return RedirectHandler
+
+
+def build_ssl_validation_error(hostname, port, paths):
+    '''Inteligently build out the SSLValidationError based on what support
+    you have installed
+    '''
+
+    msg = [
+        ('Failed to validate the SSL certificate for %s:%s.'
+         ' Make sure your managed systems have a valid CA'
+         ' certificate installed.')
+    ]
+    if not HAS_SSLCONTEXT:
+        msg.append('If the website serving the url uses SNI you need'
+                   ' python >= 2.7.9 on your managed machine')
+        if not HAS_URLLIB3_SNI_SUPPORT:
+            msg.append('or you can install the `urllib3`, `pyopenssl`,'
+                       ' `ndg-httpsclient`, and `pyasn1` python modules')
+
+        msg.append('to perform SNI verification in python >= 2.6.')
+
+    msg.append('You can use validate_certs=False if you do'
+               ' not need to confirm the servers identity but this is'
+               ' unsafe and not recommended.'
+               ' Paths checked for this platform: %s')
+
+    raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
 
 class SSLValidationHandler(urllib2.BaseHandler):
@@ -558,6 +645,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
+                    elif HAS_URLLIB3_SNI_SUPPORT:
+                        ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
@@ -567,6 +656,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
                 s.connect((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
+                elif HAS_URLLIB3_SNI_SUPPORT:
+                    ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                 else:
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                     match_hostname(ssl_s.getpeercert(), self.hostname)
@@ -578,17 +669,9 @@ class SSLValidationHandler(urllib2.BaseHandler):
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
             else:
-                raise SSLValidationError('Failed to validate the SSL certificate for %s:%s.'
-                    ' Make sure your managed systems have a valid CA'
-                    ' certificate installed.  If the website serving the url'
-                    ' uses SNI you need python >= 2.7.9 on your managed'
-                    ' machine.  You can use validate_certs=False if you do'
-                    ' not need to confirm the server\s identity but this is'
-                    ' unsafe and not recommended'
-                    ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
-                )
+                build_ssl_validation_error(self.hostname, self.port, paths_checked)
         except CertificateError:
-            raise SSLValidationError("SSL Certificate does not belong to %s.  Make sure the url has a certificate that belongs to it or use validate_certs=False (insecure)" % self.hostname)
+            build_ssl_validation_error(self.hostname, self.port, paths_checked)
 
         try:
             # cleanup the temp file created, don't worry
@@ -601,14 +684,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
 
     https_request = http_request
 
-# Rewrite of fetch_url to not require the module environment
-def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-        force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None, force_basic_auth=False):
-    '''
-    Fetches a file from an HTTP/FTP server using urllib2
-    '''
-    handlers = []
+def maybe_add_ssl_handler(url, validate_certs):
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
@@ -628,11 +704,29 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        ssl_handler = SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port)
+
+# Rewrite of fetch_url to not require the module environment
+def open_url(url, data=None, headers=None, method=None, use_proxy=True,
+        force=False, last_mod_time=None, timeout=10, validate_certs=True,
+        url_username=None, url_password=None, http_agent=None,
+        force_basic_auth=False, follow_redirects='urllib2'):
+    '''
+    Fetches a file from an HTTP/FTP server using urllib2
+    '''
+    handlers = []
+    ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+    if ssl_handler:
         handlers.append(ssl_handler)
 
+    # FIXME: change the following to use the generic_urlparse function
+    #        to remove the indexed references for 'parsed'
+    parsed = urlparse.urlparse(url)
     if parsed[0] != 'ftp':
         username = url_username
+
+        if headers is None:
+            headers = {}
 
         if username:
             password = url_password
@@ -666,10 +760,19 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             handlers.append(authhandler)
 
         elif username and force_basic_auth:
-            if headers is None:
-                headers = {}
+            headers["Authorization"] = basic_auth_header(username, password)
 
-            headers["Authorization"] = "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+        else:
+            try:
+                rc = netrc.netrc(os.environ.get('NETRC'))
+                login = rc.authenticators(parsed[1])
+            except IOError:
+                login = None
+
+            if login:
+                username, _, password = login
+                if username and password:
+                    headers["Authorization"] = basic_auth_header(username, password)
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
@@ -680,6 +783,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     # Some python builds lack HTTPS support.
     if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
+
+    handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
@@ -732,6 +837,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 # Module-related functions
 #
 
+def basic_auth_header(username, password):
+    return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+
 def url_argument_spec():
     '''
     Creates an argument spec that can be used with any module
@@ -768,26 +876,29 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     http_agent = module.params.get('http_agent', None)
     force_basic_auth = module.params.get('force_basic_auth', '')
 
+    follow_redirects = module.params.get('follow_redirects', 'urllib2')
+
     r = None
     info = dict(url=url)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
-                use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-                validate_certs=validate_certs, url_username=username,
-                url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth)
+                     use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
+                     validate_certs=validate_certs, url_username=username,
+                     url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
+                     follow_redirects=follow_redirects)
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
     except NoSSLError, e:
         distribution = get_distribution()
-        if distribution.lower() == 'redhat':
+        if distribution is not None and distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
         else:
             module.fail_json(msg='%s' % str(e))
     except (ConnectionError, ValueError), e:
         module.fail_json(msg=str(e))
     except urllib2.HTTPError, e:
-        info.update(dict(msg=str(e), status=e.code))
+        info.update(dict(msg=str(e), status=e.code, **e.info()))
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))

@@ -50,8 +50,6 @@ class CallbackModule(CallbackModule_default):
         if result._result.get('changed', False):
             self.display_task_banner()
             self.super_ref.v2_runner_on_ok(result)
-        else:
-            pass
 
     def v2_runner_on_unreachable(self, result):
         self.display_task_banner()
@@ -63,14 +61,15 @@ class CallbackModule(CallbackModule_default):
     def v2_playbook_on_include(self, included_file):
         pass
 
-    def v2_playbook_item_on_ok(self, result):
-        self.display_task_banner()
-        self.super_ref.v2_playbook_item_on_ok(result)
+    def v2_runner_item_on_ok(self, result):
+        if result._result.get('changed', False):
+            self.display_task_banner()
+            self.super_ref.v2_runner_item_on_ok(result)
 
-    def v2_playbook_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result):
         pass
 
-    def v2_playbook_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result):
         self.display_task_banner()
-        self.super_ref.v2_playbook_item_on_failed(result)
+        self.super_ref.v2_runner_item_on_failed(result)
 

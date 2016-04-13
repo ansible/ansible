@@ -1,4 +1,4 @@
-Roadmap For Ansible by RedHat
+Roadmap For Ansible by Red Hat
 =============
 This document is now the location for published Ansible Core roadmaps.     
 

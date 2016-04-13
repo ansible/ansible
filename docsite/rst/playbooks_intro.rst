@@ -41,7 +41,7 @@ Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module (see :doc:`Modules`).
+to an ansible module (see :doc:`modules`).
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -180,9 +180,9 @@ Support for running things as another user is also available (see :doc:`become`)
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
+      become: yes
 
-You can also use sudo on a particular task instead of the whole play::
+You can also use become on a particular task instead of the whole play::
 
     ---
     - hosts: webservers
@@ -382,7 +382,7 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   * Notify handlers are always run in the order written.
+   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement.
    * Handler names live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_

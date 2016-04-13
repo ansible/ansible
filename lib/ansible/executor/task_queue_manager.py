@@ -28,12 +28,14 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
 
 try:
     from __main__ import display
@@ -99,9 +101,8 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
-            self._workers.append([None, main_q, rslt_q])
+            self._workers.append([None, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -118,11 +119,18 @@ class TaskQueueManager:
         for key in self._notified_handlers.keys():
             del self._notified_handlers[key]
 
-        # FIXME: there is a block compile helper for this...
+        def _process_block(b):
+            temp_list = []
+            for t in b.block:
+                if isinstance(t, Block):
+                    temp_list.extend(_process_block(t))
+                else:
+                    temp_list.append(t)
+            return temp_list
+
         handler_list = []
         for handler_block in handlers:
-            for handler in handler_block.block:
-                handler_list.append(handler)
+            handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the handler names from the handler list
         for handler in handler_list:
@@ -144,7 +152,7 @@ class TaskQueueManager:
 
         if isinstance(self._stdout_callback, CallbackBase):
             stdout_callback_loaded = True
-        elif isinstance(self._stdout_callback, basestring):
+        elif isinstance(self._stdout_callback, string_types):
             if self._stdout_callback not in callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
@@ -249,9 +257,8 @@ class TaskQueueManager:
         if self._result_prc:
             self._result_prc.terminate()
 
-            for (worker_prc, main_q, rslt_q) in self._workers:
+            for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
-                main_q.close()
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
@@ -312,4 +319,7 @@ class TaskQueueManager:
                         method(*args, **kwargs)
                 except Exception as e:
                     #TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure when attempting to use callback plugin (%s): %s" % (to_unicode(callback_plugin), to_unicode(e)))
+                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_unicode(method_name), to_unicode(callback_plugin), to_unicode(e)))
+                    from traceback import format_tb
+                    from sys import exc_info
+                    display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))

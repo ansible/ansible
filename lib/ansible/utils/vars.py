@@ -74,13 +74,19 @@ def merge_hash(a, b):
     """
 
     _validate_mutable_mappings(a, b)
+
+    # if a is empty or equal to b, return b
+    if a == {} or a == b:
+        return b.copy()
+
+    # if b is empty the below unfolds quickly
     result = a.copy()
 
     # next, iterate over b keys and values
     for k, v in iteritems(b):
         # if there's already such key in a
         # and that key contains a MutableMapping
-        if k in result and isinstance(result[k], MutableMapping):
+        if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
         else:
@@ -104,6 +110,13 @@ def load_extra_vars(loader, options):
             data = parse_kv(extra_vars_opt)
         extra_vars = combine_vars(extra_vars, data)
     return extra_vars
+
+def load_options_vars(options):
+    options_vars = {}
+    # For now only return check mode, but we can easily return more
+    # options if we need variables for them
+    options_vars['ansible_check_mode'] = options.check
+    return options_vars
 
 def isidentifier(ident):
     """

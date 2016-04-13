@@ -16,20 +16,49 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+import re
+
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.netcfg import parse
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     transport=dict(default='cli', choices=['cli', 'nxapi']),
     use_ssl=dict(default=False, type='bool'),
-    provider=dict()
+    validate_certs=dict(default=True, type='bool'),
+    provider=dict(type='dict')
 )
 
 NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
+
 NXAPI_ENCODINGS = ['json', 'xml']
+
+CLI_PROMPTS_RE = [
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"syntax error"),
+    re.compile(r"unknown command")
+]
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -49,17 +78,18 @@ class Nxapi(object):
         self.module.params['url_password'] = module.params['password']
 
         self.url = None
-        self.enable = None
+        self._nxapi_auth = None
 
-    def _get_body(self, commands, command_type, encoding, version='1.2', chunk='0', sid=None):
+    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
         """Encodes a NXAPI JSON request message
         """
         if isinstance(commands, (list, set, tuple)):
             commands = ' ;'.join(commands)
 
         if encoding not in NXAPI_ENCODINGS:
-            self.module.fail_json("Invalid encoding. Received %s. Expected one of %s" %
-                (encoding, ','.join(NXAPI_ENCODINGS)))
+            msg = 'invalid encoding, received %s, exceped one of %s' % \
+                    (encoding, ','.join(NXAPI_ENCODINGS))
+            self.module_fail_json(msg=msg)
 
         msg = {
             'version': version,
@@ -92,16 +122,21 @@ class Nxapi(object):
         clist = to_list(commands)
 
         if command_type not in NXAPI_COMMAND_TYPES:
-            self.module.fail_json(msg="Invalid command_type. Received %s. Expected one of %s." %
-                (command_type, ','.join(NXAPI_COMMAND_TYPES)))
+            msg = 'invalid command_type, received %s, exceped one of %s' % \
+                    (command_type, ','.join(NXAPI_COMMAND_TYPES))
+            self.module_fail_json(msg=msg)
 
         data = self._get_body(clist, command_type, encoding)
         data = self.module.jsonify(data)
 
         headers = {'Content-Type': 'application/json'}
+        if self._nxapi_auth:
+            headers['Cookie'] = self._nxapi_auth
 
         response, headers = fetch_url(self.module, self.url, data=data,
                 headers=headers, method='POST')
+
+        self._nxapi_auth = headers.get('set-cookie')
 
         if headers['status'] != 200:
             self.module.fail_json(**headers)
@@ -109,22 +144,12 @@ class Nxapi(object):
         response = self.module.from_json(response.read())
         result = list()
 
-        try:
-            output = response['ins_api']['outputs']['output']
-            if isinstance(output, list):
-                for item in response['ins_api']['outputs']['output']:
-                    if item['code'] != '200':
-                        self.module.fail_json(msg=item['msg'], command=item['input'],
-                                code=item['code'])
-                    else:
-                        result.append(item['body'])
-            elif output['code'] != '200':
-                self.module.fail_json(msg=item['msg'], command=item['input'],
-                        code=item['code'])
+        output = response['ins_api']['outputs']['output']
+        for item in to_list(output):
+            if item['code'] != '200':
+                self.module.fail_json(**item)
             else:
-                result.append(output['body'])
-        except Exception:
-            self.module.fail_json(**headers)
+                result.append(item['body'])
 
         return result
 
@@ -141,13 +166,13 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
-
-        self.shell = Shell()
+        key_filename = self.module.params['ssh_keyfile']
 
         try:
-            self.shell.open(host, port=port, username=username, password=password)
+            self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE, kickstart=False)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
         except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
 
     def send(self, commands, encoding='text'):
@@ -160,6 +185,11 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
+        self._connected = False
+
+    @property
+    def connected(self):
+        return self._connected
 
     @property
     def config(self):
@@ -168,13 +198,12 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                if not params.get(key) and value is not None:
-                    params[key] = value
-        return params
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
 
     def connect(self):
         if self.params['transport'] == 'nxapi':
@@ -183,24 +212,31 @@ class NetworkModule(AnsibleModule):
             self.connection = Cli(self)
 
         self.connection.connect()
+
         if self.params['transport'] == 'cli':
-            self.execute('terminal length 0')
+            self.connection.send('terminal length 0')
+
+        self._connected = True
+
+
+    def configure_cli(self, commands):
+        commands = to_list(commands)
+        commands.insert(0, 'configure')
+        responses = self.execute(commands)
+        responses.pop(0)
+        return responses
 
     def configure(self, commands):
         commands = to_list(commands)
         if self.params['transport'] == 'cli':
-            commands.insert(0, 'configure')
-            responses = self.execute(commands)
-            responses.pop(0)
+            return self.configure_cli(commands)
         else:
-            responses = self.execute(commands, command_type='cli_conf')
-        return responses
+            return self.execute(commands, command_type='cli_conf')
 
     def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message, commands=commands)
+        if not self.connected:
+            self.connect()
+        return self.connection.send(commands, **kwargs)
 
     def disconnect(self):
         self.connection.close()
@@ -212,7 +248,6 @@ class NetworkModule(AnsibleModule):
         cmd = 'show running-config'
         if self.params.get('include_defaults'):
             cmd += ' all'
-
         response = self.execute(cmd)
         return response[0]
 
@@ -231,5 +266,4 @@ def get_module(**kwargs):
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
-    module.connect()
     return module

@@ -25,7 +25,7 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -96,6 +96,23 @@ def find_hostsystem_by_name(content, hostname):
     for host in host_system:
         if host.name == hostname:
             return host
+    return None
+
+
+def find_vm_by_name(content, vm_name):
+
+    vms = get_all_objs(content, [vim.VirtualMachine])
+    for vm in vms:
+        if vm.name == vm_name:
+            return vm
+    return None
+
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
     return None
 
 

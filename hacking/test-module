@@ -64,7 +64,7 @@ def parse():
     parser.add_option('-I', '--interpreter', dest='interpreter',
         help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
         metavar='INTERPRETER_TYPE=INTERPRETER_PATH',
-        default='python={}'.format(sys.executable))
+        default='python={0}'.format(sys.executable))
     parser.add_option('-c', '--check', dest='check', action='store_true',
         help="run the module in check mode")
     parser.add_option('-n', '--noexecute', dest='execute', action='store_false',
@@ -131,7 +131,10 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
     if check:
          complex_args['_ansible_check_mode'] = True
 
+    modname = os.path.basename(modfile)
+    modname = os.path.splitext(modname)[0]
     (module_data, module_style, shebang) = module_common.modify_module(
+        modname,
         modfile,
         complex_args,
         task_vars=task_vars

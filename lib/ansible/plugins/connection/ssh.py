@@ -24,7 +24,6 @@ import os
 import pipes
 import pty
 import select
-import shlex
 import subprocess
 import time
 
@@ -101,15 +100,6 @@ class Connection(ConnectionBase):
 
         return controlpersist, controlpath
 
-    @staticmethod
-    def _split_args(argstring):
-        """
-        Takes a string like '-o Foo=1 -o Bar="foo bar"' and returns a
-        list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
-        the argument list. The list will not contain any empty elements.
-        """
-        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
-
     def _add_args(self, explanation, args):
         """
         Adds the given args to self._command and displays a caller-supplied
@@ -158,7 +148,7 @@ class Connection(ConnectionBase):
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
         if self._play_context.ssh_args:
-            args = self._split_args(self._play_context.ssh_args)
+            args = self._split_ssh_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
 
         # Now we add various arguments controlled by configuration file settings
@@ -211,7 +201,7 @@ class Connection(ConnectionBase):
         for opt in ['ssh_common_args', binary + '_extra_args']:
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
-                args = self._split_args(attr)
+                args = self._split_ssh_args(attr)
                 self._add_args("PlayContext set %s" % opt, args)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
@@ -333,7 +323,7 @@ class Connection(ConnectionBase):
         if isinstance(cmd, (text_type, binary_type)):
             cmd = to_bytes(cmd)
         else:
-            cmd = map(to_bytes, cmd)
+            cmd = list(map(to_bytes, cmd))
 
         if not in_data:
             try:
@@ -569,11 +559,12 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        if in_data:
-            cmd = self._build_command('ssh', self.host, cmd)
+        if not in_data and sudoable:
+            args = ('ssh', '-tt', self.host, cmd)
         else:
-            cmd = self._build_command('ssh', '-tt', self.host, cmd)
+            args = ('ssh', self.host, cmd)
 
+        cmd = self._build_command(*args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         return (returncode, stdout, stderr)
@@ -595,13 +586,13 @@ class Connection(ConnectionBase):
 
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = "%s..." % args[0]
-        for attempt in xrange(remaining_tries):
+        for attempt in range(remaining_tries):
             try:
                 return_tuple = self._exec_command(*args, **kwargs)
                 # 0 = success
                 # 1-254 = remote command return code
                 # 255 = failure from the ssh command itself
-                if return_tuple[0] != 255 or attempt == (remaining_tries - 1):
+                if return_tuple[0] != 255:
                     break
                 else:
                     raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
@@ -618,7 +609,7 @@ class Connection(ConnectionBase):
                     else:
                         msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
 
-                    display.vv(msg)
+                    display.vv(msg, host=self.host)
 
                     time.sleep(pause)
                     continue
@@ -631,7 +622,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
 
         # scp and sftp require square brackets for IPv6 addresses, but

@@ -228,6 +228,18 @@ class CLI(object):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
+    def expand_paths(option, opt, value, parser):
+        """optparse action callback to convert a PATH style string arg to a list of path strings.
+
+        For ex, cli arg of '-p /blip/foo:/foo/bar' would be split on the
+        default os.pathsep and the option value would be set to
+        the list ['/blip/foo', '/foo/bar']. Each path string in the list
+        will also have '~/' values expand via os.path.expanduser()."""
+        path_entries = value.split(os.pathsep)
+        expanded_path_entries = [os.path.expanduser(path_entry) for path_entry in path_entries]
+        setattr(parser.values, option.dest, expanded_path_entries)
+
+    @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
             async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
         ''' create an options parser for most ansible scripts '''
@@ -422,16 +434,20 @@ class CLI(object):
                 except (IOError, AttributeError):
                     return ''
             f = open(os.path.join(repo_path, "HEAD"))
-            branch = f.readline().split('/')[-1].rstrip("\n")
+            line = f.readline().rstrip("\n")
+            if line.startswith("ref:"):
+                branch_path = os.path.join(repo_path, line[5:])
+            else:
+                branch_path = None
             f.close()
-            branch_path = os.path.join(repo_path, "refs", "heads", branch)
-            if os.path.exists(branch_path):
+            if branch_path and os.path.exists(branch_path):
+                branch = '/'.join(line.split('/')[2:])
                 f = open(branch_path)
                 commit = f.readline()[:10]
                 f.close()
             else:
                 # detached HEAD
-                commit = branch[:10]
+                commit = line[:10]
                 branch = 'detached HEAD'
                 branch_path = os.path.join(repo_path, "HEAD")
 
@@ -523,6 +539,8 @@ class CLI(object):
             except OSError as e:
                 raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
             stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))
             vault_pass = stdout.strip('\r\n')
         else:
             try:
@@ -542,6 +560,8 @@ class CLI(object):
             data = getattr(self.options, k)
         except:
             return defval
+        # FIXME: Can this be removed if cli and/or constants ensures it's a
+        # list?
         if k == "roles_path":
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]

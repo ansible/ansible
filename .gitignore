@@ -31,6 +31,7 @@ docs/man/man3/*
 *.sublime-workspace
 # docsite stuff...
 docsite/rst/modules_by_category.rst
+docsite/rst/playbooks_directives.rst
 docsite/rst/list_of_*.rst
 docsite/rst/*_module.rst
 docsite/*.html

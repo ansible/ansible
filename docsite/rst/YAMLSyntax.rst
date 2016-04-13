@@ -37,16 +37,33 @@ All members of a list are lines beginning at the same indentation level starting
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
 
     # An employee record
-    -  martin:
+    martin:
         name: Martin D'vloper
         job: Developer
         skill: Elite
 
+More complicated data structures are possible, such as lists of dictionaries, dictionaries whose values are lists or a mix of both::
+
+    # Employee records
+    -  martin:
+        name: Martin D'vloper
+        job: Developer
+        skills:
+          - python
+          - perl
+          - pascal
+    -  tabitha:
+        name: Tabitha Bitumen
+        job: Developer
+        skills:
+          - lisp
+          - fortran
+          - erlang
+
 Dictionaries and lists can also be represented in an abbreviated form if you really want to::
 
     ---
-    employees:
-      -  martin: {name: Martin D'vloper, job: Developer, skill: Elite}
+    martin: {name: Martin D'vloper, job: Developer, skill: Elite}
     fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 .. _truthiness:
@@ -58,6 +75,20 @@ Ansible doesn't really use these too much, but you can also specify a boolean va
     knows_oop: True
     likes_emacs: TRUE
     uses_cvs: false
+
+Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a ``|`` will include the newlines.  Using a ``>`` will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
+In either case the indentation will be ignored.
+Examples are::
+
+    include_newlines: |
+                exactly as you see
+                will appear these three
+                lines of poetry
+
+    ignore_newlines: >
+                this is really a
+                single line of text
+                despite appearances
 
 
 Let's combine what we learned so far in an arbitrary YAML example.
@@ -75,9 +106,13 @@ This really has nothing to do with Ansible, but will give you a feel for the for
         - Strawberry
         - Mango
     languages:
-        ruby: Elite
+        perl: Elite
         python: Elite
-        dotnet: Lame
+        pascal: Lame
+    education: |
+        4 GCSEs
+        3 A-Levels
+        BSc in the Internet of Things
 
 That's all you really need to know about YAML to start writing `Ansible` playbooks.
 
@@ -116,6 +151,8 @@ In these cases just use quotes::
        YAML Lint (online) helps you debug YAML syntax if you are having problems
    `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
+   `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
+       A good guide to YAML syntax
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

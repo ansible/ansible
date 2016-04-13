@@ -30,18 +30,17 @@ from ansible import constants as C
 class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
+        original_path = path
+
         if self._task._role is not None:
-            original_path = path
+            path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
+        else:
+            path = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', path)
 
-            if self._task._role is not None:
-                path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
-            else:
-                path = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', path)
-
-            if original_path and original_path[-1] == '/' and path[-1] != '/':
-                # make sure the dwim'd path ends in a trailing "/"
-                # if the original path did
-                path += '/'
+        if original_path and original_path[-1] == '/' and path[-1] != '/':
+            # make sure the dwim'd path ends in a trailing "/"
+            # if the original path did
+            path += '/'
 
         return path
 
@@ -52,6 +51,10 @@ class ActionModule(ActionBase):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
 
         user_prefix = ''
+
+        if path.startswith('rsync://'):
+            return path
+
         if user:
             user_prefix = '%s@' % (user, )
 
@@ -81,7 +84,7 @@ class ActionModule(ActionBase):
             is a different host (for instance, an ssh tunnelled port or an
             alternative ssh port to a vagrant host.)
         """
-        transport = self._play_context.connection
+        transport = self._connection.transport
         if host not in C.LOCALHOST or transport != "local":
             if port_matches_localhost_port and host in C.LOCALHOST:
                 self._task.args['_substitute_controller'] = True
@@ -144,13 +147,13 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        # self._play_context.connection accounts for delegate_to so
+        # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
         # between the controller and the delegate_to host or the controller
         # and the remote_host if delegate_to isn't set.
 
         remote_transport = False
-        if self._play_context.connection != 'local':
+        if self._connection.transport != 'local':
             remote_transport = True
 
         try:
@@ -160,9 +163,9 @@ class ActionModule(ActionBase):
 
         # ssh paramiko and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._play_context.connection not in ('ssh', 'paramiko', 'smart', 'local'):
+        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._play_context.connection
+            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
             return result
 
         use_ssh_args = self._task.args.pop('use_ssh_args', None)
@@ -204,8 +207,8 @@ class ActionModule(ActionBase):
             dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
+        inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
         if self._task.args.get('dest_port', None) is None:
-            inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
             if inv_port is not None:
                 self._task.args['dest_port'] = inv_port
 
@@ -327,6 +330,6 @@ class ActionModule(ActionBase):
         if 'SyntaxError' in result.get('exception', result.get('msg', '')):
             # Emit a warning about using python3 because synchronize is
             # somewhat unique in running on localhost
-            result['traceback'] = result['msg']
+            result['exception'] = result['msg']
             result['msg'] = 'SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3.  You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this'
         return result

@@ -17,11 +17,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(default=22, type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     provider=dict()
 )
 
@@ -45,11 +50,12 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        key_filename = self.module.params['ssh_keyfile']
 
         self.shell = Shell()
 
         try:
-            self.shell.open(host, port=port, username=username, password=password)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
         except Exception, exc:
             msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
@@ -72,12 +78,12 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                params[key] = value
-        return params
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
 
     def connect(self):
         self.connection = Cli(self)

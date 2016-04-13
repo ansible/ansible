@@ -25,7 +25,15 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import os
+from time import sleep
+
+try:
+    import boto
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
 
 try:
     import boto3
@@ -47,8 +55,6 @@ class AnsibleAWSError(Exception):
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
-    params['aws_session_token'] = params.pop('security_token', None)
-    params['verify'] = params.pop('validate_certs', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
@@ -239,3 +245,157 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
+
+def paging(pause=0):
+    """ Adds paging to boto retrieval functions that support 'marker' """
+    def wrapper(f):
+        def page(*args, **kwargs):
+            results = []
+            marker = None
+            while True:
+                try:
+                    new = f(*args, marker=marker, **kwargs)
+                    marker = new.next_marker
+                    results.extend(new)
+                    if not marker:
+                        break
+                    elif pause:
+                        sleep(pause)
+                except TypeError:
+                    # Older version of boto do not allow for marker param, just run normally
+                    results = f(*args, **kwargs)
+                    break
+            return results
+        return page
+    return wrapper
+
+
+def camel_dict_to_snake_dict(camel_dict):
+
+    def camel_to_snake(name):
+
+        import re
+
+        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+        all_cap_re = re.compile('([a-z0-9])([A-Z])')
+        s1 = first_cap_re.sub(r'\1_\2', name)
+
+        return all_cap_re.sub(r'\1_\2', s1).lower()
+
+
+    def value_is_list(camel_list):
+
+        checked_list = []
+        for item in camel_list:
+            if isinstance(item, dict):
+                checked_list.append(camel_dict_to_snake_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+
+        return checked_list
+
+
+    snake_dict = {}
+    for k, v in camel_dict.iteritems():
+        if isinstance(v, dict):
+            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
+        elif isinstance(v, list):
+            snake_dict[camel_to_snake(k)] = value_is_list(v)
+        else:
+            snake_dict[camel_to_snake(k)] = v
+
+    return snake_dict
+
+
+def ansible_dict_to_boto3_filter_list(filters_dict):
+
+    """ Convert an Ansible dict of filters to list of dicts that boto3 can use
+    Args:
+        filters_dict (dict): Dict of AWS filters.
+    Basic Usage:
+        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> ansible_dict_to_boto3_filter_list(filters)
+        {
+            'some-aws-id': 'i-01234567'
+        }
+    Returns:
+        List: List of AWS filters and their values
+        [
+            {
+                'Name': 'some-aws-id',
+                'Values': [
+                    'i-01234567',
+                ]
+            }
+        ]
+    """
+
+    filters_list = []
+    for k,v in filters_dict.iteritems():
+        filter_dict = {'Name': k}
+        if isinstance(v, basestring):
+            filter_dict['Values'] = [v]
+        else:
+            filter_dict['Values'] = v
+
+        filters_list.append(filter_dict)
+
+    return filters_list
+
+
+def boto3_tag_list_to_ansible_dict(tags_list):
+
+    """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
+    Args:
+        tags_list (list): List of dicts representing AWS tags.
+    Basic Usage:
+        >>> tags_list = [{'Key': 'MyTagKey', 'Value': 'MyTagValue'}]
+        >>> boto3_tag_list_to_ansible_dict(tags_list)
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    Returns:
+        Dict: Dict of key:value pairs representing AWS tags
+         {
+            'MyTagKey': 'MyTagValue',
+        }
+    """
+
+    tags_dict = {}
+    for tag in tags_list:
+        tags_dict[tag['Key']] = tag['Value']
+
+    return tags_dict
+
+
+def ansible_dict_to_boto3_tag_list(tags_dict):
+
+    """ Convert a flat dict of key:value pairs representing AWS resource tags to a boto3 list of dicts
+    Args:
+        tags_dict (dict): Dict representing AWS resource tags.
+    Basic Usage:
+        >>> tags_dict = {'MyTagKey': 'MyTagValue'}
+        >>> ansible_dict_to_boto3_tag_list(tags_dict)
+        {
+            'MyTagKey': 'MyTagValue'
+        }
+    Returns:
+        List: List of dicts containing tag keys and values
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    """
+
+    tags_list = []
+    for k,v in tags_dict.iteritems():
+        tags_list.append({'Key': k, 'Value': v})
+
+    return tags_list

@@ -35,6 +35,18 @@ try:
 except ImportError:
     has_lib_cs = False
 
+CS_HYPERVISORS = [
+    "KVM", "kvm",
+    "VMware", "vmware",
+    "BareMetal", "baremetal",
+    "XenServer", "xenserver",
+    "LXC", "lxc",
+    "HyperV", "hyperv",
+    "UCS", "ucs",
+    "OVM", "ovm",
+    "Simulator", "simulator",
+    ]
+
 def cs_argument_spec():
     return dict(
         api_key = dict(default=None),
@@ -100,7 +112,7 @@ class AnsibleCloudStack(object):
 
     def _connect(self):
         api_key = self.module.params.get('api_key')
-        api_secret = self.module.params.get('secret_key')
+        api_secret = self.module.params.get('api_secret')
         api_url = self.module.params.get('api_url')
         api_http_method = self.module.params.get('api_http_method')
         api_timeout = self.module.params.get('api_timeout')

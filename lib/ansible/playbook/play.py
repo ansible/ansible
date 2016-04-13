@@ -64,6 +64,7 @@ class Play(Base, Taggable, Become):
 
     # Connection
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    _gather_subset       = FieldAttribute(isa='list', default=None, always_post_validate=True)
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
@@ -105,6 +106,11 @@ class Play(Base, Taggable, Become):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
+        if ('name' not in data or data['name'] is None) and 'hosts' in data:
+            if isinstance(data['hosts'], list):
+                data['name'] = ','.join(data['hosts'])
+            else:
+                 data['name'] = data['hosts']
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 

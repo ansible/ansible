@@ -32,7 +32,7 @@ Set-StrictMode -Version 2.0
 # JSON; assign them to an environment variable and redefine $args so existing
 # modules will continue to work.
 $complex_args = @'
-<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>
+<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
 '@
 Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
 $args = @('env:MODULE_COMPLEX_ARGS')
@@ -211,7 +211,7 @@ Function Get-FileChecksum($path)
     If (Test-Path -PathType Leaf $path)
     {
         $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
-        $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+        $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
         $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
         $fp.Dispose();
     }

@@ -19,3 +19,5 @@
     - { role: test_mysql_variables, tags: test_mysql_variables}
     - { role: test_docker, tags: test_docker, when: ansible_distribution != "Fedora" }
     - { role: test_zypper, tags: test_zypper}
+    - { role: test_zypper_repository, tags: test_zypper_repository}
+    - { role: test_uri, tags: test_uri }

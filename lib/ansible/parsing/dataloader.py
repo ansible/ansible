@@ -21,10 +21,9 @@ __metaclass__ = type
 
 import copy
 import os
-import stat
+import json
 import subprocess
-
-from yaml import load, YAMLError
+from yaml import YAMLError
 from ansible.compat.six import text_type, string_types
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
@@ -35,7 +34,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 
 class DataLoader():
 
@@ -72,24 +71,29 @@ class DataLoader():
         Creates a python datastructure from the given data, which can be either
         a JSON or YAML string.
         '''
-
-        # YAML parser will take JSON as it is a subset.
-        if isinstance(data, AnsibleUnicode):
-            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-            # they are unable to cope with our subclass.
-            # Unwrap and re-wrap the unicode so we can keep track of line
-            # numbers
-            in_data = text_type(data)
-        else:
-            in_data = data
+        new_data = None
         try:
-            new_data = self._safe_load(in_data, file_name=file_name)
-        except YAMLError as yaml_exc:
-            self._handle_error(yaml_exc, file_name, show_content)
+            # we first try to load this data as JSON
+            new_data = json.loads(data)
+        except:
+            # must not be JSON, let the rest try
+            if isinstance(data, AnsibleUnicode):
+                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+                # they are unable to cope with our subclass.
+                # Unwrap and re-wrap the unicode so we can keep track of line
+                # numbers
+                in_data = text_type(data)
+            else:
+                in_data = data
+            try:
+                new_data = self._safe_load(in_data, file_name=file_name)
+            except YAMLError as yaml_exc:
+                self._handle_error(yaml_exc, file_name, show_content)
 
-        if isinstance(data, AnsibleUnicode):
-            new_data = AnsibleUnicode(new_data)
-            new_data.ansible_pos = data.ansible_pos
+            if isinstance(data, AnsibleUnicode):
+                new_data = AnsibleUnicode(new_data)
+                new_data.ansible_pos = data.ansible_pos
+
         return new_data
 
     def load_from_file(self, file_name):
@@ -114,15 +118,15 @@ class DataLoader():
 
     def path_exists(self, path):
         path = self.path_dwim(path)
-        return os.path.exists(path)
+        return os.path.exists(to_bytes(path, errors='strict'))
 
     def is_file(self, path):
         path = self.path_dwim(path)
-        return os.path.isfile(path) or path == os.devnull
+        return os.path.isfile(to_bytes(path, errors='strict')) or path == os.devnull
 
     def is_directory(self, path):
         path = self.path_dwim(path)
-        return os.path.isdir(path)
+        return os.path.isdir(to_bytes(path, errors='strict'))
 
     def list_directory(self, path):
         path = self.path_dwim(path)
@@ -140,7 +144,10 @@ class DataLoader():
         try:
             return loader.get_single_data()
         finally:
-            loader.dispose()
+            try:
+                loader.dispose()
+            except AttributeError:
+                pass # older versions of yaml don't have dispose function, ignore
 
     def _get_file_contents(self, file_name):
         '''
@@ -199,13 +206,15 @@ class DataLoader():
         '''
 
         given = unquote(given)
+        given = to_unicode(given, errors='strict')
 
-        if given.startswith("/"):
+        if given.startswith(u"/"):
             return os.path.abspath(given)
-        elif given.startswith("~"):
+        elif given.startswith(u"~"):
             return os.path.abspath(os.path.expanduser(given))
         else:
-            return os.path.abspath(os.path.join(self._basedir, given))
+            basedir = to_unicode(self._basedir, errors='strict')
+            return os.path.abspath(os.path.join(basedir, given))
 
     def path_dwim_relative(self, path, dirname, source):
         '''
@@ -229,8 +238,8 @@ class DataLoader():
             basedir = unfrackpath(path)
 
             # is it a role and if so make sure you get correct base path
-            if path.endswith('tasks') and os.path.exists(os.path.join(path,'main.yml')) \
-                or os.path.exists(os.path.join(path,'tasks/main.yml')):
+            if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='strict')) \
+                or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='strict')):
                 isrole = True
                 if path.endswith('tasks'):
                     basedir = unfrackpath(os.path.dirname(path))
@@ -253,7 +262,7 @@ class DataLoader():
             search.append(self.path_dwim(source))
 
         for candidate in search:
-            if os.path.exists(candidate):
+            if os.path.exists(to_bytes(candidate, errors='strict')):
                 break
 
         return candidate
@@ -264,8 +273,8 @@ class DataLoader():
         retrieve password from STDOUT
         """
 
-        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
-        if not os.path.exists(this_path):
+        this_path = os.path.realpath(to_bytes(os.path.expanduser(vault_password_file), errors='strict'))
+        if not os.path.exists(to_bytes(this_path, errors='strict')):
             raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
 
         if self.is_executable(this_path):

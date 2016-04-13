@@ -33,14 +33,14 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, dest, all_vars, try_directory=False, source=None):
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
         try:
-            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
+            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
             if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
         except Exception as e:
             return dict(failed=True, msg=to_bytes(e))
@@ -68,9 +68,6 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['msg'] = "src and dest are required"
             return result
-
-        if tmp is None:
-            tmp = self._make_tmp_path()
 
         if faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
@@ -126,7 +123,8 @@ class ActionModule(ActionBase):
             # loader, so that it knows about the other paths to find template files
             searchpath = [self._loader._basedir, os.path.dirname(source)]
             if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                if C.DEFAULT_ROLES_PATH:
+                    searchpath[:0] = C.DEFAULT_ROLES_PATH
                 searchpath.insert(1, self._task._role._role_path)
 
             self._templar.environment.loader.searchpath = searchpath
@@ -140,8 +138,14 @@ class ActionModule(ActionBase):
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
+        cleanup_remote_tmp = False
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            cleanup_remote_tmp = True
+
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
             result.update(remote_checksum)
@@ -161,8 +165,7 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered)
+                self._fixup_perms(tmp, remote_user, recursive=True)
 
                 # run the copy module
                 new_module_args.update(
@@ -173,12 +176,10 @@ class ActionModule(ActionBase):
                        follow=True,
                     ),
                 )
-                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
-
-            return result
 
         else:
             # when running the file module based on the template data, we do
@@ -194,6 +195,9 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
-            return result
+        if tmp and cleanup_remote_tmp:
+            self._remove_tmp_path(tmp)
+
+        return result

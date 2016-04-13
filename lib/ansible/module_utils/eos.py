@@ -16,19 +16,46 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
+
+import re
+
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.shell import Shell, Command, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+from ansible.module_utils.urls import fetch_url
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
-    authorize=dict(default=False, type='bool'),
-    auth_pass=dict(no_log=True),
-    transport=dict(choices=['cli', 'eapi']),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    transport=dict(default='cli', choices=['cli', 'eapi']),
     use_ssl=dict(default=True, type='bool'),
-    provider=dict()
+    provider=dict(type='dict')
 )
+
+CLI_PROMPTS_RE = [
+    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
+]
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -101,7 +128,7 @@ class Eapi(object):
         response = self.module.from_json(response.read())
         if 'error' in response:
             err = response['error']
-            self.module.fail_json(msg='json-rpc error', **err)
+            self.module.fail_json(msg='json-rpc error', commands=commands, **err)
 
         if self.enable:
             response['result'].pop(0)
@@ -121,13 +148,15 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
-
-        self.shell = Shell()
+        key_filename = self.module.params['ssh_keyfile']
 
         try:
-            self.shell.open(host, port=port, username=username, password=password)
+            self.shell = Shell(prompts_re=CLI_PROMPTS_RE,
+                    errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username,
+                    password=password, key_filename=key_filename)
         except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
 
     def authorize(self):
@@ -144,6 +173,11 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
+        self._connected = False
+
+    @property
+    def connected(self):
+        return self._connected
 
     @property
     def config(self):
@@ -152,49 +186,56 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                if not params.get(key) and value is not None:
-                    params[key] = value
-        return params
+            if key in NET_COMMON_ARGS:
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
 
     def connect(self):
-        if self.params['transport'] == 'eapi':
-            self.connection = Eapi(self)
-        else:
-            self.connection = Cli(self)
-
         try:
+            cls = globals().get(str(self.params['transport']).capitalize())
+            self.connection = cls(self)
+
             self.connection.connect()
-            self.execute('terminal length 0')
+            self.connection.send('terminal length 0')
 
             if self.params['authorize']:
                 self.connection.authorize()
-
+        except AttributeError, exc:
+            self.fail_json(msg=exc.message)
         except Exception, exc:
             self.fail_json(msg=exc.message)
 
-    def configure(self, commands):
+        self._connected = True
+
+    def configure(self, commands, replace=False):
+        if replace:
+            responses = self.config_replace(commands)
+        else:
+            responses = self.config_terminal(commands)
+        return responses
+
+    def config_terminal(self, commands):
         commands = to_list(commands)
         commands.insert(0, 'configure terminal')
         responses = self.execute(commands)
         responses.pop(0)
-
         return responses
 
     def config_replace(self, commands):
         if self.params['transport'] == 'cli':
             self.fail_json(msg='config replace only supported over eapi')
-
         cmd = 'configure replace terminal:'
         commands = '\n'.join(to_list(commands))
         command = dict(cmd=cmd, input=commands)
-        self.execute(command)
+        return self.execute(command)
 
     def execute(self, commands, **kwargs):
         try:
+            if not self.connected:
+                self.connect()
             return self.connection.send(commands, **kwargs)
         except Exception, exc:
             self.fail_json(msg=exc.message, commands=commands)
@@ -213,7 +254,7 @@ class NetworkModule(AnsibleModule):
             return self.execute(cmd)[0]
         else:
             resp = self.execute(cmd, encoding='text')
-            return resp[0]
+            return resp[0]['output']
 
 
 def get_module(**kwargs):
@@ -229,8 +270,6 @@ def get_module(**kwargs):
     # HAS_PARAMIKO is set by module_utils/shell.py
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    module.connect()
 
     return module
 

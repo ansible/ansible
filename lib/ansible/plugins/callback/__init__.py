@@ -99,6 +99,10 @@ class CallbackBase:
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
             del abridged_result['invocation']
 
+        # remove diff information from screen output
+        if self._display.verbosity < 3 and 'diff' in result:
+            del abridged_result['diff']
+
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
@@ -144,7 +148,7 @@ class CallbackBase:
                                                       tofile=after_header,
                                                       fromfiledate='',
                                                       tofiledate='',
-                                                      n=10)
+                                                      n=C.DIFF_CONTEXT)
                         has_diff = False
                         for line in differ:
                             has_diff = True
@@ -172,16 +176,8 @@ class CallbackBase:
         return item
 
     def _process_items(self, result):
-        for res in result._result['results']:
-            newres = self._copy_result_exclude(result, ['_result'])
-            res['item'] = self._get_item(res)
-            newres._result = res
-            if 'failed' in res and res['failed']:
-                self.v2_playbook_item_on_failed(newres)
-            elif 'skipped' in res and res['skipped']:
-                self.v2_playbook_item_on_skipped(newres)
-            else:
-                self.v2_playbook_item_on_ok(newres)
+        # just remove them as now they get handled by individual callbacks
+        del result._result['results']
 
     def _clean_results(self, result, task_name):
         if 'changed' in result and task_name in ['debug']:
@@ -342,27 +338,22 @@ class CallbackBase:
         self.playbook_on_stats(stats)
 
     def v2_on_file_diff(self, result):
-        host = result._host.get_name()
         if 'diff' in result._result:
+            host = result._host.get_name()
             self.on_file_diff(host, result._result['diff'])
-
-    def v2_playbook_on_item_ok(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_failed(self, result):
-        pass # no v1
-
-    def v2_playbook_on_item_skipped(self, result):
-        pass # no v1
 
     def v2_playbook_on_include(self, included_file):
         pass #no v1 correspondance
 
-    def v2_playbook_item_on_ok(self, result):
+    def v2_runner_item_on_ok(self, result):
         pass
 
-    def v2_playbook_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result):
         pass
 
-    def v2_playbook_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result):
         pass
+
+    def v2_runner_retry(self, result):
+        pass
+
