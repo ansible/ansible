@@ -141,7 +141,7 @@ def debug(command, zipped_mod, json_params):
     # files you've edited instead of the actual zipped module.
 
     # Okay to use __file__ here because we're running from a kept file
-    basedir = os.path.dirname(__file__)
+    basedir = os.path.abspath(os.path.dirname(__file__))
     if command == 'explode':
         # transform the ZIPDATA into an exploded directory of code and then
         # print the path to the code.  This is an easy way for people to look
