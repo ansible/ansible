@@ -631,8 +631,8 @@ Windows modules checklist
 Deprecating and making module aliases
 ``````````````````````````````````````
 
-Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
-_old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
+Starting in 1.8, you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
+_old_cloud.py. This keeps the module available, but hides it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
 This example allows the stat module to be called with fileinfo, making the following examples equivalent::
