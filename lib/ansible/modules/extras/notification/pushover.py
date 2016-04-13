@@ -95,9 +95,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             msg=dict(required=True),
-            app_token=dict(required=True),
-            user_key=dict(required=True),
-            pri=dict(required=False, default=0),
+            app_token=dict(required=True, no_log=True),
+            user_key=dict(required=True, no_log=True),
+            pri=dict(required=False, default='0', choices=['-2','-1','0','1','2']),
         ),
     )
 
