@@ -20,16 +20,32 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+import sys
+import json
+from io import BytesIO, StringIO
 
+from ansible.compat.tests import unittest
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_bytes
 
 class TestAnsibleModuleExitJson(unittest.TestCase):
+
+    def setUp(self):
+        self.real_stdin = sys.stdin
+
+    def tearDown(self):
+        sys.stdin = self.real_stdin
 
     def test_module_utils_basic_safe_eval(self):
         from ansible.module_utils import basic
 
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )

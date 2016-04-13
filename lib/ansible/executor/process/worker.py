@@ -95,12 +95,9 @@ class WorkerProcess(multiprocessing.Process):
 
     def run(self):
         '''
-        Called when the process is started, and loops indefinitely
-        until an error is encountered (typically an IOerror from the
-        queue pipe being disconnected). During the loop, we attempt
-        to pull tasks off the job queue and run them, pushing the result
-        onto the results queue. We also remove the host from the blocked
-        hosts list, to signify that they are ready for their next task.
+        Called when the process is started.  Pushes the result onto the
+        results queue. We also remove the host from the blocked hosts list, to
+        signify that they are ready for their next task.
         '''
 
         if HAS_ATFORK:
