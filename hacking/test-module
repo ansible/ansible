@@ -140,7 +140,6 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
         modname,
         modfile,
         complex_args,
-        action_write_lock,
         task_vars=task_vars
     )
 
