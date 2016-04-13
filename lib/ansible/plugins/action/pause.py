@@ -120,29 +120,23 @@ class ActionModule(ActionBase):
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
-            fd = None
-            try:
-                fd = self._connection._new_stdin.fileno()
-            except ValueError:
-                # someone is using a closed file descriptor as stdin
-                pass
-            if fd is not None:
-                if isatty(fd):
-                    old_settings = termios.tcgetattr(fd)
-                    tty.setraw(fd)
+            fd = self._connection._new_stdin.fileno()
+            if isatty(fd):
+                old_settings = termios.tcgetattr(fd)
+                tty.setraw(fd)
 
-                    # flush the buffer to make sure no previous key presses
-                    # are read in below
-                    termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+                # flush the buffer to make sure no previous key presses
+                # are read in below
+                termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+
             while True:
                 try:
-                    if fd is not None:
-                        key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == '\x03':
-                            raise KeyboardInterrupt
+                    key_pressed = self._connection._new_stdin.read(1)
+                    if key_pressed == '\x03':
+                        raise KeyboardInterrupt
 
                     if not seconds:
-                        if fd is None or not isatty(fd):
+                        if not isatty(fd):
                             display.warning("Not waiting from prompt as stdin is not interactive")
                             break
                         # read key presses and act accordingly
@@ -159,7 +153,6 @@ class ActionModule(ActionBase):
                         break
                     else:
                         raise AnsibleError('user requested abort!')
-
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal

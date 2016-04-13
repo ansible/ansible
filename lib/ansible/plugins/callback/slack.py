@@ -23,10 +23,7 @@ import json
 import os
 import uuid
 
-try:
-    from __main__ import cli
-except ImportError:
-    cli = None
+from __main__ import cli
 
 from ansible.constants import mk_boolean
 from ansible.module_utils.urls import open_url

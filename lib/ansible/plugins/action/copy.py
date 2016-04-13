@@ -107,7 +107,7 @@ class ActionModule(ActionBase):
         source_files = []
 
         # If source is a directory populate our list else source is a file and translate it to a tuple.
-        if os.path.isdir(to_bytes(source, errors='strict')):
+        if os.path.isdir(source):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
                 sz = len(source)
@@ -141,10 +141,9 @@ class ActionModule(ActionBase):
         delete_remote_tmp = (len(source_files) == 1)
 
         # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not delete_remote_tmp:
             if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path(remote_user)
+                tmp = self._make_tmp_path()
 
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
@@ -170,7 +169,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get remote file info
-            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
 
             if dest_status['exists'] and dest_status['isdir']:
                 # The dest is a directory.
@@ -183,9 +182,9 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
 
-            if dest_status['exists'] and not force:
+            if not dest_status['exists'] and not force:
                 # remote_file does not exist so continue to next iteration.
                 continue
 
@@ -197,7 +196,7 @@ class ActionModule(ActionBase):
                 # If this is recursive we already have a tmp path.
                 if delete_remote_tmp:
                     if tmp is None or "-tmp-" not in tmp:
-                        tmp = self._make_tmp_path(remote_user)
+                        tmp = self._make_tmp_path()
 
                 if self._play_context.diff and not raw:
                     diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
@@ -212,15 +211,16 @@ class ActionModule(ActionBase):
                 tmp_src = self._connection._shell.join_path(tmp, 'source')
 
                 if not raw:
-                    self._transfer_file(source_full, tmp_src)
+                    self._connection.put_file(source_full, tmp_src)
                 else:
-                    self._transfer_file(source_full, dest_file)
+                    self._connection.put_file(source_full, dest_file)
 
                 # We have copied the file remotely and no longer require our content_tempfile
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms(tmp, remote_user, recursive=True)
+                if self._play_context.become and self._play_context.become_user != 'root':
+                    self._remote_chmod('a+r', tmp_src)
 
                 if raw:
                     # Continue to next iteration if raw is defined.

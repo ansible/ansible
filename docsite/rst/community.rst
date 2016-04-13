@@ -68,7 +68,7 @@ to see if the issue has already been reported.
 
 MODULE related bugs however should go to `ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
 
-When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/.github/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
 
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
@@ -227,12 +227,6 @@ which is our official conference series.
 
 To subscribe to a group from a non-google account, you can send an email to the subscription address requesting the subscription. For example: ansible-devel+subscribe@googlegroups.com
 
-IRC Meetings
-------------
-
-The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
-participate. For more information about Ansible meetings, consult the [Ansible community meeting page](https://github.com/ansible/community/blob/master/MEETINGS.md).
-
 Release Numbering
 -----------------
 
@@ -257,12 +251,7 @@ channel or the general project mailing list.
 IRC Channel
 -----------
 
-Ansible has several IRC channels on Freenode (irc.freenode.net):
-
-- #ansible - For general use questions and support.
-- #ansible-devel - For discussions on developer topics and code related to features/bugs.
-- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists.
-- #ansible-notices - Mostly bot output from things like Github, etc.
+Ansible has an IRC channel #ansible on irc.freenode.net.
 
 Notes on Priority Flags
 -----------------------

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import re
 import time
 import json
 
@@ -29,20 +28,14 @@ try:
 except ImportError:
     HAS_OPS = False
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.shell import Shell, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
     host=dict(),
     port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    use_ssl=dict(default=True, type='bool'),
+    username=dict(),
+    password=dict(no_log=True),
+    use_ssl=dict(default=True, type='int'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
     provider=dict()
 )
@@ -55,38 +48,35 @@ def to_list(val):
     else:
         return list()
 
-def get_runconfig():
+def get_idl():
     manager = OvsdbConnectionManager(settings.get('ovs_remote'),
                                      settings.get('ovs_schema'))
     manager.start()
+    idl = manager.idl
 
-    timeout = 10
-    interval = 0
-    init_seq_no = manager.idl.change_seqno
-
-    while (init_seq_no == manager.idl.change_seqno):
-        if interval > timeout:
-            raise TypeError('timeout')
-        manager.idl.run()
-        interval += 1
+    init_seq_no = 0
+    while (init_seq_no == idl.change_seqno):
+        idl.run()
         time.sleep(1)
 
-    schema = restparser.parseSchema(settings.get('ext_schema'))
-    return runconfig.RunConfigUtil(manager.idl, schema)
+    return idl
+
+def get_schema():
+    return restparser.parseSchema(settings.get('ext_schema'))
+
+def get_runconfig():
+    idl = get_idl()
+    schema = get_schema()
+    return runconfig.RunConfigUtil(idl, schema)
 
 class Response(object):
 
     def __init__(self, resp, hdrs):
-        self.body = None
+        self.body = resp.read()
         self.headers = hdrs
-
-        if resp:
-            self.body = resp.read()
 
     @property
     def json(self):
-        if not self.body:
-            return None
         try:
             return json.loads(self.body)
         except ValueError:
@@ -105,11 +95,11 @@ class Rest(object):
         if self.module.params['use_ssl']:
             proto = 'https'
             if not port:
-                port = 18091
+                port = 443
         else:
             proto = 'http'
             if not port:
-                port = 8091
+                port = 80
 
         self.baseurl = '%s://%s:%s/rest/v1' % (proto, host, port)
 
@@ -155,10 +145,9 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+        self.shell.open(host, port=port, username=username, password=password)
 
     def send(self, commands, encoding='text'):
         return self.shell.send(commands)
@@ -178,12 +167,12 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
+        params = super(NetworkModule, self)._load_params()
+        provider = params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
+                params[key] = value
+        return params
 
     def connect(self):
         if self.params['transport'] == 'rest':

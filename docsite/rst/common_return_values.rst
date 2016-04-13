@@ -1,3 +1,5 @@
+.. _common_return_values:
+
 Common Return Values
 ====================
 

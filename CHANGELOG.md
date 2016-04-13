@@ -6,118 +6,27 @@ Ansible Changes By Release
 ###Major Changes:
 
 * added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
-* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
-* new meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
 
 ####New Modules:
-- aws
-  * ec2_vol_facts
-  * ec2_vpc_dhcp_options
-  * ec2_vpc_net_facts
-- cloudflare_dns
-- cloudstack
-  * cs_cluster
-  * cs_configuration
-  * cs_instance_facts
-  * cs_pod
-  * cs_resourcelimit
-  * cs_volume
-  * cs_zone
-  * cs_zone_facts
-- gitlab
-  * gitlab_group
-  * gitlab_project
-  * gitlab_user
-- make
-- openstack
-  * os_flavor_facts
-  * os_group
-  * os_ironic_inspect
-  * os_keystone_domain_facts
-  * os_keystone_role
-  * os_port_facts
-  * os_user_facts
-  * os_user_role
-- softlayer
-  * sl_vm
-- windows
-  * win_owner
-  * win_regmerge
-  * win_timezone
-- yum_repository
-
-
-####New Strategies:
-* debug
+* aws: ec2_vol_facts
+* aws: ec2_vpc_dhcp_options.py
+* aws: ec2_vpc_net_facts
+* cloudstack: cs_volume
+* yumrepo
 
 ####New Filters:
 * extract
-* ip4_hex
 
 ####New Callbacks:
 * actionable (only shows changed and failed)
 * slack
-* json
-
-####New Tests:
-* issubset
-* issuperset
-
-####New Inventory scripts:
-* rackhd
 
 ###Minor Changes:
 
 * callbacks now have access to the options with which the CLI was called
-* debug now has verbosity option to control when to display by matching number of -v in command line
-* modules now get verbosity, diff and other flags as passed to ansible
-* mount facts now also show 'network mounts' that use the pattern `<host>:/<mount>`
-* Plugins are now sorted before loading.  This means, for instance, if you want
-  two custom callback plugins to run in a certain order you can name them
-  10-first-callback.py and 20-second-callback.py.
+* debug is now controlable with verbosity
 
-## 2.0.1 "Over the Hills and Far Away"
-
-* Fixes a major compatibility break in the synchronize module shipped with
-  2.0.0.x.  That version of synchronize ran sudo on the controller prior to
-  running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
-  connected to.  2.0.1 restores the 1.9.x behaviour.
-* Additionally, several other problems with where synchronize chose to run when
-  combined with delegate_to were fixed.  In particular, if a playbook targetted
-  localhost and then delegated_to a remote host the prior behavior (in 1.9.x
-  and 2.0.0.x) was to copy files between the src and destination directories on
-  the delegated host.  This has now been fixed to copy between localhost and
-  the delegated host.
-* Fix a regression where synchronize was unable to deal with unicode paths.
-* Fix a regression where synchronize deals with inventory hosts that use
-  localhost but with an alternate port.
-* Fixes a regression where the retry files feature was not implemented.
-* Fixes a regression where the any_errors_fatal option was implemented in 2.0
-  incorrectly, and also adds a feature where any_errors_fatal can be set at
-  the block level.
-* Fix tracebacks when playbooks or ansible itself were located in directories
-  with unicode characters.
-* Fix bug when sending unicode characters to an external pager for display.
-* Fix a bug with squashing loops for special modules (mostly package managers).
-  The optimization was squashing when the loop did not apply to the selection
-  of packages.  This has now been fixed.
-* Temp files created when using vault are now "shredded" using the unix shred
-  program which overwrites the file with random data.
-* Some fixes to cloudstack modules for case sensitivity
-* Fix non-newstyle modules (non-python modules and old-style modules) to
-  disabled pipelining.
-* Fix fetch module failing even if fail_on_missing is set to False
-* Fix for cornercase when local connections, sudo, and raw were used together.
-* Fix dnf module to remove dependent packages when state=absent is specified.
-  This was a feature of the 1.9.x version that was left out by mistake when the
-  module was rewritten for 2.0.
-* Fix bugs with non-english locales in yum, git, and apt modules
-* Fix a bug with the dnf module where state=latest could only upgrade, not install.
-* Fix to make implicit fact gathering task correctly inherit settings from play,
-  this might cause an error if settings environment on play depending on 'ansible_env'
-  which was previouslly ignored
-
-## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
+## 2.0 "Over the Hills and Far Away"
 
 ###Major Changes:
 
@@ -214,7 +123,7 @@ allowed in future versions:
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 * WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
-* WinRM connection plugin put_file is significantly faster and no longer has file size limitations.
+* WinRM connection plugin put_file is significantly faster and no longer has file size limitations. 
 
 ####Deprecated Modules (new ones in parens):
 
@@ -229,219 +138,202 @@ allowed in future versions:
 
 ####New Modules:
 
-- amazon
-  * ec2_ami_copy
-  * ec2_ami_find
-  * ec2_elb_facts
-  * ec2_eni
-  * ec2_eni_facts
-  * ec2_remote_facts
-  * ec2_vpc_igw
-  * ec2_vpc_net
-  * ec2_vpc_net_facts
-  * ec2_vpc_route_table
-  * ec2_vpc_route_table_facts
-  * ec2_vpc_subnet
-  * ec2_vpc_subnet_facts
-  * ec2_win_password
-  * ecs_cluster
-  * ecs_task
-  * ecs_taskdefinition
-  * elasticache_subnet_group_facts
-  * iam
-  * iam_cert
-  * iam_policy
-  * route53_facts
-  * route53_health_check
-  * route53_zone
-  * s3_bucket
-  * s3_lifecycle
-  * s3_logging
-  * sns_topic
-  * sqs_queue
-  * sts_assume_role
-- apk
-- bigip_gtm_wide_ip
-- bundler
-- centurylink
-  * clc_aa_policy
-  * clc_alert_policy
-  * clc_blueprint_package
-  * clc_firewall_policy
-  * clc_group
-  * clc_loadbalancer
-  * clc_modify_server
-  * clc_publicip
-  * clc_server
-  * clc_server_snapshot
-- circonus_annotation
-- consul
-  * consul
-  * consul_acl
-  * consul_kv
-  * consul_session
-- cloudtrail
-- cloudstack
-  * cs_account
-  * cs_affinitygroup
-  * cs_domain
-  * cs_facts
-  * cs_firewall
-  * cs_iso
-  * cs_instance
-  * cs_instancegroup
-  * cs_ip_address
-  * cs_loadbalancer_rule
-  * cs_loadbalancer_rule_member
-  * cs_network
-  * cs_portforward
-  * cs_project
-  * cs_securitygroup
-  * cs_securitygroup_rule
-  * cs_sshkeypair
-  * cs_staticnat
-  * cs_template
-  * cs_user
-  * cs_vmsnapshot
-- cronvar
-- datadog_monitor
-- deploy_helper
-- docker
-  * docker_login
-- dpkg_selections
-- elasticsearch_plugin
-- expect
-- find
-- google
-  * gce_tag
-- hall
-- ipify_facts
-- iptables
-- libvirt
-  * virt_net
-  * virt_pool
-- maven_artifact
-- openstack
-  * os_auth
-  * os_client_config
-  * os_image
-  * os_image_facts
-  * os_floating_ip
-  * os_ironic
-  * os_ironic_node
-  * os_keypair
-  * os_network
-  * os_network_facts
-  * os_nova_flavor
-  * os_object
-  * os_port
-  * os_project
-  * os_router
-  * os_security_group
-  * os_security_group_rule
-  * os_server
-  * os_server_actions
-  * os_server_facts
-  * os_server_volume
-  * os_subnet
-  * os_subnet_facts
-  * os_user
-  * os_user_group
-  * os_volume
-- openvswitch_db
-- osx_defaults
-- pagerduty_alert
-- pam_limits
-- pear
-- profitbricks
-  * profitbricks
-  * profitbricks_datacenter
-  * profitbricks_nic
-  * profitbricks_snapshot
-  * profitbricks_volume
-  * profitbricks_volume_attachments
-- proxmox
-  * proxmox
-  * proxmox_template
-- puppet
-- pushover
-- pushbullet
-- rax
-  * rax_clb_ssl
-  * rax_mon_alarm
-  * rax_mon_check
-  * rax_mon_entity
-  * rax_mon_notification
-  * rax_mon_notification_plan
-- rabbitmq
-  * rabbitmq_binding
-  * rabbitmq_exchange
-  * rabbitmq_queue
-- selinux_permissive
-- sendgrid
-- sensu
-  * sensu_check
-  * sensu_subscription
-- seport
-- slackpkg
-- solaris_zone
-- taiga_issue
-- vertica
-  * vertica_configuration
-  * vertica_facts
-  * vertica_role
-  * vertica_schema
-  * vertica_user
-- vmware
-  * vca_fw
-  * vca_nat
-  * vmware_cluster
-  * vmware_datacenter
-  * vmware_dns_config
-  * vmware_dvs_host
-  * vmware_dvs_portgroup
-  * vmware_dvswitch
-  * vmware_host
-  * vmware_migrate_vmk
-  * vmware_portgroup
-  * vmware_target_canonical_facts
-  * vmware_vm_facts
-  * vmware_vm_vss_dvs_migrate
-  * vmware_vmkernel
-  * vmware_vmkernel_ip_config
-  * vmware_vsan_cluster
-  * vmware_vswitch
-  * vsphere_copy
-- webfaction
-  * webfaction_app
-  * webfaction_db
-  * webfaction_domain
-  * webfaction_mailbox
-  * webfaction_site
-- windows
-  * win_acl
-  * win_dotnet_ngen
-  * win_environment
-  * win_firewall_rule
-  * win_iis_virtualdirectory
-  * win_iis_webapplication
-  * win_iis_webapppool
-  * win_iis_webbinding
-  * win_iis_website
-  * win_lineinfile
-  * win_nssm
-  * win_package
-  * win_regedit
-  * win_scheduled_task
-  * win_unzip
-  * win_updates
-  * win_webpicmd
-- xenserver_facts
-- zabbbix
-  * zabbix_host
-  * zabbix_hostmacro
-  * zabbix_screen
-- znode
+* amazon: ec2_ami_copy
+* amazon: ec2_ami_find
+* amazon: ec2_elb_facts
+* amazon: ec2_eni
+* amazon: ec2_eni_facts
+* amazon: ec2_remote_facts
+* amazon: ec2_vpc_igw
+* amazon: ec2_vpc_net
+* amazon: ec2_vpc_net_facts
+* amazon: ec2_vpc_route_table
+* amazon: ec2_vpc_route_table_facts
+* amazon: ec2_vpc_subnet
+* amazon: ec2_vpc_subnet_facts
+* amazon: ec2_win_password
+* amazon: ecs_cluster
+* amazon: ecs_task
+* amazon: ecs_taskdefinition
+* amazon: elasticache_subnet_group_facts
+* amazon: iam
+* amazon: iam_cert
+* amazon: iam_policy
+* amazon: route53_facts
+* amazon: route53_health_check
+* amazon: route53_zone
+* amazon: sts_assume_role
+* amazon: s3_bucket
+* amazon: s3_lifecycle
+* amazon: s3_logging
+* amazon: sqs_queue
+* amazon: sns_topic
+* amazon: sts_assume_role
+* apk
+* bigip_gtm_wide_ip
+* bundler
+* centurylink: clc_aa_policy
+* centurylink: clc_alert_policy
+* centurylink: clc_blueprint_package
+* centurylink: clc_firewall_policy
+* centurylink: clc_group
+* centurylink: clc_loadbalancer
+* centurylink: clc_modify_server
+* centurylink: clc_publicip
+* centurylink: clc_server
+* centurylink: clc_server_snapshot
+* circonus_annotation
+* consul
+* consul_acl
+* consul_kv
+* consul_session
+* cloudtrail
+* cloudstack: cs_account
+* cloudstack: cs_affinitygroup
+* cloudstack: cs_domain
+* cloudstack: cs_facts
+* cloudstack: cs_firewall
+* cloudstack: cs_iso
+* cloudstack: cs_instance
+* cloudstack: cs_instancegroup
+* cloudstack: cs_ip_address
+* cloudstack: cs_loadbalancer_rule
+* cloudstack: cs_loadbalancer_rule_member
+* cloudstack: cs_network
+* cloudstack: cs_portforward
+* cloudstack: cs_project
+* cloudstack: cs_sshkeypair
+* cloudstack: cs_securitygroup
+* cloudstack: cs_securitygroup_rule
+* cloudstack: cs_staticnat
+* cloudstack: cs_template
+* cloudstack: cs_user
+* cloudstack: cs_vmsnapshot
+* cronvar
+* datadog_monitor
+* deploy_helper
+* docker: docker_login
+* dpkg_selections
+* elasticsearch_plugin
+* expect
+* find
+* google: gce_tag
+* hall
+* ipify_facts
+* iptables
+* libvirt: virt_net
+* libvirt: virt_pool
+* maven_artifact
+* openstack: os_auth
+* openstack: os_client_config
+* openstack: os_image
+* openstack: os_image_facts
+* openstack: os_floating_ip
+* openstack: os_ironic
+* openstack: os_ironic_node
+* openstack: os_keypair
+* openstack: os_network
+* openstack: os_network_facts
+* openstack: os_nova_flavor
+* openstack: os_object
+* openstack: os_port
+* openstack: os_project
+* openstack: os_router
+* openstack: os_security_group
+* openstack: os_security_group_rule
+* openstack: os_server
+* openstack: os_server_actions
+* openstack: os_server_facts
+* openstack: os_server_volume
+* openstack: os_subnet
+* openstack: os_subnet_facts
+* openstack: os_user
+* openstack: os_user_group
+* openstack: os_volume
+* openvswitch_db.
+* osx_defaults
+* pagerduty_alert
+* pam_limits
+* pear
+* profitbricks: profitbricks
+* profitbricks: profitbricks_datacenter
+* profitbricks: profitbricks_nic
+* profitbricks: profitbricks_volume
+* profitbricks: profitbricks_volume_attachments
+* profitbricks: profitbricks_snapshot
+* proxmox: proxmox
+* proxmox: proxmox_template
+* puppet
+* pushover
+* pushbullet
+* rax: rax_clb_ssl
+* rax: rax_mon_alarm
+* rax: rax_mon_check
+* rax: rax_mon_entity
+* rax: rax_mon_notification
+* rax: rax_mon_notification_plan
+* rabbitmq_binding
+* rabbitmq_exchange
+* rabbitmq_queue
+* selinux_permissive
+* sendgrid
+* sensu_check
+* sensu_subscription
+* seport
+* slackpkg
+* solaris_zone
+* taiga_issue
+* vertica_configuration
+* vertica_facts
+* vertica_role
+* vertica_schema
+* vertica_user
+* vmware: vca_fw
+* vmware: vca_nat
+* vmware: vmware_cluster
+* vmware: vmware_datacenter
+* vmware: vmware_dns_config
+* vmware: vmware_dvs_host
+* vmware: vmware_dvs_portgroup
+* vmware: vmware_dvswitch
+* vmware: vmware_host
+* vmware: vmware_migrate_vmk
+* vmware: vmware_portgroup
+* vmware: vmware_target_canonical_facts
+* vmware: vmware_vm_facts
+* vmware: vmware_vm_vss_dvs_migrate
+* vmware: vmware_vmkernel
+* vmware: vmware_vmkernel_ip_config
+* vmware: vmware_vsan_cluster
+* vmware: vmware_vswitch
+* vmware: vsphere_copy
+* webfaction_app
+* webfaction_db
+* webfaction_domain
+* webfaction_mailbox
+* webfaction_site
+* win_acl
+* win_dotnet_ngen
+* win_environment
+* win_firewall_rule
+* win_iis_virtualdirectory
+* win_iis_webapplication
+* win_iis_webapppool
+* win_iis_webbinding
+* win_iis_website
+* win_lineinfile
+* win_nssm
+* win_package
+* win_regedit
+* win_scheduled_task
+* win_unzip
+* win_updates
+* win_webpicmd
+* xenserver_facts
+* zabbix_host
+* zabbix_hostmacro
+* zabbix_screen
+* znode
 
 ####New Inventory scripts:
 
@@ -614,19 +506,19 @@ Major changes:
 
 New Modules:
 
-* cryptab *-- manages linux encrypted block devices*
-* gce_img *-- for utilizing GCE image resources*
-* gluster_volume *-- manage glusterfs volumes*
-* haproxy *-- for the load balancer of same name*
-* known_hosts *-- manages the ssh known_hosts file*
-* lxc_container *-- manage lxc containers*
-* patch *-- allows for patching files on target systems*
-* pkg5 *-- installing and uninstalling packages on Solaris*
-* pkg5_publisher *-- manages Solaris pkg5 repository configuration*
-* postgresql_ext *-- manage postgresql extensions*
-* snmp_facts *-- gather facts via snmp*
-* svc *-- manages daemontools based services*
-* uptimerobot *-- manage monitoring with this service*
+* cryptab: manages linux encrypted block devices
+* gce_img:  for utilizing GCE image resources
+* gluster_volume: manage glusterfs volumes
+* haproxy: for the load balancer of same name
+* known_hosts: manages the ssh known_hosts file
+* lxc_container: manage lxc containers
+* patch: allows for patching files on target systems
+* pkg5:  installing and uninstalling packages on Solaris
+* pkg5_publisher: manages Solaris pkg5 repository configuration
+* postgresql_ext: manage postgresql extensions
+* snmp_facts: gather facts via snmp
+* svc: manages daemontools based services
+* uptimerobot: manage monitoring with this service
 
 New Filters:
 
@@ -762,19 +654,15 @@ Major changes:
 
 New Modules:
 
-- cloud
-  * rax_cdb *-- manages Rackspace Cloud Database instances*
-  * rax_cdb_database *-- manages Rackspace Cloud Databases*
-  * rax_cdb_user *-- manages Rackspace Cloud Database users*
-- monitoring
-  * bigpanda *-- support for bigpanda*
-  * zabbix_maintaince *-- handles outage windows with Zabbix*
-- net_infrastructure
-  * a10_server *-- manages server objects on A10 devices*
-  * a10_service_group *-- manages service group objects on A10 devices*
-  * a10_virtual_server *-- manages virtual server objects on A10 devices*
-- system
-  * getent  *-- read getent databases*
+* cloud: rax_cdb - manages Rackspace Cloud Database instances
+* cloud: rax_cdb_database - manages Rackspace Cloud Databases
+* cloud: rax_cdb_user - manages Rackspace Cloud Database users
+* monitoring: zabbix_maintaince - handles outage windows with Zabbix
+* monitoring: bigpanda - support for bigpanda
+* net_infrastructure: a10_server - manages server objects on A10 devices
+* net_infrastructure: a10_service_group - manages service group objects on A10 devices
+* net_infrastructure: a10_virtual_server - manages virtual server objects on A10 devices
+* system: getent - read getent databases
 
 Some other notable changes:
 
@@ -853,21 +741,19 @@ New inventory scripts:
 
 New Modules:
 
-- cloud
-  * azure
-  * rax_meta
-  * rax_scaling_group
-  * rax_scaling_policy
-- windows
-  * *version of setup module*
-  * *version of slurp module*
-  * win_feature
-  * win_get_url
-  * win_group
-  * win_msi
-  * win_ping
-  * win_service
-  * win_user
+* cloud: azure
+* cloud: rax_meta
+* cloud: rax_scaling_group
+* cloud: rax_scaling_policy
+* windows: version of setup module
+* windows: version of slurp module
+* windows: win_feature
+* windows: win_get_url
+* windows: win_msi
+* windows: win_ping
+* windows: win_user
+* windows: win_service
+* windows: win_group
 
 Other notable changes:
 
@@ -950,48 +836,40 @@ Major features/changes:
 
 New Modules:
 
-- files
-  * replace
-- packaging
-  * apt_rpm
-  * composer *(PHP)*
-  * cpanm *(Perl)*
-  * homebrew_cask *(OS X)*
-  * homebrew_tap *(OS X)*
-  * layman
-  * portage
-- monitoring
-  * librato_annotation
-  * logentries
-  * rollbar_deployment
-- notification
-  * nexmo *(SMS)*
-  * slack *(Slack.com)*
-  * sns *(Amazon)*
-  * twilio *(SMS)*
-  * typetalk *(Typetalk.in)*
-- system
-  * alternatives
-  * capabilities
-  * debconf
-  * locale_gen
-  * ufw
-- net_infrastructure
-  * bigip_facts
-  * dnssimple
-  * lldp
-- web_infrastructure
-  * apache2_module
-- cloud
-  * digital_ocean_domain
-  * digital_ocean_sshkey
-  * ec2_asg *(configure autoscaling groups)*
-  * ec2_metric_alarm
-  * ec2_scaling_policy
-  * rax_identity
-  * rax_cbs *(cloud block storage)*
-  * rax_cbs_attachments
-  * vsphere_guest
+* files: replace
+* packaging: cpanm (Perl)
+* packaging: portage
+* packaging: composer (PHP)
+* packaging: homebrew_tap (OS X)
+* packaging: homebrew_cask (OS X) 
+* packaging: apt_rpm
+* packaging: layman
+* monitoring: logentries
+* monitoring: rollbar_deployment
+* monitoring: librato_annotation
+* notification: nexmo (SMS)
+* notification: twilio (SMS)
+* notification: slack (Slack.com)
+* notification: typetalk (Typetalk.in)
+* notification: sns (Amazon)
+* system: debconf
+* system: ufw
+* system: locale_gen
+* system: alternatives
+* system: capabilities
+* net_infrastructure: bigip_facts
+* net_infrastructure: dnssimple
+* net_infrastructure: lldp
+* web_infrastructure: apache2_module
+* cloud: digital_ocean_domain
+* cloud: digital_ocean_sshkey 
+* cloud: rax_identity
+* cloud: rax_cbs (cloud block storage)
+* cloud: rax_cbs_attachments
+* cloud: ec2_asg (configure autoscaling groups)
+* cloud: ec2_scaling_policy
+* cloud: ec2_metric_alarm
+* cloud: vsphere_guest
 
 Other notable changes:
 
@@ -1001,7 +879,7 @@ Other notable changes:
 * libvirt module now supports destroyed and paused as states
 * s3 module can specify metadata
 * security token additions to ec2 modules
-* setup module code moved into module_utils/, facts now accessible by other modules
+* setup module code moved into module_utils/, facts now accessible by other modules  
 * synchronize module sets relative dirs based on inventory or role path
 * misc bugfixes and other parameters
 * the ec2_key module now has wait/wait_timeout parameters
@@ -1014,6 +892,7 @@ Other notable changes:
 * the get_url module now accepts url_username and url_password as parameters, so sites which require
   authentication no longer need to have them embedded in the url
 * ... to be filled in from changelogs ...
+* 
 
 ## 1.5.5 "Love Walks In" - April 18, 2014
 
@@ -1050,7 +929,7 @@ Major features/changes:
 * only_if, which is much older than when_foo and was deprecated, is similarly removed.
 * ssh connection plugin is now more efficient if you add 'pipelining=True' in ansible.cfg under [ssh_connection], see example.cfg
 * localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
-* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols.
+* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
 * when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
 * added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
 * acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
@@ -1059,28 +938,24 @@ Major features/changes:
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailable, the yum module will automatically attempt to install yum-utils
-* ansible-vault: a framework for encrypting your playbooks and variable files
+* ansible-vault: a framework for encrypting your playbooks and variable files 
 * added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
 New modules:
 
-- cloud
-  * docker_image
-  * ec2_elb_lb
-  * ec2_key
-  * ec2_snapshot
-  * rax_dns
-  * rax_dns_record
-  * rax_files
-  * rax_files_objects
-  * rax_keypair
-  * rax_queue
-- messaging
-  * rabbitmq_policy
-- system
-  * at
-- utilities
-  * assert
+* cloud: ec2_elb_lb
+* cloud: ec2_key
+* cloud: ec2_snapshot
+* cloud: rax_dns
+* cloud: rax_dns_record
+* cloud: rax_files
+* cloud: rax_files_objects
+* cloud: rax_keypair
+* cloud: rax_queue
+* cloud: docker_image
+* messaging: rabbitmq_policy
+* system: at
+* utilities: assert
 
 Other notable changes (many new module params & bugfixes may not be listed):
 
@@ -1159,52 +1034,43 @@ Highlighted new features:
 
 New modules and plugins.
 
-- cloud
-  * docker *- instantiates/removes/manages docker containers*
-  * ec2_eip *-- manage AWS elastic IPs*
-  * ec2_vpc *-- manage ec2 virtual private clouds*
-  * elasticcache *-- Manages clusters in Amazon Elasticache*
-  * ovirt *-- VM lifecycle controls for ovirt*
-  * rax_network *-- sets up Rackspace networks*
-  * rax_facts *-- retrieve facts about a Rackspace Cloud Server*
-  * rax_clb_nodes *-- manage Rackspace cloud load balanced nodes*
-  * rax_clb *-- manages Rackspace cloud load balancers*
-- files
-  * acl *-- set or get acls on a file*
-  * synchronize *-- a useful wraper around rsyncing trees of files*
-  * unarchive *-- pushes and extracts tarballs*
-- system
-  * blacklist *-- add or remove modules from the kernel blacklist*
-  * firewalld *-- manage the firewalld configuration*
-  * hostname *-- sets the systems hostname*
-  * modprobe *-- manage kernel modules on systems that support modprobe/rmmod*
-  * open_iscsi *-- manage targets on an initiator using open-iscsi*
-- utilities
-  * include_vars *-- dynamically load variables based on conditions.*
-- packaging
-  * swdepot *-- a module for working with swdepot*
-  * urpmi *-- work with urpmi packages*
-  * zypper_repository *-- adds or removes Zypper repositories*
-- notification
-  * grove *-- notifies to Grove hosted IRC channels*
-- web_infrastructure
-  * ejabberd_user *-- add and remove users to ejabberd*
-  * jboss *-- deploys or undeploys apps to jboss*
-- source_control
-  * github_hooks *-- manages GitHub service hooks*
-- net_infrastructure
-  * bigip_monitor_http *-- manages F5 BIG-IP LTM http monitors*
-  * bigip_monitor_tcp *-- manages F5 BIG-IP LTM TCP monitors*
-  * bigip_node *-- manages F5 BIG-IP LTM nodes*
-  * bigip_pool_member *-- manages F5 BIG-IP LTM pool members*
-  * openvswitch_port
-  * openvswitch_bridge
+* cloud: ec2_eip -- manage AWS elastic IPs
+* cloud: ec2_vpc -- manage ec2 virtual private clouds
+* cloud: elasticcache -- Manages clusters in Amazon Elasticache
+* cloud: rax_network -- sets up Rackspace networks
+* cloud: rax_facts: retrieve facts about a Rackspace Cloud Server
+* cloud: rax_clb_nodes -- manage Rackspace cloud load balanced nodes
+* cloud: rax_clb -- manages Rackspace cloud load balancers
+* cloud: docker - instantiates/removes/manages docker containers
+* cloud: ovirt -- VM lifecycle controls for ovirt
+* files: acl -- set or get acls on a file
+* files: unarchive: pushes and extracts tarballs
+* files: synchronize: a useful wraper around rsyncing trees of files
+* system: firewalld -- manage the firewalld configuration
+* system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
+* system: open_iscsi -- manage targets on an initiator using open-iscsi
+* system: blacklist: add or remove modules from the kernel blacklist
+* system: hostname - sets the systems hostname
+* utilities: include_vars -- dynamically load variables based on conditions.
+* packaging: zypper_repository - adds or removes Zypper repositories
+* packaging: urpmi - work with urpmi packages
+* packaging: swdepot - a module for working with swdepot
+* notification: grove - notifies to Grove hosted IRC channels
+* web_infrastructure: ejabberd_user: add and remove users to ejabberd
+* web_infrastructure: jboss: deploys or undeploys apps to jboss
+* source_control: github_hooks: manages GitHub service hooks 
+* net_infrastructure: bigip_monitor_http: manages F5 BIG-IP LTM http monitors
+* net_infrastructure: bigip_monitor_tcp: manages F5 BIG-IP LTM TCP monitors
+* net_infrastructure: bigip_pool_member: manages F5 BIG-IP LTM pool members
+* net_infrastructure: bigip_node: manages F5 BIG-IP LTM nodes
+* net_infrastructure: openvswitch_port
+* net_infrastructure: openvswitch_bridge
 
 Plugins:
 
 * jail connection module (FreeBSD)
 * lxc connection module
-* added inventory script for listing FreeBSD jails
+* added inventory script for listing FreeBSD jails 
 * added md5 as a Jinja2 filter:  {{ path | md5 }}
 * added a fileglob filter that will return files matching a glob pattern.  with_items: "/foo/pattern/*.txt | fileglob"
 * 'changed' filter returns whether a previous step was changed easier.  when: registered_result | changed
@@ -1219,7 +1085,7 @@ Misc changes (all module additions/fixes may not listed):
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
-* Includes now support the more standard syntax, similar to that of role includes and dependencies.
+* Includes now support the more standard syntax, similar to that of role includes and dependencies. 
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is useful when fetching files that are actively being written to, such as live log files.
 * Inventory hosts are used in the order they appear in the inventory.
@@ -1301,35 +1167,26 @@ Highlighted new features:
 
 New modules:
 
-- notifications
-  * datadog_event *-- send data to datadog*
-- cloud
-  * digital_ocean *-- module for DigitalOcean provisioning that also includes inventory support*
-  * rds *-- Amazon Relational Database Service*
-  * linode *-- modules for Linode provisioning that also includes inventory support*
-  * route53 *-- manage Amazon DNS entries*
-  * ec2_ami *-- manages (and creates!) ec2 AMIs*
-- database
-  * mysql_replication *-- manages mysql replication settings for masters/slaves*
-  * mysql_variables *-- manages mysql runtime variables*
-  * redis *-- manages redis databases (slave mode and flushing data)*
-- net_infrastructure
-  * arista_interface
-  * arista_l2interface
-  * arista_lag
-  * arista_vlan
-  * dnsmadeeasy *-- manipulate DNS Made Easy records*
-- system
-  * stat *-- reports on stat(istics) of remote files, for use with 'register'*
-- web_infrastructure
-  * htpasswd *-- manipulate htpasswd files*
-- packaging
-  * apt_repository *-- rewritten to remove dependencies*
-  * rpm_key *-- adds or removes RPM signing keys*
-- monitoring
-  * boundary_meter *-- adds or removes boundary.com meters*
-- files
-  * xattr *-- manages extended attributes on files*
+* notifications: datadog_event -- send data to datadog
+* cloud: digital_ocean -- module for DigitalOcean provisioning that also includes inventory support
+* cloud: rds -- Amazon Relational Database Service
+* cloud: linode -- modules for Linode provisioning that also includes inventory support
+* cloud: route53 -- manage Amazon DNS entries 
+* cloud: ec2_ami -- manages (and creates!) ec2 AMIs
+* database: mysql_replication -- manages mysql replication settings for masters/slaves
+* database: mysql_variables -- manages mysql runtime variables
+* database: redis -- manages redis databases (slave mode and flushing data)
+* net_infrastructure: arista_interface
+* net_infrastructure: arista_lag
+* net_infrastructure: arista_l2interface
+* net_infrastructure: arista_vlan
+* system: stat -- reports on stat(istics) of remote files, for use with 'register'
+* web_infrastructure: htpasswd -- manipulate htpasswd files
+* packaging: rpm_key -- adds or removes RPM signing keys
+* packaging: apt_repository -- rewritten to remove dependencies 
+* monitoring: boundary_meter -- adds or removes boundary.com meters
+* net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
+* files: xattr -- manages extended attributes on files
 
 Misc changes:
 
@@ -1483,48 +1340,40 @@ increasing the ease at which things can be reorganized.
 
 Modules added:
 
-- cloud
-  * rax *-- module for creating instances in the rackspace cloud (uses pyrax)*
-- packages
-  * npm *-- node.js package management*
-  * pkgng *-- next-gen package manager for FreeBSD*
-  * redhat_subscription *-- manage Red Hat subscription usage*
-  * rhn_register *-- basic RHN registration*
-  * zypper *(SuSE)*
-- database
-  * postgresql_priv *-- manages postgresql privileges*
-- networking
-  * bigip_pool *-- load balancing with F5s*
-  * ec2_elb *-- add and remove machines from ec2 elastic load balancers*
-- notification
-  * hipchat *-- send notification events to hipchat*
-  * flowdock *-- send messages to flowdock during playbook runs*
-  * campfire *-- send messages to campfire during playbook runs*
-  * mqtt *-- send messages to the Mosquitto message bus*
-  * irc *-- send messages to IRC channels*
-  * filesystem *-- a wrapper around mkfs*
-  * jabber *-- send jabber chat messages*
-  * osx_say *-- make OS X say things out loud*
-- openstack
-  * glance_image
-  * nova_compute
-  * nova_keypair
-  * keystone_user
-  * quantum_floating_ip
-  * quantum_floating_ip_associate
-  * quantum_network
-  * quantum_router
-  * quantum_router_gateway
-  * quantum_router_interface
-  * quantum_subnet
-- monitoring
-  * airbrake_deployment *-- notify airbrake of new deployments*
-  * monit
-  * newrelic_deployment *-- notifies newrelic of new deployments*
-  * pagerduty
-  * pingdom
-- utility
-  * set_fact *-- sets a variable, which can be the result of a template evaluation*
+* cloud: rax: module for creating instances in the rackspace cloud (uses pyrax)
+* packages: npm: node.js package management
+* packages: pkgng: next-gen package manager for FreeBSD
+* packages: redhat_subscription: manage Red Hat subscription usage
+* packages: rhn_register: basic RHN registration
+* packages: zypper (SuSE)
+* database: postgresql_priv: manages postgresql privileges
+* networking: bigip_pool: load balancing with F5s
+* networking: ec2_elb: add and remove machines from ec2 elastic load balancers
+* notification: hipchat: send notification events to hipchat
+* notification: flowdock: send messages to flowdock during playbook runs
+* notification: campfire: send messages to campfire during playbook runs
+* notification: mqtt: send messages to the Mosquitto message bus
+* notification: irc: send messages to IRC channels
+* notification: filesystem - a wrapper around mkfs
+* notification: jabber: send jabber chat messages
+* notification: osx_say: make OS X say things out loud
+* openstack: keystone_user
+* openstack: glance_image
+* openstack: nova_compute
+* openstack: nova_keypair
+* openstack: quantum_floating_ip
+* openstack: quantum_floating_ip_associate
+* openstack: quantum_network
+* openstack: quantum_router
+* openstack: quantum_router_gateway
+* openstack: quantum_router_interface
+* openstack: quantum_subnet
+* monitoring: newrelic_deployment: notifies newrelic of new deployments
+* monitoring: airbrake_deployment - notify airbrake of new deployments
+* monitoring: pingdom
+* monitoring: pagerduty
+* monitoring: monit
+* utility: set_fact: sets a variable, which can be the result of a template evaluation
 
 Modules removed
 
@@ -1617,26 +1466,26 @@ Core Features
 
 Modules Added:
 
-* bzr *(bazaar version control)*
+* bzr (bazaar version control)
 * cloudformation
 * django-manage
-* gem *(ruby gems)*
+* gem (ruby gems)
 * homebrew
-* lvg *(logical volume groups)*
-* lvol *(LVM logical volumes)*
+* lvg (logical volume groups)
+* lvol (LVM logical volumes)
 * macports
 * mongodb_user
 * netscaler
 * okg
 * openbsd_pkg
-* rabbit_mq_parameter
 * rabbit_mq_plugin
 * rabbit_mq_user
 * rabbit_mq_vhost
+* rabbit_mq_parameter
 * rhn_channel
-* s3 *-- allows putting file contents in buckets for sharing over s3*
-* uri module *-- can get/put/post/etc*
-* vagrant *-- launching VMs with vagrant, this is different from existing vagrant plugin*
+* s3 -- allows putting file contents in buckets for sharing over s3
+* uri module -- can get/put/post/etc
+* vagrant -- launching VMs with vagrant, this is different from existing vagrant plugin
 * zfs
 
 Bugfixes and Misc Changes:
@@ -1738,12 +1587,12 @@ Plugins:
 
 New modules:
 
-* apt_key
-* ec2_facts
-* hg *(now in core)*
-* pacman *(Arch linux)*
-* pkgin *(Joyent SmartOS)*
-* sysctl
+* new sysctl module
+* new pacman module (Arch linux)
+* new apt_key module
+* hg module now in core
+* new ec2_facts module
+* added pkgin module for Joyent SmartOS
 
 New config settings:
 
@@ -2230,3 +2079,4 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
+

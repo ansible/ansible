@@ -60,9 +60,8 @@ import socket
 import random
 import time
 import codecs
+import ConfigParser
 import uuid
-from ansible.compat.six.moves import configparser
-
 try:
     import certifi
     HAS_CERTIFI = True
@@ -213,7 +212,7 @@ class CallbackModule(CallbackBase):
                                  'Disabling the Logentries callback plugin.')
 
         config_path = os.path.abspath(os.path.dirname(__file__))
-        config = configparser.ConfigParser()
+        config = ConfigParser.ConfigParser()
         try:
             config.readfp(open(os.path.join(config_path, 'logentries.ini')))
             if config.has_option('logentries', 'api'):
