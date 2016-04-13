@@ -481,6 +481,9 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     p = module.params
 
     if p['name']:
