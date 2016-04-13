@@ -66,7 +66,7 @@ options:
     description:
       - Option used for dumping large tables
     required: false
-    default: false
+    default: true
     version_added: "2.1"
 author: "Ansible Core Team"
 requirements:
@@ -122,7 +122,6 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
         cmd += " --defaults-extra-file=%s" % pipes.quote(config_file)
-    cmd += " --quick"
     if user is not None:
         cmd += " --user=%s" % pipes.quote(user)
     if password is not None:
@@ -248,7 +247,7 @@ def main():
             connect_timeout=dict(default=30, type='int'),
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
-            quick=dict(default=False, type='bool'),
+            quick=dict(default=True, type='bool'),
         ),
         supports_check_mode=True
     )
