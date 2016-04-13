@@ -21,7 +21,12 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import sys
+import json
 import syslog
+from io import BytesIO, StringIO
+
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_bytes
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
@@ -41,10 +46,14 @@ except ImportError:
 class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        self.constants_sentinel = basic.MODULE_CONSTANTS
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        self.real_stdin = sys.stdin
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -55,8 +64,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
             basic.has_journal = False
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
-        basic.MODULE_CONSTANTS = self.constants_sentinel
+        sys.stdin = self.real_stdin
         basic.has_journal = self.has_journal
 
     def test_smoketest_syslog(self):
@@ -75,17 +83,21 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        self.constants_sentinel = basic.MODULE_CONSTANTS
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        self.real_stdin = sys.stdin
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
+
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
-        basic.MODULE_CONSTANTS = self.constants_sentinel
+        sys.stdin = self.real_stdin
 
     @unittest.skipUnless(basic.has_journal, 'python systemd bindings not installed')
     def test_smoketest_journal(self):
@@ -121,10 +133,15 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             }
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        self.constants_sentinel = basic.MODULE_CONSTANTS
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        self.real_stdin = sys.stdin
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
+
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -134,8 +151,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             basic.has_journal = False
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
-        basic.MODULE_CONSTANTS = self.constants_sentinel
+        sys.stdin = self.real_stdin
         basic.has_journal = self.has_journal
 
     @patch('syslog.syslog', autospec=True)
@@ -176,10 +192,14 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
             }
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        self.constants_sentinel = basic.MODULE_CONSTANTS
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        self.real_stdin = sys.stdin
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -198,8 +218,8 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
                 self._fake_out_reload(basic)
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
-        basic.MODULE_CONSTANTS = self.constants_sentinel
+        sys.stdin = self.real_stdin
+
         basic.has_journal = self.has_journal
         if self.module_patcher:
             self.module_patcher.stop()

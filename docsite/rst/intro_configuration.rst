@@ -452,6 +452,22 @@ This is the default location Ansible looks to find modules::
 Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
 "./library" directory alongside a playbook.
 
+.. _local_tmp:
+
+local_tmp
+=========
+
+When Ansible gets ready to send a module to a remote machine it usually has to
+add a few things to the module: Some boilerplate code, the module's
+parameters, and a few constants from the config file.  This combination of
+things gets stored in a temporary file until ansible exits and cleans up after
+itself.  The default location is a subdirectory of the user's home directory.
+If you'd like to change that, you can do so by altering this setting::
+
+    local_tmp = $HOME/.ansible/tmp
+
+Ansible will then choose a random directory name inside this location.
+
 .. _log_path:
 
 log_path
