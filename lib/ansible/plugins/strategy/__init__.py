@@ -141,6 +141,7 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
 
+        task_vars['hostvars'] = self._tqm.hostvars
         # and then queue the new task
         display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
@@ -152,7 +153,7 @@ class StrategyBase:
 
             queued = False
             while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
+                (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
@@ -215,20 +216,6 @@ class StrategyBase:
                             if iterator.is_failed(host):
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
-                            else:
-                                # otherwise, we grab the current state and if we're iterating on
-                                # the rescue portion of a block then we save the failed task in a
-                                # special var for use within the rescue/always
-                                state, _ = iterator.get_next_task_for_host(host, peek=True)
-                                if state.run_state == iterator.ITERATING_RESCUE:
-                                    original_task = iterator.get_original_task(host, task)
-                                    self._variable_manager.set_nonpersistent_facts(
-                                        host,
-                                        dict(
-                                            ansible_failed_task=original_task.serialize(),
-                                            ansible_failed_result=task_result._result,
-                                        ),
-                                    )
                         else:
                             self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=task.ignore_errors)
@@ -342,11 +329,7 @@ class StrategyBase:
                                 self._variable_manager.set_nonpersistent_facts(target_host, facts)
                             else:
                                 self._variable_manager.set_host_facts(target_host, facts)
-                elif result[0].startswith('v2_runner_item') or result[0] == 'v2_runner_retry':
-                    self._tqm.send_callback(result[0], result[1])
-                elif result[0] == 'v2_on_file_diff':
-                    if self._diff:
-                        self._tqm.send_callback('v2_on_file_diff', result[1])
+
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
 
@@ -473,8 +456,7 @@ class StrategyBase:
                 task_include=included_file._task,
                 role=included_file._task._role,
                 use_handlers=is_handler,
-                loader=self._loader,
-                variable_manager=self._variable_manager,
+                loader=self._loader
             )
 
             # since we skip incrementing the stats when the task result is
@@ -637,10 +619,10 @@ class StrategyBase:
     def _take_step(self, task, host=None):
 
         ret=False
-        msg=u'Perform task: %s ' % task
         if host:
-            msg += u'on %s ' % host
-        msg += u'(N)o/(y)es/(c)ontinue: '
+            msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
+        else:
+            msg = u'Perform task: %s (y/n/c): ' % task
         resp = display.prompt(msg)
 
         if resp.lower() in ['y','yes']:
@@ -670,9 +652,6 @@ class StrategyBase:
             self.run_handlers(iterator, play_context)
         elif meta_action == 'refresh_inventory':
             self._inventory.refresh_inventory()
-        elif meta_action == 'clear_facts':
-            for host in iterator._host_states:
-                self._variable_manager.clear_facts(host)
         #elif meta_action == 'reset_connection':
         #    connection_info.connection.close()
         elif meta_action == 'clear_host_errors':

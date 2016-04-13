@@ -90,9 +90,6 @@ import os
 import argparse
 import ConfigParser
 
-import logging
-logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
-
 try:
     import json
 except ImportError:

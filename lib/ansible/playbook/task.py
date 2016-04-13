@@ -21,12 +21,13 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 
 from ansible.plugins import lookup_loader
+
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -34,8 +35,6 @@ from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-
-from ansible.utils.unicode import to_str
 
 try:
     from __main__ import display
@@ -70,11 +69,11 @@ class Task(Base, Conditional, Taggable, Become):
 
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
-    _changed_when         = FieldAttribute(isa='list', default=[])
+    _changed_when         = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
     _delegate_facts       = FieldAttribute(isa='bool', default=False)
-    _failed_when          = FieldAttribute(isa='list', default=[])
+    _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
@@ -83,7 +82,7 @@ class Task(Base, Conditional, Taggable, Become):
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=3)
-    _until                = FieldAttribute(isa='list', default=[])
+    _until                = FieldAttribute(isa='string')
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -134,7 +133,7 @@ class Task(Base, Conditional, Taggable, Become):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        if self.get_name() == 'meta':
+        if self.get_name() == 'meta ':
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
@@ -169,10 +168,7 @@ class Task(Base, Conditional, Taggable, Become):
         # and the delegate_to value from the various possible forms
         # supported as legacy
         args_parser = ModuleArgsParser(task_ds=ds)
-        try:
-            (action, args, delegate_to) = args_parser.parse()
-        except AnsibleParserError as e:
-            raise AnsibleParserError(to_str(e), obj=ds)
+        (action, args, delegate_to) = args_parser.parse()
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
@@ -232,13 +228,6 @@ class Task(Base, Conditional, Taggable, Become):
             self._task_include.post_validate(templar)
 
         super(Task, self).post_validate(templar)
-
-    def _post_validate_register(self, attr, value, templar):
-        '''
-        Override post validation for the register args field, which is not
-        supposed to be templated
-        '''
-        return value
 
     def _post_validate_loop_args(self, attr, value, templar):
         '''

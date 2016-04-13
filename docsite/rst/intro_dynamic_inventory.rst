@@ -290,8 +290,7 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
    Linode
    OpenShift
    OpenStack Nova
-   Ovirt
-   SpaceWalk
+   Red Hat's SpaceWalk
    Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
    Zabbix
 
@@ -303,20 +302,12 @@ to include it in the project.
 
 .. _using_multiple_sources:
 
-Using Inventory Directories and Multiple Inventory Sources
-``````````````````````````````````````````````````````````
+Using Multiple Inventory Sources
+````````````````````````````````
 
 If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
-
-In an inventory directory, executable files will be treated as dynamic inventory sources and most other files as static sources. Files which end with any of the following will be ignored::
-
-    ~, .orig, .bak, .ini, .retry, .pyc, .pyo
-
-You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the ANSIBLE_INVENTORY_IGNORE environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
-
-Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
 
 .. _static_groups_of_dynamic:
 

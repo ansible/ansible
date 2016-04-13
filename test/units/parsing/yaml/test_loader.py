@@ -20,9 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from io import StringIO
-
 from six import text_type, binary_type
+from six.moves import StringIO
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest
@@ -36,13 +35,6 @@ except ImportError:
     from yaml.parser import ParserError
 
 
-class NameStringIO(StringIO):
-    """In py2.6, StringIO doesn't let you set name because a baseclass has it
-    as readonly property"""
-    name = None
-    def __init__(self, *args, **kwargs):
-        super(NameStringIO, self).__init__(*args, **kwargs)
-
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
     def setUp(self):
@@ -52,7 +44,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         pass
 
     def test_parse_number(self):
-        stream = StringIO(u"""
+        stream = StringIO("""
                 1
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -61,7 +53,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         # No line/column info saved yet
 
     def test_parse_string(self):
-        stream = StringIO(u"""
+        stream = StringIO("""
                 Ansible
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -72,7 +64,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_utf8_string(self):
-        stream = StringIO(u"""
+        stream = StringIO("""
                 Cafè Eñyei
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -83,7 +75,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_dict(self):
-        stream = StringIO(u"""
+        stream = StringIO("""
                 webster: daniel
                 oed: oxford
                 """)
@@ -101,7 +93,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'oed'].ansible_pos, ('myfile.yml', 3, 22))
 
     def test_parse_list(self):
-        stream = StringIO(u"""
+        stream = StringIO("""
                 - a
                 - b
                 """)
@@ -117,7 +109,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[1].ansible_pos, ('myfile.yml', 3, 19))
 
     def test_parse_short_dict(self):
-        stream = StringIO(u"""{"foo": "bar"}""")
+        stream = StringIO("""{"foo": "bar"}""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -125,7 +117,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 1, 1))
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 9))
 
-        stream = StringIO(u"""foo: bar""")
+        stream = StringIO("""foo: bar""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -134,12 +126,12 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 6))
 
     def test_error_conditions(self):
-        stream = StringIO(u"""{""")
+        stream = StringIO("""{""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         self.assertRaises(ParserError, loader.get_single_data)
 
     def test_front_matter(self):
-        stream = StringIO(u"""---\nfoo: bar""")
+        stream = StringIO("""---\nfoo: bar""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -148,7 +140,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 2, 6))
 
         # Initial indent (See: #6348)
-        stream = StringIO(u""" - foo: bar\n   baz: qux""")
+        stream = StringIO(""" - foo: bar\n   baz: qux""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, [{u'foo': u'bar', u'baz': u'qux'}])
@@ -162,7 +154,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def setUp(self):
-        stream = NameStringIO(u"""
+        stream = StringIO("""
                 - hosts: localhost
                   vars:
                     number: 1

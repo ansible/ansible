@@ -22,7 +22,7 @@ __metaclass__ = type
 import re
 import codecs
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.parsing.quoting import unquote
 
 # Decode escapes adapted from rspeer's answer here:
@@ -60,7 +60,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParsingError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
 
@@ -204,7 +204,7 @@ def split_args(args):
             # to the end of the list, since we'll tack on more to it later
             # otherwise, if we're inside any jinja2 block, inside quotes, or we were
             # inside quotes (but aren't now) concat this token to the last param
-            if inside_quotes and not was_inside_quotes and not(print_depth or block_depth or comment_depth):
+            if inside_quotes and not was_inside_quotes:
                 params.append(token)
                 appended = True
             elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
@@ -256,6 +256,6 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise AnsibleParserError("failed at splitting arguments, either an unbalanced jinja2 block or quotes: {}".format(args))
+        raise AnsibleError("error while splitting arguments, either an unbalanced jinja2 block or quotes")
 
     return params

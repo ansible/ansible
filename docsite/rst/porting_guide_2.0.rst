@@ -55,10 +55,6 @@ uses key=value escaping which has not changed.  The other option is to check for
     # Output
     "msg": "Testing some things"
 
-* Behavior of templating DOS-type text files changes with Ansible v2.
-
-  A bug in Ansible v1 causes DOS-type text files (using a carriage return and newline) to be templated to Unix-type text files (using only a newline). In Ansible v2 this long-standing bug was finally fixed and DOS-type text files are preserved correctly. This may be confusing when you expect your playbook to not show any differences when migrating to Ansible v2, while in fact you will see every DOS-type file being completely replaced (with what appears to be the exact same content).
-
 * When specifying complex args as a variable, the variable must use the full jinja2
   variable syntax (```{{var_name}}```) - bare variable names there are no longer accepted.
   In fact, even specifying args with variables has been deprecated, and will not be
@@ -87,8 +83,6 @@ uses key=value escaping which has not changed.  The other option is to check for
 * Extras callbacks must be whitelisted in ansible.cfg. Copying is no longer necessary but whitelisting in ansible.cfg must be completed.
 * dnf module has been rewritten. Some minor changes in behavior may be observed.
 * win_updates has been rewritten and works as expected now.
-* from 2.0.1 onwards, the implicit setup task from gather_facts now correctly inherits everything from play, but this might cause issues for those setting
-  `environment` at the play level and depending on `ansible_env` existing. Previouslly this was ignored but now might issue an 'Undefined' error.
 
 Deprecated
 ----------
@@ -169,7 +163,6 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
     - task: dostuf
       becom: yes
-
   The task always ran without using privilege escalation (for that you need `become`) but was also silently ignored so the play 'ran' even though it should not, now this is a parsing error.
 
 
@@ -190,14 +183,14 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
   The `port` variable is reserved as a play/task directive for overriding the connection port, in previous versions this got conflated with a variable named `port` and was usable
   later in the play, this created issues if a host tried to reconnect or was using a non caching connection. Now it will be correctly identified as a directive and the `port` variable
-  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and variables to a role invocation.
+  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and varaibles to a role invocation..
 
 * Bare operations on `with_`::
 
     with_items: var1 + var2
 
-  An issue with the 'bare variable' features, which was supposed only template a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
-  Now you need to use proper templating and braces for all expressions everywhere except conditionals (`when`)::
+  An issue with the 'bare variable' features, which was supposed only tempate a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
+  Now you need to use proper templating and braces for all expressions everywhere except condtionals (`when`)::
 
     with_items: "{{var1 + var2}}"
 
@@ -233,19 +226,16 @@ for most callback plugins.  However, if your callback plugin makes use of
 have to store the values for these yourself as ansible no longer automatically
 populates the callback with them.  Here's a short snippet that shows you how::
 
-    import os
     from ansible.plugins.callback import CallbackBase
 
     class CallbackModule(CallbackBase):
         def __init__(self):
             self.playbook = None
-            self.playbook_name = None
             self.play = None
             self.task = None
 
         def v2_playbook_on_start(self, playbook):
             self.playbook = playbook
-            self.playbook_name = os.path.basename(self.playbook._file_name)
 
         def v2_playbook_on_play_start(self, play):
             self.play = play
@@ -254,116 +244,9 @@ populates the callback with them.  Here's a short snippet that shows you how::
             self.task = task
 
         def v2_on_any(self, *args, **kwargs):
-            self._display.display('%s: %s: %s' % (self.playbook_name,
+            self._display.display('%s: %s: %s' % (self.playbook.name,
             self.play.name, self.task))
 
-
-Connection plugins
-------------------
-
-* connection plugins
-
-
-Hybrid plugins
-==============
-In specific cases you may want a plugin that supports both ansible-1.9.x *and* ansible-2.0. Much like porting plugins from v1 to v2, you need to understand how plugins work in each version and support both requirements. It may mean playing tricks on Ansible.
-
-Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your plugin to provide similar pieces (subclasses, methods) for ansible-1.9.x as ansible-2.0 expects. This way your code will look a lot cleaner.
-
-You may find the following tips useful:
-
-* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``)
-
-* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (e.g. importing specific methods).
-
-* Use the existence of these methods as a qualifier to what version of Ansible you are running. So rather than using version checks, you can do capability checks instead. (See examples below)
-
-* Document for each if-then-else case for which specific version each block is needed. This will help others to understand how they have to adapt their plugins, but it will also help you to remove the older ansible-1.9.x support when it is deprecated.
-
-* When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
-
-* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
-
-
-Lookup plugins
---------------
-As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand::
-
-    from __future__ import (absolute_import, division, print_function)
-    __metaclass__ = type
-
-    import os
-    import glob
-
-    try:
-        # ansible-2.0
-        from ansible.plugins.lookup import LookupBase
-    except ImportError:
-        # ansible-1.9.x
-
-        class LookupBase(object):
-            def __init__(self, basedir=None, runner=None, **kwargs):
-                self.runner = runner
-                self.basedir = self.runner.basedir
-
-            def get_basedir(self, variables):
-                return self.basedir
-
-    try:
-        # ansible-1.9.x
-        from ansible.utils import (listify_lookup_plugin_terms, path_dwim, warning)
-    except ImportError:
-        # ansible-2.0
-        from __main__ import display
-        warning = display.warning
-
-    class LookupModule(LookupBase):
-
-        # For ansible-1.9.x, we added inject=None as valid argument
-        def run(self, terms, inject=None, variables=None, **kwargs):
-
-            # ansible-2.0, but we made this work for ansible-1.9.x too !
-            basedir = self.get_basedir(variables)
-
-            # ansible-1.9.x
-            if 'listify_lookup_plugin_terms' in globals():
-                terms = listify_lookup_plugin_terms(terms, basedir, inject)
-
-            ret = []
-            for term in terms:
-                term_file = os.path.basename(term)
-
-                # For ansible-1.9.x, we imported path_dwim() from ansible.utils
-                if 'path_dwim' in globals():
-                    # ansible-1.9.x
-                    dwimmed_path = path_dwim(basedir, os.path.dirname(term))
-                else:
-                    # ansible-2.0
-                    dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
-
-                globbed = glob.glob(os.path.join(dwimmed_path, term_file))
-                ret.extend(g for g in globbed if os.path.isfile(g))
-
-            return ret
-
-.. Note:: In the above example we did not use the ``warning()`` method as we had no direct use for it in the final version. However we left this code in so people can use this part during development/porting/use.
-
-
-
-Connection plugins
-------------------
-
-* connection plugins
-
-Action plugins
---------------
-
-* action plugins
-
-Callback plugins
-----------------
-
-* callback plugins
 
 Connection plugins
 ------------------

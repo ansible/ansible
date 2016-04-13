@@ -60,7 +60,7 @@ General defaults
 
 In the [defaults] section of ansible.cfg, the following settings are tunable:
 
-.. _cfg_action_plugins:
+.. _action_plugins:
 
 action_plugins
 ==============
@@ -228,7 +228,7 @@ Allows disabling of deprecating warnings in ansible-playbook output::
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
-.. _display_args_to_stdout:
+.. _display_args_to_stdout
 
 display_args_to_stdout
 ======================
@@ -288,8 +288,6 @@ executable
 This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
     executable = /bin/bash
-
-Starting in version 2.1 this can be overriden by the inventory var ``ansible_shell_executable``.
 
 .. _filter_plugins:
 
@@ -355,32 +353,6 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
     gathering = smart
 
-.. versionadded:: 2.1
-
-You can specify a subset of gathered facts using the following option::
-
-    gather_subset = all
-
-:all: gather all subsets (the default)
-:network: gather network facts
-:hardware: gather hardware facts (longest facts to retrieve)
-:virtual: gather facts about virtual machines hosted on the machine
-:ohai: gather facts from ohai
-:facter: gather facts from facter
-
-You can combine them using a comma separated list (ex: network,virtual,facter)
-
-You can also disable specific subsets by prepending with a `!` like this::
-
-    # Don't gather hardware facts, facts from chef's ohai or puppet's facter
-    gather_subset = !hardware,!ohai,!facter
-
-A set of basic facts are always collected no matter which additional subsets
-are selected.  If you want to collect the minimal amount of facts, use
-`!all`::
-
-    gather_subset = !all
-
 hash_behaviour
 ==============
 
@@ -395,7 +367,7 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
-.. versionadded:: 2.0
+.. versionadded: '2.0'
 
 If you want to merge hashes without changing the global settings, use
 the `combine` filter described in :doc:`playbooks_filters`.
@@ -479,21 +451,7 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
-.. _module_set_locale:
-
-module_set_locale
-=================
-
-This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
-via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
-being set when the module is executed on the given remote system.
-
-.. note::
-
-    The module_set_locale option was added in Ansible 2.1.
-
 .. _module_lang:
-
 
 module_lang
 ===========
@@ -616,9 +574,9 @@ retry_files_save_path
 =====================
 
 The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
-The default location is adjacent to the play (~/ in versions older than 2.0) and can be changed to any writeable path::
+The default location is ~/ and can be changed to any writeable path::
 
-    retry_files_save_path = ~/.ansible/retry-files
+    retry_files_save_path = ~/.ansible-retry
 
 The directory will be created if it does not already exist.
 
@@ -627,7 +585,7 @@ The directory will be created if it does not already exist.
 roles_path
 ==========
 
-.. versionadded:: 1.4
+.. versionadded: '1.4'
 
 The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
 roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
@@ -641,37 +599,6 @@ Additional paths can be provided separated by colon characters, in the same way 
 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
-
-.. _cfg_squash_actions:
-
-squash_actions
-==============
-
-.. versionadded:: 2.0
-
-Ansible can optimise actions that call modules that support list parameters when using with\_ looping.
-Instead of calling the module once for each item, the module is called once with the full list.
-
-The default value for this setting is only for certain package managers, but it can be used for any module::
-
-    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
-
-Currently, this is only supported for modules that have a name parameter, and only when the item is the
-only thing being passed to the parameter.
-
-.. _cfg_strategy_plugins:
-
-strategy_plugins
-==================
-
-Strategy plugin allow users to change the way in which Ansible runs tasks on targeted hosts.
-
-This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
-
-    strategy_plugins = ~/.ansible/plugins/strategy_plugins/:/usr/share/ansible_plugins/strategy_plugins
-
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 .. _sudo_exe:
 
@@ -841,17 +768,6 @@ instead.  Setting it to False will improve performance and is recommended when h
 
     record_host_keys=True
 
-.. _paramiko_proxy_command:
-
-proxy_command
-=============
-
-.. versionadded:: 2.1
-
-Use an OpenSSH like ProxyCommand for proxying all Paramiko SSH connections through a bastion or jump host. Requires a minimum of Paramiko version 1.9.0. On Enterprise Linux 6 this is provided by ``python-paramiko1.10`` in the EPEL repository::
-
-    proxy_command = ssh -W "%h:%p" bastion
-
 .. _openssh_settings:
 
 OpenSSH Specific Settings
@@ -1010,17 +926,6 @@ The normal behaviour is for operations to copy the existing context or use the u
 The default list is: nfs,vboxsf,fuse,ramfs::
 
     special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
-
-libvirt_lxc_noseclabel
-======================
-
-.. versionadded:: 2.1
-
-This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
-This is necessary when running on systems which do not have SELinux.
-The default behavior is no::
-
-    libvirt_lxc_noseclabel = True
 
 Galaxy Settings
 ---------------

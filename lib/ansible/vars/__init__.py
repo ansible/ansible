@@ -40,6 +40,7 @@ from ansible.inventory.host import Host
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
+from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.unsafe_proxy import wrap_var
@@ -82,8 +83,6 @@ def strip_internal_keys(dirty):
     for k in dirty.keys():
         if isinstance(k, string_types) and k.startswith('_ansible_'):
             del clean[k]
-        elif isinstance(dirty[k], dict):
-            clean[k] = strip_internal_keys(dirty[k])
     return clean
 
 class VariableManager:
@@ -97,9 +96,7 @@ class VariableManager:
         self._host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
         self._inventory = None
-        self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
-        self._options_vars = defaultdict(dict)
 
     def __getstate__(self):
         data = dict(
@@ -110,7 +107,6 @@ class VariableManager:
             host_vars_files = self._host_vars_files,
             group_vars_files = self._group_vars_files,
             omit_token = self._omit_token,
-            options_vars = self._options_vars,
             #inventory = self._inventory,
         )
         return data
@@ -124,7 +120,6 @@ class VariableManager:
         self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
-        self._options_vars = data.get('options_vars', dict())
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -155,17 +150,6 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    @property
-    def options_vars(self):
-        ''' ensures a clean copy of the options_vars are made '''
-        return self._options_vars.copy()
-
-    @options_vars.setter
-    def options_vars(self, value):
-        ''' ensures a clean copy of the options_vars are used to set the value '''
-        assert isinstance(value, dict)
-        self._options_vars = value.copy()
-
     def _preprocess_vars(self, a):
         '''
         Ensures that vars contained in the parameter passed in are
@@ -186,6 +170,8 @@ class VariableManager:
 
         return data
 
+    # FIXME: include_hostvars is no longer used, and should be removed, but
+    #        all other areas of code calling get_vars need to be fixed too
     def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -206,10 +192,10 @@ class VariableManager:
         - extra vars
         '''
 
-        display.debug("in VariableManager get_vars()")
+        debug("in VariableManager get_vars()")
         cache_entry = self._get_cache_entry(play=play, host=host, task=task)
         if cache_entry in VARIABLE_CACHE and use_cache:
-            display.debug("vars are cached, returning them now")
+            debug("vars are cached, returning them now")
             return VARIABLE_CACHE[cache_entry]
 
         all_vars = dict()
@@ -232,7 +218,7 @@ class VariableManager:
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task and task._role is not None:
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task._block._dep_chain))
+                all_vars = combine_vars(all_vars, task._role.get_default_vars())
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
@@ -320,12 +306,12 @@ class VariableManager:
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
+                    all_vars = combine_vars(all_vars, role.get_role_params())
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
             if task._role:
                 all_vars = combine_vars(all_vars, task._role.get_vars())
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block._dep_chain))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         if host:
@@ -358,7 +344,7 @@ class VariableManager:
         if task or play:
             all_vars['vars'] = all_vars.copy()
 
-        display.debug("done with get_vars()")
+        debug("done with get_vars()")
         return all_vars
 
     def invalidate_hostvars_cache(self, play):
@@ -376,7 +362,7 @@ class VariableManager:
         variables['playbook_dir'] = loader.get_basedir()
 
         if host:
-            variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
+            variables['group_names'] = [group.name for group in host.get_groups() if group.name != 'all']
 
             if self._inventory is not None:
                 variables['groups']  = dict()
@@ -406,12 +392,6 @@ class VariableManager:
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         variables['ansible_version'] = CLI.version_info(gitinfo=False)
-        # Set options vars
-        for option, option_value in iteritems(self._options_vars):
-            variables[option] = option_value
-
-        if self._hostvars is not None and include_hostvars:
-            variables['hostvars'] = self._hostvars
 
         return variables
 
@@ -425,14 +405,16 @@ class VariableManager:
         items = []
         if task.loop is not None:
             if task.loop in lookup_loader:
+                #TODO: remove convert_bare true and deprecate this in with_
                 try:
-                    #TODO: remove convert_bare true and deprecate this in with_
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
-                    items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable as e:
-                    # This task will be skipped later due to this, so we just setup
-                    # a dummy array for the later code so it doesn't fail
-                    items = [None]
+                    if 'has no attribute' in str(e):
+                        loop_terms = []
+                        display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
+                    else:
+                        raise
+                items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
         else:
@@ -584,13 +566,6 @@ class VariableManager:
         else:
             return dict()
 
-    def clear_facts(self, hostname):
-        '''
-        Clears the facts for a host
-        '''
-        if hostname in self._fact_cache:
-            del self._fact_cache[hostname]
-
     def set_host_facts(self, host, facts):
         '''
         Sets or updates the given facts for a host in the fact cache.
@@ -628,7 +603,7 @@ class VariableManager:
         host_name = host.get_name()
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
-        if varname in self._vars_cache[host_name] and isinstance(self._vars_cache[host_name][varname], MutableMapping) and isinstance(value, MutableMapping):
+        if varname in self._vars_cache[host_name]:
             self._vars_cache[host_name][varname] = combine_vars(self._vars_cache[host_name][varname], value)
         else:
             self._vars_cache[host_name][varname] = value

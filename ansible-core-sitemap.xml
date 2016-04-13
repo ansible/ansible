@@ -113,11 +113,6 @@
 		<priority>0.5</priority>
 	</url>
 	<url>
-		<loc>http://docs.ansible.com/ansible/playbooks_debugger.html</loc>
-		<changefreq>weekly</changefreq>
-		<priority>0.5</priority>
-	</url>
-	<url>
 		<loc>http://docs.ansible.com/ansible/become.html</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.5</priority>

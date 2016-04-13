@@ -495,24 +495,6 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
-.. _ansible_version:
-
-Ansible version
-```````````````
-
-.. versionadded:: 1.8
-
-To adapt playbook behavior to specific version of ansible, a variable ansible_version is available, with the following
-structure::
-
-    "ansible_version": {
-        "full": "2.0.0.2",
-        "major": 2,
-        "minor": 0,
-        "revision": 0,
-        "string": "2.0.0.2"
-    }
-
 .. _fact_caching:
 
 Fact Caching
@@ -604,7 +586,7 @@ in Ansible.  Effectively registered variables are just like facts.
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-````````````````````````````````
+```````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
@@ -632,7 +614,7 @@ these names themselves as they are reserved.  ``environment`` is also reserved.
 
 ``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can still get the variables, but you will not be able to see the facts.
+or set of playbooks, you can get at the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -674,9 +656,7 @@ Don't worry about any of this unless you think you need it.  You'll know when yo
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
-We then have ``role_path`` which will return the current role's pathname (since 1.8). This will only work inside a role.
-
-And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic variable which will be set to ``True`` if you run Ansible with ``--check``.
+And finally, ``role_path`` will return the current role's pathname (since 1.8). This will only work inside a role.
 
 .. _variable_file_separation_details:
 
@@ -750,9 +730,6 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
 The ``key=value`` form is obviously simpler, but it's there if you need it!
 
-.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
-          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
-
 As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
 
     --extra-vars "@some_file.json"
@@ -781,20 +758,19 @@ If multiple variables of the same name are defined in different places, they get
 
 .. include:: ansible_ssh_changes_note.rst
 
-In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
+In 1.x the precedence is (last listed wins):
 
- * "role defaults", which lose in priority to everything and are the most easily overridden 
- * variables defined in inventory
- * facts discovered about a system
- * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
- * connection variables (``ansible_user``, etc.)
+ * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+ * then come the variables defined in inventory
+ * then come the facts discovered about a system
+ * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+ * then come connection variables (``ansible_user``, etc)
  * extra vars (``-e`` in the command line) always win
 
-.. note:: 
+.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-    In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+In 2.x we have made the order of precedence more specific (last listed wins):
 
   * role defaults [1]_
   * inventory vars [2]_
@@ -811,7 +787,7 @@ In 2.x, we have made the order of precedence more specific (with the last listed
   * role and include vars
   * block vars (only for tasks in block)
   * task vars (only for the task)
-  * extra vars (always win precedence)
+  * extra vars
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
@@ -839,7 +815,7 @@ but they behave like other variables, so if you really want to override the remo
 .. _variable_scopes:
 
 Variable Scopes
-````````````````
+```````````````
 
 Ansible has 3 main scopes:
 
@@ -955,11 +931,6 @@ how all of these things can work together.
 
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
-
-Advanced Syntax
-```````````````
-
-For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
 
 .. seealso::
 

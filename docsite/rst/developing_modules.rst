@@ -71,9 +71,6 @@ There's a useful test script in the source checkout for ansible::
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
-For instructions on setting up ansible from source, please see
-:doc:`intro_installation`.
-
 Let's run the script you just wrote with that::
 
     ansible/hacking/test-module -m ./timetest.py
@@ -383,8 +380,6 @@ Include it in your module file like this::
     short_description: This is a sentence describing the module
     # ... snip ...
     '''
-
-If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
 
 The ``description``, and ``notes`` fields
 support formatting with some special macros.

@@ -26,8 +26,6 @@ The strategies are implemented via a new type of plugin, this means that in the 
 execution types can be added, either locally by users or to Ansible itself by
 a code contribution.
 
-One example is ``debug`` strategy. See :doc:`playbooks_debugger` for details.
-
 .. seealso::
 
    :doc:`playbooks`

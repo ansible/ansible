@@ -1,29 +1,27 @@
-# WELCOME TO ANSIBLE GITHUB
+Welcome To Ansible GitHub
+=========================
 
 Hi! Nice to see you here!
 
+If you'd like to ask a question
+===============================
 
-## QUESTIONS ?
+Please see [this web page ](http://docs.ansible.com/community.html) for community information, which includes pointers on how to ask questions on the [mailing lists](http://docs.ansible.com/community.html#mailing-list-information) and IRC.  
 
-Please see the [community page](http://docs.ansible.com/community.html) for information on how to ask questions on the [mailing lists](http://docs.ansible.com/community.html#mailing-list-information) and IRC.
+The github issue tracker is not the best place for questions for various reasons, but both IRC and the mailing list are very helpful places for those things, and that page has the pointers to those.
 
-The GitHub issue tracker is not the best place for questions for various reasons, but both IRC and the mailing list are very helpful places for those things, as the community page explains best.
+If you'd like to contribute code
+================================
 
+Please see [this web page](http://docs.ansible.com/community.html) for information about the contribution process.  Important license agreement information is also included on that page.
 
-## CONTRIBUTING ?
+If you'd like to file a bug
+===========================
 
-Please see the [community page](http://docs.ansible.com/community.html) for information regarding the contribution process. Important license agreement information is also included on that page.
+I'd also read the community page above, but in particular, make sure you copy [this issue template](https://github.com/ansible/ansible/blob/devel/ISSUE_TEMPLATE.md) into your ticket description.  We have a friendly neighborhood bot that will remind you if you forget :)  This template helps us organize tickets faster and prevents asking some repeated questions, so it's very helpful to us and we appreciate your help with it.
 
-
-## BUG TO REPORT ?
-
-First and foremost, also check the [community page](http://docs.ansible.com/community.html).
-
-You can report bugs or make enhancement requests at the [Ansible GitHub issue page](http://github.com/ansible/ansible/issues/new) by filling out the issue template that will be presented.
-
-Also please make sure you are testing on the latest released version of Ansible or the development branch. You can find the latest releases and development branch at:
-
-- https://github.com/ansible/ansible/releases
-- https://github.com/ansible/ansible/archive/devel.tar.gz
+Also please make sure you are testing on the latest released version of Ansible or the development branch.
 
 Thanks!
+
+

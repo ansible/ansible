@@ -27,7 +27,6 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -82,7 +81,7 @@ class PlaybookExecutor:
 
                 i = 1
                 plays = pb.get_plays()
-                display.vv(u'%d plays in %s' % (len(plays), to_unicode(playbook_path)))
+                display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
                     if play._included_path is not None:
@@ -168,9 +167,8 @@ class PlaybookExecutor:
                 # send the stats callback for this playbook
                 if self._tqm is not None:
                     if C.RETRY_FILES_ENABLED:
-                        retries = set(self._tqm._failed_hosts.keys())
-                        retries.update(self._tqm._unreachable_hosts.keys())
-                        retries = sorted(retries)
+                        retries = list(set(self._tqm._failed_hosts.keys() + self._tqm._unreachable_hosts.keys()))
+                        retries.sort()
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
@@ -214,7 +212,7 @@ class PlaybookExecutor:
         # and convert it to an integer value based on the number of hosts
         if isinstance(play.serial, string_types) and play.serial.endswith('%'):
             serial_pct = int(play.serial.replace("%",""))
-            serial = int((serial_pct/100.0) * len(all_hosts)) or 1
+            serial = int((serial_pct/100.0) * len(all_hosts))
         else:
             if play.serial is None:
                 serial = -1

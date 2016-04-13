@@ -27,13 +27,25 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# == BEGIN DYNAMICALLY INSERTED CODE ==
+
+ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
+
+MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
+MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
+
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
+SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 # ansible modules can be written in any language.  To simplify
-# development of Python modules, the functions available here can
-# be used to do many common tasks
+# development of Python modules, the functions available here
+# can be inserted in any module source automatically by including
+# #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
+# of an ansible module. The source of this common code lives
+# in ansible/executor/module_common.py
 
 import locale
 import os
@@ -100,12 +112,6 @@ else:
     # Python 2
     def iteritems(d):
         return d.iteritems()
-
-try:
-    reduce
-except NameError:
-    # Python 3
-    from functools import reduce
 
 try:
     NUMBERTYPES = (int, long, float)
@@ -179,7 +185,7 @@ except ImportError:
         pass
 
 try:
-    from ast import literal_eval
+    from ast import literal_eval as _literal_eval
 except ImportError:
     # a replacement for literal_eval that works with python 2.4. from:
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
@@ -187,7 +193,7 @@ except ImportError:
     # ast.py
     from compiler import ast, parse
 
-    def literal_eval(node_or_string):
+    def _literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
         expression.  The string or node provided may only consist of the  following
@@ -217,28 +223,6 @@ except ImportError:
             raise ValueError('malformed string')
         return _convert(node_or_string)
 
-_literal_eval = literal_eval
-
-from ansible import __version__
-# Backwards compat. New code should just import and use __version__
-ANSIBLE_VERSION = __version__
-
-try:
-    # MODULE_COMPLEX_ARGS is an old name kept for backwards compat
-    MODULE_COMPLEX_ARGS = os.environ.pop('ANSIBLE_MODULE_ARGS')
-except KeyError:
-    # This file might be used for its utility functions.  So don't fail if
-    # running outside of a module environment (will fail in _load_params()
-    # instead)
-    MODULE_COMPLEX_ARGS = None
-
-try:
-    # ARGS are for parameters given in the playbook.  Constants are for things
-    # that ansible needs to configure controller side but are passed to all
-    # modules.
-    MODULE_CONSTANTS = os.environ.pop('ANSIBLE_MODULE_CONSTANTS')
-except KeyError:
-    MODULE_CONSTANTS = None
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
@@ -516,18 +500,6 @@ def is_executable(path):
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 
-class AnsibleFallbackNotFound(Exception):
-    pass
-
-def env_fallback(*args, **kwargs):
-    ''' Load value from environment '''
-    for arg in args:
-        if arg in os.environ:
-            return os.environ[arg]
-    else:
-        raise AnsibleFallbackNotFound
-
-
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
@@ -560,16 +532,14 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        self._load_constants()
-        self._load_params()
-        self._set_fallbacks()
+        self.params = self._load_params()
 
         # append to legal_inputs and then possibly check against them
         try:
             self.aliases = self._handle_aliases()
         except Exception:
             e = get_exception()
-            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
+            # use exceptions here cause its not safe to call vail json until no_log is processed
             print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
             sys.exit(1)
 
@@ -777,7 +747,7 @@ class AnsibleModule(object):
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
 
             if path_mount_point == mount_point:
-                for fs in self.constants['SELINUX_SPECIAL_FS']:
+                for fs in SELINUX_SPECIAL_FS.split(','):
                     if fs in fstype:
                         special_context = self.selinux_context(path_mount_point)
                         return (True, special_context)
@@ -912,10 +882,6 @@ class AnsibleModule(object):
                     self.fail_json(path=path,
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
-
-                if mode != stat.S_IMODE(mode):
-                    # prevent mode from having extra info orbeing invalid long number
-                    self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
@@ -1286,7 +1252,11 @@ class AnsibleModule(object):
                 return (str, None)
             return str
         try:
-            result = literal_eval(str)
+            result = None
+            if not locals:
+                result = _literal_eval(str)
+            else:
+                result = _literal_eval(str, None, locals)
             if include_exceptions:
                 return (result, None)
             else:
@@ -1410,8 +1380,6 @@ class AnsibleModule(object):
                 wanted = 'str'
 
             value = self.params[k]
-            if value is None:
-                continue
 
             try:
                 type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
@@ -1434,56 +1402,17 @@ class AnsibleModule(object):
                 if k not in self.params:
                     self.params[k] = default
 
-    def _set_fallbacks(self):
-        for k,v in self.argument_spec.items():
-            fallback = v.get('fallback', (None,))
-            fallback_strategy = fallback[0]
-            fallback_args = []
-            fallback_kwargs = {}
-            if k not in self.params and fallback_strategy is not None:
-                for item in fallback[1:]:
-                    if isinstance(item, dict):
-                        fallback_kwargs = item
-                    else:
-                        fallback_args = item
-                try:
-                    self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
-                except AnsibleFallbackNotFound:
-                    continue
-
     def _load_params(self):
-        ''' read the input and set the params attribute'''
-        if MODULE_COMPLEX_ARGS is None:
-            # This helper used too early for fail_json to work.
-            print('{"msg": "Error: ANSIBLE_MODULE_ARGS not found in environment.  Unable to figure out what parameters were passed", "failed": true}')
-            sys.exit(1)
-
+        ''' read the input and return a dictionary and the arguments string '''
         params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
         if params is None:
             params = dict()
-        self.params = params
-
-    def _load_constants(self):
-        ''' read the input and set the constants attribute'''
-        if MODULE_CONSTANTS is None:
-            # This helper used too early for fail_json to work.
-            print('{"msg": "Error: ANSIBLE_MODULE_CONSTANTS not found in environment.  Unable to figure out what constants were passed", "failed": true}')
-            sys.exit(1)
-
-        # Make constants into "native string"
-        if sys.version_info >= (3,):
-            constants = json_dict_bytes_to_unicode(json.loads(MODULE_CONSTANTS))
-        else:
-            constants = json_dict_unicode_to_bytes(json.loads(MODULE_CONSTANTS))
-        if constants is None:
-            constants = dict()
-        self.constants = constants
+        return params
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
             module = 'ansible-%s' % os.path.basename(__file__)
-            facility = getattr(syslog, self.constants.get('SYSLOG_FACILITY', 'LOG_USER'), syslog.LOG_USER)
-            syslog.openlog(str(module), 0, facility)
+            syslog.openlog(str(module), 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_INFO, msg)
 
     def debug(self, msg):
@@ -1561,9 +1490,9 @@ class AnsibleModule(object):
                 arg_val = str(arg_val)
             elif isinstance(arg_val, unicode):
                 arg_val = arg_val.encode('utf-8')
-            msg.append('%s=%s' % (arg, arg_val))
+            msg.append('%s=%s ' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+            msg = 'Invoked with %s' % ''.join(msg)
         else:
             msg = 'Invoked'
 
@@ -1610,8 +1539,6 @@ class AnsibleModule(object):
             if p not in paths and os.path.exists(p):
                 paths.append(p)
         for d in paths:
-            if not d:
-                continue
             path = os.path.join(d, arg)
             if os.path.exists(path) and is_executable(path):
                 bin_path = path
@@ -1822,7 +1749,7 @@ class AnsibleModule(object):
                         prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
                 except (OSError, IOError):
                     e = get_exception()
-                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (dest_dir, e))
+                    self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
 
                 try: # leaves tmp file behind when sudo and  not root
                     if switched_user and os.getuid() != 0:

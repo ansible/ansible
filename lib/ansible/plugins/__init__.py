@@ -31,7 +31,6 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -62,15 +61,9 @@ class PluginLoader:
         self.class_name         = class_name
         self.base_class         = required_base_class
         self.package            = package
+        self.config             = config
         self.subdir             = subdir
         self.aliases            = aliases
-
-        if config and not isinstance(config, list):
-            config = [config]
-        elif not config:
-            config = []
-
-        self.config = config
 
         if not class_name in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
@@ -165,7 +158,8 @@ class PluginLoader:
 
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
-            for path in self.config:
+            configured_paths = self.config.split(os.pathsep)
+            for path in configured_paths:
                 path = os.path.realpath(os.path.expanduser(path))
                 contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                 for c in contents:
@@ -248,7 +242,7 @@ class PluginLoader:
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
-                display.warning("Error accessing plugin paths: %s" % to_unicode(e))
+                display.warning("Error accessing plugin paths: %s" % str(e))
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
@@ -322,7 +316,6 @@ class PluginLoader:
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
-        class_only = kwargs.pop('class_only', False)
         if name in self.aliases:
             name = self.aliases[name]
         path = self.find_plugin(name)
@@ -332,64 +325,40 @@ class PluginLoader:
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source('.'.join([self.package, name]), path)
 
-        obj = getattr(self._module_cache[path], self.class_name)
-        if self.base_class:
-            # The import path is hardcoded and should be the right place,
-            # so we are not expecting an ImportError.
-            module = __import__(self.package, fromlist=[self.base_class])
-            # Check whether this obj has the required base class.
-            try:
-                plugin_class = getattr(module, self.base_class)
-            except AttributeError:
+        if kwargs.get('class_only', False):
+            obj = getattr(self._module_cache[path], self.class_name)
+        else:
+            obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
                 return None
-            if not issubclass(obj, plugin_class):
-                return None
-
-        if not class_only:
-            obj = obj(*args, **kwargs)
 
         return obj
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
 
-        class_only = kwargs.pop('class_only', False)
-        all_matches = []
-
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+            matches = glob.glob(os.path.join(i, "*.py"))
+            matches.sort()
+            for path in matches:
+                name, _ = os.path.splitext(path)
+                if '__init__' in name:
+                    continue
 
-        for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
-            name, _ = os.path.splitext(path)
-            if '__init__' in name:
-                continue
+                if path not in self._module_cache:
+                    self._module_cache[path] = self._load_module_source(name, path)
 
-            if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
+                if kwargs.get('class_only', False):
+                    obj = getattr(self._module_cache[path], self.class_name)
+                else:
+                    obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
-            try:
-                obj = getattr(self._module_cache[path], self.class_name)
-            except AttributeError as e:
-                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_unicode(e)))
+                    if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+                        continue
 
-            if self.base_class:
-                # The import path is hardcoded and should be the right place,
-                # so we are not expecting an ImportError.
-                module = __import__(self.package, fromlist=[self.base_class])
-                # Check whether this obj has the required base class.
-                try:
-                   plugin_class = getattr(module, self.base_class)
-                except AttributeError:
-                   continue
-                if not issubclass(obj, plugin_class):
-                   continue
-
-            if not class_only:
-                obj = obj(*args, **kwargs)
-
-            # set extra info on the module, in case we want it later
-            setattr(obj, '_original_path', path)
-            yield obj
+                # set extra info on the module, in case we want it later
+                setattr(obj, '_original_path', path)
+                yield obj
 
 action_loader = PluginLoader(
     'ActionModule',
@@ -475,7 +444,7 @@ fragment_loader = PluginLoader(
 strategy_loader = PluginLoader(
     'StrategyModule',
     'ansible.plugins.strategy',
-    C.DEFAULT_STRATEGY_PLUGIN_PATH,
+    None,
     'strategy_plugins',
     required_base_class='StrategyBase',
 )

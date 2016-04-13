@@ -27,8 +27,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
-
-from ansible.module_utils.urls import fetch_url
+# Note: modules using this must have from ansible.module_utils.urls import *
+# before this is imported
 
 AXAPI_PORT_PROTOCOLS = {
     'tcp': 2,

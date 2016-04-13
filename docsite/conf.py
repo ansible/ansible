@@ -100,7 +100,7 @@ exclude_patterns = ['modules']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-highlight_language = 'yaml'
+highlight_language = 'YAML'
 
 
 # Options for HTML output

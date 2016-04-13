@@ -143,7 +143,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         # also search in the configured roles path
         if C.DEFAULT_ROLES_PATH:
-            role_search_paths.extend(C.DEFAULT_ROLES_PATH)
+            configured_paths = C.DEFAULT_ROLES_PATH.split(os.pathsep)
+            role_search_paths.extend(configured_paths)
 
         # finally, append the roles basedir, if it was set, so we can
         # search relative to that directory for dependent roles

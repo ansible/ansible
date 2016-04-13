@@ -1,11 +1,10 @@
 #!/usr/bin/make
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../hacking/module_formatter.py
-DUMPER=../hacking/dump_playbook_attributes.py
 
 all: clean docs
 
-docs: clean directives modules staticmin
+docs: clean modules staticmin
 	./build-site.py
 	-(cp *.ico htmlout/)
 	-(cp *.jpg htmlout/)
@@ -41,9 +40,6 @@ clean:
 	-rm rst/*_module.rst
 
 .PHONEY: docs clean
-
-directives: $(FORMATTER) ../hacking/templates/rst.j2
-	PYTHONPATH=../lib $(DUMPER) --template-dir=../hacking/templates --output-dir=rst/
 
 modules: $(FORMATTER) ../hacking/templates/rst.j2
 	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../lib/ansible/modules -o rst/
