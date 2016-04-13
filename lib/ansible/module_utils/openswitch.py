@@ -55,7 +55,7 @@ def to_list(val):
     else:
         return list()
 
-def get_runconfig():
+def get_opsidl():
     extschema = restparser.parseSchema(settings.get('ext_schema'))
     ovsschema = settings.get('ovs_schema')
     ovsremote = settings.get('ovs_remote')
