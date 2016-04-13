@@ -363,6 +363,19 @@ class StrategyModule(StrategyBase):
                             iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
 
+                display.debug("checking for max_fail_percentage")
+                if iterator._play.max_fail_percentage is not None and len(results) > 0:
+                    percentage = iterator._play.max_fail_percentage / 100.0
+
+                    if (len(failed_hosts) / len(results)) > percentage:
+                        for host in hosts_left:
+                            # don't double-mark hosts, or the iterator will potentially
+                            # fail them out of the rescue/always states
+                            if host.name not in failed_hosts:
+                                self._tqm._failed_hosts[host.name] = True
+                                iterator.mark_host_failed(host)
+                display.debug("done checking for max_fail_percentage")
+
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
