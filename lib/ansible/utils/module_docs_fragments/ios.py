@@ -76,6 +76,12 @@ options:
         environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
     required: false
     default: none
+  timeout:
+    description:
+      - Specifies idle timeout for the connection. Useful if the console
+        freezes before continuing. For example when saving configurations.
+    required: false
+    default: 10
   provider:
     description:
       - Convience method that allows all M(ios) arguments to be passed as
