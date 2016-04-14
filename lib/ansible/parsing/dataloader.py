@@ -23,11 +23,9 @@ import copy
 import os
 import json
 import subprocess
-from yaml import YAMLError
 import tempfile
+from yaml import YAMLError
 
-from yaml import load, YAMLError
->>>>>>> feature/copy-vault-dataloader: Add method get_real_file(file_path) to dataloader
 from ansible.compat.six import text_type, string_types
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
@@ -66,10 +64,6 @@ class DataLoader():
 
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
-
-    def __del__(self):
-         for f in self._tempfiles:
-            os.unlink(f)
 
     def set_vault_password(self, vault_password):
         self._vault_password = vault_password
@@ -352,9 +346,9 @@ class DataLoader():
             return real_path
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (real_path, str(e)))
 
-    def cleanup_real_file(self, file_path):
+    def cleanup_tmp_file(self, file_path):
         """
         Removes any temporary files created from a previous call to
         get_real_file. file_path must be the path returned from a
@@ -363,3 +357,10 @@ class DataLoader():
         if file_path in self._tempfiles:
             os.unlink(file_path)
             self._tempfiles.remove(file_path);
+
+    def cleanup_all_tmp_files(self):
+        for f in self._tempfiles:
+            try:
+                self.cleanup_tmp_file(f)
+            except:
+                pass #TODO: this should at least warn
