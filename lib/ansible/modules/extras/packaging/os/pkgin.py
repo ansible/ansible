@@ -164,7 +164,7 @@ def query_package(module, name):
 
             # Search for package, stripping version
             # (results in sth like 'gcc47-libs' or 'emacs24-nox11')
-            pkg_search_obj = re.search(r'^([a-zA-Z]+[0-9]*[\-]*\w*)-[0-9]', pkgname_with_version, re.M)
+            pkg_search_obj = re.search(r'^(.*?)\-[0-9][0-9.]*(nb[0-9]+)*', pkgname_with_version, re.M)
 
             # Do not proceed unless we have a match
             if not pkg_search_obj:
