@@ -12,7 +12,6 @@ import platform
 import os.path
 import subprocess
 import json
-import pprint
 
 filelist = [
         '/etc/oracle-release',
@@ -53,10 +52,14 @@ ansible_facts = {}
 for fact in facts:
     ansible_facts[fact] = parsed['ansible_facts']['ansible_'+fact]
 
+nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']
+
 output = {
+    'name': nicename,
     'input': fcont,
     'platform.dist': dist,
     'result': ansible_facts,
 }
 
-pprint.pprint(output)
+print(json.dumps(output, indent=4))
+
