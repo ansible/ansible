@@ -223,23 +223,6 @@ from ansible import __version__
 # Backwards compat. New code should just import and use __version__
 ANSIBLE_VERSION = __version__
 
-try:
-    # MODULE_COMPLEX_ARGS is an old name kept for backwards compat
-    MODULE_COMPLEX_ARGS = os.environ.pop('ANSIBLE_MODULE_ARGS')
-except KeyError:
-    # This file might be used for its utility functions.  So don't fail if
-    # running outside of a module environment (will fail in _load_params()
-    # instead)
-    MODULE_COMPLEX_ARGS = None
-
-try:
-    # ARGS are for parameters given in the playbook.  Constants are for things
-    # that ansible needs to configure controller side but are passed to all
-    # modules.
-    MODULE_CONSTANTS = os.environ.pop('ANSIBLE_MODULE_CONSTANTS')
-except KeyError:
-    MODULE_CONSTANTS = None
-
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
     mode = dict(type='raw'),
@@ -516,6 +499,18 @@ def is_executable(path):
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 
+class AnsibleFallbackNotFound(Exception):
+    pass
+
+def env_fallback(*args, **kwargs):
+    ''' Load value from environment '''
+    for arg in args:
+        if arg in os.environ:
+            return os.environ[arg]
+    else:
+        raise AnsibleFallbackNotFound
+
+
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
@@ -548,8 +543,8 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        self._load_constants()
         self._load_params()
+        self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
         try:
@@ -1421,33 +1416,47 @@ class AnsibleModule(object):
                 if k not in self.params:
                     self.params[k] = default
 
+    def _set_fallbacks(self):
+        for k,v in self.argument_spec.items():
+            fallback = v.get('fallback', (None,))
+            fallback_strategy = fallback[0]
+            fallback_args = []
+            fallback_kwargs = {}
+            if k not in self.params and fallback_strategy is not None:
+                for item in fallback[1:]:
+                    if isinstance(item, dict):
+                        fallback_kwargs = item
+                    else:
+                        fallback_args = item
+                try:
+                    self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
+                except AnsibleFallbackNotFound:
+                    continue
+
     def _load_params(self):
-        ''' read the input and set the params attribute'''
-        if MODULE_COMPLEX_ARGS is None:
-            # This helper used too early for fail_json to work.
-            print('{"msg": "Error: ANSIBLE_MODULE_ARGS not found in environment.  Unable to figure out what parameters were passed", "failed": true}')
-            sys.exit(1)
-
-        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-        if params is None:
-            params = dict()
-        self.params = params
-
-    def _load_constants(self):
-        ''' read the input and set the constants attribute'''
-        if MODULE_CONSTANTS is None:
-            # This helper used too early for fail_json to work.
-            print('{"msg": "Error: ANSIBLE_MODULE_CONSTANTS not found in environment.  Unable to figure out what constants were passed", "failed": true}')
-            sys.exit(1)
-
-        # Make constants into "native string"
-        if sys.version_info >= (3,):
-            constants = json_dict_bytes_to_unicode(json.loads(MODULE_CONSTANTS))
+        ''' read the input and set the params attribute.  Sets the constants as well.'''
+        # Avoid tracebacks when locale is non-utf8
+        if sys.version_info < (3,):
+            buffer = sys.stdin.read()
         else:
-            constants = json_dict_unicode_to_bytes(json.loads(MODULE_CONSTANTS))
-        if constants is None:
-            constants = dict()
-        self.constants = constants
+            buffer = sys.stdin.buffer.read()
+        try:
+            params = json.loads(buffer.decode('utf-8'))
+        except ValueError:
+            # This helper used too early for fail_json to work.
+            print('{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
+            sys.exit(1)
+
+        if sys.version_info < (3,):
+            params = json_dict_unicode_to_bytes(params)
+
+        try:
+            self.params = params['ANSIBLE_MODULE_ARGS']
+            self.constants = params['ANSIBLE_MODULE_CONSTANTS']
+        except KeyError:
+            # This helper used too early for fail_json to work.
+            print('{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS and ANSIBLE_MODULE_CONSTANTS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
+            sys.exit(1)
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:

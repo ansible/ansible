@@ -173,6 +173,7 @@ class Facts(object):
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
+            self.get_caps_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
             self.get_service_mgr_facts()
@@ -183,6 +184,7 @@ class Facts(object):
             self.get_env_facts()
             self.get_dns_facts()
             self.get_python_facts()
+
 
     def populate(self):
         return self.facts
@@ -351,7 +353,7 @@ class Facts(object):
                                 self.facts['distribution'] = name
                             else:
                                 self.facts['distribution'] = data.split()[0]
-                            break  
+                            break
                         elif name == 'Slackware':
                             data = get_file_content(path)
                             if 'Slackware' in data:
@@ -359,7 +361,7 @@ class Facts(object):
                                 version = re.findall('\w+[.]\w+', data)
                                 if version:
                                     self.facts['distribution_version'] = version[0]
-                            break      
+                            break
                         elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
@@ -696,6 +698,25 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except OSError:
                 self.facts['selinux']['type'] = 'unknown'
+
+    def get_caps_facts(self):
+        capsh_path = self.module.get_bin_path('capsh')
+        if capsh_path:
+            rc, out, err = self.module.run_command([capsh_path, "--print"])
+            enforced_caps = []
+            enforced = 'NA'
+            for line in out.split('\n'):
+                if len(line) < 1:
+                    continue
+                if line.startswith('Current:'):
+                    if line.split(':')[1].strip() == '=ep':
+                        enforced = 'False'
+                    else:
+                        enforced = 'True'
+                        enforced_caps = [i.strip() for i in line.split('=')[1].split(',')]
+
+            self.facts['system_capabilities_enforced'] = enforced
+            self.facts['system_capabilities'] = enforced_caps
 
 
     def get_fips_facts(self):
@@ -1083,6 +1104,19 @@ class LinuxHardware(Hardware):
     def get_mount_facts(self):
         uuids = dict()
         self.facts['mounts'] = []
+        bind_mounts = []
+        findmntPath = self.module.get_bin_path("findmnt")
+        if findmntPath:
+            rc, out, err = self.module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
+            if rc == 0:
+                # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
+                for line in out.split('\n'):
+                    fields = line.rstrip('\n').split()
+                    if(len(fields) < 2):
+                        continue
+                    if(re.match(".*\]",fields[1])):
+                        bind_mounts.append(fields[0])
+
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
             fields = line.rstrip('\n').split()
@@ -1100,6 +1134,11 @@ class LinuxHardware(Hardware):
                             if rc == 0:
                                 uuid = out.strip()
                                 uuids[fields[0]] = uuid
+
+                    if fields[1] in bind_mounts:
+                        # only add if not already there, we might have a plain /etc/mtab
+                        if not re.match(".*bind.*", fields[3]):
+                            fields[3] += ",bind"
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],

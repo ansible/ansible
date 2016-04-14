@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import tempfile
 from string import ascii_letters, digits
 
 from ansible.compat.six import string_types
@@ -47,7 +48,7 @@ def shell_expand(path):
         path = os.path.expanduser(os.path.expandvars(path))
     return path
 
-def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False):
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
@@ -65,6 +66,11 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
                 value = None
         elif ispath:
             value = shell_expand(value)
+        elif istmppath:
+            value = shell_expand(value)
+            if not os.path.exists(value):
+                os.makedirs(value, 0o700)
+            value = tempfile.mkdtemp(prefix='ansible-local-tmp', dir=value)
         elif ispathlist:
             if isinstance(value, string_types):
                 value = [shell_expand(x) for x in value.split(os.pathsep)]
@@ -136,6 +142,7 @@ DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTO
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None, ispathlist=True)
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', ispathlist=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
+DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '$HOME/.ansible/tmp', istmppath=True)
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, integer=True)
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')

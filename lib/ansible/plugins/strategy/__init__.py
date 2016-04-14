@@ -19,15 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, text_type, string_types
-
 import json
 import time
 import zlib
+from collections import defaultdict
+from multiprocessing import Lock
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.compat.six.moves import queue as Queue
+from ansible.compat.six import iteritems, text_type, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor.play_iterator import PlayIterator
@@ -50,6 +51,8 @@ except ImportError:
     display = Display()
 
 __all__ = ['StrategyBase']
+
+action_write_locks = defaultdict(Lock)
 
 
 # TODO: this should probably be in the plugins/__init__.py, with
@@ -140,6 +143,20 @@ class StrategyBase:
         ''' handles queueing the task up to be sent to a worker '''
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
+
+         # Add a write lock for tasks.
+         # Maybe this should be added somewhere further up the call stack but
+         # this is the earliest in the code where we have task (1) extracted
+         # into its own variable and (2) there's only a single code path
+         # leading to the module being run.  This is called by three
+         # functions: __init__.py::_do_handler_run(), linear.py::run(), and
+         # free.py::run() so we'd have to add to all three to do it there.
+         # The next common higher level is __init__.py::run() and that has
+         # tasks inside of play_iterator so we'd have to extract them to do it
+         # there.
+        if not action_write_locks[task.action]:
+            display.warning('Python defaultdict did not create the Lock for us.  Creating manually')
+            action_write_locks[task.action] = Lock()
 
         # and then queue the new task
         display.debug("%s - putting task (%s) in queue" % (host, task))

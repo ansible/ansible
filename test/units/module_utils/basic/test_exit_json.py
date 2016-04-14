@@ -23,8 +23,10 @@ __metaclass__ = type
 import copy
 import json
 import sys
-from io import BytesIO
+from io import BytesIO, StringIO
 
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_bytes
 from ansible.compat.tests import unittest
 
 from ansible.module_utils import basic
@@ -37,9 +39,13 @@ empty_invocation = {u'module_args': {}}
 class TestAnsibleModuleExitJson(unittest.TestCase):
 
     def setUp(self):
-        self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        basic.MODULE_CONSTANTS = '{}'
+        self.old_stdin = sys.stdin
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
 
         self.old_stdout = sys.stdout
         self.fake_stream = BytesIO()
@@ -48,8 +54,8 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.COMPLEX_ARGS
         sys.stdout = self.old_stdout
+        sys.stdin = self.old_stdin
 
     def test_exit_json_no_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -118,19 +124,31 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             )
 
     def setUp(self):
-        self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
+        self.old_stdin = sys.stdin
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        if PY3:
+            sys.stdin = StringIO(args)
+            sys.stdin.buffer = BytesIO(to_bytes(args))
+        else:
+            sys.stdin = BytesIO(to_bytes(args))
+
         self.old_stdout = sys.stdout
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.COMPLEX_ARGS
+        sys.stdin = self.old_stdin
         sys.stdout = self.old_stdout
 
     def test_exit_json_removes_values(self):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
             sys.stdout = BytesIO()
-            basic.MODULE_COMPLEX_ARGS = json.dumps(args)
-            basic.MODULE_CONSTANTS = '{}'
+            params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
+            params = json.dumps(params)
+            if PY3:
+                sys.stdin = StringIO(params)
+                sys.stdin.buffer = BytesIO(to_bytes(params))
+            else:
+                sys.stdin = BytesIO(to_bytes(params))
             module = basic.AnsibleModule(
                 argument_spec = dict(
                     username=dict(),
@@ -149,8 +167,13 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             del expected['changed']
             expected['failed'] = True
             sys.stdout = BytesIO()
-            basic.MODULE_COMPLEX_ARGS = json.dumps(args)
-            basic.MODULE_CONSTANTS = '{}'
+            params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
+            params = json.dumps(params)
+            if PY3:
+                sys.stdin = StringIO(params)
+                sys.stdin.buffer = BytesIO(to_bytes(params))
+            else:
+                sys.stdin = BytesIO(to_bytes(params))
             module = basic.AnsibleModule(
                 argument_spec = dict(
                     username=dict(),

@@ -19,8 +19,8 @@
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.shell import Shell, Command, HAS_PARAMIKO
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
@@ -28,11 +28,13 @@ NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(default=22, type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
-    authorize=dict(default=False, type='bool'),
-    auth_pass=dict(no_log=True),
-    provider=dict()
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    provider=dict(),
+    timeout=dict(default=10, type='int')
 )
 
 CLI_PROMPTS_RE = [
@@ -72,12 +74,13 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        key_filename = self.module.params['ssh_keyfile']
+        timeout = self.module.params['timeout']
 
         try:
             self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
                     errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username,
-                    password=password)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, timeout=timeout)
         except Exception, exc:
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
@@ -174,4 +177,3 @@ def get_module(**kwargs):
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
     return module
-

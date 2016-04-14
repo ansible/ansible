@@ -32,6 +32,8 @@ If you think the service may not be started, the best thing to do is request it 
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to
 do later).
 
+.. _check_mode_drift:
+
 Check Mode As A Drift Test
 ``````````````````````````
 

@@ -29,12 +29,13 @@
 #    test-module -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 #    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
-import sys
 import base64
+import optparse
 import os
 import subprocess
+import sys
 import traceback
-import optparse
+
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify

@@ -106,7 +106,7 @@ class Shell(object):
                     key_filename=key_filename, allow_agent=allow_agent)
 
         self.shell = self.ssh.invoke_shell()
-        self.shell.settimeout(10)
+        self.shell.settimeout(timeout)
 
         if self.kickstart:
             self.shell.sendall("\n")
@@ -184,4 +184,3 @@ class Shell(object):
             if match:
                 self._matched_prompt = match.group()
                 return True
-

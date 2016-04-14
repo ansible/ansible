@@ -55,7 +55,7 @@ import os_client_config
 import shade
 import shade.inventory
 
-CONFIG_FILES = ['/etc/ansible/openstack.yaml']
+CONFIG_FILES = ['/etc/ansible/openstack.yaml', '/etc/ansible/openstack.yml']
 
 
 def get_groups_from_server(server_vars, namegroup=True):
