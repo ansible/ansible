@@ -194,5 +194,7 @@ class AdHocCLI(CLI):
         finally:
             if self._tqm:
                 self._tqm.cleanup()
+            if loader:
+                loader.cleanup_all_tmp_files()
 
         return result
