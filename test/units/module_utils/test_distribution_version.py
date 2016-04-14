@@ -113,9 +113,9 @@ class TestModuleUtilsFactsDistribution(unittest.TestCase):
                 "name": "SLES 11.3",
                 "input": {
                     "/etc/SuSE-release":"""
-                    SUSE Linux Enterprise Server 11 (x86_64)
-                    VERSION = 11
-                    PATCHLEVEL = 3
+SUSE Linux Enterprise Server 11 (x86_64)
+VERSION = 11
+PATCHLEVEL = 3
                     """
                 },
                 "platform.dist": ['SuSE', '11', 'x86_64'],
@@ -130,18 +130,18 @@ class TestModuleUtilsFactsDistribution(unittest.TestCase):
                 "name": "SLES 11.4",
                 "input": {
                     "/etc/SuSE-release":"""
-                    SUSE Linux Enterprise Server 11 (x86_64)
-                    VERSION = 11
-                    PATCHLEVEL = 4
+SUSE Linux Enterprise Server 11 (x86_64)
+VERSION = 11
+PATCHLEVEL = 4
                     """,
                     "/etc/os-release":"""
-                    NAME="SLES"
-                    VERSION="11.4"
-                    VERSION_ID="11.4"
-                    PRETTY_NAME="SUSE Linux Enterprise Server 11 SP4"
-                    ID="sles"
-                    ANSI_COLOR="0;32"
-                    CPE_NAME="cpe:/o:suse:sles:11:4"
+NAME="SLES"
+VERSION="11.4"
+VERSION_ID="11.4"
+PRETTY_NAME="SUSE Linux Enterprise Server 11 SP4"
+ID="sles"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:suse:sles:11:4"
                     """,
                 },
                 "platform.dist": ['SuSE', '11', 'x86_64'],
