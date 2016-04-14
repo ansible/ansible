@@ -367,7 +367,7 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    if (len(failed_hosts) / len(results)) > percentage:
+                    if (len(iterator.get_failed_hosts()) / len(results)) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
