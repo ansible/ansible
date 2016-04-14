@@ -282,6 +282,11 @@ class Facts(object):
     # platform.dist() is deprecated in 2.6
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
+        """
+        Fills facts about the distribution name and version.
+
+        This is unit tested. Please extend the tests to cover all distributions if you have them available.
+        """
 
         # A list with OS Family members
         OS_FAMILY = dict(

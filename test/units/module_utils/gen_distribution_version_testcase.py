@@ -3,7 +3,7 @@
 """
 This script generated test_cases for test_distribution_version.py.
 
-To do so it outputs the relevant files from /etc/*release, the ouput of platform.dist() and the current ansible_facts regarding the distribution version.
+To do so it outputs the relevant files from /etc/*release, the output of platform.dist() and the current ansible_facts regarding the distribution version.
 
 This assumes a working ansible version in the path.
 """
