@@ -406,7 +406,7 @@ comply with such requests immediately.
 Policy violations
 -----------------
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by
-contacting codeofconduct@ansible.com, to any channel operator in the community IRC
+contacting greg@ansible.com, to any channel operator in the community IRC
 channels, or to the local organizers of an event. Meetup organizers are encouraged to
 prominently display points of contact for reporting unacceptable behavior at local events.
 
