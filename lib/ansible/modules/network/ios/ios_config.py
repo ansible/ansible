@@ -133,7 +133,7 @@ EXAMPLES = """
     replace: block
 
 - ios_config:
-    commands: "{{lookup('file', 'datcenter1.txt'}}"
+    commands: "{{lookup('file', 'datcenter1.txt')}}"
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     replace: block
@@ -222,4 +222,3 @@ from ansible.module_utils.netcfg import *
 from ansible.module_utils.ios import *
 if __name__ == '__main__':
     main()
-
