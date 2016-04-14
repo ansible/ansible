@@ -24,7 +24,6 @@ try:
     import ovs.poller
     import ops.dc
     from ops.settings import settings
-    from opsr
     from opslib import restparser
     HAS_OPS = True
 except ImportError:
