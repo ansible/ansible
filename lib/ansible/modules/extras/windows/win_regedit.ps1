@@ -28,6 +28,8 @@ New-PSDrive -PSProvider registry -Root HKEY_CURRENT_CONFIG -Name HCCC -ErrorActi
 $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
+Set-Attr $result "data_changed" $false;
+Set-Attr $result "data_type_changed" $false;
 
 $registryKey = Get-Attr -obj $params -name "key" -failifempty $true
 $registryValue = Get-Attr -obj $params -name "value" -default $null
@@ -56,6 +58,31 @@ Function Test-RegistryValueData {
     }
 }
 
+# Returns rue if registry data matches.
+# Handles binary and string registry data
+Function Compare-RegistryData {
+    Param (
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$ReferenceData,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$DifferenceData
+        )
+        $refType = $ReferenceData.GetType().Name
+
+        if ($refType -eq "String" ) {
+            if ($ReferenceData -eq $DifferenceData) {
+                return $true
+            } else {
+                return $false
+            }
+        } elseif ($refType -eq "Object[]") {
+            if (@(Compare-Object $ReferenceData $DifferenceData -SyncWindow 0).Length -eq 0) {
+                return $true
+            } else {
+                return $false
+            }
+        }
+}
 
 # Simplified version of Convert-HexStringToByteArray from
 # https://cyber-defense.sans.org/blog/2010/02/11/powershell-byte-array-hex-convert
@@ -64,7 +91,7 @@ Function Test-RegistryValueData {
 function Convert-RegExportHexStringToByteArray
 {
     Param (
-     [parameter(Mandatory=$true))] [String] $String
+     [parameter(Mandatory=$true)] [String] $String
     )
 
 # remove 'hex:' from the front of the string if present
@@ -100,6 +127,9 @@ if($state -eq "present") {
     {
         if (Test-RegistryValueData -Path $registryKey -Value $registryValue)
         {
+            # handle binary data
+            $currentRegistryData =(Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) 
+
             if ($registryValue.ToLower() -eq "(default)") {
                 # Special case handling for the key's default property. Because .GetValueKind() doesn't work for the (default) key property
                 $oldRegistryDataType = "String"
@@ -116,6 +146,8 @@ if($state -eq "present") {
                     Remove-ItemProperty -Path $registryKey -Name $registryValue
                     New-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData -PropertyType $registryDataType
                     $result.changed = $true
+                    $result.data_changed = $true
+                    $result.data_type_changed = $true
                 }
                 Catch
                 {
@@ -123,11 +155,12 @@ if($state -eq "present") {
                 }
             }
             # Changes Only Data
-            elseif ((Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) -ne $registryData)
+            elseif (-Not (Compare-RegistryData -ReferenceData $currentRegistryData -DifferenceData $registryData))
             {
                 Try {
                     Set-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData
                     $result.changed = $true
+                    $result.data_changed = $true
                 }
                 Catch
                 {
