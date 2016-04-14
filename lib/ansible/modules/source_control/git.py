@@ -339,7 +339,11 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
-        module.run_command([git_path, 'fetch', remote, refspec], check_rc=True, cwd=dest)
+        cmd = [git_path, 'fetch']
+        if depth:
+            cmd.extend([ '--depth', str(depth) ])
+        cmd.extend([remote, refspec])
+        module.run_command(cmd, check_rc=True, cwd=dest)
 
     if verify_commit:
         verify_commit_sign(git_path, module, dest, version)
@@ -500,32 +504,53 @@ def set_remote_url(git_path, module, repo, dest, remote):
         if rc != 0:
             module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
-def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
 
     fetch_str = 'download remote objects and refs'
+    fetch_cmd = [git_path, 'fetch']
 
-    if bare:
-        refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+
+    refspecs = []
+    if depth:
+        # try to find the minimal set of refs we need to fetch to get a
+        # successful checkout
         if refspec:
             refspecs.append(refspec)
-        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
-    else:
-        # unlike in bare mode, there's no way to combine the
-        # additional refspec with the default git fetch behavior,
-        # so use two commands
-        commands.append((fetch_str, [git_path, 'fetch', remote]))
-        refspecs = ['+refs/tags/*:refs/tags/*']
+        elif version == 'HEAD':
+            refspecs.append('HEAD')
+        elif is_remote_branch(git_path, module, dest, repo, version):
+            refspecs.append('+refs/heads/'+version+':refs/heads/'+version)
+        elif is_remote_tag(git_path, module, dest, repo, version):
+            refspecs.append('+refs/tags/'+version+':refs/tags/'+version)
+        if refspecs:
+            # if refspecs is empty, i.e. version is neither heads nor tags
+            # fall back to a full clone, otherwise we might not be able to checkout
+            # version
+            fetch_cmd.extend(['--depth', str(depth)])
+
+    fetch_cmd.extend([remote])
+    if not depth:
+        # don't try to be minimalistic but do a full clone
+        if bare:
+            refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+        else:
+            # unlike in bare mode, there's no way to combine the
+            # additional refspec with the default git fetch behavior,
+            # so use two commands
+            commands.append((fetch_str, fetch_cmd))
+            refspecs = ['+refs/tags/*:refs/tags/*']
         if refspec:
             refspecs.append(refspec)
-        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
+
+    commands.append((fetch_str, fetch_cmd + refspecs))
 
     for (label,command) in commands:
         (rc,out,err) = module.run_command(command, cwd=dest)
         if rc != 0:
-            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
+            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err), cmd=command)
 
 def submodules_fetch(git_path, module, remote, track_submodules, dest):
     changed = False
@@ -638,7 +663,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit):
     (rc, out1, err1) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         if version != 'HEAD':
-            module.fail_json(msg="Failed to checkout %s" % (version))
+            module.fail_json(msg="Failed to checkout %s" % (version), stdout=out1, stderr=err1)
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
 
@@ -782,7 +807,7 @@ def main():
         if repo_updated is None:
             if module.check_mode:
                 module.exit_json(changed=True, before=before, after=remote_head)
-            fetch(git_path, module, repo, dest, version, remote, bare, refspec)
+            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec)
             repo_updated = True
 
     # switch to version specified regardless of whether
