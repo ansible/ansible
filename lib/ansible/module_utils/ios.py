@@ -33,7 +33,8 @@ NET_COMMON_ARGS = dict(
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
-    provider=dict()
+    provider=dict(),
+    timeout=dict(default=10, type='int')
 )
 
 CLI_PROMPTS_RE = [
@@ -74,11 +75,12 @@ class Cli(object):
         username = self.module.params['username']
         password = self.module.params['password']
         key_filename = self.module.params['ssh_keyfile']
+        timeout = self.module.params['timeout']
 
         try:
             self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
                     errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, timeout=timeout)
         except Exception, exc:
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
             self.module.fail_json(msg=msg)
@@ -175,4 +177,3 @@ def get_module(**kwargs):
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
     return module
-
