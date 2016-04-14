@@ -323,7 +323,7 @@ def main():
             enablerepo=dict(type='list', default=[]),
             disablerepo=dict(type='list', default=[]),
             list=dict(),
-            conf_file=dict(default=None),
+            conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
         ),
         required_one_of=[['name', 'list']],
