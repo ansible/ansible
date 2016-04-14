@@ -188,7 +188,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             zone=dict(default='us-central1-a'),
             service_account_email=dict(),
-            pem_file=dict(),
+            pem_file=dict(type='path'),
             project_id=dict(),
         )
     )
