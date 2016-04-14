@@ -116,3 +116,16 @@ EXAMPLES = '''
     value: hello
     state: absent
 '''
+RETURN = '''
+data_changed:
+    description: whether this invocation changed the data in the registry value 
+    returned: always
+    type: boolean
+    sample: false
+data_type_changed:
+    description: whether this invocation changed the datatype of the registry value 
+    returned: always
+    type: boolean
+    sample: true
+'''
+
