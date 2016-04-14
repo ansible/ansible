@@ -92,10 +92,6 @@ def ec2_argument_spec():
     return spec
 
 
-def boto_supports_profile_name():
-    return hasattr(boto.ec2.EC2Connection, 'profile_name')
-
-
 def get_aws_connection_info(module, boto3=False):
 
     # Check module args for credentials, then check environment vars
@@ -179,15 +175,11 @@ def get_aws_connection_info(module, boto3=False):
                            aws_secret_access_key=secret_key,
                            security_token=security_token)
 
-        # profile_name only works as a key in boto >= 2.24
-        # so only set profile_name if passed as an argument
+        # only set profile_name if passed as an argument
         if profile_name:
-            if not boto_supports_profile_name():
-                module.fail_json("boto does not support profile_name before 2.24")
             boto_params['profile_name'] = profile_name
 
-        if HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
-            boto_params['validate_certs'] = validate_certs
+        boto_params['validate_certs'] = validate_certs
 
     for param, value in boto_params.items():
         if isinstance(value, str):
