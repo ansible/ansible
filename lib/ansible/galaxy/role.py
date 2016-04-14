@@ -24,6 +24,8 @@ __metaclass__ = type
 
 import datetime
 import os
+import shutil
+import subprocess
 import tarfile
 import tempfile
 import yaml
@@ -33,7 +35,6 @@ from shutil import rmtree
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
-from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
 
 try:
@@ -42,13 +43,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
-
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
 
@@ -58,11 +59,10 @@ class GalaxyRole(object):
         self._validate_certs = not C.GALAXY_IGNORE_CERTS
 
         # set validate_certs
-        if galaxy.options.ignore_certs:
+        if galaxy.ignore_certs:
             self._validate_certs = False
         display.vvv('Validate TLS certificates: %s' % self._validate_certs)
 
-        self.options = galaxy.options
         self.galaxy  = galaxy
 
         self.name = name
@@ -105,7 +105,6 @@ class GalaxyRole(object):
                     f.close()
 
         return self._metadata
-
 
     @property
     def install_info(self):
@@ -195,9 +194,9 @@ class GalaxyRole(object):
 
         if self.scm:
             # create tar file from scm url
-            tmp_file = RoleRequirement.scm_archive_role(**self.spec)
+            tmp_file = GalaxyRole.scm_archive_role(**self.spec)
         elif self.src:
-            if  os.path.isfile(self.src):
+            if os.path.isfile(self.src):
                 # installing a local tar.gz
                 tmp_file = self.src
             elif '://' in self.src:
@@ -277,7 +276,7 @@ class GalaxyRole(object):
                     if os.path.exists(self.path):
                         if not os.path.isdir(self.path):
                             raise AnsibleError("the specified roles path exists and is not a directory.")
-                        elif not getattr(self.options, "force", False):
+                        elif not self.galaxy.force:
                             raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
                         else:
                             # using --force, remove the old path
@@ -338,3 +337,52 @@ class GalaxyRole(object):
             return "%s (%s)" % (self.name, self.version)
         else:
             return self.name
+
+    @staticmethod
+    def scm_archive_role(src, scm='git', name=None, version='HEAD'):
+        if scm not in ['hg', 'git']:
+            raise AnsibleError("- scm %s is not currently supported" % scm)
+        tempdir = tempfile.mkdtemp()
+        clone_cmd = [scm, 'clone', src, name]
+        with open('/dev/null', 'w') as devnull:
+            try:
+                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+            except (IOError, OSError) as e:
+                raise AnsibleError("error executing %s: %s" % (" ".join(clone_cmd), str(e)))
+            rc = popen.wait()
+        if rc != 0:
+            raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
+
+        if scm == 'git' and version:
+            checkout_cmd = [scm, 'checkout', version]
+            with open('/dev/null', 'w') as devnull:
+                try:
+                    popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, name), stdout=devnull, stderr=devnull)
+                except (IOError, OSError) as e:
+                    raise AnsibleError("error executing %s: %s" % (" ".join(checkout_cmd), str(e)))
+                rc = popen.wait()
+            if rc != 0:
+                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(checkout_cmd), tempdir, rc))
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+        if scm == 'hg':
+            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
+            if version:
+                archive_cmd.extend(['-r', version])
+            archive_cmd.append(temp_file.name)
+        if scm == 'git':
+            archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
+            if version:
+                archive_cmd.append(version)
+            else:
+                archive_cmd.append('HEAD')
+
+        with open('/dev/null', 'w') as devnull:
+            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, name),
+                                     stderr=devnull, stdout=devnull)
+            rc = popen.wait()
+        if rc != 0:
+            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(archive_cmd), tempdir, rc))
+
+        shutil.rmtree(tempdir, ignore_errors=True)
+        return temp_file.name

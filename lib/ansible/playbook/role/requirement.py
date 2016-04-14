@@ -21,13 +21,11 @@ __metaclass__ = type
 
 from ansible.compat.six import string_types
 
-import os
-import shutil
-import subprocess
-import tempfile
+import yaml
 
 from ansible.errors import AnsibleError
 from ansible.playbook.role.definition import RoleDefinition
+from ansible.galaxy.role import GalaxyRole
 
 __all__ = ['RoleRequirement']
 
@@ -45,6 +43,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class RoleRequirement(RoleDefinition):
 
@@ -175,52 +174,97 @@ class RoleRequirement(RoleDefinition):
 
         return role
 
-    @staticmethod
-    def scm_archive_role(src, scm='git', name=None, version='HEAD'):
-        if scm not in ['hg', 'git']:
-            raise AnsibleError("- scm %s is not currently supported" % scm)
-        tempdir = tempfile.mkdtemp()
-        clone_cmd = [scm, 'clone', src, name]
-        with open('/dev/null', 'w') as devnull:
+
+def read_roles_file(galaxy, role_file):
+    roles_left = []
+    try:
+        f = open(role_file, 'r')
+        if role_file.endswith('.yaml') or role_file.endswith('.yml'):
             try:
-                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except:
-                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
-            rc = popen.wait()
-        if rc != 0:
-            raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
+                required_roles = yaml.safe_load(f.read())
+            except Exception as e:
+                raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
 
-        if scm == 'git' and version:
-            checkout_cmd = [scm, 'checkout', version]
-            with open('/dev/null', 'w') as devnull:
-                try:
-                    popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, name), stdout=devnull, stderr=devnull)
-                except (IOError, OSError):
-                    raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
-                rc = popen.wait()
-            if rc != 0:
-                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(checkout_cmd), tempdir, rc))
+            if required_roles is None:
+                raise AnsibleError("No roles found in file: %s" % role_file)
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
-        if scm == 'hg':
-            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
-            if version:
-                archive_cmd.extend(['-r', version])
-            archive_cmd.append(temp_file.name)
-        if scm == 'git':
-            archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
-            if version:
-                archive_cmd.append(version)
+            for role in required_roles:
+                role = RoleRequirement.role_yaml_parse(role)
+                if 'name' not in role and 'scm' not in role:
+                    raise AnsibleError("Must specify name or src for role")
+                roles_left.append(GalaxyRole(galaxy, **role))
+        else:
+            display.deprecated("going forward only the yaml format will be supported")
+            # roles listed in a file, one per line
+            for rline in f.readlines():
+                if rline.startswith("#") or rline.strip() == '':
+                    continue
+                role = RoleRequirement.role_yaml_parse(rline.strip())
+                roles_left.append(GalaxyRole(galaxy, **role))
+        f.close()
+    except (IOError, OSError) as e:
+        raise AnsibleError('Unable to open %s: %s' % (role_file, str(e)))
+    return roles_left
+
+
+def install_roles(roles_left, galaxy):
+    """ Helper function to allow other CLI commands install roles """
+
+    for role in roles_left:
+        display.vvv('Installing role %s ' % role.name)
+        # query the galaxy API for the role data
+
+        if role.install_info is not None and not galaxy.force:
+            if role.install_info['version'] != role.version:
+                display.display('- changing role %s from %s to %s' %
+                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                role.remove()
             else:
-                archive_cmd.append('HEAD')
+                display.display('- %s is already installed, skipping.' % role.version_string)
+                continue
 
-        with open('/dev/null', 'w') as devnull:
-            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, name),
-                                     stderr=devnull, stdout=devnull)
-            rc = popen.wait()
-        if rc != 0:
-            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(archive_cmd), tempdir, rc))
+        try:
+            installed = role.install()
+        except AnsibleError as e:
+            display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
+            exit_without_ignore(galaxy.ignore_errors)
+            continue
 
-        shutil.rmtree(tempdir, ignore_errors=True)
-        return temp_file.name
+        # install dependencies, if we want them
+        if not galaxy.no_deps and installed:
+            role_dependencies = role.metadata.get('dependencies') or []
+            for dep in role_dependencies:
+                display.debug('Installing dep %s' % dep)
+                dep_req = RoleRequirement()
+                dep_info = dep_req.role_yaml_parse(dep)
+                dep_role = GalaxyRole(galaxy, **dep_info)
+                if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                    # we know we can skip this, as it's not going to
+                    # be found on galaxy.ansible.com
+                    continue
+                if dep_role.install_info is None:
+                    if dep_role not in roles_left:
+                        display.display('- adding dependency: %s' % dep_role.version_string)
+                        roles_left.append(dep_role)
+                    else:
+                        display.display('- dependency %s already pending installation.' % dep_role.name)
+                else:
+                    if dep_role.install_info['version'] != dep_role.version:
+                        display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                (dep_role.version_string, role.name, dep_role.install_info['version']))
+                    else:
+                        display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
+        if not installed:
+            display.warning("- %s was NOT installed successfully." % role.name)
+            exit_without_ignore(galaxy.ignore_errors)
+
+    return 0
+
+
+def exit_without_ignore(ignore_errors):
+    """
+    Exits unless ignore_errors is True
+    """
+    if not ignore_errors:
+        raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
