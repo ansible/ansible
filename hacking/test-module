@@ -30,7 +30,6 @@
 #    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
 import base64
-from multiprocessing import Lock
 import optparse
 import os
 import subprocess
@@ -135,7 +134,6 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
 
     modname = os.path.basename(modfile)
     modname = os.path.splitext(modname)[0]
-    action_write_lock = Lock()
     (module_data, module_style, shebang) = module_common.modify_module(
         modname,
         modfile,
