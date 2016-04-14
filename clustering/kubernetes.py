@@ -28,9 +28,6 @@ description:
         Only supports HTTP Basic Auth
         Only supports 'strategic merge' for update, http://goo.gl/fCPYxT
         SSL certs are not working, use 'validate_certs=off' to disable
-      This module can mimic the 'kubectl' Kubernetes client for commands
-      such as 'get', 'cluster-info', and 'version'. This is useful if you
-      want to fetch full object details for existing Kubernetes resources.
 options:
   api_endpoint:
     description:
@@ -40,12 +37,14 @@ options:
     aliases: ["endpoint"]
   inline_data:
     description:
-      - The Kubernetes YAML data to send to the API I(endpoint).
+      - The Kubernetes YAML data to send to the API I(endpoint). This option is
+        mutually exclusive with C('file_reference').
     required: true
     default: null
   file_reference:
     description:
       - Specify full path to a Kubernets YAML file to send to API I(endpoint).
+        This option is mutually exclusive with C('inline_data').
     required: false
     default: null
   certificate_authority_data:
@@ -56,53 +55,27 @@ options:
         'match_hostname' that can match the IP address against the CA data.
     required: false
     default: null
-  kubectl_api_versions:
-    description:
-      - Mimic the 'kubectl api-versions' command, values are ignored.
-    required: false
-    default: null
-  kubectl_cluster_info:
-    description:
-      - Mimic the 'kubectl cluster-info' command, values are ignored.
-    required: false
-    default: null
-  kubectl_get:
-    description:
-      - Mimic the 'kubectl get' command. Specify the object(s) to fetch such
-        as 'pods' or 'replicationcontrollers/mycontroller'. It does not
-        support shortcuts (e.g. 'po', 'rc', 'svc').
-    required: false
-    default: null
-  kubectl_namespace:
-    description:
-      - Specify the namespace to use for 'kubectl' commands.
-    required: false
-    default: "default"
-  kubectl_version:
-    description:
-      - Mimic the 'kubectl version' command, values are ignored.
-    required: false
-    default: null
   state:
     description:
-      - The desired action to take on the Kubernetes data, or 'kubectl' to
-        mimic some kubectl commands.
+      - The desired action to take on the Kubernetes data.
     required: true
     default: "present"
-    choices: ["present", "post", "absent", "delete", "update", "patch",
-              "replace", "put", "kubectl"]
-  url_password:
+    choices: ["present", "absent", "update", "replace"]
+  password:
     description:
-      - The HTTP Basic Auth password for the API I(endpoint).
-    required: true
+      - The HTTP Basic Auth password for the API I(endpoint). This should be set
+        unless using the C('insecure') option.
     default: null
-    aliases: ["password", "api_password"]
-  url_username:
+  username:
     description:
-      - The HTTP Basic Auth username for the API I(endpoint).
-    required: true
+      - The HTTP Basic Auth username for the API I(endpoint). This should be set
+        unless using the C('insecure') option.
     default: "admin"
-    aliases: ["username", "api_username"]
+  insecure:
+    description:
+      - "Reverts the connection to using HTTP instead of HTTPS. This option should
+        only be used when execuing the M('kubernetes') module local to the Kubernetes
+        cluster using the insecure local port (locahost:8080 by default)."
   validate_certs:
     description:
       - Enable/disable certificate validation. Note that this is set to
@@ -110,7 +83,6 @@ options:
         hostname matching (exists in >= python3.5.0).
     required: false
     default: false
-    choices: BOOLEANS
 
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
@@ -120,8 +92,8 @@ EXAMPLES = '''
 - name: Create a kubernetes namespace
   kubernetes:
     api_endpoint: 123.45.67.89
-    url_username: admin
-    url_password: redacted
+    username: admin
+    password: redacted
     inline_data:
       kind: Namespace
       apiVersion: v1
@@ -139,28 +111,19 @@ EXAMPLES = '''
 - name: Create a kubernetes namespace
   kubernetes:
     api_endpoint: 123.45.67.89
-    url_username: admin
-    url_password: redacted
+    username: admin
+    password: redacted
     file_reference: /path/to/create_namespace.yaml
     state: present
 
-# Fetch info about the Kubernets cluster with a fake 'kubectl' command.
-- name: Look up cluster info
+# Do the same thing, but using the insecure localhost port
+- name: Create a kubernetes namespace
   kubernetes:
     api_endpoint: 123.45.67.89
-    url_username: admin
-    url_password: redacted
-    kubectl_cluster_info: 1
-    state: kubectl
+    insecure: true
+    file_reference: /path/to/create_namespace.yaml
+    state: present
 
-# Fetch info about the Kubernets pods with a fake 'kubectl' command.
-- name: Look up pods
-  kubernetes:
-    api_endpoint: 123.45.67.89
-    url_username: admin
-    url_password: redacted
-    kubectl_get: pods
-    state: kubectl
 '''
 
 RETURN = '''
@@ -259,6 +222,7 @@ USER_AGENT = "ansible-k8s-module/0.0.1"
 # - Set 'required=true' for certificate_authority_data and ensure that
 #   ansible's SSLValidationHandler.get_ca_certs() can pick up this CA cert
 # - Set 'required=true' for the validate_certs param.
+
 def decode_cert_data(module):
     return
     d = module.params.get("certificate_authority_data")
@@ -270,75 +234,70 @@ def api_request(module, url, method="GET", headers=None, data=None):
     body = None
     if data:
         data = json.dumps(data)
-    response, info = fetch_url(module, url, method=method, headers=headers,
-                               data=data)
+    response, info = fetch_url(module, url, method=method, headers=headers, data=data)
+    if int(info['status']) == -1:
+        module.fail_json(msg="Failed to execute the API request: %s" % info['msg'], url=url, method=method, headers=headers)
     if response is not None:
         body = json.loads(response.read())
     return info, body
 
 
-def k8s_kubectl_get(module, url):
-    req = module.params.get("kubectl_get")
-    info, body = api_request(module, url + "/" + req)
-    return False, body
-
-
-def k8s_delete_resource(module, url, data):
-    name = None
-    if 'metadata' in data:
-        name = data['metadata'].get('name')
-    if name is None:
-        module.fail_json(msg="Missing a named resource in object metadata")
-    url = url + '/' + name
-
-    info, body = api_request(module, url, method="DELETE")
-    if info['status'] == 404:
-        return False, {}
-    if info['status'] == 200:
-        return True, body
-    module.fail_json(msg="%s: fetching URL '%s'" % (info['msg'], url))
-
-
 def k8s_create_resource(module, url, data):
-    info, body = api_request(module, url, method="POST", data=data)
+    info, body = api_request(module, url, method="POST", data=data, headers={"Content-Type": "application/json"})
     if info['status'] == 409:
         name = data["metadata"].get("name", None)
         info, body = api_request(module, url + "/" + name)
         return False, body
+    elif info['status'] >= 400:
+        module.fail_json(msg="failed to create the resource: %s" % info['msg'], url=url)
     return True, body
 
 
-def k8s_replace_resource(module, url, data):
-    name = None
-    if 'metadata' in data:
-        name = data['metadata'].get('name')
+def k8s_delete_resource(module, url, data):
+    name = data.get('metadata', {}).get('name')
     if name is None:
-        module.fail_json(msg="Missing a named resource in object metadata")
-    url = url + '/' + name
+        module.fail_json(msg="Missing a named resource in object metadata when trying to remove a resource")
 
-    info, body = api_request(module, url, method="PUT", data=data)
+    url = url + '/' + name
+    info, body = api_request(module, url, method="DELETE")
+    if info['status'] == 404:
+        return False, "Resource name '%s' already absent" % name
+    elif info['status'] >= 400:
+        module.fail_json(msg="failed to delete the resource '%s': %s" % (name, info['msg']), url=url)
+    return True, "Successfully deleted resource name '%s'" % name
+
+
+def k8s_replace_resource(module, url, data):
+    name = data.get('metadata', {}).get('name')
+    if name is None:
+        module.fail_json(msg="Missing a named resource in object metadata when trying to replace a resource")
+
+    headers = {"Content-Type": "application/json"}
+    url = url + '/' + name
+    info, body = api_request(module, url, method="PUT", data=data, headers=headers)
     if info['status'] == 409:
         name = data["metadata"].get("name", None)
         info, body = api_request(module, url + "/" + name)
         return False, body
+    elif info['status'] >= 400:
+        module.fail_json(msg="failed to replace the resource '%s': %s" % (name, info['msg']), url=url)
     return True, body
 
 
 def k8s_update_resource(module, url, data):
-    name = None
-    if 'metadata' in data:
-        name = data['metadata'].get('name')
+    name = data.get('metadata', {}).get('name')
     if name is None:
-        module.fail_json(msg="Missing a named resource in object metadata")
-    url = url + '/' + name
+        module.fail_json(msg="Missing a named resource in object metadata when trying to update a resource")
 
     headers = {"Content-Type": "application/strategic-merge-patch+json"}
-    info, body = api_request(module, url, method="PATCH", data=data,
-                             headers=headers)
+    url = url + '/' + name
+    info, body = api_request(module, url, method="PATCH", data=data, headers=headers)
     if info['status'] == 409:
         name = data["metadata"].get("name", None)
         info, body = api_request(module, url + "/" + name)
         return False, body
+    elif info['status'] >= 400:
+        module.fail_json(msg="failed to update the resource '%s': %s" % (name, info['msg']), url=url)
     return True, body
 
 
@@ -347,97 +306,81 @@ def main():
         argument_spec=dict(
             http_agent=dict(default=USER_AGENT),
 
-            url_username=dict(default="admin"),
-            url_password=dict(required=True, no_log=True),
+            username=dict(default="admin"),
+            password=dict(default="", no_log=True),
             force_basic_auth=dict(default="yes"),
-            validate_certs=dict(default=False, choices=BOOLEANS),
+            validate_certs=dict(default=False, type='bool'),
             certificate_authority_data=dict(required=False),
-
-            # fake 'kubectl' commands
-            kubectl_api_versions=dict(required=False),
-            kubectl_cluster_info=dict(required=False),
-            kubectl_get=dict(required=False),
-            kubectl_namespace=dict(required=False, default="default"),
-            kubectl_version=dict(required=False),
-
-            # k8s API module variables
+            insecure=dict(default=False, type='bool'),
             api_endpoint=dict(required=True),
             file_reference=dict(required=False),
             inline_data=dict(required=False),
-            state=dict(default="present",
-                       choices=["present", "post",
-                                "absent", "delete",
-                                "update", "put",
-                                "replace", "patch",
-                                "kubectl"])
-        )
+            state=dict(default="present", choices=["present", "absent", "update", "replace"])
+        ),
+        mutually_exclusive = (('file_reference', 'inline_data'), ('username', 'insecure'), ('password', 'insecure')),
+        required_one_of = (('file_reference', 'inline_data'),),
     )
 
     decode_cert_data(module)
 
-    changed = False
-    data = module.params.get('inline_data', {})
-    if not data:
-        dfile = module.params.get('file_reference')
-        if dfile:
-            f = open(dfile, "r")
-            data = yaml.load(f)
-
-    endpoint = "https://" + module.params.get('api_endpoint')
-    url = endpoint
-
-    namespace = "default"
-    if data and 'metadata' in data:
-        namespace = data['metadata'].get('namespace', "default")
-        kind = data['kind'].lower()
-        url = endpoint + KIND_URL[kind]
-        url = url.replace("{namespace}", namespace)
-
-    # check for 'kubectl' commands
-    kubectl_api_versions = module.params.get('kubectl_api_versions')
-    kubectl_cluster_info = module.params.get('kubectl_cluster_info')
-    kubectl_get = module.params.get('kubectl_get')
-    kubectl_namespace = module.params.get('kubectl_namespace')
-    kubectl_version = module.params.get('kubectl_version')
-
+    api_endpoint = module.params.get('api_endpoint')
     state = module.params.get('state')
-    if state in ['present', 'post']:
-        changed, body = k8s_create_resource(module, url, data)
-        module.exit_json(changed=changed, api_response=body)
+    insecure = module.params.get('insecure')
+    inline_data = module.params.get('inline_data')
+    file_reference = module.params.get('file_reference')
 
-    if state in ['absent', 'delete']:
-        changed, body = k8s_delete_resource(module, url, data)
-        module.exit_json(changed=changed, api_response=body)
+    if inline_data:
+        data = inline_data
+    else:
+        try:
+            f = open(file_reference, "r")
+            data = [x for x in yaml.load_all(f)]
+            f.close()
+            if not data:
+                module.fail_json(msg="No valid data could be found.")
+        except:
+            module.fail_json(msg="The file '%s' was not found or contained invalid YAML/JSON data" % file_reference)
 
-    if state in ['replace', 'put']:
-        changed, body = k8s_replace_resource(module, url, data)
-        module.exit_json(changed=changed, api_response=body)
+    # set the transport type and build the target endpoint url
+    transport = 'https'
+    if insecure:
+        transport = 'http'
 
-    if state in ['update', 'patch']:
-        changed, body = k8s_update_resource(module, url, data)
-        module.exit_json(changed=changed, api_response=body)
+    target_endpoint = "%s://%s" % (transport, api_endpoint)
 
-    if state == 'kubectl':
-        kurl = url + "/api/v1/namespaces/" + kubectl_namespace
-        if kubectl_get:
-            if kubectl_get.startswith("namespaces"):
-                kurl = url + "/api/v1"
-            changed, body = k8s_kubectl_get(module, kurl)
-            module.exit_json(changed=changed, api_response=body)
-        if kubectl_version:
-            info, body = api_request(module, url + "/version")
-            module.exit_json(changed=False, api_response=body)
-        if kubectl_api_versions:
-            info, body = api_request(module, url + "/api")
-            module.exit_json(changed=False, api_response=body)
-        if kubectl_cluster_info:
-            info, body = api_request(module, url +
-                                     "/api/v1/namespaces/kube-system"
-                                     "/services?labelSelector=kubernetes"
-                                     ".io/cluster-service=true")
-            module.exit_json(changed=False, api_response=body)
+    body = []
+    changed = False
 
-    module.fail_json(msg="Invalid state: '%s'" % state)
+    # make sure the data is a list
+    if not isinstance(data, list):
+        data = [ data ]
+
+    for item in data:
+        namespace = "default"
+        if item and 'metadata' in item:
+            namespace = item.get('metadata', {}).get('namespace', "default")
+            kind = item.get('kind', '').lower()
+            try:
+                url = target_endpoint + KIND_URL[kind]
+            except KeyError:
+                module.fail_json("invalid resource kind specified in the data: '%s'" % kind)
+            url = url.replace("{namespace}", namespace)
+        else:
+            url = target_endpoint
+
+        if state == 'present':
+            item_changed, item_body = k8s_create_resource(module, url, item)
+        elif state == 'absent':
+            item_changed, item_body = k8s_delete_resource(module, url, item)
+        elif state == 'replace':
+            item_changed, item_body = k8s_replace_resource(module, url, item)
+        elif state == 'update':
+            item_changed, item_body = k8s_update_resource(module, url, item)
+
+        changed |= item_changed
+        body.append(item_body)
+
+    module.exit_json(changed=changed, api_response=body)
 
 
 # import module snippets
