@@ -48,7 +48,7 @@ options:
     default: null
   encoding:
     description:
-      - Encoding mode
+      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci)
     required: false
     default: null
   target:
