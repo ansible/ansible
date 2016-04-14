@@ -1435,11 +1435,23 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and set the params attribute.  Sets the constants as well.'''
+        # debug overrides to read args from file or cmdline
+
         # Avoid tracebacks when locale is non-utf8
-        if sys.version_info < (3,):
-            buffer = sys.stdin.read()
+        if len(sys.argv) > 1:
+            if os.path.isfile(sys.argv[1]):
+                fd = open(sys.argv[1], 'rb')
+                buffer = fd.read()
+                fd.close()
+            else:
+                buffer = sys.argv[1]
+        # default case, read from stdin
         else:
-            buffer = sys.stdin.buffer.read()
+            if sys.version_info < (3,):
+                buffer = sys.stdin.read()
+            else:
+                buffer = sys.stdin.buffer.read()
+
         try:
             params = json.loads(buffer.decode('utf-8'))
         except ValueError:

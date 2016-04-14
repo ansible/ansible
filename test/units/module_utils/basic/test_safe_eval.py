@@ -22,60 +22,48 @@ __metaclass__ = type
 
 import sys
 import json
-from io import BytesIO, StringIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
+from units.mock.procenv import swap_stdin_and_argv
 
 class TestAnsibleModuleExitJson(unittest.TestCase):
-
-    def setUp(self):
-        self.real_stdin = sys.stdin
-
-    def tearDown(self):
-        sys.stdin = self.real_stdin
 
     def test_module_utils_basic_safe_eval(self):
         from ansible.module_utils import basic
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with swap_stdin_and_argv(stdin_data=args):
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
-        # test some basic usage
-        # string (and with exceptions included), integer, bool
-        self.assertEqual(am.safe_eval("'a'"), 'a')
-        self.assertEqual(am.safe_eval("'a'", include_exceptions=True), ('a', None))
-        self.assertEqual(am.safe_eval("1"), 1)
-        self.assertEqual(am.safe_eval("True"), True)
-        self.assertEqual(am.safe_eval("False"), False)
-        self.assertEqual(am.safe_eval("{}"), {})
-        # not passing in a string to convert
-        self.assertEqual(am.safe_eval({'a':1}), {'a':1})
-        self.assertEqual(am.safe_eval({'a':1}, include_exceptions=True), ({'a':1}, None))
-        # invalid literal eval
-        self.assertEqual(am.safe_eval("a=1"), "a=1")
-        res = am.safe_eval("a=1", include_exceptions=True)
-        self.assertEqual(res[0], "a=1")
-        self.assertEqual(type(res[1]), SyntaxError)
-        self.assertEqual(am.safe_eval("a.foo()"), "a.foo()")
-        res = am.safe_eval("a.foo()", include_exceptions=True)
-        self.assertEqual(res[0], "a.foo()")
-        self.assertEqual(res[1], None)
-        self.assertEqual(am.safe_eval("import foo"), "import foo")
-        res = am.safe_eval("import foo", include_exceptions=True)
-        self.assertEqual(res[0], "import foo")
-        self.assertEqual(res[1], None)
-        self.assertEqual(am.safe_eval("__import__('foo')"), "__import__('foo')")
-        res = am.safe_eval("__import__('foo')", include_exceptions=True)
-        self.assertEqual(res[0], "__import__('foo')")
-        self.assertEqual(type(res[1]), ValueError)
+            # test some basic usage
+            # string (and with exceptions included), integer, bool
+            self.assertEqual(am.safe_eval("'a'"), 'a')
+            self.assertEqual(am.safe_eval("'a'", include_exceptions=True), ('a', None))
+            self.assertEqual(am.safe_eval("1"), 1)
+            self.assertEqual(am.safe_eval("True"), True)
+            self.assertEqual(am.safe_eval("False"), False)
+            self.assertEqual(am.safe_eval("{}"), {})
+            # not passing in a string to convert
+            self.assertEqual(am.safe_eval({'a':1}), {'a':1})
+            self.assertEqual(am.safe_eval({'a':1}, include_exceptions=True), ({'a':1}, None))
+            # invalid literal eval
+            self.assertEqual(am.safe_eval("a=1"), "a=1")
+            res = am.safe_eval("a=1", include_exceptions=True)
+            self.assertEqual(res[0], "a=1")
+            self.assertEqual(type(res[1]), SyntaxError)
+            self.assertEqual(am.safe_eval("a.foo()"), "a.foo()")
+            res = am.safe_eval("a.foo()", include_exceptions=True)
+            self.assertEqual(res[0], "a.foo()")
+            self.assertEqual(res[1], None)
+            self.assertEqual(am.safe_eval("import foo"), "import foo")
+            res = am.safe_eval("import foo", include_exceptions=True)
+            self.assertEqual(res[0], "import foo")
+            self.assertEqual(res[1], None)
+            self.assertEqual(am.safe_eval("__import__('foo')"), "__import__('foo')")
+            res = am.safe_eval("__import__('foo')", include_exceptions=True)
+            self.assertEqual(res[0], "__import__('foo')")
+            self.assertEqual(type(res[1]), ValueError)
 

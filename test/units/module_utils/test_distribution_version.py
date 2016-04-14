@@ -26,6 +26,8 @@ from io import BytesIO, StringIO
 from ansible.compat.six import PY3
 from ansible.utils.unicode import to_bytes
 
+from units.mock.procenv import swap_stdin_and_argv
+
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -323,26 +325,17 @@ def test_distribution_version():
     # needs to be in here, because the import fails with python3 still
     import ansible.module_utils.facts as facts
 
-    real_stdin = sys.stdin
     from ansible.module_utils import basic
 
     args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-    if PY3:
-        sys.stdin = StringIO(args)
-        sys.stdin.buffer = BytesIO(to_bytes(args))
-    else:
-        sys.stdin = BytesIO(to_bytes(args))
-    module = basic.AnsibleModule(argument_spec=dict())
+    with swap_stdin_and_argv(stdin_data=args):
+        module = basic.AnsibleModule(argument_spec=dict())
 
-    for t in TESTSETS:
-        # run individual tests via generator
-        # set nicer stdout output for nosetest
-        _test_one_distribution.description = "check distribution_version for %s" % t['name']
-        yield _test_one_distribution, facts, module, t
-
-
-    sys.stdin = real_stdin
-
+        for t in TESTSETS:
+            # run individual tests via generator
+            # set nicer stdout output for nosetest
+            _test_one_distribution.description = "check distribution_version for %s" % t['name']
+            yield _test_one_distribution, facts, module, t
 
 def _test_one_distribution(facts, module, testcase):
     """run the test on one distribution testcase
