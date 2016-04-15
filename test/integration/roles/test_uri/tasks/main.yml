@@ -122,7 +122,7 @@
     state: absent
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
-  get_url:
+  uri:
     url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
