@@ -43,7 +43,7 @@ options:
     aliases: []
   data:
     description:
-      - Registry Value Data.  Binary data should be expressed as comma separated hex values.  An easy way to generate this is to run regedit.exe and use the 'Export' option to save the registry values to a file.  In the file binary values will look something like this: hex:be,ef,be,ef.  The 'hex:' prefix is optional. 
+      - Registry Value Data.  Binary data should be expressed as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional. 
     required: false
     default: null
     aliases: []
@@ -119,13 +119,12 @@ EXAMPLES = '''
 RETURN = '''
 data_changed:
     description: whether this invocation changed the data in the registry value 
-    returned: always
+    returned: success
     type: boolean
-    sample: false
+    sample: False
 data_type_changed:
     description: whether this invocation changed the datatype of the registry value 
-    returned: always
+    returned: success
     type: boolean
-    sample: true
+    sample: True
 '''
-
