@@ -415,7 +415,7 @@ class TestSSHConnectionRun(object):
             self.conn._flags['become_success'] = True
         return (b'', b'')
 
-    def test_pasword_with_prompt(self):
+    def test_password_with_prompt(self):
         # test with password prompting enabled
         self.pc.password = None
         self.pc.prompt = b'Password:'
@@ -440,7 +440,7 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
 
-    def test_pasword_with_become(self):
+    def test_password_with_become(self):
         # test with some become settings
         self.pc.prompt = b'Password:'
         self.pc.become = True
@@ -550,8 +550,8 @@ class TestSSHConnectionRetries(object):
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
-        self.mock_popen_res.stdout.read.side_effect = [b""] * 11
-        self.mock_popen_res.stderr.read.side_effect = [b""] * 11
+        self.mock_popen_res.stdout.read.side_effect = [b""] * 10
+        self.mock_popen_res.stderr.read.side_effect = [b""] * 10
         type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 30)
 
         self.mock_selector.select.side_effect = [
