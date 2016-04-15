@@ -29,7 +29,7 @@ from ansible.utils.unicode import to_bytes
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from nose.tools import assert_in, assert_equal
+from nose.tools import assert_equal
 
 # the module we are actually testing
 
@@ -322,7 +322,7 @@ def test_distribution_version():
     """
 
     # needs to be in here, because the import fails with python3 still
-    import ansible.module_utils.facts
+    import ansible.module_utils.facts as facts
 
     real_stdin = sys.stdin
     from ansible.module_utils import basic
@@ -339,13 +339,13 @@ def test_distribution_version():
         # run individual tests via generator
         # set nicer stdout output for nosetest
         _test_one_distribution.description = "check distribution_version for %s" % t['name']
-        yield _test_one_distribution, module, t
+        yield _test_one_distribution, facts, module, t
 
 
     sys.stdin = real_stdin
 
 
-def _test_one_distribution(module, testcase):
+def _test_one_distribution(facts, module, testcase):
     """run the test on one distribution testcase
     
     * prepare some mock functions to get the testdata in
@@ -380,13 +380,13 @@ def _test_one_distribution(module, testcase):
     @patch('platform.dist', lambda: testcase['platform.dist'])
     @patch('platform.system', lambda: 'Linux')
     def get_facts(testcase):
-        return ansible.module_utils.facts.Facts(module).populate()
+        return facts.Facts(module).populate()
     
     generated_facts = get_facts(testcase)
 
     # testcase['result'] has a list of variables and values it expects Facts() to set
     for key, val in testcase['result'].items():
-        assert_in(key, generated_facts)
+        assert key in generated_facts
         msg = 'Comparing value of %s on %s, should: %s, is: %s' %\
             (key, testcase['name'], val, generated_facts[key])
         assert_equal(generated_facts[key], val, msg)
