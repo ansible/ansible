@@ -108,7 +108,7 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            api_key     = dict(type='str', required=True),
+            api_key     = dict(type='str', required=True, no_log=True),
             channel     = dict(type='str', default=None),
             device      = dict(type='str', default=None),
             push_type   = dict(type='str', default="note", choices=['note', 'link']),
