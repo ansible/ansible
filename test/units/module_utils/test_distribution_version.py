@@ -29,7 +29,6 @@ from ansible.utils.unicode import to_bytes
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from nose.tools import assert_equal
 
 # the module we are actually testing
 
@@ -389,4 +388,4 @@ def _test_one_distribution(facts, module, testcase):
         assert key in generated_facts
         msg = 'Comparing value of %s on %s, should: %s, is: %s' %\
             (key, testcase['name'], val, generated_facts[key])
-        assert_equal(generated_facts[key], val, msg)
+        assert generated_facts[key] == val, msg
