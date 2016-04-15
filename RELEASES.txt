@@ -9,6 +9,8 @@ Active Development
 Released
 ++++++++
 
+1.9.6  "Dancing In the Streets" 04-15-2016
+1.9.5  "Dancing In the Streets" 03-21-2016
 1.9.4  "Dancing In the Streets" 10-09-2015
 1.9.3  "Dancing In the Streets" 09-03-2015
 1.9.2  "Dancing In the Streets" 06-24-2015
