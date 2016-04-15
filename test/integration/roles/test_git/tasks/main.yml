@@ -40,6 +40,11 @@
 - name: verify that git is installed so this test can continue
   shell: which git
 
+- name: get git version, only newer than 1.8.2 has fixed git depth
+  shell: git --version | grep 'git version' | sed 's/git version //'
+  register: git_version
+
+
 #
 # Test repo=https://github.com/...
 #
@@ -254,6 +259,7 @@
     that: 
       - checkout_shallow.rc == 1
       - checkout_shallow|failed
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
@@ -450,7 +456,7 @@
 
 
 # Test the depth option and fetching revisions that were ignored first
-
+  
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
@@ -470,6 +476,7 @@
 - name: make sure the old commit was not fetched
   assert:
     that: checkout_early.rc == 1
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
 - name: fetch repo again with depth=1
@@ -481,6 +488,7 @@
 
 - assert:
     that: "not checkout2|changed"
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: again try to access earlier commit
   shell: git checkout 79624b4
@@ -492,6 +500,7 @@
 - name: again make sure the old commit was not fetched
   assert:
     that: checkout_early.rc == 1
+  when: git_version.stdout | version_compare("1.8.2", '>=')
     
 # make sure we are still able to fetch other versions
 - name: Clone same repo with older version
