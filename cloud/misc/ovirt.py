@@ -333,7 +333,7 @@ def main():
             user = dict(required=True),
             url = dict(required=True),
             instance_name = dict(required=True, aliases=['vmname']),
-            password = dict(required=True),
+            password = dict(required=True, no_log=True),
             image = dict(),
             resource_type = dict(choices=['new', 'template']),
             zone = dict(),
