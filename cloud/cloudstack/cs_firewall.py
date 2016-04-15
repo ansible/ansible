@@ -234,6 +234,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             'icmptype':     'icmp_type',
         }
         self.firewall_rule = None
+        self.network = None
 
 
     def get_firewall_rule(self):
@@ -309,10 +310,11 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         return cidr == rule['cidrlist']
 
 
-    def get_network(self, key=None, network=None):
-        if not network:
-            network = self.module.params.get('network')
+    def get_network(self, key=None):
+        if self.network:
+            return self._get_by_key(key, self.network)
 
+        network = self.module.params.get('network')
         if not network:
             return None
 
@@ -328,6 +330,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
         for n in networks['network']:
             if network in [ n['displaytext'], n['name'], n['id'] ]:
+                self.network = n
                 return self._get_by_key(key, n)
                 break
         self.module.fail_json(msg="Network '%s' not found" % network)
@@ -392,8 +395,8 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         super(AnsibleCloudStackFirewall, self).get_result(firewall_rule)
         if firewall_rule:
             self.result['type'] = self.module.params.get('type')
-            if 'networkid' in firewall_rule:
-                self.result['network'] = self.get_network(key='displaytext', network=firewall_rule['networkid'])
+            if self.result['type'] == 'egress':
+                self.result['network'] = self.get_network(key='displaytext')
         return self.result
 
 

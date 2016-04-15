@@ -89,8 +89,8 @@ options:
     default: false
   cross_zones:
     description:
-      - Whether the template should be syned across zones.
-      - Only used if C(state) is present.
+      - Whether the template should be syned or removed across zones.
+      - Only used if C(state) is present or absent.
     required: false
     default: false
   project:
@@ -168,7 +168,7 @@ options:
   display_text:
     description:
       - Display text of the template.
-    required: true
+    required: false
     default: null
   state:
     description:
@@ -220,6 +220,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_template
     name: systemvm-4.2
+    cross_zones: yes
     state: absent
 '''
 
@@ -469,6 +470,12 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
 
     def register_template(self):
+        required_params = [
+            'format',
+            'url',
+            'hypervisor',
+        ]
+        self.module.fail_on_missing_params(required_params=required_params)
         template = self.get_template()
         if not template:
             self.result['changed'] = True
@@ -536,9 +543,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         args['mode']   = self.module.params.get('mode')
         args['zoneid'] = self.get_zone(key='id')
 
-        if not args['url']:
-            self.module.fail_json(msg="Missing required arguments: url")
-
         self.result['changed'] = True
 
         if not self.module.check_mode:
@@ -560,7 +564,9 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
             args            = {}
             args['id']      = template['id']
-            args['zoneid']  = self.get_zone(key='id')
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid']  = self.get_zone(key='id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteTemplate(**args)
@@ -610,16 +616,12 @@ def main():
         poll_async = dict(type='bool', default=True),
     ))
 
-    required_together = cs_required_together()
-    required_together.extend([
-        ['format', 'url', 'hypervisor'],
-    ])
-
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=required_together,
+        required_together=cs_required_together(),
         mutually_exclusive = (
             ['url', 'vm'],
+            ['zone', 'cross_zones'],
         ),
         supports_check_mode=True
     )

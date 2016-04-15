@@ -114,10 +114,11 @@ EXAMPLES = '''
   action: win_firewall_rule
   args:
       name: smtp
-      enabled: yes
+      enable: yes
       state: present
       localport: 25
       action: allow
+      direction: In
       protocol: TCP
 
 '''
