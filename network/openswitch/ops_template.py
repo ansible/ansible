@@ -168,7 +168,7 @@ def main():
     """
 
     argument_spec = dict(
-        src=dict(type='dict'),
+        src=dict(type='str'),
         force=dict(default=False, type='bool'),
         backup=dict(default=False, type='bool'),
         config=dict(type='dict'),
@@ -180,8 +180,6 @@ def main():
                         mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
-    src = module.params['src']
-
     result = dict(changed=False)
 
     contents = get_config(module)
@@ -189,6 +187,7 @@ def main():
 
     if module.params['transport'] in ['ssh', 'rest']:
         config = contents
+        src = module.from_json(module.params['src'])
 
         changeset = diff(src, config)
         candidate = merge(changeset, config)
