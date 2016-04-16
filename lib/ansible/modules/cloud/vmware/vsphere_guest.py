@@ -92,7 +92,7 @@ options:
     default: null
   state:
     description:
-     - Indicate desired state of the vm.
+      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter. The 'memory_mb' and 'num_cpus' changes are applied to powered-on vms when hot-plugging is enabled for the guest.
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
@@ -524,7 +524,7 @@ def find_datastore(module, s, datastore, config_target):
                 datastore = d.Datastore.Name
                 break
     else:
-        for ds_mor, ds_name in server.get_datastores().items():
+        for ds_mor, ds_name in s.get_datastores().items():
             ds_props = VIProperty(s, ds_mor)
             if (ds_props.summary.accessible and (datastore and ds_name == datastore)
                     or (not datastore)):
@@ -619,6 +619,26 @@ def spec_singleton(spec, request, vm):
         spec = request.new_spec()
     return spec
 
+def get_cdrom_params(module, s, vm_cdrom):
+    cdrom_type = None
+    cdrom_iso_path = None
+    try:
+        cdrom_type = vm_cdrom['type']
+    except KeyError:
+        s.disconnect()
+        module.fail_json(
+            msg="Error on %s definition. cdrom type needs to be"
+            " specified." % vm_cdrom)
+    if cdrom_type == 'iso':
+        try:
+            cdrom_iso_path = vm_cdrom['iso_path']
+        except KeyError:
+            s.disconnect()
+            module.fail_json(
+                msg="Error on %s definition. cdrom iso_path needs"
+                " to be specified." % vm_cdrom)
+
+    return cdrom_type, cdrom_iso_path
 
 def vmdisk_id(vm, current_datastore_name):
     id_list = []
@@ -809,6 +829,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     request = None
     shutdown = False
     poweron = vm.is_powered_on()
+    devices = []
 
     memoryHotAddEnabled = bool(vm.properties.config.memoryHotAddEnabled)
     cpuHotAddEnabled = bool(vm.properties.config.cpuHotAddEnabled)
@@ -851,7 +872,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     if vm_nic:
         changed = reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name)
 
-    # ====( Config Memory )====#
+    # Change Num CPUs
     if 'num_cpus' in vm_hardware:
         if int(vm_hardware['num_cpus']) != vm.properties.config.hardware.numCPU:
             spec = spec_singleton(spec, request, vm)
@@ -881,6 +902,49 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             spec.set_element_numCPUs(int(vm_hardware['num_cpus']))
 
             changes['cpu'] = vm_hardware['num_cpus']
+
+    # Change CDROM
+    if 'vm_cdrom' in vm_hardware:
+        spec = spec_singleton(spec, request, vm)
+
+        cdrom_type, cdrom_iso_path = get_cdrom_params(module, vsphere_client, vm_hardware['vm_cdrom'])
+
+        cdrom = None
+        current_devices = vm.properties.config.hardware.device
+
+        for dev in current_devices:
+            if dev._type == 'VirtualCdrom':
+                cdrom = dev._obj
+                break
+
+        if cdrom_type == 'iso':
+            iso_location = cdrom_iso_path.split('/', 1)
+            datastore, ds = find_datastore(
+                module, vsphere_client, iso_location[0], None)
+            iso_path = iso_location[1]
+            iso = VI.ns0.VirtualCdromIsoBackingInfo_Def('iso').pyclass()
+            iso.set_element_fileName('%s %s' % (datastore, iso_path))
+            cdrom.set_element_backing(iso)
+            cdrom.Connectable.set_element_connected(True)
+            cdrom.Connectable.set_element_startConnected(True)
+        elif cdrom_type == 'client':
+            client = VI.ns0.VirtualCdromRemoteAtapiBackingInfo_Def('client').pyclass()
+            client.set_element_deviceName("")
+            cdrom.set_element_backing(client)
+            cdrom.Connectable.set_element_connected(True)
+            cdrom.Connectable.set_element_startConnected(True)
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(
+                msg="Error adding cdrom of type %s to vm spec. "
+                " cdrom type can either be iso or client" % (cdrom_type))
+
+        dev_change = spec.new_deviceChange()
+        dev_change.set_element_device(cdrom)
+        dev_change.set_element_operation('edit')
+        devices.append(dev_change)
+
+        changes['cdrom'] = vm_hardware['vm_cdrom']
 
     # Resize hard drives
     if vm_disk:
@@ -926,7 +990,6 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             spec.set_element_deviceChange(dev_changes)
             changes['disks'] = disks_changed
 
-
     if len(changes):
 
         if shutdown and vm.is_powered_on():
@@ -938,6 +1001,9 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                 module.fail_json(
                     msg='Failed to shutdown vm %s: %s' % (guest, e)
                 )
+
+        if len(devices):
+            spec.set_element_deviceChange(devices)
 
         request.set_element_spec(spec)
         ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
@@ -1277,23 +1343,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             disk_num = disk_num + 1
             disk_key = disk_key + 1
     if 'vm_cdrom' in vm_hardware:
-        cdrom_iso_path = None
-        cdrom_type = None
-        try:
-            cdrom_type = vm_hardware['vm_cdrom']['type']
-        except KeyError:
-            vsphere_client.disconnect()
-            module.fail_json(
-                msg="Error on %s definition. cdrom type needs to be"
-                " specified." % vm_hardware['vm_cdrom'])
-        if cdrom_type == 'iso':
-            try:
-                cdrom_iso_path = vm_hardware['vm_cdrom']['iso_path']
-            except KeyError:
-                vsphere_client.disconnect()
-                module.fail_json(
-                    msg="Error on %s definition. cdrom iso_path needs"
-                    " to be specified." % vm_hardware['vm_cdrom'])
+        cdrom_type, cdrom_iso_path = get_cdrom_params(module, vsphere_client, vm_hardware['vm_cdrom'])
         # Add a CD-ROM device to the VM.
         add_cdrom(module, vsphere_client, config_target, config, devices,
                   default_devs, cdrom_type, cdrom_iso_path)
