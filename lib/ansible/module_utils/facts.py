@@ -1949,9 +1949,23 @@ class Network(Facts):
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
-        for sc in Network.__subclasses__():
-            if sc.platform == platform.system():
-                subclass = sc
+        # Retrieve direct subclasses
+        to_visit = Network.__subclasses__()
+        # Then visit all subclasses
+        while to_visit:
+            for sc in to_visit:
+                # Check if current class is the good one
+                if sc.platform == platform.system():
+                    subclass = sc
+                    to_visit = []
+                    break
+                # The current class is now visited, so remove it from list
+                to_visit.remove(sc)
+                # Appending all subclasses to visit and keep a reference of available class
+                for ssc in sc.__subclasses__():
+                    to_visit.append(ssc)
+
+        # Now, return corresponding subclass
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
     def populate(self):
