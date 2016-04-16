@@ -360,6 +360,29 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+import time
+import random
+
+def _throttleable_operation(max_retries):
+    def _operation_wrapper(op):
+        def _do_op(*args, **kwargs):
+            retry = 0
+            while True:
+                try:
+                    return op(*args, **kwargs)
+                except boto.exception.BotoServerError, e:
+                    if retry < max_retries and e.code in \
+                            ("Throttling", "RequestLimitExceeded"):
+                        retry = retry + 1
+                        time.sleep(min(random.random() * (2 ** retry), 300))
+                        continue
+                    else:
+                        raise
+        return _do_op
+    return _operation_wrapper
+
+
+_THROTTLING_RETRIES = 5
 
 class ElbManager(object):
     """Handles ELB creation and destruction"""
@@ -403,6 +426,7 @@ class ElbManager(object):
         self.elb = self._get_elb()
         self.ec2_conn = self._get_ec2_connection()
 
+    @_throttleable_operation(_THROTTLING_RETRIES)
     def ensure_ok(self):
         """Create the ELB"""
         if not self.elb:
@@ -546,6 +570,7 @@ class ElbManager(object):
 
         return info
 
+    @_throttleable_operation(_THROTTLING_RETRIES)
     def _wait_for_elb_removed(self):
         polling_increment_secs = 15
         max_retries = (self.wait_timeout / polling_increment_secs)
@@ -563,6 +588,7 @@ class ElbManager(object):
 
         return status_achieved
 
+    @_throttleable_operation(_THROTTLING_RETRIES)
     def _wait_for_elb_interface_removed(self):
         polling_increment_secs = 15
         max_retries = (self.wait_timeout / polling_increment_secs)
@@ -590,6 +616,7 @@ class ElbManager(object):
 
         return status_achieved
 
+    @_throttleable_operation(_THROTTLING_RETRIES)
     def _get_elb(self):
         elbs = self.elb_conn.get_all_load_balancers()
         for elb in elbs:
@@ -611,6 +638,7 @@ class ElbManager(object):
         except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
+    @_throttleable_operation(_THROTTLING_RETRIES)
     def _delete_elb(self):
         # True if succeeds, exception raised if not
         result = self.elb_conn.delete_load_balancer(name=self.name)
@@ -627,6 +655,16 @@ class ElbManager(object):
                                                       subnets=self.subnets,
                                                       scheme=self.scheme)
         if self.elb:
+            # HACK: Work around a boto bug in which the listeners attribute is
+            # always set to the listeners argument to create_load_balancer, and
+            # not the complex_listeners
+            # We're not doing a self.elb = self._get_elb here because there
+            # might be eventual consistency issues and it doesn't necessarily
+            # make sense to wait until the ELB gets returned from the EC2 API.
+            # This is necessary in the event we hit the throttling errors and
+            # need to retry ensure_ok
+            # See https://github.com/boto/boto/issues/3526
+            self.elb.listeners = self.listeners
             self.changed = True
             self.status = 'created'
 
