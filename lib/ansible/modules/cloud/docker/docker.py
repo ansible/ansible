@@ -589,13 +589,13 @@ def get_split_image_tag(image):
     else:
         registry, resource = None, image
 
-    # now we can determine if image has a tag
-    if ':' in resource:
-        resource, tag = resource.split(':', 1)
-        if registry:
-            resource = '/'.join((registry, resource))
-        if tag == "":
-            tag = "latest"
+    # now we can determine if image has a tag or a digest
+    for s in ['@',':']:
+        if s in resource:
+            resource, tag = resource.split(s, 1)
+            if registry:
+                resource = '/'.join((registry, resource))
+            break
     else:
         tag = "latest"
         resource = image
