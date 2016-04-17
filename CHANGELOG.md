@@ -41,6 +41,7 @@ Ansible Changes By Release
   * os_user_role
 - softlayer
   * sl_vm
+- vmware_maintenancemode
 - windows
   * win_owner
   * win_regmerge
