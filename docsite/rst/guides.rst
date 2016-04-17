@@ -7,6 +7,7 @@ This section is new and evolving.  The idea here is explore particular use cases
    :maxdepth: 1
 
    guide_aws
+   guide_azure
    guide_rax
    guide_gce
    guide_cloudstack
