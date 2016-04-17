@@ -34,6 +34,8 @@ AZURE_COMMON_ARGS = dict(
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
+    ad_user=dict(type='str', no_log=True),
+    password=dict(type='str', no_log=True),
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
