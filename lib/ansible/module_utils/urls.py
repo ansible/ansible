@@ -838,8 +838,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects)
         info.update(r.info())
-        info['url'] = r.geturl()  # The URL goes in too, because of redirects.
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
+        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.getcode()))
     except NoSSLError, e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':

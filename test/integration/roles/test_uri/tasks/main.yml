@@ -204,3 +204,10 @@
   assert:
     that:
       - 'result.allow|default("") == "HEAD, OPTIONS, GET"'
+
+- name: validate the status_codes are correct
+  uri:
+    url: https://httpbin.org/status/202
+    status_code: 202
+    method: POST
+    body: foo
