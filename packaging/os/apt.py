@@ -370,6 +370,27 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
             new_pkgspec.append(pkgspec_pattern)
     return new_pkgspec
 
+def parse_diff(output):
+    diff = output.splitlines()
+    try:
+        # check for start marker from aptitude
+        diff_start = diff.index('Resolving dependencies...')
+    except ValueError:
+        try:
+            # check for start marker from apt-get
+            diff_start = diff.index('Reading state information...')
+        except ValueError:
+            diff_start = -1
+            diff.insert(0, 'Unexpected apt output for --diff. Showing everything:')
+    try:
+        # check for end marker line from both apt-get and aptitude
+        diff_end = (i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item)).next()
+    except StopIteration:
+        diff_end = len(diff)
+    diff_start += 1
+    diff_end += 1
+    return {'prepared': '\n'.join(diff[diff_start:diff_end])}
+
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
@@ -436,10 +457,14 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             cmd += " --allow-unauthenticated"
 
         rc, out, err = m.run_command(cmd)
+        if m._diff:
+            diff = parse_diff(out)
+        else:
+            diff = {}
         if rc:
             return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
         else:
-            return (True, dict(changed=True, stdout=out, stderr=err))
+            return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
     else:
         return (True, dict(changed=False))
 
@@ -491,17 +516,22 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             stdout = retvals["stdout"] + out
         else:
             stdout = out
+        if "diff" in retvals:
+            diff = retvals["diff"]
+            diff["prepared"] += '\n\n' + out
+        else:
+            diff = out
         if "stderr" in retvals:
             stderr = retvals["stderr"] + err
         else:
             stderr = err
 
         if rc == 0:
-            m.exit_json(changed=True, stdout=stdout, stderr=stderr)
+            m.exit_json(changed=True, stdout=stdout, stderr=stderr, diff=diff)
         else:
             m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
-        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''))
+        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
@@ -527,15 +557,21 @@ def remove(m, pkgspec, cache, purge=False,
         else:
             autoremove = ''
 
-        cmd = "%s -q -y %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, autoremove, packages)
-
         if m.check_mode:
-            m.exit_json(changed=True)
+            check_arg = '--simulate'
+        else:
+            check_arg = ''
+
+        cmd = "%s -q -y %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
+        if m._diff:
+            diff = parse_diff(out)
+        else:
+            diff = {}
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
-        m.exit_json(changed=True, stdout=out, stderr=err)
+        m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -577,11 +613,15 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         cmd += " -t '%s'" % (default_release,)
 
     rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+    if m._diff:
+        diff = parse_diff(out)
+    else:
+        diff = {}
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
-    m.exit_json(changed=True, msg=out, stdout=out, stderr=err)
+    m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
 def download(module, deb):
     tempdir = os.path.dirname(__file__)
