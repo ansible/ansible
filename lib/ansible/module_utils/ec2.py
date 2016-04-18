@@ -31,6 +31,7 @@ from time import sleep
 
 try:
     import boto
+    import boto.ec2 #boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
