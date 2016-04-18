@@ -269,7 +269,7 @@ def package_status(m, pkgname, version, cache, state):
                         installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
                         if installed:
                             is_installed = True
-                    return is_installed, True, False
+                    return is_installed, upgradable, False
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
