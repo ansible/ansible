@@ -19,7 +19,7 @@
 # ============================================================
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
-- name: state dump/import - create database  
+- name: state dump/import - create database
   mysql_db: name={{ db_name }} state=present
 
 - name: state dump/import - create table employee
@@ -41,7 +41,7 @@
        - "result.changed == true"
        - "result.db =='{{ db_name }}'"
 
-- name: assert database was backup successfully  
+- name: assert database was backup successfully
   command: file {{ db_file_name }}
   register: result
 
@@ -55,14 +55,14 @@
   mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
   register: result
 
-- name: assert output message restore the database 
+- name: assert output message restore the database
   assert: { that: "result.changed == true" }
 
-- name: select data from table employee 
+- name: select data from table employee
   command: mysql {{ db_name }} "-e select * from  employee;"
   register: result
 
-- name: assert data in database is from the restore database 
+- name: assert data in database is from the restore database
   assert:
     that:
        - "'47' in result.stdout"
@@ -71,5 +71,5 @@
 - name: remove database name
   mysql_db: name={{ db_name }} state=absent
 
-- name: remove file name 
+- name: remove file name
   file: name={{ db_file_name }}  state=absent

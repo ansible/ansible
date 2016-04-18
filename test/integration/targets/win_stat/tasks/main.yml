@@ -21,7 +21,7 @@
   register: win_stat_file
 
 - name: check win_stat file result
-  assert: 
+  assert:
     that:
       - "win_stat_file.stat.exists"
       - "not win_stat_file.stat.isdir"
@@ -41,7 +41,7 @@
   register: win_stat_file_no_md5
 
 - name: check win_stat file result without md5
-  assert: 
+  assert:
     that:
       - "win_stat_file_no_md5.stat.exists"
       - "not win_stat_file_no_md5.stat.isdir"
@@ -61,7 +61,7 @@
   register: win_stat_dir
 
 - name: check win_stat dir result
-  assert: 
+  assert:
     that:
       - "win_stat_dir.stat.exists"
       - "win_stat_dir.stat.isdir"
@@ -79,7 +79,7 @@
   register: win_stat_missing
 
 - name: check win_stat missing result
-  assert: 
+  assert:
     that:
       - "not win_stat_missing.stat.exists"
       - "not win_stat_missing|failed"

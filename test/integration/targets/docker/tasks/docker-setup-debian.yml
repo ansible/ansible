@@ -3,4 +3,3 @@
     state: present
     # Note: add docker-registry when available
     name: docker.io,python-docker,netcat-openbsd,nginx
-

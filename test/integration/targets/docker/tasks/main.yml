@@ -20,4 +20,3 @@
 #- include: registry-tests.yml
   # Add other distributions as the proper packages become available
 #  when: ansible_distribution in ['Fedora']
-

@@ -5,8 +5,8 @@
 
   gather_facts: False
 
-  roles: 
+  roles:
 
     # this one has a lot of things that should fail, see makefile for operation w/ tags
 
-    - { role: test_bad_parsing } 
+    - { role: test_bad_parsing }

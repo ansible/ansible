@@ -16,4 +16,3 @@
         that:
             - 'play_result == play_out'
             - 'role_result == role_out'
-

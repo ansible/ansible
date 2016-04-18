@@ -51,4 +51,3 @@
     that:
       - 'async_hello_ansible.msg == "Hello, Ansible!"'
   when: not async_hello_ansible|skipped
-

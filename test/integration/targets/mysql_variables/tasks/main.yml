@@ -133,7 +133,7 @@
 
 # ============================================================
 # Verify mysql_variable fails when setting a read-only variable
-# 
+#
 - name: set value of a read only mysql variable
   mysql_variables: variable=character_set_system value=utf16
   register: result

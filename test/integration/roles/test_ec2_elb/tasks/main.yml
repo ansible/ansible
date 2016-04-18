@@ -185,4 +185,3 @@
       - 'item.changed == True'
       - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
   with_items: result.results
-
