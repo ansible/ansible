@@ -25,6 +25,15 @@ description:
     - Manages global VRF configuration
 extends_documentation_fragment: nxos
 author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+notes:
+    - Cisco NX-OS creates the default VRF by itself. Therefore,
+      you're not allowed to use default as I(vrf) name in this module.
+    - I(vrf) name must be shorter than 32 chars.
+    - VRF names are not case sensible in NX-OS. Anyway, the name is stored
+      just like it's inserted by the user and it'll not be changed again
+      unless the VRF is removed and re-created. i.e. I(vrf=NTC) will create
+      a VRF named NTC, but running it again with I(vrf=ntc) will not cause
+      a configuration change.
 options:
     vrf:
         description:
@@ -79,11 +88,11 @@ state:
     returned: always
     type: string
     sample: "present"
-commands:
-    description: command string sent to the device
+updates:
+    description: commands sent to the device
     returned: always
-    type: string
-    sample: "vrf context ntc ; no shutdown ; description Test test ;"
+    type: list
+    sample: ["vrf context ntc", "shutdown"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -123,7 +132,7 @@ def execute_show(cmds, module, command_type=None):
         response = module.execute(cmds,
             command_type=command_type) if command_type else module.execute(cmds)
     except ShellError, clie:
-        module.fail_json(msg='Error sending {0}'.format(command),
+        module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
     return response
 
@@ -237,6 +246,9 @@ def main():
 
     if vrf == 'default':
         module.fail_json(msg='cannot use default as name of a VRF')
+    elif len(vrf) > 32:
+        module.fail_json(msg='VRF name exceeded max length of 32',
+                         vrf=vrf)
 
     existing = get_vrf(vrf, module)
     args = dict(vrf=vrf, description=description,
