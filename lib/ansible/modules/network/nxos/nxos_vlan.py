@@ -118,11 +118,11 @@ state:
     returned: always
     type: string
     sample: "present"
-commands:
+updates:
     description: command string sent to the device
     returned: always
-    type: string
-    sample: "vlan 20 ; vlan 55 ;"
+    type: list
+    sample: ["vlan 20", "vlan 55"]
 changed:
     description: check to see if a change was made on the device
     returned: always
