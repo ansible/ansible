@@ -15,7 +15,8 @@ if [ "${install_deps}" != "" ]; then
     pip list
 fi
 
-yamllint .
+yamllint ./test
+
 test/sanity/code-smell/replace-urlopen.sh
 test/sanity/code-smell/use-compat-six.sh
 test/sanity/code-smell/boilerplate.sh
