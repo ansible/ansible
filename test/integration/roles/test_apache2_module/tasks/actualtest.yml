@@ -1,0 +1,61 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install apache via apt
+  apt: name=apache2 state=present
+  when: "ansible_os_family == 'Debian'"
+
+- name: install apache via zypper
+  zypper: name=apache2 state=present
+  when: "ansible_os_family == 'Suse'"
+
+- name: disable alias module
+  apache2_module: name=alias state=absent
+
+- name: disable alias module, second run
+  apache2_module: name=alias state=absent
+  register: disable
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - 'not disable.changed'
+
+- name: enable alias module
+  apache2_module: name=alias state=present
+  register: enable
+
+- name: ensure changed on successful enable
+  assert:
+    that:
+      - 'enable.changed'
+
+- name: enable alias module, second run
+  apache2_module: name=alias state=present
+  register: enabletwo
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - 'not enabletwo.changed'
+
+- name: disable alias module, final run
+  apache2_module: name=alias state=absent
+  register: disablefinal
+
+- name: ensure changed on successful disable
+  assert:
+    that:
+      - 'disablefinal.changed'

@@ -21,3 +21,4 @@
     - { role: test_zypper, tags: test_zypper}
     - { role: test_zypper_repository, tags: test_zypper_repository}
     - { role: test_uri, tags: test_uri }
+    - { role: test_apache2_module, tags: test_apache2_module }

@@ -1,0 +1,6 @@
+---
+
+- name: include only on supported systems
+  include: actualtest.yml
+  when: ansible_os_family in ['Debian', 'Suse']
+  # centos/RHEL does not have a2enmod/a2dismod
