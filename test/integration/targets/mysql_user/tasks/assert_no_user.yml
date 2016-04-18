@@ -1,4 +1,4 @@
-# test code to assert no mysql user 
+# test code to assert no mysql user
 # (c) 2014,  Wayne Rosario <wrosario@ansible.com>
 
 # This file is part of Ansible
@@ -17,9 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
-- name: run command to query for mysql user 
+- name: run command to query for mysql user
   command: mysql "-e SELECT User FROM mysql.user where user='{{ user_name }}';"
   register: result
 
-- name: assert mysql user is not present 
+- name: assert mysql user is not present
   assert: { that: "'{{ user_name }}' not in result.stdout" }

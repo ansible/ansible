@@ -22,12 +22,12 @@
 - shell: echo "[general]" > {{ fact_dir }}/preferences.fact
 - shell: echo "bar=loaded" >> {{ fact_dir }}/preferences.fact
 
-- setup: 
-    fact_path: "{{ fact_dir | expanduser }}"  
+- setup:
+    fact_path: "{{ fact_dir | expanduser }}"
     filter: "*local*"
   register: setup_result
 
-- debug: var=setup_result  
+- debug: var=setup_result
 
 - assert:
     that:

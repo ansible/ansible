@@ -23,7 +23,7 @@
 - debug: var=shell_result
 
 - name: changed should always be true for shell
-  assert: 
+  assert:
     that:
        - "shell_result.changed"
 
@@ -35,8 +35,6 @@
 - debug: var=shell_result
 
 - name: changed should be false
-  assert: 
+  assert:
     that:
        - "not shell_result.changed"
-
-

@@ -22,7 +22,7 @@
 
 - name: check win_ping result
   assert:
-    that: 
+    that:
       - "not win_ping_result|failed"
       - "not win_ping_result|changed"
       - "win_ping_result.ping == 'pong'"
@@ -45,7 +45,7 @@
 
 - name: check win_ping.ps1 result with data
   assert:
-    that: 
+    that:
       - "not win_ping_ps1_result|failed"
       - "not win_ping_ps1_result|changed"
       - "win_ping_ps1_result.ping == 'bleep'"

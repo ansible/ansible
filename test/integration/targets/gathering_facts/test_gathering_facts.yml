@@ -129,4 +129,3 @@
           - 'ansible_interfaces|default("UNDEF_NET") != "UNDEF_NET"'
           - 'ansible_mounts|default("UNDEF_HW") == "UNDEF_HW"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
-

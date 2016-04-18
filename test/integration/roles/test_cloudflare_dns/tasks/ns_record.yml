@@ -1,8 +1,8 @@
 ---
 ######## NS record tests #################
 
-# the '.' at the end of the value is intentional                                
-# it must be verified that the '.' will be stripped   
+# the '.' at the end of the value is intentional
+# it must be verified that the '.' will be stripped
 - name: "Test: NS record creation"
   cloudflare_dns:
     account_email: "{{ cloudflare_email }}"

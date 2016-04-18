@@ -4,4 +4,3 @@
     my_var: "Bazinga!"
   tasks:
   - debug: msg="the rendered template is {{ lookup('template', 'template.j2') }}"
-

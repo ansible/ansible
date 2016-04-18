@@ -879,4 +879,3 @@
 - assert:
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
-

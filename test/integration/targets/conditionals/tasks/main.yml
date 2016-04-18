@@ -20,7 +20,7 @@
   shell: echo 'testing'
   when: 1 == 1
   register: result
- 
+
 - name: assert conditional '==' ran
   assert:
     that:

@@ -38,7 +38,7 @@
 
 - name: test replace ssh public key
   cs_sshkeypair: |
-    name={{ cs_resource_prefix }}-sshkey 
+    name={{ cs_resource_prefix }}-sshkey
     public_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDsTI7KJZ8tz/CwQIrSol41c6s3vzkGYCMI8o7P9Et48UG9eRoGaMaGYaTvBTj/VQrD7cfurI6Bn0HTT3FLK3OHOweyelm9rIiQ2hjkSl+2lIKWHu992GO58E5Gcy9yYW4sHGgGLNZkPBKrrj0w7lhmiHjPtVnf+2+7Ix1WOO2/HXPcAHhsX/AlyItDewIL4mr/BT83vq0202sPCiM2cFQJl+5WGwS1wYYK8d167cspsmdyX7OyAFCUB0vueuqjE8MFqJvyIJR9y8Lj9Ny71pSV5/QWrXUgELxMYOKSby3gHkxcIXgYBMFLl4DipRTO74OWQlRRaOlqXlOOQbikcY4T rene.moser@swisstxt.ch"
   register: sshkey3
 - name: verify results of replace ssh public key
@@ -52,7 +52,7 @@
 
 - name: test replace ssh public key idempotence
   cs_sshkeypair: |
-    name={{ cs_resource_prefix }}-sshkey 
+    name={{ cs_resource_prefix }}-sshkey
     public_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDsTI7KJZ8tz/CwQIrSol41c6s3vzkGYCMI8o7P9Et48UG9eRoGaMaGYaTvBTj/VQrD7cfurI6Bn0HTT3FLK3OHOweyelm9rIiQ2hjkSl+2lIKWHu992GO58E5Gcy9yYW4sHGgGLNZkPBKrrj0w7lhmiHjPtVnf+2+7Ix1WOO2/HXPcAHhsX/AlyItDewIL4mr/BT83vq0202sPCiM2cFQJl+5WGwS1wYYK8d167cspsmdyX7OyAFCUB0vueuqjE8MFqJvyIJR9y8Lj9Ny71pSV5/QWrXUgELxMYOKSby3gHkxcIXgYBMFLl4DipRTO74OWQlRRaOlqXlOOQbikcY4T rene.moser@swisstxt.ch"
   register: sshkey4
 - name: verify results of ssh public key idempotence
