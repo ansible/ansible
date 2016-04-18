@@ -76,11 +76,11 @@ state:
     returned: always
     type: string
     sample: "present"
-commands:
-    description: command string sent to the device
+updates:
+    description: commands sent to the device
     returned: always
-    type: string
-    sample: "interface loopback16 ; vrf member ntc ;"
+    type: list
+    sample: ["interface loopback16", "vrf member ntc"]
 changed:
     description: check to see if a change was made on the device
     returned: always
