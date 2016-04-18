@@ -47,11 +47,9 @@ except ImportError:
     import simplejson as json
 
 try:
-    import azure
-    from azure import WindowsAzureError
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
-    print("failed=True msg='`azure` library required for this script'")
+    print("ImportError: {0}".format(str(e)))
     sys.exit(1)
 
 
@@ -194,10 +192,8 @@ class AzureInventory(object):
         try:
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
-        except WindowsAzureError as e:
-            print("Looks like Azure's API is down:")
-            print("")
-            print(e)
+        except Exception as e:
+            print("Error: Failed to access cloud services - {0}".format(str(e)))
             sys.exit(1)
 
     def add_deployments(self, cloud_service):
@@ -207,10 +203,8 @@ class AzureInventory(object):
         try:
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
                 self.add_deployment(cloud_service, deployment)
-        except WindowsAzureError as e:
-            print("Looks like Azure's API is down:")
-            print("")
-            print(e)
+        except Exception as e:
+            print("Error: Failed to access deployments - {0}".format(str(e)))
             sys.exit(1)
 
     def add_deployment(self, cloud_service, deployment):
