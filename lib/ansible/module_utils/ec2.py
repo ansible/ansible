@@ -28,6 +28,11 @@
 import os
 
 try:
+    import boto.ec2
+except:
+    pass # should have had error from import boto already
+
+try:
     import boto3
     HAS_BOTO3 = True
 except:
