@@ -1,6 +1,6 @@
 ---
 - name: Sync ansible repo to ec2 instance
-  synchronize: 
+  synchronize:
     src: "{{ sync_dir }}/"
     dest: "~/ansible"
   no_log: true

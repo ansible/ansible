@@ -39,4 +39,3 @@
     debug: msg="this is the foo handler"
   - name: bar
     debug: msg="this is the bar handler, you should not see this"
-

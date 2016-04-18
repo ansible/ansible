@@ -38,4 +38,3 @@
     ec2_vars: "{{ ec2.results[item.0]['instances'][0] }}"
     ec2_instance_ids: "{{ ec2.results[item.0]['instance_ids'] }}"
   with_indexed_items: slaves
-

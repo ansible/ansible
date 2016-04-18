@@ -9,4 +9,3 @@
     - "install_sysv_result.state == 'file'"
     - "install_sysv_result.mode == '0755'"
     - "install_sysv_result.checksum == '174fa255735064b420600e4c8637ea0eff28d0c1'"
-

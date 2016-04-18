@@ -89,10 +89,10 @@
         load_balancer_port: 80
         instance_port: 80
     health_check:
-        ping_protocol: http 
+        ping_protocol: http
         ping_port: 80
         ping_path: "/"
-        response_timeout: 5 
+        response_timeout: 5
         interval: 30
         unhealthy_threshold: 3
         healthy_threshold: 3
@@ -125,7 +125,7 @@
       - "output.viable_instances == 1"
 
 
-# grow scaling group to 3 
+# grow scaling group to 3
 
 - name: add 2 more instances wait for instances to be deemed healthy (ELB)
   ec2_asg:

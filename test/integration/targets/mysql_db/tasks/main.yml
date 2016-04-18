@@ -27,7 +27,7 @@
   mysql_db: name={{ db_name }} state=present
   register: result
 
-- name: assert output message that database exist 
+- name: assert output message that database exist
   assert:
     that:
        - "result.changed == true"
@@ -37,7 +37,7 @@
   command: mysql "-e show databases like '{{ db_name }}';"
   register: result
 
-- name: assert database exist 
+- name: assert database exist
   assert: { that: "'{{ db_name }}' in result.stdout" }
 
 # ============================================================
@@ -45,7 +45,7 @@
   mysql_db: name={{ db_name }} state=absent
   register: result
 
-- name: assert output message that database does not exist 
+- name: assert output message that database does not exist
   assert:
     that:
        - "result.changed == true"
@@ -55,14 +55,14 @@
   command: mysql "-e show databases like '{{ db_name }}';"
   register: result
 
-- name: assert database does not exist   
+- name: assert database does not exist
   assert: { that: "'{{ db_name }}' not in result.stdout" }
 
 # ============================================================
 - name: test mysql_db encoding param not valid - issue 8075
-  mysql_db: name=datanotvalid state=present encoding=notvalid 
+  mysql_db: name=datanotvalid state=present encoding=notvalid
   register: result
-  ignore_errors: true 
+  ignore_errors: true
 
 - name: assert test mysql_db encoding param not valid - issue 8075 (failed=true)
   assert:
@@ -75,11 +75,11 @@
 - name: test mysql_db using a valid encoding utf8 (expect changed=true)
   mysql_db: name=en{{ db_name }}  state=present encoding=utf8
   register: result
- 
-- name: assert output message created a database   
+
+- name: assert output message created a database
   assert: { that: "result.changed == true" }
 
-- name: test database was created  
+- name: test database was created
   command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
   register: result
 
@@ -94,17 +94,17 @@
   mysql_db: name=en{{ db_name }}  state=present encoding=binary
   register: result
 
-- name: assert output message that database was created 
+- name: assert output message that database was created
   assert: { that: "result.changed == true" }
 
-- name: run command to test database was created 
+- name: run command to test database was created
   command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
   register: result
 
 - name: assert created database is of encoding binary
   assert: { that: "'binary' in result.stdout" }
 
-- name: remove database 
+- name: remove database
   mysql_db: name=en{{ db_name }}  state=absent
 
 # ============================================================
@@ -115,26 +115,26 @@
   mysql_db: name={{ db_user1 }} state=present login_user=user1 login_password=password1
   register: result
 
-- name: assert output message that database was created 
+- name: assert output message that database was created
   assert: { that: "result.changed == true" }
 
 - name: run command to test database was created using user1
   command: mysql "-e show databases like '{{ db_user1 }}';"
   register: result
 
-- name: assert database exist 
+- name: assert database exist
   assert: { that: "'{{ db_user1 }}' in result.stdout" }
 
 # ============================================================
 - name: create user2 to access database with privilege select only
-  mysql_user: name=user2 password=password2 priv=*.*:SELECT state=present 
+  mysql_user: name=user2 password=password2 priv=*.*:SELECT state=present
 
 - name: create database dbuser2 using user2 with no privilege to create (expect failed=true)
   mysql_db: name={{ db_user2 }} state=present login_user=user2 login_password=password2
   register: result
   ignore_errors: true
 
-- name: assert output message that database was not created using dbuser2 
+- name: assert output message that database was not created using dbuser2
   assert:
     that:
        - "result.failed == true"
@@ -144,7 +144,7 @@
   command: mysql "-e show databases like '{{ db_user2 }}';"
   register: result
 
-- name: assert database does not exist   
+- name: assert database does not exist
   assert: { that: "'{{ db_user2 }}' not in result.stdout" }
 
 # ============================================================
@@ -153,7 +153,7 @@
   register: result
   ignore_errors: true
 
-- name: assert output message that database was not deleted using dbuser2 
+- name: assert output message that database was not deleted using dbuser2
   assert:
     that:
        - "result.failed == true"
@@ -163,7 +163,7 @@
   command: mysql "-e show databases like '{{ db_user1 }}';"
   register: result
 
-- name: assert database still exist 
+- name: assert database still exist
   assert: { that: "'{{ db_user1 }}' in result.stdout" }
 
 # ============================================================
@@ -179,7 +179,7 @@
   command: mysql "-e show databases like '{{ db_name }}';"
   register: result
 
-- name: assert database does not exist   
+- name: assert database does not exist
   assert: { that: "'{{ db_user1 }}' not in result.stdout" }
 
 # ============================================================
@@ -188,11 +188,3 @@
 - include: state_dump_import.yml format_type=gz  file=dbdata.gz format_msg_type=gzip
 
 - include: state_dump_import.yml format_type=bz2 file=dbdata.bz2 format_msg_type=bzip2
-  
-
-
-
-
-
-
-

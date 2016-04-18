@@ -447,11 +447,11 @@
   win_file: path={{win_output_dir}}/dirtest state=absent
   register: file_result
 
-- name: stat the removed directory 
+- name: stat the removed directory
   win_stat: path={{win_output_dir}}/dirtest
   register: stat_result
 
-- name: assert the directory does not exist 
+- name: assert the directory does not exist
   assert:
     that:
        - file_result.changed
@@ -461,7 +461,7 @@
   win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=directory
   register: file_result
 
-- name: stat the directory with spaces and parens 
+- name: stat the directory with spaces and parens
   win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
   register: stat_result
 
@@ -491,4 +491,3 @@
 
 - name: clean up sub2
   win_file: path={{win_output_dir}}/sub2 state=absent
-

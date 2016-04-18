@@ -1,4 +1,3 @@
-
 - assert:
     that:
       - 'secret_var == "secret"'

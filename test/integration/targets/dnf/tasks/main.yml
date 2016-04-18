@@ -20,4 +20,3 @@
 # We want to test that for people who don't want to upgrade their systems.
 - include: 'dnf.yml'
   when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and False) or (ansible_distribution in ['Fedora'] and ansible_distribution_major_version >= 23)
-

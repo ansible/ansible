@@ -7,4 +7,3 @@ project_id: "{{ gce_project_id }}"
 zone: "us-central1-c"
 machine_type: f1-micro
 image: debian-8
-

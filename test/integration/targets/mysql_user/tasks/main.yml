@@ -93,14 +93,14 @@
 # Assert user has access to multiple databases
 #
 - name: give users access to multiple databases
-  mysql_user: name={{ item[0]  }} priv={{ item[1] }}.*:ALL append_privs=yes password={{ user_password_1 }} 
+  mysql_user: name={{ item[0]  }} priv={{ item[1] }}.*:ALL append_privs=yes password={{ user_password_1 }}
   with_nested:
-    - [ '{{ user_name_1 }}' , '{{ user_name_2 }}']
+    - [ '{{ user_name_1 }}', '{{ user_name_2 }}']
     - "{{db_names}}"
 
 - name: show grants access for user1 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
-  register: result 
+  register: result
 
 - name: assert grant access for user1 on multiple database
   assert: { that: "'{{ item }}' in result.stdout" }
@@ -108,7 +108,7 @@
 
 - name: show grants access for user2 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_2 }}'@'localhost';"
-  register: result 
+  register: result
 
 - name: assert grant access for user2 on multiple database
   assert: { that: "'{{ item }}' in result.stdout" }
@@ -150,7 +150,7 @@
 # Update user password for a user.
 # Assert the user password is updated and old password can no longer be used.
 #
-- include: user_password_update_test.yml 
+- include: user_password_update_test.yml
 
 # ============================================================
 # Assert create user with SELECT privileges, attempt to create database and update privileges to create database
@@ -171,10 +171,3 @@
 # Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
-
-
-
-
-
-
-

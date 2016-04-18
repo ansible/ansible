@@ -5,5 +5,5 @@
 
   gather_facts: False
 
-  roles: 
+  roles:
     - { role: test_good_parsing, tags: test_good_parsing }

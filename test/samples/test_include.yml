@@ -22,4 +22,3 @@
   #handlers:
   #- name: foo
   #  include: include.yml a="this is a handler"
-

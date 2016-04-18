@@ -3,7 +3,7 @@
   gather_facts: no
   vars:
     alpha: [ 'a', 'b', 'c', 'd' ]
-    numbers:  [ 1, 2, 3, 4 ]
+    numbers: [ 1, 2, 3, 4 ]
   tasks:
   - debug: msg="{{ item.0 }} and {{ item.1 }}"
     with_together:

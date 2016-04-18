@@ -1,5 +1,5 @@
 - name: set_handler_fact_1
-  set_fact: 
+  set_fact:
     handler1_called: True
 
 - name: set_handler_fact_2

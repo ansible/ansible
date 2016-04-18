@@ -23,4 +23,3 @@
   - name: EXPECTED FAILURE ensure fail action stops execution
     fail:
       msg: fail actually failed (this is expected)
-

@@ -26,7 +26,7 @@
       - "cb == '2'"
       - "cc == '3'"
 
-- set_fact: 
+- set_fact:
      a: 101
      b: 102
      c: 103
@@ -34,7 +34,7 @@
 - include: included_task1.yml a={{a}} b={{b}} c=103
 
 - name: verify variable include params
-  assert: 
+  assert:
     that:
       - "ca == 101"
       - "cb == 102"
@@ -80,5 +80,3 @@
     # both these via a handler include
     - included_handler
     - verify_handler
-
-

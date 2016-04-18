@@ -26,4 +26,3 @@
         dest: "{{ git_dir }}"
     - name: Invoke ansible in hacking mode
       shell: "cd {{ git_dir }} && . hacking/env-setup && ansible --version && ansible-playbook --version"
-

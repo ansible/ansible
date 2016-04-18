@@ -3,4 +3,3 @@
   roles:
   - { role: role_a, tags: A, when: skip != "A" }
   - { role: role_b, tags: B, when: skip != "B" }
-

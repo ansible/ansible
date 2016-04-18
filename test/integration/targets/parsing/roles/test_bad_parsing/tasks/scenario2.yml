@@ -2,4 +2,3 @@
   file: path={{ test_file }} owner=test2 {{ test_input }}
   failed_when: False # ignore the module, just test the parser
   tags: scenario2
-
