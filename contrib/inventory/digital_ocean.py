@@ -10,17 +10,10 @@ In addition to the --list and --host options used by Ansible, there are options
 for generating JSON of other DigitalOcean data.  This is useful when creating
 droplets.  For example, --regions will return all the DigitalOcean Regions.
 This information can also be easily found in the cache file, whose default
-location is /tmp/ansible-digital_ocean.cache).
+location is ./ansible-digital_ocean.cache).
 
 The --pretty (-p) option pretty-prints the output for better human readability.
 
-----
-Although the cache stores all the information received from DigitalOcean,
-the cache is not used for current droplet information (in --list, --host,
---all, and --droplets).  This is so that accurate droplet information is always
-found.  You can force this script to use the cache with --force-cache.
-
-----
 Configuration is read from `digital_ocean.ini`, then from environment variables,
 then and command-line arguments.
 
@@ -224,7 +217,7 @@ or environment variables (DO_API_TOKEN)''')
             self.load_from_digital_ocean()
             json_data = self.data
         elif self.args.host:
-            json_data = self.load_droplet_variables_for_host()
+            json_data = self.load_droplet_variables_for_host(int(self.args.host))
         else:    # '--list' this is last to make it default
             self.load_from_digital_ocean('droplets')
             self.build_inventory()
@@ -323,8 +316,7 @@ or environment variables (DO_API_TOKEN)''')
         '''Get JSON from DigitalOcean API'''
         if self.args.force_cache:
             return
-        # We always get fresh droplets
-        if self.is_cache_valid() and not (resource=='droplets' or resource is None):
+        if self.is_cache_valid():
             return
         if self.args.refresh_cache:
             resource=None
@@ -352,6 +344,8 @@ or environment variables (DO_API_TOKEN)''')
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
         self.inventory = {}
+        self.inventory['_meta'] = {}
+        self.inventory['_meta']['hostvars'] = {}
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
@@ -364,30 +358,30 @@ or environment variables (DO_API_TOKEN)''')
                         continue
             else:
                 dest = droplet['ip_address']
+           
+            dest_list = { 'hosts': [ dest ], 'vars': self.group_variables }
 
-            dest = { 'hosts': [ dest ], 'vars': self.group_variables }
-
-            self.inventory[droplet['id']] = dest
-            self.inventory[droplet['name']] = dest
-            self.inventory['region_' + droplet['region']['slug']] = dest
-            self.inventory['image_' + str(droplet['image']['id'])] = dest
-            self.inventory['size_' + droplet['size']['slug']] = dest
+            self.inventory[droplet['id']] = dest_list
+            self.inventory[droplet['name']] = dest_list
+            self.inventory['region_' + droplet['region']['slug']] = dest_list
+            self.inventory['image_' + str(droplet['image']['id'])] = dest_list
+            self.inventory['size_' + droplet['size']['slug']] = dest_list
+            self.inventory['_meta']['hostvars'][droplet['ip_address']] = droplet
 
             image_slug = droplet['image']['slug']
             if image_slug:
-                self.inventory['image_' + self.to_safe(image_slug)] = dest
+                self.inventory['image_' + self.to_safe(image_slug)] = dest_list
             else:
                 image_name = droplet['image']['name']
                 if image_name:
-                    self.inventory['image_' + self.to_safe(image_name)] = dest
+                    self.inventory['image_' + self.to_safe(image_name)] = dest_list
 
-            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest
-            self.inventory['status_' + droplet['status']] = dest
+            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest_list
+            self.inventory['status_' + droplet['status']] = dest_list
 
 
-    def load_droplet_variables_for_host(self):
+    def load_droplet_variables_for_host(self, host):
         '''Generate a JSON response to a --host call'''
-        host = int(self.args.host)
 
         droplet = self.manager.show_droplet(host)
 
