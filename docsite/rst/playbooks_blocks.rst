@@ -61,6 +61,23 @@ with whatever you need to do to recover from the previous error. The ``always`` 
 error did or did not occur in the ``block`` and ``rescue`` sections.
 
 
+Another example is how to run handlers after an error occurred :
+
+.. code-block:: YAML
+ :emphasize-lines: 4,8
+ :caption: Block run handlers in error handling
+
+  tasks:
+   - block:
+       - debug: msg='i execute normally'
+         notify: run me even after an error
+       - command: /bin/false
+     rescue:
+       - name: make sure all handlers run
+         meta: flush_handlers
+  handlers:
+    - name: run me even after an error
+      debug: msg='this handler runs even on error'
 
 .. seealso::
 
