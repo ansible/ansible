@@ -272,7 +272,8 @@ options:
     required: false
     default: null
     description:
-      - URL to the proxy server that yum should use.
+      - URL to the proxy server that yum should use. Set to C(_none_) to disable
+        the global proxy setting.
   proxy_password:
     required: false
     default: null
