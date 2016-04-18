@@ -82,4 +82,4 @@ Individuals who've been asked to become a part of this group have generally been
 * Chris Houseknecht
 * Trond Hindenes
 * Jon Hawkesworth
-
+* Will Thames
