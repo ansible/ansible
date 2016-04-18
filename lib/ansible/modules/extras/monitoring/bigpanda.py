@@ -109,7 +109,7 @@ def main():
         argument_spec=dict(
             component=dict(required=True, aliases=['name']),
             version=dict(required=True),
-            token=dict(required=True),
+            token=dict(required=True, no_log=True),
             state=dict(required=True, choices=['started', 'finished', 'failed']),
             hosts=dict(required=False, default=[socket.gethostname()], aliases=['host']),
             env=dict(required=False),
