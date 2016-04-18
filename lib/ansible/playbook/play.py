@@ -75,6 +75,8 @@ class Play(Base, Taggable, Become):
 
     # Role Attributes
     _roles               = FieldAttribute(isa='list', default=[], priority=90)
+    _roles_file          = FieldAttribute(isa='string', default='', always_post_validate=True)
+    _roles_path          = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # Block (Task) Lists Attributes
     _handlers            = FieldAttribute(isa='list', default=[])

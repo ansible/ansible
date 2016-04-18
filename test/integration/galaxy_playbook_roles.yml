@@ -1,0 +1,9 @@
+- hosts: localhost
+  connection: local
+  roles_file: "{{ playbook_dir }}/galaxy_roles.yml"
+  roles_path: "{{ playbook_dir }}/roles"
+
+  roles:
+  - "git-ansible-galaxy"
+  - "http-role"
+  - "hg-ansible-galaxy"

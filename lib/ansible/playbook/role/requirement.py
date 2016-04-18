@@ -26,6 +26,7 @@ import yaml
 from ansible.errors import AnsibleError
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.galaxy.role import GalaxyRole
+import ansible.constants as C
 
 __all__ = ['RoleRequirement']
 
@@ -207,10 +208,15 @@ def read_roles_file(galaxy, role_file):
     return roles_left
 
 
-def install_roles(roles_left, galaxy):
+def install_roles(roles_left, galaxy, use_whitelist=False, whitelist=C.AUTO_INSTALL_ROLES_WHITELIST):
     """ Helper function to allow other CLI commands install roles """
 
     for role in roles_left:
+        if use_whitelist:
+            if not any([whitelistitem in role.src for whitelistitem in whitelist]):
+                display.warning("Role %s from %s not in whitelist %s" % (role.name, role.src, whitelist))
+                exit_without_ignore(galaxy.ignore_errors)
+                continue
         display.vvv('Installing role %s ' % role.name)
         # query the galaxy API for the role data
 
