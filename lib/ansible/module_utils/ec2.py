@@ -27,6 +27,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 try:
+    import boto.ec2
+except:
+    pass # error should already be covered by import boto
+
+try:
     from distutils.version import LooseVersion
     HAS_LOOSE_VERSION = True
 except:
