@@ -250,7 +250,6 @@ def main():
     we use the following to make sure right letter case is used so that delta
     results will be consistent to the actual configuration."""
     if existing:
-        module.exit_json(existing=existing)
         if existing['admin_state'].lower() == admin_state:
             proposed['admin_state'] = existing['admin_state']
 
