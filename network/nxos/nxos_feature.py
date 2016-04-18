@@ -69,10 +69,10 @@ state:
     type: string
     sample: "disabled"
 updates:
-    description: command string sent to the device
+    description: commands sent to the device
     returned: always
-    type: string
-    sample: "no feature eigrp ;"
+    type: list
+    sample: ["no feature eigrp"]
 changed:
     description: check to see if a change was made on the device
     returned: always
