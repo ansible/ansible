@@ -68,7 +68,7 @@ state:
     returned: always
     type: string
     sample: "disabled"
-commands:
+updates:
     description: command string sent to the device
     returned: always
     type: string
