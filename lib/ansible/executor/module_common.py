@@ -385,8 +385,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             compression_method = zipfile.ZIP_STORED
 
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ziploader_cache')
-        if not os.path.exists(lookup_path):
-            os.mkdir(lookup_path)
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
 
         zipdata = None
@@ -416,6 +414,10 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
                     # written file)
+                    if not os.path.exists(lookup_path):
+                        # Note -- if we have a global function to setup, that would
+                        # be a better place to run this
+                        os.mkdir(lookup_path)
                     with open(cached_module_filename + '-part', 'w') as f:
                         f.write(zipdata)
 
@@ -428,7 +430,10 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                 # Another process wrote the file while we were waiting for
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
-                zipdata = open(cached_module_filename, 'rb').read()
+                try:
+                    zipdata = open(cached_module_filename, 'rb').read()
+                except IOError:
+                    raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
                 # Fool the check later... I think we should just remove the check
                 snippet_names.add('basic')
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
