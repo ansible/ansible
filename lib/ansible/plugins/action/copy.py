@@ -152,6 +152,8 @@ class ActionModule(ActionBase):
         diffs = []
         for source_full, source_rel in source_files:
 
+            source_full = self._loader.get_real_file(source_full)
+
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
@@ -218,6 +220,7 @@ class ActionModule(ActionBase):
 
                 # We have copied the file remotely and no longer require our content_tempfile
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._loader.cleanup_tmp_file(source_full)
 
                 # fix file permissions when the copy is done as a different user
                 self._fixup_perms(tmp, remote_user, recursive=True)
@@ -246,6 +249,7 @@ class ActionModule(ActionBase):
                 # no need to transfer the file, already correct hash, but still need to call
                 # the file module in case we want to change attributes
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._loader.cleanup_tmp_file(source_full)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
