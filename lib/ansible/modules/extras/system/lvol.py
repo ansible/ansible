@@ -68,6 +68,11 @@ options:
     description:
     - The name of the snapshot volume
     required: false
+  pvs:
+    version_added: "2.1"
+    description:
+    - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
+    required: false
 notes:
   - Filesystems on top of the volume are not resized.
 '''
