@@ -38,7 +38,6 @@ options:
         file in role or playbook root folder in templates unless a full
         path to the file is given.
     required: true
-    default: null
   force:
     description:
       - The force argument instructs the module not to consider the
