@@ -197,9 +197,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
         )
 
         self.has_journal = basic.has_journal
-        if self.has_journal:
-            # Systems with journal can still test syslog
-            basic.has_journal = False
+        basic.has_journal = True
 
         self.module_patcher = None
 
