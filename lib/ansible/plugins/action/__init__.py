@@ -292,8 +292,26 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _fixup_perms(self, remote_path, remote_user, execute=False, recursive=True):
         """
-        If the become_user is unprivileged and different from the
-        remote_user then we need to make the files we've uploaded readable by them.
+        We need the files we upload to be readable (and sometimes executable)
+        by the user being sudo'd to but we want to limit other people's access
+        (because the files could contain passwords or other private
+        information.  We achieve this in one of these ways:
+
+        * If no sudo is performed or the remote_user is sudo'ing to
+          themselves, we don't have to change permisions.
+        * If the remote_user sudo's to a privileged user (for instance, root),
+          we don't have to change permissions
+        * If the remote_user is a privileged user and sudo's to an
+          unprivileged user then we change the owner of the file to the
+          unprivileged user so they can read it.
+        * If the remote_user is an unprivieged user and we're sudo'ing to
+          a second unprivileged user then we attempt to grant the second
+          unprivileged user access via file system acls.
+        * If granting file system acls fails we can set the file to be world
+          readable so that the second unprivileged user can read the file.
+          Since this could allow other users to get access to private
+          information we only do this ansible is configured with
+          "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until
@@ -318,14 +336,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # apologize later:
             res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
             if res['rc'] == 0:
-                # Only continue with chmod if chown worked
+                # root can read things that don't have read bit but can't
+                # execute them without the execute bit, so we might need to
+                # set that even if we're root. We just ran chown successfully,
+                # so apparently we are root.
                 if execute:
-                    # root can read things that don't have read bit but can't
-                    # execute them.
                     res = self._remote_chmod('u+x', remote_path, recursive=recursive)
                     if res['rc'] != 0:
-                        raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+                        raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
 
+            elif remote_user == 'root':
+                raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.  Unprivileged become user would be unable to read the file.')
             else:
                 # Chown'ing failed. We're probably lacking root privileges; let's try something else.
                 if execute:
