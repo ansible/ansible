@@ -194,6 +194,8 @@ class PlaybookExecutor:
         finally:
             if self._tqm is not None:
                 self._tqm.cleanup()
+            if self._loader:
+                self._loader.cleanup_all_tmp_files()
 
         if self._options.syntax:
             display.display("No issues encountered")
