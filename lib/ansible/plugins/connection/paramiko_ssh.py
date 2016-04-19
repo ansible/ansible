@@ -282,13 +282,9 @@ class Connection(ConnectionBase):
             chan.exec_command(cmd)
             if self._play_context.prompt:
                 passprompt = False
-                while True:
+                become_sucess = False
+                while not (become_sucess or passprompt):
                     display.debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output):
-                        break
-                    elif self.check_password_prompt(become_output):
-                        passprompt = True
-                        break
 
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
@@ -299,6 +295,17 @@ class Connection(ConnectionBase):
                             break
                             #raise AnsibleError('ssh connection closed waiting for password prompt')
                     become_output += chunk
+
+                    # need to check every line because we might get lectured
+                    # and we might get the middle of a line in a chunk
+                    for l in become_output.splitlines(True):
+                        if self.check_become_success(l):
+                            become_sucess = True
+                            break
+                        elif self.check_password_prompt(l):
+                            passprompt = True
+                            break
+
                 if passprompt:
                     if self._play_context.become and self._play_context.become_pass:
                         chan.sendall(self._play_context.become_pass + '\n')
