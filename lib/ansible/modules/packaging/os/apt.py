@@ -562,7 +562,7 @@ def remove(m, pkgspec, cache, purge=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, autoremove, check_arg, packages)
+        cmd = "%s -q -y %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
         if m._diff:
