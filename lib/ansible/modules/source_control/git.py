@@ -650,7 +650,8 @@ def switch_version(git_path, module, dest, remote, version, verify_commit):
             else:
                 (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
                 if rc != 0:
-                    module.fail_json(msg="Failed to checkout branch %s" % version)
+                    module.fail_json(msg="Failed to checkout branch %s" % version,
+                                     stdout=out, stderr=err, rc=rc)
                 cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
         else:
             cmd = "%s checkout --force %s" % (git_path, version)
@@ -658,14 +659,17 @@ def switch_version(git_path, module, dest, remote, version, verify_commit):
         branch = get_head_branch(git_path, module, dest, remote)
         (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
         if rc != 0:
-            module.fail_json(msg="Failed to checkout branch %s" % branch)
+            module.fail_json(msg="Failed to checkout branch %s" % branch,
+                             stdout=out, stderr=err, rc=rc)
         cmd = "%s reset --hard %s" % (git_path, remote)
     (rc, out1, err1) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         if version != 'HEAD':
-            module.fail_json(msg="Failed to checkout %s" % (version), stdout=out1, stderr=err1)
+            module.fail_json(msg="Failed to checkout %s" % (version),
+                             stdout=out1, stderr=err1, rc=rc, cmd=cmd)
         else:
-            module.fail_json(msg="Failed to checkout branch %s" % (branch))
+            module.fail_json(msg="Failed to checkout branch %s" % (branch),
+                             stdout=out1, stderr=err1, rc=rc, cmd=cmd)
 
     if verify_commit:
         verify_commit_sign(git_path, module, dest, version)
