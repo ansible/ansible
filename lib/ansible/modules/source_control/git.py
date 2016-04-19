@@ -321,14 +321,18 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     except:
         pass
     cmd = [ git_path, 'clone' ]
+
+    branch_or_tag = is_remote_branch(git_path, module, dest, repo, version) \
+        or is_remote_tag(git_path, module, dest, repo, version)
+
     if bare:
         cmd.append('--bare')
     else:
         cmd.extend([ '--origin', remote ])
-        if is_remote_branch(git_path, module, dest, repo, version) \
-        or is_remote_tag(git_path, module, dest, repo, version):
+        if branch_or_tag:
             cmd.extend([ '--branch', version ])
-    if depth:
+    if depth and (branch_or_tag or version == 'HEAD' or refspec):
+        # only use depth if the remote opject is branch or tag (i.e. fetchable)
         cmd.extend([ '--depth', str(depth) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
@@ -532,8 +536,9 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
             fetch_cmd.extend(['--depth', str(depth)])
 
     fetch_cmd.extend([remote])
-    if not depth:
+    if not depth or not refspecs:
         # don't try to be minimalistic but do a full clone
+        # also do this if depth is given, but version is something that can't be fetched directly
         if bare:
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
