@@ -239,14 +239,14 @@ class VariableManager:
             # files and then any vars from host_vars files which may apply to
             # this host or the groups it belongs to
 
-            # we merge in vars from groups specified in the inventory (INI or script)
-            all_vars = combine_vars(all_vars, host.get_group_vars())
-
-            # then we merge in the special 'all' group_vars first, if they exist
+            # we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
                 data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
+
+            # we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
 
             for group in sorted(host.get_groups(), key=lambda g: g.depth):
                 if group.name in self._group_vars_files and group.name != 'all':
