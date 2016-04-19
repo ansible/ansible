@@ -35,6 +35,7 @@ options:
      required: false
      choices: ['yes', 'no']
      default: no
+     version_added: "2.1"
    state:
      description:
         - indicate the desired state of the resource
