@@ -113,12 +113,7 @@ changed:
     returned: always
     type: bool
     sample: True
-check_mode:
-    description: Whether or not the module was executed in check mode.
-    returned: always
-    type: bool
-    sample: True
-Results:
+state:
     description: Facts about the current state of the object.
     returned: always
     type: dict
@@ -176,9 +171,9 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group=dict(required=True),
-            name=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
+            resource_group=dict(type='str', required=True),
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
             allocation_method=dict(type='str', default='Dynamic', choices=['Dynamic', 'Static']),
             domain_name=dict(type='str', aliases=['domain_name_label']),
@@ -194,7 +189,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            results=dict()
+            state=dict()
         )
 
         super(AzureRMPublicIPAddress, self).__init__(derived_arg_spec=self.module_arg_spec,
@@ -204,8 +199,6 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
 
         for key in self.module_arg_spec.keys() + ['tags']:
             setattr(self, key, kwargs[key])
-
-        self.results['check_mode'] = self.check_mode
 
         results = dict()
         changed = False
@@ -250,7 +243,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                 self.log("CHANGED: pip {0} does not exist but requested state is 'present'".format(self.name))
                 changed = True
 
-        self.results['results'] = results
+        self.results['state'] = results
         self.results['changed'] = changed
 
         if self.check_mode:
@@ -281,7 +274,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                         pip.dns_settings = PublicIPAddressDnsSettings(
                             domain_name_label=self.domain_name
                         )
-                self.results['results'] = self.create_or_update_pip(pip)
+                self.results['state'] = self.create_or_update_pip(pip)
             elif self.state == 'absent':
                 self.log('Delete public ip {0}'.format(self.name))
                 self.delete_pip()
@@ -303,7 +296,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             self.fail("Error deleting {0} - {1}".format(self.name, str(exc)))
         self.get_poller_result(poller)
         # Delete returns nada. If we get here, assume that all is well.
-        self.results['results']['status'] = 'Deleted'
+        self.results['state']['status'] = 'Deleted'
         return True
 
 
