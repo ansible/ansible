@@ -328,7 +328,7 @@ be applied to single tasks only, once a playbook is completed.
 .. _dynamic_variables:
 .. _interpolate_variables:
 
-When should I use {{ }}? Also, howto interpolate variables or dyanmic variable names
+When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A steadfast rule is 'always use {{ }} except when `when:`'.
