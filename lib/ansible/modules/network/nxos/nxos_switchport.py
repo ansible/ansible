@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/> .
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 DOCUMENTATION = '''
@@ -44,7 +44,7 @@ options:
     mode:
         description:
             - Mode for the Layer 2 port
-        required: null
+        required: false
         default: null
         choices: ['access','trunk']
     access_vlan:
@@ -66,14 +66,14 @@ options:
     state:
         description:
             - Manage the state of the resource.
-        required: null
+        required: false
         default:  present
         choices: ['present','absent', 'unconfigured']
 
 '''
 EXAMPLES = '''
 # ENSURE Eth1/5 is in its default switchport state
- - nxos_switchport: interface=eth1/5 state=unconfigured host={{ inventory_hostname }}
+- nxos_switchport: interface=eth1/5 state=unconfigured host={{ inventory_hostname }}
 
 # ENSURE Eth1/5 is configured for access vlan 20
 - nxos_switchport: interface=eth1/5 mode=access access_vlan=20 host={{ inventory_hostname }}
