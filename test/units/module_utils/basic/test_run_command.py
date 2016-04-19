@@ -25,11 +25,10 @@ import sys
 import time
 from io import BytesIO, StringIO
 
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
-
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
+
+from units.mock.procenv import swap_stdin_and_argv
 
 from ansible.module_utils import basic
 from ansible.module_utils.basic import AnsibleModule
@@ -46,9 +45,7 @@ class OpenBytesIO(BytesIO):
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleRunCommand(unittest.TestCase):
-
     def setUp(self):
-
         self.cmd_out = {
             # os.read() is returning 'bytes', not strings
             sentinel.stdout: BytesIO(),
@@ -66,11 +63,10 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
         self.module = AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
@@ -95,6 +91,11 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.select.select.side_effect = mock_select
 
         self.addCleanup(patch.stopall)
+
+
+    def tearDown(self):
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
 
     def test_list_as_args(self):
         self.module.run_command(['/bin/ls', 'a', ' b', 'c '])

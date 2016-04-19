@@ -142,6 +142,7 @@ def debug(command, zipped_mod, json_params):
 
     # Okay to use __file__ here because we're running from a kept file
     basedir = os.path.abspath(os.path.dirname(__file__))
+    args_path = os.path.join(basedir, 'args')
     if command == 'explode':
         # transform the ZIPDATA into an exploded directory of code and then
         # print the path to the code.  This is an easy way for people to look
@@ -163,6 +164,11 @@ def debug(command, zipped_mod, json_params):
                 f.write(z.read(filename))
                 f.close()
 
+        # write the args file
+        f = open(args_path, 'w')
+        f.write(json_params)
+        f.close()
+
         print('Module expanded into:')
         print('%%s' %% os.path.join(basedir, 'ansible'))
         exitcode = 0
@@ -171,7 +177,29 @@ def debug(command, zipped_mod, json_params):
         # Execute the exploded code instead of executing the module from the
         # embedded ZIPDATA.  This allows people to easily run their modified
         # code on the remote machine to see how changes will affect it.
-        exitcode = invoke_module(os.path.join(basedir, 'ansible_module_%(ansible_module)s.py'), basedir, json_params)
+        # This differs slightly from default Ansible execution of Python modules
+        # as it passes the arguments to the module via a file instead of stdin.
+
+        pythonpath = os.environ.get('PYTHONPATH')
+        if pythonpath:
+            os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
+        else:
+            os.environ['PYTHONPATH'] = basedir
+
+        p = subprocess.Popen(['%(interpreter)s', 'ansible_module_%(ansible_module)s.py', args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+
+        if not isinstance(stderr, (bytes, unicode)):
+            stderr = stderr.read()
+        if not isinstance(stdout, (bytes, unicode)):
+            stdout = stdout.read()
+        if PY3:
+            sys.stderr.buffer.write(stderr)
+            sys.stdout.buffer.write(stdout)
+        else:
+            sys.stderr.write(stderr)
+            sys.stdout.write(stdout)
+        return p.returncode
 
     elif command == 'excommunicate':
         # This attempts to run the module in-process (by importing a main
@@ -182,8 +210,9 @@ def debug(command, zipped_mod, json_params):
         # when using this that are only artifacts of how we're invoking here,
         # not actual bugs (as they don't affect the real way that we invoke
         # ansible modules)
-        sys.stdin = IOStream(json_params)
-        sys.path.insert(0, basedir)
+
+        # stub the
+        sys.argv = ['%(ansible_module)s', args_path]
         from ansible_module_%(ansible_module)s import main
         main()
         print('WARNING: Module returned to wrapper instead of exiting')
