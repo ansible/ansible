@@ -329,7 +329,7 @@ class DataLoader():
         real_path = self.path_dwim(file_path)
 
         try:
-            with open(real_path, 'rb') as f:
+            with open(to_bytes(real_path), 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
                     # if the file is encrypted and no password was specified,
