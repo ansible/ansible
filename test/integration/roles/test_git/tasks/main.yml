@@ -562,3 +562,52 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
+
+  # Test for https://github.com/ansible/ansible-modules-core/issues/3456
+  # clone a repo with depth and version specified
+
+- name: clone repo with both version and depth specified
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: run a second time (now fetch, not clone)
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+  register: git_fetch
+
+- name: ensure the fetch succeeded
+  assert:
+    that: git_fetch|success
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: clone repo with both version and depth specified
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: switch to older branch with depth=1 (uses fetch)
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlybranch
+  register: git_fetch
+
+- name: ensure the fetch succeeded
+  assert:
+    that: git_fetch|success
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
