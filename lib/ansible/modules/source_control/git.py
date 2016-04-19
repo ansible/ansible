@@ -522,7 +522,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
         elif version == 'HEAD':
             refspecs.append('HEAD')
         elif is_remote_branch(git_path, module, dest, repo, version):
-            refspecs.append('+refs/heads/'+version+':refs/heads/'+version)
+            refspecs.append(version)
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/'+version+':refs/tags/'+version)
         if refspecs:
