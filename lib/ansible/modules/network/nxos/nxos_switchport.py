@@ -205,7 +205,7 @@ def interface_is_portchannel(interface, module):
     intf_type = get_interface_type(interface)
     if intf_type == 'ethernet':
         command = 'show interface ' + interface
-        body = execute_show_command(command, module)[0]
+        body = execute_show_command(command, module)
         try:
             interface_table = body[0]['TABLE_interface']['ROW_interface']
         except (KeyError, AttributeError, IndexError):
