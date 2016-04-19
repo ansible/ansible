@@ -126,6 +126,8 @@ def main():
     component = module.params['component']
     name = module.params['name']
     value = module.params['value']
+    if not isinstance(value, str):
+        value = json.dumps(value)
     vhost = module.params['vhost']
     state = module.params['state']
     node = module.params['node']
