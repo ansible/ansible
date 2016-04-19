@@ -1438,6 +1438,7 @@ class AnsibleModule(object):
         # debug overrides to read args from file or cmdline
 
         # Avoid tracebacks when locale is non-utf8
+        # We control the args and we pass them as utf8
         if len(sys.argv) > 1:
             if os.path.isfile(sys.argv[1]):
                 fd = open(sys.argv[1], 'rb')
@@ -1445,6 +1446,8 @@ class AnsibleModule(object):
                 fd.close()
             else:
                 buffer = sys.argv[1]
+                if sys.version_info >= (3,):
+                    buffer = buffer.encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
             if sys.version_info < (3,):
