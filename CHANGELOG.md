@@ -12,9 +12,6 @@ Ansible Changes By Release
 * Added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
 * Added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
 * New meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
-* added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
-* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
-* new meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
 * copy module can now transparently use a vaulted file as source, if vault passwords were provided it will decrypt and copy on the fly.
 
 ####New Modules:
