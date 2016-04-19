@@ -1,13 +1,17 @@
 Ansible Changes By Release
 ==========================
 
-## 2.1 TBD - ACTIVE DEVELOPMENT
+## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
 
-* added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
-* added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
-* new meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
+* Added the ability to specify includes as "static" (either through a configuration option or on a per-include basis). When includes are static,
+  they are loaded at compile time and cannot contain dynamic features like loops.
+* Added a new option for tasks: `loop_control`. This currently only supports one option - `loop_var`, which allows a different loop variable from `item` to be used.
+* Added the ability to send per-item callbacks, rather than a batch update (this more closely resembles the behavior of Ansible 1.x).
+* Added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
+* Added ansible-console tool, a REPL shell that allows running adhoc tasks against a chosen inventory (based on  https://github.com/dominis/ansible-shell)
+* New meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
 
 ####New Modules:
 - aws
