@@ -22,7 +22,7 @@ version_added: "2.1"
 author: "Peter sprygada (@privateip)"
 short_description: Manage Cisco IOS device configurations over SSH
 description:
-  - Manages network device configurations over SSH.  This module
+  - Manages Cisco IOS network device configurations over SSH.  This module
     allows implementors to work with the device running-config.  It
     provides a way to push a set of commands onto a network device
     by evaluting the current running-config and only pushing configuration
@@ -37,7 +37,7 @@ options:
         runtime.  By default the task will first search for the source
         file in role or playbook root folder in templates unless a full
         path to the file is given.
-    required: false
+    required: true
     default: null
   force:
     description:
@@ -84,15 +84,21 @@ options:
 EXAMPLES = """
 - name: push a configuration onto the device
   ios_template:
+    host: hostname
+    username: foo
     src: config.j2
 
 - name: forceable push a configuration onto the device
   ios_template:
+    host: hostname
+    username: foo
     src: config.j2
     force: yes
 
 - name: provide the base configuration for comparision
   ios_template:
+    host: hostname
+    username: foo
     src: candidate_config.txt
     config: current_config.txt
 """
