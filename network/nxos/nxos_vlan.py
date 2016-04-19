@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/> .
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 DOCUMENTATION = '''
@@ -305,7 +305,10 @@ def get_cli_body_ssh(command, response, module):
 
 def execute_show(cmds, module, command_type=None):
     try:
-        response = module.execute(cmds, command_type=command_type) if command_type else module.execute(cmds)
+        if command_type:
+            response = module.execute(cmds, command_type=command_type)
+        else:
+            response = module.execute(cmds)
     except ShellError, clie:
         module.fail_json(msg='Error sending {0}'.format(command),
                          error=str(clie))
