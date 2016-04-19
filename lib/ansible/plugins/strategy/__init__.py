@@ -402,10 +402,9 @@ class StrategyBase:
 
         host_name = host_info.get('host_name')
 
-        # Check if host in cache, add if not
-        if host_name in self._inventory._hosts_cache:
-            new_host = self._inventory._hosts_cache[host_name]
-        else:
+        # Check if host in inventory, add if not
+        new_host = self._inventory.get_host(host_name)
+        if not new_host:
             new_host = Host(name=host_name)
             self._inventory._hosts_cache[host_name] = new_host
 
