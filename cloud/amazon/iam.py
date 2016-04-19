@@ -534,12 +534,12 @@ def main():
     new_path = module.params.get('new_path')
     key_count = module.params.get('key_count')
     key_state = module.params.get('access_key_state')
+    key_ids = module.params.get('access_key_ids')
     if key_state:
         key_state = key_state.lower()
         if any([n in key_state for n in ['active', 'inactive']]) and not key_ids:
             module.fail_json(changed=False, msg="At least one access key has to be defined in order"
                                                 " to use 'active' or 'inactive'")
-    key_ids = module.params.get('access_key_ids')
 
     if iam_type == 'user' and module.params.get('password') is not None:
         pwd = module.params.get('password')
