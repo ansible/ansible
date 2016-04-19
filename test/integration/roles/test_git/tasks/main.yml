@@ -562,3 +562,6 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
+# Tests for git reset and git clean
+
+- include: test_git_clean.yml
