@@ -114,8 +114,10 @@ def get_cli_body_ssh_vrf_interface(command, response, module):
 
 def execute_show(cmds, module, command_type=None):
     try:
-        response = module.execute(cmds,
-            command_type=command_type) if command_type else module.execute(cmds)
+        if command_type:
+            response = module.execute(cmds, command_type=command_type)
+        else:
+            response = module.execute(cmds)
     except ShellError, clie:
         module.fail_json(msg='Error sending {0}'.format(command),
                          error=str(clie))
