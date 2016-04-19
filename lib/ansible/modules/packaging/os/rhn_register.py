@@ -279,10 +279,31 @@ class Rhn(RegistrationBase):
     def subscribe(self, channels=[]):
         if len(channels) <= 0:
             return
-        current_channels = self.api('channel.software.listSystemChannels', self.systemid)
-        new_channels = [item['channel_label'] for item in current_channels]
-        new_channels.extend(channels)
-        return self.api('channel.software.setSystemChannels', self.systemid, new_channels)
+        if self._is_hosted():
+            current_channels = self.api('channel.software.listSystemChannels', self.systemid)
+            new_channels = [item['channel_label'] for item in current_channels]
+            new_channels.extend(channels)
+            return self.api('channel.software.setSystemChannels', self.systemid, list(new_channels))
+        else:
+            current_channels = self.api('channel.software.listSystemChannels', self.systemid)
+            current_channels = [item['label'] for item in current_channels]
+            new_base = None
+            new_childs = []
+            for ch in channels:
+                if ch in current_channels:
+                    continue
+                if self.api('channel.software.getDetails', ch)['parent_channel_label'] == '':
+                    new_base = ch
+                else:
+                    if ch not in new_childs:
+                        new_childs.append(ch)
+            out_base = 0
+            out_childs = 0
+            if new_base:
+                out_base = self.api('system.setBaseChannel', self.systemid, new_base)
+            if new_childs:
+                out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
+            return out_base and out_childs
 
     def _subscribe(self, channels=[]):
         '''
@@ -297,6 +318,16 @@ class Rhn(RegistrationBase):
             for available_channel in stdout.rstrip().split('\n'): # .rstrip() because of \n at the end -> empty string at the end
                 if re.search(wanted_repo, available_channel):
                     rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel, check_rc=True)
+
+    def _is_hosted(self):
+        '''
+            Return True if we are running against Hosted (rhn.redhat.com) or
+            False otherwise (when running against Satellite or Spacewalk)
+        '''
+        if 'rhn.redhat.com' in self.hostname:
+            return True
+        else:
+            return False
 
 def main():
 
