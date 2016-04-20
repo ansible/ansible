@@ -26,6 +26,11 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
+        else:
+            if 'vars' in task_vars:
+                if 'environment' in task_vars['vars']:
+                    # The environment key only exists if explicitly declared in the task or in the play
+                    self._display.warning('raw module does not support the environment keyword')
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
