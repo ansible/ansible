@@ -100,8 +100,7 @@ def human_to_bytes(number):
             return int(number[:-len(each)]) * (1024 ** i)
         i += 1
 
-    raise ValueError("Failed to convert {0}. The suffix must be one of {1}".format(number,
-                                                                                   ','.join(BYTE_SUFFIXES)))
+    raise ValueError("Failed to convert %s. The suffix must be one of %s" % (number, ','.join(BYTE_SUFFIXES)))
 
 
 def log_msg(data, pretty_print=False):
@@ -167,7 +166,7 @@ class DockerSysLogHandler(Handler):
         super(DockerSysLogHandler, self).__init__(level)
 
     def emit(self, record):
-        log_entry = self.format(record)
+        log_entry = self.format_record
         self.module.debug(log_entry)
 
 
@@ -227,9 +226,9 @@ class AnsibleDockerClient(Client):
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
         except APIError, exc:
-            self.fail("Docker API error: {0}".format(exc))
+            self.fail("Docker API error: %s" % exc)
         except Exception, exc:
-            self.fail("Error connecting: {0}".format(exc))
+            self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
         self.logger.debug(log_msg(msg, pretty_print=pretty_print))
@@ -308,19 +307,19 @@ class AnsibleDockerClient(Client):
     def _get_tls_config(self, **kwargs):
         self.log("get_tls_config:")
         for key in kwargs:
-            self.log("  {0}: {1}".format(key, kwargs[key]))
+            self.log("  %s: %s" %  (key, kwargs[key]))
         try:
             tls_config = TLSConfig(**kwargs)
             return tls_config
         except TLSParameterError, exc:
-           self.fail("TLS config error: {0}".format(exc))
+           self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
         auth = self.auth_params
 
         self.log("connection params:")
         for key in auth:
-            self.log("  {0}: {1}".format(key, auth[key]))
+            self.log("  %s: %s" % (key, auth[key]))
 
         if auth['tls'] or auth['tls_verify']:
             auth['docker_host'] = auth['docker_host'].replace('tcp://', 'https://')
@@ -391,12 +390,12 @@ class AnsibleDockerClient(Client):
     def _handle_ssl_error(self, error):
         match = re.match(r"hostname.*doesn\'t match (\'.*\')", str(error))
         if match:
-            msg = "You asked for verification that Docker host name matches {0}. The actual hostname is {1}. " \
-                "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of {1}. " \
+            msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
+                "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                .format(self.auth_params['tls_hostname'], match.group(1))
+                 %  (self.auth_params['tls_hostname'], match.group(1))
             self.fail(msg)
-        self.fail("SSL Exception: {0}".format(error))
+        self.fail("SSL Exception: %s" % (error))
 
     def get_container(self, name=None):
         '''
@@ -412,7 +411,7 @@ class AnsibleDockerClient(Client):
         result = None
         try:
             for container in self.containers(all=True):
-                self.log("testing container: {0}".format(container['Names']))
+                self.log("testing container: %s" % (container['Names']))
                 if search_name in container['Names']:
                     result = container
                     break
@@ -425,19 +424,19 @@ class AnsibleDockerClient(Client):
         except SSLError, exc:
             self._handle_ssl_error(exc)
         except Exception, exc:
-            self.fail("Error retrieving container list: {0}".format(exc))
+            self.fail("Error retrieving container list: %s" % exc)
 
         if result is not None:
             try:
-                self.log("Inspecting container Id {0}".format(result['Id']))
+                self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
             except Exception, exc:
-                self.fail("Error inspecting container: {0}".format(exc))
+                self.fail("Error inspecting container: %s" % exc)
 
         return result
 
-    def find_image(self, name, tag="latest"):
+    def find_image(self, name, tag):
         '''
         Lookup an image and return the inspection results.
         '''
@@ -446,25 +445,25 @@ class AnsibleDockerClient(Client):
 
         lookup = name
         if tag:
-            lookup = "{0}:{1}".format(name, tag)
+            lookup = "%s:%s" % (name, tag)
 
-        self.log("Find image {0}".format(lookup))
+        self.log("Find image %s" % lookup)
         try:
             images = self.images(name=lookup)
         except Exception, exc:
-            self.fail("Error getting image: {0}".format(str(exc)))
+            self.fail("Error getting image: %s" % str(exc))
 
         if len(images) > 1:
-            self.fail("Registry returned more than one result for {0}".format(lookup))
+            self.fail("Registry returned more than one result for %s" % lookup)
 
         if len(images) == 1:
             try:
                 inspection = self.inspect_image(images[0]['Id'])
             except Exception, exc:
-                self.fail("Error inspecting image {0} - {1}".format(lookup, str(exc)))
+                self.fail("Error inspecting image %s - %s" % (lookup, str(exc)))
             inspection['Name'] = lookup
             return inspection
-        self.log("Image {0} not found.".format(lookup))
+        self.log("Image %s not found." % lookup)
         return None
 
     def pull_image(self, name, tag="latest"):
@@ -472,12 +471,12 @@ class AnsibleDockerClient(Client):
         Pull an image
         '''
         try:
-            self.log("Pulling image {0}:{1}".format(name, tag))
+            self.log("Pulling image %s:%s" % (name, tag))
             for line in self.pull(name, tag=tag, stream=True):
                 response = json.loads(line)
                 self.log(response, pretty_print=True)
             return self.find_image(name, tag)
         except Exception, exc:
-            self.fail("Error pulling image {0}:{1} - {2}".format(name, tag, str(exc)))
+            self.fail("Error pulling image %s:%s - %s" % (name, tag, str(exc)))
 
 
