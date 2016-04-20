@@ -3,25 +3,28 @@ Developing Modules
 
 .. contents:: Topics
 
-Ansible modules are reusable units of magic that can be used by the Ansible API,
-or by the `ansible` or `ansible-playbook` programs.
+Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
+or by the :command:`ansible` or :command:`ansible-playbook` programs.  They
+return information to ansible by printing a JSON string to stdout before
+exiting.  They take arguments in in one of several ways which we'll go into
+as we work through this tutorial.
 
 See :doc:`modules` for a list of various ones developed in core.
 
 Modules can be written in any language and are found in the path specified
-by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
+by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
-By default, everything that ships with ansible is pulled from its source tree, but
+By default, everything that ships with Ansible is pulled from its source tree, but
 additional paths can be added.
 
-The directory "./library", alongside your top level playbooks, is also automatically
+The directory i:file:`./library`, alongside your top level :term:`playbooks`, is also automatically
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
 `modules-extras project <https://github.com/ansible/ansible-modules-extras>`_.  There's also a core
 repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
-but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
-of how you acquire ansible.
+but there's no fundamental difference in the end - both ship with Ansible, all in one package, regardless
+of how you acquire Ansible.
 
 .. _module_dev_tutorial:
 
@@ -41,14 +44,14 @@ written in any language OTHER than Python are going to have to do exactly this. 
 way later.
 
 So, here's an example.  You would never really need to build a module to set the system time,
-the 'command' module could already be used to do this.  Though we're going to make one.
+the 'command' module could already be used to do this.
 
-Reading the modules that come with ansible (linked above) is a great way to learn how to write
-modules.   Keep in mind, though, that some modules in ansible's source tree are internalisms,
-so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
-you'll turn to stone.  Nobody ever executes async_wrapper directly.
+Reading the modules that come with Ansible (linked above) is a great way to learn how to write
+modules.   Keep in mind, though, that some modules in Ansible's source tree are internalisms,
+so look at :ref:`service` or :ref:`yum`, and don't stare too close into things like :ref:`async_wrapper` or
+you'll turn to stone.  Nobody ever executes :ref:`async_wrapper` directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `timetest.py`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`::
 
     #!/usr/bin/python
 
@@ -65,13 +68,12 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 Testing Modules
 ````````````````
 
-There's a useful test script in the source checkout for ansible::
+There's a useful test script in the source checkout for Ansible::
 
     git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
-    chmod +x ansible/hacking/test-module
 
-For instructions on setting up ansible from source, please see
+For instructions on setting up Ansible from source, please see
 :doc:`intro_installation`.
 
 Let's run the script you just wrote with that::
@@ -80,7 +82,7 @@ Let's run the script you just wrote with that::
 
 You should see output that looks something like this::
 
-    {u'time': u'2012-03-14 22:13:48.539183'}
+    {'time': '2012-03-14 22:13:48.539183'}
 
 If you did not, you might have a typo in your module, so recheck it and try again.
 
@@ -105,7 +107,7 @@ If no time parameter is set, we'll just leave the time as is and return the curr
 
 .. note::
    This is obviously an unrealistic idea for a module.  You'd most likely just
-   use the shell module.  However, it probably makes a decent tutorial.
+   use the command module.  However, it makes for a decent tutorial.
 
 Let's look at the code.  Read the comments as we'll explain as we go.  Note that this
 is highly verbose because it's intended as an educational example.  You can write modules
@@ -126,10 +128,12 @@ a lot shorter than this::
     args_file = sys.argv[1]
     args_data = file(args_file).read()
 
-    # for this module, we're going to do key=value style arguments
-    # this is up to each module to decide what it wants, but all
-    # core modules besides 'command' and 'shell' take key=value
-    # so this is highly recommended
+    # For this module, we're going to do key=value style arguments.
+    # Modules can choose to receive json instead by adding the string:
+    #   WANT_JSON
+    # Somewhere in the file.
+    # Modules can also take free-form arguments instead of key-value or json
+    # but this is not recommended.
 
     arguments = shlex.split(args_data)
     for arg in arguments:
@@ -205,7 +209,7 @@ This should return something like::
 Module Provided 'Facts'
 ````````````````````````
 
-The 'setup' module that ships with Ansible provides many variables about a system that can be used in playbooks
+The :ref:`setup` module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
 this, just have the module return a `ansible_facts` key, like so, along with other return data::
 
@@ -238,43 +242,52 @@ Rather than mention these here, the best way to learn is to read some of the `so
 
 The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
-Key parts include always ending the module file with::
+Key parts include always importing the boilerplate code from
+:mod:`ansible.module_utils.basic` like this::
 
-    from ansible.module_utils.basic import *
+    from ansible.module_utils.basic import AnsibleModule
     if __name__ == '__main__':
         main()
 
+.. note::
+    Prior to Ansible-2.1.0, importing only what you used from
+    :mod:`ansible.module_utils.basic` did not work.  You needed to use
+    a wildcard import like this::
+
+        from ansible.module_utils.basic import *
+
 And instantiating the module class like::
 
-    module = AnsibleModule(
-        argument_spec = dict(
-            state     = dict(default='present', choices=['present', 'absent']),
-            name      = dict(required=True),
-            enabled   = dict(required=True, type='bool'),
-            something = dict(aliases=['whatever'])
+    def main():
+        module = AnsibleModule(
+            argument_spec = dict(
+                state     = dict(default='present', choices=['present', 'absent']),
+                name      = dict(required=True),
+                enabled   = dict(required=True, type='bool'),
+                something = dict(aliases=['whatever'])
+            )
         )
-    )
 
-The AnsibleModule provides lots of common code for handling returns, parses your arguments
+The :class:`AnsibleModule` provides lots of common code for handling returns, parses your arguments
 for you, and allows you to check inputs.
 
 Successful returns are made like this::
 
     module.exit_json(changed=True, something_else=12345)
 
-And failures are just as simple (where 'msg' is a required parameter to explain the error)::
+And failures are just as simple (where `msg` is a required parameter to explain the error)::
 
     module.fail_json(msg="Something fatal happened")
 
-There are also other useful functions in the module class, such as module.sha1(path).  See
-lib/ansible/module_utils/basic.py in the source checkout for implementation details.
+There are also other useful functions in the module class, such as :func:`module.sha1(path)`.  See
+:file:`lib/ansible/module_utils/basic.py` in the source checkout for implementation details.
 
-Again, modules developed this way are best tested with the hacking/test-module script in the git
+Again, modules developed this way are best tested with the :file:`hacking/test-module` script in the git
 source checkout.  Because of the magic involved, this is really the only way the scripts
 can function outside of Ansible.
 
-If submitting a module to ansible's core code, which we encourage, use of the AnsibleModule
-class is required.
+If submitting a module to Ansible's core code, which we encourage, use of
+:class:`AnsibleModule` is required.
 
 .. _developing_for_check_mode:
 
@@ -449,13 +462,126 @@ built and appear in the 'docsite/' directory.
     You can set the environment variable ANSIBLE_KEEP_REMOTE_FILES=1 on the controlling host to prevent ansible from
     deleting the remote files so you can debug your module.
 
-.. _module_contribution:
+.. _debugging_ansiblemodule_based_modules:
+
+Debugging AnsibleModule-based modules
+`````````````````````````````````````
+
+.. tip::
+
+    If you're using the :file:`hacking/test-module` script then most of this
+    is taken care of for you.  If you need to do some debugging of the module
+    on the remote machine that the module will actually run on or when the
+    module is used in a playbook then you may need to use this information
+    instead of relying on test-module.
+
+Starting with Ansible-2.1.0, AnsibleModule-based modules are put together as
+a zip file consisting of the module file and the various python module
+boilerplate inside of a wrapper script instead of as a single file with all of
+the code concatenated together.  Without some help, this can be harder to
+debug as the file needs to be extracted from the wrapper in order to see
+what's actually going on in the module.  Luckily the wrapper script provides
+some helper methods to do just that.
+
+If you are using Ansible with the :envvar:`ANSIBLE_KEEP_REMOTE_FILES`
+environment variables to keep the remote module file, here's a sample of how
+your debugging session will start::
+
+    $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible localhost -m ping -a 'data=debugging_session' -vvv
+    <127.0.0.1> ESTABLISH LOCAL CONNECTION FOR USER: badger
+    <127.0.0.1> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo $HOME/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595 `" && echo "` echo $HOME/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595 `" )'
+    <127.0.0.1> PUT /var/tmp/tmpjdbJ1w TO /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping
+    <127.0.0.1> EXEC /bin/sh -c 'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping'
+    localhost | SUCCESS => {
+        "changed": false, 
+        "invocation": {
+            "module_args": {
+                "data": "debugging_session"
+            }, 
+            "module_name": "ping"
+        }, 
+        "ping": "debugging_session"
+    }
+
+Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILE` to ``1`` tells Ansible to keep the
+remote module files instead of deleting them after the module finishes
+executing.  Giving Ansible the ``-vvv`` optin makes Ansible more verbose.
+That way it prints the file name of the temporary module file for you to see.
+
+If you want to examine the wrapper file you can.  It will show a small python
+script with a large, base64 encoded string.  The string contains the module
+that is going to be executed.  Run the wrapper's explode command to turn the
+string into some python files that you can work with::
+
+    $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping explode
+    Module expanded into:
+    /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/debug_dir
+
+When you look into the debug_dir you'll see a directory structure like this::
+
+    ├── ansible_module_ping.py
+    ├── args
+    └── ansible
+        ├── __init__.py
+        └── module_utils
+            ├── basic.py
+            └── __init__.py
+
+* :file:`ansible_module_ping.py` is the code for the module itself.  The name
+  is based on the name of the module with a prefix so that we don't clash with
+  any other python module names.  You can modify this code to see what effect
+  it would have on your module.
+
+* The :file:`args` file contains a JSON string.  The string is a dictionary
+  containing the module arguments and other variables that Ansible passes into
+  the module to change it's behaviour.  If you want to modify the parameters
+  that are passed to the module, this is the file to do it in.
+
+* The :file:`ansible` directory contains code from
+  :module:`ansible.module_utils` that is used by the module.  Ansible includes
+  files for any :`module:`ansible.module_utils` imports in the module but not
+  no files from any other module.  So if your module uses
+  :module:`ansible.module_utils.url` Ansible will include it for you, but if
+  your module includes :module:`requests` then you'll have to make sure that
+  the python requests library is installed on the system before running the
+  module.  You can modify files in this directory if you suspect that the
+  module is having a problem in some of this boilerplate code rather than in
+  the module code you have written.
+
+Once you edit the code or arguments in the exploded tree you need some way to
+run it.  There's a separate wrapper subcommand for this::
+
+    $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping execute
+    {"invocation": {"module_args": {"data": "debugging_session"}}, "changed": false, "ping": "debugging_session"}
+
+This subcommand takes care of setting the PYTHONPATH to use the exploded
+:file:`debug_dir/ansible/module_utils` directory and invoking the script using
+the arguments in the :file:`args` file.  You can continue to run it like this
+until you understand the problem.  Then you can copy it back into your real
+module file and test that the real module works via :command:`ansible` or
+:command:`ansible-playbook`.
+
+.. note::
+
+    The wrapper provides one more subcommand, ``excommunicate``.  This
+    subcommand is very similar to ``execute`` in that it invokes the exploded
+    module on the arguments in the :file:`args`.  The way it does this is
+    different, however.  ``excommunicate`` imports the :function:`main`
+    function from the module and then calls that.  This makes excommunicate
+    execute the module in the wrapper's process.  This may be useful for
+    running the module under some graphical debuggers but it is very different
+    from the way the module is executed by Ansible itself.  Some modules may
+    not work with ``excommunicate`` or may behave differently than when used
+    with Ansible normally.  Those are not bugs in the module; they're
+    limitations of ``excommunicate``.  Use at your own risk.
+
+.. _module_paths
 
 Module Paths
 ````````````
 
 If you are having trouble getting your module "found" by ansible, be
-sure it is in the ``ANSIBLE_LIBRARY`` environment variable.
+sure it is in the :envvar:`ANSIBLE_LIBRARY` environment variable.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
@@ -467,6 +593,8 @@ to make sure you're not reporting bugs on versions from your fork!
 To be safe, if you're working on a variant on something in Ansible's normal distribution, it's not
 a bad idea to give it a new name while you are working on it, to be sure you know you're pulling
 your version.
+
+.. _module_contribution:
 
 Getting Your Module Into Ansible
 ````````````````````````````````
@@ -548,7 +676,7 @@ The following  checklist items are important guidelines for people who want to c
 * Are module actions idempotent? If not document in the descriptions or the notes.
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
 * Call your :func:`main` from a conditional so that it would be possible to
-  test them in the future example::
+  import them into unittests in the future example::
 
     if __name__ == '__main__':
         main()
