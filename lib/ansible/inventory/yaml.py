@@ -161,40 +161,6 @@ class InventoryParser(object):
 
     def _compile_patterns(self):
         '''
-        Compiles the regular expressions required to parse the inventory and
-        stores them in self.patterns.
+        Compiles the regular expressions required to parse the inventory and stores them in self.patterns.
         '''
-
-        # Section names are square-bracketed expressions at the beginning of a
-        # line, comprising (1) a group name optionally followed by (2) a tag
-        # that specifies the contents of the section. We ignore any trailing
-        # whitespace and/or comments. For example:
-        #
-        # [groupname]
-        # [somegroup:vars]
-        # [naughty:children] # only get coal in their stockings
-
-        self.patterns['section'] = re.compile(
-            r'''^\[
-                    ([^:\]\s]+)             # group name (see groupname below)
-                    (?::(\w+))?             # optional : and tag name
-                \]
-                \s*                         # ignore trailing whitespace
-                (?:\#.*)?                   # and/or a comment till the
-                $                           # end of the line
-            ''', re.X
-        )
-
-        # FIXME: What are the real restrictions on group names, or rather, what
-        # should they be? At the moment, they must be non-empty sequences of non
-        # whitespace characters excluding ':' and ']', but we should define more
-        # precise rules in order to support better diagnostics.
-
-        self.patterns['groupname'] = re.compile(
-            r'''^
-                ([^:\]\s]+)
-                \s*                         # ignore trailing whitespace
-                (?:\#.*)?                   # and/or a comment till the
-                $                           # end of the line
-            ''', re.X
-        )
+        self.patterns['groupname'] = re.compile( r'''^[A-Za-z_][A-Za-z0-9_]*$''')
