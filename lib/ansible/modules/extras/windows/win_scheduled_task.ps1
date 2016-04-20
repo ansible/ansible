@@ -23,6 +23,13 @@ $ErrorActionPreference = "Stop"
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
+
+$days_of_week = Get-Attr $params "days_of_week" $null;
+$enabled = Get-Attr $params "enabled" $true | ConvertTo-Bool;
+$description = Get-Attr $params "description" " ";
+$path = Get-Attr $params "path" $null;
+$argument = Get-Attr $params "argument" $null;
+
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
@@ -40,45 +47,23 @@ if($state -eq "present") {
     $time = Get-Attr -obj $params -name time -failifempty $true -resultobj $result
     $user = Get-Attr -obj $params -name user -failifempty $true -resultobj $result
 }
-if ($params.days_of_week)
+
+# Mandatory Vars
+if ($frequency -eq "weekly")
 {
-    $days_of_week = $params.days_of_week
-}
-elseif ($frequency -eq "weekly")
-{
-    Fail-Json $result "missing required argument: days_of_week"
+    if (!($days_of_week))
+    {
+        Fail-Json $result "missing required argument: days_of_week"
+    }
 }
 
-# Vars with defaults
-if ($params.enabled)
-{
-  $enabled = $params.enabled | ConvertTo-Bool
-}
-else
-{
-  $enabled = $true #default
-}
-if ($params.description)
-{
-  $description = $params.description
-}
-else
-{
-  $description = " "  #default
-}
-if ($params.path)
+if ($path)
 {
   $path = "\{0}\" -f $params.path
 }
 else
 {
   $path = "\"  #default
-}
-
-# Optional vars
-if ($params.argument)
-{
-  $argument = $params.argument
 }
 
 try {
