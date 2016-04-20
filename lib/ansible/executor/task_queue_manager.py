@@ -93,6 +93,7 @@ class TaskQueueManager:
 
         # this dictionary is used to keep track of notified handlers
         self._notified_handlers = dict()
+        self._listening_handlers = dict()
 
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts      = dict()
@@ -128,6 +129,7 @@ class TaskQueueManager:
         # Zero the dictionary first by removing any entries there.
         # Proxied dicts don't support iteritems, so we have to use keys()
         self._notified_handlers.clear()
+        self._listening_handlers.clear()
 
         def _process_block(b):
             temp_list = []
@@ -146,6 +148,10 @@ class TaskQueueManager:
         for handler in handler_list:
             if handler not in self._notified_handlers:
                 self._notified_handlers[handler] = []
+            if handler.listen:
+                if handler.listen not in self._listening_handlers:
+                    self._listening_handlers[handler.listen] = []
+                self._listening_handlers[handler.listen].append(handler.get_name())
 
     def load_callbacks(self):
         '''
@@ -302,9 +308,6 @@ class TaskQueueManager:
 
     def get_loader(self):
         return self._loader
-
-    def get_notified_handlers(self):
-        return self._notified_handlers
 
     def get_workers(self):
         return self._workers[:]

@@ -20,10 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-#from ansible.inventory.host import Host
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 
 class Handler(Task):
+
+    _listen = FieldAttribute(isa='list')
 
     def __init__(self, block=None, role=None, task_include=None):
         self._flagged_hosts = []

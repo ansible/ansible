@@ -212,9 +212,6 @@ class PlayIterator:
             # plays won't try to advance)
             play_context.start_at_task = None
 
-        # Extend the play handlers list to include the handlers defined in roles
-        self._play.handlers.extend(play.compile_roles_handlers())
-
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
         # in the event that a previous host was not in the current inventory
