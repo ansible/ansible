@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.shell import Shell, Command, HAS_PARAMIKO
+from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
+from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
 from ansible.module_utils.urls import fetch_url
 
@@ -56,6 +55,7 @@ CLI_ERRORS_RE = [
     re.compile(r"'[^']' +returned error code: ?\d+"),
     re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
 ]
+
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -151,12 +151,11 @@ class Cli(object):
         key_filename = self.module.params['ssh_keyfile']
 
         try:
-            self.shell = Shell(prompts_re=CLI_PROMPTS_RE,
-                    errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username,
-                    password=password, key_filename=key_filename)
-        except Exception, exc:
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(exc))
+            self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+        except ShellError:
+            e = get_exception()
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
             self.module.fail_json(msg=msg)
 
     def authorize(self):
@@ -164,7 +163,11 @@ class Cli(object):
         self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
     def send(self, commands):
-        return self.shell.send(commands)
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            e = get_exception()
+            self.module.fail_json(msg=e.message, commands=commands)
 
 
 class NetworkModule(AnsibleModule):
@@ -194,19 +197,18 @@ class NetworkModule(AnsibleModule):
                     self.params[key] = value
 
     def connect(self):
+        cls = globals().get(str(self.params['transport']).capitalize())
         try:
-            cls = globals().get(str(self.params['transport']).capitalize())
             self.connection = cls(self)
+        except TypeError:
+            e = get_exception()
+            self.fail_json(msg=e.message)
 
-            self.connection.connect()
-            self.connection.send('terminal length 0')
+        self.connection.connect()
+        self.connection.send('terminal length 0')
 
-            if self.params['authorize']:
-                self.connection.authorize()
-        except AttributeError, exc:
-            self.fail_json(msg=exc.message)
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
+        if self.params['authorize']:
+            self.connection.authorize()
 
         self._connected = True
 
@@ -233,15 +235,13 @@ class NetworkModule(AnsibleModule):
         return self.execute(command)
 
     def execute(self, commands, **kwargs):
-        try:
-            if not self.connected:
-                self.connect()
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message, commands=commands)
+        if not self.connected:
+            self.connect()
+        return self.connection.send(commands, **kwargs)
 
     def disconnect(self):
         self.connection.close()
+        self._connected = False
 
     def parse_config(self, cfg):
         return parse(cfg, indent=3)
@@ -267,9 +267,7 @@ def get_module(**kwargs):
 
     module = NetworkModule(**kwargs)
 
-    # HAS_PARAMIKO is set by module_utils/shell.py
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
     return module
-
