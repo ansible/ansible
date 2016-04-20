@@ -9,7 +9,11 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.6 "Dancing in the Street" - TBD
+## 1.9.7 "Dancing in the Street" - TBD
+
+* Fix for lxc_container backport which was broken because it tried to use a feature from ansible-2.x
+
+## 1.9.6 "Dancing in the Street" - Apr 15, 2016
 
 * Fix a regression in the loading of inventory variables where they were not
   found when placed inside of an inventory directory.
