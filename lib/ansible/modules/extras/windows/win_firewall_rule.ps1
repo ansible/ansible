@@ -20,6 +20,9 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+# temporarily disable strictmode, for this module only
+Set-StrictMode -Off
+
 function getFirewallRule ($fwsettings) {
     try {
 
