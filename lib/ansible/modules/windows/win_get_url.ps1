@@ -105,7 +105,7 @@ Else {
         Fail-Json $result "Error when requesting Last-Modified date from $url $($_.Exception.Message)"
     }
 
-    If ((Get-Date -Date $webLastMod ) -lt $fileLastMod) {
+    If (($webLastMod) -and ((Get-Date -Date $webLastMod ) -lt $fileLastMod)) {
         $result.changed = $false
     } Else {
         Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
