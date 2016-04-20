@@ -127,7 +127,7 @@ def main():
 		p1 = Popen(['netstat', '-plnu'], stdout=PIPE, stderr=PIPE)
 		output_udp = p1.communicate()[0]
 		kill_udp = netStatParse(output_udp)
-	except EnvironmentError as err:
+	except EnvironmentError, err:
 		module.fail_json(msg=str(err))
 
 	# gather all the pids to kill
