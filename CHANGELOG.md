@@ -14,6 +14,7 @@ Ansible Changes By Release
 * New meta action, `meta: clear_facts` which will remove existing facts for the current host from current memory and facts cache.
 * copy module can now transparently use a vaulted file as source, if vault passwords were provided it will decrypt and copy on the fly.
 * The way new-style python modules (which include all of the non-windows modules shipped with Ansible) are assembled before execution on the remote machine has been changed.  The new way stays cloesr to how python imports modules which will make it easier to write moduels which rely heavily on shared code.
+* Reduce the situations in which a module can end up as world readable.  For details, see: https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user
 
 ####New Modules:
 - aws
