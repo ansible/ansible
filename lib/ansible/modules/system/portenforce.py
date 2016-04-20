@@ -72,80 +72,80 @@ import re
 from subprocess import Popen, PIPE
 
 def netStatParse(raw):
-	results = list()
-	for line in iter(raw.splitlines()):
-		listening_search = re.search('[^ ]+:[^ ]+', line)
-		if listening_search:
-			splitted = line.split()
-			conns = re.search('[^ ]+:([^ ]+)', splitted[3])
-			if 'tcp' in splitted[0]:
-				proto = 'tcp'
-				pidstr = splitted[6]
-			else:
-				proto = 'udp'
-				pidstr = splitted[5]
-			pids = re.search('([0-9]+)/', pidstr)
-			if conns and pids:
-				port = conns.group(1)
-				pid = pids.group(1)
-				result = dict(pid=int(pid), port=int(port), proto=proto)
-				if result not in results:
-					results.append(result)
-			elif not pids:
-				raise EnvironmentError('Could not get the pids for the listening ports - possibly a permission issue')
-	return results
+    results = list()
+    for line in iter(raw.splitlines()):
+        listening_search = re.search('[^ ]+:[^ ]+', line)
+        if listening_search:
+            splitted = line.split()
+            conns = re.search('[^ ]+:([^ ]+)', splitted[3])
+            if 'tcp' in splitted[0]:
+                proto = 'tcp'
+                pidstr = splitted[6]
+            else:
+                proto = 'udp'
+                pidstr = splitted[5]
+            pids = re.search('([0-9]+)/', pidstr)
+            if conns and pids:
+                port = conns.group(1)
+                pid = pids.group(1)
+                result = dict(pid=int(pid), port=int(port), proto=proto)
+                if result not in results:
+                    results.append(result)
+            elif not pids:
+                raise EnvironmentError('Could not get the pids for the listening ports - possibly a permission issue')
+    return results
 
 def applyWhitelist(portspids, whitelist=list()):
-	kill_pids = list()
-	for p in portspids:
-		if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
-			if dict(pid=p['pid'], port=p['port'], proto=p['proto']) not in kill_pids:
-				kill_pids.append(dict(pid=p['pid'], port=p['port'], proto=p['proto']))
-	return kill_pids
+    kill_pids = list()
+    for p in portspids:
+        if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
+            if dict(pid=p['pid'], port=p['port'], proto=p['proto']) not in kill_pids:
+                kill_pids.append(dict(pid=p['pid'], port=p['port'], proto=p['proto']))
+    return kill_pids
 
 def main():
 
-	module = AnsibleModule(
-		argument_spec = dict(
-			whitelist_tcp = dict(required=False, type='list', default=list()),
-			whitelist_udp = dict(required=False, type='list', default=list())
-		),
-		supports_check_mode=True
-	)
+    module = AnsibleModule(
+        argument_spec = dict(
+            whitelist_tcp = dict(required=False, type='list', default=list()),
+            whitelist_udp = dict(required=False, type='list', default=list())
+        ),
+        supports_check_mode=True
+    )
 
-	result = {}
-	result['changed'] = False
-	result['killed'] = list()
+    result = {}
+    result['changed'] = False
+    result['killed'] = list()
 
-	try:
-		# which TCP ports are listening for connections?
-		p1 = Popen(['netstat', '-plnt'], stdout=PIPE, stderr=PIPE)
-		output_tcp = p1.communicate()[0]
-		kill_tcp = netStatParse(output_tcp)
+    try:
+        # which TCP ports are listening for connections?
+        p1 = Popen(['netstat', '-plnt'], stdout=PIPE, stderr=PIPE)
+        output_tcp = p1.communicate()[0]
+        kill_tcp = netStatParse(output_tcp)
 
-		# which UDP ports are listening for connections?
-		p1 = Popen(['netstat', '-plnu'], stdout=PIPE, stderr=PIPE)
-		output_udp = p1.communicate()[0]
-		kill_udp = netStatParse(output_udp)
-	except EnvironmentError, err:
-		module.fail_json(msg=str(err))
+        # which UDP ports are listening for connections?
+        p1 = Popen(['netstat', '-plnu'], stdout=PIPE, stderr=PIPE)
+        output_udp = p1.communicate()[0]
+        kill_udp = netStatParse(output_udp)
+    except EnvironmentError, err:
+        module.fail_json(msg=str(err))
 
-	# gather all the pids to kill
-	kill_pids_tcp = applyWhitelist(kill_tcp, module.params['whitelist_tcp'])
-	kill_pids_udp = applyWhitelist(kill_udp, module.params['whitelist_udp'])
-	killed = list(kill_pids_tcp)
-	killed.extend(x for x in kill_pids_udp if x not in kill_pids_tcp)
+    # gather all the pids to kill
+    kill_pids_tcp = applyWhitelist(kill_tcp, module.params['whitelist_tcp'])
+    kill_pids_udp = applyWhitelist(kill_udp, module.params['whitelist_udp'])
+    killed = list(kill_pids_tcp)
+    killed.extend(x for x in kill_pids_udp if x not in kill_pids_tcp)
 
-	# kill! kill!
-	if not module.check_mode:
-		for p in killed:
-			p1 = Popen(['kill', str(p['pid'])], stdout=PIPE)
+    # kill! kill!
+    if not module.check_mode:
+        for p in killed:
+            p1 = Popen(['kill', str(p['pid'])], stdout=PIPE)
 
-	if killed:
-		result['changed'] = True
-		result['killed'] = killed
+    if killed:
+        result['changed'] = True
+        result['killed'] = killed
 
-	module.exit_json(**result)
+    module.exit_json(**result)
 
 # import module snippets
 from ansible.module_utils.basic import *
