@@ -138,11 +138,10 @@ class ActionModule(ActionBase):
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
-        cleanup_remote_tmp = False
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
-            cleanup_remote_tmp = True
+            self._cleanup_remote_tmp = True
 
         local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
@@ -197,7 +196,6 @@ class ActionModule(ActionBase):
             )
             result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-        if tmp and cleanup_remote_tmp:
-            self._remove_tmp_path(tmp)
+        self._remove_tmp_path(tmp)
 
         return result

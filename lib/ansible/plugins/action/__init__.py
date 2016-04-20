@@ -64,6 +64,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display           = display
 
+        self._cleanup_remote_tmp  = False
         self._supports_check_mode = True
 
     @abstractmethod
@@ -254,7 +255,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
 
-        if tmp_path and "-tmp-" in tmp_path:
+        if tmp_path and self._cleanup_remote_tmp and not C.DEFAULT_KEEP_REMOTE_FILES and "-tmp-" in tmp_path:
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.

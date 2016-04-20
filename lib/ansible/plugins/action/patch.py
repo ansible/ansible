@@ -54,6 +54,7 @@ class ActionModule(ActionBase):
         # create the remote tmp dir if needed, and put the source file there
         if tmp is None or "-tmp-" not in tmp:
             tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._transfer_file(src, tmp_src)
@@ -68,4 +69,5 @@ class ActionModule(ActionBase):
         )
 
         result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
         return result
