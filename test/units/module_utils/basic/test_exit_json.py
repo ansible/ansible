@@ -45,6 +45,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.stdout_swap_ctx = swap_stdout()
         self.fake_stream = self.stdout_swap_ctx.__enter__()
 
+        reload(basic)
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
@@ -125,6 +126,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             params = json.dumps(params)
 
             with swap_stdin_and_argv(stdin_data=params):
+                reload(basic)
                 with swap_stdout():
                     module = basic.AnsibleModule(
                         argument_spec = dict(
@@ -146,6 +148,7 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
             params = json.dumps(params)
             with swap_stdin_and_argv(stdin_data=params):
+                reload(basic)
                 with swap_stdout():
                     module = basic.AnsibleModule(
                         argument_spec = dict(

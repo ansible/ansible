@@ -26,6 +26,12 @@ import json
 from ansible.compat.tests import unittest
 from units.mock.procenv import swap_stdin_and_argv
 
+try:
+    from importlib import reload
+except:
+    # Py2 has reload as a builtin
+    pass
+
 class TestAnsibleModuleExitJson(unittest.TestCase):
 
     def test_module_utils_basic_safe_eval(self):
@@ -34,6 +40,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            reload(basic)
             am = basic.AnsibleModule(
                 argument_spec=dict(),
             )
