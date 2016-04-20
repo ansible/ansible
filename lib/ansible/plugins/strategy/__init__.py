@@ -100,7 +100,8 @@ class StrategyBase:
         self._tqm               = tqm
         self._inventory         = tqm.get_inventory()
         self._workers           = tqm.get_workers()
-        self._notified_handlers = tqm.get_notified_handlers()
+        self._notified_handlers = tqm._notified_handlers
+        self._listening_handlers = tqm._listening_handlers
         self._variable_manager  = tqm.get_variable_manager()
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
@@ -319,7 +320,7 @@ class StrategyBase:
                     original_host = get_original_host(task_result._host)
                     original_task = iterator.get_original_task(original_host, task_result._task)
 
-                    def search_handler_blocks(handler_blocks):
+                    def search_handler_blocks(handler_name, handler_blocks):
                         for handler_block in handler_blocks:
                             for handler_task in handler_block.block:
                                 handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
@@ -350,20 +351,32 @@ class StrategyBase:
                     # roles and use the first one that matches the notify name
                     target_handler = None
                     if original_task._role:
-                        target_handler = search_handler_blocks(original_task._role.get_handler_blocks())
+                        target_handler = search_handler_blocks(handler_name, original_task._role.get_handler_blocks())
                     if target_handler is None:
-                        target_handler = search_handler_blocks(iterator._play.handlers)
+                        target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
                     if target_handler is None:
-                        raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
+                        if handler_name in self._listening_handlers:
+                            for listening_handler_name in self._listening_handlers[handler_name]:
+                                listening_handler = None
+                                if original_task._role:
+                                    listening_handler = search_handler_blocks(listening_handler_name, original_task._role.get_handler_blocks())
+                                if listening_handler is None:
+                                    listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
+                                if listening_handler is None:
+                                    raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
 
-                    # FIXME: this should be an error now in 2.1+
-                    if target_handler not in self._notified_handlers:
-                        self._notified_handlers[target_handler] = []
-
-                    if original_host not in self._notified_handlers[target_handler]:
-                        self._notified_handlers[target_handler].append(original_host)
-                        # FIXME: should this be a callback?
-                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                if original_host not in self._notified_handlers[listening_handler]:
+                                    self._notified_handlers[listening_handler].append(original_host)
+                                    display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
+                        else:
+                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+                    else:
+                        if target_handler in self._notified_handlers:
+                            if original_host not in self._notified_handlers[target_handler]:
+                                self._notified_handlers[target_handler].append(original_host)
+                                # FIXME: should this be a callback?
+                                display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                        else:
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
