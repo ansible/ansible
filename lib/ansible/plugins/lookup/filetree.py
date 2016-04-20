@@ -122,8 +122,11 @@ class LookupModule(LookupBase):
             for root, dirs, files in os.walk(path, topdown=True):
                 for entry in dirs + files:
                     relpath = os.path.relpath(os.path.join(root, entry), path)
-                    props = file_props(path, relpath)
-                    if props is not None:
-                        ret.append(props)
+
+                    # Skip if relpath was already processed (from another root)
+                    if relpath not in [ entry['path'] for entry in ret ]:
+                        props = file_props(path, relpath)
+                        if props is not None:
+                            ret.append(props)
 
         return ret
