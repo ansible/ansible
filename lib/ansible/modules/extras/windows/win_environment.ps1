@@ -20,11 +20,12 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
+$state = Get-Attr $params "state" $null;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.state) {
-    $state = $params.state.ToString().ToLower()
+If ($state) {
+    $state = $state.ToString().ToLower()
     If (($state -ne 'present') -and ($state -ne 'absent') ) {
         Fail-Json $result "state is '$state'; must be 'present', or 'absent'"
     }
