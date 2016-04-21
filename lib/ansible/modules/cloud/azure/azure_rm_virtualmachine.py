@@ -950,9 +950,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Powered off virtual machine {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machines.power_off(self.resource_group, self.name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error powering off virtual machine {0} - {1}".format(self.name, str(exc)))
-        self.get_poller_result(poller)
         return True
 
     def power_on_vm(self):
@@ -960,9 +960,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.log("Power on virtual machine {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machines.start(self.resource_group, self.name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error powering on virtual machine {0} - {1}".format(self.name, str(exc)))
-        self.get_poller_result(poller)
         return True
 
     def restart_vm(self):
@@ -970,9 +970,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.log("Restart virtual machine {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machines.restart(self.resource_group, self.name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error restarting virtual machine {0} - {1}".format(self.name, str(exc)))
-        self.get_poller_result(poller)
         return True
 
     def deallocate_vm(self):
@@ -980,9 +980,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.log("Deallocate virtual machine {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machines.deallocate(self.resource_group, self.name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deallocating virtual machine {0} - {1}".format(self.name, str(exc)))
-        self.get_poller_result(poller)
         return True
 
     def delete_vm(self, vm):
@@ -1020,11 +1020,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
         try:
             poller = self.compute_client.virtual_machines.delete(self.resource_group, self.name)
+            # wait for the poller to finish
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
-
-        # wait for the poller to finish
-        self.get_poller_result(poller)
 
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
@@ -1065,9 +1064,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Deleted public IP {0}".format(name))
         try:
             poller = self.network_client.public_ip_addresses.delete(self.resource_group, name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(name, str(exc)))
-        self.get_poller_result(poller)
         # Delete returns nada. If we get here, assume that all is well.
         return True
 
@@ -1125,11 +1124,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
     def create_or_update_vm(self, params):
         try:
             poller = self.compute_client.virtual_machines.create_or_update(self.resource_group, self.name, params)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error creating or updating virtual machine {0} - {1}".format(self.name, str(exc)))
-        # The poller does not return the expanded result set containing instanceView. Ignore it and
-        # call get_vm()
-        self.get_poller_result(poller)
         return self.serialize_vm(self.get_vm())
 
     def vm_size_is_valid(self):
@@ -1184,11 +1181,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, storage_account_name, parameters)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Failed to create storage account: {0} - {1}".format(storage_account_name, str(exc)))
-
-        self.get_poller_result(poller)
-        # poller is not returning a storage account object.
         return self.get_storage_account(storage_account_name)
 
     def check_storage_account_name(self, name):
@@ -1310,9 +1305,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             poller = self.network_client.network_interfaces.create_or_update(self.resource_group,
                                                                              network_interface_name,
                                                                              parameters)
+            new_nic = self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
-        return self.get_poller_result(poller)
+        return new_nic
 
 
 def main():
