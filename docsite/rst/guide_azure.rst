@@ -225,14 +225,14 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out `Intro to Dynamic Inventory <http://docs.ansible.com/ansible/intro_dynamic_inventory.html>`_.
 
-The azure inventory script is called azure_rm_inventory.py. It authenticates with the Azure API exactly the same as the
+The azure inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
 create a $HOME/.azure/credentials file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
 
-    $ ./ansible/contrib/inventory/azure_rm_inventory.py --help
+    $ ./ansible/contrib/inventory/azure.py --help
 
 As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command,
 or passed directly to ansible-playbook using the -i option. No matter how it is executed the script produces JSON representing
@@ -297,11 +297,11 @@ By default hosts are grouped by:
 * tag key_value
 
 You can control host groupings and host selection by either defining environment variables or creating an
-azure_rm_inventory.ini file in your current working directory.
+azure_rm.ini file in your current working directory.
 
 NOTE: An .ini file will take precedence over environment variables.
 
-NOTE: The name of the .ini file is the basename of the inventory script (i.e. 'azure_rm_inventory') with a '.ini'
+NOTE: The name of the .ini file is the basename of the inventory script (i.e. 'azure_rm') with a '.ini'
 extension. This allows you to copy, rename and customize the inventory script and have matching .ini files all in
 the same directory.
 
@@ -328,11 +328,10 @@ If you don't need the powerstate, you can improve performance by turning off pow
 
 * AZURE_INCLUDE_POWERSTATE=no
 
-A sample azure_rm_inventory.ini file is included along with the inventory script in contrib/inventory. An .ini
+A sample azure_rm.ini file is included along with the inventory script in contrib/inventory. An .ini
 file will contain the following:
 
 .. code-block:: ini
-
     [azure]
     # Control which resource groups are included. By default all resources groups are included.
     # Set resource_groups to a comma separated list of resource groups names.
@@ -342,12 +341,13 @@ file will contain the following:
     #tags=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
+    # Valid values: yes, no, true, false, True, False, 0, 1.
     include_powerstate=yes
 
     # Control grouping with the following boolean flags. Valid values: yes, no, true, false, True, False, 0, 1.
     group_by_resource_group=yes
     group_by_location=yes
-    group_by_security_group=no
+    group_by_security_group=yes
     group_by_tag=yes
 
 
@@ -359,13 +359,13 @@ Here are some examples using the inventory script:
 .. code-block:: bash
 
     # Execute /bin/uname on all instances in the Testing resource group
-    $ ansible -i azure_rm_inventory.py Testing -m shell -a "/bin/uname -a"
+    $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"
 
     # Use the inventory script to print instance specific information
-    $ ./ansible/contrib/inventory/azure_rm_inventory.py --host my_instance_host_name --resource-groups=Testing --pretty
+    $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
 
     # Use the inventory script with ansible-playbook
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm_inventory.py test_playbook.yml
+    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_playbook.yml
 
 Here is a simple playbook to exercise the Azure inventory script:
 
@@ -382,4 +382,4 @@ You can execute the playbook with something like:
 
 .. code-block:: bash
 
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm_inventory.py test_azure_inventory.yml
+    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_azure_inventory.yml
