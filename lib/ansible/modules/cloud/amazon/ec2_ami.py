@@ -210,11 +210,12 @@ block_device_mapping:
     type: a dictionary of block devices
     sample: {
         "/dev/sda1": {
-        "delete_on_termination": true,
-        "encrypted": false,
-        "size": 10,
-        "snapshot_id": "snap-1a03b80e7",
-        "volume_type": "standard"
+            "delete_on_termination": true,
+            "encrypted": false,
+            "size": 10,
+            "snapshot_id": "snap-1a03b80e7",
+            "volume_type": "standard"
+        }
     }
 creationDate:
     description: creation date of image
