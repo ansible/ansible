@@ -38,7 +38,7 @@ try:
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker.utils.types import Ulimit, LogConfig
-except ImportError as exc:
+except ImportError, exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
