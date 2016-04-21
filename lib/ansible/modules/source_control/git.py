@@ -356,7 +356,7 @@ def has_local_mods(module, git_path, dest, bare):
     if bare:
         return False
 
-    cmd = "%s status -s" % (git_path)
+    cmd = "%s status --porcelain" % (git_path)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
     lines = stdout.splitlines()
     lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
