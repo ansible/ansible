@@ -248,6 +248,22 @@ fields::
             with_items: home_dirs.stdout_lines
             # same as with_items: home_dirs.stdout.split()
 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
+You may check the registered variable's string contents for emptiness::
+
+    - name: check registered variable for emptiness
+      hosts: all
+
+      tasks:
+
+          - name: list contents of directory
+            command: ls mydir
+            register: contents
+
+          - name: check contents for emptiness
+            debug: msg="Directory is empty"
+            when: contents.stdout == ""
+
 
 .. seealso::
 
