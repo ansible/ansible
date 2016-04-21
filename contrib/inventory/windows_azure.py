@@ -49,9 +49,7 @@ except ImportError:
 try:
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
-    print("ImportError: {0}".format(str(e)))
-    sys.exit(1)
-
+    sys.exit("ImportError: {0}".format(str(e)))
 
 # Imports for ansible
 import ConfigParser
@@ -193,8 +191,7 @@ class AzureInventory(object):
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
         except Exception as e:
-            print("Error: Failed to access cloud services - {0}".format(str(e)))
-            sys.exit(1)
+            sys.exit("Error: Failed to access cloud services - {0}".format(str(e)))
 
     def add_deployments(self, cloud_service):
         """Makes an Azure API call to get the list of virtual machines
@@ -204,8 +201,7 @@ class AzureInventory(object):
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
                 self.add_deployment(cloud_service, deployment)
         except Exception as e:
-            print("Error: Failed to access deployments - {0}".format(str(e)))
-            sys.exit(1)
+            sys.exit("Error: Failed to access deployments - {0}".format(str(e)))
 
     def add_deployment(self, cloud_service, deployment):
         """Adds a deployment to the inventory and index"""
