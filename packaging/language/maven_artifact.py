@@ -54,17 +54,17 @@ options:
         required: false
         default: latest
     classifier:
-        description: 
+        description:
             - The maven classifier coordinate
         required: false
         default: null
     extension:
-        description: 
+        description:
             - The maven type/extension coordinate
         required: false
         default: jar
     repository_url:
-        description: 
+        description:
             - The URL of the Maven Repository to download from
         required: false
         default: http://repo1.maven.org/maven2
@@ -90,7 +90,7 @@ options:
         default: present
         choices: [present,absent]
     validate_certs:
-        description: 
+        description:
             - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
         required: false
         default: 'yes'
@@ -202,7 +202,10 @@ class MavenDownloader:
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
         else:
-            return self._uri_for_artifact(artifact)
+            if artifact.version == "latest":
+                artifact.version = self._find_latest_version_available(artifact)
+
+            return self._uri_for_artifact(artifact, artifact.version)
 
     def _uri_for_artifact(self, artifact, version=None):
         if artifact.is_snapshot() and not version:
@@ -331,11 +334,8 @@ def main():
     prev_state = "absent"
     if os.path.isdir(dest):
         dest = dest + "/" + artifact_id + "-" + version + "." + extension
-    if os.path.lexists(dest):
-        if not artifact.is_snapshot():
-            prev_state = "present"
-        elif downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
-            prev_state = "present"
+    if os.path.lexists(dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
+        prev_state = "present"
     else:
         path = os.path.dirname(dest)
         if not os.path.exists(path):
