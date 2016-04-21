@@ -78,10 +78,11 @@ def netStatParse(raw):
         if listening_search:
             splitted = line.split()
             conns = re.search('[^ ]+:([^ ]+)', splitted[3])
+            pidstr = ''
             if 'tcp' in splitted[0]:
                 proto = 'tcp'
                 pidstr = splitted[6]
-            else:
+            elif 'udp' in splitted[0]:
                 proto = 'udp'
                 pidstr = splitted[5]
             pids = re.search('([0-9]+)/', pidstr)
