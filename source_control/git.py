@@ -110,7 +110,7 @@ options:
         description:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
-              ignored.
+              ignored. Needs I(git>=1.8.3) to work correctly.
     clone:
         required: false
         default: "yes"
@@ -174,7 +174,8 @@ options:
               be trusted in the GPG trustdb.
 
 requirements:
-    - git (the command line tool)
+    - git>=1.7.1 (the command line tool)
+
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -526,7 +527,15 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
         elif version == 'HEAD':
             refspecs.append('HEAD')
         elif is_remote_branch(git_path, module, dest, repo, version):
-            refspecs.append(version)
+            currenthead = get_head_branch(git_path, module, dest, remote)
+            if currenthead != version:
+                # this workaroung is only needed for older git versions
+                # 1.8.3 is broken, 1.9.x works
+                # ensure that remote branch is available as both local and remote ref
+                refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))
+                refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
+            else:
+                refspecs.append(version)
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/'+version+':refs/tags/'+version)
         if refspecs:
@@ -632,11 +641,15 @@ def submodule_update(git_path, module, dest, track_submodules):
     return (rc, out, err)
 
 def set_remote_branch(git_path, module, dest, remote, version, depth):
-    cmd = "%s remote set-branches %s %s" % (git_path, remote, version)
-    (rc, out, err) = module.run_command(cmd, cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to set remote branch: %s" % version)
-    cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, version)
+    """set refs for the remote branch version
+
+    This assumes the branch does not yet exist locally and is therefore also not checked out.
+    Can't use git remote set-branches, as it is not available in git 1.7.1 (centos6)
+    """
+
+    branchref = "+refs/heads/%s:refs/heads/%s" % (version, version)
+    branchref += ' +refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version)
+    cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, branchref)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version)
