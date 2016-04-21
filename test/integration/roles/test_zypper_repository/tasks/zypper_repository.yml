@@ -41,3 +41,71 @@
   assert:
     that:
       - "zypper_result.changed"
+
+- name: use refresh option
+  zypper_repository:
+    name: testrefresh
+    refresh: no
+    state: present
+    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+
+- name: check refreshoption
+  command: zypper -x lr testrefresh
+  register: zypper_result
+
+- assert:
+    that:
+      - '"autorefresh=\"0\"" in zypper_result.stdout'
+
+- name: set repo priority
+  zypper_repository:
+    name: testprio
+    priority: 55
+    state: present
+    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+
+- name: check refreshoption
+  command: zypper -x lr testprio
+  register: zypper_result
+
+- assert:
+    that:
+      - '"priority=\"55\"" in zypper_result.stdout'
+
+- name: add two repos with same url
+  zypper_repository:
+    name: "{{item}}"
+    state: present
+    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+  with_items:
+    - oss1
+    - oss2
+
+- name: check repo is updated by url
+  command: zypper lr oss1
+  register: zypper_result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "zypper_result.rc == 6"
+      - "'not found' in zypper_result.stderr"
+
+- name: add two repos with same name
+  zypper_repository:
+    name: samename
+    state: present
+    repo: "http://download.opensuse.org/distribution/leap/42.1/repo/{{item}}/"
+  with_items:
+    - oss
+    - non-oss
+
+- name: check repo is updated by name
+  command: zypper lr samename
+  register: zypper_result
+
+- assert:
+    that:
+      - "'/oss/' not in zypper_result.stdout"
+      - "'/non-oss/' in zypper_result.stdout"
+
