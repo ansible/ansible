@@ -32,6 +32,8 @@ Ansible Changes By Release
   * cs_volume
   * cs_zone
   * cs_zone_facts
+- clustering
+  * kubernetes
 - gitlab
   * gitlab_group
   * gitlab_project
