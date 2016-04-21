@@ -262,7 +262,7 @@ def parse_structured_data(body, interface_name, version, module):
         address = {}
         address['addr'] = interface_table.get('prefix', None)
         if address['addr'] is not None:
-            address['mask'] = interface_table.get('masklen', None)
+            address['mask'] = str(interface_table.get('masklen', None))
             interface['addresses'] = [address]
             prefix = "{0}/{1}".format(address['addr'], address['mask'])
             address_list.append(prefix)
@@ -416,16 +416,17 @@ def validate_params(addr, interface, mask, version, state, intf_type, module):
         if is_default(interface, module) == "DNE":
             module.fail_json(msg="That interface does not exist yet. Create "
                                  "it first.", interface=interface)
-    try:
-        if (int(mask) < 1 or int(mask) > 32) and version == "v4":
-            raise ValueError
-        elif int(mask) < 1 or int(mask) > 128:
-            raise ValueError
-    except ValueError:
-        module.fail_json(msg="Warning! 'mask' must be an integer between"
-                             " 1 and 32 when version v4 and up to 128 "
-                             "when version v6.", version=version,
-                             mask=mask)
+    if mask is not None:
+        try:
+            if (int(mask) < 1 or int(mask) > 32) and version == "v4":
+                raise ValueError
+            elif int(mask) < 1 or int(mask) > 128:
+                raise ValueError
+        except ValueError:
+            module.fail_json(msg="Warning! 'mask' must be an integer between"
+                                 " 1 and 32 when version v4 and up to 128 "
+                                 "when version v6.", version=version,
+                                 mask=mask)
 
 
 def main():
@@ -464,11 +465,17 @@ def main():
     end_state = existing
 
     if state == 'absent' and existing['addresses']:
-        for address in existing['addresses']:
-            if address['addr'] == addr and address['mask'] == mask:
-                command = get_remove_ip_config_commands(interface, addr, mask,
-                                                        version)
-                commands.append(command)
+        if version == 'v6':
+            for address in existing['addresses']:
+                if address['addr'] == addr and address['mask'] == mask:
+                    command = get_remove_ip_config_commands(interface, addr,
+                                                            mask, version)
+                    commands.append(command)
+
+        else:
+            command = get_remove_ip_config_commands(interface, addr,
+                                                    mask, version)
+            commands.append(command)
 
     elif state == 'present':
         if not existing['addresses']:
