@@ -23,11 +23,6 @@ import shutil
 import stat
 import grp
 import pwd
-try:
-    import selinux
-    HAVE_SELINUX=True
-except ImportError:
-    HAVE_SELINUX=False
 
 DOCUMENTATION = '''
 ---
