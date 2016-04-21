@@ -178,6 +178,9 @@ EXAMPLES='''
 - name: download file with check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf checksum=sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf checksum=md5:66dffb5228a211e61d6d7ef4a86f5758
+
+- name: download file from a file path
+  get_url: url="file:///tmp/afile.txt" dest=/tmp/afilecopy.txt  
 '''
 
 import urlparse
@@ -204,7 +207,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
 
     # create a temporary file and copy content to do checksum-based replacement
-    if info['status'] != 200:
+    if info['status'] != 200 and not url.startswith('file:/'):
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
 
     if tmp_dest != '':
