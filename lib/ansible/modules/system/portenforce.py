@@ -140,8 +140,8 @@ def main():
     # get just the pids to avoid duplicates across protocols
     pids = list()
     for p in killed:
-    	if p['pid'] not in pids:
-    		pids.append(p['pid'])
+        if p['pid'] not in pids:
+            pids.append(p['pid'])
 
     # kill! kill!
     if not module.check_mode:
