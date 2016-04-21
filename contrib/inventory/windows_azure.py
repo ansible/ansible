@@ -48,7 +48,7 @@ except ImportError:
 
 try:
     import azure
-    from azure import WindowsAzureError
+    from azure.common import AzureException, AzureHttpError
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
     print("failed=True msg='`azure` library required for this script'")
@@ -194,7 +194,7 @@ class AzureInventory(object):
         try:
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
-        except WindowsAzureError as e:
+        except AzureHttpError as e:
             print("Looks like Azure's API is down:")
             print("")
             print(e)
@@ -207,7 +207,7 @@ class AzureInventory(object):
         try:
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
                 self.add_deployment(cloud_service, deployment)
-        except WindowsAzureError as e:
+        except AzureHttpError as e:
             print("Looks like Azure's API is down:")
             print("")
             print(e)
