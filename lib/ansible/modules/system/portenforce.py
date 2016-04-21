@@ -131,16 +131,22 @@ def main():
     except EnvironmentError, err:
         module.fail_json(msg=str(err))
 
-    # gather all the pids to kill
+    # gather details of the pids to kill
     kill_pids_tcp = applyWhitelist(kill_tcp, module.params['whitelist_tcp'])
     kill_pids_udp = applyWhitelist(kill_udp, module.params['whitelist_udp'])
     killed = list(kill_pids_tcp)
     killed.extend(x for x in kill_pids_udp if x not in kill_pids_tcp)
 
+    # get just the pids to avoid duplicates across protocols
+    pids = list()
+    for p in killed:
+    	if p['pid'] not in pids:
+    		pids.append(p['pid'])
+
     # kill! kill!
     if not module.check_mode:
-        for p in killed:
-            p1 = Popen(['kill', str(p['pid'])], stdout=PIPE)
+        for pid in pids:
+            p1 = Popen(['kill', str(pid)], stdout=PIPE)
 
     if killed:
         result['changed'] = True
