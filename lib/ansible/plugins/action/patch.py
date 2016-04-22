@@ -23,36 +23,43 @@ import os
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
         if src is None:
-            return dict(failed=True, msg="src is required")
+            result['failed'] = True
+            result['msg'] = "src is required"
+            return result
         elif remote_src:
             # everything is remote, so we just execute the module
             # without changing any of the module arguments
-            return self._execute_module(task_vars=task_vars)
+            result.update(self._execute_module(task_vars=task_vars))
+            return result
 
         if self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
-            src = self._loader.path_dwim(src)
+            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
 
         # create the remote tmp dir if needed, and put the source file there
         if tmp is None or "-tmp-" not in tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
-        self._connection.put_file(src, tmp_src)
+        self._transfer_file(src, tmp_src)
 
-        if self._play_context.become and self._play_context.become_user != 'root':
-            if not self._play_context.check_mode:
-                self._remote_chmod('a+r', tmp_src, tmp)
+        self._fixup_perms(tmp, remote_user, recursive=True)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(
@@ -61,4 +68,6 @@ class ActionModule(ActionBase):
             )
         )
 
-        return self._execute_module('patch', module_args=new_module_args, task_vars=task_vars)
+        result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
+        return result

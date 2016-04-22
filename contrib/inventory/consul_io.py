@@ -129,6 +129,58 @@ import sys
 import ConfigParser
 import urllib, urllib2, base64
 
+
+def get_log_filename():
+    tty_filename = '/dev/tty'
+    stdout_filename = '/dev/stdout'
+
+    if not os.path.exists(tty_filename):
+        return stdout_filename
+    if not os.access(tty_filename, os.W_OK):
+        return stdout_filename
+    if os.getenv('TEAMCITY_VERSION'):
+        return stdout_filename
+
+    return tty_filename
+
+
+def setup_logging():
+    filename = get_log_filename()
+
+    import logging.config
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            },
+        },
+        'root': {
+            'level': os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_LEVEL', 'WARN'),
+            'handlers': ['console'],
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.FileHandler',
+                'filename': filename,
+                'formatter': 'simple',
+            },
+        },
+        'loggers': {
+            'iso8601': {
+                'qualname': 'iso8601',
+                'level': 'INFO',
+            },
+        },
+    })
+    logger = logging.getLogger('consul_io.py')
+    logger.debug('Invoked with %r', sys.argv)
+
+
+if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
+    setup_logging()
+
+
 try:
   import json
 except ImportError:
@@ -136,11 +188,12 @@ except ImportError:
 
 try:
   import consul
-except ImportError, e:
-  print """failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'"""
+except ImportError as e:
+  print("""failed=True msg='python-consul required for this module. see
+  http://python-consul.readthedocs.org/en/latest/#installation'""")
   sys.exit(1)
 
+from six import iteritems
 
 
 class ConsulInventory(object):
@@ -171,7 +224,7 @@ class ConsulInventory(object):
       self.load_all_data_consul()
 
     self.combine_all_results()
-    print json.dumps(self.inventory, sort_keys=True, indent=2)
+    print(json.dumps(self.inventory, sort_keys=True, indent=2))
 
   def load_all_data_consul(self):
     ''' cycle through each of the datacenters in the consul catalog and process
@@ -187,7 +240,7 @@ class ConsulInventory(object):
     an 'available' or 'unavailable' grouping. The suffix for each group can be
     controlled from the config'''
     if self.config.has_config('availability'):
-      for service_name, service in node['Services'].iteritems():
+      for service_name, service in iteritems(node['Services']):
         for node in self.consul_api.health.service(service_name)[1]:
             for check in node['Checks']:
                 if check['ServiceName'] == service_name:

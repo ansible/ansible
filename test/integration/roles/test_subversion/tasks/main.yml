@@ -36,20 +36,16 @@
 
 - debug: var=subverted
 
-- shell: ls ~/ansible_testing/svn
+- shell: ls {{ checkout_dir }}
 
 # FIXME: the before/after logic here should be fixed to make them hashes, see GitHub 6078
 # looks like this: {
 #        "after": [
-#            "Revision: 9", 
+#            "Revision: 9",
 #            "URL: https://github.com/jimi-c/test_role"
-#        ], 
-#        "before": null, 
-#        "changed": true, 
-#        "invocation": {
-#            "module_args": "repo=https://github.com/jimi-c/test_role dest=~/ansible_testing/svn", 
-#            "module_name": "subversion"
-#        }, 
+#        ],
+#        "before": null,
+#        "changed": true,
 #        "item": ""
 # }
 

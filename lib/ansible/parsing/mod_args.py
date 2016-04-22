@@ -19,9 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError,AnsibleError
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
@@ -137,7 +137,16 @@ class ModuleArgsParser:
         # than those which may be parsed/normalized next
         final_args = dict()
         if additional_args:
-            final_args.update(additional_args)
+            if isinstance(additional_args, string_types):
+                templar = Templar(loader=None)
+                if templar._contains_vars(additional_args):
+                    final_args['_variable_params'] = additional_args
+                else:
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+            elif isinstance(additional_args, dict):
+                final_args.update(additional_args)
+            else:
+                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's an 'old style' invocation.
@@ -148,13 +157,19 @@ class ModuleArgsParser:
         else:
             (action, args) = self._normalize_new_style_args(thing)
 
-        # this can occasionally happen, simplify
-        if args and 'args' in args:
-            tmp_args = args['args']
-            del args['args']
-            if isinstance(tmp_args, string_types):
-                tmp_args = parse_kv(tmp_args)
-            args.update(tmp_args)
+            # this can occasionally happen, simplify
+            if args and 'args' in args:
+                tmp_args = args.pop('args')
+                if isinstance(tmp_args, string_types):
+                    tmp_args = parse_kv(tmp_args)
+                args.update(tmp_args)
+
+        # only internal variables can start with an underscore, so
+        # we don't allow users to set them directy in arguments
+        if args and action not in ('command', 'shell', 'script', 'raw'):
+            for arg in args:
+                if arg.startswith('_ansible_'):
+                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -207,18 +222,21 @@ class ModuleArgsParser:
         action = None
         args = None
 
+        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
             if 'module' in thing:
-                action = thing['module']
+                action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
+                check_raw = action in actions_allowing_raw
+                args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in actions_allowing_raw
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -244,7 +262,6 @@ class ModuleArgsParser:
         # this is the 'extra gross' scenario detailed above, so we grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        # FIXME: add test cases for this
         additional_args = self._task_ds.get('args', dict())
 
         # We can have one of action, local_action, or module specified
@@ -277,7 +294,14 @@ class ModuleArgsParser:
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+            if 'ping' not in module_loader:
+                raise AnsibleParserError("The requested action was not found in configured module paths. "
+                        "Additionally, core modules are missing. If this is a checkout, "
+                        "run 'git submodule update --init --recursive' to correct this problem.",
+                        obj=self._task_ds)
+
+            else:
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')

@@ -27,6 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import time
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -34,8 +35,32 @@ try:
 except ImportError:
     has_lib_cs = False
 
+CS_HYPERVISORS = [
+    "KVM", "kvm",
+    "VMware", "vmware",
+    "BareMetal", "baremetal",
+    "XenServer", "xenserver",
+    "LXC", "lxc",
+    "HyperV", "hyperv",
+    "UCS", "ucs",
+    "OVM", "ovm",
+    "Simulator", "simulator",
+    ]
 
-class AnsibleCloudStack:
+def cs_argument_spec():
+    return dict(
+        api_key = dict(default=None),
+        api_secret = dict(default=None, no_log=True),
+        api_url = dict(default=None),
+        api_http_method = dict(choices=['get', 'post'], default='get'),
+        api_timeout = dict(type='int', default=10),
+        api_region = dict(default='cloudstack'),
+    )
+
+def cs_required_together():
+    return [['api_key', 'api_secret', 'api_url']]
+
+class AnsibleCloudStack(object):
 
     def __init__(self, module):
         if not has_lib_cs:
@@ -44,6 +69,31 @@ class AnsibleCloudStack:
         self.result = {
             'changed': False,
         }
+
+        # Common returns, will be merged with self.returns
+        # search_for_key: replace_with_key
+        self.common_returns = {
+            'id':           'id',
+            'name':         'name',
+            'created':      'created',
+            'zonename':     'zone',
+            'state':        'state',
+            'project':      'project',
+            'account':      'account',
+            'domain':       'domain',
+            'displaytext':  'display_text',
+            'displayname':  'display_name',
+            'description':  'description',
+        }
+
+        # Init returns dict for use in subclasses
+        self.returns = {}
+        # these values will be casted to int
+        self.returns_to_int = {}
+        # these keys will be compared case sensitive in self.has_changed()
+        self.case_sensitive_keys = [
+            'id',
+        ]
 
         self.module = module
         self._connect()
@@ -57,11 +107,12 @@ class AnsibleCloudStack:
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
+        self.tags = None
 
 
     def _connect(self):
         api_key = self.module.params.get('api_key')
-        api_secret = self.module.params.get('secret_key')
+        api_secret = self.module.params.get('api_secret')
         api_url = self.module.params.get('api_url')
         api_http_method = self.module.params.get('api_http_method')
         api_timeout = self.module.params.get('api_timeout')
@@ -75,7 +126,8 @@ class AnsibleCloudStack:
                 method=api_http_method
                 )
         else:
-            self.cs = CloudStack(**read_config())
+            api_region = self.module.params.get('api_region', 'cloudstack')
+            self.cs = CloudStack(**read_config(api_region))
 
 
     def get_or_fallback(self, key=None, fallback_key=None):
@@ -95,27 +147,27 @@ class AnsibleCloudStack:
 
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
-                continue;
+                continue
 
             # Skip None values
             if value is None:
-                continue;
+                continue
 
             if key in current_dict:
-
-                # API returns string for int in some cases, just to make sure
-                if isinstance(value, int):
-                    current_dict[key] = int(current_dict[key])
-                elif isinstance(value, str):
-                    current_dict[key] = str(current_dict[key])
-
-                # Only need to detect a singe change, not every item
-                if value != current_dict[key]:
+                if self.case_sensitive_keys and key in self.case_sensitive_keys:
+                    if str(value) != str(current_dict[key]):
+                        return True
+                # Test for diff in case insensitive way
+                elif str(value).lower() != str(current_dict[key]).lower():
                     return True
+            else:
+                return True
         return False
 
 
-    def _get_by_key(self, key=None, my_dict={}):
+    def _get_by_key(self, key=None, my_dict=None):
+        if my_dict is None:
+            my_dict = {}
         if key:
             if key in my_dict:
                 return my_dict[key]
@@ -180,7 +232,7 @@ class AnsibleCloudStack:
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                if vm in [ v['name'], v['displayname'], v['id'] ]:
+                if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
@@ -200,7 +252,7 @@ class AnsibleCloudStack:
 
         if zones:
             for z in zones['zone']:
-                if zone in [ z['name'], z['id'] ]:
+                if zone.lower() in [ z['name'].lower(), z['id'] ]:
                     self.zone = z
                     return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)
@@ -285,47 +337,45 @@ class AnsibleCloudStack:
 
 
     def get_tags(self, resource=None):
-        existing_tags = self.cs.listTags(resourceid=resource['id'])
-        if existing_tags:
-            return existing_tags['tag']
-        return []
+        if not self.tags:
+            args = {}
+            args['projectid'] = self.get_project(key='id')
+            args['account'] = self.get_account(key='name')
+            args['domainid'] = self.get_domain(key='id')
+            args['resourceid'] = resource['id']
+            response = self.cs.listTags(**args)
+            self.tags = response.get('tag', [])
+
+        existing_tags = []
+        if self.tags:
+            for tag in self.tags:
+                existing_tags.append({'key': tag['key'], 'value': tag['value']})
+        return existing_tags
 
 
-    def _delete_tags(self, resource, resource_type, tags):
-        existing_tags = resource['tags']
-        tags_to_delete = []
-        for existing_tag in existing_tags:
-            if existing_tag['key'] in tags:
-                if existing_tag['value'] != tags[key]:
-                    tags_to_delete.append(existing_tag)
-            else:
-                tags_to_delete.append(existing_tag)
-        if tags_to_delete:
+    def _process_tags(self, resource, resource_type, tags, operation="create"):
+        if tags:
             self.result['changed'] = True
             if not self.module.check_mode:
                 args = {}
                 args['resourceids']  = resource['id']
                 args['resourcetype'] = resource_type
-                args['tags']         = tags_to_delete
-                self.cs.deleteTags(**args)
+                args['tags']         = tags
+                if operation == "create":
+                    response = self.cs.createTags(**args)
+                else:
+                    response = self.cs.deleteTags(**args)
+                self.poll_job(response)
 
 
-    def _create_tags(self, resource, resource_type, tags):
-        tags_to_create = []
-        for i, tag_entry in enumerate(tags):
-            tag = {
-                'key':   tag_entry['key'],
-                'value': tag_entry['value'],
-            }
-            tags_to_create.append(tag)
-        if tags_to_create:
-            self.result['changed'] = True
-            if not self.module.check_mode:
-                args = {}
-                args['resourceids']  = resource['id']
-                args['resourcetype'] = resource_type
-                args['tags']         = tags_to_create
-                self.cs.createTags(**args)
+    def _tags_that_should_exist_or_be_updated(self, resource, tags):
+        existing_tags = self.get_tags(resource)
+        return [tag for tag in tags if tag not in existing_tags]
+
+
+    def _tags_that_should_not_exist(self, resource, tags):
+        existing_tags = self.get_tags(resource)
+        return [tag for tag in existing_tags if tag not in tags]
 
 
     def ensure_tags(self, resource, resource_type=None):
@@ -335,8 +385,9 @@ class AnsibleCloudStack:
         if 'tags' in resource:
             tags = self.module.params.get('tags')
             if tags is not None:
-                self._delete_tags(resource, resource_type, tags)
-                self._create_tags(resource, resource_type, tags)
+                self._process_tags(resource, resource_type, self._tags_that_should_not_exist(resource, tags), operation="delete")
+                self._process_tags(resource, resource_type, self._tags_that_should_exist_or_be_updated(resource, tags))
+                self.tags = None
                 resource['tags'] = self.get_tags(resource)
         return resource
 
@@ -366,3 +417,27 @@ class AnsibleCloudStack:
                     break
                 time.sleep(2)
         return job
+
+
+    def get_result(self, resource):
+        if resource:
+            returns = self.common_returns.copy()
+            returns.update(self.returns)
+            for search_key, return_key in returns.iteritems():
+                if search_key in resource:
+                    self.result[return_key] = resource[search_key]
+
+            # Bad bad API does not always return int when it should.
+            for search_key, return_key in self.returns_to_int.iteritems():
+                if search_key in resource:
+                    self.result[return_key] = int(resource[search_key])
+
+            # Special handling for tags
+            if 'tags' in resource:
+                self.result['tags'] = []
+                for tag in resource['tags']:
+                    result_tag          = {}
+                    result_tag['key']   = tag['key']
+                    result_tag['value'] = tag['value']
+                    self.result['tags'].append(result_tag)
+        return self.result

@@ -183,7 +183,7 @@
     that:
       - 'item.changed == true'
 #      - 'item.state == "file"'
-  with_items: file16_result.results
+  with_items: "{{file16_result.results}}"
 
 #- name: try to force the sub-directory to a link
 #  win_file: src={{win_output_dir}}/testing dest={{win_output_dir}}/sub1 state=link force=yes
@@ -412,6 +412,79 @@
 #  assert:
 #    that:
 ##    - result.stat.mode == '0644'
+
+- name: create a directory
+  win_file: path={{win_output_dir}}/dirtest state=directory
+  register: file_result
+
+- name: stat the directory created
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory was created
+  assert:
+    that:
+       - file_result.changed
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: re run create directory (bug 2147)
+  win_file: path={{win_output_dir}}/dirtest state=directory
+  register: file_result
+
+- name: stat the directory created again
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory exists but was not changed
+  assert:
+    that:
+       - file_result.changed == False
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: remove empty dir we just created
+  win_file: path={{win_output_dir}}/dirtest state=absent
+  register: file_result
+
+- name: stat the removed directory 
+  win_stat: path={{win_output_dir}}/dirtest
+  register: stat_result
+
+- name: assert the directory does not exist 
+  assert:
+    that:
+       - file_result.changed
+       - "stat_result.stat.exists == False"
+
+- name: create dir with spaces and parens in the dir name
+  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=directory
+  register: file_result
+
+- name: stat the directory with spaces and parens 
+  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  register: stat_result
+
+- name: check dir with spaces and parens in the dir name has been created
+  assert:
+    that:
+       - file_result.changed
+       - stat_result.stat.exists
+       - stat_result.stat.isdir
+
+- name: remove dir with spaces and parens in the dir name
+  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=absent
+  register: file_result
+
+- name: stat the dir with spaces and parens in the dir name
+  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  register: stat_result
+
+- name: assert dir with spaces and parens in the dir name was removed
+  assert:
+    that:
+       - file_result.changed
+       - "stat_result.stat.exists == False"
 
 - name: clean up sub1
   win_file: path={{win_output_dir}}/sub1 state=absent

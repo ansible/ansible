@@ -47,13 +47,9 @@ except ImportError:
     import simplejson as json
 
 try:
-    import azure
-    from azure import WindowsAzureError
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
-    print "failed=True msg='`azure` library required for this script'"
-    sys.exit(1)
-
+    sys.exit("ImportError: {0}".format(str(e)))
 
 # Imports for ansible
 import ConfigParser
@@ -65,6 +61,14 @@ class AzureInventory(object):
         self.inventory = {}
         # Index of deployment name -> host
         self.index = {}
+        self.host_metadata = {}
+
+        # Cache setting defaults.
+        # These can be overridden in settings (see `read_settings`).
+        cache_dir = os.path.expanduser('~')
+        self.cache_path_cache = os.path.join(cache_dir, '.ansible-azure.cache')
+        self.cache_path_index = os.path.join(cache_dir, '.ansible-azure.index')
+        self.cache_max_age = 0
 
         # Read settings and parse CLI arguments
         self.read_settings()
@@ -82,14 +86,36 @@ class AzureInventory(object):
 
         if self.args.list_images:
             data_to_print = self.json_format_dict(self.get_images(), True)
-        elif self.args.list:
+        elif self.args.list or self.args.host:
             # Display list of nodes for inventory
             if len(self.inventory) == 0:
-                data_to_print = self.get_inventory_from_cache()
+                data = json.loads(self.get_inventory_from_cache())
             else:
-                data_to_print = self.json_format_dict(self.inventory, True)
+                data = self.inventory
 
-        print data_to_print
+            if self.args.host:
+                data_to_print = self.get_host(self.args.host)
+            else:
+                # Add the `['_meta']['hostvars']` information.
+                hostvars = {}
+                if len(data) > 0:
+                    for host in set([h for hosts in data.values() for h in hosts if h]):
+                        hostvars[host] = self.get_host(host, jsonify=False)
+                data['_meta'] = {'hostvars': hostvars}
+
+                # JSONify the data.
+                data_to_print = self.json_format_dict(data, pretty=True)
+        print(data_to_print)
+
+    def get_host(self, hostname, jsonify=True):
+        """Return information about the given hostname, based on what
+        the Windows Azure API provides.
+        """
+        if hostname not in self.host_metadata:
+            return "No host found: %s" % json.dumps(self.host_metadata)
+        if jsonify:
+            return json.dumps(self.host_metadata[hostname])
+        return self.host_metadata[hostname]
 
     def get_images(self):
         images = []
@@ -121,28 +147,36 @@ class AzureInventory(object):
 
         # Cache related
         if config.has_option('azure', 'cache_path'):
-            cache_path = config.get('azure', 'cache_path')
-            self.cache_path_cache = cache_path + "/ansible-azure.cache"
-            self.cache_path_index = cache_path + "/ansible-azure.index"
+            cache_path = os.path.expandvars(os.path.expanduser(config.get('azure', 'cache_path')))
+            self.cache_path_cache = os.path.join(cache_path, 'ansible-azure.cache')
+            self.cache_path_index = os.path.join(cache_path, 'ansible-azure.index')
         if config.has_option('azure', 'cache_max_age'):
             self.cache_max_age = config.getint('azure', 'cache_max_age')
 
     def read_environment(self):
         ''' Reads the settings from environment variables '''
         # Credentials
-        if os.getenv("AZURE_SUBSCRIPTION_ID"): self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
-        if os.getenv("AZURE_CERT_PATH"):       self.cert_path = os.getenv("AZURE_CERT_PATH")
-
+        if os.getenv("AZURE_SUBSCRIPTION_ID"):
+            self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+        if os.getenv("AZURE_CERT_PATH"):
+            self.cert_path = os.getenv("AZURE_CERT_PATH")
 
     def parse_cli_args(self):
         """Command line argument processing"""
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Azure')
+        parser = argparse.ArgumentParser(
+            description='Produce an Ansible Inventory file based on Azure',
+        )
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--list-images', action='store',
-                           help='Get all available images.')
-        parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
+                            help='Get all available images.')
+        parser.add_argument('--refresh-cache',
+            action='store_true', default=False,
+            help='Force refresh of thecache by making API requests to Azure '
+                 '(default: False - use cache files)',
+        )
+        parser.add_argument('--host', action='store',
+                            help='Get all information about an instance.')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -156,40 +190,58 @@ class AzureInventory(object):
         try:
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
-        except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
-            sys.exit(1)
+        except Exception as e:
+            sys.exit("Error: Failed to access cloud services - {0}".format(str(e)))
 
     def add_deployments(self, cloud_service):
-        """Makes an Azure API call to get the list of virtual machines associated with a cloud service"""
+        """Makes an Azure API call to get the list of virtual machines
+        associated with a cloud service.
+        """
         try:
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
-                if deployment.deployment_slot == "Production":
-                    self.add_deployment(cloud_service, deployment)
-        except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
-            sys.exit(1)
+                self.add_deployment(cloud_service, deployment)
+        except Exception as e:
+            sys.exit("Error: Failed to access deployments - {0}".format(str(e)))
 
     def add_deployment(self, cloud_service, deployment):
         """Adds a deployment to the inventory and index"""
+        for role in deployment.role_instance_list.role_instances:
+            try:
+                # Default port 22 unless port found with name 'SSH'
+                port = '22'
+                for ie in role.instance_endpoints.instance_endpoints:
+                    if ie.name == 'SSH':
+                        port = ie.public_port
+                        break
+            except AttributeError as e:
+                pass
+            finally:
+                self.add_instance(role.instance_name, deployment, port, cloud_service, role.instance_status)
+
+    def add_instance(self, hostname, deployment, ssh_port, cloud_service, status):
+        """Adds an instance to the inventory and index"""
 
         dest = urlparse(deployment.url).hostname
 
         # Add to index
-        self.index[dest] = deployment.name
+        self.index[hostname] = deployment.name
+
+        self.host_metadata[hostname] = dict(ansible_ssh_host=dest,
+                                            ansible_ssh_port=int(ssh_port),
+                                            instance_status=status,
+                                            private_id=deployment.private_id)
 
         # List of all azure deployments
-        self.push(self.inventory, "azure", dest)
+        self.push(self.inventory, "azure", hostname)
 
         # Inventory: Group by service name
-        self.push(self.inventory, self.to_safe(cloud_service.service_name), dest)
+        self.push(self.inventory, self.to_safe(cloud_service.service_name), hostname)
+
+        if int(ssh_port) == 22:
+            self.push(self.inventory, "Cloud_services", hostname)
 
         # Inventory: Group by region
-        self.push(self.inventory, self.to_safe(cloud_service.hosted_service_properties.location), dest)
+        self.push(self.inventory, self.to_safe(cloud_service.hosted_service_properties.location), hostname)
 
     def push(self, my_dict, key, element):
         """Pushed an element onto an array that may not have been defined in the dict."""

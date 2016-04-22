@@ -17,21 +17,44 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: use win_get_url module to download msi
-  win_get_url: url=http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.22/7z922-x64.msi dest='C:\\7z922-x64.msi'
+  win_get_url:
+    url: "{{msi_url}}"
+    dest: "{{msi_download_path}}"
   register: win_get_url_result
 
-- name: install 7zip msi
-  win_msi: path="{{ win_get_url_result.win_get_url.dest }}"
+- name: make sure msi is uninstalled
+  win_msi:
+    path: "{{msi_product_code|default(msi_download_path,true)}}"
+    state: absent
+  ignore_errors: true
+
+- name: install msi
+  win_msi:
+    path: "{{msi_download_path}}"
   register: win_msi_install_result
 
 - name: check win_msi install result
-  assert: 
+  assert:
     that:
       - "not win_msi_install_result|failed"
       - "win_msi_install_result|changed"
 
-- name: uninstall 7zip msi
-  win_msi: path="{{ win_get_url_result.win_get_url.dest }}" state=absent
+- name: install msi again with creates argument
+  win_msi:
+    path: "{{msi_download_path}}"
+    creates: "{{msi_install_path}}"
+  register: win_msi_install_again_result
+
+- name: check win_msi install again result
+  assert: 
+    that:
+      - "not win_msi_install_again_result|failed"
+      - "not win_msi_install_again_result|changed"
+
+- name: uninstall msi
+  win_msi:
+    path: "{{msi_download_path}}"
+    state: absent
   register: win_msi_uninstall_result
 
 - name: check win_msi uninstall result

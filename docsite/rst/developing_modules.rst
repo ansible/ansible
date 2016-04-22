@@ -63,13 +63,16 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 .. _module_testing:
 
 Testing Modules
-```````````````
+````````````````
 
 There's a useful test script in the source checkout for ansible::
 
-    git clone git@github.com:ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
+
+For instructions on setting up ansible from source, please see
+:doc:`intro_installation`.
 
 Let's run the script you just wrote with that::
 
@@ -191,7 +194,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"
+    ansible/hacking/test-module -m ./timetest.py -a "time=\"March 14 12:23\""
 
 This should return something like::
 
@@ -200,7 +203,7 @@ This should return something like::
 .. _module_provided_facts:
 
 Module Provided 'Facts'
-```````````````````````
+````````````````````````
 
 The 'setup' module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
@@ -219,7 +222,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
     }
 
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
-A good idea might be make a module called 'site_facts' and always call it at the top of each playbook, though
+A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
 
 .. _common_module_boilerplate:
@@ -247,7 +250,7 @@ And instantiating the module class like::
         argument_spec = dict(
             state     = dict(default='present', choices=['present', 'absent']),
             name      = dict(required=True),
-            enabled   = dict(required=True, choices=BOOLEANS),
+            enabled   = dict(required=True, type='bool'),
             something = dict(aliases=['whatever'])
         )
     )
@@ -264,7 +267,7 @@ And failures are just as simple (where 'msg' is a required parameter to explain 
     module.fail_json(msg="Something fatal happened")
 
 There are also other useful functions in the module class, such as module.sha1(path).  See
-lib/ansible/module_common.py in the source checkout for implementation details.
+lib/ansible/module_utils/basic.py in the source checkout for implementation details.
 
 Again, modules developed this way are best tested with the hacking/test-module script in the git
 source checkout.  Because of the magic involved, this is really the only way the scripts
@@ -335,7 +338,7 @@ and guidelines:
 
 * If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`.
 
-* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "choices=BOOLEANS" and a module.boolean(value) casting function.
+* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "type='bool'".
 
 * Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
 
@@ -347,7 +350,7 @@ and guidelines:
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
-* Return codes from modules are not actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+* Return codes from modules are actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
@@ -381,8 +384,10 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-The ``description``, and ``notes`` fields 
-support formatting with some special macros.  
+If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
+
+The ``description``, and ``notes`` fields
+support formatting with some special macros.
 
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
@@ -400,6 +405,30 @@ like this::
 
 The EXAMPLES section, just like the documentation section, is required in
 all module pull requests for new modules.
+
+The RETURN section documents what the module returns. For each value returned,
+provide a ``description``, in what circumstances the value is ``returned``,
+the ``type`` of the value and a ``sample``.  For example, from
+the ``copy`` module::
+
+    RETURN = '''
+    dest:
+        description: destination file/path
+        returned: success
+        type: string
+        sample: "/path/to/file.txt"
+    src:
+        description: source file used for the copy on the target machine
+        returned: changed
+        type: string
+        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+    md5sum:
+        description: md5 checksum of the file after running copy
+        returned: when supported
+        type: string
+        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+    ...
+    '''
 
 .. _module_dev_testing:
 
@@ -425,11 +454,12 @@ built and appear in the 'docsite/' directory.
 Module Paths
 ````````````
 
-If you are having trouble getting your module "found" by ansible, be sure it is in the ANSIBLE_LIBRARY_PATH.
+If you are having trouble getting your module "found" by ansible, be
+sure it is in the ``ANSIBLE_LIBRARY`` environment variable.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
-    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras 
+    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras
 
 And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
 to make sure you're not reporting bugs on versions from your fork!
@@ -453,26 +483,59 @@ gives them slightly higher development priority (though they'll work in exactly 
 Module checklist
 ````````````````
 
-* The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
+The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
+
+* The shebang should always be ``#!/usr/bin/python``, this allows ansible_python_interpreter to work
+* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
 * Documentation: Make sure it exists
-    * `required` should always be present, be it true or false
-    * If `required` is false you need to document `default`, even if its 'null'
-    * `default` is not needed for `required: true`
-    * Remove unnecessary doc like `aliases: []` or `choices: []`
-    * The version is not a float number and value the current development version
-    * The verify that arguments in doc and module spec dict are identical
-    * For password / secret arguments no_log=True should be set
-    * Requirements should  be documented, using the `requirements=[]` field
-    * Author should be set, name and github id at least
-    * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
-    * GPL 3 License header
-    * Does module use check_mode? Could it be modified to use it? Document it
-    * Examples: make sure they are reproducible
-    * Return: document the return structure of the module
+    * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
+    * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
+    * Descriptions should always start with a Capital letter and end with a full stop. Consistency always helps.
+    * The `required` setting should always be present, be it true *or* false
+    * If `required` is false, you should document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
+    * Documenting `default` is not needed for `required: true`.
+    * Remove unnecessary doc like `aliases: []` or `choices: []`.
+    * The version is not a float number and value the current development version.
+    * Verify that arguments in doc and module spec dict are identical.
+    * For password / secret arguments no_log=True should be set.
+    * Requirements should be documented, using the `requirements=[]` field.
+    * Author should be set, with their name and their github id, at the least.
+    * Ensure that you make use of U() for urls, C() for files and options, I() for params, M() for modules.
+    * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when C(state=present)."
+    * Verify that a GPL 3 License header is included.
+    * Does module use check_mode? Could it be modified to use it? Document it. Documentation is everyone's friend.
+    * Examples--include them whenever possible and make sure they are reproducible.
+    * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
+* Predictable user interface: This is a particularly important section as it is also an area where we need significant improvements.
+    * Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
+    * Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
+    * Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
+    * Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
+* Informative responses: Please note, that for  >= 2.0, it is required that return data to be documented.
+    * Always return useful data, even when there is no change.
+    * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
+    * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
+    * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please attempt to include this when applicable).
+* Code: This applies to all code in general, but often seems to be missing from modules, so please keep the following in mind as you work.
+    * Validate upfront--fail fast and return useful and clear error messages.
+    * Defensive programming--modules should be designed simply enough that this should be easy. Modules should always handle errors gracefully and avoid direct stacktraces. Ansible deals with this better in 2.0 and returns them in the results.
+    * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+    * Modules should not do the job of other modules, that is what roles are for. Less magic is more.
+    * Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
+    * Support check mode. This is not required for all modules, as it won't make sense for certain ones, but please attempt to include this when applicable). For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.        
 * Exceptions: The module must handle them. (exceptions are bugs)
     * Give out useful messages on what you were doing and you can add the exception message to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
-* The module must not use sys.exit() --> use fail_json() from the module object
+* Module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
+    * Be sure to check out the modules themselves for additional information.
+        * Amazon: https://github.com/ansible/ansible-modules-extras/blob/devel/cloud/amazon/GUIDELINES.md
+    * Modules should make use of the "extends_documentation_fragment" to ensure documentation available. For example, the AWS module should include::
+
+        extends_documentation_fragment:
+            - aws
+            - ec2
+
+* The module must not use sys.exit() --> use fail_json() from the module object.
 * Import custom packages in try/except and handled with fail_json() in main() e.g.::
 
     try:
@@ -482,7 +545,7 @@ Module checklist
         HAS_LIB=False
 
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
-* Are module actions idempotent? If not document in the descriptions or the notes
+* Are module actions idempotent? If not document in the descriptions or the notes.
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
 * Call your :func:`main` from a conditional so that it would be possible to
   test them in the future example::
@@ -493,43 +556,57 @@ Module checklist
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
 * Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
-* Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
+* Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
 * Return values must be able to be serialized as json via the python stdlib
   json library.  basic python types (strings, int, dicts, lists, etc) are
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
-  certificates and so is insecure for https.  Instead, use either fetch_url or
-  open_url from ansible.module_utils.urls.
+* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
+  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
+
 
 Windows modules checklist
 `````````````````````````
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
+* Ansible uses strictmode version 2.0 so be sure to test with that enabled
 * start with::
 
     #!powershell
 
-then::
+  then::
+
     <GPL header>
-then::
+
+  then::
+
     # WANT_JSON
     # POWERSHELL_COMMON
+    
+  then, to parse all arguments into a variable modules generally use::
+
+    $params = Parse-Args $args
 
 * Arguments:
     * Try and use state present and state absent like other modules
-    * You need to check that all your mandatory args are present::
+    * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
+    * Required arguments::
 
-        If ($params.state) {
-            $state = $params.state.ToString().ToLower()
-            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
-                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
-            }
-        }
+        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
 
+    * Required arguments with name validation::
+
+        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
+
+    * Optional arguments with name validation::
+
+        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
+
+    * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
+      using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
     * Look at existing modules for more examples of argument checking.
 
 * Results
@@ -551,15 +628,14 @@ then::
 
 * Have you tested for powershell 3.0 and 4.0 compliance?
 
-
 Deprecating and making module aliases
 ``````````````````````````````````````
 
-Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to 
-_old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
+Starting in 1.8, you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
+_old_cloud.py. This keeps the module available, but hides it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
-This example allows the stat module to be called with fileinfo, making the following examples equivalent
+This example allows the stat module to be called with fileinfo, making the following examples equivalent::
 
     EXAMPLES = '''
     ln -s stat.py _fileinfo.py
@@ -584,5 +660,3 @@ This example allows the stat module to be called with fileinfo, making the follo
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

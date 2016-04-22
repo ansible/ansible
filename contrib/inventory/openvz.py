@@ -24,7 +24,7 @@
 # https://github.com/ansible/ansible/blob/e5ef0eca03cbb6c8950c06dc50d0ca22aa8902f4/plugins/inventory/libvirt_lxc.py
 #
 # Groups are determined by the description field of openvz guests
-# multiple groups can be seperated by commas: webserver,dbserver
+# multiple groups can be separated by commas: webserver,dbserver
 
 from subprocess import Popen,PIPE
 import sys
@@ -70,8 +70,8 @@ def get_guests():
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
     inv_json = get_guests()
-    print json.dumps(inv_json, sort_keys=True)
+    print(json.dumps(inv_json, sort_keys=True))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print json.dumps({});
+    print(json.dumps({}))
 else:
-    print "Need an argument, either --list or --host <host>"
+    print("Need an argument, either --list or --host <host>")

@@ -43,7 +43,7 @@ Environmental configuration
 ```````````````````````````
 
 Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in 'constants.py' in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
+override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
 
 .. _config_values_by_section:
 
@@ -60,7 +60,7 @@ General defaults
 
 In the [defaults] section of ansible.cfg, the following settings are tunable:
 
-.. _action_plugins:
+.. _cfg_action_plugins:
 
 action_plugins
 ==============
@@ -115,6 +115,15 @@ sudoing.  The default behavior is also no::
 
 Users on platforms where sudo passwords are enabled should consider changing this setting.
 
+.. _ask_vault_pass:
+
+ask_vault_pass
+==============
+
+This controls whether an Ansible playbook should prompt for the vault password by default.  The default behavior is no::
+
+    ask_vault_pass=True
+
 .. _bin_ansible_callbacks:
 
 bin_ansible_callbacks
@@ -151,7 +160,9 @@ stdout_callback
 
 .. versionadded:: 2.0
 
-This setting allows you to override the default stdout callback for ansible-playbook.
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _callback_whitelist:
 
@@ -160,10 +171,11 @@ callback_whitelist
 
 .. versionadded:: 2.0
 
-Now ansible ships with all included callback plugins ready to use but they are disabled by default,
-this setting lets you enable a list of additional callbacks, this cannot change or override the
-default stdout callback, use :ref:`stdout_callback` for that.
+Now ansible ships with all included callback plugins ready to use but they are disabled by default.
+This setting lets you enable a list of additional callbacks. This cannot change or override the
+default stdout callback, use :ref:`stdout_callback` for that::
 
+    callback_whitelist = timer,mail
 
 .. _command_warnings:
 
@@ -216,6 +228,34 @@ Allows disabling of deprecating warnings in ansible-playbook output::
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
+.. _display_args_to_stdout:
+
+display_args_to_stdout
+======================
+
+.. versionadded:: 2.1.0
+
+By default, ansible-playbook will print a header for each task that is run to
+stdout.  These headers will contain the ``name:`` field from the task if you
+specified one.  If you didn't then ansible-playbook uses the task's action to
+help you tell which task is presently running.  Sometimes you run many of the
+same action and so you want more information about the task to differentiate
+it from others of the same action.  If you set this variable to ``True`` in
+the config then ansible-playbook will also include the task's arguments in the
+header.
+
+This setting defaults to ``False`` because there is a chance that you have
+sensitive values in your parameters and do not want those to be printed to
+stdout::
+
+    display_args_to_stdout=False
+
+If you set this to ``True`` you should be sure that you have secured your
+environment's stdout (no one can shoulder surf your screen and you aren't
+saving stdout to an insecure file) or made sure that all of your playbooks
+explicitly added the ``no_log: True`` parameter to tasks which have sensistive
+values   See :ref:`keep_secret_data` for more information.
+
 .. _display_skipped_hosts:
 
 display_skipped_hosts
@@ -248,6 +288,8 @@ executable
 This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
     executable = /bin/bash
+
+Starting in version 2.1 this can be overriden by the inventory var ``ansible_shell_executable``.
 
 .. _filter_plugins:
 
@@ -309,7 +351,35 @@ New in 1.6, the 'gathering' setting controls the default policy of facts gatheri
 The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
 The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
 The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
-This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache.
+This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache::
+
+    gathering = smart
+
+.. versionadded:: 2.1
+
+You can specify a subset of gathered facts using the following option::
+
+    gather_subset = all
+
+:all: gather all subsets (the default)
+:network: gather network facts
+:hardware: gather hardware facts (longest facts to retrieve)
+:virtual: gather facts about virtual machines hosted on the machine
+:ohai: gather facts from ohai
+:facter: gather facts from facter
+
+You can combine them using a comma separated list (ex: network,virtual,facter)
+
+You can also disable specific subsets by prepending with a `!` like this::
+
+    # Don't gather hardware facts, facts from chef's ohai or puppet's facter
+    gather_subset = !hardware,!ohai,!facter
+
+A set of basic facts are always collected no matter which additional subsets
+are selected.  If you want to collect the minimal amount of facts, use
+`!all`::
+
+    gather_subset = !all
 
 hash_behaviour
 ==============
@@ -324,6 +394,11 @@ official examples repos do not use this setting::
     hash_behaviour=replace
 
 The valid values are either 'replace' (the default) or 'merge'.
+
+.. versionadded:: 2.0
+
+If you want to merge hashes without changing the global settings, use
+the `combine` filter described in :doc:`playbooks_filters`.
 
 .. _hostfile:
 
@@ -377,6 +452,22 @@ This is the default location Ansible looks to find modules::
 Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
 "./library" directory alongside a playbook.
 
+.. _local_tmp:
+
+local_tmp
+=========
+
+When Ansible gets ready to send a module to a remote machine it usually has to
+add a few things to the module: Some boilerplate code, the module's
+parameters, and a few constants from the config file.  This combination of
+things gets stored in a temporary file until ansible exits and cleans up after
+itself.  The default location is a subdirectory of the user's home directory.
+If you'd like to change that, you can do so by altering this setting::
+
+    local_tmp = $HOME/.ansible/tmp
+
+Ansible will then choose a random directory name inside this location.
+
 .. _log_path:
 
 log_path
@@ -404,12 +495,28 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _module_set_locale:
+
+module_set_locale
+=================
+
+This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
+via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
+being set when the module is executed on the given remote system.
+
+.. note::
+
+    The module_set_locale option was added in Ansible 2.1.
+
 .. _module_lang:
+
 
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+
+    module_lang = en_US.UTF-8
 
 .. _module_name:
 
@@ -510,12 +617,33 @@ always default to the current user if this is not defined::
 
     remote_user = root
 
-.. _roles_path:
+.. _retry_files_enabled:
+
+retry_files_enabled
+===================
+
+This controls whether a failed Ansible playbook should create a .retry file. The default setting is True::
+
+    retry_files_enabled = False
+
+.. _retry_files_save_path:
+
+retry_files_save_path
+=====================
+
+The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
+The default location is adjacent to the play (~/ in versions older than 2.0) and can be changed to any writeable path::
+
+    retry_files_save_path = ~/.ansible/retry-files
+
+The directory will be created if it does not already exist.
+
+.. _cfg_roles_path:
 
 roles_path
 ==========
 
-.. versionadded: '1.4'
+.. versionadded:: 1.4
 
 The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
 roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
@@ -529,6 +657,37 @@ Additional paths can be provided separated by colon characters, in the same way 
 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
+
+.. _cfg_squash_actions:
+
+squash_actions
+==============
+
+.. versionadded:: 2.0
+
+Ansible can optimise actions that call modules that support list parameters when using with\_ looping.
+Instead of calling the module once for each item, the module is called once with the full list.
+
+The default value for this setting is only for certain package managers, but it can be used for any module::
+
+    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+
+Currently, this is only supported for modules that have a name parameter, and only when the item is the
+only thing being passed to the parameter.
+
+.. _cfg_strategy_plugins:
+
+strategy_plugins
+==================
+
+Strategy plugin allow users to change the way in which Ansible runs tasks on targeted hosts.
+
+This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
+different locations::
+
+    strategy_plugins = ~/.ansible/plugins/strategy_plugins/:/usr/share/ansible_plugins/strategy_plugins
+
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 .. _sudo_exe:
 
@@ -545,11 +704,12 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the $HOME environment variable
-of the original user.  In some situations you may wish to add or remove flags, but in general most users
-will not need to change this setting::
+Additional flags to pass to sudo when engaging sudo support. The default is '-H -S -n' which sets the HOME environment
+variable, prompts for passwords via STDIN, and avoids prompting the user for input of any kind. Note that '-n' will conflict
+with using password-less sudo auth, such as pam_ssh_agent_auth. In some situations you may wish to add or remove flags, but
+in general most users will not need to change this setting:::
 
-   sudo_flags=-H
+   sudo_flags=-H -S -n
 
 .. _sudo_user:
 
@@ -593,7 +753,9 @@ The default is 'smart', which will use 'ssh' (OpenSSH based) if the local operat
 technology, and then will otherwise use 'paramiko'.  Other transport options include 'local', 'chroot', 'jail', and so on.
 
 Users should usually leave this setting as 'smart' and let their playbooks choose an alternate setting when needed with the
-'connection:' play parameter.
+'connection:' play parameter::
+
+    transport = paramiko
 
 .. _vars_plugins:
 
@@ -642,7 +804,7 @@ The equivalent of adding sudo: or su: to a play or task, set to true/yes to acti
 become_method
 =============
 
-Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``::
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``::
 
     become_method=su
 
@@ -664,6 +826,18 @@ Ask for privilege escalation password, the default is False::
 
     become_ask_pass=True
 
+.. _become_allow_same_user:
+
+become_allow_same_user
+======================
+
+Most of the time, using *sudo* to run a command as the same user who is running
+*sudo* itself is unnecessary overhead, so Ansible does not allow it. However,
+depending on the *sudo* configuration, it may be necessary to run a command as
+the same user through *sudo*, such as to switch SELinux contexts. For this
+reason, you can set ``become_allow_same_user`` to ``True`` and disable this
+optimization.
+
 .. _paramiko_settings:
 
 Paramiko Specific Settings
@@ -682,6 +856,17 @@ This setting may be inefficient for large numbers of hosts, and in those situati
 instead.  Setting it to False will improve performance and is recommended when host key checking is disabled::
 
     record_host_keys=True
+
+.. _paramiko_proxy_command:
+
+proxy_command
+=============
+
+.. versionadded:: 2.1
+
+Use an OpenSSH like ProxyCommand for proxying all Paramiko SSH connections through a bastion or jump host. Requires a minimum of Paramiko version 1.9.0. On Enterprise Linux 6 this is provided by ``python-paramiko1.10`` in the EPEL repository::
+
+    proxy_command = ssh -W "%h:%p" bastion
 
 .. _openssh_settings:
 
@@ -838,4 +1023,33 @@ special_context_filesystems
 
 This is a list of file systems that require special treatment when dealing with security context.
 The normal behaviour is for operations to copy the existing context or use the user default, this changes it to use a file system dependent context.
-The default list is: nfs,vboxsf,fuse,ramfs
+The default list is: nfs,vboxsf,fuse,ramfs::
+
+    special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
+
+libvirt_lxc_noseclabel
+======================
+
+.. versionadded:: 2.1
+
+This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
+This is necessary when running on systems which do not have SELinux.
+The default behavior is no::
+
+    libvirt_lxc_noseclabel = True
+
+Galaxy Settings
+---------------
+
+The following options can be set in the [galaxy] section of ansible.cfg:
+
+server
+======
+
+Override the default Galaxy server value of https://galaxy.ansible.com. Useful if you have a hosted version of the Galaxy web app or want to point to the testing site https://galaxy-qa.ansible.com. It does not work against private, hosted repos, which Galaxy can use for fetching and installing roles.
+
+ignore_certs
+============
+
+If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.

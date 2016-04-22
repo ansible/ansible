@@ -17,12 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# FIXME: can we store these as something else before we ship it?
 import sys
 import time
 import json
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.cache.base import BaseCacheModule
 
 try:
@@ -75,7 +75,7 @@ class CacheModule(BaseCacheModule):
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-        self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
+            self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
 
     def keys(self):
         self._expire_keys()
@@ -94,7 +94,7 @@ class CacheModule(BaseCacheModule):
             self.delete(key)
 
     def copy(self):
-        # FIXME: there is probably a better way to do this in redis
+        # TODO: there is probably a better way to do this in redis
         ret = dict()
         for key in self.keys():
             ret[key] = self.get(key)

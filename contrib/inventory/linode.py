@@ -101,7 +101,7 @@ except:
         from chube.linode_obj import Linode
 
         sys.path = old_path
-    except Exception, e:
+    except Exception as e:
         raise Exception("could not import chube")
 
 load_chube_config()
@@ -139,7 +139,7 @@ class LinodeInventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
     def is_cache_valid(self):
         """Determines if the cache file has expired, or if it is still valid."""
@@ -184,20 +184,20 @@ class LinodeInventory(object):
         try:
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
-        except chube_api.linode_api.ApiError, e:
-            print "Looks like Linode's API is down:"
-            print
-            print e
+        except chube_api.linode_api.ApiError as e:
+            print("Looks like Linode's API is down:")
+            print("")
+            print(e)
             sys.exit(1)
 
     def get_node(self, linode_id):
         """Gets details about a specific node."""
         try:
             return Linode.find(api_id=linode_id)
-        except chube_api.linode_api.ApiError, e:
-            print "Looks like Linode's API is down:"
-            print
-            print e
+        except chube_api.linode_api.ApiError as e:
+            print("Looks like Linode's API is down:")
+            print("")
+            print(e)
             sys.exit(1)
 
     def populate_datacenter_cache(self):
@@ -279,6 +279,11 @@ class LinodeInventory(object):
 
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
         node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
+
+        # Set the SSH host information, so these inventory items can be used if
+        # their labels aren't FQDNs
+        node_vars['ansible_ssh_host'] = node_vars["public_ip"]
+        node_vars['ansible_host'] = node_vars["public_ip"]
 
         private_ips = [addr.address for addr in node.ipaddresses if not addr.is_public]
 

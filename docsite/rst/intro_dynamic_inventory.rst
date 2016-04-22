@@ -101,6 +101,19 @@ You can test the script by itself to make sure your config is correct::
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
 
+If you use boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
+
+    [profile dev]
+    aws_access_key_id = <dev access key>
+    aws_secret_access_key = <dev secret key>
+
+    [profile prod]
+    aws_access_key_id = <prod access key>
+    aws_secret_access_key = <prod secret key>
+
+You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``anisble-playbook`` though.
+But you can use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
+
 Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
 
 At their heart, inventory files are simply a mapping from some name to a destination address. The default ``ec2.ini`` settings are configured for running Ansible from outside EC2 (from your laptop for example) -- and this is not the most efficient way to manage EC2.
@@ -193,6 +206,77 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 
     # ./ec2.py --refresh-cache
 
+.. _openstack_example:
+
+Example: OpenStack External Inventory Script
+````````````````````````````````````````````
+
+If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
+
+You can download the latest version of the OpenStack inventory script at: https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+
+You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
+
+Explicit use of inventory script
+++++++++++++++++++++++++++++++++
+
+Download the latest version of the OpenStack dynamic inventory script and make it executable::
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    chmod +x openstack.py
+
+Source an OpenStack RC file::
+
+    source openstack.rc
+
+.. note::
+
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to http://docs.openstack.org/cli-reference/content/cli_openrc.html.
+
+You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
+
+.. note::
+
+    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to http://docs.openstack.org/cli-reference/content/install_clients.html.
+
+You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
+
+    ./openstack.py --list
+
+After a few moments you should see some JSON output with information about your compute instances. 
+
+Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
+
+    ansible -i openstack.py all -m ping
+
+Implicit use of inventory script
+++++++++++++++++++++++++++++++++
+
+Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    chmod +x openstack.py
+    sudo cp openstack.py /etc/ansible/hosts
+
+Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.yml
+    vi openstack.yml
+    sudo cp openstack.yml /etc/ansible/
+
+You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
+
+    /etc/ansible/hosts --list
+
+After a few moments you should see some JSON output with information about your compute instances.
+
+Refresh the cache
++++++++++++++++++
+
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
+
+    ./openstack.py --refresh
+
 .. _other_inventory_scripts:
 
 Other inventory scripts
@@ -206,7 +290,8 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
    Linode
    OpenShift
    OpenStack Nova
-   Red Hat's SpaceWalk
+   Ovirt
+   SpaceWalk
    Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
    Zabbix
 
@@ -218,12 +303,20 @@ to include it in the project.
 
 .. _using_multiple_sources:
 
-Using Multiple Inventory Sources
-````````````````````````````````
+Using Inventory Directories and Multiple Inventory Sources
+``````````````````````````````````````````````````````````
 
 If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
+
+In an inventory directory, executable files will be treated as dynamic inventory sources and most other files as static sources. Files which end with any of the following will be ignored::
+
+    ~, .orig, .bak, .ini, .retry, .pyc, .pyo
+
+You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the ANSIBLE_INVENTORY_IGNORE environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
+
+Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
 
 .. _static_groups_of_dynamic:
 

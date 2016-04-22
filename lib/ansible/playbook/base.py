@@ -19,26 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import itertools
+import operator
 import uuid
 
 from functools import partial
 from inspect import getmembers
-from io import FileIO
 
-from six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types
 
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleParserError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
+from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.unicode import to_unicode
 
-from ansible.utils.debug import debug
+BASE_ATTRIBUTES = {}
 
-from ansible.template import template
 
 class Base:
 
@@ -47,9 +48,21 @@ class Base:
     _port                = FieldAttribute(isa='int')
     _remote_user         = FieldAttribute(isa='string')
 
+    # variables
+    _vars                = FieldAttribute(isa='dict', priority=100)
+
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list', default=[])
-    _no_log              = FieldAttribute(isa='bool', default=False)
+    _environment         = FieldAttribute(isa='list')
+    _no_log              = FieldAttribute(isa='bool')
+    _always_run           = FieldAttribute(isa='bool')
+    _run_once             = FieldAttribute(isa='bool')
+    _ignore_errors        = FieldAttribute(isa='bool')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
 
     def __init__(self):
 
@@ -63,6 +76,10 @@ class Base:
 
         # and initialize the base attributes
         self._initialize_base_attributes()
+
+        # and init vars, avoid using defaults in field declaration as it lives across plays
+        self.vars = dict()
+
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
@@ -86,10 +103,13 @@ class Base:
     @staticmethod
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
-        if method in dir(self):
+        if hasattr(self, method):
             return getattr(self, method)()
 
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
+        if value is None and hasattr(self, '_get_parent_attribute'):
+            value = self._get_parent_attribute(prop_name)
+        return value
 
     @staticmethod
     def _generic_s(prop_name, self, value):
@@ -104,12 +124,19 @@ class Base:
         Returns the list of attributes for this class (or any subclass thereof).
         If the attribute name starts with an underscore, it is removed
         '''
+
+        # check cache before retrieving attributes
+        if self.__class__ in BASE_ATTRIBUTES:
+            return BASE_ATTRIBUTES[self.__class__]
+
+        # Cache init
         base_attributes = dict()
         for (name, value) in getmembers(self.__class__):
             if isinstance(value, Attribute):
-               if name.startswith('_'):
-                   name = name[1:]
-               base_attributes[name] = value
+                if name.startswith('_'):
+                    name = name[1:]
+                base_attributes[name] = value
+        BASE_ATTRIBUTES[self.__class__] = base_attributes
         return base_attributes
 
     def _initialize_base_attributes(self):
@@ -126,7 +153,7 @@ class Base:
             setattr(Base, name, property(getter, setter, deleter))
 
             # Place the value into the instance so that the property can
-            # process and hold that value/
+            # process and hold that value.
             setattr(self, name, value.default)
 
     def preprocess_data(self, ds):
@@ -143,6 +170,9 @@ class Base:
 
         assert ds is not None
 
+        # cache the datastructure internally
+        setattr(self, '_ds', ds)
+
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
@@ -153,24 +183,16 @@ class Base:
         else:
             self._loader = DataLoader()
 
-        # FIXME: is this required anymore? This doesn't seem to do anything
-        #        helpful, and was added in very early stages of the base class
-        #        development.
-        #if isinstance(ds, string_types) or isinstance(ds, FileIO):
-        #    ds = self._loader.load(ds)
-
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
         ds = self.preprocess_data(ds)
         self._validate_attributes(ds)
 
-        # Walk all attributes in the class.
-        #
-        # FIXME: we currently don't do anything with private attributes but
-        #        may later decide to filter them out of 'ds' here.
-
-        for name in self._get_base_attributes():
+        # Walk all attributes in the class. We sort them based on their priority
+        # so that certain fields can be loaded before others, if they are dependent.
+        base_attributes = self._get_base_attributes()
+        for name, attr in sorted(base_attributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -181,9 +203,6 @@ class Base:
 
         # run early, non-critical validation
         self.validate()
-
-        # cache the datastructure internally
-        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self
@@ -221,6 +240,13 @@ class Base:
             method = getattr(self, '_validate_%s' % name, None)
             if method:
                 method(attribute, name, getattr(self, name))
+            else:
+                # and make sure the attribute is of the type it should be
+                value = getattr(self, name)
+                if value is not None:
+                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                        raise AnsibleParserError("The field '%s' is supposed to be a string type,"
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
 
     def copy(self):
         '''
@@ -230,10 +256,18 @@ class Base:
         new_me = self.__class__()
 
         for name in self._get_base_attributes():
-            setattr(new_me, name, getattr(self, name))
+            attr_val = getattr(self, name)
+            if isinstance(attr_val, collections.Sequence):
+                setattr(new_me, name, attr_val[:])
+            elif isinstance(attr_val, collections.Mapping):
+                setattr(new_me, name, attr_val.copy())
+            else:
+                setattr(new_me, name, attr_val)
 
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
+
+        new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
         if hasattr(self, '_ds'):
@@ -248,10 +282,6 @@ class Base:
         any _post_validate_<foo> functions.
         '''
 
-        basedir = None
-        if self._loader is not None:
-            basedir = self._loader.get_basedir()
-
         # save the omit value for later checking
         omit_value = templar._available_variables.get('omit')
 
@@ -262,6 +292,11 @@ class Base:
                     continue
                 else:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
+            elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
+                # Intermediate objects like Play() won't have their fields validated by
+                # default, as their values are often inherited by other objects and validated
+                # later, so we don't want them to fail out early
+                continue
 
             try:
                 # Run the post-validator if present. These methods are responsible for
@@ -269,6 +304,8 @@ class Base:
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
                     value = method(attribute, getattr(self, name), templar)
+                elif attribute.isa == 'class':
+                    value = getattr(self, name)
                 else:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
@@ -276,40 +313,73 @@ class Base:
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    value = attribute.default
+                    setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = unicode(value)
+                        value = to_unicode(value)
                     elif attribute.isa == 'int':
                         value = int(value)
+                    elif attribute.isa == 'float':
+                        value = float(value)
                     elif attribute.isa == 'bool':
                         value = boolean(value)
+                    elif attribute.isa == 'percent':
+                        # special value, which may be an integer or float
+                        # with an optional '%' at the end
+                        if isinstance(value, string_types) and '%' in value:
+                            value = value.replace('%', '')
+                        value = float(value)
                     elif attribute.isa == 'list':
-                        if not isinstance(value, list):
-                            value = [ value ]
+                        if value is None:
+                            value = []
+                        elif not isinstance(value, list):
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
-                                    raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                    raise AnsibleParserError("the field '%s' should be a list of %s,"
+                                            " but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                elif attribute.required and attribute.listof == string_types:
+                                    if item is None or item.strip() == "":
+                                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
                     elif attribute.isa == 'set':
-                        if not isinstance(value, (list, set)):
-                            value = [ value ]
+                        if value is None:
+                            value = set()
+                        elif not isinstance(value, (list, set)):
+                            if isinstance(value, string_types):
+                                value = value.split(',')
+                            else:
+                                # Making a list like this handles strings of
+                                # text and bytes properly
+                                value = [ value ]
                         if not isinstance(value, set):
                             value = set(value)
-                    elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError("%s is not a dictionary" % value)
+                    elif attribute.isa == 'dict':
+                        if value is None:
+                            value = dict()
+                        elif not isinstance(value, dict):
+                            raise TypeError("%s is not a dictionary" % value)
+                    elif attribute.isa == 'class':
+                        if not isinstance(value, attribute.class_type):
+                            raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+                        value.post_validate(templar=templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
 
             except (TypeError, ValueError) as e:
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
+                        " Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
             except UndefinedError as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
+                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
+                            " The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
         '''
@@ -349,6 +419,39 @@ class Base:
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
 
+    def _load_vars(self, attr, ds):
+        '''
+        Vars in a play can be specified either as a dictionary directly, or
+        as a list of dictionaries. If the later, this method will turn the
+        list into a single dictionary.
+        '''
+
+        def _validate_variable_keys(ds):
+            for key in ds:
+                if not isidentifier(key):
+                    raise TypeError("'%s' is not a valid variable name" % key)
+
+        try:
+            if isinstance(ds, dict):
+                _validate_variable_keys(ds)
+                return ds
+            elif isinstance(ds, list):
+                all_vars = dict()
+                for item in ds:
+                    if not isinstance(item, dict):
+                        raise ValueError
+                    _validate_variable_keys(item)
+                    all_vars = combine_vars(all_vars, item)
+                return all_vars
+            elif ds is None:
+                return {}
+            else:
+                raise ValueError
+        except ValueError:
+            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
+
     def _extend_value(self, value, new_value):
         '''
         Will extend the value given with new_value (and will turn both
@@ -362,7 +465,7 @@ class Base:
             new_value = [ new_value ]
 
         #return list(set(value + new_value))
-        return [i for i,_ in itertools.groupby(value + new_value)]
+        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
 
     def __getstate__(self):
         return self.serialize()
@@ -370,4 +473,3 @@ class Base:
     def __setstate__(self, data):
         self.__init__()
         self.deserialize(data)
-

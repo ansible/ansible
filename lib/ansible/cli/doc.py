@@ -16,13 +16,15 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
-import fcntl
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import datetime
 import os
-import struct
-import termios
 import traceback
 import textwrap
+
+from ansible.compat.six import iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -30,15 +32,19 @@ from ansible.plugins import module_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class DocCLI(CLI):
     """ Vault command line class """
 
-    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
-    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION"]
+    def __init__(self, args):
 
-    def __init__(self, args, display=None):
-
-        super(DocCLI, self).__init__(args, display)
+        super(DocCLI, self).__init__(args)
         self.module_list = []
 
     def parse(self):
@@ -46,18 +52,16 @@ class DocCLI(CLI):
         self.parser = CLI.base_parser(
             usage='usage: %prog [options] [module...]',
             epilog='Show Ansible module documentation',
+            module_opts=True,
         )
 
-        self.parser.add_option("-M", "--module-path", action="store", dest="module_path", default=C.DEFAULT_MODULE_PATH,
-                help="Ansible modules/ directory")
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
 
-        self.options, self.args = self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
-
+        self.options, self.args = self.parser.parse_args(self.args[1:])
+        display.verbosity = self.options.verbosity
 
     def run(self):
 
@@ -73,7 +77,7 @@ class DocCLI(CLI):
             for path in paths:
                 self.find_modules(path)
 
-            CLI.pager(self.get_module_list_text())
+            self.pager(self.get_module_list_text())
             return 0
 
         if len(self.args) == 0:
@@ -84,25 +88,26 @@ class DocCLI(CLI):
         for module in self.args:
 
             try:
-                filename = module_loader.find_plugin(module)
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = module_loader.find_plugin(module, mod_type='.py')
                 if filename is None:
-                    self.display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                    display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
 
-                if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
+                if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    self.display.vvv(traceback.print_exc())
-                    self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
+                    display.vvv(traceback.print_exc())
+                    display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
                     continue
 
                 if doc is not None:
 
                     all_keys = []
-                    for (k,v) in doc['options'].iteritems():
+                    for (k,v) in iteritems(doc['options']):
                         all_keys.append(k)
                     all_keys = sorted(all_keys)
                     doc['option_keys'] = all_keys
@@ -114,18 +119,18 @@ class DocCLI(CLI):
                     doc['returndocs']       = returndocs
 
                     if self.options.show_snippet:
-                        text += DocCLI.get_snippet_text(doc)
+                        text += self.get_snippet_text(doc)
                     else:
-                        text += DocCLI.get_man_text(doc)
+                        text += self.get_man_text(doc)
                 else:
                     # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
-            except Exception, e:
-                self.display.vvv(traceback.print_exc())
+            except Exception as e:
+                display.vvv(traceback.print_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
-        CLI.pager(text)
+        self.pager(text)
         return 0
 
     def find_modules(self, path):
@@ -136,11 +141,11 @@ class DocCLI(CLI):
                     continue
                 elif os.path.isdir(module):
                     self.find_modules(module)
-                elif any(module.endswith(x) for x in self.BLACKLIST_EXTS):
+                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
                 elif module.startswith('__'):
                     continue
-                elif module in self.IGNORE_FILES:
+                elif module in C.IGNORE_FILES:
                     continue
                 elif module.startswith('_'):
                     fullpath = '/'.join([path,module])
@@ -150,13 +155,8 @@ class DocCLI(CLI):
                 module = os.path.splitext(module)[0] # removes the extension
                 self.module_list.append(module)
 
-
     def get_module_list_text(self):
-        tty_size = 0
-        if os.isatty(0):
-            tty_size = struct.unpack('HHHH',
-                fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))[1]
-        columns = max(60, tty_size)
+        columns = display.columns
         displace = max(len(x) for x in self.module_list)
         linelimit = columns - displace - 5
         text = []
@@ -166,7 +166,8 @@ class DocCLI(CLI):
             if module in module_docs.BLACKLIST_MODULES:
                 continue
 
-            filename = module_loader.find_plugin(module)
+            # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+            filename = module_loader.find_plugin(module, mod_type='.py')
 
             if filename is None:
                 continue
@@ -193,7 +194,6 @@ class DocCLI(CLI):
             text.extend(deprecated)
         return "\n".join(text)
 
-
     @staticmethod
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
@@ -205,38 +205,49 @@ class DocCLI(CLI):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    @staticmethod
-    def get_snippet_text(doc):
+    def get_snippet_text(self, doc):
 
         text = []
-        desc = CLI.tty_ify(" ".join(doc['short_description']))
+        desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
+        pad = 31
+        subdent = ''.join([" " for a in xrange(pad)])
+        limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
             desc = CLI.tty_ify(" ".join(opt['description']))
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 s = o + "="
             else:
                 s = o
-
-            text.append("      %-20s   # %s" % (s, desc))
+            text.append("      %-20s   # %s" % (s, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
 
         return "\n".join(text)
 
-    @staticmethod
-    def get_man_text(doc):
+    def get_man_text(self, doc):
 
         opt_indent="        "
         text = []
         text.append("> %s\n" % doc['module'].upper())
+        pad = display.columns * 0.20
+        limit = max(display.columns - int(pad), 70)
 
-        desc = " ".join(doc['description'])
+        if isinstance(doc['description'], list):
+            desc = " ".join(doc['description'])
+        else:
+            desc = doc['description']
 
-        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
+        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
+
+        if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
+            text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
 
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
@@ -244,14 +255,20 @@ class DocCLI(CLI):
         for o in sorted(doc['option_keys']):
             opt = doc['options'][o]
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 opt_leadin = "="
             else:
                 opt_leadin = "-"
 
             text.append("%s %s" % (opt_leadin, o))
 
-            desc = " ".join(opt['description'])
+            if isinstance(opt['description'], list):
+                desc = " ".join(opt['description'])
+            else:
+                desc = opt['description']
 
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])
@@ -259,19 +276,15 @@ class DocCLI(CLI):
             if 'default' in opt:
                 default = str(opt['default'])
                 desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent=opt_indent,
-                                 subsequent_indent=opt_indent))
+            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
-        if 'notes' in doc and len(doc['notes']) > 0:
+        if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), initial_indent="  ",
-                                subsequent_indent=opt_indent))
-
+            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
-            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), initial_indent="  ",
-                                subsequent_indent=opt_indent))
+            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit-16, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'examples' in doc and len(doc['examples']) > 0:
             text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))

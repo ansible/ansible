@@ -23,9 +23,12 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins.strategies import StrategyBase
+from ansible.plugins.strategy import StrategyBase
+from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
+from ansible.playbook.handler import Handler
+from ansible.inventory.host import Host
 
 from six.moves import queue as Queue
 from units.mock.loader import DictDataLoader
@@ -73,6 +76,7 @@ class TestStrategyBase(unittest.TestCase):
         for i in range(0, 5):
             mock_host = MagicMock()
             mock_host.name = "host%02d" % (i+1)
+            mock_host.has_hostkey = True
             mock_hosts.append(mock_host)
 
         mock_inventory = MagicMock()
@@ -98,37 +102,45 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._unreachable_hosts = ["host02"]
         self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts[2:])
 
-    def test_strategy_base_queue_task(self):
+    @patch.object(WorkerProcess, 'run')
+    def test_strategy_base_queue_task(self, mock_worker):
+        def fake_run(self):
+            return
+
+        mock_worker.run.side_effect = fake_run
+
         fake_loader = DictDataLoader()
+        mock_var_manager = MagicMock()
+        mock_host = MagicMock()
+        mock_host.has_hostkey = True
+        mock_inventory = MagicMock()
+        mock_options = MagicMock()
+        mock_options.module_path = None
+        
+        tqm = TaskQueueManager(
+            inventory=mock_inventory,
+            variable_manager=mock_var_manager,
+            loader=fake_loader,
+            options=mock_options,
+            passwords=None,
+        )
+        tqm._initialize_processes(3)
+        tqm.hostvars = dict()
 
-        workers = []
-        for i in range(0, 3):
-            worker_main_q = MagicMock()
-            worker_main_q.put.return_value = None
-            worker_result_q = MagicMock()
-            workers.append([i, worker_main_q, worker_result_q])
-
-        mock_tqm = MagicMock()
-        mock_tqm._final_q = MagicMock()
-        mock_tqm.get_workers.return_value = workers
-        mock_tqm.get_loader.return_value = fake_loader
-
-        strategy_base = StrategyBase(tqm=mock_tqm)
-        strategy_base._cur_worker = 0
-        strategy_base._pending_results = 0
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 1)
-        self.assertEqual(strategy_base._pending_results, 1)
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 2)
-        self.assertEqual(strategy_base._pending_results, 2)
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 0)
-        self.assertEqual(strategy_base._pending_results, 3)
-        workers[0][1].put.side_effect = EOFError
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 1)
-        self.assertEqual(strategy_base._pending_results, 3)
+        try:
+            strategy_base = StrategyBase(tqm=tqm)
+            strategy_base._queue_task(host=mock_host, task=MagicMock(), task_vars=dict(), play_context=MagicMock())
+            self.assertEqual(strategy_base._cur_worker, 1)
+            self.assertEqual(strategy_base._pending_results, 1)
+            strategy_base._queue_task(host=mock_host, task=MagicMock(), task_vars=dict(), play_context=MagicMock())
+            self.assertEqual(strategy_base._cur_worker, 2)
+            self.assertEqual(strategy_base._pending_results, 2)
+            strategy_base._queue_task(host=mock_host, task=MagicMock(), task_vars=dict(), play_context=MagicMock())
+            self.assertEqual(strategy_base._cur_worker, 0)
+            self.assertEqual(strategy_base._pending_results, 3)
+        finally:
+            tqm.cleanup()
+        
 
     def test_strategy_base_process_pending_results(self):
         mock_tqm = MagicMock()
@@ -156,10 +168,12 @@ class TestStrategyBase(unittest.TestCase):
         
         mock_iterator = MagicMock()
         mock_iterator.mark_host_failed.return_value = None
+        mock_iterator.get_next_task_for_host.return_value = (None, None)
 
         mock_host = MagicMock()
         mock_host.name = 'test01'
         mock_host.vars = dict()
+        mock_host.has_hostkey = True
 
         mock_task = MagicMock()
         mock_task._role = None
@@ -182,6 +196,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_inventory.get_host.side_effect = _get_host
         mock_inventory.get_group.side_effect = _get_group
         mock_inventory.clear_pattern_cache.return_value = None
+        mock_inventory.get_host_vars.return_value = {}
 
         mock_var_mgr = MagicMock()
         mock_var_mgr.set_host_variable.return_value = None
@@ -315,22 +330,15 @@ class TestStrategyBase(unittest.TestCase):
         res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
         self.assertEqual(res, [])
 
-    def test_strategy_base_run_handlers(self):
-        workers = []
-        for i in range(0, 3):
-            worker_main_q = MagicMock()
-            worker_main_q.put.return_value = None
-            worker_result_q = MagicMock()
-            workers.append([i, worker_main_q, worker_result_q])
-
-        mock_tqm = MagicMock()
-        mock_tqm._final_q = MagicMock()
-        mock_tqm.get_workers.return_value = workers
-        mock_tqm.send_callback.return_value = None
-
+    @patch.object(WorkerProcess, 'run')
+    def test_strategy_base_run_handlers(self, mock_worker):
+        def fake_run(*args):
+            return
+        mock_worker.side_effect = fake_run
         mock_play_context = MagicMock()
 
-        mock_handler_task = MagicMock()
+        mock_handler_task = MagicMock(Handler)
+        mock_handler_task.action = 'foo'
         mock_handler_task.get_name.return_value = "test handler"
         mock_handler_task.has_triggered.return_value = False
 
@@ -341,10 +349,9 @@ class TestStrategyBase(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.handlers = [mock_handler]
 
-        mock_host = MagicMock()
+        mock_host = MagicMock(Host)
         mock_host.name = "test01"
-
-        mock_iterator = MagicMock()
+        mock_host.has_hostkey = True
 
         mock_inventory = MagicMock()
         mock_inventory.get_hosts.return_value = [mock_host]
@@ -355,8 +362,29 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator = MagicMock
         mock_iterator._play = mock_play
 
-        strategy_base = StrategyBase(tqm=mock_tqm)
-        strategy_base._inventory = mock_inventory
-        strategy_base._notified_handlers = {"test handler": [mock_host]}
+        fake_loader = DictDataLoader()
+        mock_options = MagicMock()
+        mock_options.module_path = None
 
-        result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
+        tqm = TaskQueueManager(
+            inventory=mock_inventory,
+            variable_manager=mock_var_mgr,
+            loader=fake_loader,
+            options=mock_options,
+            passwords=None,
+        )
+        tqm._initialize_processes(3)
+        tqm.hostvars = dict()
+
+        try:
+            strategy_base = StrategyBase(tqm=tqm)
+
+            strategy_base._inventory = mock_inventory
+            strategy_base._notified_handlers = {"test handler": [mock_host]}
+
+            task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
+            tqm._final_q.put(('host_task_ok', task_result))
+
+            result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
+        finally:
+            tqm.cleanup()

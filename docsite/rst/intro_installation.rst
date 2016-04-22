@@ -27,12 +27,11 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version.
 
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
-these are infrequent.
+Ansible's release cycles are usually about four months long. Due to this short release cycle,
+minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
+Major bugs will still have maintenance releases when needed, though these are infrequent.
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
@@ -49,15 +48,26 @@ Control Machine Requirements
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
-  
+
+.. note::
+
+    As of 2.0 ansible uses a few more file handles to manage its forks, OS X has a very low setting so if you want to use 15 or more forks
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles unlimited``. Or just any time you see a "Too many open files" error.
+
+
+.. warning::
+
+    Please note that some modules and plugins have additional requirements, for modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
+
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
+Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
@@ -82,8 +92,12 @@ On the managed nodes, you only need Python 2.4 or later, but if you are running 
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
-   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
-   using the 'raw' module will be able to do it remotely.
+   Unix systems.
+
+   If you need to bootstrap these remote systems by installing Python 2.X,
+   using the 'raw' module will be able to do it remotely. For example,
+   ``ansible myhost --sudo -m raw -a "yum install -y python2 python-simplejson"``
+   would install Python 2.X and the simplejson module needed to run ansible and its modules.
 
 .. _installing_the_control_machine:
 
@@ -105,7 +119,7 @@ open source projects.
 
 .. note::
   
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use apt/yum/pip for a stable version
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
 
 
 To install from source.
@@ -114,9 +128,18 @@ To install from source.
 
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
+
+Using Bash:
+
+.. code-block:: bash
+
     $ source ./hacking/env-setup
 
-If you want to suppress spurious warnings/errors, use:
+Using Fish::
+
+    $ . ./hacking/env-setup.fish
+
+If you want to suppress spurious warnings/errors, use::
 
     $ source ./hacking/env-setup -q
 
@@ -124,7 +147,7 @@ If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
-Ansible also uses the following Python modules that need to be installed::
+Ansible also uses the following Python modules that need to be installed [1]_::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
@@ -178,14 +201,14 @@ Fedora users can install Ansible directly, though if you are using RHEL or CentO
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, ``asciidoc``, ``git``, ``python-setuptools`` and ``python2-devel`` installed.
 
 .. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ./rpmbuild/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
 
 .. _from_apt:
 
@@ -203,6 +226,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
+.. note:: For the older version 1.9 we use this ppa:ansible/ansible-1.9
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
@@ -295,9 +319,13 @@ your version of Python, you can get pip by::
 
    $ sudo easy_install pip
 
-Then install Ansible with::
+Then install Ansible with [1]_::
 
    $ sudo pip install ansible
+   
+Or if you are looking for the latest development version::
+    
+    pip install git+git://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
@@ -325,3 +353,4 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
+.. [1] If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".

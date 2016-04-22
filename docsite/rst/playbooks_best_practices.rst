@@ -205,7 +205,7 @@ Below is an example tasks file that explains how a role works.  Our common role 
     # file: roles/common/tasks/main.yml
 
     - name: be sure ntp is installed
-      yum: pkg=ntp state=installed
+      yum: name=ntp state=installed
       tags: ntp
 
     - name: be sure ntp is configured
@@ -254,8 +254,8 @@ What about just my webservers in Boston?::
 
 What about just the first 10, and then the next 10?::
    
-    ansible-playbook -i production webservers.yml --limit boston[0-10]
-    ansible-playbook -i production webservers.yml --limit boston[10-20]
+    ansible-playbook -i production webservers.yml --limit boston[1-10]
+    ansible-playbook -i production webservers.yml --limit boston[11-20]
 
 And of course just basic ad-hoc stuff is also possible.::
 
@@ -420,6 +420,18 @@ Use version control.  Keep your playbooks and inventory file in git
 (or another version control system), and commit when you make changes
 to them.  This way you have an audit trail describing when and why you
 changed the rules that are automating your infrastructure.
+
+.. _best_practices_for_variables_and_vaults:
+
+Variables and Vaults
+++++++++++++++++++++++++++++++++++++++++
+
+For general maintenance, it is often easier to use ``grep``, or similar tools, to find variables in your Ansible setup. Since vaults obscure these variables, it is best to work with a layer of indirection. When running a playbook, Ansible finds the variables in the unencrypted file and all sensitive variables come from the encrypted file.
+
+A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables and ensure that the ``vault`` file is vault encrypted.
+
+This best practice has no limit on the amount of variable and vault files or their names.
+
 
 .. seealso::
 

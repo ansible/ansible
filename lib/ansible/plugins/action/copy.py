@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import json
 import os
-import pipes
 import tempfile
 
 from ansible import constants as C
@@ -29,12 +28,16 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
-from ansible.parsing.vault import VaultLib
+
 
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source  = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -42,13 +45,21 @@ class ActionModule(ActionBase):
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
         faf     = self._task.first_available_file
+        remote_src = boolean(self._task.args.get('remote_src', False))
+        follow  = boolean(self._task.args.get('follow', False))
 
         if (source is None and content is None and faf is None) or dest is None:
-            return dict(failed=True, msg="src (or content) and dest are required")
+            result['failed'] = True
+            result['msg'] = "src (or content) and dest are required"
+            return result
         elif (source is not None or faf is not None) and content is not None:
-            return dict(failed=True, msg="src and content are mutually exclusive")
+            result['failed'] = True
+            result['msg'] = "src and content are mutually exclusive"
+            return result
         elif content is not None and dest is not None and dest.endswith("/"):
-            return dict(failed=True, msg="dest must be a file if content is defined")
+            result['failed'] = True
+            result['msg'] = "dest must be a file if content is defined"
+            return result
 
         # Check if the source ends with a "/"
         source_trailing_slash = False
@@ -69,28 +80,37 @@ class ActionModule(ActionBase):
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception as err:
-                return dict(failed=True, msg="could not write content temp file: %s" % err)
+                result['failed'] = True
+                result['msg'] = "could not write content temp file: %s" % err
+                return result
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
             if source is None:
-                return  dict(failed=True, msg="could not find src in first_available_file list")
+                result['failed'] = True
+                result['msg'] = "could not find src in first_available_file list"
+                return result
+
+        elif remote_src:
+            result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
+            return result
+
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
             else:
-                source = self._loader.path_dwim(source)
+                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
 
         # If source is a directory populate our list else source is a file and translate it to a tuple.
-        if os.path.isdir(source):
+        if os.path.isdir(to_bytes(source, errors='strict')):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
-                sz = len(source) + 1
+                sz = len(source)
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
@@ -99,6 +119,8 @@ class ActionModule(ActionBase):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
+                    if rel_path.startswith('/'):
+                        rel_path = rel_path[1:]
                     source_files.append((full_path, rel_path))
 
             # If it's recursive copy, destination is always a dir,
@@ -109,8 +131,7 @@ class ActionModule(ActionBase):
             source_files.append((source, os.path.basename(source)))
 
         changed = False
-        diffs = []
-        module_result = {"changed": False}
+        module_return = dict(changed=False)
 
         # A register for if we executed a module.
         # Used to cut down on command calls when not recursive.
@@ -120,21 +141,29 @@ class ActionModule(ActionBase):
         delete_remote_tmp = (len(source_files) == 1)
 
         # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not delete_remote_tmp:
             if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path()
+                tmp = self._make_tmp_path(remote_user)
+                self._cleanup_remote_tmp = True
 
         # expand any user home dir specifier
-        dest = self._remote_expand_user(dest, tmp)
+        dest = self._remote_expand_user(dest)
 
+        diffs = []
         for source_full, source_rel in source_files:
+
+            source_full = self._loader.get_real_file(source_full)
 
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
             # If local_checksum is not defined we can't find the file so we should fail out.
             if local_checksum is None:
-                return dict(failed=True, msg="could not find src=%s" % source_full)
+                result['failed'] = True
+                result['msg'] = "could not find src=%s" % source_full
+                self._remove_tmp_path(tmp)
+                return result
 
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
@@ -144,25 +173,28 @@ class ActionModule(ActionBase):
             else:
                 dest_file = self._connection._shell.join_path(dest)
 
-            # Attempt to get the remote checksum
-            remote_checksum = self._remote_checksum(tmp, dest_file)
+            # Attempt to get remote file info
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
 
-            if remote_checksum == '3':
-                # The remote_checksum was executed on a directory.
+            if dest_status['exists'] and dest_status['isdir']:
+                # The dest is a directory.
                 if content is not None:
                     # If source was defined as content remove the temporary file and fail out.
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    return dict(failed=True, msg="can not use content with a dir as dest")
+                    self._remove_tmp_path(tmp)
+                    result['failed'] = True
+                    result['msg'] = "can not use content with a dir as dest"
+                    return result
                 else:
-                    # Append the relative source location to the destination and retry remote_checksum
+                    # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    remote_checksum = self._remote_checksum(tmp, dest_file)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
 
-            if remote_checksum != '1' and not force:
+            if dest_status['exists'] and not force:
                 # remote_file does not exist so continue to next iteration.
                 continue
 
-            if local_checksum != remote_checksum:
+            if local_checksum != dest_status['checksum']:
                 # The checksums don't match and we will change or error out.
                 changed = True
 
@@ -170,10 +202,11 @@ class ActionModule(ActionBase):
                 # If this is recursive we already have a tmp path.
                 if delete_remote_tmp:
                     if tmp is None or "-tmp-" not in tmp:
-                        tmp = self._make_tmp_path()
+                        tmp = self._make_tmp_path(remote_user)
+                        self._cleanup_remote_tmp = True
 
                 if self._play_context.diff and not raw:
-                    diffs.append(self._get_diff_data(tmp, dest_file, source_full, task_vars))
+                    diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
 
                 if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -185,16 +218,16 @@ class ActionModule(ActionBase):
                 tmp_src = self._connection._shell.join_path(tmp, 'source')
 
                 if not raw:
-                    self._connection.put_file(source_full, tmp_src)
+                    self._transfer_file(source_full, tmp_src)
                 else:
-                    self._connection.put_file(source_full, dest_file)
+                    self._transfer_file(source_full, dest_file)
 
                 # We have copied the file remotely and no longer require our content_tempfile
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._loader.cleanup_tmp_file(source_full)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', tmp_src, tmp)
+                self._fixup_perms(tmp, remote_user, recursive=True)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
@@ -213,13 +246,14 @@ class ActionModule(ActionBase):
                     )
                 )
 
-                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
                 # no need to transfer the file, already correct hash, but still need to call
                 # the file module in case we want to change attributes
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._loader.cleanup_tmp_file(source_full)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
@@ -237,14 +271,17 @@ class ActionModule(ActionBase):
                 )
 
                 # Execute the file module.
-                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):
                 module_return['checksum'] = local_checksum
-            if module_return.get('failed') == True:
-                return module_return
-            if module_return.get('changed') == True:
+            if module_return.get('failed'):
+                result.update(module_return)
+                if not delete_remote_tmp:
+                    self._remove_tmp_path(tmp)
+                return result
+            if module_return.get('changed'):
                 changed = True
 
             # the file module returns the file path as 'path', but
@@ -253,17 +290,16 @@ class ActionModule(ActionBase):
                 module_return['dest'] = module_return['path']
 
         # Delete tmp path if we were recursive or if we did not execute a module.
-        if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
+        if not delete_remote_tmp or (delete_remote_tmp and not module_executed):
             self._remove_tmp_path(tmp)
 
-        # TODO: Support detailed status/diff for multiple files
         if module_executed and len(source_files) == 1:
-            result = module_return
+            result.update(module_return)
         else:
-            result = dict(dest=dest, src=source, changed=changed)
+            result.update(dict(dest=dest, src=source, changed=changed))
 
-        if len(diffs) == 1:
-            result['diff']=diffs[0]
+        if diffs:
+            result['diff'] = diffs
 
         return result
 
@@ -281,8 +317,6 @@ class ActionModule(ActionBase):
             f.close()
         return content_tempfile
 
-
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
         if content is not None:
             os.remove(content_tempfile)
-

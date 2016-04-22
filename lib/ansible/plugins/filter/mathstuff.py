@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 import math
 import collections
@@ -80,14 +83,14 @@ def logarithm(x, base=math.e):
             return math.log10(x)
         else:
             return math.log(x, base)
-    except TypeError, e:
+    except TypeError as e:
         raise errors.AnsibleFilterError('log() can only be used on numbers: %s' % str(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
-    except TypeError, e:
+    except TypeError as e:
         raise errors.AnsibleFilterError('pow() can only be used on numbers: %s' % str(e))
 
 
@@ -97,7 +100,7 @@ def inversepower(x, base=2):
             return math.sqrt(x)
         else:
             return math.pow(x, 1.0/float(base))
-    except TypeError, e:
+    except TypeError as e:
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
 
@@ -107,13 +110,13 @@ def human_readable(size, isbits=False, unit=None):
     suffix = ''
 
     ranges = (
-            (1<<70L, 'Z'),
-            (1<<60L, 'E'),
-            (1<<50L, 'P'),
-            (1<<40L, 'T'),
-            (1<<30L, 'G'),
-            (1<<20L, 'M'),
-            (1<<10L, 'K'),
+            (1<<70, 'Z'),
+            (1<<60, 'E'),
+            (1<<50, 'P'),
+            (1<<40, 'T'),
+            (1<<30, 'G'),
+            (1<<20, 'M'),
+            (1<<10, 'K'),
             (1, base)
         )
 

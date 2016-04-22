@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.plugins.callback import CallbackBase
 
 class CallbackModule(CallbackBase):
@@ -24,10 +28,21 @@ class CallbackModule(CallbackBase):
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
-    CALLBACK_TYPE = 'context_demo'
+    CALLBACK_NAME = 'context_demo'
+    CALLBACK_NEEDS_WHITELIST = True
+
+    def __init__(self, *args, **kwargs):
+        self.task = None
+        self.play = None
 
     def v2_on_any(self, *args, **kwargs):
         i = 0
+        if self.play:
+            play_str = 'play: %s' % self.play.name
+        if self.task:
+            task_str = 'task: %s' % self.task
+        self._display.display("--- %s %s ---" % (self.play_str, self.task_str))
+
         self._display.display("     --- ARGS ")
         for a in args:
             self._display.display('     %s: %s' % (i, a))
@@ -36,3 +51,9 @@ class CallbackModule(CallbackBase):
         self._display.display("      --- KWARGS ")
         for k in kwargs:
             self._display.display('     %s: %s' % (k, kwargs[k]))
+
+    def v2_playbook_on_play_start(self, play):
+        self.play = play
+
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        self.task = task

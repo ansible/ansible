@@ -3,10 +3,17 @@ Python API
 
 .. contents:: Topics
 
+Please note that while we make this API available it is not intended for direct consumption, it is here
+for the support of the Ansible command line tools. We try not to make breaking changes but we reserve the
+right to do so at any time if it makes sense for the Ansible toolset.
+
+
+The following documentation is provided for those that still want to use the API directly, but be mindful this is not something the Ansible team supports.
+
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
 write various plugins, and you can plug in inventory data from external data sources.  This document
-covers the Runner and Playbook API at a basic level.
+covers the execution and Playbook API at a basic level.
 
 If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
 or have access control and logging demands, take a look at :doc:`tower` 
@@ -17,11 +24,72 @@ This chapter discusses the Python API.
 
 .. _python_api:
 
-Python API
-----------
+The Python API is very powerful, and is how the all the ansible CLI tools are implemented.
+In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
 
-The Python API is very powerful, and is how the ansible CLI and ansible-playbook
-are implemented.
+.. note:: Ansible relies on forking processes, as such the API is not thread safe.
+
+.. _python_api_20:
+
+Python API 2.0
+--------------
+
+In 2.0 things get a bit more complicated to start, but you end up with much more discrete and readable classes::
+
+
+    #!/usr/bin/python2
+
+    from collections import namedtuple
+    from ansible.parsing.dataloader import DataLoader
+    from ansible.vars import VariableManager
+    from ansible.inventory import Inventory
+    from ansible.playbook.play import Play
+    from ansible.executor.task_queue_manager import TaskQueueManager
+
+    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
+    # initialize needed objects
+    variable_manager = VariableManager()
+    loader = DataLoader()
+    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
+    passwords = dict(vault_pass='secret')
+
+    # create inventory and pass to var manager
+    inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
+    variable_manager.set_inventory(inventory)
+
+    # create play with tasks
+    play_source =  dict(
+            name = "Ansible Play",
+            hosts = 'localhost',
+            gather_facts = 'no',
+            tasks = [
+                dict(action=dict(module='shell', args='ls'), register='shell_out'),
+                dict(action=dict(module='debug', args=dict(msg='{{shell_out.stdout}}')))
+             ]
+        )
+    play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
+
+    # actually run it
+    tqm = None
+    try:
+        tqm = TaskQueueManager(
+                  inventory=inventory,
+                  variable_manager=variable_manager,
+                  loader=loader,
+                  options=options,
+                  passwords=passwords,
+                  stdout_callback='default',
+              )
+        result = tqm.run(play)
+    finally:
+        if tqm is not None:
+            tqm.cleanup()
+
+
+.. _python_api_old:
+
+Python API pre 2.0
+------------------
 
 It's pretty simple::
 
@@ -51,7 +119,7 @@ expressed in the :doc:`modules` documentation.::
 A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.
 
-.. _detailed_api_example:
+.. _detailed_api_old_example:
 
 Detailed API Example
 ````````````````````
@@ -87,9 +155,9 @@ The following script prints out the uptime information for all hosts::
     for (hostname, result) in results['dark'].items():
         print "%s >>> %s" % (hostname, result)
 
-Advanced programmers may also wish to read the source to ansible itself, for
-it uses the Runner() API (with all available options) to implement the
-command line tools ``ansible`` and ``ansible-playbook``.
+Advanced programmers may also wish to read the source to ansible itself,
+for it uses the API (with all available options) to implement the ``ansible``
+command line tools (``lib/ansible/cli/``).
 
 .. seealso::
 

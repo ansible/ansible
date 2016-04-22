@@ -8,8 +8,7 @@ You Might Not Need This!
 
 Are you running Ansible 1.5 or later?  If so, you may not need accelerated mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
 
-For users on 1.5 and later, accelerated mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host
-   and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
+For users on 1.5 and later, accelerated mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
 
 If you can use pipelining, Ansible will reduce the amount of files transferred over the wire, 
 making everything much more efficient, and performance will be on par with accelerated mode in nearly all cases, possibly excluding very large file transfer.   Because less moving parts are involved, pipelining is better than accelerated mode for nearly all use cases.

@@ -21,28 +21,49 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
+from ansible.parsing.utils.addresses import parse_address
+from ansible.errors import AnsibleError
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class ActionModule(ActionBase):
     ''' Create inventory hosts and groups in the memory inventory'''
 
-    ### We need to be able to modify the inventory
+    # We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg='check mode not supported for this module')
+            result['skipped'] = True
+            result['msg'] = 'check mode not supported for this module'
+            return result
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
-        #vv("creating host via 'add_host': hostname=%s" % new_name)
+        display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        if ":" in new_name:
-            new_name, new_port = new_name.split(":")
-            self._task.args['ansible_ssh_port'] = new_port
+        try:
+            name, port = parse_address(new_name, allow_ranges=False)
+        except:
+            # not a parsable hostname, but might still be usable
+            name = new_name
+            port = None
 
-        groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', ''))) 
+        if port:
+            self._task.args['ansible_ssh_port'] = port
+
+        groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', '')))
         # add it to the group if that was specified
         new_groups = []
         if groups:
@@ -52,10 +73,11 @@ class ActionModule(ActionBase):
 
         # Add any variables to the new_host
         host_vars = dict()
+        special_args = frozenset(('name', 'hostname', 'groupname', 'groups'))
         for k in self._task.args.keys():
-            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
-                host_vars[k] = self._task.args[k] 
+            if k not in special_args:
+                host_vars[k] = self._task.args[k]
 
-        return dict(changed=True, add_host=dict(host_name=new_name, groups=new_groups, host_vars=host_vars))
-
-
+        result['changed'] = True
+        result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
+        return result

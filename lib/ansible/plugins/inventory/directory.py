@@ -22,10 +22,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+from ansible import constants as C
 
 from . aggregate import InventoryAggregateParser
 
 class InventoryDirectoryParser(InventoryAggregateParser):
+
+    CONDITION="is_dir(%s)"
 
     def __init__(self, inven_directory):
         directory = inven_directory
@@ -35,7 +38,7 @@ class InventoryDirectoryParser(InventoryAggregateParser):
         # Clean up the list of filenames
         for filename in names:
             # Skip files that end with certain extensions or characters
-            if any(filename.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            if any(filename.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if filename.startswith('.') and not filename.startswith('.{0}'.format(os.path.sep)):
@@ -44,9 +47,9 @@ class InventoryDirectoryParser(InventoryAggregateParser):
             if filename in ("host_vars", "group_vars", "vars_plugins"):
                 continue
             fullpath = os.path.join(directory, filename)
-            new_names.append(fullpath)
+            filtered_names.append(fullpath)
 
-        super(InventoryDirectoryParser, self).__init__(new_names)
+        super(InventoryDirectoryParser, self).__init__(filtered_names)
 
     def parse(self):
         return super(InventoryDirectoryParser, self).parse()

@@ -31,11 +31,6 @@
      b: 102
      c: 103
 
-# Params specified via k=v values are strings, while those
-# that come from variables will keep the type they were previously.
-# Prior to v2.0, facts too priority over include params, however
-# this is no longer the case.
-
 - include: included_task1.yml a={{a}} b={{b}} c=103
 
 - name: verify variable include params
@@ -43,10 +38,10 @@
     that:
       - "ca == 101"
       - "cb == 102"
-      - "cc == '103'"
+      - "cc == 103"
 
 # Test that strings are not turned into numbers
-- set_fact: 
+- set_fact:
      a: "101"
      b: "102"
      c: "103"
@@ -54,7 +49,7 @@
 - include: included_task1.yml a={{a}} b={{b}} c=103
 
 - name: verify variable include params
-  assert: 
+  assert:
     that:
       - "ca == '101'"
       - "cb == '102'"

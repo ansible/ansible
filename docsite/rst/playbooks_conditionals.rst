@@ -31,10 +31,10 @@ It's actually pretty simple::
 You can also use parentheses to group conditions::
 
     tasks:
-      - name: "shutdown CentOS 6 and 7 systems"
+      - name: "shutdown CentOS 6 and Debian 7 systems"
         command: /sbin/shutdown -t now
-        when: ansible_distribution == "CentOS" and
-              (ansible_distribution_major_version == "6" or ansible_distribution_major_version == "7")
+        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
+              (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
 
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then
@@ -47,7 +47,7 @@ decide to do something conditionally based on success or failure::
       - command: /bin/something
         when: result|failed
       - command: /bin/something_else
-        when: result|success
+        when: result|succeeded
       - command: /bin/still/something_else
         when: result|skipped
 
@@ -95,12 +95,31 @@ If a required variable has not been set, you can skip or fail using Jinja2's
 This is especially useful in combination with the conditional import of vars
 files (see below).
 
-Note that when combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+.. _loops_and_conditionals:
+
+Loops and Conditionals
+``````````````````````
+Combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
           with_items: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
+
+If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
+
+        - command: echo {{ item }}
+          with_items: "{{ mylist|default([]) }}"
+          when: item > 5
+
+
+If using `with_dict` which does not take a list::
+
+        - command: echo {{ item.key }}
+          with_dict: "{{ mydict|default({}) }}"
+          when: item.value > 5
+
+.. _loading_in_custom_facts:
 
 Loading in Custom Facts
 ```````````````````````
@@ -114,7 +133,9 @@ there will be accessible to future tasks::
           action: site_facts
         - command: /usr/bin/thingy
           when: my_custom_fact_just_retrieved_from_the_remote_system == '1234'
-                   
+
+.. _when_roles_and_includes:
+
 Applying 'when' to roles and includes
 `````````````````````````````````````
 
@@ -134,6 +155,8 @@ Or with a role::
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
+
+.. _conditional_imports:
 
 Conditional Imports
 ```````````````````

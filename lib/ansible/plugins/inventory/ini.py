@@ -23,9 +23,12 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from . import InventoryParser
 
 class InventoryIniParser(InventoryAggregateParser):
+
+    CONDITION="is_file(%s)"
 
     def __init__(self, inven_directory):
         directory = inven_directory
@@ -35,7 +38,7 @@ class InventoryIniParser(InventoryAggregateParser):
         # Clean up the list of filenames
         for filename in names:
             # Skip files that end with certain extensions or characters
-            if any(filename.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            if any(filename.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if filename.startswith('.') and not filename.startswith('.{0}'.format(os.path.sep)):
@@ -44,17 +47,9 @@ class InventoryIniParser(InventoryAggregateParser):
             if filename in ("host_vars", "group_vars", "vars_plugins"):
                 continue
             fullpath = os.path.join(directory, filename)
-            new_names.append(fullpath)
+            filtered_names.append(fullpath)
 
-        super(InventoryDirectoryParser, self).__init__(new_names)
+        super(InventoryDirectoryParser, self).__init__(filtered_names)
 
     def parse(self):
         return super(InventoryDirectoryParser, self).parse()
-
-    def _before_comment(self, msg):
-        ''' what's the part of a string before a comment? '''
-        msg = msg.replace("\#","**NOT_A_COMMENT**")
-        msg = msg.split("#")[0]
-        msg = msg.replace("**NOT_A_COMMENT**","#")
-        return msg
-

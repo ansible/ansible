@@ -26,8 +26,13 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import hmac
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 try:
     from hashlib import sha1
@@ -40,47 +45,59 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
     """ idempotently add a git url hostkey """
 
-    fqdn = get_fqdn(url)
+    if is_ssh_url(url):
 
-    if fqdn:
-        known_host = check_hostkey(module, fqdn)
-        if not known_host:
-            if accept_hostkey:
-                rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
-                if rc != 0:
-                    module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
-            else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
+        fqdn = get_fqdn(url)
+
+        if fqdn:
+            known_host = check_hostkey(module, fqdn)
+            if not known_host:
+                if accept_hostkey:
+                    rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
+                    if rc != 0:
+                        module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+                else:
+                    module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
+
+def is_ssh_url(url):
+
+    """ check if url is ssh """
+
+    if "@" in url and "://" not in url:
+        return True
+    for scheme in "ssh://", "git+ssh://", "ssh+git://":
+        if url.startswith(scheme):
+            return True
+    return False
 
 def get_fqdn(repo_url):
 
-    """ chop the hostname out of a giturl """
+    """ chop the hostname out of a url """
 
     result = None
     if "@" in repo_url and "://" not in repo_url:
-        # most likely a git@ or ssh+git@ type URL
+        # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
-        if ":" in repo_url:
-            repo_url = repo_url.split(":")[0]
-            result = repo_url
+        if repo_url.startswith('['):
+            result = repo_url.split(']', 1)[0] + ']'
+        elif ":" in repo_url:
+            result = repo_url.split(":")[0]
         elif "/" in repo_url:
-            repo_url = repo_url.split("/")[0]
-            result = repo_url
+            result = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
         parts = urlparse.urlparse(repo_url)
-        if 'ssh' not in parts[0] and 'git' not in parts[0]:
-            # don't try and scan a hostname that's not ssh
-            return None
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
             result = parts[1]
-            if ":" in result:
-                result = result.split(":")[0]
             if "@" in result:
                 result = result.split("@", 1)[1]
 
+            if result[0].startswith('['):
+                result = result.split(']', 1)[0] + ']'
+            elif ":" in result:
+                result = result.split(":")[0]
     return result
 
 def check_hostkey(module, fqdn):
@@ -102,6 +119,7 @@ def not_in_host_file(self, host):
     host_file_list.append(user_host_file)
     host_file_list.append("/etc/ssh/ssh_known_hosts")
     host_file_list.append("/etc/ssh/ssh_known_hosts2")
+    host_file_list.append("/etc/openssh/ssh_known_hosts")
 
     hfiles_not_found = 0
     for hf in host_file_list:
@@ -111,7 +129,7 @@ def not_in_host_file(self, host):
 
         try:
             host_fh = open(hf)
-        except IOError, e:
+        except IOError:
             hfiles_not_found += 1
             continue
         else:
@@ -145,7 +163,6 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
-    result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
     if 'USER' in os.environ:
@@ -159,7 +176,7 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     if not os.path.exists(user_ssh_dir):
         if create_dir:
             try:
-                os.makedirs(user_ssh_dir, 0700)
+                os.makedirs(user_ssh_dir, int('700', 8))
             except:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:

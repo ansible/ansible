@@ -20,8 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import yaml
+from ansible.compat.six import PY3
 
-from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
+from ansible.vars.hostvars import HostVars
 
 class AnsibleDumper(yaml.SafeDumper):
     '''
@@ -30,8 +32,31 @@ class AnsibleDumper(yaml.SafeDumper):
     '''
     pass
 
+def represent_hostvars(self, data):
+    return self.represent_dict(dict(data))
+
+if PY3:
+    represent_unicode = yaml.representer.SafeRepresenter.represent_str
+else:
+    represent_unicode = yaml.representer.SafeRepresenter.represent_unicode
+
 AnsibleDumper.add_representer(
     AnsibleUnicode,
-    yaml.representer.SafeRepresenter.represent_unicode
+    represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    HostVars,
+    represent_hostvars,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleSequence,
+    yaml.representer.SafeRepresenter.represent_list,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleMapping,
+    yaml.representer.SafeRepresenter.represent_dict,
 )
 

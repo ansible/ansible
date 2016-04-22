@@ -19,9 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
+        YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
+        YAML_COMMON_DICT_ERROR,
+        YAML_COMMON_UNQUOTED_COLON_ERROR,
+        YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
+        YAML_COMMON_UNBALANCED_QUOTES_ERROR )
 
-from ansible.errors.yaml_strings import *
+from ansible.utils.unicode import to_unicode, to_str
+
 
 class AnsibleError(Exception):
     '''
@@ -38,7 +44,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message, obj=None, show_content=True):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -47,10 +53,12 @@ class AnsibleError(Exception):
         self._show_content = show_content
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
-            if extended_error:
-                self.message = 'ERROR! %s\n\n%s' % (message, extended_error)
+            if extended_error and not suppress_extended_error:
+                self.message = '%s\n\n%s' % (to_str(message), to_str(extended_error))
+            else:
+                self.message = '%s' % to_str(message)
         else:
-            self.message = 'ERROR! %s' % message
+            self.message = '%s' % to_str(message)
 
     def __str__(self):
         return self.message
@@ -96,6 +104,8 @@ class AnsibleError(Exception):
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
+                target_line = to_unicode(target_line)
+                prev_line = to_unicode(prev_line)
                 if target_line:
                     stripped_line = target_line.replace(" ","")
                     arrow_line    = (" " * (col_number-1)) + "^ here"

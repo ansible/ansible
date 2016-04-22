@@ -19,6 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from abc import ABCMeta, abstractmethod
+
+from ansible.compat.six import with_metaclass
+
 try:
     from __main__ import display
 except ImportError:
@@ -27,10 +31,12 @@ except ImportError:
 
 __all__ = ['LookupBase']
 
-class LookupBase:
+
+class LookupBase(with_metaclass(ABCMeta, object)):
     def __init__(self, loader=None, templar=None, **kwargs):
         self._loader = loader
         self._templar = templar
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
     def get_basedir(self, variables):
@@ -39,7 +45,8 @@ class LookupBase:
         else:
             return self._loader.get_basedir()
 
-    def _flatten(self, terms):
+    @staticmethod
+    def _flatten(terms):
         ret = []
         for term in terms:
             if isinstance(term, (list, tuple)):
@@ -48,16 +55,49 @@ class LookupBase:
                 ret.append(term)
         return ret
 
-    def _combine(self, a, b):
+    @staticmethod
+    def _combine(a, b):
         results = []
         for x in a:
             for y in b:
-                results.append(self._flatten([x,y]))
+                results.append(LookupBase._flatten([x,y]))
         return results
 
-    def _flatten_hash_to_list(self, terms):
+    @staticmethod
+    def _flatten_hash_to_list(terms):
         ret = []
         for key in terms:
             ret.append({'key': key, 'value': terms[key]})
         return ret
 
+    @abstractmethod
+    def run(self, terms, variables=None, **kwargs):
+        """
+        When the playbook specifies a lookup, this method is run.  The
+        arguments to the lookup become the arguments to this method.  One
+        additional keyword argument named ``variables`` is added to the method
+        call.  It contains the variables available to ansible at the time the
+        lookup is templated.  For instance::
+
+            "{{ lookup('url', 'https://toshio.fedorapeople.org/one.txt', validate_certs=True) }}"
+
+        would end up calling the lookup plugin named url's run method like this::
+            run(['https://toshio.fedorapeople.org/one.txt'], variables=available_variables, validate_certs=True)
+
+        Lookup plugins can be used within playbooks for looping.  When this
+        happens, the first argument is a list containing the terms.  Lookup
+        plugins can also be called from within playbooks to return their
+        values into a variable or parameter.  If the user passes a string in
+        this case, it is converted into a list.
+
+        Errors encountered during execution should be returned by raising
+        AnsibleError() with a message describing the error.
+
+        Any strings returned by this method that could ever contain non-ascii
+        must be converted into python's unicode type as the strings will be run
+        through jinja2 which has this requirement.  You can use::
+
+            from ansible.module_utils.unicode import to_unicode
+            result_string = to_unicode(result_string)
+        """
+        pass

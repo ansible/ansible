@@ -19,14 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import queue
+from ansible.compat.six.moves import queue
+
+import json
 import multiprocessing
 import os
 import signal
 import sys
 import time
 import traceback
+import zlib
 
+from jinja2.exceptions import TemplateNotFound
+
+# TODO: not needed if we use the cryptography library with its default RNG
+# engine
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -38,8 +45,14 @@ from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
+from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
+from ansible.utils.unicode import to_unicode
 
-from ansible.utils.debug import debug
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['WorkerProcess']
 
@@ -51,12 +64,18 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, tqm, main_q, rslt_q, loader):
+    def __init__(self, rslt_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
+        super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._main_q = main_q
-        self._rslt_q = rslt_q
-        self._loader = loader
+        self._rslt_q            = rslt_q
+        self._task_vars         = task_vars
+        self._host              = host
+        self._task              = task
+        self._play_context      = play_context
+        self._loader            = loader
+        self._variable_manager  = variable_manager
+        self._shared_loader_obj = shared_loader_obj
 
         # dupe stdin, if we have one
         self._new_stdin = sys.stdin
@@ -65,7 +84,7 @@ class WorkerProcess(multiprocessing.Process):
             if fileno is not None:
                 try:
                     self._new_stdin = os.fdopen(os.dup(fileno))
-                except OSError, e:
+                except OSError:
                     # couldn't dupe stdin, most likely because it's
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
@@ -74,82 +93,56 @@ class WorkerProcess(multiprocessing.Process):
             # couldn't get stdin's fileno, so we just carry on
             pass
 
-        super(WorkerProcess, self).__init__()
-
     def run(self):
         '''
-        Called when the process is started, and loops indefinitely
-        until an error is encountered (typically an IOerror from the
-        queue pipe being disconnected). During the loop, we attempt
-        to pull tasks off the job queue and run them, pushing the result
-        onto the results queue. We also remove the host from the blocked
-        hosts list, to signify that they are ready for their next task.
+        Called when the process is started.  Pushes the result onto the
+        results queue. We also remove the host from the blocked hosts list, to
+        signify that they are ready for their next task.
         '''
 
         if HAS_ATFORK:
             atfork()
 
-        while True:
-            task = None
-            try:
-                if not self._main_q.empty():
-                    debug("there's work to be done!")
-                    (host, task, basedir, job_vars, play_context, shared_loader_obj) = self._main_q.get(block=False)
-                    debug("got a task/handler to work on: %s" % task)
+        try:
+            # execute the task and build a TaskResult from the result
+            display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
+            executor_result = TaskExecutor(
+                self._host,
+                self._task,
+                self._task_vars,
+                self._play_context,
+                self._new_stdin,
+                self._loader,
+                self._shared_loader_obj,
+                self._rslt_q
+            ).run()
 
-                    # because the task queue manager starts workers (forks) before the
-                    # playbook is loaded, set the basedir of the loader inherted by
-                    # this fork now so that we can find files correctly
-                    self._loader.set_basedir(basedir)
+            display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            self._host.vars = dict()
+            self._host.groups = []
+            task_result = TaskResult(self._host, self._task, executor_result)
 
-                    # Serializing/deserializing tasks does not preserve the loader attribute,
-                    # since it is passed to the worker during the forking of the process and
-                    # would be wasteful to serialize. So we set it here on the task now, and
-                    # the task handles updating parent/child objects as needed.
-                    task.set_loader(self._loader)
+            # put the result on the result queue
+            display.debug("sending task result")
+            self._rslt_q.put(task_result)
+            display.debug("done sending task result")
 
-                    # apply the given task's information to the connection info,
-                    # which may override some fields already set by the play or
-                    # the options specified on the command line
-                    new_play_context = play_context.set_task_and_variable_override(task=task, variables=job_vars)
+        except AnsibleConnectionFailure:
+            self._host.vars = dict()
+            self._host.groups = []
+            task_result = TaskResult(self._host, self._task, dict(unreachable=True))
+            self._rslt_q.put(task_result, block=False)
 
-                    # execute the task and build a TaskResult from the result
-                    debug("running TaskExecutor() for %s/%s" % (host, task))
-                    executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
-                    debug("done running TaskExecutor() for %s/%s" % (host, task))
-                    task_result = TaskResult(host, task, executor_result)
-
-                    # put the result on the result queue
-                    debug("sending task result")
+        except Exception as e:
+            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
+                try:
+                    self._host.vars = dict()
+                    self._host.groups = []
+                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
-                    debug("done sending task result")
-
-                else:
-                    time.sleep(0.1)
-
-            except queue.Empty:
-                pass
-            except (IOError, EOFError, KeyboardInterrupt):
-                break
-            except AnsibleConnectionFailure:
-                try:
-                    if task:
-                        task_result = TaskResult(host, task, dict(unreachable=True))
-                        self._rslt_q.put(task_result, block=False)
                 except:
-                    # FIXME: most likely an abort, catch those kinds of errors specifically
-                    break
-            except Exception, e:
-                debug("WORKER EXCEPTION: %s" % e)
-                debug("WORKER EXCEPTION: %s" % traceback.format_exc())
-                try:
-                    if task:
-                        task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
-                        self._rslt_q.put(task_result, block=False)
-                except:
-                    # FIXME: most likely an abort, catch those kinds of errors specifically
-                    break
+                    display.debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
 
-        debug("WORKER PROCESS EXITING")
-
+        display.debug("WORKER PROCESS EXITING")
 

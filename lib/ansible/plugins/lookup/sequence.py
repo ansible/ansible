@@ -19,7 +19,7 @@ __metaclass__ = type
 
 from re import compile as re_compile, IGNORECASE
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 
@@ -142,13 +142,9 @@ class LookupModule(LookupBase):
 
     def sanity_check(self):
         if self.count is None and self.end is None:
-            raise AnsibleError(
-                "must specify count or end in with_sequence"
-            )
+            raise AnsibleError( "must specify count or end in with_sequence")
         elif self.count is not None and self.end is not None:
-            raise AnsibleError(
-                "can't specify both count and end in with_sequence"
-            )
+            raise AnsibleError( "can't specify both count and end in with_sequence")
         elif self.count is not None:
             # convert count to end
             if self.count != 0:
@@ -166,7 +162,7 @@ class LookupModule(LookupBase):
             raise AnsibleError("bad formatting string: %s" % self.format)
 
     def generate_sequence(self):
-        if self.stride > 0:
+        if self.stride >= 0:
             adjust = 1
         else:
             adjust = -1
@@ -184,18 +180,13 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         results = []
 
-        if isinstance(terms, basestring):
-            terms = [ terms ]
-
         for term in terms:
             try:
                 self.reset()  # clear out things for this iteration
-
-                term = self._templar.template(term)
                 try:
                     if not self.parse_simple_args(term):
                         self.parse_kv_args(parse_kv(term))
-                except Exception, e:
+                except Exception as e:
                     raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
 
                 self.sanity_check()

@@ -1,0 +1,77 @@
+- hosts: all
+  connection: local
+  vars:
+    slaves:
+      - distribution: "Ubuntu"
+        version: "12.04"
+        image: "ami-309ddf5a"
+        ssh_user: "ubuntu"
+        platform: "ubuntu-12.04-x86_64"
+      - distribution: "Ubuntu"
+        version: "14.04"
+        image: "ami-d06632ba"
+        ssh_user: "ubuntu"
+        platform: "ubuntu-14.04-x86_64"
+      - distribution: "CentOS"
+        version: "6.5"
+        image: "ami-8997afe0"
+        ssh_user: "root"
+        platform: "centos-6.5-x86_64"
+      - distribution: "CentOS"
+        version: "7"
+        image: "ami-61bbf104"
+        ssh_user: "centos"
+        platform: "centos-7-x86_64"
+      - distribution: "Fedora"
+        version: "23"
+        image: "ami-518bfb3b"
+        ssh_user: "fedora"
+        platform: "fedora-23-x86_64"
+
+  tasks:
+    - debug: var=ansible_version
+    - include: ec2.yml
+      when: groups['dynamic_hosts'] is not defined
+
+# Have to hardcode these per-slave. We can't even run setup yet so we can't
+# introspect what they have.
+- hosts: dynamic_hosts
+  sudo: true
+  gather_facts: False
+  tasks:
+    - name: Install packages that let setup and package manager modules run
+      raw: dnf install -y python2 python2-dnf libselinux-python
+      when: "'fedora-23' in '{{ inventory_hostname }}'"
+
+- hosts: dynamic_hosts
+  sudo: true
+  vars:
+    credentials_file: ''
+    test_flags: ""
+    make_target: "non_destructive"
+  #pre_tasks:
+  roles:
+    - { role: ansible_test_deps, tags: ansible_test_deps }
+    - { role: run_integration,
+        tags: run_integration,
+        run_integration_test_flags: "{{ test_flags }}",
+        run_integration_credentials_file: "{{ credentials_file }}",
+        run_integration_make_target: "{{ make_target }}", }
+  tasks:
+
+    - name: Kill ec2 instances
+      sudo: false
+      local_action:
+        module: ec2
+        state: absent
+        region: 'us-east-1'
+        instance_ids: "{{ hostvars[item]['ec2_instance_ids'] }}"
+      when: hostvars[item]['ec2_instance_ids'] is defined and item == inventory_hostname
+      with_items: "{{groups['dynamic_hosts']}}"
+
+    - set_fact:
+        ansible_connection: local
+
+    - name: Fail
+      shell: 'echo "{{ inventory_hostname }}, Failed" && exit 1'
+      when: "'rc' not in test_results or test_results.rc != 0"

@@ -1,11 +1,11 @@
 ---
 - include: setup.yml
-  tags: any
 - include: present.yml
-  tags: test_cs_instance_present
-#- include: tags.yml
-#  tags: test_cs_instance_tags
+- include: tags.yml
 - include: absent.yml
-  tags: test_cs_instance_absent
 - include: cleanup.yml
-  tags: test_cs_instance_cleanup
+
+- include: setup.yml
+- include: present_display_name.yml
+- include: absent_display_name.yml
+- include: cleanup.yml

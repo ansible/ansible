@@ -25,9 +25,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        if isinstance(terms, basestring):
-            terms = [ terms ]
-
         ret = []
         for term in terms:
             var = term.split()[0]

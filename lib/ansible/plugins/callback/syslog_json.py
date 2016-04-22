@@ -1,3 +1,7 @@
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import json
 
@@ -22,10 +26,11 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'syslog_json'
+    CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
+    def __init__(self):
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
         self.logger =  logging.getLogger('ansible logger')
         self.logger.setLevel(logging.DEBUG)
@@ -55,7 +60,7 @@ class CallbackModule(CallbackBase):
         self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
 
     def playbook_on_import_for_host(self, host, imported_file):
-        self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
+        self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: imported file %s' % (self.hostname,host,imported_file))
 
     def playbook_on_not_import_for_host(self, host, missing_file):
-        self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
+        self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: missing file %s' % (self.hostname,host,missing_file))

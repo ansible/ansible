@@ -93,6 +93,17 @@ are transferred to managed machines automatically.
 
 %install
 %{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+
+# Amazon Linux doesn't install to dist-packages but python_sitelib expands to
+# that location and the python interpreter expects things to be there.
+if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
+    DEST_DIR='%{buildroot}%{python_sitelib}'
+    SOURCE_DIR=$(echo "$DEST_DIR" | sed 's/dist-packages/site-packages/g')
+    if test -d "$SOURCE_DIR" -a ! -d "$DEST_DIR" ; then
+        mv $SOURCE_DIR $DEST_DIR
+    fi
+fi
+
 mkdir -p %{buildroot}/etc/ansible/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
@@ -113,6 +124,27 @@ rm -rf %{buildroot}
 %doc %{_mandir}/man1/ansible*
 
 %changelog
+
+* Wed Feb 24 2016 Ansible, Inc. <support@ansible.com> - 2.0.1.0-1
+- Release 2.0.1.0-1
+
+* Thu Jan 14 2016 Ansible, Inc. <support@ansible.com> - 2.0.0.2-1
+- Release 2.0.0.2-1
+
+* Tue Jan 12 2016 Ansible, Inc. <support@ansible.com> - 2.0.0.1-1
+- Release 2.0.0.1-1
+
+* Tue Jan 12 2016 Ansible, Inc. <support@ansible.com> - 2.0.0.0-1
+- Release 2.0.0.0-1
+
+* Fri Oct 09 2015 Ansible, Inc. <support@ansible.com> - 1.9.4
+- Release 1.9.4
+
+* Thu Sep 03 2015 Ansible, Inc. <support@ansible.com> - 1.9.3
+- Release 1.9.3
+
+* Wed Jun 24 2015 Ansible, Inc. <support@ansible.com> - 1.9.2
+- Release 1.9.2
 
 * Mon Apr 27 2015 Ansible, Inc. <support@ansible.com> - 1.9.1
 - Release 1.9.1

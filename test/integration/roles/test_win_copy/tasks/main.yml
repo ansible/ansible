@@ -19,6 +19,41 @@
 - name: record the output directory
   set_fact: output_file={{win_output_dir}}/foo.txt
 
+- name: copy an empty file
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}/empty.txt"
+  register: copy_empty_result
+
+- name: check copy empty result
+  assert:
+    that:
+      - copy_empty_result|changed
+      - copy_empty_result.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+
+- name: stat the empty file
+  win_stat:
+    path: "{{win_output_dir}}/empty.txt"
+  register: stat_empty_result
+
+- name: check that empty file really was created
+  assert:
+    that:
+      - stat_empty_result.stat.exists
+      - stat_empty_result.stat.size == 0
+
+- name: copy an empty file again
+  win_copy:
+    src: empty.txt
+    dest: "{{win_output_dir}}/empty.txt"
+  register: copy_empty_again_result
+
+- name: check copy empty again result
+  assert:
+    that:
+      - not copy_empty_again_result|changed
+      - copy_empty_again_result.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+
 - name: initiate a basic copy
 #- name: initiate a basic copy, and also test the mode
 #  win_copy: src=foo.txt dest={{output_file}} mode=0444
@@ -148,7 +183,7 @@
 #  assert:
 #    that:
 #      - "{{item.stat.mode}} == 0700"
-#  with_items: dir_stats.results
+#  with_items: "{{dir_stats.results}}"
 
 
 # errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.

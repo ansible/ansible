@@ -134,11 +134,11 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames
-in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script.
+in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :doc:`intro_dynamic_inventory`. 
 
 This will also dynamically select nodes that were even created outside of Ansible, and allow Ansible to manage them.
 
-See the doc:`aws_example` for how to use this, then flip back over to this chapter.
+See :doc:`intro_dynamic_inventory` for how to use this, then flip back over to this chapter.
 
 .. _aws_tags_and_groups:
 
@@ -166,7 +166,7 @@ Similar groups are available for regions and other classifications, and can be s
 Autoscaling with Ansible Pull
 `````````````````````````````
 
-Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible ansibles shown in the cloud documentation that
+Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that
 can configure autoscaling policy.
 
 When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node.  
@@ -220,7 +220,7 @@ ec2_ami module.
 
 Generally speaking, we find most users using Packer.
 
-`Documentation for the Ansible Packer provisioner can be found here <https://www.packer.io/docs/provisioners/ansible-local.html>`_.
+See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible-local.html>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible.html>`_.
 
 If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable.
 

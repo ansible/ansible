@@ -171,7 +171,7 @@ class LookupModule(LookupBase):
                 else:
                     total_search.append(term)
         else:
-            total_search = terms
+            total_search = self._flatten(terms)
 
         roledir = variables.get('roledir')
         for fn in total_search:
@@ -185,14 +185,13 @@ class LookupModule(LookupBase):
             else:
                 if roledir is not None:
                     # check the templates and vars directories too,if they exist
-                    for subdir in ('templates', 'vars'):
+                    for subdir in ('templates', 'vars', 'files'):
                         path = self._loader.path_dwim_relative(roledir, subdir, fn)
                         if os.path.exists(path):
                             return [path]
 
                 # if none of the above were found, just check the
-                # current filename against the basedir (this will already
-                # have ../files from runner, if it's a role task
+                # current filename against the current dir
                 path = self._loader.path_dwim(fn)
                 if os.path.exists(path):
                     return [path]

@@ -92,3 +92,25 @@
   assert:
     that:
       - "raw_result.stdout_lines[0] == 'wwe=raw'"
+
+- name: run a raw command with unicode chars and quoted args (from https://github.com/ansible/ansible-modules-core/issues/1929)
+  raw: Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
+  register: raw_result2
+
+- name: make sure raw passes command as-is and doesn't split/rejoin args
+  assert:
+    that:
+      - "raw_result2.stdout_lines[0] == '--% icacls D:\\\\somedir\\\\ /grant \"! ЗАО. Руководство\":F'"
+
+# Assumes MaxShellsPerUser == 30 (the default)
+
+- name: test raw + with_items to verify that winrm connection is reused for each item
+  raw: echo "{{item}}"
+  with_items: "{{range(32)|list}}"
+  register: raw_with_items_result
+
+- name: check raw + with_items result
+  assert:
+    that:
+      - "not raw_with_items_result|failed"
+      - "raw_with_items_result.results|length == 32"

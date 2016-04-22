@@ -1,6 +1,6 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016 RedHat
 #
-# This file is part of Ansible
+# This file is part of Ansible.
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,160 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import re
+import pipes
+import ansible.constants as C
+import time
+import random
+
+from ansible.compat.six import text_type
+
+_USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
+
+class ShellBase(object):
+
+    def __init__(self):
+        self.env = dict()
+        if C.DEFAULT_MODULE_SET_LOCALE:
+            self.env.update(
+                dict(
+                    LANG        = C.DEFAULT_MODULE_LANG,
+                    LC_ALL      = C.DEFAULT_MODULE_LANG,
+                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                )
+            )
+
+    def env_prefix(self, **kwargs):
+        env = self.env.copy()
+        env.update(kwargs)
+        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+
+    def join_path(self, *args):
+        return os.path.join(*args)
+
+    # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
+    def get_remote_filename(self, base_name):
+        return base_name.strip()
+
+    def path_has_trailing_slash(self, path):
+        return path.endswith('/')
+
+    def chmod(self, mode, path, recursive=True):
+        path = pipes.quote(path)
+        cmd = ['chmod']
+
+        if recursive:
+            cmd.append('-R') # many chmods require -R before file list
+
+        cmd.extend([mode, path])
+
+        return ' '.join(cmd)
+
+    def chown(self, path, user, group=None, recursive=True):
+        path = pipes.quote(path)
+        user = pipes.quote(user)
+
+        cmd = ['chown']
+
+        if recursive:
+            cmd.append('-R') # many chowns require -R before file list
+
+        if group is None:
+            cmd.extend([user, path])
+        else:
+            group = pipes.quote(group)
+            cmd.extend(['%s:%s' % (user, group), path])
+
+        return ' '.join(cmd)
+
+    def set_user_facl(self, path, user, mode, recursive=True):
+        """Only sets acls for users as that's really all we need"""
+        path = pipes.quote(path)
+        mode = pipes.quote(mode)
+        user = pipes.quote(user)
+
+        cmd = ['setfacl']
+        if recursive:
+            cmd.append('-R')
+        cmd.extend(('-m', 'u:%s:%s %s' % (user, mode, path)))
+
+        return ' '.join(cmd)
+
+    def remove(self, path, recurse=False):
+        path = pipes.quote(path)
+        cmd = 'rm -f '
+        if recurse:
+            cmd += '-r '
+        return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
+
+    def exists(self, path):
+        cmd = ['test', '-e', pipes.quote(path)]
+        return ' '.join(cmd)
+
+    def mkdtemp(self, basefile=None, system=False, mode=None):
+        if not basefile:
+            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
+
+        # When system is specified we have to create this in a directory where
+        # other users can read and access the temp directory.  This is because
+        # we use system to create tmp dirs for unprivileged users who are
+        # sudo'ing to a second unprivileged user.  The only dirctories where
+        # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
+        # allow one of those two locations if system=True.  However, users
+        # might want to have some say over which of /tmp or /var/tmp is used
+        # (because /tmp may be a tmpfs and want to conserve RAM or persist the
+        # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
+        # to somewhere in or below /var/tmp and if so use /var/tmp.  If
+        # anything else we use /tmp (because /tmp is specified by POSIX nad
+        # /var/tmp is not).
+        if system:
+            if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
+                basetmpdir = '/var/tmp'
+            else:
+                basetmpdir = '/tmp'
+        else:
+            basetmpdir = C.DEFAULT_REMOTE_TMP
+        basetmp = self.join_path(basetmpdir, basefile)
+
+        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd += ' %s echo %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+
+        # change the umask in a subshell to achieve the desired mode
+        # also for directories created with `mkdir -p`
+        if mode:
+            tmp_umask = 0o777 & ~mode
+            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+
+        return cmd
+
+    def expand_user(self, user_home_path):
+        ''' Return a command to expand tildes in a path
+
+        It can be either "~" or "~username".  We use the POSIX definition of
+        a username:
+            http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
+            http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
+        '''
+
+        # Check that the user_path to expand is safe
+        if user_home_path != '~':
+            if not _USER_HOME_PATH_RE.match(user_home_path):
+                # pipes.quote will make the shell return the string verbatim
+                user_home_path = pipes.quote(user_home_path)
+        return 'echo %s' % user_home_path
+
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+        # don't quote the cmd if it's an empty string, because this will break pipelining mode
+        if cmd.strip() != '':
+            cmd = pipes.quote(cmd)
+        cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+        if arg_path is not None:
+            cmd_parts.append(arg_path)
+        new_cmd = " ".join(cmd_parts)
+        if rm_tmp:
+            new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
+        return new_cmd

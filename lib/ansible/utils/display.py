@@ -15,48 +15,63 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# FIXME: copied mostly from old code, needs py3 improvements
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fcntl
 import textwrap
 import os
 import random
 import subprocess
 import sys
 import time
+import locale
 import logging
 import getpass
-from multiprocessing import Lock
+import errno
+from struct import unpack, pack
+from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
+
+try:
+    from __main__ import debug_lock
+except ImportError:
+    # for those not using a CLI, though ...
+    # this might not work well after fork
+    from multiprocessing import Lock
+    debug_lock = Lock()
+
+try:
+    # Python 2
+    input = raw_input
+except NameError:
+    # Python 3, we already have raw_input
+    pass
 
 
 
-# These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
-debug_lock = Lock()
-
+logger = None
 #TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
-        self._display.warning("log file at %s is not writeable, aborting\n" % path)
-
-    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-    mypid = str(os.getpid())
-    user = getpass.getuser()
-    logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
-else:
-    logger = None
+    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+        mypid = str(os.getpid())
+        user = getpass.getuser()
+        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+    else:
+        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
 
 class Display:
 
     def __init__(self, verbosity=0):
 
+        self.columns = None
         self.verbosity = verbosity
 
         # list of all deprecation messages to prevent duplicate display
@@ -65,9 +80,20 @@ class Display:
         self._errors       = {}
 
         self.cowsay = None
-        self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+        self.noncow = C.ANSIBLE_COW_SELECTION
+
         self.set_cowsay_info()
 
+        if self.cowsay:
+            try:
+                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
+            except:
+                # could not execute cowsay for some reason
+                self.cowsay = False
+
+        self._set_column_width()
 
     def set_cowsay_info(self):
 
@@ -83,38 +109,63 @@ class Display:
                 # MacPorts path for cowsay
                 self.cowsay = "/opt/local/bin/cowsay"
 
-            if self.cowsay and self.noncow == 'random':
-                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (out, err) = cmd.communicate()
-                cows = out.split()
-                cows.append(False)
-                self.noncow = random.choice(cows)
-
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+        """ Display a message to the user
+
+        Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
+        """ 
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
-        msg2 = self._safe_output(msg, stderr=stderr)
+        nocolor = msg
         if color:
-            msg2 = stringc(msg, color)
+            msg = stringc(msg, color)
 
         if not log_only:
-            b_msg2 = to_bytes(msg2)
-            if not stderr:
-                print(b_msg2)
-                sys.stdout.flush()
+            if not msg.endswith(u'\n'):
+                msg2 = msg + u'\n'
             else:
-                print(b_msg2, file=sys.stderr)
-                sys.stderr.flush()
+                msg2 = msg
+
+            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
+            if sys.version_info >= (3,):
+                # Convert back to text string on python3
+                # We first convert to a byte string so that we get rid of
+                # characters that are invalid in the user's locale
+                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+
+            if not stderr:
+                fileobj = sys.stdout
+            else:
+                fileobj = sys.stderr
+
+            fileobj.write(msg2)
+
+            try:
+                fileobj.flush()
+            except IOError as e:
+                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+                # when piping to "head -n1"
+                if e.errno != errno.EPIPE:
+                    raise
 
         if logger and not screen_only:
-            while msg.startswith("\n"):
-                msg = msg.replace("\n","")
-            b_msg = to_bytes(msg)
-            if color == 'red':
-                logger.error(b_msg)
+            msg2 = nocolor.lstrip(u'\n')
+
+            msg2 = to_bytes(msg2)
+            if sys.version_info >= (3,):
+                # Convert back to text string on python3
+                # We first convert to a byte string so that we get rid of
+                # characters that are invalid in the user's locale
+                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+
+            if color == C.COLOR_ERROR:
+                logger.error(msg2)
             else:
-                logger.info(b_msg)
+                logger.info(msg2)
+
+    def v(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=0)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
@@ -134,7 +185,7 @@ class Display:
     def debug(self, msg):
         if C.DEFAULT_DEBUG:
             debug_lock.acquire()
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color='dark gray')
+            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
             debug_lock.release()
 
     def verbose(self, msg, host=None, caplevel=2):
@@ -142,9 +193,9 @@ class Display:
         #msg = utils.sanitize_output(msg)
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color='blue')
+                self.display(msg, color=C.COLOR_VERBOSE)
             else:
-                self.display("<%s> %s" % (host, msg), color='blue', screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
@@ -154,26 +205,31 @@ class Display:
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
-            raise AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, 79)
+        wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:
-            self.display(new_msg, color='purple', stderr=True)
+            self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
-    def warning(self, msg):
-        new_msg = "\n[WARNING]: %s" % msg
-        wrapped = textwrap.wrap(new_msg, 79)
-        new_msg = "\n".join(wrapped) + "\n"
+    def warning(self, msg, formatted=False):
+
+        if not formatted:
+            new_msg = "\n[WARNING]: %s" % msg
+            wrapped = textwrap.wrap(new_msg, self.columns)
+            new_msg = "\n".join(wrapped) + "\n"
+        else:
+            new_msg = "\n[WARNING]: \n%s" % msg
+
         if new_msg not in self._warns:
-            self.display(new_msg, color='bright purple', stderr=True)
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
     def system_warning(self, msg):
@@ -192,9 +248,8 @@ class Display:
             except OSError:
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
-        #FIXME: make this dynamic on tty size (look and ansible-doc)
         msg = msg.strip()
-        star_len = (80 - len(msg))
+        star_len = (79 - len(msg))
         if star_len < 0:
             star_len = 3
         stars = "*" * star_len
@@ -207,8 +262,11 @@ class Display:
                 msg = msg[:-1]
         runcmd = [self.cowsay,"-W", "60"]
         if self.noncow:
+            thecow = self.noncow
+            if thecow == 'random':
+                thecow = random.choice(self.cows_available)
             runcmd.append('-f')
-            runcmd.append(self.noncow)
+            runcmd.append(thecow)
         runcmd.append(msg)
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
@@ -216,26 +274,81 @@ class Display:
 
     def error(self, msg, wrap_text=True):
         if wrap_text:
-            new_msg = "\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, 79)
-            new_msg = "\n".join(wrapped) + "\n"
+            new_msg = u"\n[ERROR]: %s" % msg
+            wrapped = textwrap.wrap(new_msg, self.columns)
+            new_msg = u"\n".join(wrapped) + u"\n"
         else:
-            new_msg = msg
+            new_msg = u"ERROR! " + msg
         if new_msg not in self._errors:
-            self.display(new_msg, color='red', stderr=True)
+            self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
             self._errors[new_msg] = 1
 
-    def prompt(self, msg):
+    @staticmethod
+    def prompt(msg, private=False):
+        prompt_string = to_bytes(msg, encoding=Display._output_encoding())
+        if sys.version_info >= (3,):
+            # Convert back into text on python3.  We do this double conversion
+            # to get rid of characters that are illegal in the user's locale
+            prompt_string = to_unicode(prompt_string)
 
-        return raw_input(self._safe_output(msg))
-
-    def _safe_output(self, msg, stderr=False):
-
-        if not stderr and sys.stdout.encoding:
-            msg = to_bytes(msg, sys.stdout.encoding)
-        elif stderr and sys.stderr.encoding:
-            msg = to_bytes(msg, sys.stderr.encoding)
+        if private:
+            return getpass.getpass(msg)
         else:
-            msg = to_bytes(msg)
+            return input(prompt_string)
 
-        return msg
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+
+        result = None
+        if sys.__stdin__.isatty():
+
+            do_prompt = self.prompt
+
+            if prompt and default is not None:
+                msg = "%s [%s]: " % (prompt, default)
+            elif prompt:
+                msg = "%s: " % prompt
+            else:
+                msg = 'input for %s: ' % varname
+
+            if confirm:
+                while True:
+                    result = do_prompt(msg, private)
+                    second = do_prompt("confirm " + msg, private)
+                    if result == second:
+                        break
+                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
+            else:
+                result = do_prompt(msg, private)
+        else:
+            result = None
+            self.warning("Not prompting as we are not in interactive mode")
+
+        # if result is false and default is not None
+        if not result and default is not None:
+            result = default
+
+        if encrypt:
+            # Circular import because encrypt needs a display class
+            from ansible.utils.encrypt import do_encrypt
+            result = do_encrypt(result, encrypt, salt_size, salt)
+
+        # handle utf-8 chars
+        result = to_unicode(result, errors='strict')
+        return result
+
+    @staticmethod
+    def _output_encoding(stderr=False):
+        encoding = locale.getpreferredencoding()
+        # https://bugs.python.org/issue6202
+        # Python2 hardcodes an obsolete value on Mac.  Use MacOSX defaults
+        # instead.
+        if encoding in ('mac-roman',):
+            encoding = 'utf-8'
+        return encoding
+
+    def _set_column_width(self):
+        if os.isatty(0):
+            tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+        else:
+            tty_size = 0
+        self.columns = max(79, tty_size)

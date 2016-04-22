@@ -19,11 +19,8 @@
 - name: Push docker image into the private registry
   command: "docker push localhost:5000/mine"
 
-- name: Remove containers
-  shell: "docker rm $(docker ps -aq)"
-
 - name: Remove all images from the local docker
-  shell: "docker rmi -f $(docker images -q)"
+  shell: "docker rmi -f {{image_id.stdout_lines[0]}}"
 
 - name: Get number of images in docker
   command: "docker images"
@@ -41,7 +38,6 @@
     state: present
     pull: missing
     insecure_registry: True
-    docker_api_version: "1.14"
 
 - name: Run a small script in the new image
   docker:
@@ -51,7 +47,6 @@
     command: "nc -l -p 2000 -e xargs -n1 echo hello"
     detach: True
     insecure_registry: True
-    docker_api_version: "1.14"
 
 - name: Get the docker container id
   shell: "docker ps | grep mine | awk '{ print $1 }'"
@@ -76,8 +71,9 @@
 
 
 - name: Remove containers
-  shell: "docker rm $(docker ps -aq)"
+  shell: "docker rm -f $(docker ps -aq)"
 
+- shell: docker images -q
 - name: Remove all images from the local docker
   shell: "docker rmi -f $(docker images -q)"
 
@@ -157,7 +153,6 @@
     state: running
     command: "nc -l -p 2000 -e xargs -n1 echo hello"
     detach: True
-    docker_api_version: "1.14"
 
 - name: Get the docker container id
   shell: "docker ps | grep mine | awk '{ print $1 }'"

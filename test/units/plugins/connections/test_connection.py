@@ -19,21 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import StringIO
+from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.playbook.play_context import PlayContext
 
-from ansible.plugins.connections import ConnectionBase
-#from ansible.plugins.connections.accelerate import Connection as AccelerateConnection
-#from ansible.plugins.connections.chroot import Connection as ChrootConnection
-#from ansible.plugins.connections.funcd import Connection as FuncdConnection
-#from ansible.plugins.connections.jail import Connection as JailConnection
-#from ansible.plugins.connections.libvirt_lxc import Connection as LibvirtLXCConnection
-from ansible.plugins.connections.local import Connection as LocalConnection
-from ansible.plugins.connections.paramiko_ssh import Connection as ParamikoConnection
-from ansible.plugins.connections.ssh import Connection as SSHConnection
-#from ansible.plugins.connections.winrm import Connection as WinRmConnection
+from ansible.plugins.connection import ConnectionBase
+#from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
+#from ansible.plugins.connection.chroot import Connection as ChrootConnection
+#from ansible.plugins.connection.funcd import Connection as FuncdConnection
+#from ansible.plugins.connection.jail import Connection as JailConnection
+#from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
+from ansible.plugins.connection.local import Connection as LocalConnection
+from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
+from ansible.plugins.connection.ssh import Connection as SSHConnection
+#from ansible.plugins.connection.winrm import Connection as WinRmConnection
 
 class TestConnectionBaseClass(unittest.TestCase):
 

@@ -19,20 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import PY2
+from six import PY3
 from yaml.scanner import ScannerError
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
 from ansible.errors import AnsibleParserError
 
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.yaml.objects import AnsibleMapping
 
 class TestDataLoader(unittest.TestCase):
 
     def setUp(self):
-        # FIXME: need to add tests that utilize vault_password
         self._loader = DataLoader()
 
     def tearDown(self):
@@ -66,7 +65,8 @@ class TestDataLoader(unittest.TestCase):
 class TestDataLoaderWithVault(unittest.TestCase):
 
     def setUp(self):
-        self._loader = DataLoader(vault_password='ansible')
+        self._loader = DataLoader()
+        self._loader.set_vault_password('ansible')
 
     def tearDown(self):
         pass
@@ -80,10 +80,10 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3135306561356164310a343937653834643433343734653137383339323330626437313562306630
 3035
 """
-        if PY2:
-            builtins_name = '__builtin__'
-        else:
+        if PY3:
             builtins_name = 'builtins'
+        else:
+            builtins_name = '__builtin__'
 
         with patch(builtins_name + '.open', mock_open(read_data=vaulted_data)):
             output = self._loader.load_from_file('dummy_vault.txt')

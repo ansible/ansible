@@ -19,7 +19,7 @@ __metaclass__ = type
 
 from itertools import izip_longest
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
@@ -31,7 +31,7 @@ class LookupModule(LookupBase):
     [1, 2], [3] -> [1, 3], [2, None]
     """
 
-    def __lookup_variables(self, terms):
+    def _lookup_variables(self, terms):
         results = []
         for x in terms:
             intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader)
@@ -40,11 +40,11 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        terms = self.__lookup_variables(terms)
+        terms = self._lookup_variables(terms)
 
         my_list = terms[:]
         if len(my_list) == 0:
-            raise errors.AnsibleError("with_together requires at least one element in each list")
+            raise AnsibleError("with_together requires at least one element in each list")
 
         return [self._flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
 

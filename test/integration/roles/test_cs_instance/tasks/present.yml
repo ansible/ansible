@@ -1,9 +1,17 @@
 ---
+- name: setup instance to be absent
+  cs_instance: name={{ cs_resource_prefix }}-vm-{{ instance_number }} state=absent
+  register: instance
+- name: verify instance to be absent
+  assert:
+    that:
+    - instance|success
+
 - name: test create instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    template: Linux Debian 7 64-bit
-    service_offering: Tiny
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
     affinity_group: "{{ cs_resource_prefix }}-ag"
     security_group: "{{ cs_resource_prefix }}-sg"
     ssh_key: "{{ cs_resource_prefix }}-sshkey"
@@ -16,17 +24,16 @@
     - instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-
 - name: test create instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    template: Linux Debian 7 64-bit
-    service_offering: Tiny
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
     affinity_group: "{{ cs_resource_prefix }}-ag"
     security_group: "{{ cs_resource_prefix }}-sg"
     ssh_key: "{{ cs_resource_prefix }}-sshkey"
@@ -39,16 +46,15 @@
     - not instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-
 - name: test running instance not updated
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    service_offering: Micro
+    service_offering: "{{ test_cs_instance_offering_2 }}"
   register: instance
 - name: verify running instance not updated
   assert:
@@ -57,9 +63,8 @@
     - not instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
-
 
 - name: test stopping instance
   cs_instance:
@@ -73,9 +78,8 @@
     - instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Stopped"
-
 
 - name: test stopping instance idempotence
   cs_instance:
@@ -89,12 +93,11 @@
     - not instance|changed
     - instance.state == "Stopped"
 
-
 - name: test updating stopped instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     display_name: "{{ cs_resource_prefix }}-display-{{ instance_number }}"
-    service_offering: Micro
+    service_offering: "{{ test_cs_instance_offering_2 }}"
   register: instance
 - name: verify updating stopped instance
   assert:
@@ -103,9 +106,8 @@
     - instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
-    - instance.service_offering == "Micro"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Stopped"
-
 
 - name: test starting instance
   cs_instance:
@@ -119,9 +121,8 @@
     - instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
-    - instance.service_offering == "Micro"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Running"
-
 
 - name: test starting instance idempotence
   cs_instance:
@@ -133,12 +134,15 @@
     that:
     - instance|success
     - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Running"
 
 - name: test force update running instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    service_offering: Tiny
+    service_offering: "{{ test_cs_instance_offering_1 }}"
     force: true
   register: instance
 - name: verify force update running instance
@@ -147,14 +151,14 @@
     - instance|success
     - instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
 
 - name: test force update running instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    service_offering: Tiny
+    service_offering: "{{ test_cs_instance_offering_1 }}"
     force: true
   register: instance
 - name: verify force update running instance idempotence
@@ -163,6 +167,21 @@
     - instance|success
     - not instance|changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.service_offering == "Tiny"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
+
+- name: test restore instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    state: restored
+  register: instance
+- name: verify restore instance
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"

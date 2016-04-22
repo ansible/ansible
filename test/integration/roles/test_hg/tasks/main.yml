@@ -66,7 +66,6 @@
   assert:
     that:
       - "tags.stat.isreg"
-      - "head.stat.isreg"
       - "branches.stat.isreg"
 
 - name: verify on a reclone things are marked unchanged

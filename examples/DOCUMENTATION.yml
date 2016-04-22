@@ -8,7 +8,7 @@ description:
     - Longer description of the module
     - You might include instructions
 version_added: "X.Y"
-author: Your AWESOME name here
+author: "Your AWESOME name, @awesome-github-id"
 notes:
     - Other things consumers of your module should know
 requirements:

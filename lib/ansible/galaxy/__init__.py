@@ -20,10 +20,14 @@
 ########################################################################
 ''' This manages remote shared Ansible objects, mainly roles'''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 
+from ansible.compat.six import string_types
+
 from ansible.errors import AnsibleError
-from ansible.utils.display import Display
 
 #      default_readme_template
 #      default_meta_template
@@ -32,17 +36,13 @@ from ansible.utils.display import Display
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
-    def __init__(self, options, display=None):
-
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
+    def __init__(self, options):
 
         self.options = options
-        self.roles_path = getattr(self.options, 'roles_path', None)
-        if self.roles_path:
-            self.roles_path = os.path.expanduser(self.roles_path)
+        # self.options.roles_path needs to be a list and will be by default
+        roles_path = getattr(self.options, 'roles_path', [])
+        # cli option handling is responsible for making roles_path a list
+        self.roles_paths = roles_path
 
         self.roles =  {}
 
@@ -50,9 +50,34 @@ class Galaxy(object):
         this_dir, this_filename = os.path.split(__file__)
         self.DATA_PATH = os.path.join(this_dir, "data")
 
-        #TODO: move to getter for lazy loading
-        self.default_readme = self._str_from_data_file('readme')
-        self.default_meta = self._str_from_data_file('metadata_template.j2')
+        self._default_readme = None
+        self._default_meta = None
+        self._default_test = None
+        self._default_travis = None
+
+    @property
+    def default_readme(self):
+        if self._default_readme is None:
+            self._default_readme = self._str_from_data_file('readme')
+        return self._default_readme
+
+    @property
+    def default_meta(self):
+        if self._default_meta is None:
+            self._default_meta = self._str_from_data_file('metadata_template.j2')
+        return self._default_meta
+
+    @property
+    def default_test(self):
+        if self._default_test is None:
+            self._default_test = self._str_from_data_file('test_playbook.j2')
+        return self._default_test
+
+    @property
+    def default_travis(self):
+        if self._default_travis is None:
+            self._default_travis = self._str_from_data_file('travis.j2')
+        return self._default_travis
 
     def add_role(self, role):
         self.roles[role.name] = role
@@ -60,11 +85,9 @@ class Galaxy(object):
     def remove_role(self, role_name):
         del self.roles[role_name]
 
-
     def _str_from_data_file(self, filename):
         myfile = os.path.join(self.DATA_PATH, filename)
         try:
             return open(myfile).read()
         except Exception as e:
             raise AnsibleError("Could not open %s: %s" % (filename, str(e)))
-

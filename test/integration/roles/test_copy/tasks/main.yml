@@ -117,6 +117,10 @@
   register: recursive_copy_result
 
 - debug: var=recursive_copy_result
+- name: assert that the recursive copy did something
+  assert:
+    that:
+      - "recursive_copy_result|changed"
 
 - name: check that a file in a directory was transferred
   stat: path={{output_dir}}/sub/subdir/bar.txt
@@ -150,7 +154,7 @@
   assert:
     that:
       - "{{item.stat.mode}} == 0700"
-  with_items: dir_stats.results
+  with_items: "{{dir_stats.results}}"
 
 
 # errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.
@@ -166,7 +170,7 @@
 #  register: failed_copy
 
 - name: copy already copied directory again
-  copy: src=subdir dest={{output_subdir | expanduser}} owner={{ansible_ssh_user}}
+  copy: src=subdir dest={{output_subdir | expanduser}} owner={{ansible_ssh_user|default(omit)}}
   register: copy_result5
 
 - name: assert that the directory was not changed

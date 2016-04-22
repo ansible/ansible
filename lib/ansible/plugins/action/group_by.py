@@ -17,23 +17,29 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import *
 from ansible.plugins.action import ActionBase
+
 
 class ActionModule(ActionBase):
     ''' Create inventory groups based on variables '''
 
     ### We need to be able to modify the inventory
-    BYPASS_HOST_LOOP = True
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
 
-        if not 'key' in self._task.args:
-            return dict(failed=True, msg="the 'key' param is required when using group_by")
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        if 'key' not in self._task.args:
+            result['failed'] = True
+            result['msg'] = "the 'key' param is required when using group_by"
+            return result
 
         group_name = self._task.args.get('key')
         group_name = group_name.replace(' ','-')
 
-        return dict(changed=True, add_group=group_name)
-
+        result['changed'] = False
+        result['add_group'] = group_name
+        return result

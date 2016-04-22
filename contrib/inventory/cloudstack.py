@@ -70,6 +70,8 @@ based on the data obtained from CloudStack API:
 usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import argparse
@@ -83,7 +85,8 @@ except:
 try:
     from cs import CloudStack, CloudStackException, read_config
 except ImportError:
-    print >> sys.stderr, "Error: CloudStack library must be installed: pip install cs."
+    print("Error: CloudStack library must be installed: pip install cs.",
+          file=sys.stderr)
     sys.exit(1)
 
 
@@ -98,22 +101,23 @@ class CloudStackInventory(object):
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
-        except CloudStackException, e:
-            print >> sys.stderr, "Error: Could not connect to CloudStack API"
+        except CloudStackException as e:
+            print("Error: Could not connect to CloudStack API", file=sys.stderr)
 
         project_id = ''
         if options.project:
             project_id = self.get_project_id(options.project)
 
         if options.host:
-            data = self.get_host(options.host)
-            print json.dumps(data, indent=2)
+            data = self.get_host(options.host, project_id)
+            print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list()
-            print json.dumps(data, indent=2)
+            data = self.get_list(project_id)
+            print(json.dumps(data, indent=2))
         else:
-            print >> sys.stderr, "usage: --list | --host <hostname> [--project <project>]"
+            print("usage: --list | --host <hostname> [--project <project>]",
+                  file=sys.stderr)
             sys.exit(1)
 
 
@@ -123,7 +127,7 @@ class CloudStackInventory(object):
             for p in projects['project']:
                 if p['name'] == project or p['id'] == project:
                     return p['id']
-        print >> sys.stderr, "Error: Project %s not found." % project
+        print("Error: Project %s not found." % project, file=sys.stderr)
         sys.exit(1)
 
 

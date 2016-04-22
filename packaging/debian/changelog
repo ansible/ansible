@@ -4,6 +4,51 @@ ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
  -- Ansible, Inc. <support@ansible.com>  %DATE%
 
+ansible (2.0.1.0) unstable; urgency=low
+
+  * 2.0.1.0
+
+ -- Ansible, Inc. <support@ansible.com>  Wed, 24 Feb 2016 18:28:59 -0500
+
+
+ansible (2.0.0.2) unstable; urgency=low
+
+  * 2.0.0.2
+
+ -- Ansible, Inc. <support@ansible.com>  Thu, 14 Jan 2016 17:17:41 -0500
+
+
+ansible (2.0.0.1) unstable; urgency=low
+
+  * 2.0.0.1
+
+ -- Ansible, Inc. <support@ansible.com>  Tue, 12 Jan 2016 17:53:29 -0500
+
+
+ansible (2.0.0.0) unstable; urgency=low
+
+  * 2.0.0.0
+
+ -- Ansible, Inc. <support@ansible.com>  Tue, 12 Jan 2016 08:33:59 -0500
+
+ansible (1.9.4) unstable; urgency=low
+
+  * 1.9.4
+
+ -- Ansible, Inc. <support@ansible.com>  Fri, 09 Oct 2015 15:00:00 -0500
+
+ansible (1.9.3) unstable; urgency=low
+
+  * 1.9.3
+
+ -- Ansible, Inc. <support@ansible.com>  Thu, 03 Sep 2015 18:30:00 -0500
+
+ansible (1.9.2) unstable; urgency=low
+
+  * 1.9.2
+
+ -- Ansible, Inc. <support@ansible.com>  Wed, 24 Jun 2015 14:00:00 -0500
+
 ansible (1.9.1) unstable; urgency=low
 
   * 1.9.1

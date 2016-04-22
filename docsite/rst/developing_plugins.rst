@@ -19,9 +19,9 @@ in playbooks and with /usr/bin/ansible to decide how you want to talk to remote 
 are covered in the :doc:`intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
-'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 an later.  Previous versions did not support 'smart'.
+'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 and later.  Previous versions did not support 'smart'.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connections <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connections>`_ and figure things out pretty easily.
+More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_ and figure things out pretty easily.
 
 .. _developing_lookup_plugins:
 
@@ -88,7 +88,7 @@ and is guaranteed to entertain and/or annoy coworkers.
 Configuring
 +++++++++++
 
-To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`.
+To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`. Plugin load order is alphanumeric in nature. If you have a plugin you want to run first consider naming it `1_first.py`, or if you have a plugin you want to run last consider naming it `z_last.py`. 
 
 .. _callback_development:
 
@@ -112,6 +112,7 @@ to /usr/share/ansible/plugins, in a subfolder for each plugin type::
     * connection_plugins
     * filter_plugins
     * vars_plugins
+    * strategy_plugins
 
 To change this path, edit the ansible configuration file.
 

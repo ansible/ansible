@@ -19,13 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from ansible.compat.tests import unittest, mock
+from ansible.plugins.cache import FactCache
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 
 HAVE_MEMCACHED = True
 try:
-    import memcached
+    import memcache
 except ImportError:
     HAVE_MEMCACHED = False
 else:
@@ -40,6 +41,20 @@ except ImportError:
     HAVE_REDIS = False
 else:
     from ansible.plugins.cache.redis import CacheModule as RedisCache
+
+
+class TestFactCache(unittest.TestCase):
+
+    def setUp(self):
+        with mock.patch('ansible.constants.CACHE_PLUGIN', 'memory'):
+            self.cache = FactCache()
+
+    def test_copy(self):
+        self.cache['avocado'] = 'fruit'
+        self.cache['daisy'] = 'flower'
+        a_copy = self.cache.copy()
+        self.assertEqual(type(a_copy), dict)
+        self.assertEqual(a_copy, dict(avocado='fruit', daisy='flower'))
 
 
 class TestAbstractClass(unittest.TestCase):
@@ -95,6 +110,6 @@ class TestAbstractClass(unittest.TestCase):
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
-    @unittest.skipUnless(HAVE_REDIS, 'Redis pyhton module not installed')
+    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
     def test_redis_cachemodule(self):
         self.assertIsInstance(RedisCache(), RedisCache)

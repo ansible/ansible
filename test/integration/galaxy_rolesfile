@@ -1,4 +1,8 @@
-git+http://bitbucket.org/willthames/git-ansible-galaxy,v1.4
-hg+http://bitbucket.org/willthames/hg-ansible-galaxy
+# deliberate non-empty whitespace line to follow
+    
+
+git+https://bitbucket.org/willthames/git-ansible-galaxy,pr-10620
+hg+https://bitbucket.org/willthames/hg-ansible-galaxy
 https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.gz,,http-role
+# comment
 git+git@github.com:geerlingguy/ansible-role-php.git

@@ -22,22 +22,27 @@ __metaclass__ = type
 import os
 import subprocess
 import sys
-
 from collections import Mapping
 
+from ansible.compat.six import iteritems
+
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible.utils.unicode import to_str, to_unicode
 
 
 class InventoryScript:
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
 
         self._loader = loader
+        self.groups = groups
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -46,18 +51,23 @@ class InventoryScript:
         cmd = [ self.filename, "--list" ]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
+        except OSError as e:
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
 
         if sp.returncode != 0:
             raise AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
 
-        self.data = stdout
+        # make sure script output is unicode so that json loader will output
+        # unicode strings itself
+        try:
+            self.data = to_unicode(stdout, errors="strict")
+        except Exception as e:
+            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_str(self.filename), to_str(e)))
+
         # see comment about _meta below
         self.host_vars_from_top = None
-        self.groups = self._parse(stderr)
-
+        self._parse(stderr)
 
     def _parse(self, err):
 
@@ -68,19 +78,13 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(self.filename, str(e)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_str(self.filename), to_str(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(self.filename))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_str(self.filename)))
 
-        self.raw  = json_dict_bytes_to_unicode(self.raw)
-
-        all       = Group('all')
-        groups    = dict(all=all)
-        group     = None
-
-
+        group = None
         for (group_name, data) in self.raw.items():
 
             # in Ansible 1.3 and later, a "_meta" subelement may contain
@@ -94,16 +98,16 @@ class InventoryScript:
                     self.host_vars_from_top = data['hostvars']
                     continue
 
-            if group_name != all.name:
-                group = groups[group_name] = Group(group_name)
-            else:
-                group = all
+            if group_name not in self.groups:
+                group = self.groups[group_name] = Group(group_name)
+
+            group = self.groups[group_name]
             host = None
 
             if not isinstance(data, dict):
                 data = {'hosts': data}
             # is not those subkeys, then simplified syntax, host with vars
-            elif not any(k in data for k in ('hosts','vars')):
+            elif not any(k in data for k in ('hosts','vars','children')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
@@ -112,7 +116,7 @@ class InventoryScript:
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
-                    if not hostname in all_hosts:
+                    if hostname not in all_hosts:
                         all_hosts[hostname] = Host(hostname)
                     host = all_hosts[hostname]
                     group.add_host(host)
@@ -122,11 +126,8 @@ class InventoryScript:
                     raise AnsibleError("You defined a group \"%s\" with bad "
                         "data for variables:\n %s" % (group_name, data))
 
-                for k, v in data['vars'].iteritems():
-                    if group.name == all.name:
-                        all.set_variable(k, v)
-                    else:
-                        group.set_variable(k, v)
+                for k, v in iteritems(data['vars']):
+                    group.set_variable(k, v)
 
         # Separate loop to ensure all groups are defined
         for (group_name, data) in self.raw.items():
@@ -134,26 +135,30 @@ class InventoryScript:
                 continue
             if isinstance(data, dict) and 'children' in data:
                 for child_name in data['children']:
-                    if child_name in groups:
-                        groups[group_name].add_child_group(groups[child_name])
+                    if child_name in self.groups:
+                        self.groups[group_name].add_child_group(self.groups[child_name])
 
-        for group in groups.values():
-            if group.depth == 0 and group.name != 'all':
-                all.add_child_group(group)
+        # Finally, add all top-level groups as children of 'all'.
+        # We exclude ungrouped here because it was already added as a child of
+        # 'all' at the time it was created.
 
-        return groups
+        for group in self.groups.values():
+            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+                self.groups['all'].add_child_group(group)
 
     def get_host_variables(self, host):
         """ Runs <script> --host <hostname> to determine additional host variables """
         if self.host_vars_from_top is not None:
-            got = self.host_vars_from_top.get(host.name, {})
+            try:
+                got = self.host_vars_from_top.get(host.name, {})
+            except AttributeError as e:
+                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_str(e)))
             return got
-
 
         cmd = [self.filename, "--host", host.name]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
+        except OSError as e:
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
         if out.strip() == '':
@@ -162,4 +167,3 @@ class InventoryScript:
             return json_dict_bytes_to_unicode(self._loader.load(out))
         except ValueError:
             raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
-

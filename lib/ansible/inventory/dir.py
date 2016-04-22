@@ -24,31 +24,94 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
-from ansible.inventory.ini import InventoryParser
-from ansible.inventory.script import InventoryScript
-from ansible.utils.path import is_executable
 from ansible.utils.vars import combine_vars
+
+#FIXME: make into plugins
+from ansible.inventory.ini import InventoryParser as InventoryINIParser
+from ansible.inventory.yaml import InventoryParser as InventoryYAMLParser
+from ansible.inventory.script import InventoryScript
+
+__all__ = ['get_file_parser']
+
+def get_file_parser(hostsfile, groups, loader):
+    # check to see if the specified file starts with a
+    # shebang (#!/), so if an error is raised by the parser
+    # class we can show a more apropos error
+
+    shebang_present = False
+    processed = False
+    myerr = []
+    parser = None
+
+    try:
+        inv_file = open(hostsfile)
+        first_line = inv_file.readlines()[0]
+        inv_file.close()
+        if first_line.startswith('#!'):
+            shebang_present = True
+    except:
+        pass
+
+    #FIXME: make this 'plugin loop'
+    # script
+    if loader.is_executable(hostsfile):
+        try:
+            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
+            processed = True
+        except Exception as e:
+            myerr.append("The file %s is marked as executable, but failed to execute correctly. " % hostsfile + \
+                            "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % hostsfile)
+            myerr.append(str(e))
+
+    # YAML/JSON
+    if not processed and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
+        try:
+            parser = InventoryYAMLParser(loader=loader, groups=groups, filename=hostsfile)
+            processed = True
+        except Exception as e:
+            if shebang_present and not loader.is_executable(hostsfile):
+                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
+                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+            else:
+                myerr.append(str(e))
+
+    # ini
+    if not processed:
+        try:
+            parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
+            processed = True
+        except Exception as e:
+            if shebang_present and not loader.is_executable(hostsfile):
+                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
+                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+            else:
+                myerr.append(str(e))
+
+    if not processed and myerr:
+        raise AnsibleError( '\n'.join(myerr) )
+
+    return parser
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
+
         self.names = os.listdir(filename)
         self.names.sort()
         self.directory = filename
         self.parsers = []
         self.hosts = {}
-        self.groups = {}
+        self.groups = groups
 
         self._loader = loader
 
         for i in self.names:
 
             # Skip files that end with certain extensions or characters
-            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo")):
+            if any(i.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):
@@ -58,11 +121,15 @@ class InventoryDirectory(object):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
-                parser = InventoryDirectory(loader=loader, filename=fullpath)
-            elif is_executable(fullpath):
-                parser = InventoryScript(loader=loader, filename=fullpath)
+                parser = InventoryDirectory(loader=loader, groups=groups, filename=fullpath)
             else:
-                parser = InventoryParser(filename=fullpath)
+                parser = get_file_parser(fullpath, self.groups, loader)
+                if parser is None:
+                    #FIXME: needs to use display
+                    import warnings
+                    warnings.warning("Could not find parser for %s, skipping" % fullpath)
+                    continue
+
             self.parsers.append(parser)
 
             # retrieve all groups and hosts form the parser and add them to
@@ -106,7 +173,7 @@ class InventoryDirectory(object):
         if 'ungrouped' in self.groups:
             ungrouped = self.groups['ungrouped']
             # loop on a copy of ungrouped hosts, as we want to change that list
-            for host in ungrouped.hosts[:]:
+            for host in frozenset(ungrouped.hosts):
                 if len(host.groups) > 1:
                     host.groups.remove(ungrouped)
                     ungrouped.hosts.remove(host)
@@ -139,6 +206,8 @@ class InventoryDirectory(object):
         if group.name not in self.groups:
             # it's brand new, add him!
             self.groups[group.name] = group
+        # the Group class does not (yet) implement __eq__/__ne__,
+        # so unlike Host we do a regular comparison here
         if self.groups[group.name] != group:
             # different object, merge
             self._merge_groups(self.groups[group.name], group)
@@ -147,6 +216,9 @@ class InventoryDirectory(object):
         if host.name not in self.hosts:
             # Papa's got a brand new host
             self.hosts[host.name] = host
+        # because the __eq__/__ne__ methods in Host() compare the
+        # name fields rather than references, we use id() here to
+        # do the object comparison for merges
         if self.hosts[host.name] != host:
             # different object, merge
             self._merge_hosts(self.hosts[host.name], host)

@@ -21,20 +21,30 @@ __metaclass__ = type
 
 import multiprocessing
 import os
-import socket
-import sys
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import callback_loader, strategy_loader
+from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
+from ansible.vars.hostvars import HostVars
+from ansible.plugins.callback import CallbackBase
+from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['TaskQueueManager']
+
 
 class TaskQueueManager:
 
@@ -48,19 +58,28 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, display, options, passwords, stdout_callback=None):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
-        self._display          = display
         self._options          = options
         self._stats            = AggregateStats()
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
+        self._run_additional_callbacks = run_additional_callbacks
+        self._run_tree         = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
+        self._start_at_done    = False
+        self._result_prc       = None
+
+        # make sure the module path (if specified) is parsed and
+        # added to the module_loader object
+        if options.module_path is not None:
+            for path in options.module_path.split(os.pathsep):
+                module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -74,21 +93,16 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
-        # create the pool of worker threads, based on the number of forks specified
-        try:
-            fileno = sys.stdin.fileno()
-        except ValueError:
-            fileno = None
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
+        self._connection_lockfile = tempfile.TemporaryFile()
 
+    def _initialize_processes(self, num):
         self._workers = []
-        for i in range(self._options.forks):
-            main_q = multiprocessing.Queue()
+
+        for i in range(num):
             rslt_q = multiprocessing.Queue()
-
-            prc = WorkerProcess(self, main_q, rslt_q, loader)
-            prc.start()
-
-            self._workers.append((prc, main_q, rslt_q))
+            self._workers.append([None, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -105,11 +119,18 @@ class TaskQueueManager:
         for key in self._notified_handlers.keys():
             del self._notified_handlers[key]
 
-        # FIXME: there is a block compile helper for this...
+        def _process_block(b):
+            temp_list = []
+            for t in b.block:
+                if isinstance(t, Block):
+                    temp_list.extend(_process_block(t))
+                else:
+                    temp_list.append(t)
+            return temp_list
+
         handler_list = []
         for handler_block in handlers:
-            for handler in handler_block.block:
-                handler_list.append(handler)
+            handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the handler names from the handler list
         for handler in handler_list:
@@ -129,8 +150,16 @@ class TaskQueueManager:
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
-        if self._stdout_callback not in callback_loader:
-            raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        if isinstance(self._stdout_callback, CallbackBase):
+            stdout_callback_loaded = True
+        elif isinstance(self._stdout_callback, string_types):
+            if self._stdout_callback not in callback_loader:
+                raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+            else:
+                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                stdout_callback_loaded = True
+        else:
+            raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
@@ -138,17 +167,18 @@ class TaskQueueManager:
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
+                callback_needs_whitelist  = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
+                elif callback_name == 'tree' and self._run_tree:
+                    pass
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
-                self._callback_plugins.append(callback_plugin(self._display))
-            else:
-                self._callback_plugins.append(callback_plugin())
+            self._callback_plugins.append(callback_plugin())
 
         self._callbacks_loaded = True
 
@@ -170,7 +200,18 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        play_context = PlayContext(new_play, self._options, self.passwords)
+        self.hostvars = HostVars(
+            inventory=self._inventory,
+            variable_manager=self._variable_manager,
+            loader=self._loader,
+        )
+
+        # Fork # of forks, # of hosts or serial, whichever is lowest
+        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
+        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        self._initialize_processes(min(contenders))
+
+        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
@@ -186,23 +227,46 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
+        iterator = PlayIterator(
+            inventory=self._inventory,
+            play=new_play,
+            play_context=play_context,
+            variable_manager=self._variable_manager,
+            all_vars=all_vars,
+            start_at_done = self._start_at_done,
+        )
 
-        # and run the play using the strategy
-        return strategy.run(iterator, play_context)
+        # during initialization, the PlayContext will clear the start_at_task
+        # field to signal that a matching task was found, so check that here
+        # and remember it so we don't try to skip tasks on future plays
+        if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
+            self._start_at_done = True
+
+        # and run the play using the strategy and cleanup on way out
+        play_return = strategy.run(iterator, play_context)
+        self._cleanup_processes()
+        return play_return
 
     def cleanup(self):
-        self._display.debug("RUNNING CLEANUP")
-
+        display.debug("RUNNING CLEANUP")
         self.terminate()
-
         self._final_q.close()
-        self._result_prc.terminate()
+        self._cleanup_processes()
 
-        for (worker_prc, main_q, rslt_q) in self._workers:
-            rslt_q.close()
-            main_q.close()
-            worker_prc.terminate()
+    def _cleanup_processes(self):
+        if self._result_prc:
+            self._result_prc.terminate()
+
+            for (worker_prc, rslt_q) in self._workers:
+                rslt_q.close()
+                if worker_prc and worker_prc.is_alive():
+                    try:
+                        worker_prc.terminate()
+                    except AttributeError:
+                        pass
+
+    def clear_failed_hosts(self):
+        self._failed_hosts = dict()
 
     def get_inventory(self):
         return self._inventory
@@ -223,19 +287,39 @@ class TaskQueueManager:
         self._terminated = True
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in self._callback_plugins:
+        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
                 continue
-            methods = [
-                getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'v2_on_any', None)
-            ]
-            for method in methods:
-                if method is not None:
-                    try:
-                        method(*args, **kwargs)
-                    except Exception as e:
-                        self._display.warning('Error when using %s: %s' % (method, str(e)))
 
+            # try to find v2 method, fallback to v1 method, ignore callback if no method found
+            methods = []
+            for possible in [method_name, 'v2_on_any']:
+                gotit =  getattr(callback_plugin, possible, None)
+                if gotit is None:
+                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                if gotit is not None:
+                    methods.append(gotit)
+
+            for method in methods:
+                try:
+                    # temporary hack, required due to a change in the callback API, so
+                    # we don't break backwards compatibility with callbacks which were
+                    # designed to use the original API
+                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
+                    if method_name == 'v2_playbook_on_start':
+                        import inspect
+                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
+                        if 'playbook' in f_args:
+                            method(*args, **kwargs)
+                        else:
+                            method()
+                    else:
+                        method(*args, **kwargs)
+                except Exception as e:
+                    #TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_unicode(method_name), to_unicode(callback_plugin), to_unicode(e)))
+                    from traceback import format_tb
+                    from sys import exc_info
+                    display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))

@@ -22,17 +22,17 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleParserError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 
 class DictDataLoader(DataLoader):
 
     def __init__(self, file_mapping=dict()):
         assert type(file_mapping) == dict
 
+        super(DictDataLoader, self).__init__()
+
         self._file_mapping = file_mapping
         self._build_known_directories()
-
-        super(DictDataLoader, self).__init__()
 
     def load_from_file(self, path):
         if path in self._file_mapping:
@@ -57,6 +57,10 @@ class DictDataLoader(DataLoader):
     def list_directory(self, path):
         return [x for x in self._known_directories]
 
+    def is_executable(self, path):
+        # FIXME: figure out a way to make paths return true for this
+        return False
+
     def _add_known_directory(self, directory):
         if directory not in self._known_directories:
             self._known_directories.append(directory)
@@ -73,7 +77,7 @@ class DictDataLoader(DataLoader):
         rebuild_dirs = False
         if path not in self._file_mapping:
             rebuild_dirs = True
-    
+
         self._file_mapping[path] = content
 
         if rebuild_dirs:
