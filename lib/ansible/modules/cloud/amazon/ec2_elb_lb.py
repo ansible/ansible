@@ -154,6 +154,11 @@ options:
     required: false
     default: 60
     version_added: "2.1"
+  tags:
+    description:
+      - An associative array of tags. To delete all tags, supply an empty dict.
+    required: false
+    version_added: "2.1"
 
 extends_documentation_fragment: aws
 """
@@ -346,6 +351,38 @@ EXAMPLES = """
       enabled: yes
       cookie: SESSIONID
 
+# Create an ELB and add tags
+- local_action:
+    module: ec2_elb_lb
+    name: "New ELB"
+    state: present
+    region: us-east-1
+    zones:
+      - us-east-1a
+      - us-east-1d
+    listeners:
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
+    tags:
+      Name: "New ELB"
+      stack: "production"
+      client: "Bob"
+
+# Delete all tags from an ELB
+- local_action:
+    module: ec2_elb_lb
+    name: "New ELB"
+    state: present
+    region: us-east-1
+    zones:
+      - us-east-1a
+      - us-east-1d
+    listeners:
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
+    tags: {}
 """
 
 try:
@@ -353,6 +390,7 @@ try:
     import boto.ec2.elb
     import boto.ec2.elb.attributes
     from boto.ec2.elb.healthcheck import HealthCheck
+    from boto.ec2.tag import Tag
     from boto.regioninfo import RegionInfo
     HAS_BOTO = True
 except ImportError:
@@ -391,7 +429,8 @@ class ElbManager(object):
                  scheme="internet-facing", connection_draining_timeout=None,
                  idle_timeout=None,
                  cross_az_load_balancing=None, access_logs=None,
-                 stickiness=None, wait=None, wait_timeout=None, region=None,
+                 stickiness=None, wait=None, wait_timeout=None, tags=None,
+                 region=None,
                  instance_ids=None, purge_instance_ids=None, **aws_connect_params):
 
         self.module = module
@@ -414,7 +453,8 @@ class ElbManager(object):
         self.stickiness = stickiness
         self.wait = wait
         self.wait_timeout = wait_timeout
-
+        self.tags = tags
+        
         self.aws_connect_params = aws_connect_params
         self.region = region
 
@@ -449,11 +489,14 @@ class ElbManager(object):
             self._set_access_log()
         # add sitcky options
         self.select_stickiness_policy()
+
         # ensure backend server policies are correct
         self._set_backend_policies()
         # set/remove instance ids
         self._set_instance_ids()
 
+        self._set_tags()
+        
     def ensure_gone(self):
         """Destroy the ELB"""
         if self.elb:
@@ -565,6 +608,8 @@ class ElbManager(object):
                     info['cross_az_load_balancing'] = 'no'
 
             # return stickiness info?
+            
+            info['tags'] = self.tags
 
         return info
 
@@ -1107,6 +1152,41 @@ class ElbManager(object):
                 self.elb_conn.deregister_instances(self.elb.name, remove_instances)
                 self.changed = True
 
+    def _set_tags(self):
+        """Add/Delete tags"""
+        if self.tags is None:
+            return
+        
+        params = {'LoadBalancerNames.member.1': self.name}
+
+        tagdict = dict()
+
+        # get the current list of tags from the ELB, if ELB exists
+        if self.elb:
+            current_tags = self.elb_conn.get_list('DescribeTags', params,
+                                                  [('member', Tag)])
+            tagdict = dict((tag.Key, tag.Value) for tag in current_tags
+                           if hasattr(tag, 'Key'))
+            
+        # Add missing tags 
+        dictact = dict(set(self.tags.items()) - set(tagdict.items()))
+        if dictact:
+            for i, key in enumerate(dictact):
+                params['Tags.member.%d.Key' % (i + 1)] = key
+                params['Tags.member.%d.Value' % (i + 1)] = dictact[key]
+
+            self.elb_conn.make_request('AddTags', params)
+            self.changed=True
+
+        # Remove extra tags 
+        dictact = dict(set(tagdict.items()) - set(self.tags.items()))
+        if dictact:
+            for i, key in enumerate(dictact):
+                params['Tags.member.%d.Key' % (i + 1)] = key
+
+            self.elb_conn.make_request('RemoveTags', params)
+            self.changed=True
+    
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
@@ -1141,7 +1221,8 @@ def main():
             stickiness={'default': None, 'required': False, 'type': 'dict'},
             access_logs={'default': None, 'required': False, 'type': 'dict'},
             wait={'default': False, 'type': 'bool', 'required': False},
-            wait_timeout={'default': 60, 'type': 'int', 'required': False}
+            wait_timeout={'default': 60, 'type': 'int', 'required': False},
+            tags={'default': None, 'required': False, 'type': 'dict'}
         )
     )
 
@@ -1178,7 +1259,8 @@ def main():
     stickiness = module.params['stickiness']
     wait = module.params['wait']
     wait_timeout = module.params['wait_timeout']
-
+    tags = module.params['tags']
+    
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
 
@@ -1209,7 +1291,7 @@ def main():
                          subnets, purge_subnets, scheme,
                          connection_draining_timeout, idle_timeout,
                          cross_az_load_balancing,
-                         access_logs, stickiness, wait, wait_timeout,
+                         access_logs, stickiness, wait, wait_timeout, tags,
                          region=region, instance_ids=instance_ids, purge_instance_ids=purge_instance_ids,
                          **aws_connect_params)
 
