@@ -140,6 +140,8 @@ class LookupModule(LookupBase):
                 anydict = True
 
         total_search = []
+        filelist = []
+        pathlist = []
         if anydict:
             for term in terms:
                 if isinstance(term, dict):
@@ -147,22 +149,24 @@ class LookupModule(LookupBase):
                     paths = term.get('paths', [])
                     skip  = boolean(term.get('skip', False))
 
-                    filelist = files
-                    if isinstance(files, basestring):
-                        files = files.replace(',', ' ')
-                        files = files.replace(';', ' ')
-                        filelist = files.split(' ')
-
-                    pathlist = paths
-                    if paths:
-                        if isinstance(paths, basestring):
-                            paths = paths.replace(',', ' ')
-                            paths = paths.replace(':', ' ')
-                            paths = paths.replace(';', ' ')
-                            pathlist = paths.split(' ')
+                    if not filelist:
+                        filelist = files
+                        if isinstance(files, basestring):
+                            files = files.replace(',', ' ')
+                            files = files.replace(';', ' ')
+                            filelist = files.split(' ')
 
                     if not pathlist:
-                        total_search = filelist
+                        pathlist = paths
+                        if paths:
+                            if isinstance(paths, basestring):
+                                paths = paths.replace(',', ' ')
+                                paths = paths.replace(':', ' ')
+                                paths = paths.replace(';', ' ')
+                                pathlist = paths.split(' ')
+
+                    if not pathlist:
+                        total_search = list(filelist)
                     else:
                         for path in pathlist:
                             for fn in filelist:
