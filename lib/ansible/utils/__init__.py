@@ -426,6 +426,7 @@ def role_spec_parse(role_spec):
 
 
 def role_yaml_parse(role):
+    role = role.copy()
     if 'role' in role:
         # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
         role_info = role_spec_parse(role['role'])
