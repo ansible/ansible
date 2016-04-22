@@ -332,11 +332,15 @@ class Base:
                         if isinstance(value, string_types) and '%' in value:
                             value = value.replace('%', '')
                         value = float(value)
-                    elif attribute.isa == 'list':
+                    elif attribute.isa in ('list', 'barelist'):
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            if isinstance(value, string_types):
+                            if isinstance(value, string_types) and attribute.isa == 'barelist':
+                                display.deprecated(
+                                    "Using comma separated values for a list has been deprecated. " \
+                                    "You should instead use the correct YAML syntax for lists. " \
+                                )
                                 value = value.split(',')
                             else:
                                 value = [ value ]
