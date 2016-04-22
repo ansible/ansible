@@ -674,7 +674,7 @@
   command: gpg --import-ownertrust /tmp/ownertrust-git.txt
 
 - name: Clone signed repo and verify tag
-  git: repo={{ repo_signed }} dest={{ checkout_dir }} version=v1.9.1 verify_commit=yes
+  git: repo={{ repo_verify }} dest={{ checkout_dir }} version=v1.9.1 verify_commit=yes
 
 - name: Remove Junio C Hamano GPG key
   command: gpg --batch --yes --delete-key B0B5E88696AFE6CB
