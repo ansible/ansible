@@ -74,6 +74,7 @@ killed:
 
 import re
 import os
+import platform
 from subprocess import Popen, PIPE
 
 def netStatParse(raw):
@@ -120,6 +121,9 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if platform.system() != 'Linux':
+        module.fail_json(msg='This module requires Linux.')
 
     def getPidSTime(pid):
         ps_cmd = module.get_bin_path('ps', True)
