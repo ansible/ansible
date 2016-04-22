@@ -90,8 +90,6 @@ datadog_event: title="Testing from ansible" text="Test!"
                tags=aa,bb,#host:{{ inventory_hostname }}
 '''
 
-import socket
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
