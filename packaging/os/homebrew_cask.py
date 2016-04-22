@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
+# (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +21,7 @@ DOCUMENTATION = '''
 ---
 module: homebrew_cask
 author:
+    - "Indrajit Raychaudhuri (@indrajitr)"
     - "Daniel Jaouen (@danieljaouen)"
     - "Enric Lluelles (@enriclluelles)"
 short_description: Install/uninstall homebrew casks.
@@ -46,7 +48,9 @@ options:
 EXAMPLES = '''
 - homebrew_cask: name=alfred state=present
 - homebrew_cask: name=alfred state=absent
-- homebrew_cask: name=alfred state=absent install_options="appdir=/Applications"
+- homebrew_cask: name=alfred state=present install_options="appdir=/Applications"
+- homebrew_cask: name=alfred state=present install_options="--debug appdir=/Applications"
+- homebrew_cask: name=alfred state=absent install_options="--force"
 '''
 
 import os.path
@@ -538,4 +542,3 @@ from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
-
