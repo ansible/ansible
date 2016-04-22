@@ -110,15 +110,6 @@ def applyWhitelist(portspids, whitelist=list()):
                 kill_pids.append(dict(pid=p['pid'], port=p['port'], proto=p['proto'], name=p['name'], stime=p['stime']))
     return kill_pids
 
-def getPidSTime(pid):
-    p1 = Popen(['ps', '-o', 'lstart', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
-    ps_output = p1.communicate()[0]
-    stime = ''
-    for line in iter(ps_output.splitlines()):
-        if 'started' not in line:
-            stime = line
-    return stime
-
 def main():
 
     module = AnsibleModule(
@@ -129,13 +120,25 @@ def main():
         supports_check_mode=True
     )
 
+    def getPidSTime(pid):
+        ps_cmd = module.get_bin_path('ps', True)
+        p1 = Popen([ps_cmd, '-o', 'lstart', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
+        ps_output = p1.communicate()[0]
+        stime = ''
+        for line in iter(ps_output.splitlines()):
+            if 'started' not in line:
+                stime = line
+        return stime
+
     result = {}
     result['changed'] = False
     result['killed'] = list()
 
     try:
+        netstat_cmd = module.get_bin_path('netstat', True)
+
         # which TCP ports are listening for connections?
-        p1 = Popen(['netstat', '-plnt'], stdout=PIPE, stderr=PIPE)
+        p1 = Popen([netstat_cmd, '-plnt'], stdout=PIPE, stderr=PIPE)
         output_tcp = p1.communicate()[0]
         kill_tcp = netStatParse(output_tcp)
         for i, p in enumerate(kill_tcp):
@@ -143,7 +146,7 @@ def main():
             kill_tcp[i] = p
 
         # which UDP ports are listening for connections?
-        p1 = Popen(['netstat', '-plnu'], stdout=PIPE, stderr=PIPE)
+        p1 = Popen([netstat_cmd, '-plnu'], stdout=PIPE, stderr=PIPE)
         output_udp = p1.communicate()[0]
         kill_udp = netStatParse(output_udp)
         for i, p in enumerate(kill_udp):
