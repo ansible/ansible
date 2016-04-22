@@ -177,7 +177,7 @@ class LookupModule(LookupBase):
         else:
             total_search = self._flatten(terms)
 
-        roledir = variables.get('roledir')
+        roledir = variables.get('role_path')
         for fn in total_search:
             try:
                 fn = self._templar.template(fn)
