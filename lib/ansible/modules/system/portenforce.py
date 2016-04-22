@@ -106,8 +106,9 @@ def applyWhitelist(portspids, whitelist=list()):
     kill_pids = list()
     for p in portspids:
         if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
-            if dict(pid=p['pid'], port=p['port'], proto=p['proto'], name=p['name'], stime=p['stime']) not in kill_pids:
-                kill_pids.append(dict(pid=p['pid'], port=p['port'], proto=p['proto'], name=p['name'], stime=p['stime']))
+            to_kill = dict(pid=p['pid'], port=p['port'], proto=p['proto'], name=p['name'], stime=p['stime'])
+            if to_kill not in kill_pids:
+                kill_pids.append(to_kill)
     return kill_pids
 
 def main():
