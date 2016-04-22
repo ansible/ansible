@@ -157,8 +157,13 @@ class Connection(ConnectionBase):
 
         local_cmd += ['exec']
 
-        if self.remote_user is not None:
-            local_cmd += ['-u', self.remote_user]
+        if self._play_context.become and self._play_context.become_method == 'dockerexec':
+            exec_user = self._play_context.become_user
+        else:
+            exec_user = self.remote_user
+
+        if exec_user is not None:
+            local_cmd += ['-u', exec_user]
 
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd += ['-i', self._play_context.remote_addr] + cmd

@@ -29,7 +29,7 @@ become_user
     set to user with desired privileges, the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'
+    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'/'dockerexec'
 
 
 Connection variables
@@ -60,7 +60,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | dockerexec ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
