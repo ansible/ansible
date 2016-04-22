@@ -374,7 +374,7 @@ try:
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
-except ImportError, exc:
+except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
@@ -423,9 +423,9 @@ class AnsibleDockerClient(Client):
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
-        except APIError, exc:
+        except APIError as exc:
             self.fail("Docker API error: %s" % exc)
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
     def fail(self, msg):
@@ -442,7 +442,7 @@ class AnsibleDockerClient(Client):
         try:
             tls_config = TLSConfig(**kwargs)
             return tls_config
-        except TLSParameterError, exc:
+        except TLSParameterError as exc:
            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
