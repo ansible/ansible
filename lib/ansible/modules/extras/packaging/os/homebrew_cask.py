@@ -44,6 +44,7 @@ options:
             - options flags to install a package
         required: false
         default: null
+        version_added: "2.1"
 '''
 EXAMPLES = '''
 - homebrew_cask: name=alfred state=present
