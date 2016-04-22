@@ -31,6 +31,40 @@
     python_has_ssl_context: False
   when: python_test.rc != 0
 
+- name: Define test files for file schema
+  set_fact:
+    geturl_srcfile: "{{ output_dir | expanduser }}/aurlfile.txt"
+    geturl_dstfile: "{{ output_dir | expanduser }}/aurlfile_copy.txt"
+
+- name: Create source file
+  copy: 
+    dest: "{{ geturl_srcfile }}" 
+    content: "foobar" 
+
+- name: test file fetch
+  get_url:
+    url: "{{ 'file://' + geturl_srcfile }}"
+    dest: "{{ geturl_dstfile }}"  
+  register: result  
+
+- name: assert success and change
+  assert:
+    that:
+        - result.changed
+        - '"OK" in result.msg'
+
+- name: test nonexisting file fetch
+  get_url:
+    url: "{{ 'file://' + geturl_srcfile + 'NOFILE' }}"
+    dest: "{{ geturl_dstfile + 'NOFILE' }}"  
+  register: result  
+  ignore_errors: True
+
+- name: assert success and change
+  assert:
+    that:
+        - result.failed
+
 - name: test https fetch
   get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
   register: result
