@@ -312,18 +312,23 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
-            if remote_user == 'root':
-                # SSh'ing as root, therefore we can chown
-                res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
-                if res['rc'] != 0:
-                    raise AnsibleError('Failed to set owner on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+
+            # Try chown'ing the file. This will only work if our SSH user has
+            # root privileges, but since we can't reliably determine that from
+            # the username (think "toor" on FreeBSD), let's just try first and
+            # apologize later:
+            res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+            if res['rc'] == 0:
+                # Only continue with chmod if chown worked
                 if execute:
                     # root can read things that don't have read bit but can't
                     # execute them.
                     res = self._remote_chmod('u+x', remote_path, recursive=recursive)
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+
             else:
+                # Chown'ing failed. We're probably lacking root privileges; let's try something else.
                 if execute:
                     mode = 'rx'
                 else:
