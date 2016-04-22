@@ -63,9 +63,9 @@ Function Test-RegistryValueData {
 Function Compare-RegistryData {
     Param (
         [parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]$ReferenceData,
+        [AllowEmptyString()]$ReferenceData,
         [parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]$DifferenceData
+        [AllowEmptyString()]$DifferenceData
         )
         $refType = $ReferenceData.GetType().Name
 
