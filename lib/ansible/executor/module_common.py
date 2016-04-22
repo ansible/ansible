@@ -166,8 +166,10 @@ def debug(command, zipped_mod, json_params):
     #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
 
     # Okay to use __file__ here because we're running from a kept file
-    basedir = os.path.abspath(os.path.dirname(__file__))
+    basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
     args_path = os.path.join(basedir, 'args')
+    script_path = os.path.join(basedir, 'ansible_module_%(ansible_module)s.py')
+
     if command == 'explode':
         # transform the ZIPDATA into an exploded directory of code and then
         # print the path to the code.  This is an easy way for people to look
@@ -205,13 +207,14 @@ def debug(command, zipped_mod, json_params):
         # This differs slightly from default Ansible execution of Python modules
         # as it passes the arguments to the module via a file instead of stdin.
 
+        # Set pythonpath to the debug dir
         pythonpath = os.environ.get('PYTHONPATH')
         if pythonpath:
             os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
         else:
             os.environ['PYTHONPATH'] = basedir
 
-        p = subprocess.Popen(['%(interpreter)s', 'ansible_module_%(ansible_module)s.py', args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen(['%(interpreter)s', script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
 
         if not isinstance(stderr, (bytes, unicode)):
@@ -236,8 +239,10 @@ def debug(command, zipped_mod, json_params):
         # not actual bugs (as they don't affect the real way that we invoke
         # ansible modules)
 
-        # stub the
+        # stub the args and python path
         sys.argv = ['%(ansible_module)s', args_path]
+        sys.path.insert(0, basedir)
+
         from ansible_module_%(ansible_module)s import main
         main()
         print('WARNING: Module returned to wrapper instead of exiting')
@@ -257,6 +262,9 @@ if __name__ == '__main__':
     if PY3:
         ZIPLOADER_PARAMS = ZIPLOADER_PARAMS.encode('utf-8')
     try:
+        # There's a race condition with the controller removing the
+        # remote_tmpdir and this module executing under async.  So we cannot
+        # store this in remote_tmpdir (use system tempdir instead)
         temp_path = tempfile.mkdtemp(prefix='ansible_')
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
         modlib = open(zipped_mod, 'wb')
