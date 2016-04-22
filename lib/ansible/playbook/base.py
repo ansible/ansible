@@ -38,6 +38,12 @@ from ansible.utils.boolean import boolean
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.utils.unicode import to_unicode
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 BASE_ATTRIBUTES = {}
 
 
