@@ -73,6 +73,7 @@ killed:
 '''
 
 import re
+import os
 from subprocess import Popen, PIPE
 
 def netStatParse(raw):
@@ -168,7 +169,7 @@ def main():
     if not module.check_mode:
         for p in kill_unique:
             if p['stime'] == getPidSTime(p['pid']):
-                p1 = Popen(['kill', str(p['pid'])], stdout=PIPE)
+                os.kill(p['pid'], 15)
 
     if kill_all:
         result['changed'] = True
