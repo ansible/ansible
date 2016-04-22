@@ -55,6 +55,10 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
+            if (host not in self._inventory._restriction and
+                    iterator._host_states[host.name].run_state is not
+                    PlayIterator.ITERATING_SETUP):
+                continue
             host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
         display.debug("done building task lists")
 
@@ -163,7 +167,21 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
+                if iterator._play.gather_facts == 'ignore_restrictions':
+                    hosts_left = [
+                        host for host in self._inventory.get_hosts(
+                            iterator._play.hosts,
+                            ignore_limits_and_restrictions=True
+                        ) if host.name not in self._tqm._unreachable_hosts and
+                        not iterator.is_failed(host)
+                    ]
+                else:
+                    hosts_left = [
+                        host for host in
+                        self._inventory.get_hosts(iterator._play.hosts) if
+                        host.name not in self._tqm._unreachable_hosts and not
+                        iterator.is_failed(host)
+                    ]
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
