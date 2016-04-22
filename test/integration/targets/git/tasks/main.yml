@@ -31,6 +31,7 @@
     repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
     repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
     repo_depth_url: 'https://github.com/ansible-test-robinro/git-test-shallow-depth'
+    repo_verify: 'https://github.com/git/git.git'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -659,3 +660,27 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
+
+  # Test for tag verification
+  # clone a repo checkout signed tag, verify tag
+
+- name: Import Junio C Hamano GPG key
+  command: gpg --keyserver pgp.mit.edu --recv-key B0B5E88696AFE6CB
+  
+- name: Copy ownertrust
+  copy: "content='96E07AF25771955980DAD10020D04E5A713660A7:6:\n' dest=/tmp/ownertrust-git.txt"
+
+- name: Import ownertrust
+  command: gpg --import-ownertrust /tmp/ownertrust-git.txt
+
+- name: Clone signed repo and verify tag
+  git: repo={{ repo_signed }} dest={{ checkout_dir }} version=v1.9.1 verify_commit=yes
+
+- name: Remove Junio C Hamano GPG key
+  command: gpg --batch --yes --delete-key B0B5E88696AFE6CB
+
+- name: Clean up files
+  file: path="{{ item }}" state=absent
+  with_items:
+    - "{{ checkout_dir }}"
+    - /tmp/ownertrust-git.txt
