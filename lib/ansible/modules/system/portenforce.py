@@ -112,11 +112,11 @@ def applyWhitelist(portspids, whitelist=list()):
 
 def getPidSTime(pid):
     p1 = Popen(['ps', '-o', 'lstart', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
-    p2 = Popen(['grep', '^[^ ]'], stdin=p1.stdout, stdout=PIPE, stderr=PIPE)
-    p1.stdout.close()
-    p3 = Popen(['tr', '-d', '"\n"'], stdin=p2.stdout, stdout=PIPE, stderr=PIPE)
-    p2.stdout.close()
-    stime = p3.communicate()[0]
+    ps_output = p1.communicate()[0]
+    stime = ''
+    for line in iter(ps_output.splitlines()):
+        if 'started' not in line:
+            stime = line
     return stime
 
 def main():
