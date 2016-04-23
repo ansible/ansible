@@ -33,5 +33,6 @@
     - test_template_mtime
     - test_template_uid
     - test_template_fullpath
+    - test_template_relpath
     - test_template_run_date
     - test_ansible_managed
