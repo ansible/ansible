@@ -1003,7 +1003,12 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        return self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+
+        if self.sleep:
+            time.sleep(self.sleep)
+
+        return ret
 
 # ===========================================
 # Subclass: OpenBSD
