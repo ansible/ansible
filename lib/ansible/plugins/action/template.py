@@ -106,7 +106,7 @@ class ActionModule(ActionBase):
             temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
             temp_vars['template_uid']      = template_uid
             temp_vars['template_fullpath'] = os.path.abspath(source)
-            temp_vars['template_relpath']  = os.path.relpath(temp_vars['template_fullpath'], os.path.abspath(basedir))
+            temp_vars['template_relpath']  = os.path.relpath(temp_vars['template_fullpath'], os.path.abspath(playbook_dir))
             temp_vars['template_run_date'] = datetime.datetime.now()
 
             managed_default = C.DEFAULT_MANAGED_STR
