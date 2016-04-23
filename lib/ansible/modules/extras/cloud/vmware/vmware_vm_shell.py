@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Ritesh Khadgaray <khadgaray () gmail.com>
+# (c) 2015, 2016 Ritesh Khadgaray <khadgaray () gmail.com>
 #
 # This file is part of Ansible
 #
@@ -36,6 +36,12 @@ options:
     datacenter:
         description:
             - The datacenter hosting the VM
+            - Will help speed up search
+        required: False
+    cluster:
+        description:
+            - The cluster hosting the VM
+            - Will help speed up search
         required: False
     vm_id:
         description:
@@ -89,14 +95,14 @@ EXAMPLES = '''
         username: myUsername
         password: mySecret
         datacenter: myDatacenter
-        vm_id: DNSnameOfVM
+        vm_id: NameOfVM
         vm_username: root
         vm_password: superSecret
         vm_shell: /bin/echo
         vm_shell_args: " $var >> myFile "
         vm_shell_env:
           - "PATH=/bin"
-          - "var=test"
+          - "VAR=test"
         vm_shell_cwd: "/tmp"
 
 '''
@@ -106,28 +112,6 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
-
-def find_vm(content, vm_id, vm_id_type="dns_name", datacenter=None):
-    si = content.searchIndex
-    vm = None
-
-    if datacenter:
-        datacenter = find_datacenter_by_name(content, datacenter)
-    
-    if vm_id_type == 'dns_name':
-        vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
-    elif vm_id_type == 'inventory_path':
-        vm = si.FindByInventoryPath(inventoryPath=vm_id)
-        if type(vm) != type(vim.VirtualMachine):
-            vm = None
-    elif vm_id_type == 'uuid':
-        vm = si.FindByUuid(datacenter=datacenter, uuid=vm_id, vmSearch=True)
-    elif vm_id_type == 'vm_name':
-        for machine in get_all_objs(content, [vim.VirtualMachine]):
-            if machine.name == vm_id:
-                vm = machine
-
-    return vm
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py
 def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None):
@@ -142,6 +126,7 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(datacenter=dict(default=None, type='str'),
+                              cluster=dict(default=None, type='str'),
                               vm_id=dict(required=True, type='str'),
                               vm_id_type=dict(default='vm_name', type='str', choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
                               vm_username=dict(required=False, type='str'),
@@ -154,26 +139,41 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+        module.fail_json(changed=False, msg='pyvmomi is required for this module')
+
+    datacenter_name = p['datacenter']
+    cluster_name = p['cluster']
 
     try:
         p = module.params
         content = connect_to_api(module)
 
-        vm = find_vm(content, p['vm_id'], p['vm_id_type'], p['datacenter'])
+        datacenter = None
+        if datacenter_name:
+            datacenter = find_datacenter_by_name(content, datacenter_name)
+            if not datacenter:
+                module.fail_json(changed=False, msg="datacenter not found")
+
+        cluster = None
+        if cluster_name:
+            cluster = find_cluster_by_name(content, cluster_name, datacenter)
+            if not cluster:
+                module.fail_json(changed=False, msg="cluster not found")
+
+        vm = find_vm_by_id(content, p['vm_id'], p['vm_id_type'], datacenter, cluster)
         if not vm:
-            module.fail_json(msg='failed to find VM')
+            module.fail_json(msg='VM not found')
 
         msg = execute_command(content, vm, p['vm_username'], p['vm_password'], 
                               p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
 
-        module.exit_json(changed=False, virtual_machines=vm.name, msg=msg)
+        module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
     except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
+        module.fail_json(changed=False, msg=runtime_fault.msg)
     except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
+        module.fail_json(changed=False, msg=method_fault.msg)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(changed=False, msg=str(e))
 
 from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
