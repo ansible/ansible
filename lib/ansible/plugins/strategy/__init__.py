@@ -331,9 +331,12 @@ class StrategyBase:
                     # be a host that is not really in inventory at all
                     if task.delegate_to is not None and task.delegate_facts:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
+                        task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
+                        loop_var = 'item'
+                        if task.loop_control:
+                            loop_var = task.loop_control.loop_var or 'item'
                         if item is not None:
-                            task_vars['item'] = item
+                            task_vars[loop_var] = item
                         templar = Templar(loader=self._loader, variables=task_vars)
                         host_name = templar.template(task.delegate_to)
                         actual_host = self._inventory.get_host(host_name)
@@ -399,10 +402,9 @@ class StrategyBase:
 
         host_name = host_info.get('host_name')
 
-        # Check if host in cache, add if not
-        if host_name in self._inventory._hosts_cache:
-            new_host = self._inventory._hosts_cache[host_name]
-        else:
+        # Check if host in inventory, add if not
+        new_host = self._inventory.get_host(host_name)
+        if not new_host:
             new_host = Host(name=host_name)
             self._inventory._hosts_cache[host_name] = new_host
 

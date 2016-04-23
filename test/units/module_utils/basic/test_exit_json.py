@@ -23,39 +23,34 @@ __metaclass__ = type
 import copy
 import json
 import sys
-from io import BytesIO, StringIO
 
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
 from ansible.compat.tests import unittest
+from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 
 from ansible.module_utils import basic
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.module_utils.basic import return_values, remove_values
 
+
 empty_invocation = {u'module_args': {}}
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitJson(unittest.TestCase):
-
     def setUp(self):
-        self.old_stdin = sys.stdin
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
+        self.stdin_swap_ctx = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap_ctx.__enter__()
 
-        self.old_stdout = sys.stdout
-        self.fake_stream = BytesIO()
-        sys.stdout = self.fake_stream
+        # since we can't use context managers and "with" without overriding run(), call them directly
+        self.stdout_swap_ctx = swap_stdout()
+        self.fake_stream = self.stdout_swap_ctx.__enter__()
 
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
-        sys.stdout = self.old_stdout
-        sys.stdin = self.old_stdin
+        # since we can't use context managers and "with" without overriding run(), call them directly to clean up
+        self.stdin_swap_ctx.__exit__(None, None, None)
+        self.stdout_swap_ctx.__exit__(None, None, None)
 
     def test_exit_json_no_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -123,42 +118,24 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                 ),
             )
 
-    def setUp(self):
-        self.old_stdin = sys.stdin
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
-        self.old_stdout = sys.stdout
-
-    def tearDown(self):
-        sys.stdin = self.old_stdin
-        sys.stdout = self.old_stdout
-
     def test_exit_json_removes_values(self):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
-            sys.stdout = BytesIO()
             params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
             params = json.dumps(params)
-            if PY3:
-                sys.stdin = StringIO(params)
-                sys.stdin.buffer = BytesIO(to_bytes(params))
-            else:
-                sys.stdin = BytesIO(to_bytes(params))
-            module = basic.AnsibleModule(
-                argument_spec = dict(
-                    username=dict(),
-                    password=dict(no_log=True),
-                    token=dict(no_log=True),
-                    ),
-                )
-            with self.assertRaises(SystemExit) as ctx:
-                self.assertEquals(module.exit_json(**return_val), expected)
-            self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
+
+            with swap_stdin_and_argv(stdin_data=params):
+                with swap_stdout():
+                    module = basic.AnsibleModule(
+                        argument_spec = dict(
+                            username=dict(),
+                            password=dict(no_log=True),
+                            token=dict(no_log=True),
+                            ),
+                        )
+                    with self.assertRaises(SystemExit) as ctx:
+                        self.assertEquals(module.exit_json(**return_val), expected)
+                    self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
 
     def test_fail_json_removes_values(self):
         self.maxDiff = None
@@ -166,21 +143,17 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             expected = copy.deepcopy(expected)
             del expected['changed']
             expected['failed'] = True
-            sys.stdout = BytesIO()
             params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
             params = json.dumps(params)
-            if PY3:
-                sys.stdin = StringIO(params)
-                sys.stdin.buffer = BytesIO(to_bytes(params))
-            else:
-                sys.stdin = BytesIO(to_bytes(params))
-            module = basic.AnsibleModule(
-                argument_spec = dict(
-                    username=dict(),
-                    password=dict(no_log=True),
-                    token=dict(no_log=True),
-                    ),
-                )
-            with self.assertRaises(SystemExit) as ctx:
-                self.assertEquals(module.fail_json(**return_val), expected)
-            self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
+            with swap_stdin_and_argv(stdin_data=params):
+                with swap_stdout():
+                    module = basic.AnsibleModule(
+                        argument_spec = dict(
+                            username=dict(),
+                            password=dict(no_log=True),
+                            token=dict(no_log=True),
+                            ),
+                        )
+                    with self.assertRaises(SystemExit) as ctx:
+                        self.assertEquals(module.fail_json(**return_val), expected)
+                    self.assertEquals(json.loads(sys.stdout.getvalue()), expected)

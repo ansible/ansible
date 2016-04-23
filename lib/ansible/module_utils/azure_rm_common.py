@@ -34,6 +34,9 @@ AZURE_COMMON_ARGS = dict(
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
+    ad_user=dict(type='str', no_log=True),
+    password=dict(type='str', no_log=True),
+    # debug=dict(type='bool', default=False),
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
@@ -54,6 +57,8 @@ AZURE_TAG_ARGS = dict(
 AZURE_COMMON_REQUIRED_IF = [
     ('log_mode', 'file', ['log_path'])
 ]
+
+ANSIBLE_USER_AGENT = 'Ansible-Deploy'
 
 CIDR_PATTERN = re.compile("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1"
                           "[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))")
@@ -141,6 +146,7 @@ class AzureRMModuleBase(object):
         self._compute_client = None
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
+        self.debug = self.module.params.get('debug')
 
         # authenticate
         self.credentials = self._get_credentials(self.module.params)
@@ -175,22 +181,25 @@ class AzureRMModuleBase(object):
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
 
-    def fail(self, msg):
+    def fail(self, msg, **kwargs):
         '''
         Shortcut for calling module.fail()
 
-        :param msg: Errot message text.
+        :param msg: Error message text.
+        :param kwargs: Any key=value pairs
         :return: None
         '''
-        self.module.fail_json(msg=msg)
+        self.module.fail_json(msg=msg, **kwargs)
 
     def log(self, msg, pretty_print=False):
         pass
-        # log_file = open('azure_rm.log', 'a')
-        # if pretty_print:
-        #     log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        # else:
-        #     log_file.write(msg + u'\n')
+        # Use only during module development
+        # if self.debug:
+        #     log_file = open('azure_rm.log', 'a')
+        #     if pretty_print:
+        #          log_file.write(json.dumps(msg, indent=4, sort_keys=True))
+        #     else:
+        #          log_file.write(msg + u'\n')
 
     def validate_tags(self, tags):
         '''
@@ -396,7 +405,7 @@ class AzureRMModuleBase(object):
         serializer = Serializer()
         return serializer.body(obj, class_name)
 
-    def get_poller_result(self, poller):
+    def get_poller_result(self, poller, wait=20):
         '''
         Consistent method of waiting on and retrieving results from Azure's long poller
 
@@ -404,7 +413,7 @@ class AzureRMModuleBase(object):
         :return object resulting from the original request
         '''
         try:
-            delay = 20
+            delay = wait
             while not poller.done():
                 self.log("Waiting for {0} sec".format(delay))
                 poller.wait(timeout=delay)
@@ -587,8 +596,9 @@ class AzureRMModuleBase(object):
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
-            self._storage_client = StorageManagementClient(
-                StorageManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            config = StorageManagementClientConfiguration(self.azure_credentials, self.subscription_id)
+            config.add_user_agent(ANSIBLE_USER_AGENT)
+            self._storage_client = StorageManagementClient(config)
             self._register('Microsoft.Storage')
         return self._storage_client
 
@@ -596,8 +606,9 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(
-                NetworkManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            config = NetworkManagementClientConfiguration(self.azure_credentials, self.subscription_id)
+            config.add_user_agent(ANSIBLE_USER_AGENT)
+            self._network_client = NetworkManagementClient(config)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -605,15 +616,17 @@ class AzureRMModuleBase(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(
-                ResourceManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            config = ResourceManagementClientConfiguration(self.azure_credentials, self.subscription_id)
+            config.add_user_agent(ANSIBLE_USER_AGENT)
+            self._resource_client = ResourceManagementClient(config)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(
-                ComputeManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            config = ComputeManagementClientConfiguration(self.azure_credentials, self.subscription_id)
+            config.add_user_agent(ANSIBLE_USER_AGENT)
+            self._compute_client = ComputeManagementClient(config)
             self._register('Microsoft.Compute')
         return self._compute_client

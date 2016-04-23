@@ -27,6 +27,9 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
+        if self._task.environment:
+            self._display.warning('raw module does not support the environment keyword')
+
         result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:

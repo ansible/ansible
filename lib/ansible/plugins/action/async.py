@@ -41,6 +41,7 @@ class ActionModule(ActionBase):
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp=True
 
         module_name = self._task.action
         async_module_path  = self._connection._shell.join_path(tmp, 'async_wrapper')
@@ -91,8 +92,7 @@ class ActionModule(ActionBase):
         result.update(self._low_level_execute_command(cmd=async_cmd))
 
         # clean up after
-        if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
-            self._remove_tmp_path(tmp)
+        self._remove_tmp_path(tmp)
 
         result['changed'] = True
 

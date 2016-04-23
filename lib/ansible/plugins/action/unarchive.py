@@ -48,6 +48,7 @@ class ActionModule(ActionBase):
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -58,6 +59,7 @@ class ActionModule(ActionBase):
             if stat and stat.get('exists', False):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
+                self._remove_tmp_path(tmp)
                 return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
@@ -73,10 +75,12 @@ class ActionModule(ActionBase):
         if remote_checksum == '4':
             result['failed'] = True
             result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            self._remove_tmp_path(tmp)
             return result
         elif remote_checksum != '3':
             result['failed'] = True
             result['msg'] = "dest '%s' must be an existing dir" % dest
+            self._remove_tmp_path(tmp)
             return result
 
         if copy:
@@ -109,4 +113,5 @@ class ActionModule(ActionBase):
 
         # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
         return result

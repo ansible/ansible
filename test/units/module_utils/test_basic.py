@@ -31,8 +31,7 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
+from units.mock.procenv import swap_stdin_and_argv
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
@@ -40,12 +39,16 @@ from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 realimport = builtins.__import__
 
 class TestModuleUtilsBasic(unittest.TestCase):
- 
+
     def setUp(self):
-        self.real_stdin = sys.stdin
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
 
     def tearDown(self):
-        sys.stdin = self.real_stdin
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
 
     def clear_modules(self, mods):
         for mod in mods:
@@ -271,13 +274,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
@@ -293,93 +289,70 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # should test ok
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello"}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        am = basic.AnsibleModule(
-            argument_spec = arg_spec,
-            mutually_exclusive = mut_ex,
-            required_together = req_to,
-            no_log=True, 
-            check_invalid_arguments=False, 
-            add_file_common_args=True, 
-            supports_check_mode=True,
-        )
+        with swap_stdin_and_argv(stdin_data=args):
+            am = basic.AnsibleModule(
+                argument_spec = arg_spec,
+                mutually_exclusive = mut_ex,
+                required_together = req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
 
         # FIXME: add asserts here to verify the basic config
 
         # fail, because a required param was not specified
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        self.assertRaises(
-            SystemExit,
-            basic.AnsibleModule,
-            argument_spec = arg_spec,
-            mutually_exclusive = mut_ex,
-            required_together = req_to,
-            no_log=True,
-            check_invalid_arguments=False,
-            add_file_common_args=True,
-            supports_check_mode=True,
-        )
+        with swap_stdin_and_argv(stdin_data=args):
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec = arg_spec,
+                mutually_exclusive = mut_ex,
+                required_together = req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
 
         # fail because of mutually exclusive parameters
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo":"hello", "bar": "bad", "bam": "bad"}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        self.assertRaises(
-            SystemExit, 
-            basic.AnsibleModule,
-            argument_spec = arg_spec,
-            mutually_exclusive = mut_ex,
-            required_together = req_to,
-            no_log=True, 
-            check_invalid_arguments=False, 
-            add_file_common_args=True, 
-            supports_check_mode=True,
-        )
+        with swap_stdin_and_argv(stdin_data=args):
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec = arg_spec,
+                mutually_exclusive = mut_ex,
+                required_together = req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
 
         # fail because a param required due to another param was not specified
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bam": "bad"}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        self.assertRaises(
-            SystemExit,
-            basic.AnsibleModule,
-            argument_spec = arg_spec,
-            mutually_exclusive = mut_ex,
-            required_together = req_to,
-            no_log=True,
-            check_invalid_arguments=False,
-            add_file_common_args=True,
-            supports_check_mode=True,
-        )
+        with swap_stdin_and_argv(stdin_data=args):
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec = arg_spec,
+                mutually_exclusive = mut_ex,
+                required_together = req_to,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
 
     def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -429,13 +402,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -455,13 +421,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module_selinux_initial_context(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -474,13 +433,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_enabled(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -512,13 +464,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_default_context(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -554,13 +499,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_context(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -604,58 +542,48 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils import basic
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={"SELINUX_SPECIAL_FS": "nfs,nfsd,foos"}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-        print(am.constants)
+        with swap_stdin_and_argv(stdin_data=args):
 
-        def _mock_find_mount_point(path):
-            if path.startswith('/some/path'):
-                return '/some/path'
-            elif path.startswith('/weird/random/fstype'):
-                return '/weird/random/fstype'
-            return '/'
+            am = basic.AnsibleModule(
+                argument_spec = dict(),
+            )
+            print(am.constants)
 
-        am.find_mount_point = MagicMock(side_effect=_mock_find_mount_point)
-        am.selinux_context = MagicMock(return_value=['foo_u', 'foo_r', 'foo_t', 's0'])
+            def _mock_find_mount_point(path):
+                if path.startswith('/some/path'):
+                    return '/some/path'
+                elif path.startswith('/weird/random/fstype'):
+                    return '/weird/random/fstype'
+                return '/'
 
-        m = mock_open()
-        m.side_effect = OSError
+            am.find_mount_point = MagicMock(side_effect=_mock_find_mount_point)
+            am.selinux_context = MagicMock(return_value=['foo_u', 'foo_r', 'foo_t', 's0'])
 
-        with patch.object(builtins, 'open', m, create=True):
-            self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (False, None))
+            m = mock_open()
+            m.side_effect = OSError
 
-        mount_data = [
-            '/dev/disk1 / ext4 rw,seclabel,relatime,data=ordered 0 0\n',
-            '1.1.1.1:/path/to/nfs /some/path nfs ro 0 0\n',
-            'whatever /weird/random/fstype foos rw 0 0\n',
-        ]
+            with patch.object(builtins, 'open', m, create=True):
+                self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (False, None))
 
-        # mock_open has a broken readlines() implementation apparently...
-        # this should work by default but doesn't, so we fix it
-        m = mock_open(read_data=''.join(mount_data))
-        m.return_value.readlines.return_value = mount_data
+            mount_data = [
+                '/dev/disk1 / ext4 rw,seclabel,relatime,data=ordered 0 0\n',
+                '1.1.1.1:/path/to/nfs /some/path nfs ro 0 0\n',
+                'whatever /weird/random/fstype foos rw 0 0\n',
+            ]
 
-        with patch.object(builtins, 'open', m, create=True):
-            self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
-            self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
-            self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
+            # mock_open has a broken readlines() implementation apparently...
+            # this should work by default but doesn't, so we fix it
+            m = mock_open(read_data=''.join(mount_data))
+            m.return_value.readlines.return_value = mount_data
+
+            with patch.object(builtins, 'open', m, create=True):
+                self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
+                self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
+                self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
 
     def test_module_utils_basic_ansible_module_to_filesystem_str(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -666,13 +594,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -687,13 +608,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_find_mount_point(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -717,13 +631,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_context_if_different(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -769,13 +676,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -814,13 +714,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
-
         am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -858,13 +751,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_mode_if_different(self):
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -952,13 +838,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
         ):
 
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -1136,13 +1015,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
 
         from ansible.module_utils import basic
-
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
-        if PY3:
-            sys.stdin = StringIO(args)
-            sys.stdin.buffer = BytesIO(to_bytes(args))
-        else:
-            sys.stdin = BytesIO(to_bytes(args))
 
         am = basic.AnsibleModule(
             argument_spec = dict(),

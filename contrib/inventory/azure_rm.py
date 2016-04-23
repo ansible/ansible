@@ -115,7 +115,7 @@ When run in --list mode, instances are grouped by the following categories:
  - tag key
  - tag key_value
 
-Control groups using azure_rm_inventory.ini or set environment variables:
+Control groups using azure_rm.ini or set environment variables:
 
 AZURE_GROUP_BY_RESOURCE_GROUP=yes
 AZURE_GROUP_BY_LOCATION=yes
@@ -137,11 +137,11 @@ AZURE_TAGS=key1:value1,key2:value2
 If you don't need the powerstate, you can improve performance by turning off powerstate fetching:
 AZURE_INCLUDE_POWERSTATE=no
 
-azure_rm_inventory.ini
+azure_rm.ini
 ----------------------
 As mentioned above you can control execution using environment variables or an .ini file. A sample
-azure_rm_inventory.ini is included. The name of the .ini file is the basename of the inventory script (in this case
-'azure_rm_inventory') with a .ini extension. This provides you with the flexibility of copying and customizing this
+azure_rm.ini is included. The name of the .ini file is the basename of the inventory script (in this case
+'azure_rm') with a .ini extension. This provides you with the flexibility of copying and customizing this
 script and having matching .ini files. Go forth and customize your Azure inventory!
 
 Powerstate:
@@ -310,7 +310,7 @@ class AzureRM(object):
             credentials = self._get_profile(env_credentials['profile'])
             return credentials
 
-        if env_credentials['client_id'] is not None:
+        if env_credentials['client_id'] is not None or env_credentials['ad_user'] is not None:
             return env_credentials
 
         return None

@@ -215,6 +215,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
             finally:
                 if self._tqm:
                     self._tqm.cleanup()
+                if self.loader:
+                    self.loader.cleanup_all_tmp_files()
 
             if result is None:
                 display.error("No hosts found")

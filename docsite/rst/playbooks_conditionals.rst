@@ -95,12 +95,31 @@ If a required variable has not been set, you can skip or fail using Jinja2's
 This is especially useful in combination with the conditional import of vars
 files (see below).
 
-Note that when combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+.. _loops_and_conditionals:
+
+Loops and Conditionals
+``````````````````````
+Combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
           with_items: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
+
+If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
+
+        - command: echo {{ item }}
+          with_items: "{{ mylist|default([]) }}"
+          when: item > 5
+
+
+If using `with_dict` which does not take a list::
+
+        - command: echo {{ item.key }}
+          with_dict: "{{ mydict|default({}) }}"
+          when: item.value > 5
+
+.. _loading_in_custom_facts:
 
 Loading in Custom Facts
 ```````````````````````
@@ -114,7 +133,9 @@ there will be accessible to future tasks::
           action: site_facts
         - command: /usr/bin/thingy
           when: my_custom_fact_just_retrieved_from_the_remote_system == '1234'
-                   
+
+.. _when_roles_and_includes:
+
 Applying 'when' to roles and includes
 `````````````````````````````````````
 
@@ -134,6 +155,8 @@ Or with a role::
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
+
+.. _conditional_imports:
 
 Conditional Imports
 ```````````````````
@@ -247,6 +270,22 @@ fields::
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
             with_items: home_dirs.stdout_lines
             # same as with_items: home_dirs.stdout.split()
+
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
+You may check the registered variable's string contents for emptiness::
+
+    - name: check registered variable for emptiness
+      hosts: all
+
+      tasks:
+
+          - name: list contents of directory
+            command: ls mydir
+            register: contents
+
+          - name: check contents for emptiness
+            debug: msg="Directory is empty"
+            when: contents.stdout == ""
 
 
 .. seealso::

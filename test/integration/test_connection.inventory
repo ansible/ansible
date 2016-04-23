@@ -48,6 +48,13 @@ paramiko_ssh-no-pipelining ansible_ssh_pipelining=false
 ansible_host=localhost
 ansible_connection=paramiko_ssh
 
+[lxd]
+lxd-pipelining    ansible_ssh_pipelining=true
+lxd-no-pipelining ansible_ssh_pipelining=false
+[lxd:vars]
+ansible_host=centos-7-amd64
+ansible_connection=lxd
+
 [test_default:children]
 local
 chroot
