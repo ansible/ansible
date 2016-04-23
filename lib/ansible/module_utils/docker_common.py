@@ -17,21 +17,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import logging
 import re
 import json
 import sys
 import copy
 
-from requests.exceptions import SSLError
 from urlparse import urlparse
-from logging import Handler, NOTSET
 from ansible.module_utils.basic import *
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = None
 
 try:
+    from requests.exceptions import SSLError
     from docker import Client
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
@@ -60,8 +58,6 @@ DOCKER_COMMON_ARGS = dict(
     tls_verify=dict(type='bool'),
     debug=dict(type='bool', default=False),
     filter_logger=dict(type='bool', default=False),
-    log_path=dict(type='str', default='docker.log'),
-    log_mode=dict(type='str', choices=['stderr', 'file', 'syslog'], default='syslog'),
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = [
@@ -107,79 +103,25 @@ def human_to_bytes(number):
     raise ValueError("Failed to convert %s. The suffix must be one of %s" % (number, ','.join(BYTE_SUFFIXES)))
 
 
-def log_msg(data, pretty_print=False):
-    '''
-    Sanitize data to be logged, and if requested, attempt to pretty print JSON.
-
-    :param data: string to dumped to the log
-    :param pretty_print: bool
-    :return: None
-    '''
-    out = None
-    if data:
-        if isinstance(data, dict):
-            sanitized = copy.deepcopy(data)
-            sanitize_dict(sanitized)
-        elif isinstance(data, list):
-            sanitized = copy.deepcopy(data)
-            sanitize_list(sanitized)
-        else:
-            sanitized = heuristic_log_sanitize(data)
-        out = sanitized
-        if pretty_print:
-            # Attempt formatting JSON. The sanitizing may have broken things.
-            try:
-                out = json.dumps(sanitized, sort_keys=True, indent=4, separators=(',', ': '))
-            except:
-                out = sanitized
-    return out
-
-
-def sanitize_dict(data):
-    for key, value in data.items():
-        if isinstance(value, basestring):
-            data[key] = heuristic_log_sanitize(value)
-        if isinstance(value, dict):
-            sanitize_dict(value)
-        if isinstance(value, list):
-            sanitize_list(value)
-
-
-def sanitize_list(data):
-    for item in data:
-        if isinstance(item, basestring):
-            item = heuristic_log_sanitize(item)
-        if isinstance(item, list):
-            sanitize_list(item)
-        if isinstance(item, dict):
-            sanitize_dict(item)
-
 class DockerBaseClass(object):
 
     def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.debug = False
 
     def log(self, msg, pretty_print=False):
-        self.logger.debug(log_msg(msg, pretty_print=pretty_print))
-
-
-class DockerSysLogHandler(Handler):
-
-    def __init__(self, level=NOTSET, module=None):
-        self.module = module
-        super(DockerSysLogHandler, self).__init__(level)
-
-    def emit(self, record):
-        log_entry = self.format_record
-        self.module.debug(log_entry)
+        pass
+        # if self.debug:
+        #     log_file = open('docker.log', 'a')
+        #     if pretty_print:
+        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
+        #     else:
+        #         log_file.write(msg + u'\n')
 
 
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
                  required_together=None, required_if=None):
-
-        self.logger = logging.getLogger(self.__class__.__name__)
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -211,23 +153,7 @@ class AnsibleDockerClient(Client):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
-        debug = self.module.params.get('debug')
-        log_mode = self.module.params.get('log_mode')
-        filter_logger = self.module.params.get('filter_logger')
-        if debug and log_mode == 'syslog':
-            handler = DockerSysLogHandler(level=logging.DEBUG, module=self.module)
-            self.logger.addHandler(handler)
-            logging.basicConfig(level=logging.DEBUG)
-        elif debug and log_mode == 'file':
-            log_path = self.module.params.get('log_path')
-            logging.basicConfig(level=logging.DEBUG, filename=log_path)
-        elif debug and log_mode == 'stderr':
-            logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
-
-        if filter_logger:
-            for h in logging.root.handlers:
-                h.addFilter(logging.Filter(name=self.logger.name))
-
+        self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode   
         self._connect_params = self._get_connect_params()
 
@@ -239,8 +165,15 @@ class AnsibleDockerClient(Client):
             self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
-        self.logger.debug(log_msg(msg, pretty_print=pretty_print))
-    
+        pass
+
+        # if self.debug:
+        #     log_file = open('docker.log', 'a')
+        #     if pretty_print:
+        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
+        #     else:
+        #         log_file.write(msg + u'\n')
+
     def fail(self, msg):
         self.module.fail_json(msg=msg)
 
