@@ -18,7 +18,7 @@
 
 DOCUMENTATION = '''
 ---
-module: nxos_get_facts
+module: nxos_facts
 version_added: "2.1"
 short_description: Gets facts about NX-OS switches
 description:
@@ -29,7 +29,7 @@ author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
 
 EXAMPLES = '''
 # retrieve facts
-- nxos_get_facts: host={{ inventory_hostname }}
+- nxos_facts: host={{ inventory_hostname }}
 '''
 
 RETURN = '''
