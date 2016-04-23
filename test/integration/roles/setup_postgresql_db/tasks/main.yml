@@ -52,15 +52,15 @@
     loop_var: postgresql_package_item
   when: ansible_pkg_mgr  ==  'apt'
 
-- name: Initialize postgres (systemd)
+- name: Initialize postgres (RedHat systemd)
   command: postgresql-setup initdb
   when: ansible_distribution == "Fedora" or (ansible_os_family  == "RedHat" and ansible_distribution_major_version|int >= 7)
 
-- name: Initialize postgres (sysv)
+- name: Initialize postgres (RedHat sysv)
   command: /sbin/service postgresql initdb
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 6
 
-- name: Iniitalize postgres (upstart)
+- name: Iniitalize postgres (Debian)
   command: /usr/bin/pg_createcluster {{ pg_ver }} main
   # Sometimes package install creates the db cluster, sometimes this step is needed
   ignore_errors: True

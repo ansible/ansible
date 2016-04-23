@@ -21,7 +21,7 @@
   register: apt_result
 
 - name: check hello with dpkg
-  shell: dpkg --get-selections | fgrep hello
+  shell: dpkg-query -l hello
   failed_when: False
   register: dpkg_result
 
@@ -47,7 +47,7 @@
   register: apt_result
 
 - name: check hello with dpkg
-  shell: dpkg --get-selections | fgrep hello
+  shell: dpkg-query -l hello
   failed_when: False
   register: dpkg_result
 
@@ -89,7 +89,7 @@
   register: apt_result
 
 - name: check hello with wildcard with  dpkg
-  shell: dpkg --get-selections | fgrep hello
+  shell: dpkg-query -l hello
   failed_when: False
   register: dpkg_result
 
@@ -103,10 +103,10 @@
         - "dpkg_result.rc == 0"
 
 - name: check hello version
-  shell: dpkg -s hello | grep Version | sed -r 's/Version:\s+([a-zA-Z0-9.-]+)\s*$/\1/'
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
   register: hello_version
 - name: check hello architecture
-  shell: dpkg -s hello | grep Architecture | sed -r 's/Architecture:\s+([a-zA-Z0-9.-]+)\s*$/\1/'
+  shell: dpkg -s hello | grep Architecture | awk '{print $2}'
   register: hello_architecture
 
 - name: uninstall hello with apt
