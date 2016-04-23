@@ -38,11 +38,13 @@ options:
             - The datacenter hosting the VM
             - Will help speed up search
         required: False
+        default: None
     cluster:
         description:
             - The cluster hosting the VM
             - Will help speed up search
         required: False
+        default: None
     vm_id:
         description:
             - The identification for the VM
@@ -57,21 +59,24 @@ options:
             - 'inventory_path'
             - 'vm_name'
         required: False
+        default: None
     vm_username:
         description:
             - The user to connect to the VM.
         required: False
+        default: None
     vm_password:
         description:
             - The password used to login to the VM.
         required: False
+        default: None
     vm_shell:
         description:
             - The absolute path to the program to start. On Linux this is executed via bash.
         required: True
     vm_shell_args:
         description:
-            - The argument to the program. 
+            - The argument to the program.
         required: False
         default: None
     vm_shell_env:
@@ -164,7 +169,7 @@ def main():
         if not vm:
             module.fail_json(msg='VM not found')
 
-        msg = execute_command(content, vm, p['vm_username'], p['vm_password'], 
+        msg = execute_command(content, vm, p['vm_username'], p['vm_password'],
                               p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
 
         module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
