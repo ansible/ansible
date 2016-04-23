@@ -457,6 +457,8 @@ which will produce this output::
     # host: myhost
     #
 
+``{relpath}`` can be used instead of ``{file}`` to not express the absolute path of the template.
+
 .. _other_useful_filters:
 
 Other Useful Filters

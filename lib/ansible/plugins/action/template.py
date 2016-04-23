@@ -111,9 +111,10 @@ class ActionModule(ActionBase):
 
             managed_default = C.DEFAULT_MANAGED_STR
             managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
+                host    = temp_vars['template_host'],
+                uid     = temp_vars['template_uid'],
+                file    = to_bytes(temp_vars['template_path']),
+                relfile = temp_vars['template_relpath']
             )
             temp_vars['ansible_managed'] = time.strftime(
                 managed_str,
