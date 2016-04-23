@@ -23,7 +23,7 @@ module: docker_image
 
 short_description: Manage docker images.
 
-version_added: "2.1.0"
+version_added: "1.5"
 
 description:
      - Build, load or pull an image, making the image available for creating containers. Also supports tagging an
@@ -35,10 +35,6 @@ options:
       - Use with state 'present' to archive an image to a .tar file.
     required: false
     default: null
-  config_path:
-    description:
-      - Path to the Docker CLI config file.
-    default: '~/.docker/config.json'
   dockerfile:
     description:
       - Use with state 'present' to provide an alternate name for the Dockerfile to use when building an image.
@@ -68,14 +64,9 @@ options:
       - build_path
     default: null
     required: false
-  push:
-    description:
-      - "Use with state present to always push an image to the registry. The image name must contain a repository
-        path and optionally a registry. For example: registry.ansible.com/user_a/repository"
-    default: false
   pull:
     description:
-      - When building an image downloads any updates to the FROM image in Dockerfiles.
+      - When building an image downloads any updates to the FROM image in Dockerfile.
     default: true
   rm:
     description:
@@ -99,7 +90,7 @@ options:
         force option is used, the image will either be pulled, built or loaded. By default the image will be pulled
         from Docker Hub. To build the image, provide a path value set to a directory containing a context and
         Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
-        repository, provide a repository path.
+        repository, provide a repository path. If the name contains a repository path, it will be pushed.
       - "NOTE: 'build' is DEPRECATED. Specifying 'build' will behave the same as 'present'."
     default: present
     choices:
@@ -144,12 +135,11 @@ EXAMPLES = '''
   docker_image:
     name: pacur/centos-7
 
-- name: Tag to repository in private registry
+- name: Tag to repository to a private registry and push it
   docker_image:
     name: pacur/centos-7
     repository: registry.ansible.com/chouseknecht/centos_images
     tag: 7.0
-    push: yes
 
 - name: Remove image
   docker_image:
@@ -157,7 +147,7 @@ EXAMPLES = '''
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
 
-- name: Build an image
+- name: Build an image ad push it to a private repo
   docker_image:
     path: ./sinatra
     name: registry.ansible.com/chouseknecht/sinatra
@@ -169,7 +159,7 @@ EXAMPLES = '''
     tag: v1
     archive_path: my_sinatra.tar
 
-- name: Load image from archive
+- name: Load image from archive and push it to a private registry
   docker_image:
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
@@ -215,7 +205,6 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.archive_path = parameters.get('archive_path')
-        self.config_path = parameters.get('config_path')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
         self.force = parameters.get('force')
@@ -224,12 +213,12 @@ class ImageManager(DockerBaseClass):
         self.nocache = parameters.get('nocache')
         self.path = parameters.get('path')
         self.pull = parameters.get('pull')
-        self.push = parameters.get('push')
         self.repository = parameters.get('repository')
         self.rm = parameters.get('rm')
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
         self.http_timeout = parameters.get('http_timeout')
+        self.push = False
 
         if self.state in ['present', 'build']:
             self.present()
@@ -251,6 +240,7 @@ class ImageManager(DockerBaseClass):
         if not image or self.force:
             if self.path:
                 # build the image
+                self.push = True
                 params = dict(
                     path=self.path,
                     tag=self.name,
@@ -268,11 +258,11 @@ class ImageManager(DockerBaseClass):
                 if self.container_limits:
                     params['container_limits'] = self.container_limits,
                 self.log("Building image %s" % (params['tag']))
+                self.results['actions'].append("Built image %s from %s" % (params['tag'], self.path))
+                self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['actions'].append("Built image %s from %s" % (params['tag'], self.path))
                     for line in self.client.build(**params):
                         self.log(line, pretty_print=True)
-                self.results['changed'] = True
                 image = self.client.find_image(name=self.name, tag=self.tag)
                 if image:
                     self.results['image'] = image
@@ -282,12 +272,14 @@ class ImageManager(DockerBaseClass):
                 if not os.path.isfile(self.load_path):
                     self.fail("Error loading image %s. Specified path %s does not exist." % (self.name,
                                                                                              self.load_path))
+                self.push = True
                 name = self.name
                 if self.tag:
                     name = "%s:%s" % (self.name, self.tag)
 
+                self.results['actions'].append("Loaded image %s from %s" % (name, self.load_path))
+                self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['actions'].append("Loaded image %s from %s" % (name, self.load_path))
                     try:
                         self.log("Reading image data from %s" % (self.load_path))
                         image_tar = open(self.load_path, 'r')
@@ -298,15 +290,13 @@ class ImageManager(DockerBaseClass):
 
                     try:
                         self.log("Loading image from %s" % (self.load_path))
-                        response = self.client.load_image(image_data)
+                        self.client.load_image(image_data)
                     except Exception, exc:
                         self.fail("Error loading image %s - %s" % (name, str(exc)))
 
-                self.results['changed'] = True
                 image = self.client.find_image(self.name, self.tag)
                 if image:
                     self.results['image'] = image
-
             else:
                 # pull the image
                 if not self.check_mode:
@@ -368,8 +358,9 @@ class ImageManager(DockerBaseClass):
                 except Exception, exc:
                     self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
+                self.results['actions'].append('Archived image %s to %s' % (image_name, self.archive_path))
+                self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['actions'].append('Archived image %s to %s' % (image_name, self.archive_path))
                     try:
                         image_tar = open(self.archive_path, 'w')
                         image_tar.write(image.data)
@@ -377,50 +368,52 @@ class ImageManager(DockerBaseClass):
                     except Exception, exc:
                         self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
-                self.results['changed'] = True
                 image = self.client.find_image(name=name, tag=tag)
                 if image:
                     self.results['image'] = image
 
     def push_image(self, name, tag=None):
         '''
-        Push an image to a repository.
+        If the name of the image contains a repository path, then push the image.
 
-        :param name - name of the image to push. Type: str
-        :param tag - use a specific tag. Type: str
+        :param name Name of the image to push.
+        :param tag Use a specific tag.
         :return: None
         '''
+
         repository = name
         if not tag:
             repository, tag = utils.parse_repository_tag(name)
         registry, repo_name = auth.resolve_repository_name(repository)
 
-        if registry:
-            config = auth.load_config()
-            if not auth.resolve_authconfig(config, registry):
-                self.fail("Error: configuration for %s not found. Try logging into %s first." % registry)
+        if re.search('/', repository):
 
-        try:
-            self.log("pushing image %s" % (repository))
-            status = None
-            if not self.check_mode:
+            if registry:
+                config = auth.load_config()
+                if not auth.resolve_authconfig(config, registry):
+                    self.fail("Error: configuration for %s not found. Try logging into %s first." % registry)
+
+            try:
+                self.log("pushing image %s" % (repository))
+                status = None
                 self.results['actions'].append("Pushed image %s to %s:%s" % (self.name, self.repository, self.tag))
-                for line in self.client.push(repository, tag=tag, stream=True):
-                    response = json.loads(line)
-                    self.log(response, pretty_print=True)
-                    if response.get('errorDetail'):
-                        # there was an error
-                        raise Exception(response['errorDetail']['message'])
-                    status = response.get('status')
-            self.results['changed'] = True
-            image = self.client.find_image(name=repository, tag=tag)
-            if image:
-                self.results['image'] = image
-            self.results['image']['push_status'] = status
-        except Exception, exc:
-            if re.search(r'unauthorized', str(exc)):
-                self.fail("Error pushing image %s: %s. Does the repository exist?" % (repository, str(exc)))
-            self.fail("Error pushing image %s: %s" % (repository, str(exc)))
+                self.results['changed'] = True
+                if not self.check_mode:
+                    for line in self.client.push(repository, tag=tag, stream=True):
+                        response = json.loads(line)
+                        self.log(response, pretty_print=True)
+                        if response.get('errorDetail'):
+                            # there was an error
+                            raise Exception(response['errorDetail']['message'])
+                        status = response.get('status')
+                image = self.client.find_image(name=repository, tag=tag)
+                if image:
+                    self.results['image'] = image
+                self.results['image']['push_status'] = status
+            except Exception, exc:
+                if re.search(r'unauthorized', str(exc)):
+                    self.fail("Error pushing image %s: %s. Does the repository exist?" % (repository, str(exc)))
+                self.fail("Error pushing image %s: %s" % (repository, str(exc)))
 
     def tag_image(self, name, tag, repository, force=False, push=False):
         '''
@@ -441,11 +434,14 @@ class ImageManager(DockerBaseClass):
             try:
                 self.log("tagging %s:%s to %s" % (name, tag, repository))
                 self.results['changed'] = True
+                self.results['actions'].append("Tagged image %s:%s to %s" % (name, tag, repository))
                 if not self.check_mode:
-                    self.results['actions'].append("Tagged image %s:%s to %s" % (name, tag, repository))
                     # Finding the image does not always work, especially running a localhost registry. In those
                     # cases, if we don't set force=True, it errors.
-                    tag_status = self.client.tag(name, repository, tag=tag, force=True)
+                    image_name = name
+                    if tag and not re.search(tag, name):
+                        image_name = "%s:%s" % (name, tag)
+                    tag_status = self.client.tag(image_name, repository, tag=tag, force=True)
                     if not tag_status:
                         raise Exception("Tag operation failed.")
                 image = self.client.find_image(name=repository, tag=tag)
@@ -454,15 +450,12 @@ class ImageManager(DockerBaseClass):
             except Exception, exc:
                 self.fail("Error: failed to tag image %s - %s" % (name, str(exc)))
 
-            if push:
-                self.log("push %s with tag %s" % (repository, tag))
-                self.push_image(repository, tag)
+            self.push_image(repository, tag)
 
 
 def main():
     argument_spec = dict(
         archive_path=dict(type='str'),
-        config_path=dict(type='str'),
         container_limits=dict(type='dict'),
         dockerfile=dict(type='str'),
         force=dict(type='bool', default=False),
@@ -472,7 +465,6 @@ def main():
         nocache=dict(type='str', default=False),
         path=dict(type='str', aliases=['build_path']),
         pull=dict(type='bool', default=True),
-        push=dict(type='bool', default=False),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
