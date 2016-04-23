@@ -285,13 +285,13 @@ class ImageManager(DockerBaseClass):
                         image_tar = open(self.load_path, 'r')
                         image_data = image_tar.read()
                         image_tar.close()
-                    except Exception, exc:
+                    except Exception as exc:
                         self.fail("Error reading image data %s - %s" % (self.load_path, str(exc)))
 
                     try:
                         self.log("Loading image from %s" % (self.load_path))
                         self.client.load_image(image_data)
-                    except Exception, exc:
+                    except Exception as exc:
                         self.fail("Error loading image %s - %s" % (name, str(exc)))
 
                 image = self.client.find_image(self.name, self.tag)
@@ -330,7 +330,7 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 try:
                     self.client.remove_image(name, force=self.force)
-                except Exception, exc:
+                except Exception as exc:
                     self.fail("Error removing image %s - %s" % (name, str(exc)))
 
             self.results['changed'] = True
@@ -355,7 +355,7 @@ class ImageManager(DockerBaseClass):
                 try:
                     self.log("Getting archive of image %s" % (image_name))
                     image = self.client.get_image(image_name)
-                except Exception, exc:
+                except Exception as exc:
                     self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
                 self.results['actions'].append('Archived image %s to %s' % (image_name, self.archive_path))
@@ -365,7 +365,7 @@ class ImageManager(DockerBaseClass):
                         image_tar = open(self.archive_path, 'w')
                         image_tar.write(image.data)
                         image_tar.close()
-                    except Exception, exc:
+                    except Exception as exc:
                         self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
                 image = self.client.find_image(name=name, tag=tag)
@@ -410,8 +410,8 @@ class ImageManager(DockerBaseClass):
                 if image:
                     self.results['image'] = image
                 self.results['image']['push_status'] = status
-            except Exception, exc:
-                if re.search(r'unauthorized', str(exc)):
+            except Exception as exc:
+                if re.search('unauthorized', str(exc)):
                     self.fail("Error pushing image %s: %s. Does the repository exist?" % (repository, str(exc)))
                 self.fail("Error pushing image %s: %s" % (repository, str(exc)))
 
@@ -447,7 +447,7 @@ class ImageManager(DockerBaseClass):
                 image = self.client.find_image(name=repository, tag=tag)
                 if image:
                     self.results['image'] = image
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error: failed to tag image %s - %s" % (name, str(exc)))
 
             self.push_image(repository, tag)
