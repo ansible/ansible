@@ -279,11 +279,8 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
-        self.home    = None
+        self.home    = module.params['home']
         self.expires = None
-
-        if module.params['home'] is not None:
-            self.home = os.path.expanduser(module.params['home'])
 
         if module.params['expires']:
             try:
@@ -2029,7 +2026,7 @@ def main():
             group=dict(default=None, type='str'),
             groups=dict(default=None, type='str'),
             comment=dict(default=None, type='str'),
-            home=dict(default=None, type='str'),
+            home=dict(default=None, type='path'),
             shell=dict(default=None, type='str'),
             password=dict(default=None, type='str', no_log=True),
             login_class=dict(default=None, type='str'),
@@ -2049,7 +2046,7 @@ def main():
             generate_ssh_key=dict(type='bool'),
             ssh_key_bits=dict(default=ssh_defaults['bits'], type='str'),
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
-            ssh_key_file=dict(default=None, type='str'),
+            ssh_key_file=dict(default=None, type='path'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str', no_log=True),
             update_password=dict(default='always',choices=['always','on_create'],type='str'),
