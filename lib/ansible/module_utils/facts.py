@@ -32,6 +32,7 @@ import datetime
 import getpass
 import pwd
 import ConfigParser
+from basic import get_all_subclasses
 
 # py2 vs py3; replace with six via ziploader
 try:
@@ -867,7 +868,7 @@ class Hardware(Facts):
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
-        for sc in Hardware.__subclasses__():
+        for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
@@ -1949,7 +1950,7 @@ class Network(Facts):
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
-        for sc in Network.__subclasses__():
+        for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
@@ -2711,7 +2712,7 @@ class Virtual(Facts):
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
-        for sc in Virtual.__subclasses__():
+        for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
