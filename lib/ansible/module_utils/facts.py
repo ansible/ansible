@@ -32,7 +32,7 @@ import datetime
 import getpass
 import pwd
 import ConfigParser
-from basic import get_all_subclasses
+from ansible.module_utils.basic import get_all_subclasses
 
 # py2 vs py3; replace with six via ziploader
 try:
