@@ -7,7 +7,7 @@ and orchestrate infrastructure on the Microsoft Azure Cloud.
 Requirements
 ------------
 
-Using the Azure modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
+Using the Azure Resource Manager modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
 installed on the host running Ansible. You will need to have >= v2.0.0RC2 installed. The simplest way to install the
 SDK is via pip:
 
@@ -19,7 +19,7 @@ SDK is via pip:
 Authenticating with Azure
 -------------------------
 
-Using the Azure modules requires authenticating with the Azure API. You can choose from two authentication strategies:
+Using the Azure Resource Manager modules requires authenticating with the Azure API. You can choose from two authentication strategies:
 
 * Active Directory Username/Password
 * Service Principal Credentials
@@ -225,14 +225,14 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out `Intro to Dynamic Inventory <http://docs.ansible.com/ansible/intro_dynamic_inventory.html>`_.
 
-The azure inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
 create a $HOME/.azure/credentials file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
 
-    $ ./ansible/contrib/inventory/azure.py --help
+    $ ./ansible/contrib/inventory/azure_rm.py --help
 
 As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command,
 or passed directly to ansible-playbook using the -i option. No matter how it is executed the script produces JSON representing
