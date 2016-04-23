@@ -197,7 +197,7 @@ def debug(command, zipped_mod, json_params):
         f.close()
 
         print('Module expanded into:')
-        print('%%s' %% os.path.join(basedir, 'ansible'))
+        print('%%s' %% basedir)
         exitcode = 0
 
     elif command == 'execute':
