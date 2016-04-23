@@ -303,6 +303,26 @@ def get_distribution_version():
         distribution_version = None
     return distribution_version
 
+def get_all_subclasses(cls):
+    '''
+    used by modules like Hardware or Network fact classes to retrieve all subclasses of a given class.
+    __subclasses__ return only direct sub classes. This one go down into the class tree.
+    '''
+    # Retrieve direct subclasses
+    subclasses = cls.__subclasses__()
+    to_visit = list(subclasses)
+    # Then visit all subclasses
+    while to_visit:
+        for sc in to_visit:
+            # The current class is now visited, so remove it from list
+            to_visit.remove(sc)
+            # Appending all subclasses to visit and keep a reference of available class
+            for ssc in sc.__subclasses__():
+                subclasses.append(ssc)
+                to_visit.append(ssc)
+    return subclasses
+
+
 def load_platform_subclass(cls, *args, **kwargs):
     '''
     used by modules like User to have different implementations based on detected platform.  See User
@@ -315,11 +335,11 @@ def load_platform_subclass(cls, *args, **kwargs):
 
     # get the most specific superclass for this platform
     if distribution is not None:
-        for sc in cls.__subclasses__():
+        for sc in get_all_subclasses(cls):
             if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
                 subclass = sc
     if subclass is None:
-        for sc in cls.__subclasses__():
+        for sc in get_all_subclasses(cls):
             if sc.platform == this_platform and sc.distribution is None:
                 subclass = sc
     if subclass is None:
