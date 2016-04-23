@@ -142,7 +142,9 @@ ufw: rule=reject port=auth log=yes
 # for details. Typical usage is:
 ufw: rule=limit port=ssh proto=tcp
 
-# Allow OpenSSH
+# Allow OpenSSH. (Note that as ufw manages its own state, simply removing
+# a rule=allow task can leave those ports exposed. Either use delete=yes
+# or a separate state=reset task)
 ufw: rule=allow name=OpenSSH
 
 # Delete OpenSSH rule
