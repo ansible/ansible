@@ -249,9 +249,13 @@ class Netconf(object):
             self.device.facts_refresh()
         return self.device.facts
 
-    def get_config(self):
-        ele = self.rpc('get_configuration', format='text')
-        return str(ele.text).strip()
+    def get_config(self, config_format="text"):
+        ele = self.rpc('get_configuration', format=config_format)
+
+        if config_format == "text" or config_format == "set":
+           return str(ele.text).strip()
+        elif config_format == "xml":
+            return ele
 
     def rpc(self, name, format='xml', **kwargs):
         meth = getattr(self.device.rpc, name)
@@ -337,4 +341,3 @@ def get_module(**kwargs):
 
     module.connect()
     return module
-
