@@ -41,7 +41,7 @@ options:
     default: null
   rpcs:
     description:
-      - The O(rpcs) argument accepts a list of RPCs to be executed
+      - The C(rpcs) argument accepts a list of RPCs to be executed
         over a netconf session and the results from the RPC execution
         is return to the playbook via the modules results dictionary.
     required: false
