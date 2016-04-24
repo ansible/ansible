@@ -35,9 +35,10 @@ options:
       - The O(config) argument instructs the fact module to collect
         the device configuration.  The device configuration is
         stored in the I(config) key in the hostvars dictionary.
-    required: true
-    default: false
-    choices: ['true', 'false']
+        if the configuration is returned in xml, it will also be converted
+        to json and save into the I(config_json) key in the hostvars dictionary.
+    required: false
+    choices: ['xml', 'text', 'set']
 requirements:
   - junos-eznc
 notes:
@@ -54,7 +55,15 @@ EXAMPLES = """
 
 - name: collect default set of facts and configuration
   junos_facts:
-    config: yes
+    config: text
+
+- name: collect default set of facts and configuration in set format
+  junos_facts:
+    config: set
+
+- name: collect default set of facts and configuration in XML and JSON format
+  junos_facts:
+    config: xml
 """
 
 RETURN = """
@@ -68,7 +77,7 @@ def main():
     """ Main entry point for AnsibleModule
     """
     spec = dict(
-        config=dict(default=False, type='bool'),
+        config=dict(choices=['xml', 'set', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -86,7 +95,13 @@ def main():
     facts['version_info'] = dict(facts['version_info'])
 
     if module.params['config']:
-        facts['config'] = module.get_config()
+        resp_config = module.get_config( config_format=module.params['config'])
+
+        if module.params['config'] == "text" or module.params['config'] == "set":
+           facts['config'] = resp_config
+        elif module.params['config'] == "xml":
+           facts['config'] = xml_to_string(resp_config)
+           facts['config_json'] = xml_to_json(resp_config)
 
     result['ansible_facts'] = facts
     module.exit_json(**result)
