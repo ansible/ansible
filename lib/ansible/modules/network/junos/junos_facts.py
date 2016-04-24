@@ -32,12 +32,23 @@ extends_documentation_fragment: junos
 options:
   config:
     description:
-      - The O(config) argument instructs the fact module to collect
-        the device configuration.  The device configuration is
-        stored in the I(config) key in the hostvars dictionary.
-        if the configuration is returned in xml, it will also be converted
-        to json and save into the I(config_json) key in the hostvars dictionary.
+      - The C(config) argument instructs the fact module to collect
+        the configuration from the remote device.  The configuration
+        is then included in return facts.  By default, the configuration
+        is returned as text.  The C(config_format) can be used to return
+        different Junos configuration formats.
+    required: true
+    default: false
+  config_format:
+    description:
+      - The C(config_format) argument is used to specify the desired
+        format of the configuration file.  Devices support three
+        configuration file formats.  By default, the configuration
+        from the device is returned as text.  The other options include
+        set and xml.  If the xml option is choosen, the configuration file
+        is returned as both xml and json.
     required: false
+    default: text
     choices: ['xml', 'text', 'set']
 requirements:
   - junos-eznc
@@ -55,15 +66,17 @@ EXAMPLES = """
 
 - name: collect default set of facts and configuration
   junos_facts:
-    config: text
+    config: yes
 
 - name: collect default set of facts and configuration in set format
   junos_facts:
-    config: set
+    config: yes
+    config_format: set
 
 - name: collect default set of facts and configuration in XML and JSON format
   junos_facts:
-    config: xml
+    config: yes
+    config_format: xml
 """
 
 RETURN = """
@@ -77,7 +90,8 @@ def main():
     """ Main entry point for AnsibleModule
     """
     spec = dict(
-        config=dict(choices=['xml', 'set', 'text']),
+        config=dict(required=True, type='bool'),
+        config_format=dict(default='text', choices=['xml', 'set', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -95,11 +109,12 @@ def main():
     facts['version_info'] = dict(facts['version_info'])
 
     if module.params['config']:
-        resp_config = module.get_config( config_format=module.params['config'])
+        config_format = module.params['config_format']
+        resp_config = module.get_config( config_format=config_format)
 
-        if module.params['config'] == "text" or module.params['config'] == "set":
+        if config_format in ['text', 'set']:
            facts['config'] = resp_config
-        elif module.params['config'] == "xml":
+        elif config_format == "xml":
            facts['config'] = xml_to_string(resp_config)
            facts['config_json'] = xml_to_json(resp_config)
 
