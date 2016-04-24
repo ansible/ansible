@@ -1889,7 +1889,7 @@ def main():
             domainname      = dict(default=None),
             env             = dict(type='dict'),
             env_file        = dict(default=None),
-            dns             = dict(),
+            dns             = dict(default=None, type='list'),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
             signal          = dict(default=None),
