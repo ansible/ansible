@@ -125,7 +125,7 @@ requirements:
 authors:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jtanner)
+  - James Tanner (@jctanner)
 
 '''
 
