@@ -340,7 +340,7 @@ Iterating Over The Results of a Program Execution
 .. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
 
 Sometimes you might want to execute a program, and based on the output of that program, loop over the results of that line by line.
-Ansible provides a neat way to do that, though you should remember, this is always executed on the control machine, not the local
+Ansible provides a neat way to do that, though you should remember, this is always executed on the control machine, not the remote
 machine::
 
     - name: Example of looping over a command result
