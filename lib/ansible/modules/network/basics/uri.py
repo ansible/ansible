@@ -325,13 +325,18 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 
     resp, info = fetch_url(module, url, data=body, headers=headers,
                            method=method, timeout=socket_timeout)
-    r['redirected'] = redirected or info['url'] != url
-    r.update(redir_info)
-    r.update(info)
+
     try:
         content = resp.read()
     except AttributeError:
-        content = ''
+        # there was no content, but the error read()
+        # may have been stored in the info as 'body'
+        content = info.pop('body', '')
+
+    r['redirected'] = redirected or info['url'] != url
+    r.update(redir_info)
+    r.update(info)
+
     return r, content, dest
 
 
@@ -440,14 +445,15 @@ def main():
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = unicode(content, content_encoding, errors='replace')
-        if content_type.startswith('application/json') or \
-                content_type.startswith('text/json'):
+        if 'application/json' in content_type or 'text/json' in content_type:
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
             except:
+                module.fail_json(msg="bombed")
                 pass
     else:
+        module.fail_json(msg="boo")
         u_content = unicode(content, content_encoding, errors='replace')
 
     if resp['status'] not in status_code:
