@@ -8,12 +8,12 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ``````
 Ansible allows you 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
-privilege escalation tools, which you probably already use or have configured, like 'sudo', 'su', 'pfexec', 'doas', 'pbrun' and others.
+privilege escalation tools, which you probably already use or have configured, like 'sudo', 'su', 'pfexec', 'doas', 'pbrun', 'dzdo', and others.
 
 
 .. note:: Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
     and execute tasks, create resources with the 2nd user's permissions. As of 1.9 `become` supersedes the old sudo/su, while still being backwards compatible.
-    This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker), `pfexec` and others.
+    This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
 
 .. note:: Setting any var or directive makes no implications on the values of the other related directives, i.e. setting become_user does not set become.
 
@@ -29,7 +29,7 @@ become_user
     set to user with desired privileges, the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'
+    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'
 
 
 Connection variables
@@ -60,7 +60,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
