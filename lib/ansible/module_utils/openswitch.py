@@ -43,8 +43,9 @@ NET_COMMON_ARGS = dict(
     password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     use_ssl=dict(default=True, type='bool'),
+    validate_certs=dict(default=True, type='bool'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
-    provider=dict()
+    provider=dict(type='dict')
 )
 
 def to_list(val):
@@ -100,14 +101,17 @@ class Rest(object):
         host = self.module.params['host']
         port = self.module.params['port']
 
+        self.module.params['url_username'] = self.module.params['username']
+        self.module.params['url_password'] = self.module.params['password']
+
         if self.module.params['use_ssl']:
             proto = 'https'
             if not port:
-                port = 18091
+                port = 443
         else:
             proto = 'http'
             if not port:
-                port = 8091
+                port = 80
 
         self.baseurl = '%s://%s:%s/rest/v1' % (proto, host, port)
 
@@ -156,9 +160,10 @@ class Cli(object):
         key_filename = self.module.params['ssh_keyfile']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+        self.shell.open(host, port=port, username=username, password=password,
+                key_filename=key_filename)
 
-    def send(self, commands, encoding='text'):
+    def send(self, commands):
         return self.shell.send(commands)
 
 class NetworkModule(AnsibleModule):
