@@ -47,28 +47,32 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. If the machine is updated, it will
-              be left in a powered on or running state. Otherwise, the final state of the machine will remain untouched.
-            - State 'started' will also check that the machine exists with the requested configuration, updating it, if
-              needed and leaving the machine in a powered on state.
-            - State 'stopped' will also check that the machine exists with the requested configuration, updating it, if
-              needed and leaving the machine in a powered off state. Pass deallocate to put the machine in a
-              'deallocated' state.
-        default: started
+              of the existing machine does not match, the machine will be updated. Use options start, stop,
+              deallocate and restart to change the machine's power state.
+            - State 'absent' will remove the virtual machine.
+        default: present
         required: false
         choices:
             - absent
             - present
-            - started
-            - stopped
+    start:
+        description:
+            - Use with state 'present' to start the machine.
+        default: true
+        required: false
+    stop:
+        description:
+            - Use with state 'present' to stop the machine.
+        default: false
+        required: false
     deallocate:
         description:
-            - Use with state 'stopped' to put the VM in a deallocated state.
+            - Use with state 'present' to put the VM in a deallocated state.
         default: false
         required: false
     restart:
         description:
-            - Use with state 'present' or 'started' to restart a running VM.
+            - Use with state 'present' to restart a running VM.
         default: false
         required: false
     location:
@@ -279,13 +283,12 @@ EXAMPLES = '''
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    state: stopped
+    stop: yes
 
 - name: Deallocate
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    state: stopped
     deallocate: yes
 
 - name: Power On
@@ -302,11 +305,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 actions:
     description: List of descriptive actions performed by the module.
     returned: always
@@ -315,7 +313,7 @@ actions:
         "Powered on virtual machine testvm10"
     ]
 differences:
-    description: List of differences between the requested configuraiton and actual VM configuration.
+    description: List of differences between the requested configuration and actual VM configuration.
     returned: always
     type: list
     sample: []
@@ -495,7 +493,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
-            state=dict(choices=['present', 'absent', 'started', 'stopped'], default='started', type='str'),
+            state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
             vm_size=dict(type='str', choices=[], default='Standard_D1'),
@@ -520,7 +518,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
             deallocate=dict(type='bool', default=False),
-            restart=dict(type='bool', default=False)
+            restart=dict(type='bool', default=False),
+            start=dict(type='bool', default=True),
+            stop=dict(type='bool', default=False),
         )
 
         for key in VirtualMachineSizeTypes:
@@ -554,6 +554,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.subnet_name = None
         self.deallocate = None
         self.restart = None
+        self.start = None
+        self.stop = None
 
         self.results = dict(
             changed=False,
@@ -585,7 +587,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             # Set default location
             self.location = resource_group.location
 
-        if self.state in ('present', 'started', 'stopped'):
+        if self.state == 'present':
             # Verify parameters and resolve any defaults
 
             if self.vm_size and not self.vm_size_is_valid():
@@ -634,7 +636,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.check_provisioning_state(vm, self.state)
             vm_dict = self.serialize_vm(vm)
 
-            if self.state in ('present', 'started', 'stopped'):
+            if self.state == 'present':
                 differences = []
                 current_nics = []
                 results = vm_dict
@@ -671,21 +673,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                 self.results['differences'] = differences
 
-                if self.state == 'started' and vm_dict['powerstate'] != 'running':
+                if self.start and vm_dict['powerstate'] != 'running':
                     self.log("CHANGED: virtual machine {0} not running and requested state 'running'".format(self.name))
                     changed = True
                     powerstate_change = 'poweron'
-                elif self.state in ('started', 'present') and vm_dict['powerstate'] == 'running' and self.restart:
+                elif self.state == 'present' and vm_dict['powerstate'] == 'running' and self.restart:
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'restarted'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'restarted'
-                elif self.state == 'stopped' and self.deallocate and vm_dict['powerstate'] != 'deallocated':
+                elif self.state == 'present' and self.deallocate and vm_dict['powerstate'] != 'deallocated':
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'deallocated'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'deallocated'
-                elif self.state == 'stopped' and vm_dict['powerstate'] == 'running':
+                elif self.stop and vm_dict['powerstate'] == 'running':
                     self.log("CHANGED: virtual machine {0} running and requested state 'stopped'".format(self.name))
                     changed = True
                     powerstate_change = 'poweroff'
@@ -710,7 +712,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             return self.results
 
         if changed:
-            if self.state in ('present', 'started', 'stopped'):
+            if self.state == 'present':
                 if not vm:
                     # Create the VM
                     self.log("Create virtual machine {0}".format(self.name))
