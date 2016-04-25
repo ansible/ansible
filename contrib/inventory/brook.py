@@ -90,8 +90,7 @@ except ImportError:
 try:
     import libbrook
 except:
-    print('Brook.io inventory script requires libbrook. See https://github.com/doalitic/libbrook')
-    sys.exit(1)
+    sys.exit('Brook.io inventory script requires libbrook. See https://github.com/doalitic/libbrook')
 
 
 class BrookInventory:
