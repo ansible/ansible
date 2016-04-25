@@ -60,6 +60,7 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 ZIPLOADER_TEMPLATE = u'''%(shebang)s
 %(coding)s
+ZIPLOADER_WRAPPER = True # For test-module script to tell this is a ZIPLOADER_WRAPPER
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -134,16 +135,42 @@ def invoke_module(module, modlib_path, json_params):
 
 def debug(command, zipped_mod, json_params):
     # The code here normally doesn't run.  It's only used for debugging on the
-    # remote machine. Run with ANSIBLE_KEEP_REMOTE_FILES=1 envvar and -vvv
-    # to save the module file remotely.  Login to the remote machine and use
-    # /path/to/module explode to extract the ZIPDATA payload into source
-    # files.  Edit the source files to instrument the code or experiment with
-    # different values.  Then use /path/to/module execute to run the extracted
-    # files you've edited instead of the actual zipped module.
+    # remote machine.
+    #
+    # The subcommands in this function make it easier to debug ziploader
+    # modules.  Here's the basic steps:
+    #
+    # Run ansible with the environment variable: ANSIBLE_KEEP_REMOTE_FILES=1 and -vvv
+    # to save the module file remotely::
+    #   $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible host1 -m ping -a 'data=october' -vvv
+    #
+    # Part of the verbose output will tell you where on the remote machine the
+    # module was written to::
+    #   [...]
+    #   <host1> SSH: EXEC ssh -C -q -o ControlMaster=auto -o ControlPersist=60s -o KbdInteractiveAuthentication=no -o
+    #   PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 -o
+    #   ControlPath=/home/badger/.ansible/cp/ansible-ssh-%%h-%%p-%%r -tt rhel7 '/bin/sh -c '"'"'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+    #   LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping'"'"''
+    #   [...]
+    #
+    # Login to the remote machine and run the module file via from the previous
+    # step with the explode subcommand to extract the module payload into
+    # source files::
+    #   $ ssh host1
+    #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping explode
+    #   Module expanded into:
+    #   /home/badger/.ansible/tmp/ansible-tmp-1461173408.08-279692652635227/ansible
+    #
+    # You can now edit the source files to instrument the code or experiment with
+    # different parameter values.  When you're ready to run the code you've modified
+    # (instead of the code from the actual zipped module), use the execute subcommand like this::
+    #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
 
     # Okay to use __file__ here because we're running from a kept file
-    basedir = os.path.abspath(os.path.dirname(__file__))
+    basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
     args_path = os.path.join(basedir, 'args')
+    script_path = os.path.join(basedir, 'ansible_module_%(ansible_module)s.py')
+
     if command == 'explode':
         # transform the ZIPDATA into an exploded directory of code and then
         # print the path to the code.  This is an easy way for people to look
@@ -171,7 +198,7 @@ def debug(command, zipped_mod, json_params):
         f.close()
 
         print('Module expanded into:')
-        print('%%s' %% os.path.join(basedir, 'ansible'))
+        print('%%s' %% basedir)
         exitcode = 0
 
     elif command == 'execute':
@@ -181,13 +208,14 @@ def debug(command, zipped_mod, json_params):
         # This differs slightly from default Ansible execution of Python modules
         # as it passes the arguments to the module via a file instead of stdin.
 
+        # Set pythonpath to the debug dir
         pythonpath = os.environ.get('PYTHONPATH')
         if pythonpath:
             os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
         else:
             os.environ['PYTHONPATH'] = basedir
 
-        p = subprocess.Popen(['%(interpreter)s', 'ansible_module_%(ansible_module)s.py', args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen(['%(interpreter)s', script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
 
         if not isinstance(stderr, (bytes, unicode)):
@@ -212,8 +240,10 @@ def debug(command, zipped_mod, json_params):
         # not actual bugs (as they don't affect the real way that we invoke
         # ansible modules)
 
-        # stub the
+        # stub the args and python path
         sys.argv = ['%(ansible_module)s', args_path]
+        sys.path.insert(0, basedir)
+
         from ansible_module_%(ansible_module)s import main
         main()
         print('WARNING: Module returned to wrapper instead of exiting')
@@ -225,10 +255,17 @@ def debug(command, zipped_mod, json_params):
     return exitcode
 
 if __name__ == '__main__':
+    #
+    # See comments in the debug() method for information on debugging
+    #
+
     ZIPLOADER_PARAMS = %(params)s
     if PY3:
         ZIPLOADER_PARAMS = ZIPLOADER_PARAMS.encode('utf-8')
     try:
+        # There's a race condition with the controller removing the
+        # remote_tmpdir and this module executing under async.  So we cannot
+        # store this in remote_tmpdir (use system tempdir instead)
         temp_path = tempfile.mkdtemp(prefix='ansible_')
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
         modlib = open(zipped_mod, 'wb')
@@ -251,6 +288,24 @@ if __name__ == '__main__':
             pass
     sys.exit(exitcode)
 '''
+
+def _strip_comments(source):
+    # Strip comments and blank lines from the wrapper
+    buf = []
+    for line in source.splitlines():
+        l = line.strip()
+        if not l or l.startswith(u'#'):
+            continue
+        buf.append(line)
+    return u'\n'.join(buf)
+
+if C.DEFAULT_KEEP_REMOTE_FILES:
+    # Keep comments when KEEP_REMOTE_FILES is set.  That way users will see
+    # the comments with some nice usage instructions
+    ACTIVE_ZIPLOADER_TEMPLATE = ZIPLOADER_TEMPLATE
+else:
+    # ZIPLOADER_TEMPLATE stripped of comments for smaller over the wire size
+    ACTIVE_ZIPLOADER_TEMPLATE = _strip_comments(ZIPLOADER_TEMPLATE)
 
 class ModuleDepFinder(ast.NodeVisitor):
     # Caveats:
@@ -300,19 +355,6 @@ class ModuleDepFinder(ast.NodeVisitor):
                     self.submodules.add((alias.name,))
         self.generic_visit(node)
 
-
-def _strip_comments(source):
-    # Strip comments and blank lines from the wrapper
-    buf = []
-    for line in source.splitlines():
-        l = line.strip()
-        if not l or l.startswith(u'#'):
-            continue
-        buf.append(line)
-    return u'\n'.join(buf)
-
-# ZIPLOADER_TEMPLATE stripped of comments for smaller over the wire size
-STRIPPED_ZIPLOADER_TEMPLATE = _strip_comments(ZIPLOADER_TEMPLATE)
 
 def _slurp(path):
     if not os.path.exists(path):
@@ -555,10 +597,11 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
                 # Fool the check later... I think we should just remove the check
                 py_module_names.add(('basic',))
+
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
-        output.write(to_bytes(STRIPPED_ZIPLOADER_TEMPLATE % dict(
+        output.write(to_bytes(ACTIVE_ZIPLOADER_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
             params=python_repred_params,
