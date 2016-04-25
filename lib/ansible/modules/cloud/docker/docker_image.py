@@ -35,6 +35,7 @@ options:
       - Use with state 'present' to archive an image to a .tar file.
     required: false
     default: null
+    version_added: "2.1"
   dockerfile:
     description:
       - Use with state 'present' to provide an alternate name for the Dockerfile to use when building an image.
@@ -45,12 +46,14 @@ options:
       - Use with absent state to un-tag and remove all images matching the specified name. Use with states 'present'
         and 'tagged' to take action even when an image already exists.
     default: false
+    version_added: "2.1"
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
         seconds.
     default: null
     required: false
+    version_added: "2.1"
   name:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
@@ -68,10 +71,12 @@ options:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
     default: true
+    version_added: "2.1"
   rm:
     description:
       - Remove intermediate containers after build.
     default: true
+    version_added: "2.1"
   nocache:
     description:
       - Do not use cache when building an image.
@@ -81,6 +86,7 @@ options:
       - Full path to a repository. Use with state 'present' to tag the image into the repository.
     required: false
     default: null
+    version_added: "2.1"
   state:
     description:
       - Make assertions about the state of an image.
@@ -417,7 +423,6 @@ class ImageManager(DockerBaseClass):
 
         :return: image dict
         '''
-        self.push = True
         params = dict(
             path=self.path,
             tag=self.name,
