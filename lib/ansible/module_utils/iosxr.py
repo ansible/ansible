@@ -19,8 +19,8 @@
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.shell import Shell, HAS_PARAMIKO
+from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
+from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
@@ -49,6 +49,7 @@ CLI_ERRORS_RE = [
     re.compile(r"'[^']' +returned error code: ?\d+"),
 ]
 
+
 def to_list(val):
     if isinstance(val, (list, tuple)):
         return list(val)
@@ -56,6 +57,7 @@ def to_list(val):
         return [val]
     else:
         return list()
+
 
 class Cli(object):
 
@@ -74,12 +76,18 @@ class Cli(object):
         try:
             self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
             self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
-        except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+        except ShellError:
+            e = get_exception()
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
             self.module.fail_json(msg=msg)
 
     def send(self, commands):
-        return self.shell.send(commands)
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            e = get_exception()
+            self.module.fail_json(msg=e.message, commands=commands)
+
 
 class NetworkModule(AnsibleModule):
 
@@ -103,18 +111,16 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self)._load_params()
         provider = self.params.get('provider') or dict()
         for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
+            if key in NET_COMMON_ARGS:
                 if self.params.get(key) is None and value is not None:
                     self.params[key] = value
 
     def connect(self):
-        try:
-            self.connection = Cli(self)
-            self.connection.connect()
-            self.connection.send('terminal length 0')
-            self._connected = True
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
+        self.connection = Cli(self)
+
+        self.connection.connect()
+        self.connection.send('terminal length 0')
+        self._connected = True
 
     def configure(self, commands):
         commands = to_list(commands)
@@ -126,12 +132,9 @@ class NetworkModule(AnsibleModule):
         return responses
 
     def execute(self, commands, **kwargs):
-        try:
-            if not self.connected:
-                self.connect()
-            return self.connection.send(commands)
-        except ShellError, exc:
-            self.fail_json(msg=exc.message, command=exc.command)
+        if not self.connected:
+            self.connect()
+        return self.connection.send(commands, **kwargs)
 
     def disconnect(self):
         self.connection.close()
@@ -157,4 +160,3 @@ def get_module(**kwargs):
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
     return module
-
