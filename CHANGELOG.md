@@ -87,6 +87,7 @@ Ansible Changes By Release
 * issuperset
 
 ####New Inventory scripts:
+* brook
 * rackhd
 
 ###Minor Changes:
