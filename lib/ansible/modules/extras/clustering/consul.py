@@ -93,6 +93,11 @@ options:
           - the port on which the service is listening required for
             registration of a service, i.e. if service_name or service_id is set
         required: false
+    service_address:
+        description:
+          - the address on which the service is serving required for
+            registration of a service
+        required: false
     tags:
         description:
           - a list of tags that will be attached to the service registration.
@@ -178,6 +183,12 @@ EXAMPLES = '''
       interval: 60s
       http: /status
 
+  - name: register nginx with address
+    consul:
+      service_name: nginx
+      service_port: 80
+      service_address: 127.0.0.1
+      
   - name: register nginx with some service tags
     consul:
       service_name: nginx
@@ -360,6 +371,7 @@ def parse_service(module):
         return ConsulService(
             module.params.get('service_id'),
             module.params.get('service_name'),
+            module.params.get('service_address'),
             module.params.get('service_port'),
             module.params.get('tags'),
         )
@@ -368,13 +380,14 @@ def parse_service(module):
         module.fail_json( msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure the 'port' argument meaning 'service_port'?")
 
 
-class ConsulService():
+class  ConsulService():
 
-    def __init__(self, service_id=None, name=None, port=-1,
+    def __init__(self, service_id=None, name=None, address=None, port=-1,
                  tags=None, loaded=None):
         self.id = self.name = name
         if service_id:
             self.id = service_id
+        self.address = address
         self.port = port
         self.tags = tags
         self.checks = []
@@ -391,6 +404,7 @@ class ConsulService():
             consul_api.agent.service.register(
                 self.name,
                 service_id=self.id,
+                address=self.address,
                 port=self.port,
                 tags=self.tags,
                 check=check.check)
@@ -398,6 +412,7 @@ class ConsulService():
             consul_api.agent.service.register(
                 self.name,
                 service_id=self.id,
+                address=self.address,
                 port=self.port,
                 tags=self.tags)
 
@@ -527,6 +542,7 @@ def main():
             script=dict(required=False),
             service_id=dict(required=False),
             service_name=dict(required=False),
+            service_address=dict(required=False, type='str', default='localhost'),
             service_port=dict(required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
             interval=dict(required=False, type='str'),
