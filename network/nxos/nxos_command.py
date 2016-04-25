@@ -157,12 +157,8 @@ def main():
         kwargs['command_type'] = 'cli_show'
 
     while retries > 0:
-        try:
-            response = module.execute(commands, **kwargs)
-            result['stdout'] = response
-        except ShellError, exc:
-            module.fail_json(msg='failed to run commands', exc=exc.message,
-                    command=exc.command)
+        response = module.execute(commands, **kwargs)
+        result['stdout'] = response
 
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
