@@ -560,22 +560,21 @@ class Facts(object):
     def get_public_ssh_host_keys(self):
         keytypes = ('dsa', 'rsa', 'ecdsa', 'ed25519')
 
-        if self.facts['system'] == 'Darwin':
-            if self.facts['distribution'] == 'MacOSX' and LooseVersion(self.facts['distribution_version']) >= LooseVersion('10.11') :
-                keydir = '/etc/ssh'
-            else:
-                keydir = '/etc'
-        if self.facts['distribution'] == 'Altlinux':
-            keydir = '/etc/openssh'
-        else:
-            keydir = '/etc/ssh'
+        # list of directories to check for ssh keys
+        # used in the order listed here, the first one with keys is used
+        keydirs = ['/etc/ssh', '/etc/openssh', '/etc']
 
-        for type_ in keytypes:
-            key_filename = '%s/ssh_host_%s_key.pub' % (keydir, type_)
-            keydata = get_file_content(key_filename)
-            if keydata is not None:
+        for keydir in keydirs:
+            for type_ in keytypes:
                 factname = 'ssh_host_key_%s_public' % type_
-                self.facts[factname] = keydata.split()[1]
+                if factname in self.facts:
+                    # a previous keydir was already successful, stop looking
+                    # for keys
+                    return
+                key_filename = '%s/ssh_host_%s_key.pub' % (keydir, type_)
+                keydata = get_file_content(key_filename)
+                if keydata is not None:
+                    self.facts[factname] = keydata.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
