@@ -97,6 +97,7 @@ Ansible Changes By Release
 * Plugins are now sorted before loading.  This means, for instance, if you want
   two custom callback plugins to run in a certain order you can name them
   10-first-callback.py and 20-second-callback.py.
+* Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 
 ## 2.0.1 "Over the Hills and Far Away"
 
