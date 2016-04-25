@@ -290,7 +290,7 @@ def main():
       password = dict(no_log=True),
       hostname = dict(),
       ostemplate = dict(),
-      disk = dict(type='int', default=3),
+      disk = dict(type='str', default='3'),
       cpus = dict(type='int', default=1),
       memory = dict(type='int', default=512),
       swap = dict(type='int', default=0),
