@@ -47,30 +47,30 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options start, stop,
-              deallocate and restart to change the machine's power state.
+              of the existing machine does not match, the machine will be updated. Use options started, stopped,
+              deallocated and restarted to change the machine's power state.
             - State 'absent' will remove the virtual machine.
         default: present
         required: false
         choices:
             - absent
             - present
-    start:
+    started:
         description:
             - Use with state 'present' to start the machine.
         default: true
         required: false
-    stop:
+    stopped:
         description:
             - Use with state 'present' to stop the machine.
         default: false
         required: false
-    deallocate:
+    deallocated:
         description:
             - Use with state 'present' to put the VM in a deallocated state.
         default: false
         required: false
-    restart:
+    restarted:
         description:
             - Use with state 'present' to restart a running VM.
         default: false
@@ -283,13 +283,13 @@ EXAMPLES = '''
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    stop: yes
+    stopped: yes
 
 - name: Deallocate
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    deallocate: yes
+    deallocated: yes
 
 - name: Power On
   azure_rm_virtualmachine:
@@ -300,7 +300,7 @@ EXAMPLES = '''
   azure_rm_virtualmachine:
     resource_group:
     name: testvm002
-    restart: yes
+    restarted: yes
 
 '''
 
@@ -312,11 +312,6 @@ actions:
     sample: [
         "Powered on virtual machine testvm10"
     ]
-differences:
-    description: List of differences between the requested configuration and actual VM configuration.
-    returned: always
-    type: list
-    sample: []
 powerstate:
     description: Indicates if the state is running, stopped, deallocated
     returned: always
@@ -517,10 +512,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             delete_public_ips=dict(type='bool', default=True),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
-            deallocate=dict(type='bool', default=False),
-            restart=dict(type='bool', default=False),
-            start=dict(type='bool', default=True),
-            stop=dict(type='bool', default=False),
+            deallocated=dict(type='bool', default=False),
+            restarted=dict(type='bool', default=False),
+            started=dict(type='bool', default=True),
+            stopped=dict(type='bool', default=False),
         )
 
         for key in VirtualMachineSizeTypes:
@@ -552,15 +547,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.open_ports = None
         self.virtual_network_name = None
         self.subnet_name = None
-        self.deallocate = None
-        self.restart = None
-        self.start = None
-        self.stop = None
+        self.deallocated = None
+        self.restarted = None
+        self.started = None
+        self.stopped = None
+        self.differences = None
 
         self.results = dict(
             changed=False,
             actions=[],
-            differences=None,
             powerstate_change=None,
             state=dict()
         )
@@ -671,26 +666,26 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['osProfile']['computerName'] = self.short_hostname
 
-                self.results['differences'] = differences
-
-                if self.start and vm_dict['powerstate'] != 'running':
+                if self.started and vm_dict['powerstate'] != 'running':
                     self.log("CHANGED: virtual machine {0} not running and requested state 'running'".format(self.name))
                     changed = True
                     powerstate_change = 'poweron'
-                elif self.state == 'present' and vm_dict['powerstate'] == 'running' and self.restart:
+                elif self.state == 'present' and vm_dict['powerstate'] == 'running' and self.restarted:
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'restarted'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'restarted'
-                elif self.state == 'present' and self.deallocate and vm_dict['powerstate'] != 'deallocated':
+                elif self.state == 'present' and self.deallocated and vm_dict['powerstate'] != 'deallocated':
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'deallocated'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'deallocated'
-                elif self.stop and vm_dict['powerstate'] == 'running':
+                elif self.stopped and vm_dict['powerstate'] == 'running':
                     self.log("CHANGED: virtual machine {0} running and requested state 'stopped'".format(self.name))
                     changed = True
                     powerstate_change = 'poweroff'
+
+                self.differences = differences
 
             elif self.state == 'absent':
                 self.log("CHANGED: virtual machine {0} exists and requested state is 'absent'".format(self.name))
@@ -699,8 +694,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         except CloudError:
             self.log('Virtual machine {0} does not exist'.format(self.name))
-            if self.state in ('present', 'started', 'stopped'):
-                self.log("CHANGED: virtual machine does not exist but state in ('present','started','stopped')" \
+            if self.state == 'present':
+                self.log("CHANGED: virtual machine does not exist but state is present." \
                     .format(self.name))
                 changed = True
 
@@ -797,7 +792,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log(self.serialize_obj(vm_resource, 'VirtualMachine'), pretty_print=True)
                     self.results['state'] = self.create_or_update_vm(vm_resource)
 
-                elif self.results['differences'] and len(self.results['differences']) > 0:
+                elif self.differences and len(self.differences) > 0:
                     # Update the VM based on detected config differences
 
                     self.log("Update virtual machine {0}".format(self.name))
