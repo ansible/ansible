@@ -98,7 +98,10 @@ def write_fstab(lines, dest):
 
 def _escape_fstab(v):
     """ escape space (040), ampersand (046) and backslash (134) which are invalid in fstab fields """
-    return v.replace('\\', '\\134').replace(' ', '\\040').replace('&', '\\046')
+    if isinstance(v, int):
+        return v
+    else:
+        return v.replace('\\', '\\134').replace(' ', '\\040').replace('&', '\\046')
 
 def set_mount(module, **kwargs):
     """ set/change a mount point location in fstab """
@@ -111,11 +114,6 @@ def set_mount(module, **kwargs):
         fstab  = '/etc/fstab'
     )
     args.update(kwargs)
-
-    # save the mount name before space replacement
-    origname =  args['name']
-    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
-    args['name'] = args['name'].replace(' ', r'\040')
 
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
@@ -156,14 +154,13 @@ def set_mount(module, **kwargs):
             to_write.append(line)
 
     if not exists:
-        to_write.append(new_line % args)
+        to_write.append(new_line % escaped_args)
         changed = True
 
     if changed and not module.check_mode:
         write_fstab(to_write, args['fstab'])
 
-    # mount function needs origname
-    return (origname, changed)
+    return (args['name'], changed)
 
 
 def unset_mount(module, **kwargs):
@@ -177,11 +174,6 @@ def unset_mount(module, **kwargs):
         fstab  = '/etc/fstab'
     )
     args.update(kwargs)
-
-    # save the mount name before space replacement
-    origname =  args['name']
-    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
-    args['name'] = args['name'].replace(' ', r'\040')
 
     to_write = []
     changed = False
@@ -212,8 +204,7 @@ def unset_mount(module, **kwargs):
     if changed and not module.check_mode:
         write_fstab(to_write, args['fstab'])
 
-    # umount needs origname
-    return (origname, changed)
+    return (args['name'], changed)
 
 
 def mount(module, **kwargs):
