@@ -243,7 +243,7 @@ EXAMPLES = '''
       key_name: test
       timeout: 200
       flavor: 101
-      floating-ips:
+      floating_ips:
         - 12.34.56.79
 
 # Creates a new instance with 4G of RAM on Ubuntu Trusty, ignoring
