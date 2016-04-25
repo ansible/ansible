@@ -131,6 +131,7 @@ class TestPlayContext(unittest.TestCase):
         pfexec_flags = ''
         doas_exe    = 'doas'
         doas_flags  = ' -n  -u foo '
+        dzdo_exe   = 'dzdo'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
@@ -165,6 +166,10 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
+
+        play_context.become_method = 'dzdo'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
