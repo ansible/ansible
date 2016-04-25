@@ -238,7 +238,7 @@ EXAMPLES = '''
       key_name: test
       wait_for: 200
       flavor_id: 101
-      floating-ips:
+      floating_ips:
         - 12.34.56.79
 
 # Creates a new VM with 4G of RAM on Ubuntu Trusty, ignoring deprecated images
