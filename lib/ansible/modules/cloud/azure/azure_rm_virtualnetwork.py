@@ -23,15 +23,11 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_virtualnetwork
-
 version_added: "2.1"
-
 short_description: Manage Azure virtual networks.
-
 description:
     - Create, update or delete a virtual networks. Allows setting and updating the available IPv4 address ranges
       and setting custom DNS servers. Use the azure_rm_subnet module to associate subnets with a virtual network.
-
 options:
     resource_group:
         description:
@@ -125,13 +121,8 @@ EXAMPLES = '''
         state: absent
 '''
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Facts about the current state of the object.
+    description: Current state of the virtual network.
     returned: always
     type: dict
     sample: {
