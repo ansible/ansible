@@ -47,6 +47,7 @@ Ansible Changes By Release
   * gitlab_project
   * gitlab_user
 - make
+- mongodb_parameter
 - openstack
   * os_flavor_facts
   * os_group
