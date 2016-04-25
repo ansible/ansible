@@ -198,13 +198,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Facts about the current state of the object.
+    description: The current state of the network interface.
     returned: always
     type: dict
     sample: {

@@ -22,11 +22,8 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_securitygroup
-
 version_added: "2.1"
-
 short_description: Manage Azure network security groups.
-
 description:
     - Create, update or delete a network security group. A security group contains Access Control List (ACL) rules
       that allow or deny network traffic to subnets or individual network interfaces. A security group is created
@@ -195,13 +192,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Facts about the current state of the object.
+    description: Current state of the security group.
     returned: always
     type: dict
     sample: {

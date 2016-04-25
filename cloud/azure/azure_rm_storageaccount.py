@@ -23,14 +23,10 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_storageaccount
-
 version_added: "2.1"
-
 short_description: Manage Azure storage accounts.
-
 description:
     - Create, update or delete a storage account.
-
 options:
     resource_group:
         description:
@@ -119,13 +115,8 @@ EXAMPLES = '''
 
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Facts about the current state of the object.
+    description: Current state of the storage account.
     returned: always
     type: dict
     sample: {
