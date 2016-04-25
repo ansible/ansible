@@ -668,8 +668,8 @@ class Ec2Inventory(object):
         # If we can't get a nice hostname, use the destination address
         if not hostname:
             hostname = dest
-
-        hostname = self.to_safe(hostname).lower()
+        else:
+            hostname = self.to_safe(hostname).lower()
 
         # if we only want to include hosts that match a pattern, skip those that don't
         if self.pattern_include and not self.pattern_include.match(hostname):
