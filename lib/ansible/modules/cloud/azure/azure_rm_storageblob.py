@@ -22,15 +22,11 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_storageblob
-
 short_description: Manage blob containers and blob objects.
-
 version_added: "2.1"
-
 description:
     - Create, update and delete blob containers and blob objects. Use to upload a file and store it as a blob object,
       or download a blob object to a file.
-
 options:
     storage_account_name:
         description:
@@ -180,11 +176,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 actions:
     description: List of descriptive actions taken by the module.
     returned: always

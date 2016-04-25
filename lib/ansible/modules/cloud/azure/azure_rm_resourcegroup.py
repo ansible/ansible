@@ -22,14 +22,10 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_resourcegroup
-
 version_added: "2.1"
-
 short_description: Manage Azure resource groups.
-
 description:
     - Create, update and delete a resource group.
-
 options:
     force:
         description:
@@ -47,7 +43,6 @@ options:
         description:
             - Name of the resource group.
         required: true
-        default: null
     state:
         description:
             - Assert the state of the resource group. Use 'present' to create or update and
@@ -95,17 +90,12 @@ EXAMPLES = '''
         state: absent
 '''
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 contains_resources:
     description: Whether or not the resource group contains associated resources.
     type: bool
     sample: True
 state:
-    description: Facts about the current state of the object.
+    description: Current state of the resource group.
     returned: always
     type: dict
     sample: {
@@ -143,7 +133,7 @@ def resource_group_to_dict(rg):
 
 
 class AzureRMResourceGroup(AzureRMModuleBase):
-    
+
     def __init__(self):
         self.module_arg_spec = dict(
             name=dict(type='str', required=True),

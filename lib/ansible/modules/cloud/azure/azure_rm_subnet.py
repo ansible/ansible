@@ -22,16 +22,12 @@
 DOCUMENTATION = '''
 ---
 module: azure_rm_subnet
-
 version_added: "2.1"
-
 short_description: Manage Azure subnets.
-
 description:
     - Create, update or delete a subnet within a given virtual network. Allows setting and updating the address
       prefix CIDR, which must be valid within the context of the virtual network. Use the azure_rm_networkinterface
       module to associate interfaces with the subnet and assign specific IP addresses.
-
 options:
     resource_group:
         description:
@@ -97,13 +93,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
-    description: Facts about the current state of the object.
+    description: Current state of the subnet.
     returned: always
     type: dict
     sample: {
