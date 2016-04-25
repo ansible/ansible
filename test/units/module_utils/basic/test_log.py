@@ -49,6 +49,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -85,6 +86,7 @@ class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -132,6 +134,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -192,6 +195,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )

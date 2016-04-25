@@ -286,9 +286,20 @@ imports of things in module_utils instead of merely preprocessing the module.
 It does this by constructing a zipfile--which includes the module file, files
 in :file:`ansible/module_utils` that are imported by the module, and some
 boilerplate to pass in the constants.  The zipfile is then Base64 encoded and
-wrapped in a small Python script which unzips the file on the managed node and
-then invokes Python on the file.  (Ansible wraps the zipfile in the Python
-script so that pipelining will work.)
+wrapped in a small Python script which decodes the Base64 encoding and places
+the zipfile into a temp direcrtory on the managed node.  It then extracts just
+the ansible module script from the zip file and places that in the temporary
+directory as well.  Then it sets the PYTHONPATH to find python modules inside
+of the zip file and invokes :command:`python` on the extracted ansible module.
+
+.. note::
+    Ansible wraps the zipfile in the Python script for two reasons:
+
+    * for compatibility with Python-2.4 and Python-2.6 which have less
+      featureful versions of Python's ``-m`` command line switch.
+    * so that pipelining will function properly.  Pipelining needs to pipe the
+      Python module into the Python interpreter on the remote node.  Python
+      understands scripts on stdin but does not understand zip files.
 
 In ziploader, any imports of Python modules from the ``ansible.module_utils``
 package trigger inclusion of that Python file into the zipfile.  Instances of
@@ -299,16 +310,10 @@ that are included from module_utils are themselves scanned for imports of other
 Python modules from module_utils to be included in the zipfile as well.
 
 .. warning::
-    At present, there are two caveats to how ziploader determines other files
-    to import:
-
-    * Ziploader cannot determine whether an import should be included if it is
-      a relative import.  Always use an absolute import that has
-      ``ansible.module_utils`` in it to allow ziploader to determine that the
-      file should be included.
-    * Ziploader does not include Python packages (directories with
-      :file:`__init__.py`` in them).  Ziploader only works on :file:`*.py`
-      files that are directly in the :file:`ansible/module_utils` directory.
+    At present, Ziploader cannot determine whether an import should be
+    included if it is a relative import.  Always use an absolute import that
+    has ``ansible.module_utils`` in it to allow ziploader to determine that
+    the file should be included.
 
 .. _flow_passing_module_args:
 
@@ -317,13 +322,11 @@ Passing args
 
 In :ref:`module_replacer`, module arguments are turned into a JSON-ified
 string and substituted into the combined module file.  In :ref:`ziploader`,
-the JSON-ified string is placed in the the :envvar:`ANSIBLE_MODULE_ARGS`
-environment variable.  When :code:`ansible.module_utils.basic` is imported,
-it places this string in the global variable
-``ansible.module_utils.basic.MODULE_COMPLEX_ARGS`` and removes it from the
-environment.  Modules should not access this variable directly.  Instead, they
-should instantiate an :class:`AnsibleModule()` and use
-:meth:`AnsibleModule.params` to access the parsed version of the arguments.
+the JSON-ified string is passed into the module via stdin.  When
+a  :class:`ansible.module_utils.basic.AnsibleModule` is instantiated,
+it parses this string and places the args into
+:attribute:`AnsibleModule.params` where it can be accessed by the module's
+other code.
 
 .. _flow_passing_module_constants:
 
@@ -351,21 +354,17 @@ For now, :code:`ANSIBLE_VERSION` is also available at its old location inside of
 ``ansible.module_utils.basic``, but that will eventually be removed.
 
 ``SELINUX_SPECIAL_FS`` and  ``SYSLOG_FACILITY`` have changed much more.
-:ref:`ziploader` passes these as another JSON-ified string inside of the
-:envvar:`ANSIBLE_MODULE_CONSTANTS` environment variable.  When
-``ansible.module_utils.basic`` is imported, it places this string in the global
-variable :code:`ansible.module_utils.basic.MODULE_CONSTANTS` and removes it from
-the environment.  The constants are parsed when an :class:`AnsibleModule` is
-instantiated.  Modules shouldn't access any of those directly.  Instead, they
-should instantiate an :class:`AnsibleModule` and use
-:attr:`AnsibleModule.constants` to access the parsed version of these values.
+:ref:`ziploader` passes these as part of the JSON-ified argument string via stdin.
+When
+:class:`ansible.module_utils.basic.AnsibleModule` is instantiated, it parses this
+string and places the constants into :attribute:`AnsibleModule.constants`
+where other code can access it.
 
-Unlike the ``ANSIBLE_ARGS`` and ``ANSIBLE_VERSION``, where some efforts were
-made to keep the old backwards compatible globals available, these two
-constants are not available at their old names.  This is a combination of the
-degree to which these are internal to the needs of ``module_utils.basic`` and,
-in the case of ``SYSLOG_FACILITY``, how hacky and unsafe the previous
-implementation was.
+Unlike the ``ANSIBLE_VERSION``, where some efforts were made to keep the old
+backwards compatible globals available, these two constants are not available
+at their old names.  This is a combination of the degree to which these are
+internal to the needs of ``module_utils.basic`` and, in the case of
+``SYSLOG_FACILITY``, how hacky and unsafe the previous implementation was.
 
 Porting code from the :ref:`module_replacer` method of getting
 ``SYSLOG_FACILITY`` to the new one is a little more tricky than the other

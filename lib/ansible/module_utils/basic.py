@@ -223,6 +223,12 @@ from ansible import __version__
 # Backwards compat. New code should just import and use __version__
 ANSIBLE_VERSION = __version__
 
+# Internal global holding passed in params and constants.  This is consulted
+# in case multiple AnsibleModules are created.  Otherwise each AnsibleModule
+# would attempt to read from stdin.  Other code should not use this directly
+# as it is an internal implementation detail
+_ANSIBLE_ARGS = None
+
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
     mode = dict(type='raw'),
@@ -1457,23 +1463,28 @@ class AnsibleModule(object):
         ''' read the input and set the params attribute.  Sets the constants as well.'''
         # debug overrides to read args from file or cmdline
 
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
-        if len(sys.argv) > 1:
-            if os.path.isfile(sys.argv[1]):
-                fd = open(sys.argv[1], 'rb')
-                buffer = fd.read()
-                fd.close()
-            else:
-                buffer = sys.argv[1]
-                if sys.version_info >= (3,):
-                    buffer = buffer.encode('utf-8', errors='surrogateescape')
-        # default case, read from stdin
+        global _ANSIBLE_ARGS
+        if _ANSIBLE_ARGS is not None:
+            buffer = _ANSIBLE_ARGS
         else:
-            if sys.version_info < (3,):
-                buffer = sys.stdin.read()
+            # Avoid tracebacks when locale is non-utf8
+            # We control the args and we pass them as utf8
+            if len(sys.argv) > 1:
+                if os.path.isfile(sys.argv[1]):
+                    fd = open(sys.argv[1], 'rb')
+                    buffer = fd.read()
+                    fd.close()
+                else:
+                    buffer = sys.argv[1]
+                    if sys.version_info >= (3,):
+                        buffer = buffer.encode('utf-8', errors='surrogateescape')
+            # default case, read from stdin
             else:
-                buffer = sys.stdin.buffer.read()
+                if sys.version_info < (3,):
+                    buffer = sys.stdin.read()
+                else:
+                    buffer = sys.stdin.buffer.read()
+            _ANSIBLE_ARGS = buffer
 
         try:
             params = json.loads(buffer.decode('utf-8'))
