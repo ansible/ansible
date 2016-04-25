@@ -33,12 +33,10 @@ options:
     description:
       - The username on the remote host whose authorized_keys file will be modified
     required: true
-    default: null
   key:
     description:
       - The SSH public key(s), as a string or (since 1.9) url (https://github.com/username.keys)
     required: true
-    default: null
   path:
     description:
       - Alternate path to the authorized_keys file
