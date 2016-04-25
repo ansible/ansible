@@ -171,6 +171,9 @@ class Connection(ConnectionBase):
             self._connected = True
         if not self.shell_id:
             self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
+            # self.shell_id = self.protocol.open_shell(codepage=936) # Chinese Simplified.
+            # for whose who would like to modify the locale of session, please change the codepage accordingly. 
+            # here we keep the code to UTF8.
             display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
         if from_exec:
             display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
@@ -192,6 +195,16 @@ class Connection(ConnectionBase):
             # NB: this could hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
             # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
+            # Notice that even if we use utf8 as the session locale, we may still encounter wrong characters as the OS setting.
+            # you can query the active code by :
+            #
+            #   $PS1> chcp
+            #    Active code page: 65001
+            #
+            # but if the NIC name or other variables are using different charset other than UTF8, we may still need the following 2 lines.
+            # -suse
+            response.std_out= to_unicode(response.std_out.decode('cp936'))       # >  chinese simplified. for this example
+            response.std_err= to_unicode(response.std_err.decode('cp936'))       # >  please change accordingly by your default chcp result.
             if from_exec:
                 display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             else:
