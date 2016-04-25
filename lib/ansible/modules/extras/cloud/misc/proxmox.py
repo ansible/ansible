@@ -213,6 +213,9 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
   if VZ_TYPE =='lxc':
       kwargs['cpulimit']=cpus
       kwargs['rootfs']=disk
+      if 'netif' in kwargs:
+        kwargs.update(kwargs['netif'])
+        del kwargs['netif']
   else:
       kwargs['cpus']=cpus
       kwargs['disk']=disk
