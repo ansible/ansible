@@ -26,7 +26,7 @@ import sys
 import time
 import traceback
 
-from ansible.compat.six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types, binary_type
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
@@ -137,6 +137,8 @@ class TaskExecutor:
                         res[idx] = _clean_res(item)
                 elif isinstance(res, UnsafeProxy):
                     return res._obj
+                elif isinstance(res, binary_type):
+                    return to_unicode(res, errors='strict')
                 return res
 
             display.debug("dumping result to json")
