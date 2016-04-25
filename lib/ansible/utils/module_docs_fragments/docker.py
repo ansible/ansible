@@ -26,6 +26,7 @@ options:
             - URL or Unix socket path used to connect to the Docker daemon.
         required: false
         default: null
+        aliases: ['docker_url']
     tls_hostname:
         description:
             - If verifying the name of the host found in the TLS certs, provide the expected host name.
