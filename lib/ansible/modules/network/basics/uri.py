@@ -450,10 +450,8 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except:
-                module.fail_json(msg="bombed")
                 pass
     else:
-        module.fail_json(msg="boo")
         u_content = unicode(content, content_encoding, errors='replace')
 
     if resp['status'] not in status_code:
