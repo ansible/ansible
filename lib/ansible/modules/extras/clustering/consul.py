@@ -98,6 +98,8 @@ options:
           - the address on which the service is serving required for
             registration of a service
         required: false
+        default: localhost
+        version_added: "2.1"
     tags:
         description:
           - a list of tags that will be attached to the service registration.
@@ -188,7 +190,7 @@ EXAMPLES = '''
       service_name: nginx
       service_port: 80
       service_address: 127.0.0.1
-      
+
   - name: register nginx with some service tags
     consul:
       service_name: nginx
@@ -210,8 +212,6 @@ EXAMPLES = '''
       interval: 5m
 
 '''
-
-import sys
 
 try:
     import consul
@@ -298,8 +298,8 @@ def add_service(module, service):
     consul_api = get_consul_api(module)
     existing = get_service_by_id(consul_api, service.id)
 
-    # there is no way to retreive the details of checks so if a check is present
-    # in the service it must be reregistered
+    # there is no way to retrieve the details of checks so if a check is present
+    # in the service it must be re-registered
     if service.has_checks() or not existing or not existing == service:
 
         service.register(consul_api)
@@ -472,7 +472,7 @@ class ConsulCheck():
             self.check = consul.Check.ttl(self.ttl)
 
         if http:
-            if interval == None:
+            if interval is None:
                 raise Exception('http check must specify interval')
 
             self.check = consul.Check.http(http, self.interval, self.timeout)
@@ -517,7 +517,7 @@ class ConsulCheck():
 
     def _add(self, data, key, attr=None):
         try:
-            if attr == None:
+            if attr is None:
                 attr = key
             data[key] = getattr(self, attr)
         except:
