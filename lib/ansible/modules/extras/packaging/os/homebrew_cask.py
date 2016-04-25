@@ -50,8 +50,8 @@ EXAMPLES = '''
 - homebrew_cask: name=alfred state=present
 - homebrew_cask: name=alfred state=absent
 - homebrew_cask: name=alfred state=present install_options="appdir=/Applications"
-- homebrew_cask: name=alfred state=present install_options="--debug appdir=/Applications"
-- homebrew_cask: name=alfred state=absent install_options="--force"
+- homebrew_cask: name=alfred state=present install_options="debug,appdir=/Applications"
+- homebrew_cask: name=alfred state=absent install_options="force"
 '''
 
 import os.path
