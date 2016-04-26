@@ -51,7 +51,7 @@ class Connection(ConnectionBase):
 
     transport = 'accelerate'
     has_pipelining = False
-    become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('runas', 'dockerexec'))
 
     def __init__(self, *args, **kwargs):
 

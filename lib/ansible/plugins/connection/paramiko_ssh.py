@@ -127,6 +127,7 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('runas', 'dockerexec'))
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)

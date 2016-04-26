@@ -45,6 +45,7 @@ class Connection(ConnectionBase):
 
     transport = 'local'
     has_pipelining = True
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('dockerexec',))
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
