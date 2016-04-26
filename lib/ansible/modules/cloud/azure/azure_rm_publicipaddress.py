@@ -71,21 +71,10 @@ options:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
         required: false
-    tags:
-        description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object
-              will be updated with any provided values. To remove tags use the purge_tags option."
-        required: false
-        default: null
-    purge_tags:
-        description:
-            - Use to remove tags from an object. Any tags not found in the tags parameter will be removed from
-              the object's metadata.
-        required: false
-        default: false
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -108,11 +97,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: True
 state:
     description: Facts about the current state of the object.
     returned: always
@@ -136,9 +120,7 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError
     from azure.mgmt.network.models import PublicIPAddress, PublicIPAddressDnsSettings
-    from azure.mgmt.network.models.network_management_client_enums import IPAllocationMethod
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -248,7 +230,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
 
         if self.check_mode:
             return results
-    
+
         if changed:
             if self.state == 'present':
                 if not pip:

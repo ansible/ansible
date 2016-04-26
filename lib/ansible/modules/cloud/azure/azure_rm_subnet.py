@@ -115,7 +115,6 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError
     from azure.mgmt.network.models import Subnet, NetworkSecurityGroup
 except ImportError:
     # This is handled in azure_rm_common
