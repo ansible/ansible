@@ -289,7 +289,7 @@ This indicates the command to use to spawn a shell under a sudo environment.  Us
 
     executable = /bin/bash
 
-Starting in version 2.1 this can be overriden by the inventory var ``ansible_shell_executable``.
+Starting in version 2.1 this can be overridden by the inventory var ``ansible_shell_executable``.
 
 .. _filter_plugins:
 
@@ -928,7 +928,7 @@ pipelining
 ==========
 
 Enabling pipelining reduces the number of SSH operations required to
-execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+execute a module on the remote server, by executing many ansible modules without actual file transfer.
 This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
 first disable 'requiretty' in /etc/sudoers on all managed hosts.
 
@@ -943,7 +943,7 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 Accelerated Mode Settings
 -------------------------
 
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
+Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
 not needed if you can.
 
