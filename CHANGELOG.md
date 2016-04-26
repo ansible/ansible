@@ -57,12 +57,55 @@ Ansible Changes By Release
   * cs_zone_facts
 - clustering
   * kubernetes
+- cumulus
+  * cl_bond
+  * cl_bridge
+  * cl_img_install
+  * cl_interface
+  * cl_interface_policy
+  * cl_license
+  * cl_ports
+- eos
+  * eos_command
+  * eos_config
+  * eos_eapi
+  * eos_template
 - gitlab
   * gitlab_group
   * gitlab_project
   * gitlab_user
+- ios
+  * ios_command
+  * ios_config
+  * ios_template
+- iosxr
+  * iosxr_command
+  * iosxr_config
+  * iosxr_template
+- junos
+  * junos_command
+  * junos_config
+  * junos_facts
+  * junos_netconf
+  * junos_package
+  * junos_template
 - make
 - mongodb_parameter
+- nxos
+  * nxos_command
+  * nxos_config
+  * nxos_facts
+  * nxos_feature
+  * nxos_interface
+  * nxos_ip_interface
+  * nxos_nxapi
+  * nxos_ping
+  * nxos_switchport
+  * nxos_template
+  * nxos_vlan
+  * nxos_vrf
+  * nxos_vrf_interface
+  * nxos_vrrp
 - openstack
   * os_flavor_facts
   * os_group
@@ -73,6 +116,11 @@ Ansible Changes By Release
   * os_project_facts
   * os_user_facts
   * os_user_role
+- openswitch
+  * ops_command
+  * ops_config
+  * ops_facts
+  * ops_template
 - softlayer
   * sl_vm
 - vmware
@@ -93,6 +141,8 @@ Ansible Changes By Release
 ####New Filters:
 * extract
 * ip4_hex
+* regex_search
+* regex_findall
 
 ####New Callbacks:
 * actionable (only shows changed and failed)
