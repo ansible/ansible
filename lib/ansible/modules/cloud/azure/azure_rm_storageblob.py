@@ -126,21 +126,10 @@ options:
         choices:
             - container
             - blob
-    tags:
-        description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object
-              will be updated with any provided values. To remove tags use the purge_tags option."
-        required: false
-        default: null
-    purge_tags:
-        description:
-            - Use to remove tags from an object. Any tags not found in the tags parameter will be removed from
-              the object's metadata.
-        required: false
-        default: false
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -176,13 +165,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-actions:
-    description: List of descriptive actions taken by the module.
-    returned: always
-    type: list
-    sample: [
-        "updated blob foo:graylog.png content settings."
-    ]
 blob:
     description: Facts about the current state of the blob.
     returned: when a blob is operated on
@@ -214,8 +196,6 @@ container:
 '''
 
 
-import datetime
-import hashlib
 import os
 
 from ansible.module_utils.basic import *
@@ -224,7 +204,6 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from azure.storage.blob.models import ContentSettings
-    from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except ImportError:
     # This is handled in azure_rm_common
@@ -347,6 +326,8 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 # Delete blob
                 self.delete_blob()
 
+        # until we sort out how we want to do this globally
+        del self.results['actions']
         return self.results
 
     def get_container(self):

@@ -227,21 +227,10 @@ options:
             - When removing a VM using state 'absent', also remove any public IP addresses associate with the VM.
         default: true
         required: false
-    tags:
-        description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object
-              will be updated with any provided values. To remove tags use the purge_tags option."
-        default: null
-        required: false
-    purge_tags:
-        description:
-            - Use to remove tags from an object. Any tags not found in the tags parameter will be removed from
-              the object's metadata.
-        default: false
-        required: false
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -454,19 +443,16 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError
     from azure.mgmt.compute.models import NetworkInterfaceReference, VirtualMachine, HardwareProfile, \
         StorageProfile, OSProfile, OSDisk, VirtualHardDisk, ImageReference, NetworkProfile, LinuxConfiguration, \
         SshConfiguration, SshPublicKey
-    from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
+    from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
-    from azure.mgmt.storage.models import AccountType, AccountStatus, StorageAccountCreateParameters
-    from azure.mgmt.compute.models.compute_management_client_enums import CachingTypes, DiskCreateOptionTypes, \
-        VirtualMachineSizeTypes
+    from azure.mgmt.storage.models import StorageAccountCreateParameters
+    from azure.mgmt.compute.models.compute_management_client_enums import DiskCreateOptionTypes, VirtualMachineSizeTypes
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
 
@@ -886,6 +872,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.log("Delete virtual machine {0}".format(self.name))
                 self.results['state']['status'] = 'Deleted'
                 self.delete_vm(vm)
+
+        # until we sort out how we want to do this globally
+        del self.results['actions']
 
         return self.results
 

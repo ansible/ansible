@@ -74,21 +74,10 @@ options:
             - Can be added to an existing storage account. Will be ignored during storage account creation.
         required: false
         default: null
-    tags:
-        description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object
-              will be updated with any provided values. To remove tags use the purge_tags option."
-        required: false
-        default: null
-    purge_tags:
-        description:
-            - Use to remove tags from an object. Any tags not found in the tags parameter will be removed from
-              the object's metadata.
-        default: false
-        required: false
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -155,10 +144,9 @@ try:
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
     from azure.mgmt.storage.models import AccountType,\
-                                          AccountStatus, \
                                           ProvisioningState, \
                                           StorageAccountUpdateParameters,\
-                                          CustomDomain, StorageAccountCreateParameters, KeyName
+                                          CustomDomain, StorageAccountCreateParameters
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -449,7 +437,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         return False
 
 
-def main():
+
     AzureRMStorageAccount()
 
 if __name__ == '__main__':

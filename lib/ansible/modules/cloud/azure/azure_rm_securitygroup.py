@@ -118,21 +118,10 @@ options:
         choices:
             - absent
             - present
-    tags:
-        description:
-            - "Dictionary of string:string pairs to assign as metadata to the object. Metadata tags on the object
-              will be updated with any provided values. To remove tags use the purge_tags option."
-        required: false
-        default: null
-    purge_tags:
-        description:
-            - Use to remove tags from an object. Any tags not found in the tags parameter will be removed from
-              the object's metadata.
-        default: false
-        required: false
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -340,8 +329,8 @@ from ansible.module_utils.azure_rm_common import *
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule, Subnet, NetworkInterface
+    from azure.common import AzureHttpError
+    from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
     from azure.mgmt.network.models.network_management_client_enums import (SecurityRuleAccess,
                                                                            SecurityRuleDirection,
                                                                            SecurityRuleProtocol)
