@@ -22,19 +22,25 @@ DOCUMENTATION = '''
 ---
 module: make
 short_description: Run targets in a Makefile
-requirements: []
+requirements: [ make ]
 version_added: "2.1"
 author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
-description: Run targets in a Makefile.
+description:
+  - Run targets in a Makefile.
 options:
   target:
-    description: The target to run
+    description:
+      - The target to run
     required: false
+    default: none
   params:
-    description: Any extra parameters to pass to make
+    description:
+      - Any extra parameters to pass to make
     required: false
+    default: none
   chdir:
-    description: cd into this directory before running make
+    description:
+      - cd into this directory before running make
     required: true
 '''
 
