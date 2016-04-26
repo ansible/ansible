@@ -131,6 +131,8 @@ EXAMPLES = '''
       device_type: io1
       iops: 3000
       delete_on_termination: true
+    - device_name: /dev/sdb
+      ephemeral: ephemeral0
 
 '''
 
