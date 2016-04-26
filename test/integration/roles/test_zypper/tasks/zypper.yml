@@ -289,7 +289,7 @@
       - zypper_rm|failed
       - zypper_rm.msg.startswith('Can not remove via URL.')
 
-# use of version specific data in the following
+# use of version specific (42.1) data in the following
 - block:
   # test for #1627
   - name: in existing patch
@@ -307,21 +307,30 @@
   - assert:
       that: zypper_patch|failed
 
+  - name: remove pattern update_test
+    zypper: name=update_test type=pattern state=absent
+  - name: install pattern update_test
+    zypper: name=update_test type=pattern state=present
+    register: zypper_install_pattern1
+  - name: install pattern update_test again
+    zypper: name=update_test type=pattern state=present
+    register: zypper_install_pattern2
+  - assert:
+      that:
+        - zypper_install_pattern1|changed
+        - not zypper_install_pattern2|changed
 
   - name: remove hello
     zypper: name=hello state=absent
-
   - name: install via URL
     zypper: state=present name=http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/hello-2.9-6.2.x86_64.rpm
-    register: zypperres
-
+    register: zypperin1
   - name: test install
     zypper: name=hello state=present
     register: zypperin2
-
   - assert:
       that:
-        - zypperres|success
-        - zypperres|changed
+        - zypperin1|success
+        - zypperin1|changed
         - not zypperin2|changed
   when: ansible_distribution == 'openSUSE Leap' and ansible_distribution_version == '42.1'
