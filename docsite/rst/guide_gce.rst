@@ -11,11 +11,11 @@ Introduction
 Ansible contains modules for managing Google Compute Engine resources, including creating instances, controlling network access, working with persistent disks, and managing
 load balancers.  Additionally, there is an inventory plugin that can automatically suck down all of your GCE instances into Ansible dynamic inventory, and create groups by tag and other properties.
 
-The GCE modules all require the apache-libcloud module version 0.17.0 or higher, which you can install from pip:
+The GCE modules all require the apache-libcloud module which you can install from pip:
 
 .. code-block:: bash
 
-    $ pip install apache-libcloud>=0.17.0
+    $ pip install apache-libcloud
 
 .. note:: If you're using Ansible on Mac OS X, libcloud also needs to access a CA cert chain. You'll need to download one (you can get one for `here <http://curl.haxx.se/docs/caextract.html>`_.)
 
@@ -29,6 +29,8 @@ JSON format:
 2. `Download JSON credentials <https://support.google.com/cloud/answer/6158849?hl=en&ref_topic=6262490#serviceaccounts>`_
 
 There are three different ways to provide credentials to Ansible so that it can talk with Google Cloud for provisioning and configuration actions:
+
+.. note:: If you would like to use JSON credentials you must have libcloud >= 0.17.0
 
 * by providing to the modules directly
 * by populating a ``secrets.py`` file
