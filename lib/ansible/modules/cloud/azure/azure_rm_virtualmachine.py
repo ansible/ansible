@@ -47,8 +47,7 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options started, stopped,
-              deallocated and restarted to change the machine's power state.
+              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power state.
             - State 'absent' will remove the virtual machine.
         default: present
         required: false
@@ -57,18 +56,13 @@ options:
             - present
     started:
         description:
-            - Use with state 'present' to start the machine.
+            - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
         default: true
         required: false
-    stopped:
+    allocated:
         description:
-            - Use with state 'present' to stop the machine.
-        default: false
-        required: false
-    deallocated:
-        description:
-            - Use with state 'present' to put the VM in a deallocated state.
-        default: false
+            - Toggle that controls if the machine is allocated/deallocated, only useful with state='present'.
+        default: True
         required: false
     restarted:
         description:
@@ -208,24 +202,12 @@ options:
             - virtual_network
         default: null
         required: false
-    delete_network_interfaces:
+    remove_on_absent:
         description:
-            - When removing a VM using state 'absent', also remove any network interfaces associate with the VM.
-        default: true
-        aliases:
-            - delete_nics
-        required: false
-    delete_virtual_storage:
-        description:
-            - When removing a VM using state 'absent', also remove any storage blobs associated with the VM.
-        default: true
-        aliases:
-            - delete_vhd
-        required: false
-    delete_public_ips:
-        description:
-            - When removing a VM using state 'absent', also remove any public IP addresses associate with the VM.
-        default: true
+            - When removing a VM using state 'absent', also remove associated resources
+            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - Any other input will be ignored
+        default: ['all']
         required: false
 
 extends_documentation_fragment:
@@ -272,13 +254,13 @@ EXAMPLES = '''
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    stopped: yes
+    started: no
 
 - name: Deallocate
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    deallocated: yes
+    allocated: no
 
 - name: Power On
   azure_rm_virtualmachine:
@@ -291,16 +273,17 @@ EXAMPLES = '''
     name: testvm002
     restarted: yes
 
+- name: remove vm and all resources except public ips
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm002
+    state: absent
+    remove_on_absent:
+        - network_interfaces
+        - virtual_storage
 '''
 
 RETURN = '''
-actions:
-    description: List of descriptive actions performed by the module.
-    returned: always
-    type: list
-    sample: [
-        "Powered on virtual machine testvm10"
-    ]
 powerstate:
     description: Indicates if the state is running, stopped, deallocated
     returned: always
@@ -493,15 +476,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
-            delete_network_interfaces=dict(type='bool', default=True, aliases=['delete_nics']),
-            delete_virtual_storage=dict(type='bool', default=True, aliases=['delete_vhd']),
-            delete_public_ips=dict(type='bool', default=True),
+            remove_on_absent=dict(type='list', default=['all']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
-            deallocated=dict(type='bool', default=False),
+            allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
-            stopped=dict(type='bool', default=False),
         )
 
         for key in VirtualMachineSizeTypes:
@@ -524,19 +504,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_type = None
         self.os_disk_caching = None
         self.network_interface_names = None
-        self.delete_network_interfaces = None
-        self.delete_virtual_storage = None
-        self.delete_public_ips = None
+        self.remove_on_absent = []
         self.tags = None
         self.force = None
         self.public_ip_allocation_method = None
         self.open_ports = None
         self.virtual_network_name = None
         self.subnet_name = None
-        self.deallocated = None
+        self.allocated = None
         self.restarted = None
         self.started = None
-        self.stopped = None
         self.differences = None
 
         self.results = dict(
@@ -548,6 +525,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         super(AzureRMVirtualMachine, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True)
+
+        # make sure options are lower case
+        self.remove_on_absent = [resource.lower() for resource in  self.remove_on_absent]
 
     def exec_module(self, **kwargs):
 
@@ -562,7 +542,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         requested_vhd_uri = None
         disable_ssh_password = None
         vm_dict = None
-        
+
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             # Set default location
@@ -661,12 +641,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'restarted'
-                elif self.state == 'present' and self.deallocated and vm_dict['powerstate'] != 'deallocated':
+                elif self.state == 'present' and not self.allocated and vm_dict['powerstate'] != 'deallocated':
                     self.log("CHANGED: virtual machine {0} {1} and requested state 'deallocated'"
                              .format(self.name, vm_dict['powerstate']))
                     changed = True
                     powerstate_change = 'deallocated'
-                elif self.stopped and vm_dict['powerstate'] == 'running':
+                elif not self.started and vm_dict['powerstate'] == 'running':
                     self.log("CHANGED: virtual machine {0} running and requested state 'stopped'".format(self.name))
                     changed = True
                     powerstate_change = 'poweroff'
@@ -976,14 +956,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         nic_names = []
         pip_names = []
 
-        if self.delete_virtual_storage:
+        if self.remove_on_absent.intersection(['all','virtual_storage']):
             # store the attached vhd info so we can nuke it after the VM is gone
             self.log('Storing VHD URI for deletion')
             vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
             self.results['deleted_vhd_uris'] = vhd_uris
 
-        if self.delete_network_interfaces:
+        if self.remove_on_absent.intersection(['all','network_interfaces']):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
@@ -991,7 +971,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 nic_names.append(id_dict['networkInterfaces'])
             self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
-            if self.delete_public_ips:
+            if self.remove_on_absent.intersection(['all','public_ips']):
                 # also store each nic's attached public IPs and delete after the NIC is gone
                 for name in nic_names:
                     nic = self.get_network_interface(name)
@@ -1013,16 +993,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
-        if self.delete_virtual_storage:
+        if self.remove_on_absent.intersection(['all','virtual_storage']):
             self.log('Deleting virtual storage')
             self.delete_vm_storage(vhd_uris)
 
-        if self.delete_network_interfaces:
+        if self.remove_on_absent.intersection(['all','network_interfaces']):
             self.log('Deleting network interfaces')
             for name in nic_names:
                 self.delete_nic(name)
 
-        if self.delete_public_ips:
+        if self.remove_on_absent.intersection(['all','public_ips']):
             self.log('Deleting public IPs')
             for name in pip_names:
                 self.delete_pip(name)
