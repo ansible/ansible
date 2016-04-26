@@ -118,8 +118,8 @@ else
 
 }
 
-if($registryDataType -eq "binary" -and $registryData -ne $null) {
-   $registryData = Convert-RegExportHexStringToByteArray($registryData)
+if($registryDataType -eq "binary" -and $registryData -ne $null -and $registryData.GetType().Name -eq 'String') {
+      $registryData = Convert-RegExportHexStringToByteArray($registryData)
 }
 
 if($state -eq "present") {
