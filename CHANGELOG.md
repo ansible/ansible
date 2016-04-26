@@ -23,12 +23,14 @@ Ansible Changes By Release
   * ec2_vpc_net_facts
   * ec2_snapshot_facts
 - azure:
+  * azure_rm_deployment
   * azure_rm_networkinterface
-  * azure_rm_resourcegroup.py
+  * azure_rm_resourcegroup
   * azure_rm_securitygroup
   * azure_rm_storageaccount
   * azure_rm_storageblob
   * azure_rm_subnet
+  * azure_rm_virtualmachine
   * azure_rm_virtualnetwork
 - cloudflare_dns
 - cloudstack
@@ -89,6 +91,7 @@ Ansible Changes By Release
 ####New Inventory scripts:
 * brook
 * rackhd
+* azure_rm
 
 ###Minor Changes:
 
