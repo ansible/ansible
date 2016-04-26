@@ -103,6 +103,22 @@ tasks:
   with_subelements: 
     - ec2_vol.results
     - volumes
+
+# Playbook example of listing tags on an instance
+tasks:
+- name: get ec2 facts
+  action: ec2_facts
+
+- name: list tags on an instance
+  ec2_tag:
+    region: "{{ ansible_ec2_placement_region }}"
+    resource: "{{ ansible_ec2_instance_id }}"
+    state: list
+  register: ec2_tags
+
+- name: list tags, such as Name, env if exist
+  shell: echo {{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}
+
 '''
 
 
