@@ -26,6 +26,8 @@ Ansible Changes By Release
 * The way new-style python modules (which include all of the non-windows modules shipped with Ansible) are assembled before execution on the remote machine has been changed. The new way stays closer to how python imports modules which will make it easier to write modules which rely heavily on shared code.
 * Reduce the situations in which a module can end up as world readable.  For details, see: https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user
 * Re-implemented the retry file feature, which had been left out of 2.0 (fix was backported to 2.0.1 originally).
+* Improved winrm argument validation and feature sniffing (for upcoming pywinrm NTLM support).
+* Improved winrm error handling: basic parsing of stderr from CLIXML stream.
 
 ####New Modules:
 - aws
@@ -77,7 +79,9 @@ Ansible Changes By Release
   * vmware_maintenancemode
   * vmware_vm_shell
 - windows
+  * win_acl_inheritance
   * win_owner
+  * win_reboot
   * win_regmerge
   * win_timezone
 - yum_repository
