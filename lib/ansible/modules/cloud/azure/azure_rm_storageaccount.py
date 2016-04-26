@@ -437,7 +437,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         return False
 
 
-
+def main():
     AzureRMStorageAccount()
 
 if __name__ == '__main__':
