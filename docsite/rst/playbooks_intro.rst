@@ -7,7 +7,7 @@ About Playbooks
 ```````````````
 
 Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
-particularly powerful. 
+particularly powerful.
 
 Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,
 unlike any that already exist, and one that is very well suited to deploying complex applications.
@@ -41,7 +41,7 @@ Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module, which you should have learned about in earlier chapters.
+to an ansible module (see :doc:`modules`).
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -50,7 +50,7 @@ server group, then more commands back on the webservers group, etc.
 
 "plays" are more or less a sports analogy.  You can have quite a lot of plays that affect your systems
 to do different things.  It's not as if you were just defining one particular state or model, and you
-can run different plays at different times.  
+can run different plays at different times.
 
 For starters, here's a playbook that contains just one play::
 
@@ -62,7 +62,7 @@ For starters, here's a playbook that contains just one play::
       remote_user: root
       tasks:
       - name: ensure apache is at the latest version
-        yum: pkg=httpd state=latest
+        yum: name=httpd state=latest
       - name: write the apache config file
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
@@ -88,7 +88,7 @@ YAML dictionaries to supply the modules with their ``key=value`` arguments.::
       tasks:
       - name: ensure apache is at the latest version
         yum:
-          pkg: httpd
+          name: httpd
           state: latest
       - name: write the apache config file
         template:
@@ -115,7 +115,7 @@ the web servers, and then the database servers. For example::
 
       tasks:
       - name: ensure apache is at the latest version
-        yum: pkg=httpd state=latest
+        yum: name=httpd state=latest
       - name: write the apache config file
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
 
@@ -180,9 +180,9 @@ Support for running things as another user is also available (see :doc:`become`)
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
+      become: yes
 
-You can also use sudo on a particular task instead of the whole play::
+You can also use become on a particular task instead of the whole play::
 
     ---
     - hosts: webservers
@@ -264,7 +264,7 @@ nice to have reasonably good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
-Tasks can be declared using the legacy ``action: module options`` format, but 
+Tasks can be declared using the legacy ``action: module options`` format, but
 it is recommended that you use the more conventional ``module: options`` format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
@@ -382,15 +382,18 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   * Notify handlers are always run in the order written.
+   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement.
    * Handler names live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
+   * You cannot notify a handler that is defined inside of an include
 
-Roles are described later on.  It's worthwhile to point out that handlers are
-automatically processed between ``pre_tasks``, ``roles``, ``tasks``, and ``post_tasks``
-sections.  If you ever want to flush all the handler commands immediately though,
-in 1.2 and later, you can::
+Roles are described later on, but it's worthwhile to point out that:
+
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
+* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
+
+If you ever want to flush all the handler commands immediately though, in 1.2 and later, you can::
 
     tasks:
        - shell: some tasks go here

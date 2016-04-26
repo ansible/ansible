@@ -42,7 +42,7 @@ Get Involved
 Branch Info
 ===========
 
-   * Releases are named after Van Halen songs.
+   * Releases are named after Led Zeppelin songs. (Releases prior to 2.0 were named after Van Halen songs.)
    * The devel branch corresponds to the release actively under development.
    * As of 1.8, modules are kept in different repos, you'll want to follow [core](https://github.com/ansible/ansible-modules-core) and [extras](https://github.com/ansible/ansible-modules-extras)
    * Various release-X.Y branches exist for previous releases.
@@ -54,4 +54,5 @@ Authors
 Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 1000 users (and growing).  Thanks everyone!
 
 Ansible is sponsored by [Ansible, Inc](http://ansible.com)
+
 

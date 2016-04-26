@@ -58,11 +58,16 @@ The following tasks are illustrative of how filters can be used with conditional
       - debug: msg="it changed"
         when: result|changed
 
+      - debug: msg="it succeeded in Ansible >= 2.1"
+        when: result|succeeded
+
       - debug: msg="it succeeded"
         when: result|success
 
       - debug: msg="it was skipped"
         when: result|skipped
+
+.. note:: From 2.1 You can also use success, failure, change, skip so the grammer matches, for those that want to be strict about it.
 
 .. _forcing_variables_to_be_defined:
 
@@ -352,6 +357,39 @@ override those in `b`, and so on.
 This behaviour does not depend on the value of the `hash_behaviour`
 setting in `ansible.cfg`.
 
+.. _extract_filter:
+
+Extracting values from containers
+---------------------------------
+
+.. versionadded:: 2.1
+
+The `extract` filter is used to map from a list of indices to a list of
+values from a container (hash or array)::
+
+    {{ [0,2]|map('extract', ['x','y','z'])|list }}
+    {{ ['x','y']|map('extract', {'x': 42, 'y': 31})|list }}
+
+The results of the above expressions would be::
+
+    ['x', 'z']
+    [42, 31]
+
+The filter can take another argument::
+
+    {{ groups['x']|map('extract', hostvars, 'ec2_ip_address')|list }}
+
+This takes the list of hosts in group 'x', looks them up in `hostvars`,
+and then looks up the `ec2_ip_address` of the result. The final result
+is a list of IP addresses for the hosts in group 'x'.
+
+The third argument to the filter can also be a list, for a recursive
+lookup inside the container::
+
+    {{ ['a']|map('extract', b, ['x','y'])|list }}
+
+This would return a list containing the value of `b['a']['x']['y']`.
+
 .. _comment_filter:
 
 Comment Filter
@@ -426,7 +464,7 @@ Other Useful Filters
 
 To add quotes for shell usage::
 
-    - shell: echo={{ string_value | quote }} 
+    - shell: echo {{ string_value | quote }} 
 
 To use one value on true and another on false (new in version 1.9)::
 
@@ -450,11 +488,11 @@ To separate the windows drive letter from the rest of a file path (new in versio
 
 To get only the windows drive letter::
 
-    {{ path | win_splitdrive | first }} 
-    
+    {{ path | win_splitdrive | first }}
+
 To get the rest of the path without the drive letter::
 
-    {{ path | win_splitdrive | last }} 
+    {{ path | win_splitdrive | last }}
 
 To get the directory from a path::
 
@@ -514,23 +552,35 @@ To match strings against a regex, use the "match" or "search" filter::
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
-    # convert "ansible" to "able"    
+    # convert "ansible" to "able"
     {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
 
     # convert "foobar" to "bar"
     {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
 
+    # convert "localhost:80" to "localhost, 80" using named groups
+    {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
+
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+.. versionadded:: 2.0
 
 To escape special characters within a regex, use the "regex_escape" filter::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
+To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
+
+    # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
+    {{ ansible_mounts|map(attribute='mount')|join(',') }}
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
+
+.. _Jinja2 map() docs: http://jinja.pocoo.org/docs/dev/templates/#map
 
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 

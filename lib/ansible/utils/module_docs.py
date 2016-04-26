@@ -17,10 +17,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import sys
 import ast
-import yaml
+from ansible.parsing.yaml.loader import AnsibleLoader
 import traceback
 
 from collections import MutableMapping, MutableSet, MutableSequence
@@ -33,9 +37,11 @@ except ImportError:
     display = Display()
 
 # modules that are ok that they do not have documentation strings
-BLACKLIST_MODULES = [
-   'async_wrapper', 'accelerate', 'async_status'
-]
+BLACKLIST_MODULES = frozenset((
+   'async_wrapper',
+   'accelerate',
+   'fireball',
+))
 
 def get_docstring(filename, verbose=False):
     """
@@ -63,10 +69,11 @@ def get_docstring(filename, verbose=False):
                         theid = t.id
                     except AttributeError as e:
                         # skip errors can happen when trying to use the normal code
+                        display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
                     if 'DOCUMENTATION' in theid:
-                        doc = yaml.safe_load(child.value.s)
+                        doc = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                         fragments = doc.get('extends_documentation_fragment', [])
 
                         if isinstance(fragments, basestring):
@@ -86,7 +93,7 @@ def get_docstring(filename, verbose=False):
                             assert fragment_class is not None
 
                             fragment_yaml = getattr(fragment_class, fragment_var, '{}')
-                            fragment = yaml.safe_load(fragment_yaml)
+                            fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
                             if fragment.has_key('notes'):
                                 notes = fragment.pop('notes')
@@ -119,6 +126,7 @@ def get_docstring(filename, verbose=False):
     except:
         display.error("unable to parse %s" % filename)
         if verbose == True:
+            display.display("unable to parse %s" % filename)
             raise
     return doc, plainexamples, returndocs
 

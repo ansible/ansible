@@ -1,3 +1,5 @@
+.. _check_mode_dry:
+
 Check Mode ("Dry Run")
 ======================
 
@@ -38,7 +40,25 @@ Example::
 
 As a reminder, a task with a `when` clause evaluated to false, will
 still be skipped even if it has a `always_run` clause evaluated to
-true.
+true. 
+
+Also if you want to skip, or ignore errors on some tasks in check mode
+you can use a boolean magic variable `ansible_check_mode` (added in version 2.1)
+which will be set to `True` during check mode.
+
+Example::
+
+    tasks:
+
+      - name: this task will be skipped in check mode
+        git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
+        when: not ansible_check_mode
+
+      - name: this task will ignore errors in check mode
+        git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
+        ignore_errors: "{{ ansible_check_mode }}"
+
+
 
 .. _diff_mode:
 

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from six import with_metaclass
+from ansible.compat.six import with_metaclass
 
 try:
     from __main__ import display
@@ -31,10 +31,12 @@ except ImportError:
 
 __all__ = ['LookupBase']
 
+
 class LookupBase(with_metaclass(ABCMeta, object)):
     def __init__(self, loader=None, templar=None, **kwargs):
         self._loader = loader
         self._templar = templar
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
     def get_basedir(self, variables):

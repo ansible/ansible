@@ -19,12 +19,19 @@ rpm-build
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
+docs/man/man1/ansible.1
+docs/man/man1/ansible-doc.1
+docs/man/man1/ansible-galaxy.1
+docs/man/man1/ansible-playbook.1
+docs/man/man1/ansible-pull.1
+docs/man/man1/ansible-vault.1
 docs/man/man3/*
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
 docsite/rst/modules_by_category.rst
+docsite/rst/playbooks_directives.rst
 docsite/rst/list_of_*.rst
 docsite/rst/*_module.rst
 docsite/*.html
@@ -41,6 +48,8 @@ deb-build
 *.swo
 credentials.yml
 # test output
+*.retry
+*.out
 .coverage
 .tox
 results.xml

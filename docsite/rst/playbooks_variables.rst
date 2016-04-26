@@ -21,6 +21,8 @@ and the ``when`` conditional can also be used with variables, and to help manage
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
+For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
+
 .. _valid_variable_names:
 
 What Makes A Valid Variable Name
@@ -34,7 +36,26 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
-Easy enough, let's move on.
+YAML also supports dictionaries which map keys to values.  For instance::
+
+  foo:
+    field1: one
+    field2: two
+
+You can then reference a specific field in the dictionary using either bracket
+notation or dot notation::
+
+  foo['field1']
+  foo.field1
+
+These will both reference the same value ("one").  However, if you choose to
+use dot notation be aware that some keys can cause problems because they
+collide with attributes and methods of python dictionaries.  You should use
+bracket notation instead of dot notation if you use keys which start and end
+with two underscores (Those are reserved for special meanings in python) or
+are any of the known public attributes:
+
+``add``, ``append``, ``as_integer_ratio``, ``bit_length``, ``capitalize``, ``center``, ``clear``, ``conjugate``, ``copy``, ``count``, ``decode``, ``denominator``, ``difference``, ``difference_update``, ``discard``, ``encode``, ``endswith``, ``expandtabs``, ``extend``, ``find``, ``format``, ``fromhex``, ``fromkeys``, ``get``, ``has_key``, ``hex``, ``imag``, ``index``, ``insert``, ``intersection``, ``intersection_update``, ``isalnum``, ``isalpha``, ``isdecimal``, ``isdigit``, ``isdisjoint``, ``is_integer``, ``islower``, ``isnumeric``, ``isspace``, ``issubset``, ``issuperset``, ``istitle``, ``isupper``, ``items``, ``iteritems``, ``iterkeys``, ``itervalues``, ``join``, ``keys``, ``ljust``, ``lower``, ``lstrip``, ``numerator``, ``partition``, ``pop``, ``popitem``, ``real``, ``remove``, ``replace``, ``reverse``, ``rfind``, ``rindex``, ``rjust``, ``rpartition``, ``rsplit``, ``rstrip``, ``setdefault``, ``sort``, ``split``, ``splitlines``, ``startswith``, ``strip``, ``swapcase``, ``symmetric_difference``, ``symmetric_difference_update``, ``title``, ``translate``, ``union``, ``update``, ``upper``, ``values``, ``viewitems``, ``viewkeys``, ``viewvalues``, ``zfill``.
 
 .. _variables_in_inventory:
 
@@ -474,6 +495,24 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
+.. _ansible_version:
+
+Ansible version
+```````````````
+
+.. versionadded:: 1.8
+
+To adapt playbook behavior to specific version of ansible, a variable ansible_version is available, with the following
+structure::
+
+    "ansible_version": {
+        "full": "2.0.0.2",
+        "major": 2,
+        "minor": 0,
+        "revision": 0,
+        "string": "2.0.0.2"
+    }
+
 .. _fact_caching:
 
 Fact Caching
@@ -532,6 +571,8 @@ To configure fact caching using jsonfile, enable it in ``ansible.cfg`` as follow
 ``fact_caching_connection`` is a local filesystem path to a writeable
 directory (ansible will attempt to create the directory if one does not exist).
 
+``fact_caching_timeout`` is the number of seconds to cache the recorded facts.
+
 .. _registered_variables:
 
 Registered Variables
@@ -563,7 +604,7 @@ in Ansible.  Effectively registered variables are just like facts.
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-```````````````````````````````
+````````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
@@ -591,7 +632,7 @@ these names themselves as they are reserved.  ``environment`` is also reserved.
 
 ``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can get at the variables, but you will not be able to see the facts.
+or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -627,13 +668,13 @@ period, without the rest of the domain.
 
 ``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
-``delegate_to`` is the inventory hostname of the host that the current task has been delegated to using ``delegate_to`` keyword.
-
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
-And finally, ``role_path`` will return the current role's pathname (since 1.8). This will only work inside a role.
+We then have ``role_path`` which will return the current role's pathname (since 1.8). This will only work inside a role.
+
+And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic variable which will be set to ``True`` if you run Ansible with ``--check``.
 
 .. _variable_file_separation_details:
 
@@ -707,6 +748,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
 The ``key=value`` form is obviously simpler, but it's there if you need it!
 
+.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
+          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
+
 As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
 
     --extra-vars "@some_file.json"
@@ -717,12 +761,12 @@ or in a file as above.
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
-```````````````````````````````````````````````````
+````````````````````````````````````````````````````
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.  
 
-Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".  
+Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".
 Why?  Because that's not Ansible's Zen philosophy of doing things.
 
 There is only one Empire State Building. One Mona Lisa, etc.  Figure out where to define a variable, and don't make
@@ -731,19 +775,82 @@ it complicated.
 However, let's go ahead and get precedence out of the way!  It exists.  It's a real thing, and you might have
 a use for it.
 
-If multiple variables of the same name are defined in different places, they win in a certain order, which is::
+If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-    * extra vars (``-e`` in the command line) always win
-    * then comes connection variables defined in inventory (``ansible_user``, etc)
-    * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
-    * then comes the rest of the variables defined in inventory
-    * then comes facts discovered about a system
-    * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+.. include:: ansible_ssh_changes_note.rst
 
-.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 
-That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
-control you might want over values.
+ * "role defaults", which lose in priority to everything and are the most easily overridden 
+ * variables defined in inventory
+ * facts discovered about a system
+ * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
+ * connection variables (``ansible_user``, etc.)
+ * extra vars (``-e`` in the command line) always win
+
+.. note:: 
+
+    In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+
+In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+
+  * role defaults [1]_
+  * inventory vars [2]_
+  * inventory group_vars
+  * inventory host_vars
+  * playbook group_vars
+  * playbook host_vars
+  * host facts
+  * registered vars
+  * set_facts
+  * play vars
+  * play vars_prompt
+  * play vars_files
+  * role and include vars
+  * block vars (only for tasks in block)
+  * task vars (only for the task)
+  * extra vars (always win precedence)
+
+Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
+
+.. rubric:: Footnotes
+
+.. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
+.. [2] Variables defined in inventory file or provided by dynamic inventory.
+
+.. note:: Within any section, redefining a var will overwrite the previous instance.
+          If multiple groups have the same variable, the last one loaded wins.
+          If you define a variable twice in a play's vars: section, the 2nd one wins.
+.. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+
+
+Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+
+    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+
+This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+
+    ansible... -e "ansible_ssh_user=<user>"
+
+
+.. _variable_scopes:
+
+Variable Scopes
+````````````````
+
+Ansible has 3 main scopes:
+
+ * Global: this is set by config, environment variables and the command line
+ * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+
+.. _variable_examples:
+
+Variable Examples
+`````````````````
+
+That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
 First off, group variables are super powerful.
 
@@ -760,7 +867,7 @@ Regional information might be defined in a ``group_vars/region`` variable.  If t
 
     ---
     # file: /etc/ansible/group_vars/boston
-    ntp_server: boston-time.example.com 
+    ntp_server: boston-time.example.com
 
 If for some crazy reason we wanted to tell just a specific host to use a specific NTP server, it would then override the group variable!::
 
@@ -846,6 +953,11 @@ how all of these things can work together.
 
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+
+Advanced Syntax
+```````````````
+
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
 
 .. seealso::
 

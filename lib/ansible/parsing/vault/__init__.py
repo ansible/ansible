@@ -22,32 +22,17 @@ import shlex
 import shutil
 import sys
 import tempfile
+import random
 from io import BytesIO
 from subprocess import call
 from ansible.errors import AnsibleError
 from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
-from six import PY3
 
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
 from hashlib import md5
-
-
-try:
-    from six import byte2int
-except ImportError:
-    # bytes2int added in six-1.4.0
-    if PY3:
-        import operator
-        byte2int = operator.itemgetter(0)
-    else:
-        def byte2int(bs):
-            return ord(bs[0])
-
-from ansible.utils.unicode import to_unicode, to_bytes
-
 
 try:
     from Crypto.Hash import SHA256, HMAC
@@ -86,6 +71,9 @@ try:
 except ImportError:
     pass
 
+from ansible.compat.six import PY3
+from ansible.utils.unicode import to_unicode, to_bytes
+
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
@@ -93,6 +81,8 @@ CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the on
 b_HEADER = b'$ANSIBLE_VAULT'
 CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_WRITE_WHITELIST=frozenset((u'AES256',))
+# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
+# (used in VaultFile header) to a cipher class
 
 
 def check_prereqs():
@@ -136,12 +126,11 @@ class VaultLib:
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
             self.cipher_name = u"AES256"
 
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals():
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
-        else:
+        try:
+            Cipher = CIPHER_MAPPING[self.cipher_name]
+        except KeyError:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
+        this_cipher = Cipher()
 
         # encrypt data
         b_enc_data = this_cipher.encrypt(b_data, self.b_password)
@@ -194,10 +183,12 @@ class VaultLib:
         if not self.cipher_name:
             raise AnsibleError("the cipher must be set before adding a header")
 
-        tmpdata = [b'%s\n' % b_data[i:i+80] for i in range(0, len(b_data), 80)]
-        tmpdata.insert(0, b'%s;%s;%s\n' % (b_HEADER, self.b_version,
-            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')))
-        tmpdata = b''.join(tmpdata)
+        header = b';'.join([b_HEADER, self.b_version,
+            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')])
+        tmpdata = [header]
+        tmpdata += [b_data[i:i+80] for i in range(0, len(b_data), 80)]
+        tmpdata += [b'']
+        tmpdata = b'\n'.join(tmpdata)
 
         return tmpdata
 
@@ -230,23 +221,95 @@ class VaultEditor:
     def __init__(self, password):
         self.vault = VaultLib(password)
 
+    def _shred_file_custom(self, tmp_path):
+        """"Destroy a file, when shred (core-utils) is not available
+
+        Unix `shred' destroys files "so that they can be recovered only with great difficulty with
+        specialised hardware, if at all". It is based on the method from the paper
+        "Secure Deletion of Data from Magnetic and Solid-State Memory",
+        Proceedings of the Sixth USENIX Security Symposium (San Jose, California, July 22-25, 1996).
+
+        We do not go to that length to re-implement shred in Python; instead, overwriting with a block
+        of random data should suffice.
+
+        See https://github.com/ansible/ansible/pull/13700 .
+        """
+
+        file_len = os.path.getsize(tmp_path)
+
+        if file_len > 0: # avoid work when file was empty
+            max_chunk_len = min(1024*1024*2, file_len)
+
+            passes = 3
+            with open(tmp_path,  "wb") as fh:
+                for _ in range(passes):
+                    fh.seek(0,  0)
+                    # get a random chunk of data, each pass with other length
+                    chunk_len = random.randint(max_chunk_len//2, max_chunk_len)
+                    data = os.urandom(chunk_len)
+
+                    for _ in range(0, file_len // chunk_len):
+                        fh.write(data)
+                    fh.write(data[:file_len % chunk_len])
+
+                    assert(fh.tell() == file_len) # FIXME remove this assert once we have unittests to check its accuracy
+                    os.fsync(fh)
+
+
+    def _shred_file(self, tmp_path):
+        """Securely destroy a decrypted file
+
+        Note standard limitations of GNU shred apply (For flash, overwriting would have no effect
+        due to wear leveling; for other storage systems, the async kernel->filesystem->disk calls never
+        guarantee data hits the disk; etc). Furthermore, if your tmp dirs is on tmpfs (ramdisks),
+        it is a non-issue.
+
+        Nevertheless, some form of overwriting the data (instead of just removing the fs index entry) is
+        a good idea. If shred is not available (e.g. on windows, or no core-utils installed), fall back on
+        a custom shredding method.
+        """
+
+        if not os.path.isfile(tmp_path):
+            # file is already gone
+            return
+
+        try:
+            r = call(['shred', tmp_path])
+        except (OSError, ValueError):
+            # shred is not available on this system, or some other error occured.
+            # ValueError caught because OS X El Capitan is raising an
+            # exception big enough to hit a limit in python2-2.7.11 and below.
+            # Symptom is ValueError: insecure pickle when shred is not
+            # installed there.
+            r = 1
+
+        if r != 0:
+            # we could not successfully execute unix shred; therefore, do custom shred.
+            self._shred_file_custom(tmp_path)
+
+        os.remove(tmp_path)
+
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
-        # make sure the umask is set to a sane value
-        old_umask = os.umask(0o077)
 
         # Create a tempfile
         _, tmp_path = tempfile.mkstemp()
 
         if existing_data:
-            self.write_data(existing_data, tmp_path)
+            self.write_data(existing_data, tmp_path, shred=False)
 
         # drop the user into an editor on the tmp file
-        call(self._editor_shell_command(tmp_path))
+        try:
+            call(self._editor_shell_command(tmp_path))
+        except:
+            # whatever happens, destroy the decrypted file
+            self._shred_file(tmp_path)
+            raise
+
         tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
         if existing_data == tmpdata and not force_save:
-            os.remove(tmp_path)
+            self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
@@ -255,9 +318,6 @@ class VaultEditor:
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
-
-        # and restore umask
-        os.umask(old_umask)
 
     def encrypt_file(self, filename, output_file=None):
 
@@ -272,8 +332,11 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
-        self.write_data(plaintext, output_file or filename)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
+        self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename):
         """ create a new encrypted file """
@@ -292,7 +355,10 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
@@ -300,33 +366,40 @@ class VaultEditor:
         else:
             self._edit_file_helper(filename, existing_data=plaintext, force_save=False)
 
-    def view_file(self, filename):
+    def plaintext(self, filename):
 
         check_prereqs()
-
-        # FIXME: Why write this to a temporary file at all? It would be safer
-        # to feed it to the PAGER on stdin.
-        _, tmp_path = tempfile.mkstemp()
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
-        self.write_data(plaintext, tmp_path)
 
-        # drop the user into pager on the tmp file
-        call(self._pager_shell_command(tmp_path))
-        os.remove(tmp_path)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
+
+        return plaintext
 
     def rekey_file(self, filename, new_password):
 
         check_prereqs()
 
+        prev = os.stat(filename)
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
+
         self.write_data(new_ciphertext, filename)
 
+        # preserve permissions
+        os.chmod(filename, prev.st_mode)
+        os.chown(filename, prev.st_uid, prev.st_gid)
+
     def read_data(self, filename):
+
         try:
             if filename == '-':
                 data = sys.stdin.read()
@@ -338,21 +411,38 @@ class VaultEditor:
 
         return data
 
-    def write_data(self, data, filename):
+    def write_data(self, data, filename, shred=True):
+        """write data to given path
+        
+        if shred==True, make sure that the original data is first shredded so 
+        that is cannot be recovered
+        """
         bytes = to_bytes(data, errors='strict')
         if filename == '-':
             sys.stdout.write(bytes)
         else:
             if os.path.isfile(filename):
-                os.remove(filename)
+                if shred:
+                    self._shred_file(filename)
+                else:
+                    os.remove(filename)
             with open(filename, "wb") as fh:
                 fh.write(bytes)
 
     def shuffle_files(self, src, dest):
+        prev = None
         # overwrite dest with src
         if os.path.isfile(dest):
+            prev = os.stat(dest)
+            # old file 'dest' was encrypted, no need to _shred_file
             os.remove(dest)
         shutil.move(src, dest)
+
+        # reset permissions if needed
+        if prev is not None:
+            #TODO: selinux, ACLs, xattr?
+            os.chmod(dest, prev.st_mode)
+            os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
         EDITOR = os.environ.get('EDITOR','vim')
@@ -360,13 +450,6 @@ class VaultEditor:
         editor.append(filename)
 
         return editor
-
-    def _pager_shell_command(self, filename):
-        PAGER = os.environ.get('PAGER','less')
-        pager = shlex.split(PAGER)
-        pager.append(filename)
-
-        return pager
 
 class VaultFile(object):
 
@@ -383,7 +466,7 @@ class VaultFile(object):
 
         _, self.tmpfile = tempfile.mkstemp()
 
-    ### FIXME:
+    ### TODO:
     # __del__ can be problematic in python... For this use case, make
     # VaultFile a context manager instead (implement __enter__ and __exit__)
     def __del__(self):
@@ -405,7 +488,7 @@ class VaultFile(object):
             this_vault = VaultLib(self.password)
             dec_data = this_vault.decrypt(tmpdata)
             if dec_data is None:
-                raise AnsibleError("Decryption failed")
+                raise AnsibleError("Failed to decrypt: %s" % self.filename)
             else:
                 self.tmpfile.write(dec_data)
                 return self.tmpfile
@@ -435,7 +518,7 @@ class VaultAES:
 
         d = d_i = b''
         while len(d) < key_length + iv_length:
-            text = b"%s%s%s" % (d_i, password, salt)
+            text = b''.join([d_i, password, salt])
             d_i = to_bytes(md5(text).digest(), errors='strict')
             d += d_i
 
@@ -581,7 +664,7 @@ class VaultAES256:
 
         # COMBINE SALT, DIGEST AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = b'%s\n%s\n%s' % (hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData))
+        message = b'\n'.join([hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData)])
         message = hexlify(message)
         return message
 
@@ -637,3 +720,10 @@ class VaultAES256:
                 result |= ord(x) ^ ord(y)
         return result == 0
 
+
+# Keys could be made bytes later if the code that gets the data is more
+# naturally byte-oriented
+CIPHER_MAPPING = {
+        u'AES': VaultAES,
+        u'AES256': VaultAES256,
+    }

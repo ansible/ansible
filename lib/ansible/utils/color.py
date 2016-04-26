@@ -54,22 +54,23 @@ if C.ANSIBLE_FORCE_COLOR:
 # http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
 
 codeCodes = {
-    'black':     '0;30', 'bright gray':    '0;37',
-    'blue':      '0;34', 'white':          '1;37',
-    'green':     '0;32', 'bright blue':    '1;34',
-    'cyan':      '0;36', 'bright green':   '1;32',
-    'red':       '0;31', 'bright cyan':    '1;36',
-    'purple':    '0;35', 'bright red':     '1;31',
-    'yellow':    '0;33', 'bright purple':  '1;35',
-    'dark gray': '1;30', 'bright yellow':  '1;33',
-    'normal':    '0'
+    'black':     u'0;30', 'bright gray':    u'0;37',
+    'blue':      u'0;34', 'white':          u'1;37',
+    'green':     u'0;32', 'bright blue':    u'1;34',
+    'cyan':      u'0;36', 'bright green':   u'1;32',
+    'red':       u'0;31', 'bright cyan':    u'1;36',
+    'purple':    u'0;35', 'bright red':     u'1;31',
+    'yellow':    u'0;33', 'bright purple':  u'1;35',
+    'dark gray': u'1;30', 'bright yellow':  u'1;33',
+    'magenta':   u'0;35', 'bright magenta': u'1;35',
+    'normal':    u'0'   ,
 }
 
 def stringc(text, color):
     """String in color."""
 
     if ANSIBLE_COLOR:
-        return "\033["+codeCodes[color]+"m"+text+"\033[0m"
+        return u"\033[%sm%s\033[0m" % (codeCodes[color], text)
     else:
         return text
 
@@ -78,17 +79,17 @@ def stringc(text, color):
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
     if num != 0 and ANSIBLE_COLOR and color is not None:
-        return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
+        return u"%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
     else:
-        return "%s=%-4s" % (lead, str(num))
+        return u"%s=%-4s" % (lead, str(num))
 
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return "%-37s" % stringc(host, 'red')
+            return u"%-37s" % stringc(host, 'red')
         elif stats['changed'] != 0:
-            return "%-37s" % stringc(host, 'yellow')
+            return u"%-37s" % stringc(host, 'yellow')
         else:
-            return "%-37s" % stringc(host, 'green')
-    return "%-26s" % host
+            return u"%-37s" % stringc(host, 'green')
+    return u"%-26s" % host
 

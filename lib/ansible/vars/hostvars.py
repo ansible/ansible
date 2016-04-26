@@ -28,65 +28,74 @@ from ansible import constants as C
 from ansible.inventory.host import Host
 from ansible.template import Templar
 
+STATIC_VARS = [
+  'inventory_hostname', 'inventory_hostname_short',
+  'inventory_file', 'inventory_dir', 'playbook_dir',
+  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
+  'ansible_version', 'omit', 'role_names'
+]
+
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 __all__ = ['HostVars']
 
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_manager, play, inventory, loader):
-        self._lookup = {}
+    def __init__(self, inventory, variable_manager, loader):
+        self._lookup = dict()
+        self._inventory = inventory
         self._loader = loader
+        self._variable_manager = variable_manager
+        variable_manager._hostvars = self
+        self._cached_result = dict()
 
-        hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
+    def set_variable_manager(self, variable_manager):
+        self._variable_manager = variable_manager
+        variable_manager._hostvars = self
 
-        # check to see if localhost is in the hosts list, as we
-        # may have it referenced via hostvars but if created implicitly
-        # it doesn't sow up in the hosts list
-        has_localhost = False
-        for host in hosts:
-            if host.name in C.LOCALHOST:
-                has_localhost = True
-                break
+    def set_inventory(self, inventory):
+        self._inventory = inventory
 
-        # we don't use the method in inventory to create the implicit host,
-        # because it also adds it to the 'ungrouped' group, and we want to
-        # avoid any side-effects
-        if not has_localhost:
-            new_host =  Host(name='localhost')
-            new_host.set_variable("ansible_python_interpreter", sys.executable)
-            new_host.set_variable("ansible_connection", "local")
-            new_host.address = '127.0.0.1'
-            hosts.append(new_host)
-
-        for host in hosts:
-            self._lookup[host.name] = vars_manager.get_vars(loader=loader, play=play, host=host, include_hostvars=False)
+    def _find_host(self, host_name):
+        return self._inventory.get_host(host_name)
 
     def __getitem__(self, host_name):
+        host = self._find_host(host_name)
+        if host is None:
+            raise j2undefined
 
-        if host_name not in self._lookup:
-            return j2undefined
+        data = self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
-        data = self._lookup.get(host_name)
-        templar = Templar(variables=data, loader=self._loader)
-        return templar.template(data, fail_on_undefined=False)
+        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
+        if sha1_hash in self._cached_result:
+            result = self._cached_result[sha1_hash]
+        else:
+            templar = Templar(variables=data, loader=self._loader)
+            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
+            self._cached_result[sha1_hash] = result
+        return result
+
+    def set_host_variable(self, host, varname, value):
+        self._variable_manager.set_host_variable(host, varname, value)
+
+    def set_nonpersistent_facts(self, host, facts):
+        self._variable_manager.set_nonpersistent_facts(host, facts)
+
+    def set_host_facts(self, host, facts):
+        self._variable_manager.set_host_facts(host, facts)
 
     def __contains__(self, host_name):
-        item = self.get(host_name)
-        if item and item is not j2undefined:
-            return True
-        return False
+        return self._find_host(host_name) is not None
 
     def __iter__(self):
-        raise NotImplementedError('HostVars does not support iteration as hosts are discovered on an as needed basis.')
+        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+            yield host
 
     def __len__(self):
-        raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
+        return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
 
-    def __getstate__(self):
-        data = self._lookup.copy()
-        return dict(loader=self._loader, data=data)
-
-    def __setstate__(self, data):
-        self._lookup = data.get('data')
-        self._loader = data.get('loader')

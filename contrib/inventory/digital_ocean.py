@@ -137,6 +137,7 @@ import re
 import argparse
 from time import time
 import ConfigParser
+import ast
 
 try:
     import json
@@ -167,6 +168,8 @@ class DigitalOceanInventory(object):
         # Define defaults
         self.cache_path = '.'
         self.cache_max_age = 0
+        self.use_private_network = False
+        self.group_variables = {}
 
         # Read settings, environment variables, and CLI arguments
         self.read_settings()
@@ -256,6 +259,13 @@ or environment variables (DO_API_TOKEN)''')
         if config.has_option('digital_ocean', 'cache_max_age'):
             self.cache_max_age = config.getint('digital_ocean', 'cache_max_age')
 
+        # Private IP Address
+        if config.has_option('digital_ocean', 'use_private_network'):
+            self.use_private_network = config.get('digital_ocean', 'use_private_network')
+
+        # Group variables
+        if config.has_option('digital_ocean', 'group_variables'):
+            self.group_variables = ast.literal_eval(config.get('digital_ocean', 'group_variables'))
 
     def read_environment(self):
         ''' Reads the settings from environment variables '''
@@ -345,8 +355,8 @@ or environment variables (DO_API_TOKEN)''')
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            #when using private_networking, the API reports the private one in "ip_address", which is useless. We need the public one for Ansible to work
-            if 'private_networking' in droplet['features']:
+            #when using private_networking, the API reports the private one in "ip_address".
+            if 'private_networking' in droplet['features'] and not self.use_private_network:
                 for net in droplet['networks']['v4']:
                     if net['type']=='public':
                         dest=net['ip_address']
@@ -355,22 +365,24 @@ or environment variables (DO_API_TOKEN)''')
             else:
                 dest = droplet['ip_address']
 
-            self.inventory[droplet['id']] = [dest]
-            self.push(self.inventory, droplet['name'], dest)
-            self.push(self.inventory, 'region_' + droplet['region']['slug'], dest)
-            self.push(self.inventory, 'image_' + str(droplet['image']['id']), dest)
-            self.push(self.inventory, 'size_' + droplet['size']['slug'], dest)
+            dest = { 'hosts': [ dest ], 'vars': self.group_variables }
+
+            self.inventory[droplet['id']] = dest
+            self.inventory[droplet['name']] = dest
+            self.inventory['region_' + droplet['region']['slug']] = dest
+            self.inventory['image_' + str(droplet['image']['id'])] = dest
+            self.inventory['size_' + droplet['size']['slug']] = dest
 
             image_slug = droplet['image']['slug']
             if image_slug:
-                self.push(self.inventory, 'image_' + self.to_safe(image_slug), dest)
+                self.inventory['image_' + self.to_safe(image_slug)] = dest
             else:
                 image_name = droplet['image']['name']
                 if image_name:
-                    self.push(self.inventory, 'image_' + self.to_safe(image_name), dest)
+                    self.inventory['image_' + self.to_safe(image_name)] = dest
 
-            self.push(self.inventory, 'distro_' + self.to_safe(droplet['image']['distribution']), dest)
-            self.push(self.inventory, 'status_' + droplet['status'], dest)
+            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest
+            self.inventory['status_' + droplet['status']] = dest
 
 
     def load_droplet_variables_for_host(self):

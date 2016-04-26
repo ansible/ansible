@@ -20,7 +20,9 @@ setup(name='ansible',
       author_email='support@ansible.com',
       url='http://ansible.com/',
       license='GPLv3',
-      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6', 'six'],
+      # Ansible will also make use of a system copy of python-six if installed but use a
+      # Bundled copy if it's not.
+      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
@@ -47,6 +49,7 @@ setup(name='ansible',
          'bin/ansible-pull',
          'bin/ansible-doc',
          'bin/ansible-galaxy',
+         'bin/ansible-console',
          'bin/ansible-vault',
       ],
       data_files=[],

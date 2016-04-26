@@ -19,9 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError,AnsibleError
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
@@ -137,7 +137,16 @@ class ModuleArgsParser:
         # than those which may be parsed/normalized next
         final_args = dict()
         if additional_args:
-            final_args.update(additional_args)
+            if isinstance(additional_args, string_types):
+                templar = Templar(loader=None)
+                if templar._contains_vars(additional_args):
+                    final_args['_variable_params'] = additional_args
+                else:
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+            elif isinstance(additional_args, dict):
+                final_args.update(additional_args)
+            else:
+                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's an 'old style' invocation.
@@ -154,6 +163,13 @@ class ModuleArgsParser:
                 if isinstance(tmp_args, string_types):
                     tmp_args = parse_kv(tmp_args)
                 args.update(tmp_args)
+
+        # only internal variables can start with an underscore, so
+        # we don't allow users to set them directy in arguments
+        if args and action not in ('command', 'shell', 'script', 'raw'):
+            for arg in args:
+                if arg.startswith('_ansible_'):
+                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -206,18 +222,21 @@ class ModuleArgsParser:
         action = None
         args = None
 
+        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
             if 'module' in thing:
-                action = thing['module']
+                action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
+                check_raw = action in actions_allowing_raw
+                args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in actions_allowing_raw
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -233,16 +252,16 @@ class ModuleArgsParser:
         task, dealing with all sorts of levels of fuzziness.
         '''
 
-        thing       = None
+        thing      = None
+
         action      = None
-        connection  = self._task_ds.get('connection', None)
+        delegate_to = self._task_ds.get('delegate_to', None)
         args        = dict()
 
 
         # this is the 'extra gross' scenario detailed above, so we grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        # FIXME: add test cases for this
         additional_args = self._task_ds.get('args', dict())
 
         # We can have one of action, local_action, or module specified
@@ -253,15 +272,15 @@ class ModuleArgsParser:
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # local_action
-        local_action = False
         if 'local_action' in self._task_ds:
-            # local_action is similar but also implies a connection='local'
+            # local_action is similar but also implies a delegate_to
             if action is not None:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
-            connection = 'local'
-            local_action = True
+            delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
+
+        # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
@@ -282,7 +301,7 @@ class ModuleArgsParser:
                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
@@ -294,8 +313,4 @@ class ModuleArgsParser:
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)
 
-        # now add the local action flag to the args, if it was set
-        if local_action:
-            args['_local_action'] = local_action
-
-        return (action, args, connection)
+        return (action, args, delegate_to)

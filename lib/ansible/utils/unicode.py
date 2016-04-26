@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import string_types, text_type, binary_type, PY3
+from ansible.compat.six import string_types, text_type, binary_type, PY3
 
 # to_bytes and to_unicode were written by Toshio Kuratomi for the
 # python-kitchen library https://pypi.python.org/pypi/kitchen
@@ -251,3 +251,35 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
 # ensure that a filter will return unicode values.
 def unicode_wrap(func, *args, **kwargs):
     return to_unicode(func(*args, **kwargs), nonstring='passthru')
+
+
+# Alias for converting to native strings.
+# Native strings are the default string type for the particular version of
+# python.  The objects are called "str" in both py2 and py3 but they mean
+# different things.  In py2, it's a byte string like in C.  In py3 it's an
+# abstract text type (like py2's unicode type).
+#
+# Use this when raising exceptions and wanting to get the string
+# representation of an object for the exception message.  For example:
+#
+# try:
+#    do_something()
+# except Exception as e:
+#    raise AnsibleError(to_str(e))
+#
+# Note that this is because python's exception handling expects native strings
+# and doe the wrong thing if given the other sort of string (in py2, if given
+# unicode strings, it could traceback or omit the message.  in py3, if given
+# byte strings it prints their repr (so the message ends up as b'message').
+#
+# If you use ansible's API instead of re-raising an exception, use to_unicode
+# instead:
+#
+# try:
+#     do_something()
+# except Exception as e:
+#     display.warn(to_unicode(e))
+if PY3:
+    to_str = to_unicode
+else:
+    to_str = to_bytes

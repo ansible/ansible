@@ -20,15 +20,13 @@ __metaclass__ = type
 
 import os
 import os.path
-import pipes
-import shutil
 import tempfile
-import base64
 import re
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
+
 
 class ActionModule(ActionBase):
 
@@ -75,24 +73,39 @@ class ActionModule(ActionBase):
         tmp.close()
         return temp_path
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg=("skipped, this module does not support check_mode."))
+            result['skipped'] = True
+            result['msg'] = "skipped, this module does not support check_mode."
+            return result
 
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
+        follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
 
-
         if src is None or dest is None:
-            return dict(failed=True, msg="src and dest are required")
+            result['failed'] = True
+            result['msg'] = "src and dest are required"
+            return result
+
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         if boolean(remote_src):
-            return self._execute_module(tmp=tmp, task_vars=task_vars)
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
+            self._remove_tmp_path(tmp)
+            return result
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
@@ -102,49 +115,55 @@ class ActionModule(ActionBase):
         if regexp is not None:
             _re = re.compile(regexp)
 
+        if not os.path.isdir(src):
+            result['failed'] = True
+            result['msg'] = "Source (%s) is not a directory" % src
+            return result
+
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
         path_checksum = checksum_s(path)
-        dest = self._remote_expand_user(dest, tmp)
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
+        dest = self._remote_expand_user(dest)
+        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=tmp)
 
         diff = {}
-        if path_checksum != remote_checksum:
-            resultant = file(path).read()
+
+        # setup args for running modules
+        new_module_args = self._task.args.copy()
+
+        # clean assemble specific options
+        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
+            if opt in new_module_args:
+                del new_module_args[opt]
+
+        new_module_args.update(
+            dict(
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+        )
+
+        if path_checksum != dest_stat['checksum']:
 
             if self._play_context.diff:
-                diff = self._get_diff_data(tmp, dest, path, task_vars)
+                diff = self._get_diff_data(dest, path, task_vars)
 
-            xfered = self._transfer_data('src', resultant)
+            remote_path = self._connection._shell.join_path(tmp, 'src')
+            xfered = self._transfer_file(path, remote_path)
 
             # fix file permissions when the copy is done as a different user
-            if self._play_context.become and self._play_context.become_user != 'root':
-                self._remote_chmod('a+r', xfered, tmp)
+            self._fixup_perms(tmp, remote_user, recursive=True)
 
-            # run the copy module
+            new_module_args.update( dict( src=xfered,))
 
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
-
-            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
             if diff:
                 res['diff'] = diff
-            return res
+            result.update(res)
         else:
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+        self._remove_tmp_path(tmp)
+
+        return result

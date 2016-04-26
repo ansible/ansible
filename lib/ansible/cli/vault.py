@@ -16,26 +16,35 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import sys
-import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
-from ansible.utils.display import Display
+from ansible.utils.unicode import to_unicode
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class VaultCLI(CLI):
     """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
 
-    def __init__(self, args, display=None):
+    def __init__(self, args):
 
         self.vault_pass = None
-        super(VaultCLI, self).__init__(args, display)
+        self.new_vault_pass = None
+        super(VaultCLI, self).__init__(args)
 
     def parse(self):
 
@@ -61,8 +70,8 @@ class VaultCLI(CLI):
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
-        self.options, self.args = self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
+        self.options, self.args = self.parser.parse_args(self.args[1:])
+        display.verbosity = self.options.verbosity
 
         can_output = ['encrypt', 'decrypt']
 
@@ -85,11 +94,19 @@ class VaultCLI(CLI):
         super(VaultCLI, self).run()
         loader = DataLoader()
 
+        # set default restrictive umask
+        old_umask = os.umask(0o077)
+
         if self.options.vault_password_file:
             # read vault_pass from a file
             self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
         else:
-            self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
+            newpass = False
+            rekey = False
+            if not self.options.new_vault_password_file:
+                newpass = (self.action in ['create', 'rekey', 'encrypt'])
+                rekey = (self.action == 'rekey')
+            self.vault_pass, self.new_vault_pass = self.ask_vault_passwords(ask_new_vault_pass=newpass, rekey=rekey)
 
         if self.options.new_vault_password_file:
             # for rekey only
@@ -102,27 +119,30 @@ class VaultCLI(CLI):
 
         self.execute()
 
+        # and restore umask
+        os.umask(old_umask)
+
     def execute_encrypt(self):
 
         if len(self.args) == 0 and sys.stdin.isatty():
-            self.display.display("Reading plaintext input from stdin", stderr=True)
+            display.display("Reading plaintext input from stdin", stderr=True)
 
         for f in self.args or ['-']:
             self.editor.encrypt_file(f, output_file=self.options.output_file)
 
         if sys.stdout.isatty():
-            self.display.display("Encryption successful", stderr=True)
+            display.display("Encryption successful", stderr=True)
 
     def execute_decrypt(self):
 
         if len(self.args) == 0 and sys.stdin.isatty():
-            self.display.display("Reading ciphertext input from stdin", stderr=True)
+            display.display("Reading ciphertext input from stdin", stderr=True)
 
         for f in self.args or ['-']:
             self.editor.decrypt_file(f, output_file=self.options.output_file)
 
         if sys.stdout.isatty():
-            self.display.display("Decryption successful", stderr=True)
+            display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
 
@@ -138,19 +158,19 @@ class VaultCLI(CLI):
     def execute_view(self):
 
         for f in self.args:
-            self.editor.view_file(f)
+            # Note: vault should return byte strings because it could encrypt
+            # and decrypt binary files.  We are responsible for changing it to
+            # unicode here because we are displaying it and therefore can make
+            # the decision that the display doesn't have to be precisely what
+            # the input was (leave that to decrypt instead)
+            self.pager(to_unicode(self.editor.plaintext(f)))
 
     def execute_rekey(self):
         for f in self.args:
             if not (os.path.isfile(f)):
                 raise AnsibleError(f + " does not exist")
 
-        if self.new_vault_pass:
-            new_password = self.new_vault_pass
-        else:
-            __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
-
         for f in self.args:
-            self.editor.rekey_file(f, new_password)
+            self.editor.rekey_file(f, self.new_vault_pass)
 
-        self.display.display("Rekey successful", stderr=True)
+        display.display("Rekey successful", stderr=True)

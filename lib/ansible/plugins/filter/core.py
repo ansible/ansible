@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 import sys
 import base64
@@ -38,13 +41,14 @@ import uuid
 import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
-from six import iteritems
+from ansible.compat.six import iteritems, string_types
 
 from ansible import errors
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 from ansible.utils.vars import merge_hash
+from ansible.vars.hostvars import HostVars
 
 try:
     import passlib.hash
@@ -54,6 +58,17 @@ except:
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+class AnsibleJSONEncoder(json.JSONEncoder):
+    '''
+    Simple encoder class to deal with JSON encoding of internal
+    types like HostVars
+    '''
+    def default(self, o):
+        if isinstance(o, HostVars):
+            return dict(o)
+        else:
+            return o
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
@@ -67,7 +82,7 @@ def to_nice_yaml(a, *args, **kw):
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
-    return json.dumps(a, *args, **kw)
+    return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 def to_nice_json(a, *args, **kw):
     '''Make verbose, human readable JSON'''
@@ -85,15 +100,17 @@ def to_nice_json(a, *args, **kw):
             else:
                 if major >= 2:
                     return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
+    try:
+        return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+    except:
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
-    return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
 
 def bool(a):
     ''' return a bool for the arg '''
     if a is None or type(a) == bool:
         return a
-    if type(a) in types.StringTypes:
+    if isinstance(a, string_types):
         a = a.lower()
     if a in ['yes', 'on', '1', 'true', 1]:
         return True
@@ -120,6 +137,45 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
         flags = 0
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
+
+def regex_findall(value, regex, multiline=False, ignorecase=False):
+    ''' Perform re.findall and return the list of matches '''
+    flags = 0
+    if ignorecase:
+        flags |= re.I
+    if multiline:
+        flags |= re.M
+    return re.findall(regex, value, flags)
+
+def regex_search(value, regex, *args, **kwargs):
+    ''' Perform re.search and return the list of matches or a backref '''
+
+    groups = list()
+    for arg in args:
+        if arg.startswith('\\g'):
+            match = re.match(r'\\g<(\S+)>', arg).group(1)
+            groups.append(match)
+        elif arg.startswith('\\'):
+            match = int(re.match(r'\\(\d+)', arg).group(1))
+            groups.append(match)
+        else:
+            raise errors.AnsibleFilterError('Unknown argument')
+
+    flags = 0
+    if kwargs.get('ignorecase'):
+        flags |= re.I
+    if kwargs.get('multiline'):
+        flags |= re.M
+
+    match = re.search(regex, value, flags)
+    if match:
+        if not groups:
+            return match.group()
+        else:
+            items = list()
+            for item in groups:
+                items.append(match.group(item))
+            return items
 
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
@@ -208,7 +264,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
     if hashtype in cryptmethod:
         if salt is None:
             r = SystemRandom()
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
+            if hashtype in ['md5']:
+                saltsize = 8
+            else:
+                saltsize = 16
+            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
@@ -324,6 +384,18 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def extract(item, container, morekeys=None):
+    from jinja2.runtime import Undefined
+
+    value = container[item]
+
+    if value is not Undefined and morekeys is not None:
+        if not isinstance(morekeys, list):
+            morekeys = [morekeys]
+
+        value = reduce(lambda d, k: d[k], morekeys, value)
+
+    return value
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -381,6 +453,8 @@ class FilterModule(object):
             # regex
             'regex_replace': regex_replace,
             'regex_escape': regex_escape,
+            'regex_search': regex_search,
+            'regex_findall': regex_findall,
 
             # ? : ;
             'ternary': ternary,
@@ -400,4 +474,7 @@ class FilterModule(object):
 
             # comment-style decoration
             'comment': comment,
+
+            # array and dict lookups
+            'extract': extract,
         }

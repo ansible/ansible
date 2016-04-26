@@ -17,6 +17,20 @@ class TestParseAddress(unittest.TestCase):
         '[::1]:442': ['::1', 442],
         'abcd:ef98:7654:3210:abcd:ef98:7654:3210': ['abcd:ef98:7654:3210:abcd:ef98:7654:3210', None],
         '[abcd:ef98:7654:3210:abcd:ef98:7654:3210]:42': ['abcd:ef98:7654:3210:abcd:ef98:7654:3210', 42],
+        '1234:5678:9abc:def0:1234:5678:9abc:def0': ['1234:5678:9abc:def0:1234:5678:9abc:def0', None],
+        '1234::9abc:def0:1234:5678:9abc:def0': ['1234::9abc:def0:1234:5678:9abc:def0', None],
+        '1234:5678::def0:1234:5678:9abc:def0': ['1234:5678::def0:1234:5678:9abc:def0', None],
+        '1234:5678:9abc::1234:5678:9abc:def0': ['1234:5678:9abc::1234:5678:9abc:def0', None],
+        '1234:5678:9abc:def0::5678:9abc:def0': ['1234:5678:9abc:def0::5678:9abc:def0', None],
+        '1234:5678:9abc:def0:1234::9abc:def0': ['1234:5678:9abc:def0:1234::9abc:def0', None],
+        '1234:5678:9abc:def0:1234:5678::def0': ['1234:5678:9abc:def0:1234:5678::def0', None],
+        '1234:5678:9abc:def0:1234:5678::': ['1234:5678:9abc:def0:1234:5678::', None],
+        '::9abc:def0:1234:5678:9abc:def0': ['::9abc:def0:1234:5678:9abc:def0', None],
+        '0:0:0:0:0:ffff:1.2.3.4': ['0:0:0:0:0:ffff:1.2.3.4', None],
+        '0:0:0:0:0:0:1.2.3.4': ['0:0:0:0:0:0:1.2.3.4', None],
+        '::ffff:1.2.3.4': ['::ffff:1.2.3.4', None],
+        '::1.2.3.4': ['::1.2.3.4', None],
+        '1234::': ['1234::', None],
 
         # Hostnames
         'some-host': ['some-host', None],
@@ -57,7 +71,12 @@ class TestParseAddress(unittest.TestCase):
         for t in self.tests:
             test = self.tests[t]
 
-            (host, port) = parse_address(t)
+            try:
+                (host, port) = parse_address(t)
+            except:
+                host = None
+                port = None
+
             assert host == test[0]
             assert port == test[1]
 
@@ -65,6 +84,11 @@ class TestParseAddress(unittest.TestCase):
         for t in self.range_tests:
             test = self.range_tests[t]
 
-            (host, port) = parse_address(t, allow_ranges=True)
+            try:
+                (host, port) = parse_address(t, allow_ranges=True)
+            except:
+                host = None
+                port = None
+
             assert host == test[0]
             assert port == test[1]

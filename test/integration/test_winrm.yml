@@ -37,4 +37,6 @@
     - { role: test_win_copy, tags: test_win_copy }
     - { role: test_win_template, tags: test_win_template }
     - { role: test_win_lineinfile, tags: test_win_lineinfile }
+    - { role: test_win_regmerge, tags: test_win_regmerge }
+    - { role: test_win_regedit, tags: test_win_regedit }
 

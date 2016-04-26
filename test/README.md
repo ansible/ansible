@@ -12,7 +12,7 @@ mock interfaces rather than producing side effects.
 
 Playbook engine code is better suited for integration tests.
 
-Requirements: sudo pip install paramiko PyYAML jinja2 httplib2 passlib nose mock
+Requirements: `sudo pip install paramiko PyYAML jinja2 httplib2 passlib nose mock`
 
 integration
 -----------

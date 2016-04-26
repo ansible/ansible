@@ -49,6 +49,8 @@ class TestVariableManager(unittest.TestCase):
             del vars['vars']
         if 'ansible_version' in vars:
             del vars['ansible_version']
+        if 'ansible_check_mode' in vars:
+            del vars['ansible_check_mode']
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 
@@ -171,12 +173,15 @@ class TestVariableManager(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task._role = None
+        mock_task.loop = None
         mock_task.get_vars.return_value = dict(foo="bar")
+        mock_task.get_include_params.return_value = dict()
 
         v = VariableManager()
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
-    def test_variable_manager_precedence(self):
+    @patch.object(Inventory, 'basedir')
+    def test_variable_manager_precedence(self, mock_basedir):
         '''
         Tests complex variations and combinations of get_vars() with different
         objects to modify the context under which variables are merged.
@@ -223,6 +228,7 @@ class TestVariableManager(unittest.TestCase):
             """,
         })
 
+        mock_basedir.return_value = './'
         inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
         inv1.set_playbook_basedir('./')
 

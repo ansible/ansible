@@ -34,7 +34,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'minimal'
 
-    def _command_generic_msg(self, host, result,  caption):
+    def _command_generic_msg(self, host, result, caption):
         ''' output the result of a command run '''
 
         buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc',0))
@@ -53,28 +53,32 @@ class CallbackModule(CallbackBase):
             else:
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
-            self._display.display(msg, color='red')
+            self._display.display(msg, color=C.COLOR_ERROR)
 
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
         if result._task.action in C.MODULE_NO_JSON:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"FAILED"), color='red')
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
         else:
-            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='red')
+            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_ERROR)
 
     def v2_runner_on_ok(self, result):
+        self._clean_results(result._result, result._task.action)
         if result._task.action in C.MODULE_NO_JSON:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"SUCCESS"), color='green')
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "SUCCESS"), color=C.COLOR_OK)
         else:
-            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='green')
+            if 'changed' in result._result and result._result['changed']:
+                self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_CHANGED)
+            else:
+                self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_OK)
             self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
-        self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
+        self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
-        self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
+        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
 
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:

@@ -23,10 +23,9 @@ import fnmatch
 import os
 import sys
 import re
-import stat
 import itertools
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -35,8 +34,11 @@ from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
+from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
 from ansible.parsing.utils.addresses import parse_address
+
+HOSTS_PATTERNS_CACHE = {}
 
 try:
     from __main__ import display
@@ -76,7 +78,18 @@ class Inventory(object):
         self._restriction = None
         self._subset = None
 
+        # clear the cache here, which is only useful if more than
+        # one Inventory objects are created when using the API directly
+        self.clear_pattern_cache()
+
         self.parse_inventory(host_list)
+
+    def serialize(self):
+        data = dict()
+        return data
+
+    def deserialize(self, data):
+        pass
 
     def parse_inventory(self, host_list):
 
@@ -90,7 +103,7 @@ class Inventory(object):
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
         # empty: in this case we will subsequently an the implicit 'localhost' to it.
 
-        ungrouped = Group(name='ungrouped')
+        ungrouped = Group('ungrouped')
         all = Group('all')
         all.add_child_group(ungrouped)
 
@@ -100,11 +113,16 @@ class Inventory(object):
             pass
         elif isinstance(host_list, list):
             for h in host_list:
-                (host, port) = parse_address(h, allow_ranges=False)
+                try:
+                    (host, port) = parse_address(h, allow_ranges=False)
+                except AnsibleError as e:
+                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
+                    host = h
+                    port = None
                 all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
-            if self._loader.is_directory(host_list):
+            if self.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
@@ -115,16 +133,17 @@ class Inventory(object):
             if not self.parser:
                 # should never happen, but JIC
                 raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
+        else:
+            display.warning("Host file not found: %s" % to_unicode(host_list))
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
-        # FIXME: shouldn't be required, since the group/host vars file
-        #        management will be done in VariableManager
-        # get group vars from group_vars/ files and vars plugins
-        for group in self.groups.values():
+        # set group vars from group_vars/ files and vars plugins
+        for g in self.groups:
+            group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
-        # get host vars from host_vars/ files and vars plugins
+        # set host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
@@ -134,7 +153,7 @@ class Inventory(object):
                 return re.search(pattern_str[1:], str)
             else:
                 return fnmatch.fnmatch(str, pattern_str)
-        except Exception as e:
+        except Exception:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
@@ -144,7 +163,7 @@ class Inventory(object):
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
-        except Exception as e:
+        except Exception:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
         for item in items:
@@ -159,23 +178,41 @@ class Inventory(object):
         or applied subsets
         """
 
-        patterns = self._split_pattern(pattern)
-        hosts = self._evaluate_patterns(patterns)
+        # Check if pattern already computed
+        if isinstance(pattern, list):
+            pattern_hash = u":".join(pattern)
+        else:
+            pattern_hash = pattern
 
-        # mainly useful for hostvars[host] access
         if not ignore_limits_and_restrictions:
-            # exclude hosts not in a subset, if defined
             if self._subset:
-                subset = self._evaluate_patterns(self._subset)
-                hosts = [ h for h in hosts if h in subset ]
+                pattern_hash += u":%s" % to_unicode(self._subset)
+            if self._restriction:
+                pattern_hash += u":%s" % to_unicode(self._restriction)
 
-            # exclude hosts mentioned in any restriction (ex: failed hosts)
-            if self._restriction is not None:
-                hosts = [ h for h in hosts if h in self._restriction ]
+        if pattern_hash not in HOSTS_PATTERNS_CACHE:
 
-        return hosts
+            patterns = Inventory.split_host_pattern(pattern)
+            hosts = self._evaluate_patterns(patterns)
 
-    def _split_pattern(self, pattern):
+            # mainly useful for hostvars[host] access
+            if not ignore_limits_and_restrictions:
+                # exclude hosts not in a subset, if defined
+                if self._subset:
+                    subset = self._evaluate_patterns(self._subset)
+                    hosts = [ h for h in hosts if h in subset ]
+
+                # exclude hosts mentioned in any restriction (ex: failed hosts)
+                if self._restriction is not None:
+                    hosts = [ h for h in hosts if h in self._restriction ]
+
+            seen = set()
+            HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+
+        return HOSTS_PATTERNS_CACHE[pattern_hash][:]
+
+    @classmethod
+    def split_host_pattern(cls, pattern):
         """
         Takes a string containing host patterns separated by commas (or a list
         thereof) and returns a list of single patterns (which may not contain
@@ -188,10 +225,11 @@ class Inventory(object):
         """
 
         if isinstance(pattern, list):
-            return list(itertools.chain(*map(self._split_pattern, pattern)))
+            return list(itertools.chain(*map(cls.split_host_pattern, pattern)))
 
         if ';' in pattern:
-            display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0, removed=True)
+            patterns = re.split('\s*;\s*', pattern)
+            display.deprecated("Use ',' or ':' instead of ';' to separate host patterns")
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
@@ -201,17 +239,14 @@ class Inventory(object):
 
         # If it doesn't, it could still be a single pattern. This accounts for
         # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
-
         else:
-            (base, port) = parse_address(pattern, allow_ranges=True)
-            if base:
+            try:
+                (base, port) = parse_address(pattern, allow_ranges=True)
                 patterns = [pattern]
-
-            # The only other case we accept is a ':'-separated list of patterns.
-            # This mishandles IPv6 addresses, and is retained only for backwards
-            # compatibility.
-
-            else:
+            except:
+                # The only other case we accept is a ':'-separated list of patterns.
+                # This mishandles IPv6 addresses, and is retained only for backwards
+                # compatibility.
                 patterns = re.findall(
                     r'''(?:             # We want to match something comprising:
                             [^\s:\[\]]  # (anything other than whitespace or ':[]'
@@ -221,16 +256,10 @@ class Inventory(object):
                     ''', pattern, re.X
                 )
 
-                if len(patterns) > 1:
-                    display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0)
-
         return [p.strip() for p in patterns]
 
-    def _evaluate_patterns(self, patterns):
-        """
-        Takes a list of patterns and returns a list of matching host names,
-        taking into account any negative and intersection patterns.
-        """
+    @classmethod
+    def order_patterns(cls, patterns):
 
         # Host specifiers should be sorted to ensure consistent behavior
         pattern_regular = []
@@ -251,8 +280,15 @@ class Inventory(object):
 
         # when applying the host selectors, run those without the "&" or "!"
         # first, then the &s, then the !s.
-        patterns = pattern_regular + pattern_intersection + pattern_exclude
+        return pattern_regular + pattern_intersection + pattern_exclude
 
+    def _evaluate_patterns(self, patterns):
+        """
+        Takes a list of patterns and returns a list of matching host names,
+        taking into account any negative and intersection patterns.
+        """
+
+        patterns = Inventory.order_patterns(patterns)
         hosts = []
 
         for p in patterns:
@@ -363,7 +399,7 @@ class Inventory(object):
                     end = -1
                 subscript = (int(start), int(end))
                 if sep == '-':
-                    display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
+                    display.warning("Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
 
         return (pattern, subscript)
 
@@ -392,7 +428,6 @@ class Inventory(object):
         """
 
         results = []
-        hosts = []
         hostnames = set()
 
         def __append_host_to_results(host):
@@ -421,14 +456,18 @@ class Inventory(object):
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
-        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.address = "127.0.0.1"
+        new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
-        new_host.address = '127.0.0.1'
+        if "ansible_python_interpreter" not in new_host.vars:
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
         self.get_group("ungrouped").add_host(new_host)
         return new_host
 
     def clear_pattern_cache(self):
         ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
+        global HOSTS_PATTERNS_CACHE
+        HOSTS_PATTERNS_CACHE = {}
         self._pattern_cache = {}
 
     def groups_for_host(self, host):
@@ -573,7 +612,7 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
-            subset_patterns = self._split_pattern(subset_pattern)
+            subset_patterns = Inventory.split_host_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
@@ -590,23 +629,36 @@ class Inventory(object):
         self._restriction = None
 
     def is_file(self):
-        """ did inventory come from a file? """
+        """
+        Did inventory come from a file? We don't use the equivalent loader
+        methods in inventory, due to the fact that the loader does an implict
+        DWIM on the path, which may be incorrect for inventory paths relative
+        to the playbook basedir.
+        """
         if not isinstance(self.host_list, string_types):
             return False
-        return self._loader.path_exists(self.host_list)
+        return os.path.isfile(self.host_list) or self.host_list == os.devnull
+
+    def is_directory(self, path):
+        """
+        Is the inventory host list a directory? Same caveat for here as with
+        the is_file() method above.
+        """
+        if not isinstance(self.host_list, string_types):
+            return False
+        return os.path.isdir(path)
 
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         dname = self.host_list
-        if not self.is_file():
-            dname = None
-        elif self._loader.is_directory(self.host_list):
+        if self.is_directory(self.host_list):
             dname = self.host_list
+        elif not self.is_file():
+            dname = None
         else:
             dname = os.path.dirname(self.host_list)
             if dname is None or dname == '' or dname == '.':
-                cwd = os.getcwd()
-                dname = cwd
+                dname = os.getcwd()
         if dname:
             dname = os.path.abspath(dname)
         return dname
@@ -630,11 +682,11 @@ class Inventory(object):
         if dir_name != self._playbook_basedir:
             self._playbook_basedir = dir_name
             # get group vars from group_vars/ files
-            # FIXME: excluding the new_pb_basedir directory may result in group_vars
-            #        files loading more than they should, however with the file caching
-            #        we do this shouldn't be too much of an issue. Still, this should
-            #        be fixed at some point to allow a "first load" to touch all of the
-            #        directories, then later runs only touch the new basedir specified
+            # TODO: excluding the new_pb_basedir directory may result in group_vars
+            #       files loading more than they should, however with the file caching
+            #       we do this shouldn't be too much of an issue. Still, this should
+            #       be fixed at some point to allow a "first load" to touch all of the
+            #       directories, then later runs only touch the new basedir specified
             for group in self.groups.values():
                 #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
                 group.vars = combine_vars(group.vars, self.get_group_vars(group))
@@ -673,11 +725,9 @@ class Inventory(object):
             basedirs = [self._playbook_basedir]
 
         for basedir in basedirs:
-            display.debug('getting vars from %s' % basedir)
-
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
-            if basedir is None:
+            if basedir in ('', None):
                 basedir = './'
 
             scan_pass = scan_pass + 1
@@ -690,15 +740,14 @@ class Inventory(object):
             if _basedir == self._playbook_basedir and scan_pass != 1:
                 continue
 
-            # FIXME: these should go to VariableManager
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.realpath(os.path.join(basedir, "group_vars/%s" % group.name))
-                results = self._variable_manager.add_group_vars_file(base_path, self._loader)
+                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "group_vars/%s" % group.name))
+                results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.realpath(os.path.join(basedir, "host_vars/%s" % host.name))
-                results = self._variable_manager.add_host_vars_file(base_path, self._loader)
+                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "host_vars/%s" % host.name))
+                results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
 
         # all done, results is a dictionary of variables for this particular host.
         return results

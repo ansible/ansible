@@ -1,7 +1,7 @@
 Rackspace Cloud Guide
 =====================
 
-.. _introduction:
+.. _rax_introduction:
 
 Introduction
 ````````````
@@ -122,6 +122,8 @@ Here's what it would look like in a playbook, assuming the parameters were defin
         register: rax
 
 The rax module returns data about the nodes it creates, like IP addresses, hostnames, and login passwords.  By registering the return value of the step, it is possible used this data to dynamically add the resulting hosts to inventory (temporarily, in memory). This facilitates performing configuration actions on the hosts in a follow-on task.  In the following example, the servers that were successfully created using the above task are dynamically added to a group called "raxhosts", with each nodes hostname, IP address, and root password being added to the inventory.
+
+.. include:: ansible_ssh_changes_note.rst
 
 .. code-block:: yaml
 

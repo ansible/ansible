@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems
+from ansible.compat.six import iteritems
 from jinja2.utils import missing
+from ansible.utils.unicode import to_unicode
 
 __all__ = ['AnsibleJ2Vars']
 
@@ -83,7 +84,12 @@ class AnsibleJ2Vars:
         if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars):
             return variable
         else:
-            return self._templar.template(variable)
+            value = None
+            try:
+                value = self._templar.template(variable)
+            except Exception as e:
+                raise type(e)(to_unicode(variable) + ': ' + e.message)
+            return value
 
     def add_locals(self, locals):
         '''

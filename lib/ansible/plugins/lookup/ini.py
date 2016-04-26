@@ -17,20 +17,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
+from io import StringIO
 import os
-import codecs
 import ConfigParser
 import re
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
-        config = StringIO.StringIO()
-        config.write('[java_properties]\n' + open(filename).read())
+        config = StringIO()
+        config.write(u'[java_properties]\n' + open(filename).read())
         config.seek(0, os.SEEK_SET)
         self.cp.readfp(config)
         return self.get_value(key, 'java_properties', dflt, is_regexp)
@@ -47,7 +46,7 @@ class LookupModule(LookupBase):
         # Retrieve a single value
         try:
             value = self.cp.get(section, key)
-        except ConfigParser.NoOptionError as e:
+        except ConfigParser.NoOptionError:
             return dflt
         return value
 
@@ -77,7 +76,7 @@ class LookupModule(LookupBase):
                     assert(name in paramvals)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
-                raise errors.AnsibleError(e)
+                raise AnsibleError(e)
 
             path = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
             if paramvals['type'] == "properties":

@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import text_type
+from ansible.compat.six import text_type
 
 
 class AnsibleBaseYAMLObject(object):

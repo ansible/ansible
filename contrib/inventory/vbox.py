@@ -23,6 +23,11 @@ try:
 except ImportError:
     import simplejson as json
 
+class SetEncoder(json.JSONEncoder):
+   def default(self, obj):
+      if isinstance(obj, set):
+         return list(obj)
+      return json.JSONEncoder.default(self, obj)
 
 VBOX="VBoxManage"
 
@@ -110,5 +115,4 @@ if __name__ == '__main__':
     else:
         inventory = get_hosts()
 
-    import pprint
-    pprint.pprint(inventory)
+    sys.stdout.write(json.dumps(inventory, indent=2, cls=SetEncoder))

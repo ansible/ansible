@@ -17,7 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
@@ -63,7 +63,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        ### FIXME: Is this needed now that listify is run on all lookup plugin terms?
         if not isinstance(terms, list):
             raise AnsibleError("with_flattened expects a list")
 

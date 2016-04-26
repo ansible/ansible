@@ -1,0 +1,5 @@
+---
+test_cs_lb_public_ip: "1.2.3.4"
+test_cs_instance_template: CentOS 5.3(64-bit) no GUI (Simulator)
+test_cs_instance_offering_1: Small Instance
+test_cs_lb_member: "{{ cs_resource_prefix }}_member1"

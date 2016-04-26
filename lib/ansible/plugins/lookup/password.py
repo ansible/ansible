@@ -134,27 +134,28 @@ class LookupModule(LookupBase):
                     f.write(content + '\n')
             else:
                 content = open(path).read().rstrip()
-                sep = content.find(' ')
 
-                if sep >= 0:
-                    password = content[:sep]
-                    salt = content[sep + 1:].split('=')[1]
-                else:
-                    password = content
-                    salt = None
+                password = content
+                salt = None
+                if params['encrypt'] is not None:
+                    try:
+                        sep = content.rindex(' ')
+                    except ValueError:
+                        # No salt
+                        pass
+                    else:
+                        salt_field = content[sep + 1:]
+                        if salt_field.startswith('salt='):
+                            password = content[:sep]
+                            salt = salt_field[len('salt='):]
 
-                # crypt requested, add salt if missing
-                if (params['encrypt'] is not None and not salt):
-                    salt = self.random_salt()
-                    content = '%s salt=%s' % (password, salt)
-                    with open(path, 'w') as f:
-                        os.chmod(path, 0o600)
-                        f.write(content + '\n')
-                # crypt not requested, remove salt if present
-                elif (params['encrypt'] is None and salt):
-                    with open(path, 'w') as f:
-                        os.chmod(path, 0o600)
-                        f.write(password + '\n')
+                    # crypt requested, add salt if missing
+                    if not salt:
+                        salt = self.random_salt()
+                        content = '%s salt=%s' % (password, salt)
+                        with open(path, 'w') as f:
+                            os.chmod(path, 0o600)
+                            f.write(content + '\n')
 
             if params['encrypt']:
                 password = do_encrypt(password, params['encrypt'], salt=salt)

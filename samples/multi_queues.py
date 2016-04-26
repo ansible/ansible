@@ -13,10 +13,12 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.vars import VariableManager
 
-from ansible.utils.debug import debug
+from ansible.utils.display import Display
+display = Display()
+debug = display.debug
 
 NUM_WORKERS = 20
 NUM_HOSTS   = 1778

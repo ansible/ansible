@@ -23,5 +23,3 @@
   assert:
     that:
        - "output.failed == true"
-       - "'{{msg}}' in output.msg"
-

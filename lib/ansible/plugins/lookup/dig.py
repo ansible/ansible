@@ -24,8 +24,9 @@ import socket
 try:
     import dns.resolver
     import dns.reversename
-    from dns.rdatatype import *
-    from dns.exception import DNSException
+    from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
+            MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
+    import dns.exception
     HAVE_DNS = True
 except ImportError:
     HAVE_DNS = False

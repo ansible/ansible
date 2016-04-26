@@ -26,8 +26,11 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
-Note that the above system only governs the failure of the particular task, so if you have an undefined
-variable used, it will still raise an error that users will need to address.
+Note that the above system only governs the return value of failure of the particular task,
+so if you have an undefined variable used, it will still raise an error that users will need to address.
+Neither will this prevent failures on connection nor execution issues, the task must be able to run and
+return a value of 'failed'.
+
 
 .. _handlers_and_failure:
 

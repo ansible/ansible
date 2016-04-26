@@ -26,8 +26,13 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import hmac
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 try:
     from hashlib import sha1
@@ -73,12 +78,12 @@ def get_fqdn(repo_url):
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
-        if ":" in repo_url:
-            repo_url = repo_url.split(":")[0]
-            result = repo_url
+        if repo_url.startswith('['):
+            result = repo_url.split(']', 1)[0] + ']'
+        elif ":" in repo_url:
+            result = repo_url.split(":")[0]
         elif "/" in repo_url:
-            repo_url = repo_url.split("/")[0]
-            result = repo_url
+            result = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
         parts = urlparse.urlparse(repo_url)
@@ -86,11 +91,13 @@ def get_fqdn(repo_url):
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
             result = parts[1]
-            if ":" in result:
-                result = result.split(":")[0]
             if "@" in result:
                 result = result.split("@", 1)[1]
 
+            if result[0].startswith('['):
+                result = result.split(']', 1)[0] + ']'
+            elif ":" in result:
+                result = result.split(":")[0]
     return result
 
 def check_hostkey(module, fqdn):
@@ -112,6 +119,7 @@ def not_in_host_file(self, host):
     host_file_list.append(user_host_file)
     host_file_list.append("/etc/ssh/ssh_known_hosts")
     host_file_list.append("/etc/ssh/ssh_known_hosts2")
+    host_file_list.append("/etc/openssh/ssh_known_hosts")
 
     hfiles_not_found = 0
     for hf in host_file_list:
@@ -121,7 +129,7 @@ def not_in_host_file(self, host):
 
         try:
             host_fh = open(hf)
-        except IOError, e:
+        except IOError:
             hfiles_not_found += 1
             continue
         else:
@@ -155,7 +163,6 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
-    result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
     if 'USER' in os.environ:
@@ -169,7 +176,7 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     if not os.path.exists(user_ssh_dir):
         if create_dir:
             try:
-                os.makedirs(user_ssh_dir, 0700)
+                os.makedirs(user_ssh_dir, int('700', 8))
             except:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:

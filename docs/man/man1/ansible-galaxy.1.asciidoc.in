@@ -12,16 +12,15 @@ ansible-galaxy - manage roles using galaxy.ansible.com
 
 SYNOPSIS
 --------
-ansible-galaxy [init|info|install|list|remove] [--help] [options] ...
+ansible-galaxy [delete|import|info|init|install|list|login|remove|search|setup] [--help] [options] ...
 
 
 DESCRIPTION
 -----------
 
-*Ansible Galaxy* is a shared repository for Ansible roles (added in
-ansible version 1.2). The ansible-galaxy command can be used to manage
-these roles, or by creating a skeleton framework for roles you'd like
-to upload to Galaxy.
+*Ansible Galaxy* is a shared repository for Ansible roles.
+The ansible-galaxy command can be used to manage these roles,
+or for creating a skeleton framework for roles you'd like to upload to Galaxy.
 
 COMMON OPTIONS
 --------------
@@ -29,7 +28,6 @@ COMMON OPTIONS
 *-h*, *--help*::
 
 Show a help message related to the given sub-command.
-
 
 INSTALL
 -------
@@ -43,16 +41,16 @@ $ ansible-galaxy install [options] [-r FILE | role_name(s)[,version] | tar_file(
 
 Roles can be installed in several different ways:
 
-* A username.rolename[,version] - this will install a single role. The Galaxy 
-  API will be contacted to provide the information about the role, and the 
-  corresponding .tar.gz will be downloaded from *github.com*. If the version 
+* A username.rolename[,version] - this will install a single role. The Galaxy
+  API will be contacted to provide the information about the role, and the
+  corresponding .tar.gz will be downloaded from *github.com*. If the version
   is omitted, the most recent version available will be installed.
 
 * A file name, using *-r* - this will install multiple roles listed one per
   line. The format of each line is the same as above: username.rolename[,version]
 
 * A .tar.gz of a valid role you've downloaded directly from *github.com*. This
-  is mainly useful when the system running Ansible does not have access to 
+  is mainly useful when the system running Ansible does not have access to
   the Galaxy API, for instance when behind a firewall or proxy.
 
 
@@ -146,6 +144,204 @@ The path to the directory containing your roles. The default is the *roles_path*
 configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
 
 
+SEARCH
+------
+
+The *search* sub-command returns a filtered list of roles found on the remote
+server.
+
+
+USAGE
+~~~~~
+
+$ ansible-galaxy search [options] [searchterm1 searchterm2]
+
+
+OPTIONS
+~~~~~~~
+*--galaxy-tags*::
+
+Provide a comma separated list of Galaxy Tags on which to filter.
+
+*--platforms*::
+
+Provide a comma separated list of Platforms on which to filter.
+
+*--author*::
+
+Specify the username of a Galaxy contributor on which to filter.
+
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+
+INFO
+----
+
+The *info* sub-command shows detailed information for a specific role.
+Details returned about the role included information from the local copy
+as well as information from galaxy.ansible.com.
+
+USAGE
+~~~~~
+
+$ ansible-galaxy info [options] role_name[, version]
+
+OPTIONS
+~~~~~~~
+
+*-p* 'ROLES_PATH', *--roles-path=*'ROLES_PATH'::
+
+The path to the directory containing your roles. The default is the *roles_path* 
+configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
+
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+
+LOGIN
+-----
+
+The *login* sub-command is used to authenticate with galaxy.ansible.com. 
+Authentication is required to use the import, delete and setup commands.
+It will authenticate the user, retrieve a token from Galaxy, and store it
+in the user's home directory.
+
+USAGE
+~~~~~
+
+$ ansible-galaxy login [options]
+
+The *login* sub-command prompts for a *GitHub* username and password. It does
+NOT send your password to Galaxy. It actually authenticates with GitHub and
+creates a personal access token. It then sends the personal access token to
+Galaxy, which in turn verifies that you are you and returns a Galaxy access
+token. After authentication completes the *GitHub* personal access token is
+destroyed. 
+
+If you do not wish to use your GitHub password, or if you have two-factor
+authentication enabled with GitHub, use the *--github-token* option to pass a
+personal access token that you create. Log into GitHub, go to Settings and
+click on Personal Access Token to create a token.
+
+OPTIONS
+~~~~~~~
+
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+*--github-token*::
+
+Authenticate using a *GitHub* personal access token rather than a password.
+
+
+IMPORT
+------
+
+Import a role from *GitHub* to galaxy.ansible.com. Requires the user first
+authenticate with galaxy.ansible.com using the *login* subcommand.
+
+USAGE
+~~~~~
+
+$ ansible-galaxy import [options] github_user github_repo
+
+OPTIONS
+~~~~~~~
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+*--branch*::
+
+Provide a specific branch to import. When a branch is not specified the
+branch found in meta/main.yml is used. If no branch is specified in
+meta/main.yml, the repo's default branch (usually master) is used.
+
+
+DELETE
+------
+
+The *delete* sub-command will delete a role from galaxy.ansible.com. Requires
+the user first authenticate with galaxy.ansible.com using the *login* subcommand.
+
+USAGE
+~~~~~
+
+$ ansible-galaxy delete [options] github_user github_repo
+
+OPTIONS
+~~~~~~~
+
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+
+SETUP
+-----
+
+The *setup* sub-command creates an integration point for *Travis CI*, enabling 
+galaxy.ansible.com to receive notifications from *Travis* on build completion.
+Requires the user first authenticate with galaxy.ansible.com using the *login*
+subcommand.
+
+USAGE
+~~~~~
+
+$ ansible-galaxy setup [options] source github_user github_repo secret
+
+* Use *travis* as the source value. In the future additional source values may
+  be added.
+
+* Provide your *Travis* user token as the secret. The token is not stored by
+  galaxy.ansible.com. A hash is created using github_user, github_repo
+  and your token. The hash value is what actually gets stored.
+
+OPTIONS
+~~~~~~~
+
+*-c*, *--ignore-certs*::
+
+Ignore TLS certificate errors. 
+
+*-s*, *--server*::
+
+Override the default server https://galaxy.ansible.com.
+
+--list::
+
+Show your configured integrations. Provids the ID of each integration
+which can be used with the remove option.
+
+--remove::
+
+Remove a specific integration. Provide the ID of the integration to 
+be removed.
+
 AUTHOR
 ------
 
@@ -164,7 +360,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
+*ansible*(1), *ansible-pull*(1), *ansible-doc*(1), *ansible-playbook*(1), *ansible-vault*(1)
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>. IRC and mailing list info can be found

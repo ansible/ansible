@@ -55,7 +55,7 @@ class Connection(object):
         self.client = fc.Client(self.host)
         return self
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False,
+    def exec_command(self, cmd, become_user=None, sudoable=False,
                      executable='/bin/sh', in_data=None):
         ''' run a command on the remote minion '''
 
@@ -65,7 +65,7 @@ class Connection(object):
         # totally ignores privlege escalation
         vvv("EXEC %s" % (cmd), host=self.host)
         p = self.client.command.run(cmd)[self.host]
-        return (p[0], '', p[1], p[2])
+        return (p[0], p[1], p[2])
 
     def _normalize_path(self, path, prefix):
         if not path.startswith(os.path.sep):

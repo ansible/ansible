@@ -28,14 +28,16 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
         if self._plugin is None:
-            self._display.warning("Failed to load fact cache plugins")
+            display.warning("Failed to load fact cache plugins")
             return
 
     def __getitem__(self, key):
@@ -68,3 +70,8 @@ class FactCache(MutableMapping):
     def flush(self):
         """ Flush the fact cache of all keys. """
         self._plugin.flush()
+
+    def update(self, key, value):
+        host_cache = self._plugin.get(key)
+        host_cache.update(value)
+        self._plugin.set(key, host_cache)

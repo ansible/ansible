@@ -17,56 +17,64 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import datetime
 import os
+import pwd
 import time
 
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.utils.boolean import boolean
 from ansible.utils.unicode import to_bytes, to_unicode
+
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, tmp, dest, all_vars, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=all_vars)
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
+        try:
+            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        if remote_checksum in ('0', '2', '3', '4'):
-            # Note: 1 means the file is not present which is fine; template
-            # will create it.  3 means directory was specified instead of file
-            if try_directory and remote_checksum == '3' and source:
+            if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(tmp, dest, all_vars=all_vars, try_directory=False)
-                if remote_checksum not in ('0', '2', '3', '4'):
-                    return remote_checksum
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-            result = dict(failed=True, msg="failed to checksum remote file."
-                        " Checksum error code: %s" % remote_checksum)
-            return result
+        except Exception as e:
+            return dict(failed=True, msg=to_bytes(e))
 
-        return remote_checksum
+        return dest_stat['checksum']
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
         faf    = self._task.first_available_file
+        force  = boolean(self._task.args.get('force', True))
+        state  = self._task.args.get('state', None)
 
-        if (source is None and faf is not None) or dest is None:
-            return dict(failed=True, msg="src and dest are required")
-
-        if tmp is None:
-            tmp = self._make_tmp_path()
+        if state is not None:
+            result['failed'] = True
+            result['msg'] = "'state' cannot be specified on a template"
+            return result
+        elif (source is None and faf is not None) or dest is None:
+            result['failed'] = True
+            result['msg'] = "src and dest are required"
+            return result
 
         if faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
             if source is None:
-                return dict(failed=True, msg="could not find src in first_available_file list")
+                result['failed'] = True
+                result['msg'] = "could not find src in first_available_file list"
+                return result
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
@@ -74,7 +82,7 @@ class ActionModule(ActionBase):
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
 
         # Expand any user home dir specification
-        dest = self._remote_expand_user(dest, tmp)
+        dest = self._remote_expand_user(dest)
 
         directory_prepended = False
         if dest.endswith(os.sep):
@@ -115,7 +123,8 @@ class ActionModule(ActionBase):
             # loader, so that it knows about the other paths to find template files
             searchpath = [self._loader._basedir, os.path.dirname(source)]
             if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                if C.DEFAULT_ROLES_PATH:
+                    searchpath[:0] = C.DEFAULT_ROLES_PATH
                 searchpath.insert(1, self._task._role._role_path)
 
             self._templar.environment.loader.searchpath = searchpath
@@ -125,30 +134,37 @@ class ActionModule(ActionBase):
             resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
-            return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
+            result['failed'] = True
+            result['msg'] = type(e).__name__ + ": " + str(e)
+            return result
+
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(tmp, dest, task_vars, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
-            return remote_checksum
+            result.update(remote_checksum)
+            return result
 
         diff = {}
         new_module_args = self._task.args.copy()
 
-        if local_checksum != remote_checksum:
-            dest_contents = ''
+        if (remote_checksum == '1') or (force and local_checksum != remote_checksum):
 
+            result['changed'] = True
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
-                diff = self._get_diff_data(tmp, dest, resultant, task_vars, source_file=False)
+                diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
 
             if not self._play_context.check_mode: # do actual work thorugh copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered, tmp)
+                self._fixup_perms(tmp, remote_user, recursive=True)
 
                 # run the copy module
                 new_module_args.update(
@@ -159,15 +175,10 @@ class ActionModule(ActionBase):
                        follow=True,
                     ),
                 )
-                result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
-            else:
-                result=dict(changed=True)
+                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
-            #    result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
-
-            return result
 
         else:
             # when running the file module based on the template data, we do
@@ -183,6 +194,8 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+        self._remove_tmp_path(tmp)
 
+        return result

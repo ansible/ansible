@@ -20,52 +20,83 @@ Each item in the list is a list of key/value pairs, commonly
 called a "hash" or a "dictionary".  So, we need to know how
 to write lists and dictionaries in YAML.
 
-There's another small quirk to YAML.  All YAML files (regardless of their association with
-Ansible or not) should begin with ``---``.  This is part of the YAML
-format and indicates the start of a document.
+There's another small quirk to YAML.  All YAML files (regardless of their association with Ansible or not) can optionally
+begin with ``---`` and end with ``...``.  This is part of the YAML format and indicates the start and end of a document.
 
-All members of a list are lines beginning at the same indentation level starting
-with a ``"- "`` (a dash and a space)::
+All members of a list are lines beginning at the same indentation level starting with a ``"- "`` (a dash and a space)::
 
     ---
     # A list of tasty fruits
-    - Apple
-    - Orange
-    - Strawberry
-    - Mango
+    fruits:
+        - Apple
+        - Orange
+        - Strawberry
+        - Mango
+    ...
 
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
 
-    ---
     # An employee record
-    name: Example Developer
-    job: Developer
-    skill: Elite
+    martin:
+        name: Martin D'vloper
+        job: Developer
+        skill: Elite
 
-Dictionaries can also be represented in an abbreviated form if you really want to::
+More complicated data structures are possible, such as lists of dictionaries, dictionaries whose values are lists or a mix of both::
+
+    # Employee records
+    -  martin:
+        name: Martin D'vloper
+        job: Developer
+        skills:
+          - python
+          - perl
+          - pascal
+    -  tabitha:
+        name: Tabitha Bitumen
+        job: Developer
+        skills:
+          - lisp
+          - fortran
+          - erlang
+
+Dictionaries and lists can also be represented in an abbreviated form if you really want to::
 
     ---
-    # An employee record
-    {name: Example Developer, job: Developer, skill: Elite}
+    martin: {name: Martin D'vloper, job: Developer, skill: Elite}
+    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 .. _truthiness:
 
-Ansible doesn't really use these too much, but you can also specify a 
-boolean value (true/false) in several forms::
+Ansible doesn't really use these too much, but you can also specify a boolean value (true/false) in several forms::
 
-    ---
     create_key: yes
     needs_agent: no
     knows_oop: True
     likes_emacs: TRUE
     uses_cvs: false
 
-Let's combine what we learned so far in an arbitrary YAML example.  This really
-has nothing to do with Ansible, but will give you a feel for the format::
+Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a ``|`` will include the newlines.  Using a ``>`` will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
+In either case the indentation will be ignored.
+Examples are::
+
+    include_newlines: |
+                exactly as you see
+                will appear these three
+                lines of poetry
+
+    ignore_newlines: >
+                this is really a
+                single line of text
+                despite appearances
+
+
+Let's combine what we learned so far in an arbitrary YAML example.
+This really has nothing to do with Ansible, but will give you a feel for the format::
 
     ---
     # An employee record
-    name: Example Developer
+    name: Martin D'vloper
     job: Developer
     skill: Elite
     employed: True
@@ -75,12 +106,15 @@ has nothing to do with Ansible, but will give you a feel for the format::
         - Strawberry
         - Mango
     languages:
-        ruby: Elite
+        perl: Elite
         python: Elite
-        dotnet: Lame
+        pascal: Lame
+    education: |
+        4 GCSEs
+        3 A-Levels
+        BSc in the Internet of Things
 
-That's all you really need to know about YAML to start writing
-`Ansible` playbooks.
+That's all you really need to know about YAML to start writing `Ansible` playbooks.
 
 Gotchas
 -------
@@ -100,6 +134,14 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 
+The same applies for strings that start or contain any YAML special characters `` [] {} : > | `` .
+
+Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
+In these cases just use quotes::
+
+    non_boolean: "yes"
+    other_string: "False"
+
 
 .. seealso::
 
@@ -109,6 +151,8 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
        YAML Lint (online) helps you debug YAML syntax if you are having problems
    `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
+   `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
+       A good guide to YAML syntax
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

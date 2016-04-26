@@ -18,9 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
-from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.vars import isidentifier
@@ -30,16 +29,26 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+
         facts = dict()
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
 
                 if not isidentifier(k):
-                    return dict(failed=True, msg="The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k)
+                    result['failed'] = True
+                    result['msg'] = "The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k
+                    return result
 
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v
-        return dict(changed=False, ansible_facts=facts)
+
+        result['changed'] = False
+        result['ansible_facts'] = facts
+        return result

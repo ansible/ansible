@@ -1,4 +1,4 @@
-BSD support
+BSD Support
 ===========
 
 .. contents:: Topics
@@ -8,80 +8,73 @@ BSD support
 Working with BSD
 ````````````````
 
-As you may have already read, Ansible manages Linux/Unix machines using SSH by default. You access BSD machines the same way.
+Ansible manages Linux/Unix machines using SSH by default. BSD machines are no exception, however this document covers some of the differences you may encounter with Ansible when working with BSD variants.
 
-Depending on your control machine ansible will try to default to using OpenSSH, this works fine in the case of ssh keys but when using ssh passwords it relies on sshpass, most
-versions of sshpass do not deal well with BSD login prompts, in these cases we recommend changing the transport to paramiko. You can do this in ansible.cfg globaly or set it as
-an inventory/group/host var::
+Typically, Ansible will try to default to using OpenSSH as a connection method. This is suitable when when using SSH keys to authenticate, but when using SSH passwords, Ansible relies on sshpass. Most
+versions of sshpass do not deal particularly well with BSD login prompts, so when using SSH passwords against BSD machines, it is recommended to change the transport method to paramiko. You can do this in ansible.cfg globally or you can set it as an inventory/group/host variable. For example::
 
     [freebsd]
     mybsdhost1 ansible_connection=paramiko
 
-Ansible is agentless by default, but it needs some software installed on the target machines, mainly python 2.4 or higher with an included json library (standard in 2.5 and above).
-Without python you can still use the ``raw`` module to execute commands but this is very limited, still it can be used to bootstrap ansible on BSDs.
-
-
+Ansible is agentless by default, however certain software is required on the target machines. Using Python 2.4 on the agents requires an additional py-simplejson package/library to be installed, however this library is already included in Python 2.5 and above.
+Operating without Python is possible with the ``raw`` module. Although this module can be used to bootstrap Ansible and install Python on BSD variants (see below), it is very limited and the use of Python is required to make full use of Ansible's features.
 
 .. _bootstrap_bsd:
 
 Bootstrapping BSD
 `````````````````
 
-For ansible to effectively manage your machine, we need to install python + a json library, in this case we are using python 2.7 which already has json included.
-From your control machine you can just execute the following on most versions of FreeBSD::
+As mentioned above, you can bootstrap Ansible with the ``raw`` module and remotely install Python on targets. The following example installs Python 2.7 which includes the json library required for full functionality of Ansible.
+On your control machine you can simply execute the following for most versions of FreeBSD::
 
-    ansible -m raw -a “pkg_add -r python27” mybsdhost1
+    ansible -m raw -a “pkg install -y python27” mybsdhost1
 
-Once this is done you can now use other ansible modules aside from ``raw``.
+Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
 .. note::
-    This example uses pkg_add, you should be able to subsitute for the appropriate tool for your BSD,
-    also you might need to lookup the exact package name you need.
-
+    This example used pkg_add as used on FreeBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
 
 .. _python_location:
 
-Setting python interpreter
-``````````````````````````
+Setting the Python interpreter
+``````````````````````````````
 
-To support the multitude of Unix/Linux OSs and distributions ansible cannot rely on the environment or ``env`` to find the correct python, by default modules point at ``/usr/bin/python`` as this is the most common location. On the BSDs you cannot rely on this so you should tell ansible where python is located, through the ``ansible_python_interpreter`` invenotry variable::
+To support a variety of Unix/Linux operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example::
 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
 
-If you use plugins other than those included with ansible you might need to set the same for ``bash``, ``perl`` or ``ruby``, depending on how the plugin was written::
+If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example::
 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python
     ansible_perl_interpreter=/usr/bin/perl5
 
 
-What modules are available
-``````````````````````````
+Which modules are available?
+````````````````````````````
 
-Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, most should work fine on the BSDs with the exception of those that are for linux specific technologies (i.e. lvg).
+The majority of the core Ansible modules are written for a combination of Linux/Unix machines and other generic services, so most should function well on the BSDs with the obvious exception of those that are aimed at Linux-only technologies (such as LVG).
 
+Using BSD as the control machine
+````````````````````````````````
 
-You can also use a BSD as the control machine
-`````````````````````````````````````````````
-
-It should be as simple as installing the Ansible package or follow the ``pip`` or 'from source' instructions.
+Using BSD as the control machine is as simple as installing the Ansible package for your BSD variant or by following the ``pip`` or 'from source' instructions.
 
 .. _bsd_facts:
 
 BSD Facts
 `````````
 
-Ansible gathers facts from the BSDs as it would from Linux machines, but since the data, names and structures can be different for network, disks and other devices expect the output to be different, but familiar to a BSD admin.
-
+Ansible gathers facts from the BSDs in a similar manner to Linux machines, but since the data, names and structures can vary for network, disks and other devices, one should expect the output to be slightly different yet still familiar to a BSD administrator.
 
 .. _bsd_contributions:
 
-BSD Contributions
-`````````````````
+BSD Efforts and Contributions
+`````````````````````````````
 
-BSD support is important for Ansible, though the majority of our contributors use and target Linux we have a active BSD community and will strive to be as BSD friendly as possible.
-Report any issues you see with BSD incompatibilities, even better if you can submit a pull request with the fix!
+BSD support is important to us at Ansible. Even though the majority of our contributors use and target Linux we have an active BSD community and strive to be as BSD friendly as possible.
+Please feel free to report any issues or incompatibilities you discover with BSD; pull requests with an included fix are also welcome!
 
 .. seealso::
 

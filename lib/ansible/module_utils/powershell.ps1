@@ -26,13 +26,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-Set-StrictMode -Version Latest
+Set-StrictMode -Version 2.0
 
 # Ansible v2 will insert the module arguments below as a string containing
 # JSON; assign them to an environment variable and redefine $args so existing
 # modules will continue to work.
 $complex_args = @'
-<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>
+<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
 '@
 Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
 $args = @('env:MODULE_COMPLEX_ARGS')
@@ -101,9 +101,11 @@ Function Fail-Json($obj, $message = $null)
 # Helper function to get an "attribute" from a psobject instance in powershell.
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
-# Example: $attr = Get-Attr $response "code" -default "1"
+# Example: $attr = Get-AnsibleParam $response "code" -default "1"
+#Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
+#Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage)
+Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
 {
     # Check if the provided Member $name exists in $obj and return it or the default. 
     Try
@@ -112,7 +114,28 @@ Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false
         {
             throw
         }
-        $obj.$name
+
+        if ($ValidateSet)
+        {
+            if ($ValidateSet -contains ($obj.$name))
+            {
+                $obj.$name    
+            }
+            Else
+            {
+                if ($ValidateSetErrorMessage -eq $null)
+                {
+                    #Auto-generated error should be sufficient in most use cases
+                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                }
+                Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+            }
+        }
+        Else
+        {
+            $obj.$name
+        }
+        
     }
     Catch
     {
@@ -130,6 +153,9 @@ Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false
         }
     }
 }
+
+#Alias Get-attr-->Get-AnsibleParam for backwards compat.
+New-Alias -Name Get-attr -Value Get-AnsibleParam
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
@@ -185,7 +211,7 @@ Function Get-FileChecksum($path)
     If (Test-Path -PathType Leaf $path)
     {
         $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
-        $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+        $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
         $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
         $fp.Dispose();
     }
