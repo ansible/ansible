@@ -504,7 +504,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_type = None
         self.os_disk_caching = None
         self.network_interface_names = None
-        self.remove_on_absent = []
+        self.remove_on_absent = set()
         self.tags = None
         self.force = None
         self.public_ip_allocation_method = None
@@ -527,7 +527,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                     supports_check_mode=True)
 
         # make sure options are lower case
-        self.remove_on_absent = [resource.lower() for resource in  self.remove_on_absent]
+        self.remove_on_absent = set([resource.lower() for resource in  self.remove_on_absent])
 
     def exec_module(self, **kwargs):
 
@@ -708,7 +708,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
-                    
+
                     nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
                     vhd = VirtualHardDisk(uri=requested_vhd_uri)
                     vm_resource = VirtualMachine(
@@ -956,14 +956,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         nic_names = []
         pip_names = []
 
-        if self.remove_on_absent.intersection(['all','virtual_storage']):
+        if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
             self.log('Storing VHD URI for deletion')
             vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
             self.results['deleted_vhd_uris'] = vhd_uris
 
-        if self.remove_on_absent.intersection(['all','network_interfaces']):
+        if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
@@ -971,7 +971,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 nic_names.append(id_dict['networkInterfaces'])
             self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
-            if self.remove_on_absent.intersection(['all','public_ips']):
+            if self.remove_on_absent.intersection(set(['all','public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
                 for name in nic_names:
                     nic = self.get_network_interface(name)
@@ -993,16 +993,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
-        if self.remove_on_absent.intersection(['all','virtual_storage']):
+        if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
             self.log('Deleting virtual storage')
             self.delete_vm_storage(vhd_uris)
 
-        if self.remove_on_absent.intersection(['all','network_interfaces']):
+        if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
             self.log('Deleting network interfaces')
             for name in nic_names:
                 self.delete_nic(name)
 
-        if self.remove_on_absent.intersection(['all','public_ips']):
+        if self.remove_on_absent.intersection(set(['all','public_ips'])):
             self.log('Deleting public IPs')
             for name in pip_names:
                 self.delete_pip(name)
