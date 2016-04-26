@@ -19,7 +19,7 @@ DOCUMENTATION = """
 module: ec2_lc
 short_description: Create or delete AWS Autoscaling Launch Configurations
 description:
-  - Can create or delete AwS Autoscaling Configurations
+  - Can create or delete AWS Autoscaling Configurations
   - Works with the ec2_asg module to manage Autoscaling Groups
 notes:
   - "Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration
