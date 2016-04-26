@@ -379,7 +379,11 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
 
 def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id=None, boto3=True):
 
-    """ Return list of security group IDs from security group names """
+    """ Return list of security group IDs from security group names. Note that security group names are not unique
+     across VPCs.  If a name exists across multiple VPCs and no VPC ID is supplied, all matching IDs will be returned. This
+     will probably lead to a boto exception if you attempt to assign both IDs to a resource so ensure you wrap the call in
+     a try block
+     """
 
     def get_sg_name(sg, boto3):
 
