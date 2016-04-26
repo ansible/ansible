@@ -395,3 +395,70 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
         tags_list.append({'Key': k, 'Value': v})
 
     return tags_list
+
+
+def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id=None, boto3=True):
+
+    """ Return list of security group IDs from security group names. Note that security group names are not unique
+     across VPCs.  If a name exists across multiple VPCs and no VPC ID is supplied, all matching IDs will be returned. This
+     will probably lead to a boto exception if you attempt to assign both IDs to a resource so ensure you wrap the call in
+     a try block
+     """
+
+    def get_sg_name(sg, boto3):
+
+        if boto3:
+            return sg['GroupName']
+        else:
+            return sg.name
+
+
+    def get_sg_id(sg, boto3):
+
+        if boto3:
+            return sg['GroupId']
+        else:
+            return sg.id
+
+
+    sec_group_id_list = []
+
+    if isinstance(sec_group_list, basestring):
+        sec_group_list = [sec_group_list]
+
+    # Get all security groups
+    if boto3:
+        if vpc_id:
+            filters = [
+                {
+                    'Name': 'vpc-id',
+                    'Values': [
+                        vpc_id,
+                    ]
+                }
+            ]
+            all_sec_groups = ec2_connection.describe_security_groups(Filters=filters)['SecurityGroups']
+        else:
+            all_sec_groups = ec2_connection.describe_security_groups()['SecurityGroups']
+    else:
+        if vpc_id:
+            filters = { 'vpc-id': vpc_id }
+            all_sec_groups = ec2_connection.get_all_security_groups(filters=filters)
+        else:
+            all_sec_groups = ec2_connection.get_all_security_groups()
+
+    unmatched = set(sec_group_list).difference(str(get_sg_name(all_sg, boto3)) for all_sg in all_sec_groups)
+    sec_group_name_list = list(set(sec_group_list) - set(unmatched))
+
+    if len(unmatched) > 0:
+        # If we have unmatched names that look like an ID, assume they are
+        import re
+        sec_group_id_list[:] = [sg for sg in unmatched if re.match('sg-[a-fA-F0-9]+$', sg)]
+        still_unmatched = [sg for sg in unmatched if not re.match('sg-[a-fA-F0-9]+$', sg)]
+        if len(still_unmatched) > 0:
+            raise ValueError("The following group names are not valid: %s" % ', '.join(still_unmatched))
+
+    sec_group_id_list += [ str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list ]
+
+    return sec_group_id_list
+
