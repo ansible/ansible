@@ -9,6 +9,11 @@ Ansible Changes By Release
 ####New Filters:
 * extract
 
+## 2.0.3 "Over the Hills and Far Away"
+
+* Backport fix to uri module to return the body of an error response
+* Backport fix to uri module to handle file:/// uris.
+
 ## 2.0.2 "Over the Hills and Far Away"
 
 * Backport of the 2.1 feature to ensure per-item callbacks are sent as they occur,
