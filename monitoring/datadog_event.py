@@ -142,7 +142,7 @@ def post_event(module):
     headers = {"Content-Type": "application/json"}
 
     (response, info) = fetch_url(module, uri, data=json_body, headers=headers)
-    if info['status'] == 200:
+    if info['status'] == 202:
         response_body = response.read()
         response_json = module.from_json(response_body)
         if response_json['status'] == 'ok':
