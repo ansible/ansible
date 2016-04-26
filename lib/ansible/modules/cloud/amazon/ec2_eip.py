@@ -303,7 +303,7 @@ def ensure_present(ec2, module, domain, address, device_id,
         if isinstance:
             instance = find_device(ec2, module, device_id)
             if reuse_existing_ip_allowed:
-                if len(instance.vpc_id) > 0 and domain is None:
+                if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, device_id,
