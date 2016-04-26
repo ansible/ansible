@@ -210,8 +210,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            executable           = dict(required=False, type='str'),
-            gem_source           = dict(required=False, type='str'),
+            executable           = dict(required=False, type='path'),
+            gem_source           = dict(required=False, type='path'),
             include_dependencies = dict(required=False, default=True, type='bool'),
             name                 = dict(required=True, type='str'),
             repository           = dict(required=False, aliases=['source'], type='str'),
