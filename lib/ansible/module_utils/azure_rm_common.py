@@ -51,7 +51,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
 
 AZURE_TAG_ARGS = dict(
     tags=dict(type='dict'),
-    purge_tags=dict(type='bool', default=False),
+    append_tags=dict(type='bool', default=True),
 )
 
 AZURE_COMMON_REQUIRED_IF = [
@@ -275,7 +275,7 @@ class AzureRMModuleBase(object):
         if updated:
             changed = True
 
-        if self.module.params['purge_tags']:
+        if not self.module.params['append_tags']:
             purged, new_tags = self._tag_purge(new_tags)
             if purged:
                 changed = True
