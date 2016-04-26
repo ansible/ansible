@@ -426,7 +426,7 @@ class AnsibleDockerClient(Client):
         '''
         try:
             response = self.images(name=name)
-        except Exception as exc:
+        except Exception, exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
         if tag: 
