@@ -118,6 +118,9 @@ To change this path, edit the ansible configuration file.
 
 In addition, plugins can be shipped in a subdirectory relative to a top-level playbook, in folders named the same as indicated above.
 
+They can also be shipped as part of a role, in a subdirectory named as indicated above. The plugin will be availiable as soon as the role
+is called.
+
 .. seealso::
 
    :doc:`modules`
