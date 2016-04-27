@@ -241,6 +241,10 @@ class Facts(object):
                 self.facts['architecture'] = data[0]
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
+        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
+        if machine_id:
+            machine_id = machine_id.split('\n')[0]
+            self.facts["machine_id"] = machine_id
 
     def get_local_facts(self):
 
@@ -702,10 +706,6 @@ class Distribution(object):
                 except AttributeError:
                     pass
 
-        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
-        if machine_id:
-            machine_id = machine_id.split('\n')[0]
-            self.facts["machine_id"] = machine_id
         self.facts['os_family'] = self.facts['distribution']
         distro = self.facts['distribution'].replace(' ', '_')
         if distro in self.OS_FAMILY:
