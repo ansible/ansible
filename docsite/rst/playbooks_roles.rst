@@ -330,13 +330,13 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
-Embedding Modules In Roles
-``````````````````````````
+Embedding Modules and Plugins In Roles
+``````````````````````````````````````
 
 This is an advanced topic that should not be relevant for most users.
 
-If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
-in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
+If you write a custom module (see :doc:`developing_modules`) or a plugin (see :doc:`developing_plugins`), you may wish to distribute it as part of a role.
+Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
 A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
 people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
@@ -364,6 +364,16 @@ This can also be used, with some limitations, to modify modules in Ansible's cor
 in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy
 way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back
 to github whenever possible via a pull request.
+
+The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin::
+
+    roles/
+       my_custom_filter/
+           filter_plugins
+              filter1
+              filter2
+
+They can then be used in a template or a jinja template in any role called after 'my_custom_filter'
 
 Ansible Galaxy
 ``````````````
