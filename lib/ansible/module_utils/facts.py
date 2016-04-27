@@ -31,16 +31,42 @@ import struct
 import datetime
 import getpass
 import pwd
-import ConfigParser
+
+try:
+    # python2
+    import ConfigParser as configparser
+except ImportError:
+    # python3
+    import configparser
 from ansible.module_utils.basic import get_all_subclasses
 
 # py2 vs py3; replace with six via ziploader
 try:
+    # python2
     from StringIO import StringIO
 except ImportError:
+    # python3
     from io import StringIO
 
-from string import maketrans
+
+try:
+    # python2
+    from string import maketrans
+except ImportError:
+    # python3
+    maketrans = str.maketrans # TODO: is this really identical?
+
+try:
+    dict.iteritems
+except AttributeError:
+    # Python 3
+    def iteritems(d):
+        return d.items()
+else:
+    # Python 2
+    def iteritems(d):
+        return d.iteritems()
+
 
 try:
     import selinux
@@ -118,23 +144,6 @@ class Facts(object):
     _I386RE = re.compile(r'i([3456]86|86pc)')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
-    OSDIST_LIST = ( ('/etc/oracle-release', 'OracleLinux'),
-                    ('/etc/slackware-version', 'Slackware'),
-                    ('/etc/redhat-release', 'RedHat'),
-                    ('/etc/vmware-release', 'VMwareESX'),
-                    ('/etc/openwrt_release', 'OpenWrt'),
-                    ('/etc/system-release', 'OtherLinux'),
-                    ('/etc/alpine-release', 'Alpine'),
-                    ('/etc/release', 'Solaris'),
-                    ('/etc/arch-release', 'Archlinux'),
-                    ('/etc/os-release', 'SuSE'),
-                    ('/etc/SuSE-release', 'SuSE'),
-                    ('/etc/gentoo-release', 'Gentoo'),
-                    ('/etc/os-release', 'Debian'),
-                    ('/etc/lsb-release', 'Mandriva'),
-                    ('/etc/altlinux-release', 'Altlinux'),
-                    ('/etc/os-release', 'NA'),
-                )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -158,7 +167,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
-    ]
+                ]
 
     def __init__(self, module, load_on_init=True):
 
@@ -170,7 +179,7 @@ class Facts(object):
         # about those first.
         if load_on_init:
             self.get_platform_facts()
-            self.get_distribution_facts()
+            self.facts.update(Distribution().populate())
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
@@ -217,9 +226,7 @@ class Facts(object):
                 self.facts['userspace_architecture'] = 'i386'
         else:
             self.facts['architecture'] = self.facts['machine']
-        if self.facts['system'] == 'Linux':
-            self.get_distribution_facts()
-        elif self.facts['system'] == 'AIX':
+        if self.facts['system'] == 'AIX':
             # Attempt to use getconf to figure out architecture
             # fall back to bootinfo if needed
             getconf_bin = self.module.get_bin_path('getconf')
@@ -234,6 +241,10 @@ class Facts(object):
                 self.facts['architecture'] = data[0]
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
+        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
+        if machine_id:
+            machine_id = machine_id.split('\n')[0]
+            self.facts["machine_id"] = machine_id
 
     def get_local_facts(self):
 
@@ -260,14 +271,13 @@ class Facts(object):
                 fact = json.loads(out)
             except ValueError:
                 # load raw ini
-                cp = ConfigParser.ConfigParser()
+                cp = configparser.ConfigParser()
                 try:
                     cp.readfp(StringIO(out))
-                except ConfigParser.Error:
+                except configparser.Error:
                     fact = "error loading fact - please check content"
                 else:
                     fact = {}
-                    #print cp.sections()
                     for sect in cp.sections():
                         if sect not in fact:
                             fact[sect] = {}
@@ -279,269 +289,6 @@ class Facts(object):
         if not local:
             return
         self.facts['local'] = local
-
-    # platform.dist() is deprecated in 2.6
-    # in 2.6 and newer, you should use platform.linux_distribution()
-    def get_distribution_facts(self):
-        """
-        Fills facts about the distribution name and version.
-
-        This is unit tested. Please extend the tests to cover all distributions if you have them available.
-        """
-
-        # A list with OS Family members
-        OS_FAMILY = dict(
-            RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
-            SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
-            OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
-            XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
-            SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-            Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
-            Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
-            SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
-            FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
-        )
-
-        # TODO: Rewrite this to use the function references in a dict pattern
-        # as it's much cleaner than this massive if-else
-        if self.facts['system'] == 'AIX':
-            self.facts['distribution'] = 'AIX'
-            rc, out, err = self.module.run_command("/usr/bin/oslevel")
-            data = out.split('.')
-            self.facts['distribution_version'] = data[0]
-            self.facts['distribution_release'] = data[1]
-        elif self.facts['system'] == 'HP-UX':
-            self.facts['distribution'] = 'HP-UX'
-            rc, out, err = self.module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
-            data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
-            if data:
-                self.facts['distribution_version'] = data.groups()[0]
-                self.facts['distribution_release'] = data.groups()[1]
-        elif self.facts['system'] == 'Darwin':
-            self.facts['distribution'] = 'MacOSX'
-            rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
-            data = out.split()[-1]
-            self.facts['distribution_version'] = data
-        elif self.facts['system'] == 'FreeBSD':
-            self.facts['distribution'] = 'FreeBSD'
-            self.facts['distribution_release'] = platform.release()
-            self.facts['distribution_version'] = platform.version()
-        elif self.facts['system'] == 'NetBSD':
-            self.facts['distribution'] = 'NetBSD'
-            self.facts['distribution_release'] = platform.release()
-            self.facts['distribution_version'] = platform.version()
-        elif self.facts['system'] == 'OpenBSD':
-            self.facts['distribution'] = 'OpenBSD'
-            self.facts['distribution_release'] = platform.release()
-            rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
-            match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
-            if match:
-                self.facts['distribution_version'] = match.groups()[0]
-            else:
-                self.facts['distribution_version'] = 'release'
-        else:
-            dist = platform.dist()
-            self.facts['distribution'] = dist[0].capitalize() or 'NA'
-            self.facts['distribution_version'] = dist[1] or 'NA'
-            self.facts['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
-            self.facts['distribution_release'] = dist[2] or 'NA'
-            # Try to handle the exceptions now ...
-            for (path, name) in Facts.OSDIST_LIST:
-                if os.path.exists(path):
-                    if os.path.getsize(path) > 0:
-                        if self.facts['distribution'] in ('Fedora', 'Altlinux', ):
-                            # Once we determine the value is one of these distros
-                            # we trust the values are always correct
-                            break
-                        elif name == 'Archlinux':
-                            data = get_file_content(path)
-                            if 'Arch Linux' in data:
-                                self.facts['distribution'] = name
-                            else:
-                                self.facts['distribution'] = data.split()[0]
-                            break
-                        elif name == 'Slackware':
-                            data = get_file_content(path)
-                            if 'Slackware' in data:
-                                self.facts['distribution'] = name
-                                version = re.findall('\w+[.]\w+', data)
-                                if version:
-                                    self.facts['distribution_version'] = version[0]
-                            break
-                        elif name == 'OracleLinux':
-                            data = get_file_content(path)
-                            if 'Oracle Linux' in data:
-                                self.facts['distribution'] = name
-                            else:
-                                self.facts['distribution'] = data.split()[0]
-                            break
-                        elif name == 'RedHat':
-                            data = get_file_content(path)
-                            if 'Red Hat' in data:
-                                self.facts['distribution'] = name
-                            else:
-                                self.facts['distribution'] = data.split()[0]
-                            break
-                        elif name == 'Altlinux':
-                            data = get_file_content(path)
-                            if 'ALT Linux' in data:
-                                self.facts['distribution'] = name
-                            else:
-                                self.facts['distribution'] = data.split()[0]
-                            break
-                        elif name == 'OtherLinux':
-                            data = get_file_content(path)
-                            if 'Amazon' in data:
-                                self.facts['distribution'] = 'Amazon'
-                                self.facts['distribution_version'] = data.split()[-1]
-                                break
-                        elif name == 'OpenWrt':
-                            data = get_file_content(path)
-                            if 'OpenWrt' in data:
-                                self.facts['distribution'] = name
-                                version = re.search('DISTRIB_RELEASE="(.*)"', data)
-                                if version:
-                                    self.facts['distribution_version'] = version.groups()[0]
-                                release = re.search('DISTRIB_CODENAME="(.*)"', data)
-                                if release:
-                                    self.facts['distribution_release'] = release.groups()[0]
-                                break
-                        elif name == 'Alpine':
-                            data = get_file_content(path)
-                            self.facts['distribution'] = name
-                            self.facts['distribution_version'] = data
-                            break
-                        elif name == 'Solaris':
-                            data = get_file_content(path).split('\n')[0]
-                            if 'Solaris' in data:
-                                ora_prefix = ''
-                                if 'Oracle Solaris' in data:
-                                    data = data.replace('Oracle ','')
-                                    ora_prefix = 'Oracle '
-                                self.facts['distribution'] = data.split()[0]
-                                self.facts['distribution_version'] = data.split()[1]
-                                self.facts['distribution_release'] = ora_prefix + data
-                                break
-
-                            uname_rc, uname_out, uname_err = self.module.run_command(['uname', '-v'])
-                            distribution_version = None
-                            if 'SmartOS' in data:
-                                self.facts['distribution'] = 'SmartOS'
-                                if os.path.exists('/etc/product'):
-                                    product_data = dict([l.split(': ', 1) for l in get_file_content('/etc/product').split('\n') if ': ' in l])
-                                    if 'Image' in product_data:
-                                        distribution_version = product_data.get('Image').split()[-1]
-                            elif 'OpenIndiana' in data:
-                                self.facts['distribution'] = 'OpenIndiana'
-                            elif 'OmniOS' in data:
-                                self.facts['distribution'] = 'OmniOS'
-                                distribution_version = data.split()[-1]
-                            elif uname_rc == 0 and 'NexentaOS_' in uname_out:
-                                self.facts['distribution'] = 'Nexenta'
-                                distribution_version = data.split()[-1].lstrip('v')
-
-                            if self.facts['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
-                                self.facts['distribution_release'] = data.strip()
-                                if distribution_version is not None:
-                                    self.facts['distribution_version'] = distribution_version
-                                elif uname_rc == 0:
-                                    self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
-                                break
-
-                        elif name == 'SuSE':
-                            data = get_file_content(path)
-                            if 'suse' in data.lower():
-                                if path == '/etc/os-release':
-                                    for line in data.splitlines():
-                                        distribution = re.search("^NAME=(.*)", line)
-                                        if distribution:
-                                            self.facts['distribution'] = distribution.group(1).strip('"')
-                                        distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line) # example pattern are 13.04 13.0 13
-                                        if distribution_version:
-                                             self.facts['distribution_version'] = distribution_version.group(1)
-                                        if 'open' in data.lower():
-                                            release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
-                                            if release:
-                                                self.facts['distribution_release'] = release.groups()[0]
-                                        elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
-                                             release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line) # SLES doesn't got funny release names
-                                             if release and release.group(1):
-                                                 release = release.group(1)
-                                             else:
-                                                 release = "0" # no minor number, so it is the first release
-                                             self.facts['distribution_release'] = release
-                                    break
-                                elif path == '/etc/SuSE-release':
-                                    if 'open' in data.lower():
-                                        data = data.splitlines()
-                                        distdata = data[0]
-                                        self.facts['distribution'] = distdata.split()[0]
-                                        for line in data:
-                                            release = re.search('CODENAME *= *([^\n]+)', line)
-                                            if release:
-                                                self.facts['distribution_release'] = release.groups()[0].strip()
-                                    elif 'enterprise' in data.lower():
-                                        lines = data.splitlines()
-                                        distribution = lines[0].split()[0]
-                                        if "Server" in data:
-                                            self.facts['distribution'] = "SLES"
-                                        elif "Desktop" in data:
-                                            self.facts['distribution'] = "SLED"
-                                        for line in lines:
-                                            release = re.search('PATCHLEVEL = ([0-9]+)', line) # SLES doesn't got funny release names
-                                            if release:
-                                                self.facts['distribution_release'] = release.group(1)
-                                                self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
-                                    break
-                        elif name == 'Debian':
-                            data = get_file_content(path)
-                            if 'Debian' in data or 'Raspbian' in data:
-                                release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
-                                if release:
-                                    self.facts['distribution_release'] = release.groups()[0]
-                                    break
-                            elif 'Ubuntu' in data:
-                                break # Ubuntu gets correct info from python functions
-                        elif name == 'Mandriva':
-                            data = get_file_content(path)
-                            if 'Mandriva' in data:
-                                version = re.search('DISTRIB_RELEASE="(.*)"', data)
-                                if version:
-                                    self.facts['distribution_version'] = version.groups()[0]
-                                release = re.search('DISTRIB_CODENAME="(.*)"', data)
-                                if release:
-                                    self.facts['distribution_release'] = release.groups()[0]
-                                self.facts['distribution'] = name
-                                break
-                        elif name == 'NA':
-                            data = get_file_content(path)
-                            for line in data.splitlines():
-                                if self.facts['distribution'] == 'NA':
-                                    distribution = re.search("^NAME=(.*)", line)
-                                    if distribution:
-                                        self.facts['distribution'] = distribution.group(1).strip('"')
-                                if self.facts['distribution_version'] == 'NA':
-                                    version = re.search("^VERSION=(.*)", line)
-                                    if version:
-                                        self.facts['distribution_version'] = version.group(1).strip('"')
-
-                            if self.facts['distribution'].lower() == 'coreos':
-                                data = get_file_content('/etc/coreos/update.conf')
-                                if data:
-                                    release = re.search("^GROUP=(.*)", data)
-                                    if release:
-                                        self.facts['distribution_release'] = release.group(1).strip('"')
-
-                    else:
-                        self.facts['distribution'] = name
-        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
-        if machine_id:
-            machine_id = machine_id.split('\n')[0]
-            self.facts["machine_id"] = machine_id
-        self.facts['os_family'] = self.facts['distribution']
-        distro = self.facts['distribution'].replace(' ', '_')
-        if distro in OS_FAMILY:
-            self.facts['os_family'] = OS_FAMILY[distro]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
@@ -781,7 +528,7 @@ class Facts(object):
 
     def get_env_facts(self):
         self.facts['env'] = {}
-        for k,v in os.environ.iteritems():
+        for k,v in iteritems(os.environ):
             self.facts['env'][k] = v
 
     def get_dns_facts(self):
@@ -846,6 +593,326 @@ class Facts(object):
             self.facts['python']['type'] = sys.subversion[0]
         except AttributeError:
             self.facts['python']['type'] = None
+
+
+class Distribution(object):
+    """
+    This subclass of Facts fills the distribution, distribution_version and distribution_release variables
+
+    To do so it checks the existance and content of typical files in /etc containing distribution information
+
+    This is unit tested. Please extend the tests to cover all distributions if you have them available.
+    """
+
+    OSDIST_LIST = (
+        ('/etc/oracle-release', 'OracleLinux'),
+        ('/etc/slackware-version', 'Slackware'),
+        ('/etc/redhat-release', 'RedHat'),
+        ('/etc/vmware-release', 'VMwareESX'),
+        ('/etc/openwrt_release', 'OpenWrt'),
+        ('/etc/system-release', 'OtherLinux'),
+        ('/etc/alpine-release', 'Alpine'),
+        ('/etc/release', 'Solaris'),
+        ('/etc/arch-release', 'Archlinux'),
+        ('/etc/os-release', 'SuSE'),
+        ('/etc/SuSE-release', 'SuSE'),
+        ('/etc/gentoo-release', 'Gentoo'),
+        ('/etc/os-release', 'Debian'),
+        ('/etc/lsb-release', 'Mandriva'),
+        ('/etc/altlinux-release', 'Altlinux'),
+        ('/etc/os-release', 'NA'),
+        ('/etc/coreos/update.conf', 'Coreos'),
+    )
+
+    # A list with OS Family members
+    OS_FAMILY = dict(
+        RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
+        SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
+        OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
+        XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
+        SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
+        Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
+        Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
+        SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
+        FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
+    )
+
+    def __init__(self):
+        self.system = platform.system()
+        self.facts = {}
+
+    def populate(self):
+        if self.system == 'Linux':
+            self.get_distribution_facts()
+        return self.facts
+
+    def get_distribution_facts(self):
+
+        # The platform module provides information about the running
+        # system/distribution. Use this as a baseline and fix buggy systems
+        # afterwards
+        self.facts['distribution_release'] = platform.release()
+        self.facts['distribution_version'] = platform.version()
+
+        systems_platform_working = ('NetBSD', 'FreeBSD')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
+
+        if self.system in systems_platform_working:
+            # the distribution is provided by platform module already and needs no fixes
+            pass
+
+        elif self.system in systems_implemented:
+            self.facts['distribution'] = self.system
+            cleanedname = self.system.replace('-','')
+            distfunc = getattr(self, 'get_distribution_'+cleanedname)
+            distfunc()
+        else:
+            # try to find out which linux distribution this is
+            dist = platform.dist()
+            self.facts['distribution'] = dist[0].capitalize() or 'NA'
+            self.facts['distribution_version'] = dist[1] or 'NA'
+            self.facts['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
+            self.facts['distribution_release'] = dist[2] or 'NA'
+            # Try to handle the exceptions now ...
+            # self.facts['distribution_debug'] = []
+            for (path, name) in self.OSDIST_LIST:
+
+                # TODO: remove this hack if tested with Fedora and Altlinux
+                if self.facts['distribution'] in ('Fedora', 'Altlinux', ):
+                    # Once we determine the value is one of these distros
+                    # we trust the values are always correct
+                    break
+                if not os.path.exists(path):
+                    continue
+                if os.path.getsize(path) == 0:
+                    continue
+
+                try:
+                    distfunc = getattr(self, 'get_distribution_' + name)
+                    data = get_file_content(path)
+                    parsed = distfunc(name, data, path)
+                    if parsed is None or parsed:
+                        # break only if parsing was succesful
+                        # otherwise continue with other distributions
+
+                        # to debug multiple matching release files, one can use:
+                        # self.facts['distribution_debug'].append({path + ' ' + name:
+                        #         (parsed,
+                        #          self.facts['distribution'],
+                        #          self.facts['distribution_version'],
+                        #          self.facts['distribution_release'],
+                        #          )})
+                        break
+                except AttributeError:
+                    pass
+
+        self.facts['os_family'] = self.facts['distribution']
+        distro = self.facts['distribution'].replace(' ', '_')
+        if distro in self.OS_FAMILY:
+            self.facts['os_family'] = self.OS_FAMILY[distro]
+
+    def get_distribution_AIX(self):
+        rc, out, err = self.module.run_command("/usr/bin/oslevel")
+        data = out.split('.')
+        self.facts['distribution_version'] = data[0]
+        self.facts['distribution_release'] = data[1]
+
+    def get_distribution_HPUX(self):
+        rc, out, err = self.module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
+        data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
+        if data:
+            self.facts['distribution_version'] = data.groups()[0]
+            self.facts['distribution_release'] = data.groups()[1]
+
+    def get_distribution_Darwin(self):
+        self.facts['distribution'] = 'MacOSX'
+        rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
+        data = out.split()[-1]
+        self.facts['distribution_version'] = data
+
+    def get_distribution_OpenBSD(self):
+        rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
+        if match:
+            self.facts['distribution_version'] = match.groups()[0]
+        else:
+            self.facts['distribution_version'] = 'release'
+
+    def get_distribution_Archlinux(self, name, data, path):
+        if not 'Arch Linux' in data:
+            self.facts['distribution'] = data.split()[0]
+
+    def get_distribution_Slackware(self, name, data, path):
+        if 'Slackware' in data:
+            self.facts['distribution'] = name
+            version = re.findall('\w+[.]\w+', data)
+            if version:
+                self.facts['distribution_version'] = version[0]
+
+    def get_distribution_OracleLinux(self, name, data, path):
+        if not 'Oracle Linux' in data:
+            self.facts['distribution'] = data.split()[0]
+
+    def get_distribution_RedHat(self, name, data, path):
+        if not 'Red Hat' in data:
+            self.facts['distribution'] = data.split()[0]
+
+    def get_distribution_Altlinux(self, name, data, path):
+        if not 'ALT Linux' in data:
+            self.facts['distribution'] = data.split()[0]
+
+    def get_distribution_OtherLinux(self, name, data, path):
+        if 'Amazon' in data:
+            self.facts['distribution'] = 'Amazon'
+            self.facts['distribution_version'] = data.split()[-1]
+        else:
+            return False  # TODO: remove if tested without this
+
+    def get_distribution_OpenWrt(self, name, data, path):
+        if 'OpenWrt' in data:
+            self.facts['distribution'] = name
+            version = re.search('DISTRIB_RELEASE="(.*)"', data)
+            if version:
+                self.facts['distribution_version'] = version.groups()[0]
+            release = re.search('DISTRIB_CODENAME="(.*)"', data)
+            if release:
+                self.facts['distribution_release'] = release.groups()[0]
+        else:
+            return False  # TODO: remove if tested without this
+
+    def get_distribution_Alpine(self, name, data, path):
+        self.facts['distribution'] = 'Alpine'
+        self.facts['distribution_version'] = data
+
+    def get_distribution_Solaris(self, name, data, path):
+        data = data.split('\n')[0]
+        if 'Solaris' in data:
+            ora_prefix = ''
+            if 'Oracle Solaris' in data:
+                data = data.replace('Oracle ','')
+                ora_prefix = 'Oracle '
+            self.facts['distribution'] = data.split()[0]
+            self.facts['distribution_version'] = data.split()[1]
+            self.facts['distribution_release'] = ora_prefix + data
+            return
+
+        uname_rc, uname_out, uname_err = self.module.run_command(['uname', '-v'])
+        distribution_version = None
+        if 'SmartOS' in data:
+            self.facts['distribution'] = 'SmartOS'
+            if os.path.exists('/etc/product'):
+                product_data = dict([l.split(': ', 1) for l in get_file_content('/etc/product').split('\n') if ': ' in l])
+                if 'Image' in product_data:
+                    distribution_version = product_data.get('Image').split()[-1]
+        elif 'OpenIndiana' in data:
+            self.facts['distribution'] = 'OpenIndiana'
+        elif 'OmniOS' in data:
+            self.facts['distribution'] = 'OmniOS'
+            distribution_version = data.split()[-1]
+        elif uname_rc == 0 and 'NexentaOS_' in uname_out:
+            self.facts['distribution'] = 'Nexenta'
+            distribution_version = data.split()[-1].lstrip('v')
+
+        if self.facts['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
+            self.facts['distribution_release'] = data.strip()
+            if distribution_version is not None:
+                self.facts['distribution_version'] = distribution_version
+            elif uname_rc == 0:
+                self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
+            return
+
+        return False  # TODO: remove if tested without this
+
+    def get_distribution_SuSE(self, name, data, path):
+        if 'suse' not in data.lower():
+            return False  # TODO: remove if tested without this
+        if path == '/etc/os-release':
+            for line in data.splitlines():
+                distribution = re.search("^NAME=(.*)", line)
+                if distribution:
+                    self.facts['distribution'] = distribution.group(1).strip('"')
+                # example pattern are 13.04 13.0 13
+                distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
+                if distribution_version:
+                        self.facts['distribution_version'] = distribution_version.group(1)
+                if 'open' in data.lower():
+                    release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
+                    if release:
+                        self.facts['distribution_release'] = release.groups()[0]
+                elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
+                    # SLES doesn't got funny release names
+                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
+                    if release.group(1):
+                        release = release.group(1)
+                    else:
+                        release = "0"  # no minor number, so it is the first release
+                    self.facts['distribution_release'] = release
+        elif path == '/etc/SuSE-release':
+            if 'open' in data.lower():
+                data = data.splitlines()
+                distdata = get_file_content(path).split('\n')[0]
+                self.facts['distribution'] = distdata.split()[0]
+                for line in data:
+                    release = re.search('CODENAME *= *([^\n]+)', line)
+                    if release:
+                        self.facts['distribution_release'] = release.groups()[0].strip()
+            elif 'enterprise' in data.lower():
+                lines = data.splitlines()
+                distribution = lines[0].split()[0]
+                if "Server" in data:
+                    self.facts['distribution'] = "SLES"
+                elif "Desktop" in data:
+                    self.facts['distribution'] = "SLED"
+                for line in lines:
+                    release = re.search('PATCHLEVEL = ([0-9]+)', line) # SLES doesn't got funny release names
+                    if release:
+                        self.facts['distribution_release'] = release.group(1)
+                        self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
+
+    def get_distribution_Debian(self, name, data, path):
+        if 'Debian' in data or 'Raspbian' in data:
+            self.facts['distribution'] = 'Debian'
+            release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            if release:
+                self.facts['distribution_release'] = release.groups()[0]
+        elif 'Ubuntu' in data:
+            self.facts['distribution'] = 'Ubuntu'
+            pass  # Ubuntu gets correct info from python functions
+        else:
+            return False  # TODO: remove if tested without this
+
+    def get_distribution_Mandriva(self, name, data, path):
+        if 'Mandriva' in data:
+            self.facts['distribution'] = 'Mandriva'
+            version = re.search('DISTRIB_RELEASE="(.*)"', data)
+            if version:
+                self.facts['distribution_version'] = version.groups()[0]
+            release = re.search('DISTRIB_CODENAME="(.*)"', data)
+            if release:
+                self.facts['distribution_release'] = release.groups()[0]
+            self.facts['distribution'] = name
+        else:
+            return False
+
+    def get_distribution_NA(self, name, data, path):
+        for line in data.splitlines():
+            distribution = re.search("^NAME=(.*)", line)
+            if distribution and self.facts['distribution'] == 'NA':
+                self.facts['distribution'] = distribution.group(1).strip('"')
+            version = re.search("^VERSION=(.*)", line)
+            if version and self.facts['distribution_version'] == 'NA':
+                self.facts['distribution_version'] = version.group(1).strip('"')
+
+    def get_distribution_Coreos(self, name, data, path):
+        if self.facts['distribution'].lower() == 'coreos':
+            if not data:
+                # include fix from #15230, #15228
+                return
+            release = re.search("^GROUP=(.*)", data)
+            if release:
+                self.facts['distribution_release'] = release.group(1).strip('"')
+        else:
+            return False  # TODO: remove if tested without this
 
 
 class Hardware(Facts):
@@ -1176,7 +1243,8 @@ class LinuxHardware(Hardware):
             sysfs_no_links = 0
             try:
                 path = os.readlink(os.path.join("/sys/block/", block))
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 if e.errno == errno.EINVAL:
                     path = block
                     sysfs_no_links = 1
@@ -2035,8 +2103,6 @@ class LinuxNetwork(Network):
                 interfaces[device]['mtu'] = int(get_file_content(os.path.join(path, 'mtu')))
             if os.path.exists(os.path.join(path, 'operstate')):
                 interfaces[device]['active'] = get_file_content(os.path.join(path, 'operstate')) != 'down'
-#            if os.path.exists(os.path.join(path, 'carrier')):
-#                interfaces[device]['link'] = get_file_content(os.path.join(path, 'carrier')) == '1'
             if os.path.exists(os.path.join(path, 'device','driver', 'module')):
                 interfaces[device]['module'] = os.path.basename(os.path.realpath(os.path.join(path, 'device', 'driver', 'module')))
             if os.path.exists(os.path.join(path, 'type')):
