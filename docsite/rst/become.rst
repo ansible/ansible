@@ -15,7 +15,7 @@ privilege escalation tools, which you probably already use or have configured, l
     and execute tasks, create resources with the 2nd user's permissions. As of 1.9 `become` supersedes the old sudo/su, while still being backwards compatible.
     This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
 
-.. note:: Setting any var or directive makes no implications on the values of the other related directives, i.e. setting become_user does not set become.
+.. note:: Become vars & directives are independent, i.e. setting `become_user` does not set `become`.
 
 
 Directives
