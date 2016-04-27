@@ -175,7 +175,7 @@ def ziploader_setup(modfile, modname):
     print("* ziploader module detected; extracted module source to: %s" % debug_dir)
     return modfile, argsfile
 
-def runtest(modstyle, modfile, argspath, modname, module_style):
+def runtest(modfile, argspath, modname, module_style):
     """Test run a module, piping it's output for reporting."""
     if module_style == 'ziploader':
         modfile, argspath = ziploader_setup(modfile, modname)
