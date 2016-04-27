@@ -1,7 +1,7 @@
 Detailed Guides
 ```````````````
 
-This section is new and evolving.  The idea here is explore particular use cases in greater depth and provide a more "top down" explanation of some basic features.
+This section is new and evolving.  The idea here is to explore particular use cases in greater depth and provide a more "top down" explanation of some basic features.
 
 .. toctree::
    :maxdepth: 1
@@ -13,5 +13,6 @@ This section is new and evolving.  The idea here is explore particular use cases
    guide_cloudstack
    guide_vagrant
    guide_rolling_upgrade
+   guide_docker
 
 Pending topics may include: Docker, Jenkins, Google Compute Engine, Linode/DigitalOcean, Continuous Deployment, and more.
