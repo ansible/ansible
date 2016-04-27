@@ -229,7 +229,7 @@ class NetworkConfig(object):
         if self._device_os == 'junos':
             return updates
 
-        diffs = dict()
+        diffs = collections.OrderedDict()
         for update in updates:
             if replace == 'block' and update.parents:
                 update = update.parents[-1]
