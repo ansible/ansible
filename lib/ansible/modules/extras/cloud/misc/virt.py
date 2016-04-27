@@ -84,6 +84,23 @@ tasks:
     virt: name=foo state=running uri=lxc:///
 '''
 
+RETURN = '''
+# for list_vms command
+list_vms: 
+    description: The list of vms defined on the remote system
+    type: dictionary
+    returned: success
+    sample: [
+        "build.example.org", 
+        "dev.example.org"
+    ]
+# for status command
+status:
+    description: The status of the VM, among running, crashed, paused and shutdown
+    type: string
+    sample: "success"
+    returned: success
+'''
 VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
