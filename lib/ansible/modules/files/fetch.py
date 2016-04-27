@@ -82,11 +82,11 @@ EXAMPLES = '''
 - fetch: src=/tmp/somefile dest=/tmp/fetched
 
 # Specifying a path directly
-- fetch: src=/tmp/somefile dest=/tmp/prefix-{{ ansible_hostname }} flat=yes
+- fetch: src=/tmp/somefile dest=/tmp/prefix-{{ inventory_hostname }} flat=yes
 
 # Specifying a destination path
 - fetch: src=/tmp/uniquefile dest=/tmp/special/ flat=yes
 
 # Storing in a path relative to the playbook
-- fetch: src=/tmp/uniquefile dest=special/prefix-{{ ansible_hostname }} flat=yes
+- fetch: src=/tmp/uniquefile dest=special/prefix-{{ inventory_hostname }} flat=yes
 '''
