@@ -124,16 +124,15 @@ actions:
         "Updated config file /Users/chouseknecht/.docker/config.json with new authorization for https://index.docker.io/v1/"
     ]
 login_results:
-    descriptoin: Results from the login.
+    description: Results from the login.
     returned: always
     type: dict
-    sample:{
+    sample: {
         "email": "testuer@yahoo.com",
         "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
-}
 '''
 
 import base64
