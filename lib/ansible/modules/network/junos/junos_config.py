@@ -25,7 +25,7 @@ short_description: Manage configuration on remote devices running Junos
 description:
   - The M(junos_config) module provides an abstraction for working
     with the configuration running on remote devices.  It can perform
-    operations that influence the confiugration state.
+    operations that influence the configuration state.
   - This module provides an implementation for configuring Juniper
     JUNOS devices.  The configuration statements must start with either
     `set` or `delete` and are compared against the current device
@@ -40,15 +40,6 @@ options:
         file in role or playbook root folder in templates directory.
     required: false
     default: null
-  backup:
-    description:
-      - When this argument is configured true, the module will backup
-        the configuration from the node prior to making any changes.
-        The backup file will be written to backup_{{ hostname }} in
-        the root of the playbook directory.
-    required: false
-    default: false
-    choices: ["true", "false"]
   rollback:
     description:
       - The C(rollback) argument instructs the module to rollback the
@@ -82,18 +73,6 @@ options:
         is set to False, this argument is silently ignored.
     required: false
     default: configured by junos_config
-  action:
-    description:
-      - The C(action) argument instructs the module how to load the
-        configuration into the remote device.  When action is set to
-        I(merge) the C(src) template file is merged with the current
-        device configuration.  When the I(replace) action is used,
-        the current device configuration is replaced by the C(src).
-        Finally when C(overwrite) is used, the device configuration will
-        be overwritten.
-    required: true
-    default: merge
-    choices: ['merge', 'replace', 'overwrite']
   replace:
     description:
       - The C(replace) argument will instruct the remote device to
@@ -102,20 +81,6 @@ options:
         from this module.
     required: true
     default: false
-  overwrite:
-    description:
-
-  format:
-    description:
-      - The C(format) argument specifies the format of the configuration
-        template specified in C(src).  If the format argument is not
-        specified, the module will attempt to infer the configuration
-        format based of file extension.  Files that end in I(xml) will set
-        the format to xml.  Files that end in I(set) will set the format
-        to set and all other files will default the format to text.
-    required: false
-    default: text
-    choices: ['text', 'xml', 'set']
 requirements:
   - junos-eznc
 notes:
