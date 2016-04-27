@@ -42,16 +42,16 @@ installed on the host running Ansible. You will need to have >= 1.7.0 installed.
 Connecting to the Docker API
 ----------------------------
 
-You can connect to a local or remote API using command line parameters passed to each task or by setting environment
-variables. The order of precedence is command line parameters and then environment variables. If neither a command line
+You can connect to a local or remote API using parameters passed to each task or by setting environment variables.
+The order of precedence is command line parameters and then environment variables. If neither a command line
 option for a environment variable is found, then a default value will be used. The default values are provided under
-`Command Line Parameters`_
+`Parameters`_
 
 
-Command Line Parameters
-.......................
+Parameters
+..........
 
-Control how modules connect to the Docker API by passing the following options to a task:
+Control how modules connect to the Docker API by passing the following parameters:
 
     docker_host
         The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``.
@@ -167,7 +167,7 @@ examples to get you started:
             - debug: msg="Container - {{ inventory_hostname }}"
 
 Configuration
-..............
+.............
 You can control the behavior of the inventory script by defining environment variables, or
 creating a docker.yml file (sample provided in ansible/contrib/inventory). The order of precedence is the docker.yml
 file and then environment variables.
@@ -233,10 +233,12 @@ You can also override the default name of the script by defining DOCKER_CONFIG_F
 
 Here's what you can define in docker_inventory.yml:
 
-  * defaults: Defines a default connection. Defaults will be taken from this and applied to any values not provided
-    for a host defined in the hosts list.
+    defaults
+        Defines a default connection. Defaults will be taken from this and applied to any values not provided
+        for a host defined in the hosts list.
 
-  * hosts: If you wish to get inventory from more than one Docker host, define a hosts list.
+    hosts
+        If you wish to get inventory from more than one Docker host, define a hosts list.
 
 For the default host and each host in the hosts list define the following attributes:
 
