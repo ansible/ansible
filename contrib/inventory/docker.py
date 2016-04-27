@@ -24,9 +24,16 @@ DOCUMENTATION = '''
 
 Docker Inventory Script
 =======================
-Generates dynamic inventory by making API requests to one or more Docker daemons. Communicates with the API
-by way of docker-py (https://docker-py.readthedocs.org/en/stable/). So before running the script, you will need to
-install docker-py:
+The inventory script generates dynamic inventory by making API requests to one or more Docker APIs. It's dynamic
+because the inventory is generated at run-time rather than being read from a static file. The script generates the
+inventory by connecting to one or many Docker APIs and inspecting the containers it finds at each API. Which APIs the
+script contacts can be defined using environment variables or a configuration file.
+
+Requirements
+------------
+
+Using the docker modules requires having docker-py <https://docker-py.readthedocs.org/en/stable/>
+installed on the host running Ansible. To install docker-py:
 
    pip install docker-py
 
@@ -197,126 +204,123 @@ When run in --list mode (the default), container instances are grouped by:
 Configuration:
 --------------
 You can control the behavior of the inventory script by passing arguments, defining environment variables, or
-creating a docker.yml file (sample provided in ansible/contrib/inventory). The order of precedence is command
-line args, then the docker.yml file and finally environment variables.
+creating a configuration file named docker.yml (sample provided in ansible/contrib/inventory). The order of precedence
+is command line args, then the docker.yml file and finally environment variables.
 
 Environment variables:
-;;;;;;;;;;;;;;;;;;;;;;
+......................
 
-DOCKER_CONFIG_FILE
-   description: path to docker inventory configuration file.
-   default: ./docker.yml
+To connect to a single Docker API the following variables can be defined in the environment to control the connection
+options. These are the same environment variables used by the Docker modules.
 
-DOCKER_HOST
-   description: Docker daemon URL or Unix socket path.
-   default: unix://var/run/docker.sock
+    DOCKER_HOST
+        The URL or Unix socket path used to connect to the Docker API. Defaults to unix://var/run/docker.sock.
 
-DOCKER_TLS_HOSTNAME:
-   description: When DOCKER_TLS_VERIFY is true, provide the expected name of the host.
-   default: localhost
+    DOCKER_API_VERSION:
+        The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported
+        by docker-py.
 
-DOCKER_API_VERSION:
-   description: Version of the Docker API the client will use.
-   default: DEFAULT_DOCKER_API_VERSION as defined in docker-py
+    DOCKER_TIMEOUT:
+        The maximum amount of time in seconds to wait on a response fromm the API. Defaults to 60 seconds.
 
-DOCKER_CERT_PATH:
-   description: Path to the directory containing the client certificate and key files.
-   default: None
+    DOCKER_TLS:
+        Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server.
+        Defaults to False.
 
-DOCKER_SSL_VERSION:
-   description: Version of TLS supported by Docker daemon.
-   default: None
+    DOCKER_TLS_VERIFY:
+        Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+        Default is False
 
-DOCKER_TLS:
-   description: Use TLS when sending requests to Docker daemon. Set to 1, 0, true, false, True, False, yes, no.
-   default: False
+    DOCKER_TLS_HOSTNAME:
+        When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults
+        to localhost.
 
-DOCKER_TLS_VERIFY:
-   description: Verify hostname found in TLS certs. Set to 1, 0, true, false, True, False, yes, no.
-   default: False
+    DOCKER_CERT_PATH:
+        Path to the directory containing the client certificate, client key and CA certificate.
 
-DOCKER_TIMEOUT:
-   description: Docker request timeout in seconds.
-   default: Value of DOCKER_TIMEOUT as defined in docker-py
+    DOCKER_SSL_VERSION:
+        Provide a valid SSL version number. Default value determined by docker-py, which at the time of this writing
+        was 1.0
 
-DOCKER_PRIVATE_SSH_PORT:
-   description: The private port (container port) on which SSH is listening for connections
-   default: 22
+In addition to the connection variables there are a couple variables used to control the execution and output of the
+script:
 
-DOCKER_DEFAULT_IP:
-   description: This environment variable overrides the container SSH connection
-      IP address (aka, 'ansible_ssh_host').
+    DOCKER_CONFIG_FILE
+        Path to the configuration file. Defaults to ./docker.yml.
 
-      This option allows one to override the ansible_ssh_host whenever Docker has exercised its default behavior of
-      binding private ports to all interfaces of the Docker host.  This behavior, when dealing with remote Docker hosts,
-      does not allow Ansible to determine a proper host IP address on which to connect via SSH to containers. By
-      default, this inventory module assumes all 0.0.0.0-exposed ports to be bound to localhost:<port>.  To override
-      this behavior, for example, to bind a container's SSH port to the public interface of its host, one must
-      manually set this IP.
+    DOCKER_PRIVATE_SSH_PORT:
+        The private port (container port) on which SSH is listening for connections. Defaults to 22.
 
-      It is preferable to begin to launch Docker containers with ports exposed on publicly accessible IP addresses,
-      particularly if the containers are to be targeted by Ansible for remote configuration, not accessible via
-      localhost SSH connections. Docker containers can be explicitly exposed on IP addresses by
-         a) starting the daemon with the --ip argument
-         b) running containers with the -P/--publish ip::containerPort
-            argument
-   default: 127.0.0.1 if port exposed on 0.0.0.0
+    DOCKER_DEFAULT_IP:
+        The IP address to assign to ansible_host when the container's SSH port is mapped to interface '0.0.0.0'.
 
 
-docker.yml
-;;;;;;;;;;;;;;;;;;;;
+Configuration File
+..................
 
-A sample docker.yml file is included in the ansible/contrib/inventory. Using this file is not required. If
-the file is not found, environment variables will be used.
+Using a configuration file provides a means for defining a set of Docker APIs from which to build an inventory.
 
 The default name of the file is derived from the name of the inventory script. By default the script will look for
-basename of the script (i.e. docker) with an extension of '.yml'. You can override the default name by passing a 
-command line argument or setting DOCKER_CONFIG_FILE in the environment.
+basename of the script (i.e. docker) with an extension of '.yml'.
+
+You can also override the default name of the script by defining DOCKER_CONFIG_FILE in the environment.
 
 Here's what you can define in docker_inventory.yml:
 
-  * defaults: Defines a default connnection. Defaults will be taken from this and applied to any values not provided
-    for a host defined in the hosts list.
+    defaults
+        Defines a default connection. Defaults will be taken from this and applied to any values not provided
+        for a host defined in the hosts list.
 
-  * hosts: If you wish to get inventory from more than one Docker daemon hosts, define a hosts list.
+    hosts
+        If you wish to get inventory from more than one Docker host, define a hosts list.
 
-For a host defined in defaults or hosts, you can provided the following attributes. The only required attribute is host.
+For the default host and each host in the hosts list define the following attributes:
 
   host:
-      description: The URL or Unix socket path for the host.
+      description: The URL or Unix socket path used to connect to the Docker API.
       required: yes
+
   tls:
-     description: Connect using https://
+     description: Connect using TLS without verifying the authenticity of the Docker host server.
      default: false
      required: false
+
   tls_verify:
-     description: Connect using https:// and verify the host name matches the host name found in the certificate.
+     description: Connect using TLS without verifying the authenticity of the Docker host server.
      default: false
      required: false
+
   cert_path:
-     description: Path to the host's certificate .pem file.
+     description: Path to the client's TLS certificate file.
      default: null
      required: false
+
   cacert_path:
-     description: Path to the host's Certificate Authority .pem file.
+     description: Use a CA certificate when performing server verification by providing the path to a CA certificate file.
      default: null
      required: false
+
   key_path:
-     description: Path to the host's encryption key .pem file
+     description: Path to the client's TLS key file.
      default: null
      required: false
+
   version:
-     description: The API version.
+     description: The Docker API version.
      required: false
      default: will be supplied by the docker-py module.
+
   timeout:
      description: The amount of time in seconds to wait on an API response.
      required: false
-     default: will be supplied by the docker-py module.
+     default: 60
+
   default_ip:
-     description: The IP address to assign to ansilbe_host when the container's SSH port is mappped to 0.0.0.0
+     description: The IP address to assign to ansible_host when the container's SSH port is mapped to interface
+     '0.0.0.0'.
      required: false
-     default: 1267.0.0.1
+     default: 127.0.0.1
+
   private_ssh_port:
      description: The port containers use for SSH
      required: false
@@ -324,28 +328,25 @@ For a host defined in defaults or hosts, you can provided the following attribut
 
 Examples
 --------
- # Run the script with Env vars (for when you have Docker toolbox installed)
- ./docker_inventory.py --pretty
 
- # Connect to docker instance on localhost port 4243
- DOCKER_HOST=tcp://localhost:4243 ./docker.py --pretty
+# Connect to the Docker API on localhost port 4243 and format the JSON output
+DOCKER_HOST=tcp://localhost:4243 ./docker.py --pretty
 
- # Any container's ssh port exposed on 0.0.0.0 will mapped to
- #another IP address (where Ansible will attempt to connect via SSH)
- DOCKER_DEFAULT_IP=1.2.3.4 ./docker.py --pretty
+# Any container's ssh port exposed on 0.0.0.0 will be mapped to
+# another IP address (where Ansible will attempt to connect via SSH)
+DOCKER_DEFAULT_IP=1.2.3.4 ./docker.py --pretty
 
- # Run as input to a playbook:
- ansible-playbook -i ~/projects/ansible/contrib/inventory/docker_inventory.py docker_inventory_test.yml
+# Run as input to a playbook:
+ansible-playbook -i ~/projects/ansible/contrib/inventory/docker.py docker_inventory_test.yml
 
- # Simple playbook to invoke with the above example:
+# Simple playbook to invoke with the above example:
 
     - name: Test docker_inventory
       hosts: all
       connection: local
       gather_facts: no
       tasks:
-         - debug: msg="Container - {{ inventory_hostname }}"
-
+        - debug: msg="Container - {{ inventory_hostname }}"
 
 '''
 
