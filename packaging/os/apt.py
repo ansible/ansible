@@ -487,7 +487,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             # to install so they're all done in one shot
             deps_to_install.extend(pkg.missing_deps)
 
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             m.fail_json(msg="Unable to install package: %s" % str(e))
 
         # and add this deb to the list of packages to install
@@ -643,7 +644,8 @@ def download(module, deb):
             f.write(data)
         f.close()
         deb = package
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Failure downloading %s, %s" % (deb, e))
 
     return deb
