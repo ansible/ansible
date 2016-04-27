@@ -63,7 +63,7 @@ options:
         description: ["The name of the alert."]
         required: true
     message:
-        description: ["A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same '@username' notation as events."]
+        description: ["A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'."]
         required: false
         default: null
     silenced:
@@ -176,6 +176,9 @@ def main():
     elif module.params['state'] == 'unmute':
         unmute_monitor(module)
 
+def _fix_template_vars(message):
+    return message.replace('[[', '{{').replace(']]', '}}')
+
 
 def _get_monitor(module):
     for monitor in api.Monitor.get_all():
@@ -187,7 +190,7 @@ def _get_monitor(module):
 def _post_monitor(module, options):
     try:
         msg = api.Monitor.create(type=module.params['type'], query=module.params['query'],
-                                 name=module.params['name'], message=module.params['message'],
+                                 name=module.params['name'], message=_fix_template_vars(module.params['message']),
                                  options=options)
         if 'errors' in msg:
             module.fail_json(msg=str(msg['errors']))
@@ -204,7 +207,7 @@ def _equal_dicts(a, b, ignore_keys):
 def _update_monitor(module, monitor, options):
     try:
         msg = api.Monitor.update(id=monitor['id'], query=module.params['query'],
-                                 name=module.params['name'], message=module.params['message'],
+                                 name=module.params['name'], message=_fix_template_vars(module.params['message']),
                                  options=options)
         if 'errors' in msg:
             module.fail_json(msg=str(msg['errors']))
