@@ -1,0 +1,198 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
+#                    Chris Houseknecht, <house@redhat.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: azure_rm_virtualnetwork_facts
+
+version_added: "2.1"
+
+short_description: Get virtual network facts.
+
+description:
+    - Get facts for a specific virtual network or all virtual networks within a resource group.
+
+options:
+    name:
+        description:
+            - Only show results for a specific security group.
+        default: null
+        required: false
+    resource_group:
+        description:
+            - Limit results by resource group. Required when filtering by name.
+        default: null
+        required: false
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        default: null
+        required: false
+
+extends_documentation_fragment:
+    - azure
+
+authors:
+    - "Chris Houseknecht house@redhat.com"
+    - "Matt Davis mdavis@redhat.com"
+
+'''
+
+EXAMPLES = '''
+    - name: Get facts for one virtual network
+      azure_rm_virtualnetwork_facts:
+        resource_group: Testing
+        name: secgroup001
+
+    - name: Get facts for all virtual networks
+      azure_rm_virtualnetwork_facts:
+        resource_group: Testing
+
+    - name: Get facts by tags
+      azure_rm_virtualnetwork_facts:
+        tags:
+          - testing
+'''
+RETURN = '''
+changed:
+    description: Whether or not the object was changed.
+    returned: always
+    type: bool
+    sample: False
+objects:
+    description: List containing a set of facts for each selected object.
+    returned: always
+    type: list
+    sample: [{
+        "etag": "W/\"532ba1be-ae71-40f2-9232-3b1d9cf5e37e\"",
+        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet2001",
+        "location": "eastus2",
+        "name": "vnet2001",
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "10.10.0.0/16"
+                ]
+            },
+            "provisioningState": "Succeeded",
+            "resourceGuid": "a7ba285f-f7e7-4e17-992a-de4d39f28612",
+            "subnets": []
+        },
+        "type": "Microsoft.Network/virtualNetworks"
+    }]
+'''
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.azure_rm_common import *
+
+try:
+    from msrestazure.azure_exceptions import CloudError
+    from azure.common import AzureMissingResourceHttpError, AzureHttpError
+except:
+    # This is handled in azure_rm_common
+    pass
+
+
+AZURE_OBJECT_CLASS = 'VirtualNetwork'
+
+
+class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
+
+    def __init__(self):
+
+        self.module_arg_spec = dict(
+            name=dict(type='str'),
+            resource_group=dict(type='str'),
+            tags=dict(type='list'),
+        )
+
+        self.results = dict(
+            changed=False,
+            objects=[]
+        )
+
+        self.name = None
+        self.resource_group = None
+        self.tags = None
+
+        super(AzureRMNetworkInterfaceFacts, self).__init__(self.module_arg_spec,
+                                                           supports_tags=False,
+                                                           facts_module=True)
+
+    def exec_module(self, **kwargs):
+
+        for key in self.module_arg_spec:
+            setattr(self, key, kwargs[key])
+
+        if self.name is not None:
+            self.results['objects'] = self.get_item()
+        else:
+            self.results['objects'] = self.list_items()
+
+        return self.results
+
+    def get_item(self):
+        self.log('Get properties for {0}'.format(self.name))
+        item = None
+        results = []
+
+        try:
+            item = self.network_client.virtual_networks.get(self.resource_group, self.name)
+        except CloudError:
+            pass
+
+        if item and self.has_tags(item.tags, self.tags):
+            results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+
+        return results
+
+    def list_resource_group(self):
+        self.log('List items for resource group')
+        try:
+            response = self.network_client.virtual_networks.list(self.resource_group)
+        except AzureHttpError as exc:
+            self.fail("Failed to list for resource group {0} - {1}".format(self.resource_group, str(exc)))
+
+        results = []
+        for item in response:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+        return results
+
+    def list_items(self):
+        self.log('List all for items')
+        try:
+            response = self.network_client.virtual_networks.list_all()
+        except AzureHttpError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
+
+        results = []
+        for item in response:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+        return results
+
+def main():
+    AzureRMNetworkInterfaceFacts()
+
+if __name__ == '__main__':
+    main()
+
