@@ -28,6 +28,8 @@ options:
               the module will automatically replace 'tcp' in the connection URL with 'https'."
         required: false
         default: "unix://var/run/docker.sock"
+        aliases:
+            - docker_url
     tls_hostname:
         description:
             - When verifying the authenticity of the Docker Host server, provide the expected name of the server.
@@ -39,6 +41,8 @@ options:
               supported by docker-py.
         required: false
         default: default provided by docker-py
+        aliases:
+            - docker_api_version
     timeout:
         description:
             - The maximum amount of time in seconds to wait on a response from the API.
@@ -49,16 +53,22 @@ options:
             - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
         required: false
         default: null
+        aliases:
+            - tls_ca_cert
     cert_path:
         description:
             - Path to the client's TLS certificate file.
         required: false
         default: null
+        aliases:
+            - tls_client_cert
     key_path:
         description:
             - Path to the client's TLS key file.
         required: false
         default: null
+        aliases:
+            - tls_client_key
     ssl_version:
         description:
             - Provide a valid SSL version number. Default value determined by docker-py, currently 1.0.
