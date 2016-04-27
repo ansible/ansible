@@ -99,7 +99,7 @@ that only allow reading by the user and root.
 The problem occurs when the ``become_user`` is an unprivileged user.  Ansible
 2.0.x and below make the module file world readable in this case as the module
 file is written as the user that Ansible connects as but the file needs to
-be reasable by the user Ansible is set to ``become``.
+be readable by the user Ansible is set to ``become``.
 
 .. note:: In Ansible 2.1, this window is further narrowed: If the connection
     is made as a privileged user (root) then Ansible 2.1 and above will use
