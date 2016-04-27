@@ -56,7 +56,8 @@ Control how modules connect to the Docker API by passing the following parameter
     docker_host
         The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``.
         To connect to a remote host, provide the TCP connection string. For example: ``tcp://192.168.99.100:2376``. If
-        TLS is used to encrypt the connection to the API, then 'tcp' in the connection URL will be replace with 'https'.
+        TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the
+        connection URL with 'https'.
 
     api_version
         The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported
@@ -80,7 +81,7 @@ Control how modules connect to the Docker API by passing the following parameter
         Path to the client's TLS certificate file.
 
     key_path
-        Path to the clients TLS key file.
+        Path to the client's TLS key file.
 
     tls_hostname
         When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults
