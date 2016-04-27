@@ -81,7 +81,6 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
-import httplib
 import netrc
 import os
 import re
@@ -91,7 +90,13 @@ import platform
 import tempfile
 import base64
 
-from ansible.module_utils.basic import get_distribution
+from ansible.module_utils.basic import get_distribution, get_exception
+
+try:
+    import httplib
+except ImportError:
+    # Python 3
+    import http.client as httplib
 
 try:
     import urllib2
@@ -664,7 +669,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error), e:
+        except (ssl.SSLError, socket.error):
+            e = get_exception()
             # fail if we tried all of the certs but none worked
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
@@ -888,27 +894,33 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects)
         info.update(r.info())
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.getcode()))
-    except NoSSLError, e:
+    except NoSSLError:
+        e = get_exception()
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
         else:
             module.fail_json(msg='%s' % str(e))
-    except (ConnectionError, ValueError), e:
+    except (ConnectionError, ValueError):
+        e = get_exception()
         module.fail_json(msg=str(e))
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError:
+        e = get_exception()
         try:
             body = e.read()
         except AttributeError:
             body = ''
         info.update(dict(msg=str(e), body=body, **e.info()))
         info['status'] = e.code
-    except urllib2.URLError, e:
+    except urllib2.URLError:
+        e = get_exception()
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
-    except socket.error, e:
+    except socket.error:
+        e = get_exception()
         info.update(dict(msg="Connection failure: %s" % str(e), status=-1))
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
 
     return r, info
