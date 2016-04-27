@@ -2,7 +2,8 @@ import collections
 import mock
 import os
 import sys
-import unittest
+from ansible.compat.tests import unittest
+
 
 try:
     from ansible.modules.core.packaging.os.apt import (
