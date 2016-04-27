@@ -901,7 +901,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = e.read()
         except AttributeError:
             body = ''
-        info.update(dict(msg=str(e), status=e.code, body=body, **e.info()))
+        info.update(dict(msg=str(e), body=body, **e.info()))
+        info['status'] = e.code
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
