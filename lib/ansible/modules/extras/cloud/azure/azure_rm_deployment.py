@@ -32,6 +32,7 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
+    default: null
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -42,6 +43,7 @@ options:
       - If state is "present", template will be created. If state is "present" and if deployment exists, it will be
         updated. If state is "absent", stack will be removed.
     default: present
+    required: true
     choices:
         - present
         - absent
@@ -50,25 +52,25 @@ options:
       - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
         Either one of them is required if "state" parameter is "present".
     required: false
-    default: None
+    default: null
   template_link:
     description:
       - Uri of file containing the template body. This parameter is mutually exclusive with 'template'. Either one
         of them is required if "state" parameter is "present".
     required: false
-    default: None
+    default: null
   parameters:
     description:
       - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive
         with 'parameters_link'. Either one of them is required if "state" parameter is "present".
     required: false
-    default: None
+    default: null
   parameters_link:
     description:
       - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
         one of them is required if "state" parameter is "present".
     required: false
-    default: None
+    default: null
 
 extends_documentation_fragment:
     - azure
@@ -314,51 +316,40 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg:
-  description: String indicating if the deployment was created or deleted
-  returned: always
-  type: string
-  sample: "deployment created"
 deployment:
   description: Deployment details
   type: dict
   returned: always
-  sample:{
-        "group_name": "Test_Deployment",
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Test_Deployment/providers/Microsoft.Resources/deployments/ansible-arm",
-        "instances": [
-            {
-                "ips": [
-                    {
-                        "dns_settings": {
-                            "domain_name_label": "testvm9910001",
-                            "fqdn": "testvm9910001.westus.cloudapp.azure.com"
-                        },
-                        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Test_Deployment/providers/Microsoft.Network/publicIPAddresses/myPublicIP",
-                        "name": "myPublicIP",
-                        "public_ip": "13.91.99.232",
-                        "public_ip_allocation_method": "IPAllocationMethod.dynamic"
-                    }
-                ],
-                "vm_name": "MyUbuntuVM"
-            }
-        ],
-        "name": "ansible-arm",
-        "outputs": {
-            "hostname": {
-                "type": "String",
-                "value": "testvm9910001.westus.cloudapp.azure.com"
-            },
-            "sshCommand": {
-                "type": "String",
-                "value": "ssh chouseknecht@testvm9910001.westus.cloudapp.azure.com"
-            }
-        }
-    }
+  sample:
+      group_name:
+        description: Name of the resource group
+        type: string
+        returned: always
+      id:
+        description: The Azure ID of the deployment
+        type: string
+        returned: always
+      instances:
+        description: Provides the public IP addresses for each VM instance.
+        type: list
+        returned: always
+      name:
+        description: Name of the deployment
+        type: string
+        returned: always
+      outputs:
+        description: Dictionary of outputs received from the deployment
+        type: dict
+        returned: always
 '''
 
-import time
-import yaml
+PREREQ_IMPORT_ERROR = None
+
+try:
+    import time
+    import yaml
+except ImportError as exc:
+    IMPORT_ERROR = "Error importing module prerequisites: %s" % exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *
@@ -427,6 +418,9 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
+        if PREREQ_IMPORT_ERROR:
+            self.fail(PREREQ_IMPORT_ERROR)
+
         for key in self.module_arg_spec.keys() + ['tags']:
             setattr(self, key, kwargs[key])
 
@@ -440,7 +434,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 instances=self._get_instances(deployment)
             )
             self.results['changed'] = True
-            self.results['msg'] = 'deployment created'
+            self.results['msg'] = 'deployment succeeded'
         else:
             if self.resource_group_exists(self.resource_group_name):
                 self.destroy_resource_group()
