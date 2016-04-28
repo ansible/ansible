@@ -91,6 +91,24 @@ options:
     description:
      - Sets the assignee on create or transition operations. Note not all transitions will allow this.
 
+  linktype:
+    required: false
+    version_added: 2.3
+    description:
+     - Set type of link, when action 'link' selected
+
+  inwardissue:
+    required: false
+    version_added: 2.3
+    description:
+     - set issue from which link will be created
+
+  outwardissue:
+    required: false
+    version_added: 2.3
+    description:
+     - set issue to which link will be created
+
   fields:
     required: false
     description:
@@ -178,6 +196,10 @@ EXAMPLES = """
   user:
     name: '{{ issue.meta.fields.creator.name }}'
     comment: '{{issue.meta.fields.creator.displayName }}'
+
+- name: Create link from HSP-1 to MKY-1
+  jira: uri={{server}} username={{user}} password={{pass}} operation=link
+        linktype=Relate inwardissue=HSP-1 outwardissue=MKY-1
 
 # Transition an issue by target status
 - name: Close the issue
@@ -315,13 +337,26 @@ def transition(restbase, user, passwd, params):
 
     return ret
 
+def link(restbase, user, passwd, params):
+    data = {
+        'type': { 'name': params['linktype'] },
+        'inwardIssue': { 'key': params['inwardissue'] },
+        'outwardIssue': { 'key': params['outwardissue'] },
+    }
+
+    url = restbase + '/issueLink/'
+
+    ret = post(url, user, passwd, data)
+
+    return ret
 
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],
-                   transition=['status'])
+                   transition=['status'],
+                   link=['linktype', 'inwardissue', 'outwardissue'])
 
 def main():
 
@@ -329,7 +364,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
@@ -341,7 +376,10 @@ def main():
             comment=dict(),
             status=dict(),
             assignee=dict(),
-            fields=dict(default={}, type='dict')
+            fields=dict(default={}, type='dict'),
+            linktype=dict(),
+            inwardissue=dict(),
+            outwardissue=dict(),
         ),
         supports_check_mode=False
     )
