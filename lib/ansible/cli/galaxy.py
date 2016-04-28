@@ -53,7 +53,6 @@ class GalaxyCLI(CLI):
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
     
     def __init__(self, args):
-        self.api = None
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
 
@@ -149,11 +148,6 @@ class GalaxyCLI(CLI):
         
         super(GalaxyCLI, self).run()
 
-        # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup","delete") or \
-            (self.action == 'init' and not self.options.offline):
-            self.api = GalaxyAPI(self.galaxy)
-
         self.execute()
 
     def exit_without_ignore(self, rc=1):
@@ -242,8 +236,8 @@ class GalaxyCLI(CLI):
                 # platforms included (but commented out), the galaxy_tags
                 # list, and the dependencies section
                 platforms = []
-                if not offline and self.api:
-                    platforms = self.api.get_list("platforms") or []
+                if not offline:
+                    platforms = GalaxyAPI(self.galaxy).get_list("platforms") or []
 
                 # group the list of platforms from the api based
                 # on their names, with the release field being
@@ -314,9 +308,7 @@ class GalaxyCLI(CLI):
                     del install_info['version']
                 role_info.update(install_info)
 
-            remote_data = False
-            if self.api:
-                remote_data = self.api.lookup_role_by_name(role, False)
+            remote_data = GalaxyAPI(self.galaxy).lookup_role_by_name(role, False)
 
             if remote_data:
                 role_info.update(remote_data)
@@ -520,7 +512,7 @@ class GalaxyCLI(CLI):
         if not search and not self.options.platforms and not self.options.tags and not self.options.author:
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
-        response = self.api.search_roles(search, platforms=self.options.platforms,
+        response = GalaxyAPI(self.galaxy).search_roles(search, platforms=self.options.platforms,
             tags=self.options.tags, author=self.options.author, page_size=page_size)
 
         if response['count'] == 0:
@@ -561,7 +553,7 @@ class GalaxyCLI(CLI):
         else:
             github_token = self.options.token
 
-        galaxy_response = self.api.authenticate(github_token)
+        galaxy_response = GalaxyAPI(self.galaxy).authenticate(github_token)
 
         if self.options.token is None:
             # Remove the token we created
@@ -593,11 +585,13 @@ class GalaxyCLI(CLI):
         github_repo = self.args.pop()
         github_user = self.args.pop()
 
+        api = GalaxyAPI(self.galaxy)
+
         if self.options.check_status:
-            task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
+            task = api.get_import_task(github_user=github_user, github_repo=github_repo)
         else:
             # Submit an import request
-            task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference)
+            task = api.create_import_task(github_user, github_repo, reference=self.options.reference)
 
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
@@ -619,7 +613,7 @@ class GalaxyCLI(CLI):
             msg_list = []
             finished = False
             while not finished:
-                task = self.api.get_import_task(task_id=task[0]['id'])
+                task = api.get_import_task(task_id=task[0]['id'])
                 for msg in task[0]['summary_fields']['task_messages']:
                     if msg['id'] not in msg_list:
                         display.display(msg['message_text'], color=colors[msg['message_type']])
@@ -636,9 +630,11 @@ class GalaxyCLI(CLI):
         Setup an integration from Github or Travis
         """
 
+        api = GalaxyAPI(self.galaxy)
+
         if self.options.setup_list:
             # List existing integration secrets
-            secrets = self.api.list_secrets()
+            secrets = api.list_secrets()
             if len(secrets) == 0:
                 # None found
                 display.display("No integrations found.")
@@ -652,7 +648,7 @@ class GalaxyCLI(CLI):
 
         if self.options.remove_id:
             # Remove a secret
-            self.api.remove_secret(self.options.remove_id)
+            api.remove_secret(self.options.remove_id)
             display.display("Secret removed. Integrations using this secret will not longer work.", color=C.COLOR_OK)
             return 0
 
@@ -665,7 +661,7 @@ class GalaxyCLI(CLI):
         github_user = self.args.pop()
         source = self.args.pop()
 
-        resp = self.api.add_secret(source, github_user, github_repo, secret)
+        resp = api.add_secret(source, github_user, github_repo, secret)
         display.display("Added integration for %s %s/%s" % (resp['source'], resp['github_user'], resp['github_repo']))
 
         return 0
@@ -680,7 +676,7 @@ class GalaxyCLI(CLI):
 
         github_repo = self.args.pop()
         github_user = self.args.pop()
-        resp = self.api.delete_role(github_user, github_repo)
+        resp = GalaxyAPI(self.galaxy).delete_role(github_user, github_repo)
 
         if len(resp['deleted_roles']) > 1:
             display.display("Deleted the following roles:")
