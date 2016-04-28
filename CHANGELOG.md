@@ -70,6 +70,7 @@ Ansible Changes By Release
   * eos_config
   * eos_eapi
   * eos_template
+- git_config
 - gitlab
   * gitlab_group
   * gitlab_project
