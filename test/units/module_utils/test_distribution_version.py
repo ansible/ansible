@@ -38,6 +38,64 @@ from ansible.compat.tests.mock import patch
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
     {
+
+    "name": "CentOS 6.7",
+    "platform.dist": [
+        "centos",
+        "6.7",
+        "Final"
+    ],
+    "input": {
+        "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
+        "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+        "/etc/system-release": "CentOS release 6.7 (Final)\n"
+    },
+    "result": {
+        "distribution_release": "Final",
+        "distribution": "CentOS",
+        "distribution_major_version": "6",
+        "distribution_version": "6.7"
+    }
+},
+    {
+    "name": "RedHat 7.2",
+    "platform.dist": [
+        "redhat",
+        "7.2",
+        "Maipo"
+    ],
+    "input": {
+        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
+        "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n",
+        "/etc/system-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n"
+    },
+    "result": {
+        "distribution_release": "Maipo",
+        "distribution": "RedHat",
+        "distribution_major_version": "7",
+        "distribution_version": "7.2"
+    }
+},
+{
+    "name": "RedHat 6.7",
+    "platform.dist": [
+        "redhat",
+        "6.7",
+        "Santiago"
+    ],
+    "input": {
+        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
+        "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+        "/etc/system-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n"
+    },
+    "result": {
+        "distribution_release": "Santiago",
+        "distribution": "RedHat",
+        "distribution_major_version": "6",
+        "distribution_version": "6.7"
+    }
+},
+{
         "name" : "openSUSE Leap 42.1",
         "input": {
             "/etc/os-release":
@@ -339,7 +397,7 @@ def test_distribution_version():
 
 def _test_one_distribution(facts, module, testcase):
     """run the test on one distribution testcase
-    
+
     * prepare some mock functions to get the testdata in
     * run Facts()
     * compare with the expected output
@@ -373,7 +431,7 @@ def _test_one_distribution(facts, module, testcase):
     @patch('platform.system', lambda: 'Linux')
     def get_facts(testcase):
         return facts.Facts(module).populate()
-    
+
     generated_facts = get_facts(testcase)
 
     # testcase['result'] has a list of variables and values it expects Facts() to set
