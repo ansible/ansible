@@ -19,7 +19,7 @@ module: ec2_vpc_igw_facts
 short_description: Gather facts about internet gateways in AWS
 description:
     - Gather facts about internet gateways in AWS
-version_added: "2.1"
+version_added: "2.2"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
