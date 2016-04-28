@@ -13,10 +13,10 @@
     - { role: test_yum, tags: test_yum }
     - { role: test_apt, tags: test_apt }
     - { role: test_apt_repository, tags: test_apt_repository }
-    - { role: test_postgresql, tags: test_postgresql}
-    - { role: test_mysql_db, tags: test_mysql_db}
-    - { role: test_mysql_user, tags: test_mysql_user}
-    - { role: test_mysql_variables, tags: test_mysql_variables}
+    - { role: test_postgresql, tags: test_postgresql, when: ansible_os_family != 'Suse' }
+    - { role: test_mysql_db, tags: test_mysql_db, when: ansible_os_family != 'Suse'}
+    - { role: test_mysql_user, tags: test_mysql_user, when: ansible_os_family != 'Suse'}
+    - { role: test_mysql_variables, tags: test_mysql_variables, when: ansible_os_family != 'Suse'}
     - { role: test_docker, tags: test_docker, when: ansible_distribution != "Fedora" }
     - { role: test_zypper, tags: test_zypper}
     - { role: test_zypper_repository, tags: test_zypper_repository}
