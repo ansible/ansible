@@ -35,7 +35,7 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 Tag Inheritance
 ```````````````
 
-You can apply tags to more than tasks, but they ONLY affect the tasks themselves, everywhere else is just a
+You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applyng tags anywhere else is just a
 convenience so you don't have to write it on every task::
 
     - hosts: all
@@ -60,7 +60,7 @@ And include statements::
       tags: [web,foo]
 
 All of these apply the specified tags to EACH task inside the play, included
-file or role, so that these tasks can be selectively run when the playbook
+file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
 
 .. _special_tags:
