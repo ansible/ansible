@@ -118,7 +118,7 @@ def invoke_module(module, modlib_path, json_params):
     else:
         os.environ['PYTHONPATH'] = modlib_path
 
-    p = subprocess.Popen(['%(interpreter)s', module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = subprocess.Popen([%(interpreter)s, module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     (stdout, stderr) = p.communicate(json_params)
 
     if not isinstance(stderr, (bytes, unicode)):
@@ -215,7 +215,7 @@ def debug(command, zipped_mod, json_params):
         else:
             os.environ['PYTHONPATH'] = basedir
 
-        p = subprocess.Popen(['%(interpreter)s', script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen([%(interpreter)s, script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
 
         if not isinstance(stderr, (bytes, unicode)):
@@ -372,12 +372,12 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter)
+    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter).strip()
 
     if interpreter_config not in task_vars:
         return (None, interpreter)
 
-    interpreter = task_vars[interpreter_config]
+    interpreter = task_vars[interpreter_config].strip()
     shebang = u'#!' + interpreter
 
     if args:
@@ -601,6 +601,17 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
+
+        executable = interpreter.split(u' ', 1)
+        if len(executable) == 2 and executable[0].endswith(u'env'):
+            # Handle /usr/bin/env python style interpreter settings
+            interpreter = u"'{0}', '{1}'".format(*executable)
+        else:
+            # Still have to enclose the parts of the interpreter in quotes
+            # because we're substituting it into the template as a python
+            # string
+            interpreter = u"'{0}'".format(interpreter)
+
         output.write(to_bytes(ACTIVE_ZIPLOADER_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
