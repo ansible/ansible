@@ -25,7 +25,7 @@ module: git_config
 author:
   - "Matthew Gamble"
   - "Marius Gedminas"
-version_added: 2.2
+version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
 description:
