@@ -69,7 +69,7 @@ options:
     - The name of the snapshot volume
     required: false
   pvs:
-    version_added: "2.1"
+    version_added: "2.2"
     description:
     - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
     required: false
