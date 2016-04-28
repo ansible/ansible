@@ -23,7 +23,7 @@ To save some typing, repeated tasks can be written in short-hand like so::
 
 If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
 
-    with_items: "{{somelist}}"
+    with_items: "{{ somelist }}"
 
 The above would be the equivalent of::
 
@@ -63,7 +63,7 @@ As with the case of 'with_items' above, you can use previously defined variables
     - name: here, 'users' contains the above list of employees
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - "{{users}}"
+        - "{{ users }}"
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 .. _looping_over_hashes:
@@ -89,7 +89,7 @@ And you want to print every user's name and phone number.  You can loop through 
     tasks:
       - name: Print phone records
         debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-        with_dict: "{{users}}"
+        with_dict: "{{ users }}"
 
 .. _looping_over_fileglobs:
 
@@ -105,14 +105,14 @@ Looping over Files
 
         # emit a debug message containing the content of each file.
         - debug:
-            msg: "{{item}}"
+            msg: "{{ item }}"
           with_file:
             - first_example_file
             - second_example_file
 
 Assuming that ``first_example_file`` contained the text "hello" and ``second_example_file`` contained the text "world", this would result in::
 
-    TASK [debug msg={{item}}] ******************************************************
+    TASK [debug msg={{ item }}] ******************************************************
     ok: [localhost] => (item=hello) => {
         "item": "hello", 
         "msg": "hello"
@@ -159,8 +159,8 @@ And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' t
     tasks:
         - debug: msg="{{ item.0 }} and {{ item.1 }}"
           with_together:
-            - "{{alpha}}"
-            - "{{numbers}}"
+            - "{{ alpha }}"
+            - "{{ numbers }}"
 
 Looping over Subelements
 ````````````````````````
@@ -200,7 +200,7 @@ How might that be accomplished?  Let's assume you had the following defined and 
 It might happen like so::
 
     - user: name={{ item.name }} state=present generate_ssh_key=yes
-      with_items: "{{users}}"
+      with_items: "{{ users }}"
 
     - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
       with_subelements:
@@ -314,7 +314,7 @@ that matches a given criteria, and some of the filenames are determined by varia
     - name: INTERFACES | Create Ansible header for /etc/network/interfaces
       template: src={{ item }} dest=/etc/foo.conf
       with_first_found:
-        - "{{ansible_virtualization_type}}_foo.conf"
+        - "{{ ansible_virtualization_type }}_foo.conf"
         - "default_foo.conf"
 
 This tool also has a long form version that allows for configurable search paths.  Here's an example::
@@ -323,7 +323,7 @@ This tool also has a long form version that allows for configurable search paths
       template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
       with_first_found:
         - files:
-           - "{{inventory_hostname}}/etc/file.cfg"
+           - "{{ inventory_hostname }}/etc/file.cfg"
           paths:
            - ../../../templates.overwrites
            - ../../../templates
@@ -358,7 +358,7 @@ Should you ever need to execute a command remotely, you would not use the above 
 
     - name: Do something with each result
       shell: /usr/bin/something_else --param {{ item }}
-      with_items: "{{command_result.stdout_lines}}"
+      with_items: "{{ command_result.stdout_lines }}"
 
 .. _indexed_lists:
 
@@ -374,7 +374,7 @@ It's uncommonly used::
 
     - name: indexed loop demo
       debug: msg="at array position {{ item.0 }} there is a value {{ item.1 }}"
-      with_indexed_items: "{{some_list}}"
+      with_indexed_items: "{{ some_list }}"
 
 .. _using_ini_with_a_loop:
 
@@ -394,7 +394,7 @@ The ini plugin can use regexp to retrieve a set of keys. As a consequence, we ca
 
 Here is an example of using ``with_ini``::
 
-    - debug: msg="{{item}}"
+    - debug: msg="{{ item }}"
       with_ini: value[1-2] section=section1 file=lookup.ini re=true
 
 And here is the returned value::
@@ -447,8 +447,8 @@ As you can see the formatting of packages in these lists is all over the place. 
     - name: flattened loop demo
       yum: name={{ item }} state=installed 
       with_flattened:
-         - "{{packages_base}}"
-         - "{{packages_apps}}"
+         - "{{ packages_base }}"
+         - "{{ packages_apps }}"
 
 That's how!
 
@@ -512,7 +512,7 @@ Subsequent loops over the registered variable to inspect the results may look li
       fail:
         msg: "The command ({{ item.cmd }}) did not have a 0 return code"
       when: item.rc != 0
-      with_items: "{{echo.results}}"
+      with_items: "{{ echo.results }}"
 
 
 
@@ -526,13 +526,13 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
 
     # show all the hosts in the inventory
     - debug: msg={{ item }}
-      with_items: "{{groups['all']}}"
+      with_items: "{{ groups['all'] }}"
 
     # show all the hosts in the current play
     - debug: msg={{ item }}
       with_items: play_hosts
 
-There is also a specific lookup plugin ``inventory_hostname`` that can be used like this::
+There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
     # show all the hosts in the inventory
     - debug: msg={{ item }}
@@ -556,7 +556,7 @@ Ansible by default sets the loop variable `item` for each loop, which causes the
 As of Ansible 2.1, the `loop_control` option can be used to specify the name of the variable to be used for the loop::
 
     # main.yml
-    - include: test.yml outer_loop="{{outer_item}}"
+    - include: test.yml outer_loop="{{ outer_item }}"
       with_items:
         - 1
         - 2
@@ -565,7 +565,7 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
         loop_var: outer_item
 
     # inner.yml
-    - debug: msg="outer item={{outer_loop}} inner item={{item}}"
+    - debug: msg="outer item={{ outer_loop }} inner item={{ item }}"
       with_items:
         - a
         - b
@@ -591,10 +591,10 @@ for `item`::
 
     # inner.yml
     - set_fact:
-        outer_item: "{{item}}"
+        outer_item: "{{ item }}"
 
     - debug:
-        msg: "outer item={{outer_item}} inner item={{item}}"
+        msg: "outer item={{ outer_item }} inner item={{ item }}"
       with_items:
         - a
         - b
