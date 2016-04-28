@@ -46,11 +46,21 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
 
-    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
+    Options = namedtuple('Options', ['connection','module_path', 'forks',
+                                 'remote_user','private_key_file',
+                                 'ssh_common_args', 'ssh_extra_args',
+                                 'sftp_extra_args','scp_extra_args',
+                                 'become', 'become_method',
+                                 'become_user', 'verbosity', 'check'])
     # initialize needed objects
     variable_manager = VariableManager()
     loader = DataLoader()
-    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
+    options = Options(connection='local', module_path='/path/to/mymodules',
+                  forks=100, remote_user=None, private_key_file=None,
+                  ssh_common_args=None, ssh_extra_args=None,
+                  sftp_extra_args=None, scp_extra_args=None,
+                  become=None, become_method=None, become_user=None,
+                  verbosity=None, check=False)
     passwords = dict(vault_pass='secret')
 
     # create inventory and pass to var manager
