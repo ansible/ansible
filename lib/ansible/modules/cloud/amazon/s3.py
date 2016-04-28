@@ -113,9 +113,9 @@ options:
     version_added: "2.0"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [Always, Never, Different], new in 2.0
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
     required: false
-    default: true
+    default: 'always'
     version_added: "1.2"
   region:
     description:
