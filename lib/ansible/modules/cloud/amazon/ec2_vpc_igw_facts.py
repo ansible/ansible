@@ -75,8 +75,9 @@ changed:
     returned: always
 '''
 
+import json
+
 try:
-    import json
     import botocore
     import boto3   
     HAS_BOTO3 = True
