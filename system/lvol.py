@@ -48,7 +48,7 @@ options:
     choices: [ "present", "absent" ]
     default: present
     description:
-    - Control if the logical volume exists. If C(present) the C(size) option 
+    - Control if the logical volume exists. If C(present) the C(size) option
       is required.
     required: false
   force:
@@ -68,6 +68,11 @@ options:
     description:
     - The name of the snapshot volume
     required: false
+  pvs:
+    version_added: "2.1"
+    description:
+    - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
+    required: false
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -75,6 +80,12 @@ notes:
 EXAMPLES = '''
 # Create a logical volume of 512m.
 - lvol: vg=firefly lv=test size=512
+
+# Create a logical volume of 512m with disks /dev/sda and /dev/sdb
+- lvol: vg=firefly lv=test size=512 pvs=/dev/sda,/dev/sdb
+
+# Create cache pool logical volume
+- lvol: vg=firefly lv=lvcache size=512m opts='--type cache-pool'
 
 # Create a logical volume of 512g.
 - lvol: vg=firefly lv=test size=512g
@@ -119,7 +130,7 @@ def parse_lvs(data):
     for line in data.splitlines():
         parts = line.strip().split(';')
         lvs.append({
-            'name': parts[0],
+            'name': parts[0].replace('[','').replace(']',''),
             'size': int(decimal_point.match(parts[1]).group(1))
         })
     return lvs
@@ -158,6 +169,7 @@ def main():
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
             snapshot=dict(type='str', default=None),
+            pvs=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -181,6 +193,12 @@ def main():
     size_opt = 'L'
     size_unit = 'm'
     snapshot = module.params['snapshot']
+    pvs = module.params['pvs']
+
+    if pvs is None:
+        pvs = ""
+    else:
+        pvs = pvs.replace(",", " ")
 
     if opts is None:
         opts = ""
@@ -230,12 +248,12 @@ def main():
             module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, err=err)
 
     vgs = parse_vgs(current_vgs)
-    this_vg = vgs[0]   
+    this_vg = vgs[0]
 
     # Get information on logical volume requested
     lvs_cmd = module.get_bin_path("lvs", required=True)
     rc, current_lvs, err = module.run_command(
-        "%s --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (lvs_cmd, unit, vg))
+        "%s -a --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (lvs_cmd, unit, vg))
 
     if rc != 0:
         if state == 'absent':
@@ -275,7 +293,7 @@ def main():
                 if snapshot is not None:
                     cmd = "%s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
                 else:
-                    cmd = "%s %s -n %s -%s %s%s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg)
+                    cmd = "%s %s -n %s -%s %s%s %s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg, pvs)
                 rc, _, err = module.run_command(cmd)
                 if rc == 0:
                     changed = True
@@ -306,7 +324,7 @@ def main():
             if '+' in size:
                 size_requested += this_lv['size']
             if this_lv['size'] < size_requested:
-                if (size_free > 0)  and (('+' not in size) or (size_free >= (size_requested -  this_lv['size']))): 
+                if (size_free > 0)  and (('+' not in size) or (size_free >= (size_requested -  this_lv['size']))):
                     tool = module.get_bin_path("lvextend", required=True)
                 else:
                     module.fail_json(msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" % (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit))
@@ -323,7 +341,7 @@ def main():
                 if module.check_mode:
                     changed = True
                 else:
-                    cmd = "%s -%s %s%s %s/%s" % (tool, size_opt, size, size_unit, vg, this_lv['name'])
+                    cmd = "%s -%s %s%s %s/%s %s" % (tool, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                     rc, out, err = module.run_command(cmd)
                     if "Reached maximum COW size" in out:
                         module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
@@ -353,7 +371,7 @@ def main():
                 if module.check_mode:
                     changed = True
                 else:
-                    cmd = "%s -%s %s%s %s/%s" % (tool, size_opt, size, size_unit, vg, this_lv['name'])
+                    cmd = "%s -%s %s%s %s/%s %s" % (tool, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                     rc, out, err = module.run_command(cmd)
                     if "Reached maximum COW size" in out:
                         module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
