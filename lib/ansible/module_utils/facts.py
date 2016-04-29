@@ -650,7 +650,7 @@ class Distribution(object):
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
-        {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
+        {'path': '/etc/os-release', 'name': 'Archlinux'},
         {'path': '/etc/os-release', 'name': 'SuSE'},
         {'path': '/etc/SuSE-release', 'name': 'SuSE'},
         {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
@@ -667,6 +667,7 @@ class Distribution(object):
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
+        'Archlinux': 'Arch Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
         'SMGL': 'Source Mage GNU/Linux',
     }
