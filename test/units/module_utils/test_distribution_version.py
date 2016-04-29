@@ -22,9 +22,6 @@ import sys
 
 # to work around basic.py reading stdin
 import json
-from io import BytesIO, StringIO
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
 
 from units.mock.procenv import swap_stdin_and_argv
 
