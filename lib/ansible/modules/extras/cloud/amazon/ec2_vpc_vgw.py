@@ -40,6 +40,7 @@ options:
     description:
         - type of the virtual gateway to be created
     required: false
+    choices: [ "ipsec.1" ]
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
@@ -57,6 +58,8 @@ options:
     description:
         - dictionary of resource tags
     required: false
+    default: null
+    aliases: [ "resource_tags" ]
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - aws
@@ -120,6 +123,26 @@ try:
 except ImportError:
    HAS_BOTO3 = False
 
+def get_vgw_info(vgws):
+    if not isinstance(vgws, list):
+        return
+
+    for vgw in vgws:
+        vgw_info = {
+            'id': vgw['VpnGatewayId'],
+            'type': vgw['Type'],
+            'state': vgw['State'],
+            'vpc_id': None,
+            'tags': dict()
+        }
+
+        for tag in vgw['Tags']:
+            vgw_info['tags'][tag['Key']] = tag['Value']
+
+        if len(vgw['VpcAttachments']) != 0:
+            vgw_info['vpc_id'] = vgw['VpcAttachments'][0]['VpcId']
+
+        return vgw_info
 
 def wait_for_status(client, module, vpn_gateway_id, status):
     polling_increment_secs = 15
@@ -425,7 +448,7 @@ def ensure_vgw_present(client, module):
             changed = True
             vgw = find_vgw(client, module, [vpn_gateway_id])
 
-    result = vgw
+    result = get_vgw_info(vgw)
     return changed, result
 
 
@@ -514,7 +537,7 @@ def ensure_vgw_absent(client, module):
             changed = False
             deleted_vgw = None
 
-    result = deleted_vgw
+    result = get_vgw_info(deleted_vgw)
     return changed, result
 
 
@@ -526,9 +549,9 @@ def main():
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),
-        wait_timeout=dict(type='int', default=320, required=False),
-        type=dict(),
-        tags=dict(),
+        wait_timeout=dict(type='int', default=320),
+        type=dict(default='ipsec.1', choices=['ipsec.1']),
+        tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -548,7 +571,7 @@ def main():
         (changed, results) = ensure_vgw_present(client, module)
     else:
         (changed, results) = ensure_vgw_absent(client, module)
-    module.exit_json(changed=changed, result=results)
+    module.exit_json(changed=changed, vgw=results)
 
 
 # import module snippets
