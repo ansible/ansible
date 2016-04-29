@@ -35,7 +35,25 @@ from ansible.compat.tests.mock import patch
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
     {
-
+    "platform.dist": [
+        "centos",
+        "7.2.1511",
+        "Core"
+    ],
+    "input": {
+        "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
+        "/etc/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"7 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\nPRETTY_NAME=\"CentOS Linux 7 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:7\"\nHOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-7\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"7\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7\"\n\n",
+        "/etc/system-release": "CentOS Linux release 7.2.1511 (Core) \n"
+    },
+    "name": "CentOS 7.2.1511",
+    "result": {
+        "distribution_release": "Core",
+        "distribution": "CentOS",
+        "distribution_major_version": "7",
+        "distribution_version": "7.2.1511"
+    }
+},
+    {
     "name": "CentOS 6.7",
     "platform.dist": [
         "centos",
