@@ -108,6 +108,26 @@ options:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
        'latest' when pulling an image.
     default: latest
+  container_limits:
+    description:
+      - A dictionary of limits applied to each container created by the build process.
+    required: false
+    default: null
+    version_added: "2.1"
+    type: complex
+    contains:
+      memory:
+        description: Set memory limit for build
+        type: int
+      memswap:
+        description: Total memory (memory + swap), -1 to disable swap
+        type: int
+      cpushares:
+        description: CPU shares (relative weight)
+        type: int
+      cpusetcpus:
+        description: CPUs in which to allow execution, e.g., "0-3", "0,1"
+        type: str
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to 'no' when TLS will not be used. Set to
@@ -119,6 +139,7 @@ options:
       - verify
     default: no
     version_added: "2.0"
+
 
 extends_documentation_fragment:
     - docker
@@ -173,20 +194,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-actions:
-    description: List of actions taken by the module.
-    returned: always
-    type: list
-    sample: [
-        "Removed image myimage"
-    ]
 image:
-    description: Facts representing the current state of the image.
-    returned: always
-    type: dict
-    sample: {
-
-    }
+    description: Image inspection results for the affected image. 
+    returned: success
+    type: complex
+    sample: {}
 '''
 
 from ansible.module_utils.docker_common import *
@@ -360,7 +372,8 @@ class ImageManager(DockerBaseClass):
             if registry:
                 config = auth.load_config()
                 if not auth.resolve_authconfig(config, registry):
-                    self.fail("Error: configuration for %s not found. Try logging into %s first." % registry)
+                    self.fail("Error: configuration for %s not found. Try logging into %s first." % (registry,
+                                                                                                     registry))
 
             self.log("pushing image %s" % repository)
             self.results['actions'].append("Pushed image %s to %s:%s" % (self.name, self.repository, self.tag))
@@ -438,7 +451,7 @@ class ImageManager(DockerBaseClass):
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)
         if self.container_limits:
-            params['container_limits'] = self.container_limits,
+            params['container_limits'] = self.container_limits
         for line in self.client.build(**params):
             # line = json.loads(line)
             self.log(line, pretty_print=True)
@@ -477,15 +490,15 @@ class ImageManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
-        archive_path=dict(type='str'),
+        archive_path=dict(type='path'),
         container_limits=dict(type='dict'),
         dockerfile=dict(type='str'),
         force=dict(type='bool', default=False),
         http_timeout=dict(type='int'),
-        load_path=dict(type='str'),
+        load_path=dict(type='path'),
         name=dict(type='str', required=True),
         nocache=dict(type='str', default=False),
-        path=dict(type='str', aliases=['build_path']),
+        path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True),
