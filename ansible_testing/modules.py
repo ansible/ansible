@@ -45,6 +45,10 @@ import yaml
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
+BLACKLIST_IMPORTS = {
+    'requests': ('requests import found, should use '
+                 'ansible.module_utils.urls instead'),
+}
 
 
 class Validator(object):
@@ -205,24 +209,12 @@ class ModuleValidator(Validator):
                 self.errors.append('indentation contains tabs. line %d '
                                    'column %d' % (line_no + 1, index))
 
-    def _find_json_import(self):
+    def _find_blacklist_imports(self):
         for child in self.ast.body:
             if isinstance(child, ast.Import):
                 for name in child.names:
-                    if name.name == 'json':
-                        self.warnings.append('JSON import found, '
-                                             'already provided by '
-                                             'ansible.module_utils.basic')
-
-    def _find_requests_import(self):
-        for child in self.ast.body:
-            if isinstance(child, ast.Import):
-                for name in child.names:
-                    if name.name == 'requests':
-                        self.errors.append('requests import found, '
-                                           'should use '
-                                           'ansible.module_utils.urls '
-                                           'instead')
+                    if name.name in BLACKLIST_IMPORTS:
+                        self.errors.append(BLACKLIST_IMPORTS[name.name])
             elif isinstance(child, ast.TryExcept):
                 bodies = child.body
                 for handler in child.handlers:
@@ -230,11 +222,10 @@ class ModuleValidator(Validator):
                 for grandchild in bodies:
                     if isinstance(grandchild, ast.Import):
                         for name in grandchild.names:
-                            if name.name == 'requests':
-                                self.errors.append('requests import found, '
-                                                   'should use '
-                                                   'ansible.module_utils.urls '
-                                                   'instead')
+                            if name.name in BLACKLIST_IMPORTS:
+                                self.errors.append(
+                                    BLACKLIST_IMPORTS[name.name]
+                                )
 
     def _find_module_utils(self, main):
         linenos = []
@@ -560,8 +551,7 @@ class ModuleValidator(Validator):
 
         if self._python_module() and not self._just_docs():
             self._check_for_sys_exit()
-            self._find_json_import()
-            self._find_requests_import()
+            self._find_blacklist_imports()
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
