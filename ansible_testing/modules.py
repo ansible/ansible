@@ -115,18 +115,6 @@ class ModuleValidator(Validator):
                                  '__init__.py', 'VERSION', 'test-docs.sh'))
     BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
 
-    BOTTOM_IMPORTS = frozenset((
-        'ansible.module_utils.basic',
-        'ansible.module_utils.urls',
-        'ansible.module_utils.facts',
-        'ansible.module_utils.splitter',
-        'ansible.module_utils.known_hosts',
-        'ansible.module_utils.rax',
-    ))
-    BOTTOM_IMPORTS_BLACKLIST = frozenset((
-        'command.py',
-    ))
-
     PS_DOC_BLACKLIST = frozenset((
         'slurp.ps1',
         'setup.ps1'
@@ -175,9 +163,6 @@ class ModuleValidator(Validator):
             return True
         except AttributeError:
             return False
-
-    def _is_bottom_import_blacklisted(self):
-        return self.object_name in self.BOTTOM_IMPORTS_BLACKLIST
 
     def _is_new_module(self):
         return not module_loader.has_plugin(self.name)
@@ -234,12 +219,6 @@ class ModuleValidator(Validator):
             if isinstance(child, ast.ImportFrom):
                 if child.module.startswith('ansible.module_utils.'):
                     found_module_utils_import = True
-
-                    if child.module in self.BOTTOM_IMPORTS:
-                        if (child.lineno < main - 10 and
-                                not self._is_bottom_import_blacklisted()):
-                            self.errors.append('%s import not near call to '
-                                               'main()' % child.module)
 
                     linenos.append(child.lineno)
 
