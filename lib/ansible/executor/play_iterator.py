@@ -326,8 +326,7 @@ class PlayIterator:
                     if self._check_failed_state(state.tasks_child_state):
                         # failed child state, so clear it and move into the rescue portion
                         state.tasks_child_state = None
-                        state.fail_state |= self.FAILED_TASKS
-                        state.run_state = self.ITERATING_RESCUE
+                        self._set_failed_state(state)
                     else:
                         # get the next task recursively
                         if task is None or state.tasks_child_state.run_state == self.ITERATING_COMPLETE:
@@ -365,8 +364,7 @@ class PlayIterator:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek)
                     if self._check_failed_state(state.rescue_child_state):
                         state.rescue_child_state = None
-                        state.fail_state |= self.FAILED_RESCUE
-                        state.run_state = self.ITERATING_ALWAYS
+                        self._set_failed_state(state)
                     else:
                         if task is None or state.rescue_child_state.run_state == self.ITERATING_COMPLETE:
                             state.rescue_child_state = None
@@ -396,8 +394,7 @@ class PlayIterator:
                     (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, host=host, peek=peek)
                     if self._check_failed_state(state.always_child_state):
                         state.always_child_state = None
-                        state.fail_state |= self.FAILED_ALWAYS
-                        state.run_state = self.ITERATING_COMPLETE
+                        self._set_failed_state(state)
                     else:
                         if task is None or state.always_child_state.run_state == self.ITERATING_COMPLETE:
                             state.always_child_state = None
@@ -466,7 +463,9 @@ class PlayIterator:
 
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
+        display.debug("marking host %s failed, current state: %s" % (host, s))
         s = self._set_failed_state(s)
+        display.debug("^ failed state is now: %s" % s)
         self._host_states[host.name] = s
 
     def get_failed_hosts(self):
