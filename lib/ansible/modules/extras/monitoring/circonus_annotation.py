@@ -133,7 +133,7 @@ def main():
             title=dict(required=True),
             description=dict(required=True),
             duration=dict(required=False, type='int'),
-            api_key=dict(required=True)
+            api_key=dict(required=True, no_log=True)
             )
         )
     annotation = create_annotation(module)
