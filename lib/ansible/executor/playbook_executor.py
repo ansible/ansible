@@ -247,6 +247,9 @@ class PlaybookExecutor:
         re-running on ONLY the failed hosts.  This may duplicate some variable
         information in group_vars/host_vars but that is ok, and expected.
         '''
+        dirname = os.path.dirname(retry_path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
 
         try:
             with open(retry_path, 'w') as fd:
