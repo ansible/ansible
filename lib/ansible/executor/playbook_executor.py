@@ -25,7 +25,7 @@ from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.playbook import Playbook
+from ansible.playbook.role.requirement import read_roles_file
 from ansible.template import Templar
 from ansible.utils.unicode import to_unicode
 
@@ -63,6 +63,9 @@ class PlaybookExecutor:
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
         '''
+
+        # import here to avoid a dependency loop
+        from ansible.playbook import Playbook
 
         result = 0
         entrylist = []

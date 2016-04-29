@@ -38,7 +38,7 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
-from ansible.playbook.role.requirement import RoleRequirement
+from ansible.playbook.role.requirement import RoleRequirement, read_roles_file, install_roles
 from ansible.utils.unicode import to_unicode
 
 try:
@@ -141,12 +141,11 @@ class GalaxyCLI(CLI):
 
         self.options, self.args =self.parser.parse_args()
         display.verbosity = self.options.verbosity
-        self.galaxy = Galaxy(self.options)
-
+        self.galaxy = Galaxy(self.options.roles_path, self.options.ignore_certs, self.options.api_server)
         return True
 
     def run(self):
-        
+
         super(GalaxyCLI, self).run()
 
         # if not offline, get connect to galaxy api
@@ -155,14 +154,6 @@ class GalaxyCLI(CLI):
             self.api = GalaxyAPI(self.galaxy)
 
         self.execute()
-
-    def exit_without_ignore(self, rc=1):
-        """
-        Exits with the specified return code unless the
-        option --ignore-errors was specified
-        """
-        if not self.get_opt("ignore_errors", False):
-            raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
 
     def _display_role_info(self, role_info):
 
@@ -356,88 +347,24 @@ class GalaxyCLI(CLI):
             # the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
-        no_deps    = self.get_opt("no_deps", False)
-        force      = self.get_opt('force', False)
+        self.galaxy.no_deps       = self.get_opt("no_deps", False)
+        self.galaxy.force         = self.get_opt('force', False)
+        self.galaxy.ignore_errors = self.get_opt('ignore_errors', False)
 
-        roles_left = []
         if role_file:
-            try:
-                f = open(role_file, 'r')
-                if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                    try:
-                        required_roles =  yaml.safe_load(f.read())
-                    except Exception as e:
-                        raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
-
-                    if required_roles is None:
-                        raise AnsibleError("No roles found in file: %s" % role_file)
-
-                    for role in required_roles:
-                        role = RoleRequirement.role_yaml_parse(role)
-                        display.vvv('found role %s in yaml file' % str(role))
-                        if 'name' not in role and 'scm' not in role:
-                            raise AnsibleError("Must specify name or src for role")
-                        roles_left.append(GalaxyRole(self.galaxy, **role))
-                else:
-                    display.deprecated("going forward only the yaml format will be supported")
-                    # roles listed in a file, one per line
-                    for rline in f.readlines():
-                        if rline.startswith("#") or rline.strip() == '':
-                            continue
-                        display.debug('found role %s in text file' % str(rline))
-                        role = RoleRequirement.role_yaml_parse(rline.strip())
-                        roles_left.append(GalaxyRole(self.galaxy, **role))
-                f.close()
-            except (IOError, OSError) as e:
-                display.error('Unable to open %s: %s' % (role_file, str(e)))
+            roles_left = read_roles_file(self.galaxy, role_file)
+            for role in roles_left:
+                display.debug('found role %s in roles file' % str(role.name))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
+            roles_left = []
             for rname in self.args:
                 role = RoleRequirement.role_yaml_parse(rname.strip())
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
-        for role in roles_left:
-            display.vvv('Installing role %s ' % role.name)
-            # query the galaxy API for the role data
+        install_roles(roles_left, self.galaxy)
 
-            if role.install_info is not None and not force:
-                display.display('- %s is already installed, skipping.' % role.name)
-                continue
-
-            try:
-                installed = role.install()
-            except AnsibleError as e:
-                display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
-                self.exit_without_ignore()
-                continue
-
-            # install dependencies, if we want them
-            if not no_deps and installed:
-                role_dependencies = role.metadata.get('dependencies') or []
-                for dep in role_dependencies:
-                    display.debug('Installing dep %s' % dep)
-                    dep_req = RoleRequirement()
-                    dep_info = dep_req.role_yaml_parse(dep)
-                    dep_role = GalaxyRole(self.galaxy, **dep_info)
-                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
-                        # we know we can skip this, as it's not going to
-                        # be found on galaxy.ansible.com
-                        continue
-                    if dep_role.install_info is None or force:
-                        if dep_role not in roles_left:
-                            display.display('- adding dependency: %s' % dep_role.name)
-                            roles_left.append(dep_role)
-                        else:
-                            display.display('- dependency %s already pending installation.' % dep_role.name)
-                    else:
-                        display.display('- dependency %s is already installed, skipping.' % dep_role.name)
-
-            if not installed:
-                display.warning("- %s was NOT installed successfully." % role.name)
-                self.exit_without_ignore()
-
-        return 0
 
     def execute_remove(self):
         """
@@ -692,3 +619,5 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
+
+

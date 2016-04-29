@@ -22,9 +22,12 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleParserError
+from ansible.galaxy import Galaxy
+from ansible.playbook.role.requirement import read_roles_file, install_roles
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import get_all_plugin_loaders
+from ansible.template import Templar
 from ansible import constants as C
 
 try:
@@ -90,6 +93,27 @@ class Playbook:
                 else:
                     display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
             else:
+                all_vars = variable_manager.get_vars(loader=self._loader)
+                templar = Templar(loader=self._loader, variables=all_vars)
+
+                # Install roles if roles_file is present in play or on command line
+                import pdb
+                pdb.set_trace()
+                roles_file = entry.get('roles_file')
+                if roles_file:
+                    if C.AUTO_INSTALL_ROLES:
+                        if templar._contains_vars(roles_file):
+                             roles_file = templar.template(roles_file)
+                        roles_path = entry.get('roles_path')
+                        if roles_path and templar._contains_vars(roles_path):
+                            roles_path = templar.template(roles_path)
+                        galaxy = Galaxy(roles_path, ignore_certs=False, api_server=C.GALAXY_SERVER,
+                                        force=True, no_deps=False, ignore_errors=False)
+                        roles_left = read_roles_file(galaxy, roles_file)
+                        install_roles(roles_left, galaxy, use_whitelist=True)
+                    else:
+                        display.warning("Found roles_file in playbook %s but auto_install_roles is not on in configuration" % file_name)
+
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)
 

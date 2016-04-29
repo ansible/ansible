@@ -249,7 +249,7 @@ else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif
 
-test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git
+test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git test_galaxy_playbook_options
 
 test_galaxy_spec: setup
 	mytmpdir=$(MYTMPDIR) ; \
@@ -274,6 +274,14 @@ test_galaxy_git: setup
 	ansible-galaxy install git+https://bitbucket.org/willthames/git-ansible-galaxy,v1.6 -p $$mytmpdir/roles -vvvv; \
     cp galaxy_playbook_git.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook_git.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
+test_galaxy_playbook_options: setup
+	mytmpdir=$(MYTMPDIR) ; \
+	cp galaxy_playbook_roles.yml galaxy_roles.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook_roles.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC

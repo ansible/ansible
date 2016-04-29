@@ -288,6 +288,9 @@ GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBL
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', islist=True)
 
+AUTO_INSTALL_ROLES             = get_config(p, DEFAULTS, 'auto_install_roles', 'ANSIBLE_AUTO_INSTALL_ROLES', False, boolean=True)
+AUTO_INSTALL_ROLES_WHITELIST   = get_config(p, DEFAULTS, 'auto_install_roles_whitelist', 'ANSIBLE_AUTO_INSTALL_ROLES_WHITELIST', [], islist=True)
+
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], islist=True )

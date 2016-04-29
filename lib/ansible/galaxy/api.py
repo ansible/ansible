@@ -54,13 +54,13 @@ class GalaxyAPI(object):
         self._validate_certs = not C.GALAXY_IGNORE_CERTS
 
         # set validate_certs
-        if galaxy.options.ignore_certs:
+        if galaxy.ignore_certs:
             self._validate_certs = False
         display.vvv('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
-        if galaxy.options.api_server != C.GALAXY_SERVER:
-            self._api_server = galaxy.options.api_server
+        if galaxy.api_server != C.GALAXY_SERVER:
+            self._api_server = galaxy.api_server
         display.vvv("Connecting to galaxy_server: %s" % self._api_server)
 
         server_version = self.get_server_api_version()

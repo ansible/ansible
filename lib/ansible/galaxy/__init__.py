@@ -36,15 +36,20 @@ from ansible.errors import AnsibleError
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
-    def __init__(self, options):
+    def __init__(self, roles_path, ignore_certs, api_server, force=False, no_deps=False, ignore_errors=False):
 
-        self.options = options
-        # self.options.roles_path needs to be a list and will be by default
-        roles_path = getattr(self.options, 'roles_path', [])
-        # cli option handling is responsible for making roles_path a list
-        self.roles_paths = roles_path
+        # self.roles_paths needs to be a list
+        if isinstance(roles_path, string_types):
+            self.roles_paths = [roles_path]
+        else:
+            self.roles_paths = roles_path or []
 
         self.roles =  {}
+        self.ignore_certs = ignore_certs
+        self.api_server = api_server
+        self.force = force
+        self.no_deps = no_deps
+        self.ignore_errors = ignore_errors
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)

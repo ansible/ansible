@@ -68,6 +68,25 @@ To request specific versions (tags) of a role, use this syntax in the roles file
 
 Available versions will be listed on the Ansible Galaxy webpage for that role.
 
+Automatic Role Installation
+===========================
+
+Since Ansible 2.2, you can install roles using just ansible-playbook by setting auto_install_roles to True in the ansible configuration file and specifying your roles requirements file in the playbook itself::
+
+   - hosts: localhost
+     roles_file: "{{ playbook_dir }}/rolesfile.yml"
+     roles_path: "{{ playbook_dir }}/roles"
+
+Running ansible-playbook with that playbook will install the roles under a directory called roles alongside the playbook.
+
+Each role in the ``roles_file`` will be tested against the ``auto_install_roles_whitelist`` in the ansible configuration file. Typically this will be a list containing only your internal version control service or your public space (e.g. github.com/yourcompany)
+
+e.g.::
+
+   [default]
+   auto_install_roles = True
+   auto_install_roles_whitelist = git.yourcompany.com,github.com/yourcompany
+
 Advanced Control over Role Requirements Files
 =============================================
 
