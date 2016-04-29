@@ -1975,6 +1975,16 @@ class AnsibleModule(object):
             old_env_vals['PATH'] = os.environ['PATH']
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
+        # Clean out python paths set by ziploader
+        if 'PYTHONPATH' in os.environ:
+            ppaths = os.environ['PYTHONPATH'].split(':')
+            ppaths = [x for x in ppaths \
+                if not x.endswith('/ansible_modlib.zip')]
+            ppaths = [x for x in ppaths \
+                if not x.endswith('/debug_dir')]
+            os.environ['PYTHONPATH'] = ':'.join(ppaths)
+
+
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
@@ -2016,7 +2026,6 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=os.environ,
         )
 
         if cwd and os.path.isdir(cwd):
