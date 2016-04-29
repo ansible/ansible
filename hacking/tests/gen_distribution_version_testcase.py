@@ -46,11 +46,14 @@ dist = platform.dist()
 
 
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version']
-ansible_out = subprocess.check_output(['ansible', 'localhost', '-m', 'setup'])
+ansible_out = subprocess.Popen(['ansible', 'localhost', '-m', 'setup'], stdout=subprocess.PIPE).communicate()[0]
 parsed = json.loads(ansible_out[ansible_out.index('{'):])
 ansible_facts = {}
 for fact in facts:
-    ansible_facts[fact] = parsed['ansible_facts']['ansible_'+fact]
+    try:
+        ansible_facts[fact] = parsed['ansible_facts']['ansible_'+fact]
+    except:
+        ansible_facts[fact] = "N/A"
 
 nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']
 
