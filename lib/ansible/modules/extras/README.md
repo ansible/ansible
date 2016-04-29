@@ -1,5 +1,7 @@
-ansible-modules-core
-====================
+[![Build Status](https://travis-ci.org/ansible/ansible-modules-extras.svg?branch=devel)](https://travis-ci.org/ansible/ansible-modules-extras)
+
+ansible-modules-extras
+======================
 
 This repo is transitional and not yet enabled.  Do not send issues or pull requests here yet.
 
