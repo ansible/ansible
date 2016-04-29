@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ansible/ansible-modules-extras.svg?branch=devel)](https://travis-ci.org/ansible/ansible-modules-extras)
+
 ansible-modules-extras
 ======================
 
