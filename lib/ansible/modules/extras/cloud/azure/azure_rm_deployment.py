@@ -32,7 +32,6 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
-    default: null
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -43,7 +42,7 @@ options:
       - If state is "present", template will be created. If state is "present" and if deployment exists, it will be
         updated. If state is "absent", stack will be removed.
     default: present
-    required: true
+    required: false
     choices:
         - present
         - absent
@@ -351,7 +350,6 @@ try:
 except ImportError as exc:
     IMPORT_ERROR = "Error importing module prerequisites: %s" % exc
 
-from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *
 
 try:
@@ -635,6 +633,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 def main():
     AzureRMDeploymentManager()
 
-
+from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
+
