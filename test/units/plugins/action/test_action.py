@@ -33,7 +33,7 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from ansible import __version__ as ansible_version
+from ansible.release import __version__ as ansible_version
 from ansible import constants as C
 from ansible.compat.six import text_type
 from ansible.compat.tests import unittest
