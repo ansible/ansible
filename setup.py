@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('lib'))
-from ansible import __version__, __author__
+from ansible.release import __version__, __author__
 try:
     from setuptools import setup, find_packages
 except ImportError:

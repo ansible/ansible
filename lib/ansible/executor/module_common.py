@@ -30,7 +30,7 @@ import zipfile
 from io import BytesIO
 
 # from Ansible
-from ansible import __version__
+from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -533,6 +533,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         constants = dict(
                 SELINUX_SPECIAL_FS=C.DEFAULT_SELINUX_SPECIAL_FS,
                 SYSLOG_FACILITY=_get_facility(task_vars),
+                ANSIBLE_VERSION=__version__,
                 )
         params = dict(ANSIBLE_MODULE_ARGS=module_args,
                 ANSIBLE_MODULE_CONSTANTS=constants,
@@ -562,8 +563,8 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     # Create the module zip data
                     zipoutput = BytesIO()
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-                    zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
-                    zf.writestr('ansible/module_utils/__init__.py', b'')
+                    zf.writestr('ansible/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\ntry:\n    from ansible.release import __version__,__author__\nexcept ImportError:\n    __version__="' + to_bytes(__version__) + b'"\n    __author__="' + to_bytes(__author__) + b'"\n')
+                    zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
                     zf.writestr('ansible_module_%s.py' % module_name, module_data)
 
