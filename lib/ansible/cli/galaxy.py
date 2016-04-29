@@ -51,7 +51,7 @@ class GalaxyCLI(CLI):
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
-    
+
     def __init__(self, args):
         self.api = None
         self.galaxy = None
@@ -146,14 +146,10 @@ class GalaxyCLI(CLI):
         return True
 
     def run(self):
-        
+
         super(GalaxyCLI, self).run()
 
-        # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup","delete") or \
-            (self.action == 'init' and not self.options.offline):
-            self.api = GalaxyAPI(self.galaxy)
-
+        self.api = GalaxyAPI(self.galaxy)
         self.execute()
 
     def exit_without_ignore(self, rc=1):
@@ -242,7 +238,7 @@ class GalaxyCLI(CLI):
                 # platforms included (but commented out), the galaxy_tags
                 # list, and the dependencies section
                 platforms = []
-                if not offline and self.api:
+                if not offline:
                     platforms = self.api.get_list("platforms") or []
 
                 # group the list of platforms from the api based
@@ -315,7 +311,7 @@ class GalaxyCLI(CLI):
                 role_info.update(install_info)
 
             remote_data = False
-            if self.api:
+            if not self.options.offline:
                 remote_data = self.api.lookup_role_by_name(role, False)
 
             if remote_data:
