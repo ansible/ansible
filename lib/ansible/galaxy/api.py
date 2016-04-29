@@ -28,7 +28,6 @@ import json
 import urllib
 
 from urllib2 import quote as urlquote, HTTPError
-from urlparse import urlparse
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
@@ -41,6 +40,21 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+def g_connect(method):
+    ''' wrapper to lazily initialize connection info to galaxy '''
+    def wrapped(self, *args, **kwargs):
+        if not self.initialized:
+            display.vvvv("Initial connection to galaxy_server: %s" % self._api_server)
+            server_version = self._get_server_api_version()
+            if not server_version in self.SUPPORTED_VERSIONS:
+                raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
+
+            self.baseurl = '%s/api/%s' % (self._api_server, server_version)
+            self.version = server_version # for future use
+            display.vvvv("Base API: %s" % self.baseurl)
+            self.initialized = True
+        return method(self, *args, **kwargs)
+    return wrapped
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -52,6 +66,9 @@ class GalaxyAPI(object):
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
         self._validate_certs = not C.GALAXY_IGNORE_CERTS
+        self.baseurl = None
+        self.version = None
+        self.initialized = False
 
         # set validate_certs
         if galaxy.options.ignore_certs:
@@ -61,15 +78,7 @@ class GalaxyAPI(object):
         # set the API server
         if galaxy.options.api_server != C.GALAXY_SERVER:
             self._api_server = galaxy.options.api_server
-        display.vvv("Connecting to galaxy_server: %s" % self._api_server)
 
-        server_version = self.get_server_api_version()
-        if not server_version in self.SUPPORTED_VERSIONS:
-            raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
-
-        self.baseurl = '%s/api/%s' % (self._api_server, server_version)
-        self.version = server_version # for future use
-        display.vvv("Base API: %s" % self.baseurl)           
 
     def __auth_header(self):
         token = self.token.get()
@@ -77,6 +86,7 @@ class GalaxyAPI(object):
             raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
         return {'Authorization': 'Token ' + token}
 
+    @g_connect
     def __call_galaxy(self, url, args=None, headers=None, method=None):
         if args and not headers:
             headers = self.__auth_header()
@@ -91,13 +101,13 @@ class GalaxyAPI(object):
 
     @property
     def api_server(self):
-        return self._api_server    
-    
+        return self._api_server
+
     @property
     def validate_certs(self):
         return self._validate_certs
 
-    def get_server_api_version(self):
+    def _get_server_api_version(self):
         """
         Fetches the Galaxy API current version to ensure
         the API server is up and reachable.
@@ -107,8 +117,9 @@ class GalaxyAPI(object):
             data = json.load(open_url(url, validate_certs=self._validate_certs))
             return data['current_version']
         except Exception as e:
-            raise AnsibleError("The API server (%s) is not responding, please try again later." % url)
-        
+            raise AnsibleError("The API server (%s) is not responding, please try again later" % url)
+
+    @g_connect
     def authenticate(self, github_token):
         """
         Retrieve an authentication token
@@ -134,6 +145,7 @@ class GalaxyAPI(object):
             return data['results']
         return data
 
+    @g_connect
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
         """
         Check the status of an import task.
@@ -145,10 +157,11 @@ class GalaxyAPI(object):
             url = "%s?github_user=%s&github_repo=%s" % (url,github_user,github_repo)
         else:
             raise AnsibleError("Expected task_id or github_user and github_repo")
-        
+
         data = self.__call_galaxy(url)
         return data['results']
-       
+
+    @g_connect
     def lookup_role_by_name(self, role_name, notify=True):
         """
         Find a role by name.
@@ -170,6 +183,7 @@ class GalaxyAPI(object):
             return data["results"][0]
         return None
 
+    @g_connect
     def fetch_role_related(self, related, role_id):
         """
         Fetch the list of related items for the given role.
@@ -190,6 +204,7 @@ class GalaxyAPI(object):
         except:
             return None
 
+    @g_connect
     def get_list(self, what):
         """
         Fetch the list of items specified.
@@ -213,6 +228,7 @@ class GalaxyAPI(object):
         except Exception as error:
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
 
+    @g_connect
     def search_roles(self, search, **kwargs):
 
         search_url = self.baseurl + '/search/roles/?'
@@ -228,7 +244,7 @@ class GalaxyAPI(object):
         if tags and isinstance(tags, basestring):
             tags = tags.split(',')
             search_url += '&tags_autocomplete=' + '+'.join(tags)
-        
+
         if platforms and isinstance(platforms, basestring):
             platforms = platforms.split(',')
             search_url += '&platforms_autocomplete=' + '+'.join(platforms)
@@ -238,10 +254,11 @@ class GalaxyAPI(object):
 
         if author:
             search_url += '&username_autocomplete=%s' % author
-   
+
         data = self.__call_galaxy(search_url)
         return data
 
+    @g_connect
     def add_secret(self, source, github_user, github_repo, secret):
         url = "%s/notification_secrets/" % self.baseurl
         args = urllib.urlencode({
@@ -253,16 +270,19 @@ class GalaxyAPI(object):
         data = self.__call_galaxy(url, args=args)
         return data
 
+    @g_connect
     def list_secrets(self):
         url = "%s/notification_secrets" % self.baseurl
         data = self.__call_galaxy(url, headers=self.__auth_header())
         return data
 
+    @g_connect
     def remove_secret(self, secret_id):
         url = "%s/notification_secrets/%s/" % (self.baseurl, secret_id)
         data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data
 
+    @g_connect
     def delete_role(self, github_user, github_repo):
         url = "%s/removerole/?github_user=%s&github_repo=%s" % (self.baseurl,github_user,github_repo)
         data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
