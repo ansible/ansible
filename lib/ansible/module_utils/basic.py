@@ -219,10 +219,6 @@ except ImportError:
 
 _literal_eval = literal_eval
 
-from ansible import __version__
-# Backwards compat. New code should just import and use __version__
-ANSIBLE_VERSION = __version__
-
 # Internal global holding passed in params and constants.  This is consulted
 # in case multiple AnsibleModules are created.  Otherwise each AnsibleModule
 # would attempt to read from stdin.  Other code should not use this directly
