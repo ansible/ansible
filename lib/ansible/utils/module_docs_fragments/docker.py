@@ -23,52 +23,65 @@ class ModuleDocFragment(object):
 options:
     docker_host:
         description:
-            - URL or Unix socket path used to connect to the Docker daemon.
+            - "The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the
+              TCP connection string. For example, 'tcp://192.168.99.100:2376'. If TLS is used to encrypt the connection,
+              the module will automatically replace 'tcp' in the connection URL with 'https'."
         required: false
-        default: null
-        aliases: ['docker_url']
+        default: "unix://var/run/docker.sock"
+        aliases:
+            - docker_url
     tls_hostname:
         description:
-            - If verifying the name of the host found in the TLS certs, provide the expected host name.
-        default: null
+            - When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+        default: localhost
         required: false
     api_version:
         description:
-            - Version of the Docker API the client will use.
+            - The version of the Docker API running on the Docker Host. Defaults to the latest version of the API
+              supported by docker-py.
         required: false
         default: default provided by docker-py
+        aliases:
+            - docker_api_version
     timeout:
         description:
-            - Amount of time in seconds to wait on response from the API.
+            - The maximum amount of time in seconds to wait on a response from the API.
         required: false
-        default: null
+        default: 60
     cacert_path:
         description:
-            - Path to the client TLS Certificate Authority .pem file.
+            - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
         required: false
         default: null
+        aliases:
+            - tls_ca_cert
     cert_path:
         description:
-            - Path to the client TLS certificate .pem file.
+            - Path to the client's TLS certificate file.
         required: false
         default: null
+        aliases:
+            - tls_client_cert
     key_path:
         description:
-            - Path to the client .pem key file.
+            - Path to the client's TLS key file.
         required: false
         default: null
+        aliases:
+            - tls_client_key
     ssl_version:
         description:
-            - SSL version number to use for TLS encryption.
+            - Provide a valid SSL version number. Default value determined by docker-py, currently 1.0.
         required: false
-        default: null
+        default: "1.0"
     tls:
         description:
-            - Use TLS encryption without verifying the host certificates.
+            -  Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
+               server.
         default: false
     tls_verify:
         description:
-            - Use TLS encryption and verify the host certificates.
+            - Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
         default: false
 
 notes:
