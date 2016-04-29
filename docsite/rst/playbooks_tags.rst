@@ -35,7 +35,7 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 Tag Inheritance
 ```````````````
 
-You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applyng tags anywhere else is just a
+You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applying tags anywhere else is just a
 convenience so you don't have to write it on every task::
 
     - hosts: all
