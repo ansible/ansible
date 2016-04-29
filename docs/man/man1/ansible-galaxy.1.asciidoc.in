@@ -79,6 +79,10 @@ configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
 A file containing a list of roles to be imported, as specified above. This
 option cannot be used if a rolename or .tar.gz have been specified.
 
+*--offline*::
+
+Don't query the galaxy API unless it's needed when installing roles
+
 REMOVE
 ------
 

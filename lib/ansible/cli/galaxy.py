@@ -95,6 +95,9 @@ class GalaxyCLI(CLI):
                 help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file',
                 help='A file containing a list of roles to be imported')
+            self.parser.add_option(
+                '--offline', dest='offline', default=False, action='store_true',
+                help="Don't query the galaxy API unless it's needed when installing roles")
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -150,7 +153,8 @@ class GalaxyCLI(CLI):
         super(GalaxyCLI, self).run()
 
         # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup","delete") or \
+        if self.action in ("import","info","search","login","setup","delete") or \
+            (self.action == 'install' and not self.options.offline) or \
             (self.action == 'init' and not self.options.offline):
             self.api = GalaxyAPI(self.galaxy)
 
