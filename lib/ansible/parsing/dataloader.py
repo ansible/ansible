@@ -160,12 +160,13 @@ class DataLoader():
         if not file_name or not isinstance(file_name, string_types):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
-        if not self.path_exists(file_name) or not self.is_file(file_name):
+        b_file_name = to_bytes(file_name)
+        if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
-            with open(file_name, 'rb') as f:
+            with open(b_file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
                     data = self._vault.decrypt(data)
