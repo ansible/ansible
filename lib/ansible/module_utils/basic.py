@@ -2006,7 +2006,7 @@ class AnsibleModule(object):
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
         # Clean out python paths set by ziploader
-        if 'PYTHONPATH' in os.environ:
+        if 'PYTHONPATH' in os.environ and self._remote_temp:
             pypaths = os.environ['PYTHONPATH'].split(':')
             pypaths = [x for x in pypaths if not x.startswith(self._remote_temp)]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
