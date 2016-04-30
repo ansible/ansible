@@ -54,6 +54,9 @@ class ActionModule(ActionBase):
                 try:
                     results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                     if results == self._task.args['var']:
+                        # if results is not str/unicode type, raise an exception
+                        if type(results) not in [str, unicode]:
+                            raise AnsibleUndefinedVariable
                         # If var name is same as result, try to template it
                         results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
                 except AnsibleUndefinedVariable:
