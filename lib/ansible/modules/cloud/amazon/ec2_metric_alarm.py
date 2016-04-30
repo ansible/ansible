@@ -18,8 +18,8 @@ DOCUMENTATION = """
 module: ec2_metric_alarm
 short_description: "Create/update or delete AWS Cloudwatch 'metric alarms'"
 description:
- - Can create or delete AWS metric alarms
- - Metrics you wish to alarm on must already exist
+ - Can create or delete AWS metric alarms.
+ - Metrics you wish to alarm on must already exist.
 version_added: "1.6"
 author: "Zacharie Eakin (@zeekin)"
 options:
