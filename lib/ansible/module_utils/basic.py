@@ -35,7 +35,6 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # development of Python modules, the functions available here can
 # be used to do many common tasks
 
-import inspect
 import locale
 import os
 import re
