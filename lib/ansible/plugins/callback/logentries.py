@@ -78,10 +78,6 @@ except ImportError:
 from ansible.plugins.callback import CallbackBase
 
 
-def to_unicode(ch):
-    return codecs.unicode_escape_decode(ch)[0]
-
-
 def is_unicode(ch):
     return isinstance(ch, unicode)
 
@@ -106,7 +102,7 @@ class PlainTextSocketAppender(object):
         self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN "
                               "parameter you entered is incorrect!\n\n")
         # Unicode Line separator character   \u2028
-        self.LINE_SEP = to_unicode('\u2028')
+        self.LINE_SEP = u'\u2028'
 
         self.verbose = verbose
         self._conn = None
