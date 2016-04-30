@@ -150,8 +150,6 @@ import re
 import os
 import tempfile
 
-from ansible import __version__
-
 
 def write_changes(module, contents, dest):
 
@@ -246,7 +244,7 @@ def main():
     marker1 = re.sub(r'{mark}', 'END', marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
-        if __version__.startswith('1.'):
+        if module.constants['ANSIBLE_VERSION'].startswith('1.'):
             block = re.sub('', block, '')
         blocklines = [marker0] + block.splitlines() + [marker1]
     else:
