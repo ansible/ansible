@@ -139,7 +139,7 @@ def check_command(commandline):
                   'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch' }
     commands  = { 'git': 'git', 'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
                   'svn': 'subversion', 'service': 'service',
-                  'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt-get',
+                  'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'rsync': 'synchronize', 'dnf': 'dnf', 'zypper': 'zypper' }
     become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
