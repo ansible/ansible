@@ -34,3 +34,15 @@
     that: 
         - 'diff_result.stdout == ""' 
 
+- name: check debug variable with same name as var content
+  debug: var=same_value_as_var_name_var
+  register: same_value_as_var_name
+
+- name: check debug variable output when variable is undefined
+  debug: var=undefined_variable
+  register: var_undefined
+
+- assert:
+    that:
+      - var_undefined.undefined_variable == 'VARIABLE IS NOT DEFINED!'
+      - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
