@@ -77,7 +77,7 @@ changed:
 
 import json
 
-try:
+try:    
     import botocore
     import boto3   
     HAS_BOTO3 = True
@@ -123,7 +123,12 @@ def list_internet_gateways(client, module):
     for internet_gateway in all_internet_gateways['InternetGateways']:
         all_internet_gateways_array.append(get_internet_gateway_info(internet_gateway))
 
-    module.exit_json(internet_gateways=all_internet_gateways_array)
+    #Turn the boto3 result in to ansible_friendly_snaked_names
+    snaked_internet_gateways_array = []
+    for igw in all_internet_gateways_array:
+        snaked_internet_gateways_array.append(camel_dict_to_snake_dict(igw))
+    
+    module.exit_json(internet_gateways=snaked_internet_gateways_array)
 
 
 def main():
@@ -159,4 +164,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-
