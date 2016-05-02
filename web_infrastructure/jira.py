@@ -187,7 +187,7 @@ def request(url, user, passwd, data=None, method=None):
                                headers={'Content-Type':'application/json',
                                         'Authorization':"Basic %s" % auth})
 
-    if info['status'] not in (200, 204):
+    if info['status'] not in (200, 201, 204):
         module.fail_json(msg=info['msg'])
 
     body = response.read()
