@@ -2205,8 +2205,15 @@ class LinuxNetwork(Network):
                         if not address.startswith('127.'):
                             ips['all_ipv4_addresses'].append(address)
                     elif words[0] == 'inet6':
-                        address, prefix = words[1].split('/')
-                        scope = words[3]
+                        if '/' in words[1]:
+                            address, prefix = words[1].split('/')
+                        else:
+                            address = words[1]
+                            prefix = "128"
+                        if words[2] == 'peer':
+                            scope = words[5]
+                        else:
+                            scope = words[3]
                         if 'ipv6' not in interfaces[device]:
                             interfaces[device]['ipv6'] = []
                         interfaces[device]['ipv6'].append({
