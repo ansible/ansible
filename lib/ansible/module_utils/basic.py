@@ -1971,6 +1971,19 @@ class AnsibleModule(object):
             old_env_vals['PATH'] = os.environ['PATH']
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
+        # If using test-module and explode, the remote lib path will resemble ...
+        #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
+        # If using ansible or ansible-playbook with a remote system ...
+        #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
+
+        # Clean out python paths set by ziploader
+        if 'PYTHONPATH' in os.environ:
+            pypaths = os.environ['PYTHONPATH'].split(':')
+            pypaths = [x for x in pypaths \
+                        if not x.endswith('/ansible_modlib.zip') \
+                        and not x.endswith('/debug_dir')]
+            os.environ['PYTHONPATH'] = ':'.join(pypaths)
+
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
@@ -2012,7 +2025,6 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=os.environ,
         )
 
         if cwd and os.path.isdir(cwd):
