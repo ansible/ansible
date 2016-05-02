@@ -51,7 +51,6 @@ EXAMPLES = '''
 '''
 
 
-import os
 import warnings
 from re import match
 
@@ -118,9 +117,9 @@ def main():
     module = AnsibleModule(
             argument_spec = dict(
             login_user=dict(default=None),
-            login_password=dict(default=None),
-            login_host=dict(default="127.0.0.1"),
-            login_port=dict(default="3306", type='int'),
+            login_password=dict(default=None, no_log=True),
+            login_host=dict(default="localhost"),
+            login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             variable=dict(default=None),
             value=dict(default=None),
@@ -128,19 +127,16 @@ def main():
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
             connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf")
+            config_file=dict(default="~/.my.cnf", type="path")
         )
     )
     user = module.params["login_user"]
     password = module.params["login_password"]
-    host = module.params["login_host"]
-    port = module.params["login_port"]
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
-    config_file = os.path.expanduser(os.path.expandvars(config_file))
     db = 'mysql'
 
     mysqlvar = module.params["variable"]
@@ -187,4 +183,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.database import *
 from ansible.module_utils.mysql import *
-main()
+if __name__ == '__main__':
+    main()
