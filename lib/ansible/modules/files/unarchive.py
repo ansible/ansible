@@ -493,6 +493,7 @@ class TgzArchive(object):
             # Fallback to tar
             self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
+        self.compress_mode = 'gz'
         self._files_in_archive = []
 
     def _get_tar_fileobj(self):
@@ -507,7 +508,7 @@ class TgzArchive(object):
         # The use of Python's tarfile module here allows us to easily avoid tricky file encoding
         # problems. Ref #11348
         try:
-            tf = tarfile.open(fileobj=self._get_tar_fileobj())
+            tf = tarfile.open(fileobj=self._get_tar_fileobj(), mode='r:%s' % self.compress_mode)
         except Exception:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -593,7 +594,10 @@ class TgzArchive(object):
 class TarArchive(TgzArchive):
     def __init__(self, src, dest, file_args, module):
         super(TarArchive, self).__init__(src, dest, file_args, module)
+        # argument to tar
         self.zipflag = ''
+        # parameter for python tarfile library
+        self.compress_mode = ''
 
 
 # class to handle bzip2 compressed tar files
@@ -601,6 +605,7 @@ class TarBzipArchive(TgzArchive):
     def __init__(self, src, dest, file_args, module):
         super(TarBzipArchive, self).__init__(src, dest, file_args, module)
         self.zipflag = 'j'
+        self.compress_mode = 'bz2'
 
 
 # class to handle xz compressed tar files
@@ -608,6 +613,7 @@ class TarXzArchive(TgzArchive):
     def __init__(self, src, dest, file_args, module):
         super(TarXzArchive, self).__init__(src, dest, file_args, module)
         self.zipflag = 'J'
+        self.compress_mode = ''
 
     def _get_tar_fileobj(self):
         # Python's tarfile module doesn't support xz compression so we have to manually uncompress
