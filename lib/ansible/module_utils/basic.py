@@ -1985,7 +1985,7 @@ class AnsibleModule(object):
             pypaths = os.environ['PYTHONPATH'].split(':')
             pypaths = [x for x in pypaths \
                         if not x.endswith('/ansible_modlib.zip') \
-                        and not x.endswith('/debug/dir')]
+                        and not x.endswith('/debug_dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
 
         # create a printable version of the command for use
