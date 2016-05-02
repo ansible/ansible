@@ -213,6 +213,18 @@ def remove_source(zone, source):
 # interface handling
 #
 def get_interface(zone, interface):
+    if interface in fw.getInterfaces(zone):
+        return True
+    else:
+        return False
+
+def change_zone_of_interface(zone, interface):
+    fw.changeZoneOfInterface(zone, interface)
+
+def remove_interface(zone, interface):
+    fw.removeInterface(zone, interface)
+
+def get_interface_permanent(zone, interface):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     if interface in fw_settings.getInterfaces():
@@ -220,13 +232,20 @@ def get_interface(zone, interface):
     else:
         return False
 
-def add_interface(zone, interface):
+def change_zone_of_interface_permanent(zone, interface):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
-    fw_settings.addInterface(interface)
-    fw_zone.update(fw_settings)
+    old_zone_name = fw.config().getZoneOfInterface(interface)
+    if old_zone_name != zone:
+        if old_zone_name:
+            old_zone_obj = fw.config().getZoneByName(old_zone_name)
+            old_zone_settings = old_zone_obj.getSettings()
+            old_zone_settings.removeInterface(interface) # remove from old
+            old_zone_obj.update(old_zone_settings)
+        fw_settings.addInterface(interface)              # add to new
+        fw_zone.update(fw_settings)
 
-def remove_interface(zone, interface):
+def remove_interface_permanent(zone, interface):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.removeInterface(interface)
@@ -533,23 +552,44 @@ def main():
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
 
     if interface != None:
-        is_enabled = get_interface(zone, interface)
-        if desired_state == "enabled":
-            if is_enabled == False:
-                if module.check_mode:
-                    module.exit_json(changed=True)
+        if permanent:
+            is_enabled = get_interface_permanent(zone, interface)
+            msgs.append('Permanent operation')
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
 
-                add_interface(zone, interface)
-                changed=True
-                msgs.append("Added %s to zone %s" % (interface, zone))
-        elif desired_state == "disabled":
-            if is_enabled == True:
-                if module.check_mode:
-                    module.exit_json(changed=True)
+                    change_zone_of_interface_permanent(zone, interface)
+                    changed=True
+                    msgs.append("Changed %s to zone %s" % (interface, zone))
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
 
-                remove_interface(zone, interface)
-                changed=True
-                msgs.append("Removed %s from zone %s" % (interface, zone))
+                    remove_interface_permanent(zone, interface)
+                    changed=True
+                    msgs.append("Removed %s from zone %s" % (interface, zone))
+        if immediate or not permanent:
+            is_enabled = get_interface(zone, interface)
+            msgs.append('Non-permanent operation')
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    change_zone_of_interface(zone, interface)
+                    changed=True
+                    msgs.append("Changed %s to zone %s" % (interface, zone))
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    remove_interface(zone, interface)
+                    changed=True
+                    msgs.append("Removed %s from zone %s" % (interface, zone))
 
     if masquerade != None:
 
