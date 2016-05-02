@@ -523,35 +523,6 @@ def is_executable(path):
     return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
             or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
-
-def get_remote_temp():
-
-    ''' Return the remote temp path where modules are stored '''
-
-    # If using test-module and explode, the remote temp will resemble ...
-    #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
-    # If using ansible or ansible-playbook with a remote system ...
-    #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
-
-    # the path to basic.py
-    thisfile = __file__
-
-    remote_temp = None
-
-    # list.index('ansible') in reverse
-    directories = thisfile.split(os.sep)
-    directories = [x for x in reversed(directories)]
-    ansible_index = None
-    for idx,x in enumerate(directories):
-        if x == 'ansible':
-            ansible_index = idx
-            break
-    if ansible_index:
-        # Keep everything up to the index
-        directories = directories[(ansible_index + 1):]        
-        directories = [x for x in reversed(directories)]
-        remote_temp = os.sep.join(directories)
-    return remote_temp
  
 
 class AnsibleFallbackNotFound(Exception):
@@ -586,7 +557,6 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._verbosity = 0
-        self._remote_temp = get_remote_temp()
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
@@ -2005,10 +1975,17 @@ class AnsibleModule(object):
             old_env_vals['PATH'] = os.environ['PATH']
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
+        # If using test-module and explode, the remote lib path will resemble ...
+        #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
+        # If using ansible or ansible-playbook with a remote system ...
+        #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
+
         # Clean out python paths set by ziploader
-        if 'PYTHONPATH' in os.environ and self._remote_temp:
+        if 'PYTHONPATH' in os.environ:
             pypaths = os.environ['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths if not x.startswith(self._remote_temp)]
+            pypaths = [x for x in pypaths \
+                        if not x.endswith('/ansible_modlib.zip') \
+                        and not x.endswith('/debug/dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
 
         # create a printable version of the command for use
