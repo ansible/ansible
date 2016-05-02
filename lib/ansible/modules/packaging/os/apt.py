@@ -263,6 +263,7 @@ def package_status(m, pkgname, version, cache, state):
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
                     is_installed = False
+                    upgradable = False
                     # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
