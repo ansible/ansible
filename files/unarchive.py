@@ -345,7 +345,7 @@ class ZipArchive(object):
                 diff += 'c%s++++++.?? %s\n' % (ftype, path)
                 continue
 
-            itemized = bytearray('.%s.......??' % ftype)
+            itemized = list('.%s.......??' % ftype)
 
             dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
             timestamp = time.mktime(dt_object.timetuple())
@@ -444,7 +444,7 @@ class ZipArchive(object):
             if change:
                 if path not in self.includes:
                     self.includes.append(path)
-                diff += '%s %s\n' % (itemized, path)
+                diff += '%s %s\n' % (''.join(itemized), path)
 
         if self.includes:
             unarchived = False
