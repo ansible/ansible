@@ -523,7 +523,6 @@ def is_executable(path):
     return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
             or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
- 
 
 class AnsibleFallbackNotFound(Exception):
     pass
