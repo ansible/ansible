@@ -41,7 +41,7 @@ class TaskInclude(Task):
     # =================================================================================
     # ATTRIBUTES
 
-    _static = FieldAttribute(isa='bool', default=False)
+    _static = FieldAttribute(isa='bool', default=None)
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
