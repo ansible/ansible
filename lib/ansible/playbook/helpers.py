@@ -114,8 +114,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # 3. the included file name contains no variables, and has no loop
                 is_static = t.static or \
                             C.DEFAULT_TASK_INCLUDES_STATIC or \
-                            (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                            not templar._contains_vars(t.args.get('_raw_params')) and t.loop is None
+                            (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)
 
                 if is_static:
                     if t.loop is not None:
