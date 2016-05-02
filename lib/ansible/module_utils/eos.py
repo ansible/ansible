@@ -18,26 +18,15 @@
 #
 
 import re
+import json
+import collections
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
+from ansible.module_utils.network import get_network_module, NetworkError
+from ansible.module_utils.network import add_argument, register_transport
 from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
-    transport=dict(default='cli', choices=['cli', 'eapi']),
-    use_ssl=dict(default=True, type='bool'),
-    provider=dict(type='dict')
-)
 
 CLI_PROMPTS_RE = [
     re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -56,27 +45,21 @@ CLI_ERRORS_RE = [
     re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
 ]
 
+add_argument('use_ssl', dict(default=True, type='bool'))
+add_argument('validate_certs', dict(default=True, type='bool'))
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
 
-
+@register_transport('eapi')
 class Eapi(object):
 
-    def __init__(self, module):
-        self.module = module
-
-        # sets the module_utils/urls.py req parameters
-        self.module.params['url_username'] = module.params['username']
-        self.module.params['url_password'] = module.params['password']
-
+    def __init__(self):
         self.url = None
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
         self.enable = None
+
+    def _error(self, msg):
+        raise NetworkError(msg, url=self.url)
 
     def _get_body(self, commands, encoding, reqid=None):
         """Create a valid eAPI JSON-RPC request message
@@ -84,11 +67,16 @@ class Eapi(object):
         params = dict(version=1, cmds=commands, format=encoding)
         return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
-    def connect(self):
-        host = self.module.params['host']
-        port = self.module.params['port']
+    def connect(self, params):
+        host = params['host']
+        port = params['port']
 
-        if self.module.params['use_ssl']:
+        # sets the module_utils/urls.py req parameters
+        self.url_args.params['url_username'] = params['username']
+        self.url_args.params['url_password'] = params['password']
+        self.url_args.params['validate_certs'] = params['validate_certs']
+
+        if params['use_ssl']:
             proto = 'https'
             if not port:
                 port = 443
@@ -99,175 +87,84 @@ class Eapi(object):
 
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
 
-    def authorize(self):
-        if self.module.params['auth_pass']:
-            passwd = self.module.params['auth_pass']
+    def authorize(self, params):
+        if params.get('auth_pass'):
+            passwd = params['auth_pass']
             self.enable = dict(cmd='enable', input=passwd)
         else:
             self.enable = 'enable'
 
-    def send(self, commands, encoding='json'):
+    def run_commands(self, commands, encoding='json', **kwargs):
         """Send commands to the device.
         """
-        clist = to_list(commands)
-
         if self.enable is not None:
-            clist.insert(0, self.enable)
+            commands.insert(0, self.enable)
 
-        data = self._get_body(clist, encoding)
-        data = self.module.jsonify(data)
+        data = self._get_body(commands, encoding)
+        data = json.dumps(data)
 
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response, headers = fetch_url(self.module, self.url, data=data,
+        response, headers = fetch_url(self.url_args, self.url, data=data,
                 headers=headers, method='POST')
 
         if headers['status'] != 200:
-            self.module.fail_json(**headers)
+            raise NetworkError(**headers)
 
-        response = self.module.from_json(response.read())
+        response = json.loads(response.read())
         if 'error' in response:
             err = response['error']
-            self.module.fail_json(msg='json-rpc error', commands=commands, **err)
+            raise NetworkError(msg='json-rpc error', commands=commands, **err)
 
         if self.enable:
             response['result'].pop(0)
 
         return response['result']
 
+    def get_config(self, params):
+        return self.run_commands(['show running-config'], encoding='text')[0]
 
+
+@register_transport('cli', default=True)
 class Cli(object):
 
-    def __init__(self, module):
-        self.module = module
+    def __init__(self):
+        if not HAS_PARAMIKO:
+            raise NetworkError(msg='paramiko is required but does not '
+                'appear to be installed.  It can be installed using  `pip '
+                'install paramiko`')
+
         self.shell = None
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+    def connect(self, params, **kwargs):
+        host = params['host']
 
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
+        username = params['username']
+        port = params.get('port') or 22
+
+        password = params.get('password')
+        key_file = params.get('ssh_keyfile')
 
         try:
             self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+            self.shell.open(host, port=port, username=username,
+                    password=password, key_filename=key_file)
         except ShellError:
             e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
+            raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
+                    exc=str(e))
 
-    def authorize(self):
-        passwd = self.module.params['auth_pass']
-        self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
+    def authorize(self, passwd, params, **kwargs):
+        self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
-    def send(self, commands):
+    def run_commands(self, commands, **kwargs):
         try:
             return self.shell.send(commands)
         except ShellError:
             e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
+            raise NetworkError(e.message, commands=commands)
+
+    def get_config(self, **kwargs):
+        return self.run_commands('show running-config')[0]
 
 
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
-
-    @property
-    def connected(self):
-        return self._connected
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        cls = globals().get(str(self.params['transport']).capitalize())
-        try:
-            self.connection = cls(self)
-        except TypeError:
-            e = get_exception()
-            self.fail_json(msg=e.message)
-
-        self.connection.connect()
-        self.connection.send('terminal length 0')
-
-        if self.params['authorize']:
-            self.connection.authorize()
-
-        self._connected = True
-
-    def configure(self, commands, replace=False):
-        if replace:
-            responses = self.config_replace(commands)
-        else:
-            responses = self.config_terminal(commands)
-        return responses
-
-    def config_terminal(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure terminal')
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
-
-    def config_replace(self, commands):
-        if self.params['transport'] == 'cli':
-            self.fail_json(msg='config replace only supported over eapi')
-        cmd = 'configure replace terminal:'
-        commands = '\n'.join(to_list(commands))
-        command = dict(cmd=cmd, input=commands)
-        return self.execute(command)
-
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=3)
-
-    def get_config(self):
-        cmd = 'show running-config'
-        if self.params.get('include_defaults'):
-            cmd += ' all'
-        if self.params['transport'] == 'cli':
-            return self.execute(cmd)[0]
-        else:
-            resp = self.execute(cmd, encoding='text')
-            return resp[0]['output']
-
-
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
-
-    module = NetworkModule(**kwargs)
-
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    return module
