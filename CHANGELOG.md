@@ -173,6 +173,7 @@ Ansible Changes By Release
   two custom callback plugins to run in a certain order you can name them
   10-first-callback.py and 20-second-callback.py.
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
+* Fixes for unarchive when filenames contain non-ascii characters
 
 ###Deprecations:
 
