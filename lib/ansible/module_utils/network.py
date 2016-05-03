@@ -82,6 +82,9 @@ class NetworkModule(AnsibleModule):
     def disconnect(self):
         return self.invoke(self.connection.disconnect)
 
+    def authorize(self):
+        raise NotImplementedError
+
     def run_commands(self, commands, **kwargs):
         commands = to_list(commands)
         return self.invoke(self.connection.run_commands, commands)
@@ -93,6 +96,11 @@ class NetworkModule(AnsibleModule):
     def get_config(self, **kwargs):
         return self.invoke(self.connection.get_config)
 
+    def load_config(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def commit(self, *args, **kwargs):
+        raise NotImplementedError
 
 def get_network_module(**kwargs):
 
