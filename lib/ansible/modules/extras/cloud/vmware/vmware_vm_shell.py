@@ -59,7 +59,6 @@ options:
             - 'inventory_path'
             - 'vm_name'
         required: False
-        default: None
     vm_username:
         description:
             - The user to connect to the VM.
