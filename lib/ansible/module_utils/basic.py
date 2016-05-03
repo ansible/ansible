@@ -609,6 +609,7 @@ class AnsibleModule(object):
                 'float': self._check_type_float,
                 'path': self._check_type_path,
                 'raw': self._check_type_raw,
+                'jsonarg': self._check_type_jsonarg,
             }
         if not bypass_checks:
             self._check_required_arguments()
@@ -1394,6 +1395,16 @@ class AnsibleModule(object):
     def _check_type_path(self, value):
         value = self._check_type_str(value)
         return os.path.expanduser(os.path.expandvars(value))
+
+    def _check_type_jsonarg(self, value):
+        # Return a jsonified string.  Sometimes the controller turns a json
+        # string into a dict/list so transform it back into json here
+        if isinstance(value, (unicode, bytes)):
+            return value
+        else:
+            if isinstance(value (list, tuple, dict)):
+                return json.dumps(value)
+        raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
         return value
