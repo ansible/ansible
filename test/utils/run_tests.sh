@@ -1,6 +1,8 @@
-#!/bin/sh -x
+#!/bin/sh
 
 set -e
+set -u
+set -x
 
 if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/replace-urlopen.sh .
