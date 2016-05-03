@@ -108,14 +108,14 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 all_vars = variable_manager.get_vars(loader=loader, play=play, task=t)
                 templar = Templar(loader=loader, variables=all_vars)
 
-                # check to see if this include is static, which can be true if:
-                # 1. the user set the 'static' option to true
+                # check to see if this include is dynamic or static:
+                # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                # 3. the included file name contains no variables, and has no loop
-                is_static = t.static or \
-                            C.DEFAULT_TASK_INCLUDES_STATIC or \
-                            (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                            not templar._contains_vars(t.args.get('_raw_params')) and t.loop is None
+                if t.static is not None:
+                    is_static = t.static
+                else:
+                    is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
+                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)
 
                 if is_static:
                     if t.loop is not None:
