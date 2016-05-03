@@ -21,11 +21,11 @@
   zypper: name=apache2 state=present
   when: "ansible_os_family == 'Suse'"
 
-- name: disable alias module
-  apache2_module: name=alias state=absent
+- name: disable userdir module
+  apache2_module: name=userdir state=absent
 
-- name: disable alias module, second run
-  apache2_module: name=alias state=absent
+- name: disable userdir module, second run
+  apache2_module: name=userdir state=absent
   register: disable
 
 - name: ensure apache2_module is idempotent
@@ -33,8 +33,8 @@
     that:
       - 'not disable.changed'
 
-- name: enable alias module
-  apache2_module: name=alias state=present
+- name: enable userdir module
+  apache2_module: name=userdir state=present
   register: enable
 
 - name: ensure changed on successful enable
@@ -42,8 +42,8 @@
     that:
       - 'enable.changed'
 
-- name: enable alias module, second run
-  apache2_module: name=alias state=present
+- name: enable userdir module, second run
+  apache2_module: name=userdir state=present
   register: enabletwo
 
 - name: ensure apache2_module is idempotent
@@ -51,8 +51,8 @@
     that:
       - 'not enabletwo.changed'
 
-- name: disable alias module, final run
-  apache2_module: name=alias state=absent
+- name: disable userdir module, final run
+  apache2_module: name=userdir state=absent
   register: disablefinal
 
 - name: ensure changed on successful disable
