@@ -149,6 +149,7 @@ class Cli(object):
             self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
             self.shell.open(host, port=port, username=username,
                     password=password, key_filename=key_file)
+            self.shell.send('terminal length 0')
         except ShellError:
             e = get_exception()
             raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
