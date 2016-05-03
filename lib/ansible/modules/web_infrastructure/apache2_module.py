@@ -55,39 +55,68 @@ EXAMPLES = '''
 
 import re
 
-def _disable_module(module):
+def _run_threaded(module):
+    control_binary = _get_ctl_binary(module)
+
+    result, stdout, stderr = module.run_command("%s -V" % control_binary)
+
+    if re.search(r'threaded:[ ]*yes', stdout):
+        return True
+    else:
+        return False
+
+def _get_ctl_binary(module):
+    for command in ['apache2ctl', 'apachectl']:
+        ctl_binary = module.get_bin_path(command)
+        if ctl_binary is not None:
+            return ctl_binary
+
+    module.fail_json(
+      msg="None of httpd, apachectl or apach2ctl found. At least one apache control binary is necessary.")
+
+def _module_is_enabled(module):
+    control_binary = _get_ctl_binary(module)
+    name = module.params['name']
+
+    result, stdout, stderr = module.run_command("%s -M" % control_binary)
+
+    if result != 0:
+        module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
+
+    if re.search(r' ' + name + r'_module', stdout):
+        return True
+    else:
+        return False
+
+def _set_state(module, state):
     name = module.params['name']
     force = module.params['force']
-    a2dismod_binary = module.get_bin_path("a2dismod")
-    if a2dismod_binary is None:
-        module.fail_json(msg="a2dismod not found.  Perhaps this system does not use a2dismod to manage apache")
 
-    if force:
-        a2dismod_binary += ' -f'
+    want_enabled = state == 'present'
+    state_string = {'present': 'enabled', 'absent': 'disabled'}[state]
+    a2mod_binary = {'present': 'a2enmod', 'absent': 'a2dismod'}[state]
+    success_msg = "Module %s %s" % (name, state_string)
 
-    result, stdout, stderr = module.run_command("%s %s" % (a2dismod_binary, name))
+    if _module_is_enabled(module) != want_enabled:
+        if module.check_mode:
+            module.exit_json(changed = True, result = success_msg)
 
-    if re.match(r'.*\b' + name + r' already disabled', stdout, re.S|re.M):
-        module.exit_json(changed = False, result = "Success")
-    elif result != 0:
-        module.fail_json(msg="Failed to disable module %s: %s" % (name, stdout))
+        a2mod_binary = module.get_bin_path(a2mod_binary)
+        if a2mod_binary is None:
+            module.fail_json(msg="%s not found. Perhaps this system does not use %s to manage apache" % (a2mod_binary, a2mod_binary))
+
+        if not want_enabled and force:
+            # force exists only for a2dismod on debian
+            a2mod_binary += ' -f'
+
+        result, stdout, stderr = module.run_command("%s %s" % (a2mod_binary, name))
+
+        if _module_is_enabled(module) == want_enabled:
+            module.exit_json(changed = True, result = success_msg)
+        else:
+            module.fail_json(msg="Failed to set module %s to %s: %s" % (name, state_string, stdout), rc=result, stdout=stdout, stderr=stderr)
     else:
-        module.exit_json(changed = True, result = "Disabled")
-
-def _enable_module(module):
-    name = module.params['name']
-    a2enmod_binary = module.get_bin_path("a2enmod")
-    if a2enmod_binary is None:
-        module.fail_json(msg="a2enmod not found.  Perhaps this system does not use a2enmod to manage apache")
-
-    result, stdout, stderr = module.run_command("%s %s" % (a2enmod_binary, name))
-
-    if re.match(r'.*\b' + name + r' already enabled', stdout, re.S|re.M):
-        module.exit_json(changed = False, result = "Success")
-    elif result != 0:
-        module.fail_json(msg="Failed to enable module %s: %s" % (name, stdout))
-    else:
-        module.exit_json(changed = True, result = "Enabled")
+        module.exit_json(changed = False, result = success_msg)
 
 def main():
     module = AnsibleModule(
@@ -96,13 +125,15 @@ def main():
             force = dict(required=False, type='bool', default=False),
             state = dict(default='present', choices=['absent', 'present'])
         ),
+        supports_check_mode = True,
     )
 
-    if module.params['state'] == 'present':
-        _enable_module(module)
+    name = module.params['name']
+    if name == 'cgi' and _run_threaded(module):
+        module.fail_json(msg="Your MPM seems to be threaded. No automatic actions on module %s possible." % name)
 
-    if module.params['state'] == 'absent':
-        _disable_module(module)
+    if module.params['state'] in ['present', 'absent']:
+        _set_state(module, module.params['state'])
 
 # import module snippets
 from ansible.module_utils.basic import *
