@@ -604,6 +604,10 @@ class Distribution(object):
     This is unit tested. Please extend the tests to cover all distributions if you have them available.
     """
 
+    # every distribution name mentioned here, must have one of
+    #  - allowempty == True
+    #  - be listed in SEARCH_STRING
+    #  - have a function get_distribution_DISTNAME implemented
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
@@ -628,7 +632,6 @@ class Distribution(object):
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
-        'Archlinux': '',
     }
 
     # A list with OS Family members
@@ -688,12 +691,12 @@ class Distribution(object):
 
                 if not os.path.exists(path):
                     continue
+                # if allowempty is set, we only check for file existance but not content
+                if 'allowempty' in ddict and ddict['allowempty']:
+                    self.facts['distribution'] = name
+                    break
                 if os.path.getsize(path) == 0:
-                    if 'allowempty' in ddict and ddict['allowempty']:
-                        self.facts['distribution'] = name
-                        break
-                    else:
-                        continue
+                    continue
 
                 data = get_file_content(path)
                 if name in self.SEARCH_STRING:
@@ -708,13 +711,19 @@ class Distribution(object):
                     break
                 else:
                     # call a dedicated function for parsing the file content
-                    distfunc = getattr(self, 'get_distribution_' + name)
-                    parsed = distfunc(name, data, path)
-                    if parsed is None or parsed:
-                        # distfunc return False if parsing failed
-                        # break only if parsing was succesful
-                        # otherwise continue with other distributions
-                        break
+                    try:
+                        distfunc = getattr(self, 'get_distribution_' + name)
+                        parsed = distfunc(name, data, path)
+                        if parsed is None or parsed:
+                            # distfunc return False if parsing failed
+                            # break only if parsing was succesful
+                            # otherwise continue with other distributions
+                            break
+                    except AttributeError:
+                        # this should never happen, but if it does fail quitely and not with a traceback
+                        pass
+
+
 
                     # to debug multiple matching release files, one can use:
                     # self.facts['distribution_debug'].append({path + ' ' + name:
