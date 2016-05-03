@@ -780,6 +780,10 @@ class Distribution(object):
         if release:
             self.facts['distribution_release'] = release.groups()[0]
 
+    def get_distribution_Archlinux(self, name, data, path):
+        self.facts['distribution'] = 'Archlinux'
+        self.facts['distribution_version'] = data
+
     def get_distribution_Alpine(self, name, data, path):
         self.facts['distribution'] = 'Alpine'
         self.facts['distribution_version'] = data
