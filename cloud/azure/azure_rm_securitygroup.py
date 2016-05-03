@@ -140,9 +140,9 @@ EXAMPLES = '''
           - name: DenySSH
             protocol: TCP
             destination_port_range: 22
-            access: Deny 
+            access: Deny
             priority: 100
-            direction: Inbound 
+            direction: Inbound
           - name: 'AllowSSH'
             protocol: TCP
             source_address_prefix: '174.109.158.0/24'
@@ -161,14 +161,14 @@ EXAMPLES = '''
             destination_port_range: 22-23
             access: Deny
             priority: 100
-            direction: Inbound 
+            direction: Inbound
           - name: AllowSSHFromHome
             protocol: TCP
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
             priority: 102
-            direction: Inbound 
+            direction: Inbound
       tags:
           testing: testing
           delete: on-exit
@@ -176,7 +176,7 @@ EXAMPLES = '''
 # Delete security group
 - azure_rm_securitygroup:
       resource_group: mygroup
-      name: mysecgroup 
+      name: mysecgroup
       state: absent
 '''
 
@@ -193,7 +193,7 @@ state:
                 "destination_address_prefix": "VirtualNetwork",
                 "destination_port_range": "*",
                 "direction": "Inbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
                 "name": "AllowVnetInBound",
                 "priority": 65000,
@@ -208,7 +208,7 @@ state:
                 "destination_address_prefix": "*",
                 "destination_port_range": "*",
                 "direction": "Inbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
                 "name": "AllowAzureLoadBalancerInBound",
                 "priority": 65001,
@@ -223,7 +223,7 @@ state:
                 "destination_address_prefix": "*",
                 "destination_port_range": "*",
                 "direction": "Inbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
                 "name": "DenyAllInBound",
                 "priority": 65500,
@@ -238,7 +238,7 @@ state:
                 "destination_address_prefix": "VirtualNetwork",
                 "destination_port_range": "*",
                 "direction": "Outbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
                 "name": "AllowVnetOutBound",
                 "priority": 65000,
@@ -253,7 +253,7 @@ state:
                 "destination_address_prefix": "Internet",
                 "destination_port_range": "*",
                 "direction": "Outbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
                 "name": "AllowInternetOutBound",
                 "priority": 65001,
@@ -268,7 +268,7 @@ state:
                 "destination_address_prefix": "*",
                 "destination_port_range": "*",
                 "direction": "Outbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
                 "name": "DenyAllOutBound",
                 "priority": 65500,
@@ -289,7 +289,7 @@ state:
                 "destination_address_prefix": "*",
                 "destination_port_range": "22",
                 "direction": "Inbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
                 "name": "DenySSH",
                 "priority": 100,
@@ -304,7 +304,7 @@ state:
                 "destination_address_prefix": "*",
                 "destination_port_range": "22",
                 "direction": "Inbound",
-                "etag": "W/\"edf48d56-b315-40ca-a85d-dbcb47f2da7d\"",
+                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
                 "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
                 "name": "AllowSSH",
                 "priority": 101,
@@ -354,7 +354,7 @@ def validate_rule(rule, rule_type=None):
         raise Exception("Rule name value is required.")
     if not NAME_PATTERN.match(rule.get('name')):
         raise Exception("Rule name must contain only word characters plus '.','-','_'")
-    
+
     priority = rule.get('priority', None)
     if not priority:
         raise Exception("Rule priority is required.")
@@ -445,7 +445,7 @@ def create_rule_instance(rule):
         destination_port_range=rule.get('destination_port_range', None),
         priority=rule.get('priority', None),
         provisioning_state=rule.get('provisioning_state', None),
-        name=rule.get('name', None), 
+        name=rule.get('name', None),
         etag=rule.get('etag', None)
     )
 
@@ -480,7 +480,7 @@ def create_network_security_group_dict(nsg):
         name=nsg.name,
         type=nsg.type,
         location=nsg.location,
-        tags=nsg.tags,    
+        tags=nsg.tags,
     )
     results['rules'] = []
     if nsg.security_rules:
@@ -539,7 +539,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-        
+
         for key in self.module_arg_spec.keys() + ['tags']:
             setattr(self, key, kwargs[key])
 

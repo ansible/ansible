@@ -78,14 +78,14 @@ objects:
     returned: always
     type: list
     sample: [{
-        "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+        "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
         "location": "eastus2",
         "name": "secgroup001",
         "properties": {
             "defaultSecurityRules": [
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetInBound",
                     "name": "AllowVnetInBound",
                     "properties": {
@@ -102,7 +102,7 @@ objects:
                     }
                 },
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowAzureLoadBalancerInBound",
                     "name": "AllowAzureLoadBalancerInBound",
                     "properties": {
@@ -119,7 +119,7 @@ objects:
                     }
                 },
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllInBound",
                     "name": "DenyAllInBound",
                     "properties": {
@@ -136,7 +136,7 @@ objects:
                     }
                 },
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetOutBound",
                     "name": "AllowVnetOutBound",
                     "properties": {
@@ -153,7 +153,7 @@ objects:
                     }
                 },
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowInternetOutBound",
                     "name": "AllowInternetOutBound",
                     "properties": {
@@ -170,7 +170,7 @@ objects:
                     }
                 },
                 {
-                    "etag": "W/\"d036f4d7-d977-429a-a8c6-879bc2523399\"",
+                    "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllOutBound",
                     "name": "DenyAllOutBound",
                     "properties": {

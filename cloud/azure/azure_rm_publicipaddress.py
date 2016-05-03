@@ -101,9 +101,9 @@ state:
     description: Facts about the current state of the object.
     returned: always
     type: dict
-    sample:{
+    sample: {
         "dns_settings": {},
-        "etag": "W/\"a5e56955-12df-445a-bda4-dc129d22c12f\"",
+        "etag": '"/"a5e56955-12df-445a-bda4-dc129d22c12f"',
         "idle_timeout_in_minutes": 4,
         "ip_address": "52.160.103.93",
         "location": "westus",
