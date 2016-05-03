@@ -218,7 +218,7 @@
     that:
       - result|success
       - 'sni_host == result.content'
-  when: ansible_python.has_sslcontext
+  when: ansible_python.has_sslcontext and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '16.04')
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
   uri:
@@ -246,7 +246,7 @@
     - ndg-httpsclient
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
-- name: Verify SNI verificaiton succeeds on old python with urllib3 contrib
+- name: Verify SNI verification succeeds on old python with urllib3 contrib
   uri:
     url: 'https://{{ sni_host }}'
     return_content: true
