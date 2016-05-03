@@ -18,7 +18,7 @@ else
     docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS:-''}'; cd /root/ansible; . hacking/env-setup; (cd test/integration; LC_ALL=en_US.utf-8 make)"
     docker kill $(cat /tmp/cid_${TARGET})
 
-    if [ "X${TESTS_KEEP_CONTAINER}" = "X" ]; then
+    if [ "X${TESTS_KEEP_CONTAINER:-''}" = "X" ]; then
         docker rm -vf "${C_NAME}"
     fi
 fi
