@@ -22,7 +22,7 @@ import json
 import collections
 
 from ansible.module_utils.network import get_network_module, NetworkError
-from ansible.module_utils.network import add_argument, register_transport
+from ansible.module_utils.network import add_argument, register_transport, get_exception
 from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
