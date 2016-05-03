@@ -23,16 +23,14 @@ from ansible.module_utils.basic import env_fallback, get_exception
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
-    transport=dict(choices=list()),
-    provider=dict(type='dict')
-)
-
-NET_CREDENTIAL_ARGS = dict(
     username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    provider=dict(type='dict'),
+    transport=dict(choices=list()),
+    timeout=dict(default=10, type='int')
 )
 
 NET_CONNECTION_ARGS = dict()
@@ -60,7 +58,7 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self)._load_params()
         provider = self.params.get('provider') or dict()
         for key, value in provider.items():
-            for args in [NET_TRANSPORT_ARGS, NET_CREDENTIAL_ARGS, NET_CONNECTION_ARGS]:
+            for args in [NET_TRANSPORT_ARGS, NET_CONNECTION_ARGS]:
                 if key in args:
                     if self.params.get(key) is None and value is not None:
                         self.params[key] = value
@@ -99,7 +97,6 @@ class NetworkModule(AnsibleModule):
 def get_network_module(**kwargs):
 
     argument_spec = NET_TRANSPORT_ARGS.copy()
-    argument_spec.update(NET_CREDENTIAL_ARGS.copy())
     argument_spec['transport']['choices'] = NET_CONNECTIONS.keys()
     argument_spec.update(NET_CONNECTION_ARGS.copy())
 
