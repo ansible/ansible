@@ -239,8 +239,7 @@ from ansible.module_utils.urls import *
 from ansible.module_utils.netcfg import *
 from ansible.module_utils.shell import *
 from ansible.module_utils.openswitch import *
+
 if __name__ == '__main__':
-        main()
-
-
+    main()
 
