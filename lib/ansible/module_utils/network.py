@@ -68,13 +68,11 @@ class NetworkModule(AnsibleModule):
             kwargs['params'] = self.params
             return method(*args, **kwargs)
         except AttributeError:
-            e = get_exception()
-            raise
-            self.fail_json(msg='failed to execute %s' % method.__name__,
-                    exc=str(e))
+            exc = get_exception()
+            self.fail_json(msg='failed to execute %s' % method.__name__, exc=str(exc))
         except NetworkError:
-            e = get_exception()
-            self.fail_json(msg=e.message, **e.kwargs)
+            exc = get_exception()
+            self.fail_json(msg=exc.message, **exc.kwargs)
 
     def connect(self):
         return self.invoke(self.connection.connect)
@@ -102,7 +100,7 @@ class NetworkModule(AnsibleModule):
     def commit(self, *args, **kwargs):
         raise NotImplementedError
 
-def get_network_module(**kwargs):
+def get_module(**kwargs):
 
     argument_spec = NET_TRANSPORT_ARGS.copy()
     argument_spec['transport']['choices'] = NET_CONNECTIONS.keys()
@@ -121,8 +119,8 @@ def get_network_module(**kwargs):
     except KeyError:
         module.fail_json(msg='Unknown transport or no default transport specified')
     except TypeError:
-        e = get_exception()
-        module.fail_json(msg=e.message)
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
 
     module.connect()
 
