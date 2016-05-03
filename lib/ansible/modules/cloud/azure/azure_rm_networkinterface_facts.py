@@ -92,7 +92,7 @@ objects:
             "internal_fqdn": null
         },
         "enable_ip_forwarding": false,
-        "etag": "W/\"59726bfc-08c4-44ed-b900-f6a559876a9d\"",
+        "etag": 'W/"59726bfc-08c4-44ed-b900-f6a559876a9d"',
         "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
         "ip_configuration": {
             "name": "default",

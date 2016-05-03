@@ -87,6 +87,7 @@ options:
         - Project name or ID containing the network (name admin-only)
      required: false
      default: None
+     version_added: "2.1"
 requirements: ["shade"]
 '''
 

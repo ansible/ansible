@@ -352,7 +352,7 @@ state:
                             "enableIPForwarding": false,
                             "ipConfigurations": [
                                 {
-                                    "etag": "W/\"041c8c2a-d5dd-4cd7-8465-9125cfbe2cf8\"",
+                                    "etag": 'W/"041c8c2a-d5dd-4cd7-8465-9125cfbe2cf8"',
                                     "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default",
                                     "name": "default",
                                     "properties": {
@@ -450,7 +450,7 @@ def extract_names_from_blob_uri(blob_uri):
     return extracted_names
 
 
-class AzureRMVirtualMachine(AzureRMModuleBase):   
+class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def __init__(self):
 

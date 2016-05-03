@@ -1,4 +1,4 @@
-##!/usr/bin/python
+#!/usr/bin/python
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>

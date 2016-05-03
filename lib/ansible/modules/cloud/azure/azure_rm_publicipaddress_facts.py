@@ -78,7 +78,7 @@ objects:
     returned: always
     type: list
     sample: [{
-        "etag": "W/\"a31a6d7d-cb18-40a5-b16d-9f4a36c1b18a\"",
+        "etag": 'W/"a31a6d7d-cb18-40a5-b16d-9f4a36c1b18a"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/pip2001",
         "location": "eastus2",
         "name": "pip2001",

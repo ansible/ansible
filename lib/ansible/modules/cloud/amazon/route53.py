@@ -336,16 +336,16 @@ def commit(changes, retry_interval, wait, wait_timeout):
             time.sleep(float(retry_interval))
 
     if wait:
-      timeout_time = time.time() + wait_timeout
-      connection = changes.connection
-      change = result['ChangeResourceRecordSetsResponse']['ChangeInfo']
-      status = Status(connection, change)
-      while status.status != 'INSYNC' and time.time() < timeout_time:
-        time.sleep(WAIT_RETRY_SLEEP)
-        status.update()
-      if time.time() >= timeout_time:
-        raise TimeoutError()
-    return result
+        timeout_time = time.time() + wait_timeout
+        connection = changes.connection
+        change = result['ChangeResourceRecordSetsResponse']['ChangeInfo']
+        status = Status(connection, change)
+        while status.status != 'INSYNC' and time.time() < timeout_time:
+            time.sleep(WAIT_RETRY_SLEEP)
+            status.update()
+        if time.time() >= timeout_time:
+            raise TimeoutError()
+        return result
 
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
@@ -436,20 +436,20 @@ def main():
     if command_in == 'create' or command_in == 'delete':
         if not value_in:
             module.fail_json(msg = "parameter 'value' required for create/delete")
-        elif module.params['alias']:
-          if len(value_list) != 1:
-              module.fail_json(msg = "parameter 'value' must contain a single dns name for alias create/delete")
-          elif not alias_hosted_zone_id_in:
-              module.fail_json(msg = "parameter 'alias_hosted_zone_id' required for alias create/delete")
-	elif ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
-	  module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
+        elif alias_in:
+            if len(value_list) != 1:
+                module.fail_json(msg = "parameter 'value' must contain a single dns name for alias create/delete")
+            elif not alias_hosted_zone_id_in:
+                module.fail_json(msg = "parameter 'alias_hosted_zone_id' required for alias create/delete")
+        elif ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
+            module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
 
     if command_in == 'create':
         if ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
           module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
         elif  ( weight_in==None and region_in==None and failover_in==None ) and identifier_in!=None:
           module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
-        
+
 
 
     if vpc_id_in and not private_zone_in:
@@ -509,7 +509,7 @@ def main():
 
         if identifier_in is not None:
             identifier_in = str(identifier_in)
-	
+
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
             found_record = True
             record['zone'] = zone_in

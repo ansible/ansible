@@ -199,7 +199,7 @@ state:
             "internal_fqdn": null
         },
         "enable_ip_forwarding": false,
-        "etag": "W/\"be115a43-2148-4545-a324-f33ad444c926\"",
+        "etag": 'W/"be115a43-2148-4545-a324-f33ad444c926"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
         "ip_configuration": {
             "name": "default",
@@ -435,7 +435,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if self.check_mode:
             return self.results
-    
+
         if changed:
             if self.state == 'present':
                 if not nic:

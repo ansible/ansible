@@ -46,11 +46,11 @@ options:
     required: false
   cpu_period:
     description:
-      - Limit CPU CFS (Completely Fair Scheduler) period 
+      - Limit CPU CFS (Completely Fair Scheduler) period
     default: 0
   cpu_quota:
     description:
-      - Limit CPU CFS (Completely Fair Scheduler) quota 
+      - Limit CPU CFS (Completely Fair Scheduler) quota
     default: 0
   cpuset_cpus:
     description:
@@ -69,7 +69,7 @@ options:
     required: false
   detach:
     description:
-      - Enable detached mode to leave the container running in background. 
+      - Enable detached mode to leave the container running in background.
         If disabled, fail unless the process exits cleanly.
     default: true
   devices:
@@ -100,7 +100,7 @@ options:
     required: false
   etc_hosts:
     description:
-      - Dict of host-to-IP mappings, where each host name is key in the dictionary. Hostname will be added to the 
+      - Dict of host-to-IP mappings, where each host name is key in the dictionary. Hostname will be added to the
         container's /etc/hosts file.
     default: null
     required: false
@@ -120,7 +120,7 @@ options:
     default: false
   groups:
     description:
-      - List of additional group names and/or IDs that the container process will run as. 
+      - List of additional group names and/or IDs that the container process will run as.
     default: null
     required: false
   hostname:
@@ -133,7 +133,7 @@ options:
       - When state is present or started the module compares the configuration of an existing
         container to requested configuration. The evaluation includes the image version. If
         the image vesion in the registry does not match the container, the container will be
-        rebuilt. To stop this behavior set ignore_image to true. 
+        rebuilt. To stop this behavior set ignore_image to true.
     default: false
   image:
     description:
@@ -147,7 +147,7 @@ options:
     default: false
   ipc_mode:
     description:
-      - Set the IPC mode for the container. Can be one of 
+      - Set the IPC mode for the container. Can be one of
         'container:<name|id>' to reuse another container's IPC namespace
         or 'host' to use the host's IPC namespace within the container.
     default: null
@@ -155,7 +155,7 @@ options:
   keep_volumes:
     description:
       - Retain volumes associated with a removed container.
-    default: true 
+    default: true
   kill_signal:
     description:
       - Override default signal used to kill a running container.
@@ -190,7 +190,7 @@ options:
     defult: json-file
   log_options:
     description:
-      - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/ 
+      - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
     required: false
     default: null
@@ -281,7 +281,7 @@ options:
     default: false
   registry:
     description:
-      - Registry URL from which to pull images. If not specified, images will be pulled from 
+      - Registry URL from which to pull images. If not specified, images will be pulled from
         the default registry found in the local docker config.json file.
     default: null
     required: false
@@ -295,14 +295,14 @@ options:
     choices:
       - on-failure
       - always
-    default: on-failure 
+    default: on-failure
   restart_retries:
      description:
        - Use with restart policy to control maximum number of restart attempts.
-     default: 0 
+     default: 0
   shm_size:
     description:
-      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`. 
+      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
         Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
       - Ommitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
     default: null
@@ -319,15 +319,15 @@ options:
       - '"present" - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
-        with the requested config. Image version will be taken into account when comparing configuration. To ignore image 
+        with the requested config. Image version will be taken into account when comparing configuration. To ignore image
         version use the ignore_image option. Use the recreate option to force the re-creation of the matching container. Use
         force_kill to kill the container rather than stopping it. Use keep_volumes to retain volumes associated with a removed
         container.'
       - '"started" - Asserts there is a running container matching the name and any provided configuration. If no container
         matches the name, a container will be created and started. If a container matching the name is found but the
         configuration does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed
-        and a new container will be created with the requested configuration and started. Image version will be taken into 
-        account when comparing configuration. To ignore image version use the ignore_image option. Use recreate to always 
+        and a new container will be created with the requested configuration and started. Image version will be taken into
+        account when comparing configuration. To ignore image version use the ignore_image option. Use recreate to always
         re-create a matching container, even if it is running. Use restart to force a matching container to be stopped and
         restarted. Use force_kill to kill a container rather than stopping it. Use keep_volumes to retain volumes associated
         with a removed container.'
@@ -343,7 +343,7 @@ options:
   stop_signal:
     description:
       - Override default signal used to stop the container.
-    default: null 
+    default: null
     required: false
   stop_timeout:
     description:
@@ -378,7 +378,7 @@ options:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - You can specify a read mode for the mount with either C(ro) or C(rw).
-      - SELinux hosts can additionally use C(z) or C(Z) to use a shared or 
+      - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
     default: null
     required: false
@@ -389,7 +389,7 @@ options:
     required: false
   volumes_from:
     description:
-      - List of container names or Ids to get volumes from. 
+      - List of container names or Ids to get volumes from.
     default: null
     required: false
 
@@ -436,7 +436,7 @@ EXAMPLES = '''
   docker_container:
     name: myapplication
     image: someuser/appimage
-    state: started 
+    state: started
     restart: yes
     links:
      - "myredis:aliasedredis"
@@ -471,10 +471,10 @@ EXAMPLES = '''
     name: ohno
     state: absent
 
-- name: Syslogging output 
+- name: Syslogging output
   docker_container:
     name: myservice
-    state: started 
+    state: started
     log_driver: syslog
     log_opt:
       syslog-address: tcp://my-syslog-server:514
@@ -528,6 +528,7 @@ container:
                 "/tmp/lnmp/nginx-sites/logs/": {}
             },
             ...
+        }
     }
 '''
 
@@ -910,7 +911,7 @@ class TaskParameters(DockerBaseClass):
 
 
 class Container(DockerBaseClass):
-    
+
     def __init__(self, container, parameters):
         super(Container, self).__init__()
         self.raw = container

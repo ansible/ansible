@@ -110,6 +110,7 @@ options:
         - Project name or ID containing the subnet (name admin-only)
      required: false
      default: None
+     version_added: "2.1"
 requirements:
     - "python >= 2.6"
     - "shade"

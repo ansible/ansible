@@ -168,5 +168,3 @@ from ansible.module_utils.openswitch import *
 if __name__ == '__main__':
     main()
 
-
-

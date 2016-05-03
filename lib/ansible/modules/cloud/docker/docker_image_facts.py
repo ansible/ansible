@@ -68,7 +68,7 @@ images:
     description: Facts for the selected images.
     returned: always
     type: dict
-    sample:[
+    sample: [
         {
             "Architecture": "amd64",
             "Author": "",
@@ -111,7 +111,7 @@ images:
                 "Cmd": [
                     "/bin/sh",
                     "-c",
-                    "#(nop) CMD [\"/etc/docker/registry/config.yml\"]"
+                    '#(nop) CMD ["/etc/docker/registry/config.yml"]'
                 ],
                 "Domainname": "",
                 "Entrypoint": [
