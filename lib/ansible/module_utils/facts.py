@@ -628,6 +628,7 @@ class Distribution(object):
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
+        'Archlinux': '',
     }
 
     # A list with OS Family members
@@ -779,10 +780,6 @@ class Distribution(object):
         release = re.search('DISTRIB_CODENAME="(.*)"', data)
         if release:
             self.facts['distribution_release'] = release.groups()[0]
-
-    def get_distribution_Archlinux(self, name, data, path):
-        self.facts['distribution'] = 'Archlinux'
-        self.facts['distribution_version'] = data
 
     def get_distribution_Alpine(self, name, data, path):
         self.facts['distribution'] = 'Alpine'
