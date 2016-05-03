@@ -35,6 +35,8 @@ NET_CREDENTIAL_ARGS = dict(
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 )
 
+NET_CONNECTION_ARGS = dict()
+
 NET_CONNECTIONS = dict()
 
 
@@ -48,8 +50,8 @@ def to_list(val):
 
 class NetworkError(Exception):
 
-    def __init__(self, message, **kwargs):
-        super(NetworkError, self).__init__(message, **kwargs)
+    def __init__(self, msg, **kwargs):
+        super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
 
 class NetworkModule(AnsibleModule):
@@ -58,7 +60,7 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self)._load_params()
         provider = self.params.get('provider') or dict()
         for key, value in provider.items():
-            for args in [NET_TRANSPORT_ARGS, NET_CREDENTIAL_ARGS]:
+            for args in [NET_TRANSPORT_ARGS, NET_CREDENTIAL_ARGS, NET_CONNECTION_ARGS]:
                 if key in args:
                     if self.params.get(key) is None and value is not None:
                         self.params[key] = value
@@ -69,11 +71,12 @@ class NetworkModule(AnsibleModule):
             return method(*args, **kwargs)
         except AttributeError:
             e = get_exception()
-            self.fail_json(msg='method %s is not implemented' % method.__name__,
+            raise
+            self.fail_json(msg='failed to execute %s' % method.__name__,
                     exc=str(e))
         except NetworkError:
             e = get_exception()
-            self.fail_json(e.message)
+            self.fail_json(msg=e.message, **e.kwargs)
 
     def connect(self):
         return self.invoke(self.connection.connect)
@@ -97,15 +100,8 @@ def get_network_module(**kwargs):
 
     argument_spec = NET_TRANSPORT_ARGS.copy()
     argument_spec.update(NET_CREDENTIAL_ARGS.copy())
-
     argument_spec['transport']['choices'] = NET_CONNECTIONS.keys()
-
-    transport = module.params['transport'] or '__default__'
-    cls = NET_CONNECTIONS[transport]
-    module.connection = cls()
-
-    if hasattr(cls, 'argument_spec'):
-        argument_spec.update(cls.argument_spec)
+    argument_spec.update(NET_CONNECTION_ARGS.copy())
 
     if kwargs.get('argument_spec'):
         argument_spec.update(kwargs['argument_spec'])
@@ -114,6 +110,8 @@ def get_network_module(**kwargs):
     module = NetworkModule(**kwargs)
 
     try:
+        transport = module.params['transport'] or '__default__'
+        cls = NET_CONNECTIONS[transport]
         module.connection = cls()
     except KeyError:
         module.fail_json(msg='Unknown transport or no default transport specified')
@@ -132,4 +130,7 @@ def register_transport(transport, default=False):
             NET_CONNECTIONS['__default__'] = cls
         return cls
     return register
+
+def add_argument(key, value):
+    NET_CONNECTION_ARGS[key] = value
 
