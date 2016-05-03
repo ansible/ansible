@@ -17,15 +17,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import urlparse
 import re
 
-from ansible.module_utils.basic import json, get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import NetCli, Command, ModuleStub
+from ansible.module_utils.basic import json
+from ansible.module_utils.network import NetCli, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
@@ -76,7 +74,6 @@ def load_config(module, commands, nodiff=False):
 
 
 class Cli(NetCli):
-
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     CLI_PROMPTS_RE = [
@@ -99,15 +96,6 @@ class Cli(NetCli):
         self.shell.send('terminal length 0')
         self._connected = True
 
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.run_commands(
-            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        )
-
-    def disconnect(self):
-        self._connected = False
-
     ### Cli methods ###
 
     def run_commands(self, commands, **kwargs):
@@ -120,9 +108,9 @@ class Cli(NetCli):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         cmds.append('end')
+
         responses = self.execute(cmds)
-        responses.pop(0)
-        return responses
+        return responses[1:-1]
 
     def get_config(self, include_defaults=False, **kwargs):
         cmd = 'show running-config'
@@ -144,7 +132,6 @@ class Cli(NetCli):
 
     def save_config(self):
         self.execute(['copy running-config startup-config'])
-
 Cli = register_transport('cli', default=True)(Cli)
 
 
@@ -277,6 +264,4 @@ class Restconf(object):
 
     def save_config(self):
         self.put('/api/v1/global/save-config')
-
 Restconf = register_transport('restconf')(Restconf)
-
