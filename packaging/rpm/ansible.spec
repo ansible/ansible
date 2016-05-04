@@ -1,4 +1,4 @@
-%define name ansible
+%define name ansible1.9
 %define ansible_version $VERSION
 %define ansible_release $RELEASE
 
@@ -73,6 +73,9 @@ Requires: python-setuptools
 %endif
 
 Requires: sshpass
+
+Provides: ansible = %{version}-%{release}
+Conflicts: ansible
 
 %description
 
