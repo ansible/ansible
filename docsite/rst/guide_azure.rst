@@ -332,6 +332,7 @@ A sample azure_rm.ini file is included along with the inventory script in contri
 file will contain the following:
 
 .. code-block:: ini
+
     [azure]
     # Control which resource groups are included. By default all resources groups are included.
     # Set resource_groups to a comma separated list of resource groups names.
