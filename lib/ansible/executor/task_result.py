@@ -41,11 +41,8 @@ class TaskResult:
 
     def is_skipped(self):
         if 'results' in self._result and self._task.loop:
-            flag = True
-            for res in self._result.get('results', []):
-                if isinstance(res, dict):
-                    flag &= res.get('skipped', False)
-            return flag
+            results = self._result['results']
+            return results and all(isinstance(res, dict) and res.get('skipped', False) for res in results)
         else:
             return self._result.get('skipped', False)
 
