@@ -21,8 +21,8 @@ import collections
 import re
 import json
 
-from ansible.module_utils.network import NetworkError, get_module
-from ansible.module_utils.network import add_argument, get_exception, register_transport
+from ansible.module_utils.network import NetworkError, get_module, get_exception
+from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -68,7 +68,7 @@ class Eapi(object):
         params = dict(version=1, cmds=commands, format=encoding)
         return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
-    def connect(self, params):
+    def connect(self, params, **kwargs):
         host = params['host']
         port = params['port']
 
@@ -88,7 +88,13 @@ class Eapi(object):
 
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
 
-    def authorize(self, params):
+        if params.get('authorize'):
+            self.authorize(params)
+
+    def disconnect(self, **kwargs):
+        pass
+
+    def authorize(self, params, **kwargs):
         if params.get('auth_pass'):
             passwd = params['auth_pass']
             self.enable = dict(cmd='enable', input=passwd)
@@ -121,8 +127,24 @@ class Eapi(object):
 
         return response['result']
 
-    def get_config(self, params):
+    def configure(self, commands, replace=False, **kwargs):
+        if replace:
+            commands = prepare_config_replace(commands)
+            return self.run_commands(commands)
+        else:
+            commands = prepare_config_terminal(commands)
+            responses = self.run_commands(commands)
+            responses.pop(0)
+            return responses
+
+    def get_config(self, **kwargs):
         return self.run_commands(['show running-config'], encoding='text')[0]
+
+    def load_config(self, **kwargs):
+        raise NotImplementedError
+
+    def commit(self, **kwargs):
+        raise NotImplementedError
 
 
 @register_transport('cli', default=True)
@@ -160,10 +182,13 @@ class Cli(object):
 
         self.shell.send('terminal length 0')
 
-    def disconnect(self):
+        if params.get('authorize'):
+            self.authorize(params)
+
+    def disconnect(self, **kwargs):
         self.shell.close()
 
-    def authorize(self, passwd, params, **kwargs):
+    def authorize(self, passwd, **kwargs):
         self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
     def run_commands(self, commands, **kwargs):
@@ -173,5 +198,29 @@ class Cli(object):
             exc = get_exception()
             raise NetworkError(exc.message, commands=commands)
 
+    def configure(self, commands, **kwargs):
+        commands = prepare_config_terminal(commands)
+        responses = self.run_commands(commands)
+        responses.pop(0)
+        return responses
+
     def get_config(self, **kwargs):
         return self.run_commands('show running-config')[0]
+
+    def load_config(self, **kwargs):
+        raise NotImplementedError
+
+    def commit(self, **kwargs):
+        raise NotImplementedError
+
+
+def prepare_config_terminal(commands):
+    commands = to_list(commands)
+    commands.insert(0, 'configure terminal')
+    return commands
+
+
+def prepare_config_replace(commands):
+    cmd = 'configure replace terminal:'
+    commands = '\n'.join(to_list(commands))
+    return dict(cmd=cmd, input=commands)
