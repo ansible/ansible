@@ -19,14 +19,16 @@
 
 import collections
 import re
-import json
 
+from ansible.module_utils.basic import json
 from ansible.module_utils.network import NetworkError, get_module, get_exception
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+EAPI_FORMATS = ['json', 'text']
 
 CLI_PROMPTS_RE = [
     re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -62,10 +64,16 @@ class Eapi(object):
     def _error(self, msg):
         raise NetworkError(msg, url=self.url)
 
-    def _get_body(self, commands, encoding, reqid=None):
+    def _get_body(self, commands, format, reqid=None):
         """Create a valid eAPI JSON-RPC request message
         """
-        params = dict(version=1, cmds=commands, format=encoding)
+
+        if format not in EAPI_FORMATS:
+            msg = 'invalid format, received %s, expected one of %s' % \
+                    (format, ','.join(EAPI_FORMATS))
+            self._error(msg=msg)
+
+        params = dict(version=1, cmds=commands, format=format)
         return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
     def connect(self, params, **kwargs):
@@ -89,7 +97,7 @@ class Eapi(object):
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
 
     def disconnect(self, **kwargs):
-        pass
+        self.url = None
 
     def authorize(self, params, **kwargs):
         if params.get('auth_pass'):
@@ -98,13 +106,15 @@ class Eapi(object):
         else:
             self.enable = 'enable'
 
-    def run_commands(self, commands, encoding='json', **kwargs):
+    def run_commands(self, commands, format='json', **kwargs):
         """Send commands to the device.
         """
+        if self.url is None:
+            raise NetworkError('Not connected to endpoint.')
         if self.enable is not None:
             commands.insert(0, self.enable)
 
-        data = self._get_body(commands, encoding)
+        data = self._get_body(commands, format)
         data = json.dumps(data)
 
         headers = {'Content-Type': 'application/json-rpc'}
@@ -124,24 +134,41 @@ class Eapi(object):
 
         return response['result']
 
-    def configure(self, commands, replace=False, **kwargs):
-        if replace:
-            commands = prepare_config_replace(commands)
-            return self.run_commands(commands)
-        else:
-            commands = prepare_config_terminal(commands)
-            responses = self.run_commands(commands)
-            responses.pop(0)
-            return responses
-
     def get_config(self, **kwargs):
-        return self.run_commands(['show running-config'], encoding='text')[0]
+        return self.run_commands(['show running-config'], format='text')[0]
 
-    def load_config(self, **kwargs):
-        raise NotImplementedError
+    def load_config(self, commands, session_name='ansible_temp_session', commit=False, **kwargs):
+        commands = to_list(commands)
+        commands.insert(0, 'configure session %s' % session_name)
+        commands.append('show session-config diffs')
+        commands.append('end')
 
-    def commit(self, **kwargs):
-        raise NotImplementedError
+        responses = self.run_commands(commands, format='text')
+        if commit:
+            self.commit_config(session_name)
+        return responses[-2]['output']
+
+    def replace_config(self, contents, params, **kwargs):
+        remote_user = params['username']
+        remote_path = '/home/%s/ansible-config' % remote_user
+
+        commands = [
+            'bash timeout 10 echo "%s" > %s' % (contents, remote_path),
+            'diff running-config file:/%s' % remote_path,
+            'config replace file:/%s' % remote_path,
+        ]
+
+        responses = self.run_commands(commands)
+        return responses[-2]
+
+    def commit_config(self, session_name, **kwargs):
+        session = 'configure session %s' % session_name
+        commands = [session, 'commit', 'no '+session]
+        self.run_commands(commands)
+
+    def abort_config(self, session_name, **kwargs):
+        command = 'no configure session %s' % session_name
+        self.run_commands([command])
 
 
 @register_transport('cli', default=True)
@@ -182,7 +209,8 @@ class Cli(object):
     def disconnect(self, **kwargs):
         self.shell.close()
 
-    def authorize(self, passwd, **kwargs):
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
         self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
     def run_commands(self, commands, **kwargs):
@@ -192,29 +220,38 @@ class Cli(object):
             exc = get_exception()
             raise NetworkError(exc.message, commands=commands)
 
-    def configure(self, commands, **kwargs):
-        commands = prepare_config_terminal(commands)
-        responses = self.run_commands(commands)
-        responses.pop(0)
-        return responses
-
     def get_config(self, **kwargs):
         return self.run_commands('show running-config')[0]
 
-    def load_config(self, **kwargs):
-        raise NotImplementedError
+    def load_config(self, commands, session_name='ansible_temp_session', commit=False, **kwargs):
+        commands = to_list(commands)
+        commands.insert(0, 'configure session %s' % session_name)
+        commands.append('show session-config diffs')
+        commands.append('end')
 
-    def commit(self, **kwargs):
-        raise NotImplementedError
+        responses = self.run_commands(commands)
+        if commit:
+            self.commit_config(session_name)
+        return responses[-2]
 
+    def replace_config(self, contents, params, **kwargs):
+        remote_user = params['username']
+        remote_path = '/home/%s/ansible-config' % remote_user
 
-def prepare_config_terminal(commands):
-    commands = to_list(commands)
-    commands.insert(0, 'configure terminal')
-    return commands
+        commands = [
+            'bash echo "%s" > %s' % (contents, remote_path),
+            'diff running-config file:/%s' % remote_path,
+            'config replace file:/%s' % remote_path,
+        ]
 
+        responses = self.run_commands(commands)
+        return responses[-2]
 
-def prepare_config_replace(commands):
-    cmd = 'configure replace terminal:'
-    commands = '\n'.join(to_list(commands))
-    return dict(cmd=cmd, input=commands)
+    def commit_config(self, session_name, **kwargs):
+        session = 'configure session %s' % session_name
+        commands = [session, 'commit', 'no '+session]
+        self.run_commands(commands)
+
+    def abort_config(self, session_name, **kwargs):
+        command = 'no configure session %s' % session_name
+        self.run_commands([command])
