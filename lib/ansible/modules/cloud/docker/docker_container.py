@@ -48,10 +48,12 @@ options:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
     default: 0
+    required: false
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
     default: 0
+    required: false
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -70,8 +72,9 @@ options:
   detach:
     description:
       - Enable detached mode to leave the container running in background.
-        If disabled, fail unless the process exits cleanly.
+        If disabled, the task will reflect the status of the container run (failed if the command failed).
     default: true
+    required: false
   devices:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
@@ -100,24 +103,24 @@ options:
     required: false
   etc_hosts:
     description:
-      - Dict of host-to-IP mappings, where each host name is key in the dictionary. Hostname will be added to the
-        container's /etc/hosts file.
+      - Dict of host-to-IP mappings, where each host name is key in the dictionary.
+        Hostname will be added to the container's /etc/hosts file.
     default: null
     required: false
   exposed_ports:
     description:
       - List of additional container ports to expose for port mappings or links.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
-        need to be exposed again.
+        need to be xposed again.
     default: null
     required: false
     aliases:
       - exposed
   force_kill:
     description:
-      - Use with absent, present, started and stopped states to use the kill command rather
-        than the stop command.
+      - Use with absent, present, started and stopped states to use the kill command rather than the stop command.
     default: false
+    required: false
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
@@ -135,6 +138,7 @@ options:
         the image vesion in the registry does not match the container, the container will be
         rebuilt. To stop this behavior set ignore_image to true.
     default: false
+    required: false
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
@@ -145,17 +149,18 @@ options:
     description:
       - Keep stdin open after a container is launched, even if not attached.
     default: false
+    required: false
   ipc_mode:
     description:
-      - Set the IPC mode for the container. Can be one of
-        'container:<name|id>' to reuse another container's IPC namespace
-        or 'host' to use the host's IPC namespace within the container.
+      - Set the IPC mode for the container. Can be one of 'container:<name|id>' to reuse another
+        container's IPC namespace or 'host' to use the host's IPC namespace within the container.
     default: null
     required: false
   keep_volumes:
     description:
       - Retain volumes associated with a removed container.
     default: true
+    required: false
   kill_signal:
     description:
       - Override default signal used to kill a running container.
@@ -166,6 +171,7 @@ options:
       - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g. Minimum is 4M."
     default: 0
+    required: false
   labels:
      description:
        - Dictionary of key value pairs.
@@ -188,6 +194,7 @@ options:
       - awslogs
       - splunk
     defult: json-file
+    required: false
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
@@ -198,25 +205,30 @@ options:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
     default: null
+    required: false
   memory:
     description:
       - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
+    required: false
   memory_reservation:
     description:
       - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
+    required: false
   memory_swap:
     description:
       - Total memory limit (memory + swap, format:<number>[<unit>]).
         Number is a positive integer. Unit can be one of b, k, m, or g.
     default: 0
+    required: false
   memory_swappiness:
-      description:
+    description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
-      default: 0
+    default: 0
+    required: false
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -232,20 +244,16 @@ options:
       - none
     default: null
     required: false
-  # networks:
-  #   description:
-  #     - "Dictionary of networks to which the container will be connected. The dictionary must have a name key (the name of the network).
-  #       Optional keys include: aliases (a list of container aliases), and links (a list of links in the format C(container_name:alias))."
-  #   default: null
-  #   required: false
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
     default: false
+    required: false
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
     default: false
+    required: false
   pid_mode:
     description:
       - Set the PID namespace mode for the container. Currenly only supports 'host'.
@@ -255,6 +263,7 @@ options:
     description:
       - Give extended privileges to the container.
     default: false
+    required: false
   published_ports:
     description:
       - List of ports to publish from the container to the host.
@@ -266,19 +275,22 @@ options:
     aliases:
       - ports
     required: false
+    default: null
   pull:
-     description:
-       - If true, always pull the latest version of an image. Otherwise, will only pull an image
-         when missing.
-     default: false
+    description:
+       - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
+    default: false
+    required: false
   read_only:
     description:
       - Mount the container's root file system as read-only.
     default: false
+    required: false
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
     default: false
+    required: false
   registry:
     description:
       - Registry URL from which to pull images. If not specified, images will be pulled from
@@ -289,6 +301,7 @@ options:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
     default: false
+    required: false
   restart_policy:
     description:
       - Container restart policy.
@@ -296,10 +309,12 @@ options:
       - on-failure
       - always
     default: on-failure
+    required: false
   restart_retries:
-     description:
+    description:
        - Use with restart policy to control maximum number of restart attempts.
-     default: 0
+    default: 0
+    required: false
   shm_size:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
@@ -349,14 +364,17 @@ options:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
     required: false
+    default: null
   trust_image_content:
     description:
       - If true, skip image verification.
     default: false
+    requried: false
   tty:
     description:
       - Allocate a psuedo-TTY.
     default: false
+    required: false
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
@@ -392,7 +410,6 @@ options:
       - List of container names or Ids to get volumes from.
     default: null
     required: false
-
 extends_documentation_fragment:
     - docker
 
@@ -427,7 +444,7 @@ EXAMPLES = '''
     command: redis-server --appendonly yes
     state: present
     recreate: yes
-    expose:
+    exposed_ports:
       - 6379
     volumes_from:
       - mydata
@@ -453,7 +470,7 @@ EXAMPLES = '''
     name: mycontainer
     state: present
     recreate: yes
-    forcekill: yes
+    force_kill: yes
     image: someplace/image
     command: echo "I'm here!"
 
@@ -466,7 +483,7 @@ EXAMPLES = '''
     command: sleep 1d
   with_sequence: count=4
 
--name: remove container
+- name: remove container
   docker_container:
     name: ohno
     state: absent
@@ -476,7 +493,7 @@ EXAMPLES = '''
     name: myservice
     state: started
     log_driver: syslog
-    log_opt:
+    log_options:
       syslog-address: tcp://my-syslog-server:514
       syslog-facility: daemon
       syslog-tag: myservice
@@ -484,20 +501,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-actions:
-    description: List of actions taken by the module.
-    returned: always
-    type: list
-    sample: [
-        {
-        "started": "8e47bf643eb95e2da60758f022629179605c336f04410c3e8ed120c376f1570b"
-        }
-    ]
-container:
-    description: Facts representing the current state of the container.
+ansible_docker_container:
+    description: Facts representing the current state of the container. Note that facts are not part of registred vars but accessible directly.
     returned: always
     type: dict
-    sample: {
+    sample: '{
         "AppArmorProfile": "",
         "Args": [],
         "Config": {
@@ -528,16 +536,12 @@ container:
                 "/tmp/lnmp/nginx-sites/logs/": {}
             },
             ...
-        }
-    }
+    }'
 '''
-
-import logging
 
 from ansible.module_utils.docker_common import *
 
 try:
-    from docker import auth
     from docker import utils
     from docker.utils.types import Ulimit
 except:
@@ -570,7 +574,6 @@ class TaskParameters(DockerBaseClass):
         self.cpuset_cpus = None
         self.cpuset_mems = None
         self.cpu_shares = None
-        self.debug = False
         self.detach = None
         self.devices = None
         self.dns_servers = None
@@ -620,10 +623,9 @@ class TaskParameters(DockerBaseClass):
         self.user = None
         self.uts = None
         self.volumes = None
+        self.volume_binds = dict()
         self.volumes_from = None
         self.volume_driver = None
-        self.debug = None
-        self.debug_file = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -655,7 +657,7 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.log_config = self._parse_log_config()
         self.exp_links = None
-        self.volume_binds = self._parse_volumes()
+        self._parse_volumes()
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -716,28 +718,33 @@ class TaskParameters(DockerBaseClass):
         for key, value in create_params.iteritems():
             if getattr(self, value, None) is not None:
                 result[key] = getattr(self, value)
-
         return result
 
     def _expand_host_paths(self):
         new_vols = []
         for vol in self.volumes:
-            if len(vol.split(':')) == 3:
-                host, container, mode = vol.split(':')
-                host = os.path.abspath(host)
-                new_vols.append(host + ':' + container + ':' + mode)
+            if ':' in vol:
+                if len(vol.split(':')) == 3:
+                    host, container, mode = vol.split(':')
+                    host = os.path.abspath(host)
+                    new_vols.append(host + ':' + container + ':' + mode)
+                else:
+                    host, container = vol.split(':')
+                    host = os.path.abspath(host)
+                    new_vols.append(host + ':' + container)
             else:
-                host, container = vol.split(':')
-                host = os.path.abspath(host)
-                new_vols.append(host + ':' + container)
+                new_vols.append(os.path.abspath(vol))
         return new_vols
 
     def _get_mounts(self):
         result = []
         if self.volumes:
             for vol in self.volumes:
-                host, container = vol.split(':')
-                result.append(host)
+                if ':' in vol:
+                    host, container, _ = vol.split(':')
+                    result.append(host)
+                else:
+                    result.append(vol)
         return result
 
     def _host_config(self):
@@ -815,23 +822,22 @@ class TaskParameters(DockerBaseClass):
     def _parse_volumes(self):
         '''
         Convert volumes parameter to host_config bind format.
-
         https://docker-py.readthedocs.org/en/latest/volumes/
-
         :return: array of binds
         '''
-        results = dict()
         if self.volumes:
             for vol in self.volumes:
-                if len(vol.split(':')) == 3:
-                    host, container, mode = vol.split(':')
-                else:
-                    host, container, mode = vol.split(':') + ['rw']
-                results[host] = dict(
-                    bind=container,
-                    mode=mode
-                )
-        return results
+                if ':' in vol:
+                    volumespec = vol.split(':')
+                    if len(volumespec) == 3:
+                        host, container, mode = vol.split(':')
+                    else:
+                        host, container, mode = (vol.split(':') + ['rw'])
+                    self.volume_binds[host] = dict(
+                        bind=container,
+                        mode=mode
+                    )
+
 
     def _parse_exposed_ports(self):
         '''
@@ -902,7 +908,7 @@ class TaskParameters(DockerBaseClass):
         )
 
         if self.log_options is not None:
-            options['Config'] = self.log_opts
+            options['Config'] = self.log_options
 
         try:
             return LogConfig(**options)
@@ -922,7 +928,6 @@ class Container(DockerBaseClass):
             self.Image = container['Image']
         self.log(self.container, pretty_print=True)
         self.parameters = parameters
-        self.debug = self.parameters.debug
         self.parameters.expected_links = None
         self.parameters.expected_ports = None
         self.parameters.expected_exposed = None
@@ -1223,12 +1228,15 @@ class Container(DockerBaseClass):
         param_vols = []
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
-                if len(vol.split(':')) == 3:
-                    host, container, mode = vol.split(':')
+                if ':' in vol:
+                    if len(vol.split(':')) == 3:
+                        host, container, mode = vol.split(':')
+                    else:
+                        host, container, mode = vol.split(':') + ['rw']
+                    param_vols.append("%s:%s:%s" % (host, container, mode))
                 else:
-                    host, container, mode = vol.split(':') + ['rw']
+                    param_vols.append(vol)
                 # flip to container first
-                param_vols.append("%s:%s:%s" % (host, container, mode))
         return list(set(image_vols + param_vols))
 
     def _get_volumes_from_binds(self, volumes):
@@ -1321,21 +1329,33 @@ class ContainerManager(DockerBaseClass):
     Perform container management tasks
     '''
 
-    def __init__(self, client, results):
+    def __init__(self, client):
 
         super(ContainerManager, self).__init__()
 
         self.client = client
-        self.results = results
         self.parameters = TaskParameters(client)
         self.check_mode = self.client.check_mode
-        self.debug = self.parameters.debug
+        self.results = {'changed': False, 'actions': []}
+        self.diff = {}
+        self.facts = {}
 
         state = self.parameters.state
         if state in ('started', 'present'):
             self.present(state)
         elif state == 'absent':
             self.absent()
+
+        # remove for now, until we decide about general framework
+        try:
+            del results['actions']
+        except:
+            pass
+
+        if self.client.module._diff:
+            self.results['diff'] = self.diff
+        if self.facts:
+            self.results['ansbile_facts'] = {'ansible_docker_container': self.facts}
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
@@ -1351,22 +1371,22 @@ class ContainerManager(DockerBaseClass):
             container = self.update_networks(container)
             if state == 'started':
                 container = self.container_start(container.Id)
-            self.results['container'] = container.raw
+            self.facts = container.raw
             return True
 
         # Existing container
         self.log(container.raw, pretty_print=True)
         different, differences = container.has_different_configuration(image)
         image_different = self._image_is_different(image, container)
-        if image_different:
-            self.results['image_different'] = True
         if image_different or different or self.parameters.recreate:
-            self.results['config_differences'] = differences
+            self.diff = differences
             self.container_stop(container.Id)
             self.container_remove(container.Id)
             new_container = self.container_create(self.parameters.create_parameters)
             if new_container:
                 container = new_container
+        if image_different:
+            self.diff['image_different'] = True
 
         container = self.update_limits(container)
         container = self.update_networks(container)
@@ -1382,7 +1402,7 @@ class ContainerManager(DockerBaseClass):
             self.container_stop(container.Id)
             container = self._get_container(container.Id)
 
-        self.results['container'] = container.raw
+        self.facts = container.raw
 
     def absent(self):
         container = Container(self.client.get_container(self.parameters.name), self.parameters)
@@ -1451,13 +1471,12 @@ class ContainerManager(DockerBaseClass):
         self.log(create_parameters, pretty_print=True)
         if not self.check_mode:
             try:
-                new_container = self.client.create_container(**create_parameters)
-                self.results['actions'].append(dict(created=new_container.get('Id'),
-                                                    create_parameters=create_parameters))
+                new_container = self.client.create_container(create_parameters)
+                self.results['actions'].append(dict(created=new_container.get('Id'), create_parameters=create_parameters))
                 self.results['changed'] = True
-                return self._get_container(new_container['Id'])
             except Exception, exc:
                 self.fail("Error creating container: %s" % str(exc))
+            return self._get_container(new_container['Id'])
 
     def container_start(self, container_id):
         self.log("start container %s" % (container_id))
@@ -1550,8 +1569,8 @@ def main():
         env=dict(type='dict'),
         entrypoint=dict(type='list'),
         etc_hosts=dict(type='dict'),
-        exposed_ports=dict(type='list', aliases=['exposed']),
-        force_kill=dict(type='bool', default=False),
+        exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
+        force_kill=dict(type='bool', default=False, aliases=['forcekill']),
         groups=dict(type='list'),
         hostname=dict(type='str'),
         image=dict(type='str'),
@@ -1562,11 +1581,10 @@ def main():
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
         links=dict(type='list'),
-        log_driver=dict(type='str', choices=['json-file', 'syslog', 'journald', 'gelf', 'fluentd',
-                                             'awslogs', 'splunk'], default='json-file'),
-        log_options=dict(type='str'),
+        log_driver=dict(type='str', choices=['json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'], default='json-file'),
+        log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
-        memory=dict(type='str'),
+        memory=dict(type='str', default='0'),
         memory_reservation=dict(type='str'),
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
@@ -1609,15 +1627,8 @@ def main():
         supports_check_mode=True
     )
 
-    results = dict(
-        changed=False,
-        actions=[],
-        container={}
-    )
-
-    ContainerManager(client, results)
-    client.module.exit_json(**results)
-
+    cm = ContainerManager(client)
+    client.module.exit_json(**cm.results)
 
 # import module snippets
 from ansible.module_utils.basic import *
