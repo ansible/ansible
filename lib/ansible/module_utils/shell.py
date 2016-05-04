@@ -101,12 +101,15 @@ class Shell(object):
         if not look_for_keys:
             look_for_keys = password is None
 
-        self.ssh.connect(host, port=port, username=username, password=password,
-                    timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
-                    key_filename=key_filename, allow_agent=allow_agent)
+        try:
+            self.ssh.connect(host, port=port, username=username, password=password,
+                        timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
+                        key_filename=key_filename, allow_agent=allow_agent)
 
-        self.shell = self.ssh.invoke_shell()
-        self.shell.settimeout(timeout)
+            self.shell = self.ssh.invoke_shell()
+            self.shell.settimeout(timeout)
+        except socket.gaierror:
+            raise ShellError("unable to resolve host name")
 
         if self.kickstart:
             self.shell.sendall("\n")
