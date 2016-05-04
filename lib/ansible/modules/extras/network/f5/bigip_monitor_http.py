@@ -317,7 +317,20 @@ def main():
         supports_check_mode=True
     )
 
-    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
+    if not bigsuds_found:
+        module.fail_json(msg="the python bigsuds module is required")
+
+    if module.params['validate_certs']:
+        import ssl
+        if not hasattr(ssl, 'SSLContext'):
+            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+
+    server = module.params['server']
+    user = module.params['user']
+    password = module.params['password']
+    state = module.params['state']
+    partition = module.params['partition']
+    validate_certs = module.params['validate_certs']
 
     parent_partition = module.params['parent_partition']
     name = module.params['name']
