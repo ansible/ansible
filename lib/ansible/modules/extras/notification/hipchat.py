@@ -149,7 +149,10 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
         module.exit_json(changed=False)
 
     response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] == 200:
+
+    # https://www.hipchat.com/docs/apiv2/method/send_room_notification shows
+    # 204 to be the expected result code.
+    if info['status'] in [200, 204]:
         return response.read()
     else:
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
