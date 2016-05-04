@@ -95,20 +95,20 @@ class NetworkModule(AnsibleModule):
 
     def run_commands(self, commands, **kwargs):
         commands = to_list(commands)
-        return self.invoke(self.connection.run_commands, commands)
+        return self.invoke(self.connection.run_commands, commands, **kwargs)
 
     def configure(self, commands, **kwargs):
         commands = to_list(commands)
-        return self.invoke(self.connection.configure, commands)
+        return self.invoke(self.connection.configure, commands, **kwargs)
 
     def get_config(self, **kwargs):
-        return self.invoke(self.connection.get_config)
+        return self.invoke(self.connection.get_config, **kwargs)
 
     def load_config(self, *args, **kwargs):
-        raise NotImplementedError
+        return self.invoke(self.connection.load_config, *args, **kwargs)
 
     def commit(self, *args, **kwargs):
-        raise NotImplementedError
+        return self.invoke(self.connection.commit, *args, **kwargs)
 
 def get_module(**kwargs):
 
