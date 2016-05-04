@@ -19,6 +19,8 @@
 import re
 import socket
 
+from ansible.module_utils.basic import get_exception
+
 # py2 vs py3; replace with six via ziploader
 try:
     from StringIO import StringIO
