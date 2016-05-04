@@ -171,7 +171,7 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 	@echo "#############################################"
 
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(RPMNVR)-*.src.rpm
+	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(RPMNVR).src.rpm
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
