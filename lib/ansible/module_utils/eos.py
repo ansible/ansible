@@ -17,12 +17,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
 import re
 import json
-import collections
 
-from ansible.module_utils.network import get_network_module, NetworkError
-from ansible.module_utils.network import add_argument, register_transport, get_exception
+from ansible.module_utils.network import NetworkError, get_module
+from ansible.module_utils.network import add_argument, get_exception, register_transport
 from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -49,6 +49,7 @@ add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
 ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
+
 
 @register_transport('eapi')
 class Eapi(object):
@@ -105,8 +106,7 @@ class Eapi(object):
 
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response, headers = fetch_url(self.url_args, self.url, data=data,
-                headers=headers, method='POST')
+        response, headers = fetch_url(self.url_args, self.url, data=data, headers=headers, method='POST')
 
         if headers['status'] != 200:
             raise NetworkError(**headers)
@@ -130,30 +130,38 @@ class Cli(object):
 
     def __init__(self):
         if not HAS_PARAMIKO:
-            raise NetworkError(msg='paramiko is required but does not '
-                'appear to be installed.  It can be installed using  `pip '
-                'install paramiko`')
+            raise NetworkError(
+                msg='paramiko is required but does not appear to be installed.  '
+                'It can be installed using  `pip install paramiko`'
+            )
 
         self.shell = None
 
     def connect(self, params, **kwargs):
         host = params['host']
-
-        username = params['username']
         port = params.get('port') or 22
 
+        username = params['username']
         password = params.get('password')
         key_file = params.get('ssh_keyfile')
+        timeout = params['timeout']
 
         try:
             self.shell = Shell(prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username,
-                    password=password, key_filename=key_file)
-            self.shell.send('terminal length 0')
+            self.shell.open(
+                host, port=port, username=username, password=password,
+                key_filename=key_file, timeout=timeout,
+            )
         except ShellError:
-            e = get_exception()
-            raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
-                    exc=str(e))
+            exc = get_exception()
+            raise NetworkError(
+                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
+            )
+
+        self.shell.send('terminal length 0')
+
+    def disconnect(self):
+        self.shell.close()
 
     def authorize(self, passwd, params, **kwargs):
         self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
@@ -162,10 +170,8 @@ class Cli(object):
         try:
             return self.shell.send(commands)
         except ShellError:
-            e = get_exception()
-            raise NetworkError(e.message, commands=commands)
+            exc = get_exception()
+            raise NetworkError(exc.message, commands=commands)
 
     def get_config(self, **kwargs):
         return self.run_commands('show running-config')[0]
-
-
