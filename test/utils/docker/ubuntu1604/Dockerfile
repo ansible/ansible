@@ -21,6 +21,7 @@ RUN apt-get install -y \
     fakeroot \
     gawk \
     git \
+    iproute2 \
     libxml2-utils \
     locales \
     lsb-release \
