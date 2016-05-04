@@ -88,9 +88,6 @@ class Eapi(object):
 
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if params.get('authorize'):
-            self.authorize(params)
-
     def disconnect(self, **kwargs):
         pass
 
@@ -181,9 +178,6 @@ class Cli(object):
             )
 
         self.shell.send('terminal length 0')
-
-        if params.get('authorize'):
-            self.authorize(params)
 
     def disconnect(self, **kwargs):
         self.shell.close()

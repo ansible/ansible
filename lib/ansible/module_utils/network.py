@@ -91,7 +91,7 @@ class NetworkModule(AnsibleModule):
         return self.invoke(self.connection.disconnect)
 
     def authorize(self):
-        raise NotImplementedError
+        return self.invoke(self.connection.authorize)
 
     def run_commands(self, commands, **kwargs):
         commands = to_list(commands)
@@ -132,7 +132,13 @@ def get_module(**kwargs):
         exc = get_exception()
         module.fail_json(msg=exc.message)
 
-    module.connect()
+    try:
+        module.connect()
+        if module.params['authorize']:
+            module.authorize()
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
 
     return module
 
