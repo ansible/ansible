@@ -68,7 +68,7 @@ try:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.backends import default_backend
     HAS_PBKDF2HMAC = True
-except ImportError:
+except Exception:
     pass
 
 from ansible.compat.six import PY3
