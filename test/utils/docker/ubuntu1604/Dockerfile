@@ -11,21 +11,31 @@ APT::Install-Suggests "0";' > /etc/apt/apt.conf.d/01buildconfig
 
 RUN apt-get install -y \
     acl \
+    asciidoc \
+    cdbs \
+    debhelper \
     debianutils \
-    python-dbus \
+    devscripts \
+    docbook-xml \
+    dpkg-dev \
+    fakeroot \
     gawk \
     git \
+    libxml2-utils \
     locales \
     lsb-release \
     make \
     mercurial \
-    ruby \
-    rsync \
-    subversion \
-    sudo \
     openssh-client \
     openssh-server \
+    python-dbus \
+    reprepro \
+    rsync \
+    ruby \
+    subversion \
+    sudo \
     unzip \
+    xsltproc \
     python-coverage \
     python-httplib2 \
     python-jinja2 \
