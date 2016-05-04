@@ -38,3 +38,6 @@ notifications:
     on_failure: always
     skip_join: true
     nick: ansibletravis
+  webhooks:
+    # trigger Buildtime Trend Service to parse Travis CI log
+    - https://buildtimetrend.herokuapp.com/travis

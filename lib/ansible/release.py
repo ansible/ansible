@@ -1,6 +1,5 @@
-# test code for the apt_repository module
-# (c) 2014, James Laska <jlaska@ansible.com>
-
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -16,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- include: 'apt.yml'
-  when: ansible_distribution in ('Ubuntu') and ansible_distribution_version|version_compare('16.04', '<')
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
+__version__ = '2.2.0'
+__author__  = 'Ansible, Inc.'

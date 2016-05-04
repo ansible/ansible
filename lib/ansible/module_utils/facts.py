@@ -605,24 +605,30 @@ class Distribution(object):
     """
 
     OSDIST_LIST = (
-        ('/etc/oracle-release', 'OracleLinux'),
-        ('/etc/slackware-version', 'Slackware'),
-        ('/etc/redhat-release', 'RedHat'),
-        ('/etc/vmware-release', 'VMwareESX'),
-        ('/etc/openwrt_release', 'OpenWrt'),
-        ('/etc/system-release', 'OtherLinux'),
-        ('/etc/alpine-release', 'Alpine'),
-        ('/etc/release', 'Solaris'),
-        ('/etc/arch-release', 'Archlinux'),
-        ('/etc/os-release', 'SuSE'),
-        ('/etc/SuSE-release', 'SuSE'),
-        ('/etc/gentoo-release', 'Gentoo'),
-        ('/etc/os-release', 'Debian'),
-        ('/etc/lsb-release', 'Mandriva'),
-        ('/etc/altlinux-release', 'Altlinux'),
-        ('/etc/os-release', 'NA'),
-        ('/etc/coreos/update.conf', 'Coreos'),
+        {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
+        {'path': '/etc/slackware-version', 'name': 'Slackware'},
+        {'path': '/etc/redhat-release', 'name': 'RedHat'},
+        {'path': '/etc/vmware-release', 'name': 'VMwareESX', 'allowempty': True},
+        {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
+        {'path': '/etc/system-release', 'name': 'Amazon'},
+        {'path': '/etc/alpine-release', 'name': 'Alpine'},
+        {'path': '/etc/release', 'name': 'Solaris'},
+        {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
+        {'path': '/etc/os-release', 'name': 'SuSE'},
+        {'path': '/etc/SuSE-release', 'name': 'SuSE'},
+        {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
+        {'path': '/etc/os-release', 'name': 'Debian'},
+        {'path': '/etc/lsb-release', 'name': 'Mandriva'},
+        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
+        {'path': '/etc/os-release', 'name': 'NA'},
+        {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
     )
+
+    SEARCH_STRING = {
+        'OracleLinux': 'Oracle Linux',
+        'RedHat': 'Red Hat',
+        'Altlinux': 'ALT Linux',
+    }
 
     # A list with OS Family members
     OS_FAMILY = dict(
@@ -675,36 +681,47 @@ class Distribution(object):
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             # self.facts['distribution_debug'] = []
-            for (path, name) in self.OSDIST_LIST:
+            for ddict in self.OSDIST_LIST:
+                name = ddict['name']
+                path = ddict['path']
 
-                # TODO: remove this hack if tested with Fedora and Altlinux
-                if self.facts['distribution'] in ('Fedora', 'Altlinux', ):
-                    # Once we determine the value is one of these distros
-                    # we trust the values are always correct
-                    break
                 if not os.path.exists(path):
                     continue
                 if os.path.getsize(path) == 0:
-                    continue
+                    if 'allowempty' in ddict and ddict['allowempty']:
+                        self.facts['distribution'] = name
+                        break
+                    else:
+                        continue
 
-                try:
+                data = get_file_content(path)
+                if name in self.SEARCH_STRING:
+                    # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
+                    # only the distribution name is set, the version is assumed to be correct from platform.dist()
+                    if self.SEARCH_STRING[name] in data:
+                        # this sets distribution=RedHat if 'Red Hat' shows up in data
+                        self.facts['distribution'] = name
+                    else:
+                        # this sets distribution to what's in the data, e.g. CentOS, Scientific, ...
+                        self.facts['distribution'] = data.split()[0]
+                    break
+                else:
+                    # call a dedicated function for parsing the file content
                     distfunc = getattr(self, 'get_distribution_' + name)
-                    data = get_file_content(path)
                     parsed = distfunc(name, data, path)
                     if parsed is None or parsed:
+                        # distfunc return False if parsing failed
                         # break only if parsing was succesful
                         # otherwise continue with other distributions
-
-                        # to debug multiple matching release files, one can use:
-                        # self.facts['distribution_debug'].append({path + ' ' + name:
-                        #         (parsed,
-                        #          self.facts['distribution'],
-                        #          self.facts['distribution_version'],
-                        #          self.facts['distribution_release'],
-                        #          )})
                         break
-                except AttributeError:
-                    pass
+
+                    # to debug multiple matching release files, one can use:
+                    # self.facts['distribution_debug'].append({path + ' ' + name:
+                    #         (parsed,
+                    #          self.facts['distribution'],
+                    #          self.facts['distribution_version'],
+                    #          self.facts['distribution_release'],
+                    #          )})
 
         self.facts['os_family'] = self.facts['distribution']
         distro = self.facts['distribution'].replace(' ', '_')
@@ -738,47 +755,34 @@ class Distribution(object):
         else:
             self.facts['distribution_version'] = 'release'
 
-    def get_distribution_Archlinux(self, name, data, path):
-        if not 'Arch Linux' in data:
-            self.facts['distribution'] = data.split()[0]
-
     def get_distribution_Slackware(self, name, data, path):
-        if 'Slackware' in data:
-            self.facts['distribution'] = name
-            version = re.findall('\w+[.]\w+', data)
-            if version:
-                self.facts['distribution_version'] = version[0]
+        if 'Slackware' not in data:
+            return False  # TODO: remove
+        self.facts['distribution'] = name
+        version = re.findall('\w+[.]\w+', data)
+        if version:
+            self.facts['distribution_version'] = version[0]
 
-    def get_distribution_OracleLinux(self, name, data, path):
-        if not 'Oracle Linux' in data:
-            self.facts['distribution'] = data.split()[0]
-
-    def get_distribution_RedHat(self, name, data, path):
-        if not 'Red Hat' in data:
-            self.facts['distribution'] = data.split()[0]
-
-    def get_distribution_Altlinux(self, name, data, path):
-        if not 'ALT Linux' in data:
-            self.facts['distribution'] = data.split()[0]
-
-    def get_distribution_OtherLinux(self, name, data, path):
-        if 'Amazon' in data:
-            self.facts['distribution'] = 'Amazon'
-            self.facts['distribution_version'] = data.split()[-1]
-        else:
-            return False  # TODO: remove if tested without this
+    def get_distribution_Amazon(self, name, data, path):
+        if 'Amazon' not in data:
+            return False  # TODO: remove
+        self.facts['distribution'] = 'Amazon'
+        self.facts['distribution_version'] = data.split()[-1]
 
     def get_distribution_OpenWrt(self, name, data, path):
-        if 'OpenWrt' in data:
-            self.facts['distribution'] = name
-            version = re.search('DISTRIB_RELEASE="(.*)"', data)
-            if version:
-                self.facts['distribution_version'] = version.groups()[0]
-            release = re.search('DISTRIB_CODENAME="(.*)"', data)
-            if release:
-                self.facts['distribution_release'] = release.groups()[0]
-        else:
-            return False  # TODO: remove if tested without this
+        if 'OpenWrt' not in data:
+            return False  # TODO: remove
+        self.facts['distribution'] = name
+        version = re.search('DISTRIB_RELEASE="(.*)"', data)
+        if version:
+            self.facts['distribution_version'] = version.groups()[0]
+        release = re.search('DISTRIB_CODENAME="(.*)"', data)
+        if release:
+            self.facts['distribution_release'] = release.groups()[0]
+
+    def get_distribution_Archlinux(self, name, data, path):
+        self.facts['distribution'] = 'Archlinux'
+        self.facts['distribution_version'] = data
 
     def get_distribution_Alpine(self, name, data, path):
         self.facts['distribution'] = 'Alpine'

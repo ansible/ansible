@@ -36,6 +36,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
@@ -52,8 +53,24 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
-action_write_locks = defaultdict(Lock)
+if 'action_write_locks' not in globals():
+    # Do not initialize this more than once because it seems to bash
+    # the existing one.  multiprocessing must be reloading the module
+    # when it forks?
+    action_write_locks = dict()
 
+    # Below is a Lock for use when we weren't expecting a named module.
+    # It gets used when an action plugin directly invokes a module instead
+    # of going through the strategies.  Slightly less efficient as all
+    # processes with unexpected module names will wait on this lock
+    action_write_locks[None] = Lock()
+
+    # These plugins are called directly by action plugins (not going through
+    # a strategy).  We precreate them here as an optimization
+    mods = set(p['name'] for p in Facts.PKG_MGRS)
+    mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))
+    for mod_name in mods:
+        action_write_locks[mod_name] = Lock()
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -144,18 +161,19 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
 
-         # Add a write lock for tasks.
-         # Maybe this should be added somewhere further up the call stack but
-         # this is the earliest in the code where we have task (1) extracted
-         # into its own variable and (2) there's only a single code path
-         # leading to the module being run.  This is called by three
-         # functions: __init__.py::_do_handler_run(), linear.py::run(), and
-         # free.py::run() so we'd have to add to all three to do it there.
-         # The next common higher level is __init__.py::run() and that has
-         # tasks inside of play_iterator so we'd have to extract them to do it
-         # there.
-        if not action_write_locks[task.action]:
-            display.warning('Python defaultdict did not create the Lock for us.  Creating manually')
+        # Add a write lock for tasks.
+        # Maybe this should be added somewhere further up the call stack but
+        # this is the earliest in the code where we have task (1) extracted
+        # into its own variable and (2) there's only a single code path
+        # leading to the module being run.  This is called by three
+        # functions: __init__.py::_do_handler_run(), linear.py::run(), and
+        # free.py::run() so we'd have to add to all three to do it there.
+        # The next common higher level is __init__.py::run() and that has
+        # tasks inside of play_iterator so we'd have to extract them to do it
+        # there.
+        global action_write_locks
+        if task.action not in action_write_locks:
+            display.debug('Creating lock for %s' % task.action)
             action_write_locks[task.action] = Lock()
 
         # and then queue the new task
