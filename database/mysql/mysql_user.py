@@ -247,7 +247,7 @@ def is_hash(password):
             ishash = True
     return ishash
 
-def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, check_mode):
+def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
     changed = False
     grant_option = False
 
@@ -272,7 +272,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 encrypted_string = (password)
                 if is_hash(password):
                     if current_pass_hash[0] != encrypted_string:
-                        if check_mode:
+                        if module.check_mode:
                             return True
                         if old_user_mgmt:
                             cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
@@ -288,7 +288,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
                 new_pass_hash = cursor.fetchone()
                 if current_pass_hash[0] != new_pass_hash[0]:
-                    if check_mode:
+                    if module.check_mode:
                         return True
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
@@ -308,7 +308,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     grant_option = True
                 if db_table not in new_priv:
                     if user != "root" and "PROXY" not in priv and not append_privs:
-                        if check_mode:
+                        if module.check_mode:
                             return True
                         privileges_revoke(cursor, user,host,db_table,priv,grant_option)
                         changed = True
@@ -317,7 +317,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # we can perform a straight grant operation.
             for db_table, priv in new_priv.iteritems():
                 if db_table not in curr_priv:
-                    if check_mode:
+                    if module.check_mode:
                         return True
                     privileges_grant(cursor, user,host,db_table,priv)
                     changed = True
@@ -328,7 +328,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             for db_table in db_table_intersect:
                 priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if (len(priv_diff) > 0):
-                    if check_mode:
+                    if module.check_mode:
                         return True
                     if not append_privs:
                         privileges_revoke(cursor, user,host,db_table,curr_priv[db_table],grant_option)
@@ -554,9 +554,9 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module.check_mode)
+                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module.check_mode)
+                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
