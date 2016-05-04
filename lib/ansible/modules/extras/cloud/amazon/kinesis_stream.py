@@ -21,7 +21,7 @@ description:
     - Create or Delete a Kinesis Stream.
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
-version_added: "2.1"
+version_added: "2.2"
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:
