@@ -79,9 +79,6 @@ class Eapi(object):
 
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
 
-        if params.get('authorize'):
-            self.authorize(params)
-
     def disconnect(self, **kwargs):
         self.url = None
 
