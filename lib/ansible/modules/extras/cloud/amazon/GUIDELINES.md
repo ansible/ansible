@@ -220,3 +220,8 @@ key and the dict value is the tag value.
 
 Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts.
 
+### get_ec2_security_group_ids_from_names
+
+Pass this function a list of security group names or combination of security group names and IDs and this function will
+return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
+across VPCs.
