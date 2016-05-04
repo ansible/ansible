@@ -33,7 +33,6 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 try:
     import winrm
     from winrm import Response
-    from winrm.exceptions import WinRMTransportError
     from winrm.protocol import Protocol
 except ImportError:
     raise AnsibleError("winrm is not installed")
@@ -122,7 +121,7 @@ class Connection(ConnectionBase):
 
         # warn for kwargs unsupported by the installed version of pywinrm
         for arg in unsupported_args:
-            display.warning("ansible_winrm_{0} unsupported by pywinrm (are you running the right pywinrm version?)".format(arg))
+            display.warning("ansible_winrm_{0} unsupported by pywinrm (is an up-to-date version of pywinrm installed?)".format(arg))
 
         # arg names we're going passing directly
         internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password'])
@@ -147,9 +146,8 @@ class Connection(ConnectionBase):
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
                 protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
-                # send keepalive message to ensure we're awake
-                # TODO: is this necessary?
-                # protocol.send_message(xmltodict.unparse(rq))
+
+                # open the shell from connect so we know we're able to talk to the server
                 if not self.shell_id:
                     self.shell_id = protocol.open_shell(codepage=65001) # UTF-8
                     display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
@@ -163,7 +161,7 @@ class Connection(ConnectionBase):
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
-                        err_msg = 'the username/password specified for this server was incorrect'
+                        err_msg = 'the specified credentials were rejected by the server'
                     elif code == 411:
                         return protocol
                 errors.append(u'%s: %s' % (transport, err_msg))
@@ -282,7 +280,7 @@ class Connection(ConnectionBase):
             try:
                 result.std_err = self.parse_clixml_stream(result.std_err)
             except:
-                # unsure if we're guaranteed a valid xml doc- keep original output just in case
+                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
         return (result.status_code, result.std_out, result.std_err)
@@ -294,7 +292,7 @@ class Connection(ConnectionBase):
     def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
         clear_xml = clixml_doc.replace('#< CLIXML\r\n', '')
         doc = xmltodict.parse(clear_xml)
-        lines = [l.get('#text', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
+        lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
         return '\r\n'.join(lines)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
