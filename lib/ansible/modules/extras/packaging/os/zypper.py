@@ -26,7 +26,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+from xml.dom.minidom import parseString as parseXML
 
 DOCUMENTATION = '''
 ---
@@ -34,6 +34,8 @@ module: zypper
 author:
     - "Patrick Callahan (@dirtyharrycallahan)"
     - "Alexander Gubin (@alxgu)"
+    - "Thomas O'Donnell (@andytom)"
+    - "Robin Roth (@robinro)"
 version_added: "1.2"
 short_description: Manage packages on SUSE and openSUSE
 description:
@@ -41,7 +43,7 @@ description:
 options:
     name:
         description:
-        - package name or package specifier with version C(name) or C(name-1.0). You can also pass a url or a local path to a rpm file.
+        - package name or package specifier with version C(name) or C(name-1.0). You can also pass a url or a local path to a rpm file. When using state=latest, this can be '*', which updates all installed packages.
         required: true
         aliases: [ 'pkg' ]
     state:
@@ -56,7 +58,7 @@ options:
         description:
           - The type of package to be operated on.
         required: false
-        choices: [ package, patch, pattern, product, srcpackage ]
+        choices: [ package, patch, pattern, product, srcpackage, application ]
         default: "package"
         version_added: "2.0"
     disable_gpg_check:
@@ -67,7 +69,6 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
-        aliases: []
     disable_recommends:
         version_added: "1.8"
         description:
@@ -75,10 +76,18 @@ options:
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
+    force:
+        version_added: "2.2"
+        description:
+          - Adds C(--force) option to I(zypper). Allows to downgrade packages and change vendor or architecture.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
 
-notes: []
 # informational: requirements for nodes
-requirements: [ zypper, rpm ]
+requirements: 
+    - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
+    - rpm
 '''
 
 EXAMPLES = '''
@@ -88,6 +97,9 @@ EXAMPLES = '''
 # Install apache2 with recommended packages
 - zypper: name=apache2 state=present disable_recommends=no
 
+# Apply a given patch
+- zypper: name=openSUSE-2016-128 state=present type=patch
+
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
 
@@ -96,168 +108,222 @@ EXAMPLES = '''
 
 # Install local rpm file
 - zypper: name=/tmp/fancy-software.rpm state=present
+
+# Update all packages
+- zypper: name=* state=latest
+
+# Apply all available patches
+- zypper: name=* state=latest type=patch
 '''
 
-# Function used for getting zypper version
-def zypper_version(module):
-    """Return (rc, message) tuple"""
-    cmd = ['/usr/bin/zypper', '-V']
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if rc == 0:
-        return rc, stdout
-    else:
-        return rc, stderr
 
-# Function used for getting versions of currently installed packages.
-def get_current_version(m, packages):
-    cmd = ['/bin/rpm', '-q', '--qf', '%{NAME} %{VERSION}-%{RELEASE}\n']
+def get_want_state(m, names, remove=False):
+    packages_install = []
+    packages_remove = []
+    urls = []
+    for name in names:
+        if '://' in name or name.endswith('.rpm'):
+            urls.append(name)
+        elif name.startswith('-') or name.startswith('~'):
+            packages_remove.append(name[1:])
+        elif name.startswith('+'):
+            packages_install.append(name[1:])
+        else:
+            if remove:
+                packages_remove.append(name)
+            else:
+                packages_install.append(name)
+    return packages_install, packages_remove, urls
+
+
+def get_installed_state(m, packages):
+    "get installed state of packages"
+
+    cmd = get_cmd(m, 'search')
+    cmd.extend(['--match-exact', '--verbose', '--installed-only'])
     cmd.extend(packages)
+    return parse_zypper_xml(m, cmd, fail_not_found=False)[0]
 
+
+def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    current_version = {}
-    rpmoutput_re = re.compile('^(\S+) (\S+)$')
-
-    for stdoutline in stdout.splitlines():
-        match = rpmoutput_re.match(stdoutline)
-        if match == None:
-            return None
-        package = match.group(1)
-        version = match.group(2)
-        current_version[package] = version
-
-    for package in packages:
-        if package not in current_version:
-            print package + ' was not returned by rpm \n'
-            return None
-
-    return current_version
-
-
-# Function used to find out if a package is currently installed.
-def get_package_state(m, packages):
-    for i in range(0, len(packages)):
-        # Check state of a local rpm-file
-        if ".rpm" in packages[i]:
-            # Check if rpm file is available
-            package = packages[i]
-            if not os.path.isfile(package) and not '://' in package:
-                stderr = "No Package file matching '%s' found on system" % package
-                m.fail_json(msg=stderr, rc=1)
-            # Get packagename from rpm file
-            cmd = ['/bin/rpm', '--query', '--qf', '%{NAME}', '--package']
-            cmd.append(package)
-            rc, stdout, stderr = m.run_command(cmd, check_rc=False)
-            packages[i] = stdout
-
-    cmd = ['/bin/rpm', '--query', '--qf', 'package %{NAME} is installed\n']
-    cmd.extend(packages)
-
-    rc, stdout, stderr = m.run_command(cmd, check_rc=False)
-
-    installed_state = {}
-    rpmoutput_re = re.compile('^package (\S+) (.*)$')
-    for stdoutline in stdout.splitlines():
-        match = rpmoutput_re.match(stdoutline)
-        if match == None:
-            continue
-        package = match.group(1)
-        result = match.group(2)
-        if result == 'is installed':
-            installed_state[package] = True
+    dom = parseXML(stdout)
+    if rc == 104:
+        # exit code 104 is ZYPPER_EXIT_INF_CAP_NOT_FOUND (no packages found)
+        if fail_not_found:
+            errmsg = dom.getElementsByTagName('message')[-1].childNodes[0].data
+            m.fail_json(msg=errmsg, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
         else:
-            installed_state[package] = False
+            return {}, rc, stdout, stderr
+    elif rc in [0, 106, 103]:
+        # zypper exit codes
+        # 0: success
+        # 106: signature verification failed
+        # 103: zypper was upgraded, run same command again 
+        if packages is None:
+            firstrun = True
+            packages = {}
+        solvable_list = dom.getElementsByTagName('solvable')
+        for solvable in solvable_list:
+            name = solvable.getAttribute('name')
+            packages[name] = {}
+            packages[name]['version'] = solvable.getAttribute('edition')
+            packages[name]['oldversion'] = solvable.getAttribute('edition-old')
+            status = solvable.getAttribute('status')
+            packages[name]['installed'] = status == "installed"
+            packages[name]['group'] = solvable.parentNode.nodeName
+        if rc == 103 and firstrun:
+            # if this was the first run and it failed with 103
+            # run zypper again with the same command to complete update
+            return parse_zypper_xml(m, cmd, fail_not_found=fail_not_found, packages=packages)
 
-    return installed_state
+        return packages, rc, stdout, stderr
+    m.fail_json(msg='Zypper run command failed with return code %s.'%rc, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
 
-# Function used to make sure a package is present.
-def package_present(m, name, installed_state, package_type, disable_gpg_check, disable_recommends, old_zypper):
-    packages = []
-    for package in name:
-        if package not in installed_state or installed_state[package] is False:
-            packages.append(package)
-    if len(packages) != 0:
-        cmd = ['/usr/bin/zypper', '--non-interactive']
-        # add global options before zypper command
-        if disable_gpg_check:
-            cmd.append('--no-gpg-checks')
-        cmd.extend(['install', '--auto-agree-with-licenses', '-t', package_type])
-        # add install parameter
-        if disable_recommends and not old_zypper:
-            cmd.append('--no-recommends')
-        cmd.extend(packages)
-        rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-        if rc == 0:
-            changed=True
-        else:
-            changed=False
-    else:
-        rc = 0
-        stdout = ''
-        stderr = ''
-        changed=False
+def get_cmd(m, subcommand):
+    "puts together the basic zypper command arguments with those passed to the module"
+    is_install = subcommand in ['install', 'update', 'patch']
+    cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
 
-    return (rc, stdout, stderr, changed)
-
-# Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, package_type, disable_gpg_check, disable_recommends, old_zypper):
-
-    # first of all, make sure all the packages are installed
-    (rc, stdout, stderr, changed) = package_present(m, name, installed_state, package_type, disable_gpg_check, disable_recommends, old_zypper)
-
-    # return if an error occured while installation
-    # otherwise error messages will be lost and user doesn`t see any error
-    if rc:
-        return (rc, stdout, stderr, changed)
-
-    # if we've already made a change, we don't have to check whether a version changed
-    if not changed:
-        pre_upgrade_versions = get_current_version(m, name)
-
-    cmd = ['/usr/bin/zypper', '--non-interactive']
-
-    if disable_gpg_check:
+    # add global options before zypper command
+    if is_install and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
 
-    if old_zypper:
-        cmd.extend(['install', '--auto-agree-with-licenses', '-t', package_type])
+    cmd.append(subcommand)
+    if subcommand != 'patch':
+        cmd.extend(['--type', m.params['type']])
+    if m.check_mode and subcommand != 'search':
+        cmd.append('--dry-run')
+    if is_install:
+        cmd.append('--auto-agree-with-licenses')
+        if m.params['disable_recommends']:
+            cmd.append('--no-recommends')
+        if m.params['force']:
+            cmd.append('--force')
+    return cmd
+
+
+def set_diff(m, retvals, result):
+    packages = {'installed': [], 'removed': [], 'upgraded': []}
+    for p in result:
+        group = result[p]['group']
+        if group == 'to-upgrade':
+            versions = ' (' + result[p]['oldversion'] + ' => ' + result[p]['version'] + ')'
+            packages['upgraded'].append(p + versions)
+        elif group == 'to-install':
+            packages['installed'].append(p)
+        elif group == 'to-remove':
+            packages['removed'].append(p)
+
+    output = ''
+    for state in packages:
+        if packages[state]:
+            output += state + ': ' + ', '.join(packages[state]) + '\n'
+    if 'diff' not in retvals:
+        retvals['diff'] = {}
+    if 'prepared' not in retvals['diff']:
+        retvals['diff']['prepared'] = output
     else:
-        cmd.extend(['update', '--auto-agree-with-licenses', '-t', package_type])
+        retvals['diff']['prepared'] += '\n' + output
 
-    cmd.extend(name)
-    rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    # if we've already made a change, we don't have to check whether a version changed
-    if not changed:
-        post_upgrade_versions = get_current_version(m, name)
-        if pre_upgrade_versions != post_upgrade_versions:
-            changed = True
+def package_present(m, name, want_latest):
+    "install and update (if want_latest) the packages in name_install, while removing the packages in name_remove"
+    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    name_install, name_remove, urls = get_want_state(m, name)
 
-    return (rc, stdout, stderr, changed)
+    if not want_latest:
+        # for state=present: filter out already installed packages
+        prerun_state = get_installed_state(m, name_install + name_remove)
+        # generate lists of packages to install or remove
+        name_install = [p for p in name_install if p not in prerun_state]
+        name_remove = [p for p in name_remove if p in prerun_state]
+        if not name_install and not name_remove and not urls:
+            # nothing to install/remove and nothing to update
+            return retvals
 
-# Function used to make sure a package is not installed.
-def package_absent(m, name, installed_state, package_type, old_zypper):
-    packages = []
-    for package in name:
-        if package not in installed_state or installed_state[package] is True:
-            packages.append(package)
-    if len(packages) != 0:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', '-t', package_type]
-        cmd.extend(packages)
-        rc, stdout, stderr = m.run_command(cmd)
+    # zypper install also updates packages
+    cmd = get_cmd(m, 'install')
+    cmd.append('--')
+    cmd.extend(urls)
 
-        if rc == 0:
-            changed=True
-        else:
-            changed=False
+    # allow for + or - prefixes in install/remove lists
+    # do this in one zypper run to allow for dependency-resolution
+    # for example "-exim postfix" runs without removing packages depending on mailserver
+    cmd.extend(name_install)
+    cmd.extend(['-%s' % p for p in name_remove])
+
+    retvals['cmd'] = cmd
+    result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
+    if retvals['rc'] == 0:
+        # installed all packages successfully
+        # checking the output is not straight-forward because zypper rewrites 'capabilities'
+        # could run get_installed_state and recheck, but this takes time
+        if result:
+            retvals['changed'] = True
     else:
-        rc = 0
-        stdout = ''
-        stderr = ''
-        changed=False
+        retvals['failed'] = True
+        # return retvals
+    if m._diff:
+        set_diff(m, retvals, result)
 
-    return (rc, stdout, stderr, changed)
+    return retvals
+
+
+def package_update_all(m, do_patch):
+    "run update or patch on all available packages"
+    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    if do_patch:
+        cmdname = 'patch'
+    else:
+        cmdname = 'update'
+
+    cmd = get_cmd(m, cmdname)
+    retvals['cmd'] = cmd
+    result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
+    if retvals['rc'] == 0:
+        if result:
+            retvals['changed'] = True
+    else:
+        retvals['failed'] = True
+    if m._diff:
+        set_diff(m, retvals, result)
+    return retvals
+
+
+def package_absent(m, name):
+    "remove the packages in name"
+    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    # Get package state
+    name_install, name_remove, urls = get_want_state(m, name, remove=True)
+    if name_install:
+        m.fail_json(msg="Can not combine '+' prefix with state=remove/absent.")
+    if urls:
+        m.fail_json(msg="Can not remove via URL.")
+    if m.params['type'] == 'patch':
+        m.fail_json(msg="Can not remove patches.")
+    prerun_state = get_installed_state(m, name_remove)
+    name_remove = [p for p in name_remove if p in prerun_state]
+    if not name_remove:
+        return retvals
+
+    cmd = get_cmd(m, 'remove')
+    cmd.extend(name_remove)
+
+    retvals['cmd'] = cmd
+    result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
+    if retvals['rc'] == 0:
+        # removed packages successfully
+        if result:
+            retvals['changed'] = True
+    else:
+        retvals['failed'] = True
+    if m._diff:
+        set_diff(m, retvals, result)
+
+    return retvals
 
 # ===========================================
 # Main control flow
@@ -267,57 +333,40 @@ def main():
         argument_spec = dict(
             name = dict(required=True, aliases=['pkg'], type='list'),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage']),
+            type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
+            force = dict(required=False, default='no', type='bool'),
         ),
-        supports_check_mode = False
+        supports_check_mode = True
     )
 
-
-    params = module.params
-
-    name  = params['name']
-    state = params['state']
-    type_ = params['type']
-    disable_gpg_check = params['disable_gpg_check']
-    disable_recommends = params['disable_recommends']
-
-    rc = 0
-    stdout = ''
-    stderr = ''
-    result = {}
-    result['name'] = name
-    result['state'] = state
-
-    rc, out = zypper_version(module)
-    match = re.match(r'zypper\s+(\d+)\.(\d+)\.(\d+)', out)
-    if not match or  int(match.group(1)) > 0:
-        old_zypper = False
-    else:
-        old_zypper = True
-
-    # Get package state
-    installed_state = get_package_state(module, name)
+    name = module.params['name']
+    state = module.params['state']
 
     # Perform requested action
-    if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, type_, disable_gpg_check, disable_recommends, old_zypper)
-    elif state in ['absent', 'removed']:
-        (rc, stdout, stderr, changed) = package_absent(module, name, installed_state, type_, old_zypper)
-    elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, type_, disable_gpg_check, disable_recommends, old_zypper)
+    if name == ['*'] and state == 'latest':
+        if module.params['type'] == 'package':
+            retvals = package_update_all(module, False)
+        elif module.params['type'] == 'patch':
+            retvals = package_update_all(module, True)
+    else:
+        if state in ['absent', 'removed']:
+            retvals = package_absent(module, name)
+        elif state in ['installed', 'present', 'latest']:
+            retvals = package_present(module, name, state == 'latest')
 
-    if rc != 0:
-        if stderr:
-            module.fail_json(msg=stderr, rc=rc)
-        else:
-            module.fail_json(msg=stdout, rc=rc)
+    failed = retvals['failed']
+    del retvals['failed']
 
-    result['changed'] = changed
-    result['rc'] = rc
+    if failed:
+        module.fail_json(msg="Zypper run failed.", **retvals)
 
-    module.exit_json(**result)
+    if not retvals['changed']:
+        del retvals['stdout']
+        del retvals['stderr']
+
+    module.exit_json(name=name, state=state, **retvals)
 
 # import module snippets
 from ansible.module_utils.basic import *
