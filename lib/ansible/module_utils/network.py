@@ -54,6 +54,16 @@ class NetworkError(Exception):
 
 class NetworkModule(AnsibleModule):
 
+    def __init__(self, *args, **kwargs):
+        super(NetworkModule, self).__init__(*args, **kwargs)
+        self._config = None
+
+    @property
+    def config(self):
+        if not self._config:
+            self._config = self.get_config()
+        return self._config
+
     def _load_params(self):
         super(NetworkModule, self)._load_params()
         provider = self.params.get('provider') or dict()
