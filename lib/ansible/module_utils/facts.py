@@ -169,10 +169,13 @@ class Facts(object):
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
                 ]
 
-    def __init__(self, module, load_on_init=True):
+    def __init__(self, module, load_on_init=True, cached_facts={}):
 
         self.module = module
-        self.facts = {}
+        if not cached_facts:
+            self.facts = {}
+        else:
+            self.facts = cached_facts    
         ### TODO: Eventually, these should all get moved to populate().  But
         # some of the values are currently being used by other subclasses (for
         # instance, os_family and distribution).  Have to sort out what to do
@@ -3177,7 +3180,9 @@ def ansible_facts(module, gather_subset):
     facts['gather_subset'] = list(gather_subset)
     facts.update(Facts(module).populate())
     for subset in gather_subset:
-        facts.update(FACT_SUBSETS[subset](module).populate())
+        facts.update(FACT_SUBSETS[subset](module,
+                                         load_on_init=False,
+                                         cached_facts=facts).populate())
     return facts
 
 def get_all_facts(module):
