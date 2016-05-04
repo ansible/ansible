@@ -289,8 +289,8 @@ powerstate:
     returned: always
     type: string
     sample: running
-state:
-    description: Facts about the current state of the object.
+azure_rm_vm:
+    description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
     returned: always
     type: dict
     sample: {
@@ -520,7 +520,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             changed=False,
             actions=[],
             powerstate_change=None,
-            state=dict()
+            ansible_facts=dict('azure_rm_vm')
         )
 
         super(AzureRMVirtualMachine, self).__init__(derived_arg_spec=self.module_arg_spec,
@@ -666,7 +666,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 changed = True
 
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['ansible_facts']['azure_rm_vm'] = results
         self.results['powerstate_change'] = powerstate_change
 
         if self.check_mode:
