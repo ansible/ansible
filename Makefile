@@ -80,7 +80,7 @@ RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
-RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
+RPMNVR = "$(NAME)1.9-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 # MOCK build parameters
 MOCK_BIN ?= mock
@@ -171,7 +171,7 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 	@echo "#############################################"
 
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
+	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(RPMNVR)-*.src.rpm
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
@@ -198,7 +198,7 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
+	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
 	--define "__python `which $(PYTHON)`" \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
