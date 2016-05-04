@@ -1,4 +1,3 @@
-# Latest version of centos
 FROM opensuse:leap
 
 RUN zypper --gpg-auto-import-keys --non-interactive ref && \
@@ -7,21 +6,25 @@ RUN zypper --gpg-auto-import-keys --non-interactive ref && \
 #RUN yum -y update; yum clean all; yum -y swap fakesystemd systemd
 
 RUN zypper --non-interactive install --auto-agree-with-licenses \
+    acl \
+    asciidoc \
     dbus-1-python \
-    lsb-release \
-    glibc-locale \
+    gcc \
     git \
+    glibc-locale \
     iproute \
+    lsb-release \
     make \
     mercurial \
+    openssh \
+    rpm-build \
     ruby \
     subversion \
     sudo \
-    unzip \
-    zip \
     tar \
-    openssh \
+    unzip \
     which \
+    zip \
     python-PyYAML \
     python-coverage \
     python-httplib2 \
