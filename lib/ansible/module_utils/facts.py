@@ -169,7 +169,7 @@ class Facts(object):
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
                 ]
 
-    def __init__(self, module, load_on_init=True, cached_facts={}):
+    def __init__(self, module, load_on_init=True, cached_facts=None):
 
         self.module = module
         if not cached_facts:
