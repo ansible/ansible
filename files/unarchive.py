@@ -79,6 +79,15 @@ options:
     default:
     required: false
     version_added: "2.1"
+  validate_certs:
+      description:
+        - This only applies if using a https url as the source of the file.
+        - This should only set to C(no) used on personally controlled sites using self-signed cer
+        - Prior to 2.2 the code worked as if this was set to C(yes).
+      required: false
+      default: "yes"
+      choices: ["yes", "no"]
+      version_added: "2.2"
 author: "Dag Wieers (@dagwieers)"
 todo:
     - re-implement tar support using native tarfile module
@@ -652,6 +661,7 @@ def main():
             keep_newer        = dict(required=False, default=False, type='bool'),
             exclude           = dict(requited=False, default=[], type='list'),
             extra_opts        = dict(required=False, default=[], type='list'),
+            validate_certs    = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args = True,
 #        supports_check_mode = True,
