@@ -826,12 +826,12 @@ class LinuxService(Service):
 
             if self.enable:
                 (rc, out, err) = self.execute_command("%s %s" % (self.enable_cmd, self.name))
-                if (rc != 0):
+                if (rc != 0) or (err != ''):
                     self.module.fail_json(msg=("Failed to install service. rc: %s, out: %s, err: %s" % (rc, out, err)))
                 return (rc, out, err)
             else:
                 (rc, out, err) = self.execute_command("%s -r %s" % (self.enable_cmd, self.name))
-                if (rc != 0):
+                if (rc != 0) or (err != ''):
                     self.module.fail_json(msg=("Failed to remove service. rc: %s, out: %s, err: %s" % (rc, out, err)))
                 return (rc, out, err)
 
