@@ -46,7 +46,8 @@ def vca_argument_spec():
         api_version=dict(default=DEFAULT_VERSION),
         service_type=dict(default=DEFAULT_SERVICE_TYPE, choices=SERVICE_MAP.keys()),
         vdc_name=dict(),
-        gateway_name=dict(default='gateway')
+        gateway_name=dict(default='gateway'),
+        verify_certs=dict(type='bool', default=True)
     )
 
 class VcaAnsibleModule(AnsibleModule):
@@ -130,7 +131,11 @@ class VcaAnsibleModule(AnsibleModule):
         service_type = self.params['service_type']
         password = self.params['password']
 
-        if not self.vca.login(password=password):
+        login_org = None
+        if service_type == 'vcd':
+            login_org = self.params['org']
+
+        if not self.vca.login(password=password, org=login_org):
             self.fail('Login to VCA failed', response=self.vca.response.content)
 
         try:
