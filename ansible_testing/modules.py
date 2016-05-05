@@ -587,48 +587,50 @@ def re_compile(value):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('modules', help='Path to module or module directory')
+    parser.add_argument('modules', nargs='+',
+                        help='Path to module or module directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
     parser.add_argument('--exclude', help='RegEx exclusion pattern',
                         type=re_compile)
     args = parser.parse_args()
 
-    args.modules = args.modules.rstrip('/')
+    args.modules[:] = [m.rstrip('/') for m in args.modules]
 
     exit = []
 
     # Allow testing against a single file
-    if os.path.isfile(args.modules):
-        path = args.modules
-        if args.exclude and args.exclude.search(path):
-            sys.exit(0)
-        mv = ModuleValidator(path)
-        mv.validate()
-        exit.append(mv.report(args.warnings))
-        sys.exit(sum(exit))
-
-    for root, dirs, files in os.walk(args.modules):
-        basedir = root[len(args.modules)+1:].split('/', 1)[0]
-        if basedir in BLACKLIST_DIRS:
-            continue
-        for dirname in dirs:
-            if root == args.modules and dirname in BLACKLIST_DIRS:
-                continue
-            path = os.path.join(root, dirname)
+    for module in args.modules:
+        if os.path.isfile(module):
+            path = module
             if args.exclude and args.exclude.search(path):
-                continue
-            pv = PythonPackageValidator(path)
-            pv.validate()
-            exit.append(pv.report(args.warnings))
-
-        for filename in files:
-            path = os.path.join(root, filename)
-            if args.exclude and args.exclude.search(path):
-                continue
+                sys.exit(0)
             mv = ModuleValidator(path)
             mv.validate()
             exit.append(mv.report(args.warnings))
+            sys.exit(sum(exit))
+
+        for root, dirs, files in os.walk(module):
+            basedir = root[len(module)+1:].split('/', 1)[0]
+            if basedir in BLACKLIST_DIRS:
+                continue
+            for dirname in dirs:
+                if root == module and dirname in BLACKLIST_DIRS:
+                    continue
+                path = os.path.join(root, dirname)
+                if args.exclude and args.exclude.search(path):
+                    continue
+                pv = PythonPackageValidator(path)
+                pv.validate()
+                exit.append(pv.report(args.warnings))
+
+            for filename in files:
+                path = os.path.join(root, filename)
+                if args.exclude and args.exclude.search(path):
+                    continue
+                mv = ModuleValidator(path)
+                mv.validate()
+                exit.append(mv.report(args.warnings))
 
     sys.exit(sum(exit))
 
