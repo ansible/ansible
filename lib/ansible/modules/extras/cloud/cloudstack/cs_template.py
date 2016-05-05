@@ -93,6 +93,23 @@ options:
       - Only used if C(state) is present or absent.
     required: false
     default: false
+  mode:
+    description:
+      - Mode for the template extraction.
+      - Only used if C(state=extracted).
+    required: false
+    default: 'http_download'
+    choices: [ 'http_download', 'ftp_upload' ]
+  domain:
+    description:
+      - Domain the template, snapshot or VM is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the template, snapshot or VM is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the template to be registered in.
