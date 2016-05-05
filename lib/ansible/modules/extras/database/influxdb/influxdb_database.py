@@ -23,7 +23,7 @@ module: influxdb_database
 short_description: Manage InfluxDB databases
 description:
     - Manage InfluxDB databases
-version_added: 2.2
+version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
