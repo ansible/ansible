@@ -125,7 +125,12 @@ def list_virtual_gateways(client, module):
     for virtual_gateway in all_virtual_gateways['VpnGateways']:
         all_virtual_gateways_array.append(get_virtual_gateway_info(virtual_gateway))
 
-    module.exit_json(virtual_gateways=all_virtual_gateways_array)
+    #Turn the boto3 result in to ansible_friendly_snaked_names
+    snaked_vgw_array = []
+    for vgw in all_virtual_gateways_array:
+        snaked_vgw_array.append(camel_dict_to_snake_dict(vgw))
+    
+    module.exit_json(internet_gateways=snaked_vgw_array)
 
 
 def main():
