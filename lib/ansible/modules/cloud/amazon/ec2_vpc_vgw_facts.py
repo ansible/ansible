@@ -130,7 +130,7 @@ def list_virtual_gateways(client, module):
     for vgw in all_virtual_gateways_array:
         snaked_vgw_array.append(camel_dict_to_snake_dict(vgw))
     
-    module.exit_json(internet_gateways=snaked_vgw_array)
+    module.exit_json(virtual_gateways=snaked_vgw_array)
 
 
 def main():
