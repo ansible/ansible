@@ -25,7 +25,7 @@ module: zfs_permissions
 short_description: Manage zfs administrative permissions
 description:
   - Manages ZFS file system administrative permissions on Solaris and FreeBSD. See zfs(1M) for more information about the properties.
-version_added: "2.1"
+version_added: "2.2"
 options:
   name:
     description:
