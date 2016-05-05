@@ -219,7 +219,9 @@ class DocCLI(CLI):
             opt = doc['options'][o]
             desc = CLI.tty_ify(" ".join(opt['description']))
 
-            required = opt.get('required', False)
+            required = opt.get('required')
+            if required is None:
+                raise("Missing required field 'Required'")
             if not isinstance(required, bool):
                 raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
