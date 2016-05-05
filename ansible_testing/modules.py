@@ -599,7 +599,6 @@ def main():
 
     exit = []
 
-    # Allow testing against a single file
     for module in args.modules:
         if os.path.isfile(module):
             path = module
@@ -608,7 +607,6 @@ def main():
             mv = ModuleValidator(path)
             mv.validate()
             exit.append(mv.report(args.warnings))
-            sys.exit(sum(exit))
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module)+1:].split('/', 1)[0]
