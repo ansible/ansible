@@ -60,7 +60,7 @@ EXAMPLES = '''
   ec2_vpc_vgw_facts:
     region: ap-southeast-2
     profile: production
-    VpnGatewayIds: vgw-c123f6a7 
+    VpnGatewayIds: vgw-c432f6a7 
   register: vgw_facts
 '''
 
