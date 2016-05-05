@@ -139,7 +139,7 @@ class RabbitMqUser(object):
         self.bulk_permissions = bulk_permissions
 
         self._tags = None
-        self._permissions = None
+        self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args, run_in_check_mode=False):
