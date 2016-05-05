@@ -75,7 +75,7 @@ DEB_DIST ?= unstable
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
-RPMDIST = $(shell rpm --eval '%{?dist}')
+RPMDIST ?= $(shell rpm --eval '%{?dist}')
 RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
