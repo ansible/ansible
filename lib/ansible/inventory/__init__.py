@@ -204,7 +204,7 @@ class Inventory(object):
 
                 # exclude hosts mentioned in any restriction (ex: failed hosts)
                 if self._restriction is not None:
-                    hosts = [ h for h in hosts if h in self._restriction ]
+                    hosts = [ h for h in hosts if h.name in self._restriction ]
 
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
@@ -600,7 +600,7 @@ class Inventory(object):
             return
         elif not isinstance(restriction, list):
             restriction = [ restriction ]
-        self._restriction = restriction
+        self._restriction = [ h.name for h in restriction ]
 
     def subset(self, subset_pattern):
         """ 
