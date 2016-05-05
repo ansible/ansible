@@ -31,20 +31,18 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.module_utils import basic as module_utils_basic
 from ansible.plugins import module_loader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
 from schema import doc_schema, option_schema
 
-from utils import CaptureStd, find_globals
+from utils import CaptureStd
 
 import yaml
 
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
 BLACKLIST_IMPORTS = {
     'requests': ('requests import found, should use '
                  'ansible.module_utils.urls instead'),
@@ -414,14 +412,6 @@ class ModuleValidator(Validator):
                                     e.problem_mark.column + 1))
                 self.traces.append(e)
 
-    def _find_redeclarations(self):
-        g = set()
-        find_globals(g, self.ast.body)
-        redeclared = BASIC_RESERVED.intersection(g)
-        if redeclared:
-            self.warnings.append('Redeclared basic.py variable or '
-                                 'function: %s' % ', '.join(redeclared))
-
     def _check_version_added(self, doc):
         if not self._is_new_module():
             return
@@ -536,7 +526,6 @@ class ModuleValidator(Validator):
             self._find_module_utils(main)
             self._find_has_import()
             self._check_for_tabs()
-            self._find_redeclarations()
 
         if self._powershell_module():
             self._find_ps_replacers()
