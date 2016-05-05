@@ -595,14 +595,14 @@ class TaskExecutor:
             # since we're delegating, we don't want to use interpreter values
             # which would have been set for the original target host
             for i in variables.keys():
-                if i.startswith('ansible_') and i.endswith('_interpreter'):
+                if isinstance(i, string_types) and i.startswith('ansible_') and i.endswith('_interpreter'):
                     del variables[i]
             # now replace the interpreter values with those that may have come
             # from the delegated-to host
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
             if isinstance(delegated_vars, dict):
                 for i in delegated_vars:
-                    if i.startswith("ansible_") and i.endswith("_interpreter"):
+                    if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
         conn_type = self._play_context.connection
