@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: portenforce
 author:
     - '"Nathan Davison (@ndavison)" <ndavison85@gmail.com>'
-version_added: "2.1"
+version_added: "2.2"
 description:
     - Kill processes listening on TCP and UDP ports not defined in the whitelists.
 short_description: Kill processes listening on TCP and UDP ports not defined in the whitelists.
