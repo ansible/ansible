@@ -91,6 +91,7 @@ def create_datacenter(context, module):
 
     try:
         datacenter = get_datacenter(context, module)
+        changed = False
         if not datacenter:
             changed = True
             if not module.check_mode:
@@ -114,6 +115,7 @@ def destroy_datacenter(context, module):
 
     try:
         datacenter = get_datacenter(context, module)
+        changed = False
         if datacenter:
             changed = True
             if not module.check_mode:
