@@ -44,8 +44,15 @@ import yaml
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 BLACKLIST_IMPORTS = {
-    'requests': ('requests import found, should use '
-                 'ansible.module_utils.urls instead'),
+    'requests': {
+        'new_only': True,
+        'msg': ('requests import found, should use '
+                'ansible.module_utils.urls instead')
+    },
+    'boto': {
+        'new_only': True,
+        'msg': ('boto import found, new modules should use boto3')
+    },
 }
 
 
@@ -194,21 +201,25 @@ class ModuleValidator(Validator):
 
     def _find_blacklist_imports(self):
         for child in self.ast.body:
+            names = []
             if isinstance(child, ast.Import):
-                for name in child.names:
-                    if name.name in BLACKLIST_IMPORTS:
-                        self.errors.append(BLACKLIST_IMPORTS[name.name])
+                names.extend(child.names)
             elif isinstance(child, ast.TryExcept):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
                 for grandchild in bodies:
                     if isinstance(grandchild, ast.Import):
-                        for name in grandchild.names:
-                            if name.name in BLACKLIST_IMPORTS:
-                                self.errors.append(
-                                    BLACKLIST_IMPORTS[name.name]
-                                )
+                        names.extend(grandchild.names)
+            for name in names:
+                if name.name in BLACKLIST_IMPORTS:
+                    msg = BLACKLIST_IMPORTS[name.name]['msg']
+                    new_only = BLACKLIST_IMPORTS[name.name]['new_only']
+                    if self._is_new_module() and new_only:
+                        self.errors.append(msg)
+                    elif not new_only:
+                        self.errors.append(msg)
+
 
     def _find_module_utils(self, main):
         linenos = []
@@ -228,7 +239,6 @@ class ModuleValidator(Validator):
                     linenos.append(child.lineno)
 
                     for name in child.names:
-                        print(name.name)
                         if (isinstance(name, ast.alias) and
                                 name.name == 'basic'):
                             found_basic = True
