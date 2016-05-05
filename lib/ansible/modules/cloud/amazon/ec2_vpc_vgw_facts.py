@@ -19,7 +19,7 @@ module: ec2_vpc_vgw_facts
 short_description: Gather facts about virtual gateways in AWS
 description:
     - Gather facts about virtual gateways in AWS
-version_added: "2.1"
+version_added: "2.2"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
@@ -75,8 +75,9 @@ changed:
     returned: always
 '''
 
+import json
+
 try:
-    import json
     import botocore
     import boto3   
     HAS_BOTO3 = True
