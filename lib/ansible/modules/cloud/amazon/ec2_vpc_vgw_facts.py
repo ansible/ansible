@@ -20,19 +20,20 @@ short_description: Gather facts about virtual gateways in AWS
 description:
     - Gather facts about virtual gateways in AWS
 version_added: "2.2"
-author: "Nick Aslanidis (@naslanidis)"
+requirements: [ boto3 ]
 options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
-    default: null
+    default: None
   VpnGatewayIds:
     description:
       - Get details of specific Virtual Gateway ID
       - Provide this value as a list
     required: false
     default: None
+author: "Nick Aslanidis (@naslanidis)"
 extends_documentation_fragment:
     - aws
     - ec2
