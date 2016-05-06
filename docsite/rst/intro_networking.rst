@@ -12,17 +12,17 @@ Starting with Ansible version 2.1, you can now use the familiar Ansible models o
 
 Ansible currently supports the following networking devices:
 
-* Arista EOS (cli, eapi)
-* Cisco NXOS (cli, nxapi)
-* Cisco IOS (cli)
-* Cisco IOSXR (cli, netconf)
-* Cumulus Linux (ssh)
-* Juniper JUNOS (cli, netconf)
-* OpenSwitch (ssh, cli, rest)
+* Arista EOS 
+* Cisco NXOS 
+* Cisco IOS 
+* Cisco IOSXR 
+* Cumulus Linux 
+* Juniper JUNOS 
+* OpenSwitch
 
 .. _networking_prerequisites:
 
-Network Management Prerequisites
+Network Automation Prerequisites
 ````````````````````````
 
 TBD
@@ -30,7 +30,7 @@ TBD
 
 .. _networking_installation:
 
-Network Management Installation
+Network Automation Installation
 ````````````````````````
 
 TBD
@@ -162,10 +162,10 @@ ssh_keyfile ANSIBLE_NET_SSH_KEYFILE
 authorize ANSIBLE_NET_AUTHORIZE
 auth_pass ANSIBLE_NET_AUTH_PASS
 
-Environment variables are evaulated in the following order, list from lowest to highest priority:
+Variables are evaulated in the following order, list from lowest to highest priority:
 
 * Default
-* Environmet
+* Environment
 * Provider
 * Task arguments
 
@@ -184,15 +184,15 @@ To see what modules are available for networking devices, please browse the `"ne
 Conditionals in Networking Modules
 ````````````````````````
 
-Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking modules use unique conditional statements.
+Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use unique conditional statements.
 
-* eq - Equal.
+* eq - Equal
 * neq - Not equal
 * gt - Greater than
 * ge - Greater than or equal
 * lt - Less than
 * le - Less than or equal
-* contains - 
+* contains - Object contains specified item
 
 
 
