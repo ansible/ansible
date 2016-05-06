@@ -250,19 +250,18 @@ class TestTaskExecutor(unittest.TestCase):
         new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'b', 'c']])
 
-        job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "c": "baz" })
+        job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "foo": "baz", "bar": "quux" })
         items = [['a', 'b'], ['foo', 'bar']]
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ packages[item] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
+        self.assertEqual(new_items, [['foo', 'baz', 'quux']])
 
-        items = ['a', 'b', 'c']
+        items = ['a', 'b', 'foo']
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ packages[item] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
-        self.assertEqual(new_items, [['foo', 'bar', 'baz']])
+        self.assertEqual(new_items, [['foo', 'baz']])
 
         #
         # These are presently not optimized but could be in the future.
@@ -280,9 +279,9 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict(pkg_mgr='yum')
         items = [{'package': 'foo'}, {'package': 'bar'}]
         mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ items["package"] }}'}
+        mock_task.args = {'name': '{{ item["package"] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
+        self.assertEqual(new_items, [['foo', 'bar']])
 
         # Could do something like this to recover from bad deps in a package
         job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
@@ -296,6 +295,7 @@ class TestTaskExecutor(unittest.TestCase):
         # Smoketests -- these won't optimize but make sure that they don't
         # traceback either
         #
+        items = ['a', 'b', 'c']
         mock_task.action = '{{unknown}}'
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)

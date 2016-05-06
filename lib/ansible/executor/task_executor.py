@@ -280,6 +280,9 @@ class TaskExecutor:
             task_action = templar.template(task_action, fail_on_undefined=False)
 
         if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
+            # flatten lists of lists
+            if all([isinstance(item, list) for item in items]):
+                items = [x for y in items for x in y]
             # use list rather than set to preserve ordering
             final_items = list()
 
