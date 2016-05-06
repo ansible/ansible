@@ -95,7 +95,7 @@ class Cli(object):
 
         try:
             self.shell = Shell()
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, allow_agent=True)
         except ShellError:
             e = get_exception()
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
