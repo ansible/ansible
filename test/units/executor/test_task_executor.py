@@ -195,7 +195,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_queue = MagicMock()
 
         new_stdin = None
-        job_vars = dict(pkg_mgr='yum')
+        job_vars = dict(pkg_mgr='yum', package_map=dict(a='z', b='y', c='x'))
 
         te = TaskExecutor(
             host = mock_host,
@@ -228,7 +228,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args={'name': '{{pkg_mgr}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertEqual(new_items, [['yum']])
 
         #
         # Replaces
@@ -243,20 +243,37 @@ class TestTaskExecutor(unittest.TestCase):
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
 
-        #
-        # Smoketests -- these won't optimize but make sure that they don't
-        # traceback either
-        #
-        mock_task.action = '{{unknown}}'
-        mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
+        # New loop_var
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{a_loop_var_item}}'}
+        mock_task.loop_control = {'loop_var': 'a_loop_var_item'}
+        new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
+        self.assertEqual(new_items, [['a', 'b', 'c']])
 
+        job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "c": "baz" })
+        items = [['a', 'b'], ['foo', 'bar']]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages[item] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
+
+        items = ['a', 'b', 'c']
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages[item] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+        self.assertEqual(new_items, [['foo', 'bar', 'baz']])
+
+        #
+        # These are presently not optimized but could be in the future.
+        # Expected output if they were optimized is given as a comment
+        # Please move these to a different section if they are optimized
+        #
         items = [dict(name='a', state='present'),
                 dict(name='b', state='present'),
                 dict(name='c', state='present')]
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{item}}'}
+        mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, items)
 
@@ -276,27 +293,13 @@ class TestTaskExecutor(unittest.TestCase):
         self.assertEqual(new_items, items)
 
         #
-        # These are presently not optimized but could be in the future.
-        # Expected output if they were optimized is given as a comment
-        # Please move these to a different section if they are optimized
+        # Smoketests -- these won't optimize but make sure that they don't
+        # traceback either
         #
-
-        job_vars = dict(pkg_mgr='yum')
-        items = [['a', 'b'], ['foo', 'bar']]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ packages[item] }}'}
+        mock_task.action = '{{unknown}}'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
-        #self.assertEqual(new_items, ['a', 'b', 'foo', 'bar'])
-
-        ### Enable this when we've fixed https://github.com/ansible/ansible/issues/15649
-        #job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "c": "baz" })
-        #items = ['a', 'b', 'c']
-        #mock_task.action = 'yum'
-        #mock_task.args = {'name': '{{ packages[item] }}'}
-        #new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, items)
-        #self.assertEqual(new_items, ['foo', 'bar', 'baz'])
+        self.assertEqual(new_items, ['a', 'b', 'c'])
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})
