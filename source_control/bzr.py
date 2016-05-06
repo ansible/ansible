@@ -143,7 +143,7 @@ class Bzr(object):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            dest=dict(required=True),
+            dest=dict(required=True, type='path'),
             name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
             force=dict(default='no', type='bool'),
@@ -151,7 +151,7 @@ def main():
         )
     )
 
-    dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
+    dest    = module.params['dest']
     parent  = module.params['name']
     version = module.params['version']
     force   = module.params['force']
