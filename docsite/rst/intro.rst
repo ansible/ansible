@@ -15,4 +15,5 @@ Before we dive into the really fun parts -- playbooks, configuration management,
    intro_configuration
    intro_bsd
    intro_windows
+   intro_networking
 
