@@ -260,6 +260,44 @@ class TestTaskExecutor(unittest.TestCase):
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, items)
 
+        job_vars = dict(pkg_mgr='yum')
+        items = [{'package': 'foo'}, {'package': 'bar'}]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ items["package"] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+
+        # Could do something like this to recover from bad deps in a package
+        job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
+        items = [ 'absent', 'latest' ]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+
+        #
+        # These are presently not optimized but could be in the future.
+        # Expected output if they were optimized is given as a comment
+        # Please move these to a different section if they are optimized
+        #
+
+        job_vars = dict(pkg_mgr='yum')
+        items = [['a', 'b'], ['foo', 'bar']]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages[item] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+        #self.assertEqual(new_items, ['a', 'b', 'foo', 'bar'])
+
+        ### Enable this when we've fixed https://github.com/ansible/ansible/issues/15649
+        #job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "c": "baz" })
+        #items = ['a', 'b', 'c']
+        #mock_task.action = 'yum'
+        #mock_task.args = {'name': '{{ packages[item] }}'}
+        #new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        #self.assertEqual(new_items, items)
+        #self.assertEqual(new_items, ['foo', 'bar', 'baz'])
+
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})
 
