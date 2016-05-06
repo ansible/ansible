@@ -34,6 +34,8 @@ from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.plugins import module_loader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
+from module_args import get_argument_spec
+
 from schema import doc_schema, option_schema
 
 from utils import CaptureStd
@@ -125,12 +127,14 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path):
+    def __init__(self, path, analyze_arg_spec=False):
         super(ModuleValidator, self).__init__()
 
         self.path = path
         self.basename = os.path.basename(self.path)
         self.name, _ = os.path.splitext(self.basename)
+
+        self.analyze_arg_spec = analyze_arg_spec
 
         self._python_module_override = False
 
@@ -442,6 +446,16 @@ class ModuleValidator(Validator):
             self.errors.append('version_added should be %s. Currently %s' %
                                (should_be, version_added))
 
+    def _validate_argument_spec(self):
+        if not self.analyze_arg_spec:
+            return
+        spec = get_argument_spec(self.path)
+        for arg, data in spec.items():
+            if data.get('required') and data.get('default', object) != object:
+                self.errors.append('"%s" is marked as required but specifies '
+                                   'a default. Arguments with a default '
+                                   'should not be marked as required' % arg)
+
     def _check_for_new_args(self, doc):
         if self._is_new_module():
             return
@@ -530,6 +544,7 @@ class ModuleValidator(Validator):
             self._validate_docs()
 
         if self._python_module() and not self._just_docs():
+            self._validate_argument_spec()
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()
@@ -593,6 +608,8 @@ def main():
                         action='store_true')
     parser.add_argument('--exclude', help='RegEx exclusion pattern',
                         type=re_compile)
+    parser.add_argument('--arg-spec', help='Analyze module argument spec',
+                        action='store_true', default=False)
     args = parser.parse_args()
 
     args.modules[:] = [m.rstrip('/') for m in args.modules]
@@ -604,7 +621,7 @@ def main():
             path = module
             if args.exclude and args.exclude.search(path):
                 sys.exit(0)
-            mv = ModuleValidator(path)
+            mv = ModuleValidator(path, analyze_arg_spec=args.arg_spec)
             mv.validate()
             exit.append(mv.report(args.warnings))
 
@@ -626,7 +643,7 @@ def main():
                 path = os.path.join(root, filename)
                 if args.exclude and args.exclude.search(path):
                     continue
-                mv = ModuleValidator(path)
+                mv = ModuleValidator(path, analyze_arg_spec=args.arg_spec)
                 mv.validate()
                 exit.append(mv.report(args.warnings))
 
@@ -634,4 +651,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
