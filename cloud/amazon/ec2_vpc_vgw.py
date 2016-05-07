@@ -22,7 +22,7 @@ description:
   - Deletes AWS VPN Virtual Gateways
   - Attaches Virtual Gateways to VPCs
   - Detaches Virtual Gateways from VPCs
-version_added: "2.1"
+version_added: "2.2"
 requirements: [ boto3 ]
 options:
   state:
@@ -139,7 +139,7 @@ def get_vgw_info(vgws):
         for tag in vgw['Tags']:
             vgw_info['tags'][tag['Key']] = tag['Value']
 
-        if len(vgw['VpcAttachments']) != 0:
+        if len(vgw['VpcAttachments']) != 0 and vgw['VpcAttachments'][0]['State'] == 'attached':
             vgw_info['vpc_id'] = vgw['VpcAttachments'][0]['VpcId']
 
         return vgw_info
@@ -537,7 +537,7 @@ def ensure_vgw_absent(client, module):
             changed = False
             deleted_vgw = None
 
-    result = get_vgw_info(deleted_vgw)
+    result = deleted_vgw
     return changed, result
 
 
