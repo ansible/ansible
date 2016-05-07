@@ -88,9 +88,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    
-if not HAS_BOTO:
-    module.fail_json(msg='boto required for this module')
 
 def copy_image(module, ec2):
     """
@@ -179,6 +176,9 @@ def main():
         tags=dict(type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     try:
         ec2 = ec2_connect(module)
