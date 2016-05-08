@@ -101,6 +101,12 @@ options:
             - "List of all Profiles (HTTP,ClientSSL,ServerSSL,etc) that must be used by the virtual server"
         required: false
         default: None
+    all_rules:
+        version_added: "2.2"
+        description:
+            - "List of rules to be applied in priority order"
+        required: false
+        default: None
     pool:
         description:
             - "Default pool for the virtual server"
@@ -227,9 +233,38 @@ def vs_create(api,name,destination,port,pool):
 def vs_remove(api,name):
     api.LocalLB.VirtualServer.delete_virtual_server(virtual_servers = [name ])
 
+
+def get_rules(api,name):
+    return api.LocalLB.VirtualServer.get_rule(virtual_servers = [name])[0]
+
+
+def set_rules(api,name,rules_list):
+    updated=False
+    if rules_list is None:
+        return False
+    rules_list = list(enumerate(rules_list))
+    try:
+        current_rules=map(lambda x: (x['priority'], x['rule_name']), get_rules(api,name))
+        to_add_rules=[]
+        for i, x in rules_list:
+            if (i ,x) not in current_rules:
+                to_add_rules.append({'priority': i, 'rule_name': x})
+        to_del_rules=[]
+        for i, x in current_rules:
+            if (i, x) not in rules_list:
+                to_del_rules.append({'priority': i, 'rule_name': x})
+        if len(to_del_rules)>0:
+            api.LocalLB.VirtualServer.remove_rule(virtual_servers = [name],rules = [to_del_rules])
+            updated=True
+        if len(to_add_rules)>0:
+            api.LocalLB.VirtualServer.add_rule(virtual_servers = [name],rules= [to_add_rules])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting profiles : %s' % e)
+
 def get_profiles(api,name):
     return api.LocalLB.VirtualServer.get_profile(virtual_servers = [name])[0]
-
 
 
 def set_profiles(api,name,profiles_list):
@@ -380,6 +415,7 @@ def main():
             destination = dict(type='str', aliases=['address', 'ip']),
             port = dict(type='int'),
             all_profiles = dict(type='list'),
+            all_rules = dict(type='list'),
             pool=dict(type='str'),
             description = dict(type='str'),
             snat=dict(type='str'),
@@ -411,6 +447,7 @@ def main():
     destination=module.params['destination']
     port=module.params['port']
     all_profiles=fq_list_names(partition,module.params['all_profiles'])
+    all_rules=fq_list_names(partition,module.params['all_rules'])
     pool=fq_name(partition,module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
@@ -454,6 +491,7 @@ def main():
                     try:
                         vs_create(api,name,destination,port,pool)
                         set_profiles(api,name,all_profiles)
+                        set_rules(api,name,all_rules)
                         set_snat(api,name,snat)
                         set_description(api,name,description)
                         set_default_persistence_profiles(api,name,default_persistence_profile)
@@ -478,6 +516,7 @@ def main():
                         result['changed']|=set_description(api,name,description)
                         result['changed']|=set_snat(api,name,snat)
                         result['changed']|=set_profiles(api,name,all_profiles)
+                        result['changed']|=set_rules(api,name,all_rules)
                         result['changed']|=set_default_persistence_profiles(api,name,default_persistence_profile)
                         result['changed']|=set_state(api,name,state)
                         api.System.Session.submit_transaction()
