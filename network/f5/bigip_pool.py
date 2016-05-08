@@ -133,6 +133,14 @@ options:
         default: null
         choices: []
         aliases: []
+    reselect_tries:
+        description:
+            - Sets the number of times the system tries to contact a pool member after a passive failure
+        version_added: "2.2"
+        required: False
+        default: null
+        choices: []
+        aliases: []
     service_down_action:
         description:
             - Sets the action to take when node goes down in pool
@@ -284,6 +292,13 @@ def get_slow_ramp_time(api, pool):
 def set_slow_ramp_time(api, pool, seconds):
     api.LocalLB.Pool.set_slow_ramp_time(pool_names=[pool], values=[seconds])
 
+def get_reselect_tries(api, pool):
+    result = api.LocalLB.Pool.get_reselect_tries(pool_names=[pool])[0]
+    return result
+
+def set_reselect_tries(api, pool, tries):
+    api.LocalLB.Pool.set_reselect_tries(pool_names=[pool], values=[tries])
+
 def get_action_on_service_down(api, pool):
     result = api.LocalLB.Pool.get_action_on_service_down(pool_names=[pool])[0]
     result = result.split("SERVICE_DOWN_ACTION_")[-1].lower()
@@ -356,6 +371,7 @@ def main():
             quorum = dict(type='int'),
             monitors = dict(type='list'),
             slow_ramp_time = dict(type='int'),
+            reselect_tries = dict(type='int'),
             service_down_action = dict(type='str', choices=service_down_choices),
             host = dict(type='str', aliases=['address']),
             port = dict(type='int')
@@ -397,6 +413,7 @@ def main():
         for monitor in module.params['monitors']:
                 monitors.append(fq_name(partition, monitor))
     slow_ramp_time = module.params['slow_ramp_time']
+    reselect_tries = module.params['reselect_tries']
     service_down_action = module.params['service_down_action']
     if service_down_action:
         service_down_action = service_down_action.lower()
@@ -487,6 +504,8 @@ def main():
                             set_monitors(api, pool, monitor_type, quorum, monitors)
                         if slow_ramp_time:
                             set_slow_ramp_time(api, pool, slow_ramp_time)
+                        if reselect_tries:
+                            set_reselect_tries(api, pool, reselect_tries)
                         if service_down_action:
                             set_action_on_service_down(api, pool, service_down_action)
                         if host and port:
@@ -512,6 +531,10 @@ def main():
                 if slow_ramp_time and slow_ramp_time != get_slow_ramp_time(api, pool):
                     if not module.check_mode:
                         set_slow_ramp_time(api, pool, slow_ramp_time)
+                    result = {'changed': True}
+                if reselect_tries and reselect_tries != get_reselect_tries(api, pool):
+                    if not module.check_mode:
+                        set_reselect_tries(api, pool, reselect_tries)
                     result = {'changed': True}
                 if service_down_action and service_down_action != get_action_on_service_down(api, pool):
                     if not module.check_mode:
