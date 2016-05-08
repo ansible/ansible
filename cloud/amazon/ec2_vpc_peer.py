@@ -150,7 +150,10 @@ EXAMPLES = '''
     peering_id: "{{ vpc_peer.peering_id }}"
     profile: bot03_profile_for_cross_account
     state: accept
-
+    tags:
+      Name: Peering conenction for VPC 21 to VPC 22
+      CostCode: CC1234
+      Project: phoenix
 
 # Complete example to create and reject a cross account peering connection.
 - name: Create cross account VPC peering Connection
@@ -281,6 +284,8 @@ def accept_reject_delete(state, client, module):
     if state == 'absent' or peer_status(client, module) != 'active':
         try:
             invocations[state](**params)
+            if module.params.get('tags'):
+                create_tags(params['VpcPeeringConnectionId'], client, module)
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
