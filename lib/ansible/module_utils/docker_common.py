@@ -21,6 +21,7 @@ import re
 import json
 import sys
 import copy
+import logging
 
 from urlparse import urlparse
 from ansible.module_utils.basic import *
@@ -45,6 +46,7 @@ DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 MIN_DOCKER_VERSION = "1.7.0"
+DEVELOPMENT_MODE = False
 
 DOCKER_COMMON_ARGS = dict(
     docker_host=dict(type='str', aliases=['docker_url']),
@@ -104,26 +106,31 @@ def human_to_bytes(number):
     raise ValueError("Failed to convert %s. The suffix must be one of %s" % (number, ','.join(BYTE_SUFFIXES)))
 
 
+def log_msg(data, pretty_print=False):
+    if pretty_print:
+        return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+    return data
+
+
 class DockerBaseClass(object):
 
     def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.debug = False
 
-    def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if DEVELOPMENT_MODE:
+            self.debug = True
 
+    def log(self, msg, pretty_print=False):
+        if DEVELOPMENT_MODE and self.debug:
+            self.logger.debug(log_msg(msg, pretty_print=pretty_print))
 
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
                  required_together=None, required_if=None):
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -159,6 +166,9 @@ class AnsibleDockerClient(Client):
         self.check_mode = self.module.check_mode   
         self._connect_params = self._get_connect_params()
 
+        if DEVELOPMENT_MODE:
+            logging.basicConfig(level=logging.DEBUG, filename='docker.log')
+
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
         except APIError, exc:
@@ -167,14 +177,8 @@ class AnsibleDockerClient(Client):
             self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if DEVELOPMENT_MODE and self.debug:
+            self.logger.debug(log_msg(msg, pretty_print=pretty_print))
 
     def fail(self, msg):
         self.module.fail_json(msg=msg)
