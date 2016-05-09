@@ -1400,7 +1400,7 @@ class AnsibleModule(object):
         # Return a jsonified string.  Sometimes the controller turns a json
         # string into a dict/list so transform it back into json here
         if isinstance(value, (unicode, bytes)):
-            return value
+            return value.strip()
         else:
             if isinstance(value (list, tuple, dict)):
                 return json.dumps(value)
