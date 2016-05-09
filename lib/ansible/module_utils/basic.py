@@ -54,6 +54,8 @@ import pwd
 import platform
 import errno
 import datetime
+import logging
+
 from itertools import repeat, chain
 
 try:
@@ -550,7 +552,9 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
+        self.debug_logger = None
         self._debug = False
+        self._remote_log_target = None
         self._diff = False
         self._verbosity = 0
         # May be used to set modifications to the environment for any
@@ -558,7 +562,8 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff',
+                              '_ansible_verbosity', '_ansible_remote_log_target']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -623,6 +628,10 @@ class AnsibleModule(object):
 
         if not self.no_log and self._verbosity >= 3:
             self._log_invocation()
+
+        if not self.no_log and self._debug and self._remote_log_target:
+            self.debug_logger = logging.getLogger(self.__class__.__name__)
+            logging.basicConfig(level=logging.DEBUG, filename=self._remote_log_target)
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
@@ -1188,6 +1197,9 @@ class AnsibleModule(object):
             elif k == '_ansible_debug':
                 self._debug = self.boolean(v)
 
+            elif k == '_ansible_remote_log_target':
+                self._remote_log_target = v
+
             elif k == '_ansible_diff':
                 self._diff = self.boolean(v)
 
@@ -1518,9 +1530,16 @@ class AnsibleModule(object):
             syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
 
-    def debug(self, msg):
+    def debug(self, msg, pretty_print=False):
         if self._debug:
-            self.log(msg)
+            if self.debug_logger:
+                if pretty_print:
+                    msg_txt = json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': '))
+                else:
+                    msg_txt = msg
+                self.debug_logger.debug(remove_values(msg_txt, self.no_log_values))
+            else:
+                self.log(msg)
 
     def log(self, msg, log_args=None):
 
