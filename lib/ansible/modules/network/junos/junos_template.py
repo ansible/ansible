@@ -62,22 +62,13 @@ options:
         is set to False, this argument is silently ignored.
     required: false
     default: configured by junos_template
-  merge:
+  action:
     description:
-      - The C(merge) argument instructs the module to merge the contents
-        of C(src) with the configuration running on the remote device.  If
-        both C(merge) and C(overwrite) are set to false, the configuration
-        is replaced.
+      - The C(action) argument specifies how the module will apply changes.
     required: false
-    default: true
-  overwrite:
-    description:
-      - The C(overwrite) argument will overwrite the entire configuration
-        on the remote device with the contents loaded from C(src).  If
-        both C(merge) and C(overwrite) are set to false, the configuration
-        is replaced.
-    required: false
-    default: false
+    default: merge
+    choices: ['merge', 'overwrite', 'replace']
+    version_added: "2.2"
   config_format:
     description:
       - The C(format) argument specifies the format of the configuration
@@ -103,11 +94,11 @@ EXAMPLES = """
 
 - name: replace config hierarchy
     src: config.j2
-    replace: yes
+    action: replace
 
 - name: overwrite the config
     src: config.j2
-    overwrite: yes
+    action: overwrite
 """
 
 DEFAULT_COMMENT = 'configured by junos_template'
@@ -118,39 +109,27 @@ def main():
         src=dict(required=True, type='path'),
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
-        merge=dict(default=True, type='bool'),
-        overwrite=dict(default=False, type='bool'),
+        action=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
         config_format=dict(choices=['text', 'set', 'xml']),
         backup=dict(default=False, type='bool'),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    mutually_exclusive = [('merge', 'overwrite')]
-
     module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
     comment = module.params['comment']
     confirm = module.params['confirm']
     commit = not module.check_mode
 
-    merge = module.params['merge']
-    overwrite = module.params['overwrite']
+    action = module.params['action']
 
     src = module.params['src']
     fmt = module.params['config_format']
 
-    if overwrite and fmt == 'set':
+    if action == 'overwrite' and fmt == 'set':
         module.fail_json(msg="overwrite cannot be used when format is "
             "set per junos documentation")
-
-    if merge:
-        action = 'merge'
-    elif overwrite:
-        action = 'overwrite'
-    else:
-        action = 'replace'
 
     results = dict(changed=False)
     results['_backup'] = str(module.get_config()).strip()
