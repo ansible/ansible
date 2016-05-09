@@ -68,12 +68,14 @@
 - name: test https fetch
   get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
   register: result
+  tags: ['external_url', 'githubusercontent.com']
 
 - name: assert the get_url call was successful
   assert:
     that:
     - result.changed 
     - '"OK" in result.msg'
+  tags: ['external_url', 'raw.githubusercontent.com']
 
 - name: test https fetch to a site with mismatched hostname and certificate
   get_url:
@@ -87,10 +89,12 @@
   until: "'read operation timed out' not in result.msg"
   retries: 30
   delay: 10
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
   register: stat_result
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: Assert that the file was not downloaded
   assert:
@@ -98,6 +102,7 @@
       - "result.failed == true"
       - "'Failed to validate the SSL certificate' in result.msg"
       - "stat_result.stat.exists == false"
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
@@ -108,16 +113,19 @@
   until: "'read operation timed out' not in result.msg"
   retries: 30
   delay: 10
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"
   register: stat_result
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: Assert that the file was downloaded
   assert:
     that:
       - "result.changed == true"
       - "stat_result.stat.exists == true"
+  tags: ['external_url', 'www.kennethreitz.org']
 
 # At the moment, AWS can't make an https request to velox.ch... connection
 # timed out.  So we'll use a different test until/unless the problem is resolved
@@ -159,10 +167,12 @@
     dest: "{{ output_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
+  tags: ['external_url', 'www.mnot.net']
 
 - command: "grep '<h2>If You Can Read This, You.re SNIing</h2>' {{ output_dir}}/sni.html"
   register: data_result
   when: "{{ python_has_ssl_context }}"
+  tags: ['external_url', 'www.mnot.net']
 
 - debug: var=get_url_result
 - name: Assert that SNI works with this python version
@@ -171,6 +181,7 @@
       - 'data_result.rc == 0'
       - '"failed" not in get_url_result'
   when: "{{ python_has_ssl_context }}"
+  tags: ['external_url', 'www.mnot.net']
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
@@ -178,12 +189,14 @@
     that:
       - 'get_url_result["failed"]'
   when: "{{ not python_has_ssl_context }}"
+  tags: ['external_url', 'www.mnot.net']
 # End hacky SNI test section
 
 - name: Test get_url with redirect
   get_url:
     url: 'http://httpbin.org/redirect/6'
     dest: "{{ output_dir }}/redirect.json"
+  tags: ['external_url', 'httpbin.org']
 
 - name: Test that setting file modes work
   get_url:
@@ -191,16 +204,19 @@
     dest: '{{ output_dir }}/test'
     mode: '0707'
   register: result
+  tags: ['external_url', 'httpbin.org']
 
 - stat:
     path: "{{ output_dir }}/test"
   register: stat_result
+  tags: ['external_url', 'httpbin.org']
 
 - name: Assert that the file has the right permissions
   assert:
     that:
       - "result.changed == true"
       - "stat_result.stat.mode == '0707'"
+  tags: ['external_url', 'httpbin.org']
 
 - name: Test that setting file modes on an already downlaoded file work
   get_url:
@@ -208,13 +224,16 @@
     dest: '{{ output_dir }}/test'
     mode: '0070'
   register: result
+  tags: ['external_url', 'httpbin.org']
 
 - stat:
     path: "{{ output_dir }}/test"
   register: stat_result
+  tags: ['external_url', 'httpbin.org']
 
 - name: Assert that the file has the right permissions
   assert:
     that:
       - "result.changed == true"
       - "stat_result.stat.mode == '0070'"
+  tags: ['external_url', 'httpbin.org']

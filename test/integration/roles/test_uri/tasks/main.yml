@@ -104,6 +104,7 @@
   until: "'read operation timed out' not in result.msg"
   retries: 30
   delay: 10
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
@@ -115,11 +116,13 @@
       - "result.failed == true"
       - "'Failed to validate the SSL certificate' in result.msg"
       - "stat_result.stat.exists == false"
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Clean up any cruft from the results directory
   file:
     name: "{{ output_dir }}/kreitz.html"
     state: absent
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
@@ -130,16 +133,19 @@
   until: "'read operation timed out' not in result.msg"
   retries: 30
   delay: 10
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"
   register: stat_result
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: Assert that the file was downloaded
   assert:
     that:
       - "stat_result.stat.exists == true"
       - "result.changed == true"
+  tags: ['external_url', 'www.kennethreitz.org']
 
 - name: test redirect without follow_redirects
   uri:
@@ -147,39 +153,46 @@
     follow_redirects: 'none'
     status_code: 302
   register: result
+  tags: ['external_url', 'httpbin.org']
 
 - name: Assert location header
   assert:
     that:
       - 'result.location|default("") == "http://httpbin.org/relative-redirect/1"'
+  tags: ['external_url', 'httpbin.org']
 
 - name: Check SSL with redirect
   uri:
     url: 'https://httpbin.org/redirect/2'
   register: result
+  tags: ['external_url', 'httpbin.org']
 
 - name: Assert SSL with redirect
   assert:
     that:
       - 'result.url|default("") == "https://httpbin.org/get"'
+  tags: ['external_url', 'httpbin.org']
 
 - name: redirect to bad SSL site
   uri:
     url: 'http://wrong.host.badssl.com'
   register: result
   ignore_errors: true
+  tags: ['external_url', 'badssl.com']
 
 - name: Ensure bad SSL site reidrect fails
   assert:
     that:
       - result|failed
       - '"wrong.host.badssl.com" in result.msg'
+  tags: ['external_url', 'badssl.com']
 
 - name: test basic auth
   uri:
     url: 'http://httpbin.org/basic-auth/user/passwd'
     user: user
     password: passwd
+  tags: ['external_url', 'httpbin.org']
 
 - name: test basic forced auth
   uri:
@@ -187,23 +200,27 @@
     force_basic_auth: true
     user: user
     password: passwd
+  tags: ['external_url', 'httpbin.org']
 
 - name: test PUT
   uri:
     url: 'http://httpbin.org/put'
     method: PUT
     body: 'foo=bar'
+  tags: ['external_url', 'httpbin.org']
 
 - name: test OPTIONS
   uri:
     url: 'http://httpbin.org/'
     method: OPTIONS
   register: result
+  tags: ['external_url', 'httpbin.org']
 
 - name: Assert we got an allow header
   assert:
     that:
       - 'result.allow|default("") == "HEAD, OPTIONS, GET"'
+  tags: ['external_url', 'httpbin.org']
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
@@ -217,6 +234,7 @@
     return_content: true
   when: ansible_python.has_sslcontext
   register: result
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Assert SNI verification succeeds on new python
   assert:
@@ -224,6 +242,7 @@
       - result|success
       - '"Great! Your client" in result.content'
   when: ansible_python.has_sslcontext
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
   uri:
@@ -231,12 +250,14 @@
   ignore_errors: true
   when: not ansible_python.has_sslcontext
   register: result
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Assert SNI verification fails on old python
   assert:
     that:
       - result|failed
   when: not result|skipped
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: install OS packages that are needed for SNI on old python
   package:
@@ -257,6 +278,7 @@
     return_content: true
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
   register: result
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Assert SNI verification succeeds on old python
   assert:
@@ -264,6 +286,7 @@
       - result|success
       - '"Great! Your client" in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  tags: ['external_url', 'sni.velox.ch']
 
 - name: Uninstall ndg-httpsclient and urllib3
   pip:
@@ -286,3 +309,4 @@
     status_code: 202
     method: POST
     body: foo
+  tags: ['external_url', 'https', 'httpbin']

@@ -4,6 +4,12 @@ set -e
 set -u
 set -x
 
+# On pull request builds, skip any tests that we know make external url requests
+TEST_FLAGS="${TEST_FLAGS:-}"
+if [ "${TRAVIS_PULL_REQUEST:-"false"}" != "false" ] ; then
+    TEST_FLAGS="${TEST_FLAGS} --skip-tags external_url"
+fi
+
 if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/replace-urlopen.sh .
     ./test/code-smell/use-compat-six.sh lib
