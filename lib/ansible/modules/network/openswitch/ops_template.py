@@ -195,7 +195,7 @@ def main():
         updates = dict()
         for path, key, new_value, old_value in changeset:
             path = '%s.%s' % ('.'.join(path), key)
-            updates[path] = new_value
+            updates[path] = str(new_value)
         result['updates'] = updates
 
         if changeset:
