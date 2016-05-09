@@ -179,7 +179,7 @@ class Facts(object):
         # about those first.
         if load_on_init:
             self.get_platform_facts()
-            self.facts.update(Distribution().populate())
+            self.facts.update(Distribution(module).populate())
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
@@ -647,17 +647,19 @@ class Distribution(object):
         FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
     )
 
-    def __init__(self):
+    def __init__(self, module):
         self.system = platform.system()
         self.facts = {}
+        self.module = module
 
     def populate(self):
         if self.system == 'Linux':
             self.get_distribution_facts()
+        elif self.system == 'Darwin':
+            self.get_distribution_facts()
         return self.facts
 
     def get_distribution_facts(self):
-
         # The platform module provides information about the running
         # system/distribution. Use this as a baseline and fix buggy systems
         # afterwards
