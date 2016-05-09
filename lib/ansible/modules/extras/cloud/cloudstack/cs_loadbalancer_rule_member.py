@@ -50,7 +50,7 @@ options:
   state:
     description:
       - Should the VMs be present or absent from the rule.
-    required: true
+    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   project:
@@ -101,19 +101,19 @@ EXAMPLES = '''
   pre_tasks:
     - name: Remove from load balancer
       local_action:
-      module: cs_loadbalancer_rule_member
-      name: balance_http
-      vm: "{{ ansible_hostname }}"
-      state: absent
+        module: cs_loadbalancer_rule_member
+        name: balance_http
+        vm: "{{ ansible_hostname }}"
+        state: absent
   tasks:
     # Perform update
   post_tasks:
     - name: Add to load balancer
       local_action:
-      module: cs_loadbalancer_rule_member
-      name: balance_http
-      vm: "{{ ansible_hostname }}"
-      state: present
+        module: cs_loadbalancer_rule_member
+        name: balance_http
+        vm: "{{ ansible_hostname }}"
+        state: present
 '''
 
 RETURN = '''
