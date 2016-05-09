@@ -653,10 +653,7 @@ class Distribution(object):
         self.module = module
 
     def populate(self):
-        if self.system == 'Linux':
-            self.get_distribution_facts()
-        elif self.system == 'Darwin':
-            self.get_distribution_facts()
+        self.get_distribution_facts()
         return self.facts
 
     def get_distribution_facts(self):
@@ -678,7 +675,7 @@ class Distribution(object):
             cleanedname = self.system.replace('-','')
             distfunc = getattr(self, 'get_distribution_'+cleanedname)
             distfunc()
-        else:
+        elif self.system == 'Linux':
             # try to find out which linux distribution this is
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
