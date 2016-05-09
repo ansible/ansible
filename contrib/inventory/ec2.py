@@ -552,7 +552,10 @@ class Ec2Inventory(object):
             if 'LatestRestorableTime' in c:
                 del c['LatestRestorableTime']
 
-            matches_filter = False
+            if self.ec2_instance_filters == {}:
+                matches_filter = True
+            else:
+                matches_filter = False
 
             try:
                 # arn:aws:rds:<region>:<account number>:<resourcetype>:<name>
