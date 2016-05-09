@@ -476,7 +476,7 @@ class CLI(object):
                 display.display(text)
             else:
                 self.pager_pipe(text, os.environ['PAGER'])
-        elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
+        elif subprocess.call('(less --version) &> /dev/null', shell = True) == 0:
             self.pager_pipe(text, 'less')
         else:
             display.display(text)
