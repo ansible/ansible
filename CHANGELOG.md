@@ -13,6 +13,7 @@ Ansible Changes By Release
 
 * Backport fix to uri module to return the body of an error response
 * Backport fix to uri module to handle file:/// uris.
+* Backport fix to uri module to fix traceback when handling certain server error types.
 
 ## 2.0.2 "Over the Hills and Far Away"
 
