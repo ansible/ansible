@@ -567,15 +567,12 @@ class Ec2Inventory(object):
                     for filter_key, filter_values in self.ec2_instance_filters.items():
                         # get AWS tag key e.g. tag:env will be 'env'
                         tag_name = filter_key.split(":", 1)[1]
-                        # Filter values is a list (if you put commas into the value it will be multiple items) - ignore the rest of the items for now
-                        matches_filter = any(d['Key'] == tag_name and d['Value'] == filter_values[0] for d in c['Tags'])
+                        # Filter values is a list (if you put multiple values for the same tag name)
+                        matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
 
                         if matches_filter:
-                            # print "Add DB to list"
                             # it matches a filter, so stop looking for further matches
                             break
-                            # else:
-                            # print "ignore this DB, filter out"
 
             except Exception as e:
                 if e.message.find('DBInstanceNotFound') >= 0:
