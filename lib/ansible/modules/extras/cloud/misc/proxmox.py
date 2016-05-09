@@ -98,7 +98,7 @@ options:
       - specifies network interfaces for the container
     default: null
     required: false
-    type: string
+    type:  A hash/dictionary defining interfaces
   ip_address:
     description:
       - specifies the address the container will be assigned
@@ -170,6 +170,9 @@ EXAMPLES = '''
 
 # Create new container with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
 - proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+# Create new container with minimal options defining network interface with dhcp
+- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' netif='{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
 
 # Start container
 - proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=started
@@ -294,7 +297,7 @@ def main():
       cpus = dict(type='int', default=1),
       memory = dict(type='int', default=512),
       swap = dict(type='int', default=0),
-      netif = dict(),
+      netif = dict(type='dict'),
       ip_address = dict(),
       onboot = dict(type='bool', default='no'),
       storage = dict(default='local'),
