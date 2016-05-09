@@ -289,6 +289,8 @@ def accept_reject_delete(state, client, module):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
+    if tags_changed(params['VpcPeeringConnectionId'], client, module):
+        changed = True
     return changed, params['VpcPeeringConnectionId']
 
 
