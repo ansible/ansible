@@ -188,7 +188,7 @@ def check_file_attrs(module, changed, message):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, aliases=['name', 'destfile']),
+            dest=dict(required=True, aliases=['name', 'destfile'], type='path'),
             state=dict(default='present', choices=['absent', 'present']),
             marker=dict(default='# {mark} ANSIBLE MANAGED BLOCK', type='str'),
             block=dict(default='', type='str', aliases=['content']),
@@ -204,7 +204,7 @@ def main():
     )
 
     params = module.params
-    dest = os.path.expanduser(params['dest'])
+    dest = params['dest']
     if module.boolean(params.get('follow', None)):
         dest = os.path.realpath(dest)
 
