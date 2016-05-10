@@ -372,8 +372,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.async = 3
-        mock_task.poll  = 1
+        mock_task.async = 0.1
+        mock_task.poll  = 0.05
 
         mock_play_context = MagicMock()
 
