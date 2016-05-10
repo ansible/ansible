@@ -31,12 +31,6 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-try:
-    from importlib import reload
-except:
-    # Py2 has reload as a builtin
-    pass
-
 from units.mock.procenv import swap_stdin_and_argv
 
 from ansible.compat.tests import unittest
@@ -297,7 +291,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo": "hello"}, ANSIBLE_MODULE_CONSTANTS={}))
 
         with swap_stdin_and_argv(stdin_data=args):
-            reload(basic)
+            basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec = arg_spec,
                 mutually_exclusive = mut_ex,
@@ -314,7 +308,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
 
         with swap_stdin_and_argv(stdin_data=args):
-            reload(basic)
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
@@ -361,7 +355,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -410,7 +404,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -430,7 +424,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_initial_context(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -444,7 +438,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_enabled(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -476,7 +470,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_default_context(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -512,7 +506,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_selinux_context(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -554,7 +548,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_is_special_selinux_path(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={"SELINUX_SPECIAL_FS": "nfs,nfsd,foos"}))
 
@@ -599,7 +593,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_to_filesystem_str(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -624,7 +618,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_find_mount_point(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -648,7 +642,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_context_if_different(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -693,7 +687,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -732,7 +726,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -771,7 +765,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     def test_module_utils_basic_ansible_module_set_mode_if_different(self):
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -859,7 +853,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         ):
 
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -1037,7 +1031,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
     def test_module_utils_basic_ansible_module__symbolic_mode_to_octal(self):
 
         from ansible.module_utils import basic
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
