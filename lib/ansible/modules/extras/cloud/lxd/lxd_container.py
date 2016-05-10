@@ -94,25 +94,24 @@ EXAMPLES = """
 
 RETURN="""
 lxd_container:
-    description: container information
-    returned: success
-    type: object
-    contains:
-        addresses:
-            description: mapping from the network device name to a list
-                         of IPv4 addresses in the container
-            returned: when state is started or restarted
-            type: object
-            sample: {"eth0": ["10.155.92.191"]}
-        old_state:
-            description: the old state of the container
-            returned: when state is started or restarted
-            sample: "stopped"
-        logs": ["started"],
-            description: list of actions performed for the container
-            returned: success
-            type: list
-            sample: ["created", "started"]
+  description: container information
+  returned: success
+  type: object
+  contains:
+    addresses:
+      description: mapping from the network device name to a list of IPv4 addresses in the container
+      returned: when state is started or restarted
+      type: object
+      sample: {"eth0": ["10.155.92.191"]}
+    old_state:
+      description: the old state of the container
+      returned: when state is started or restarted
+      sample: "stopped"
+    logs:
+      description: list of actions performed for the container
+      returned: success
+      type: list
+      sample: ["created", "started"]
 """
 
 from distutils.spawn import find_executable
