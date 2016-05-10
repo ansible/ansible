@@ -28,8 +28,6 @@ from ansible.compat.tests import unittest
 from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 
 from ansible.module_utils import basic
-from ansible.module_utils.basic import heuristic_log_sanitize
-from ansible.module_utils.basic import return_values, remove_values
 
 
 empty_invocation = {u'module_args': {}}
@@ -45,7 +43,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.stdout_swap_ctx = swap_stdout()
         self.fake_stream = self.stdout_swap_ctx.__enter__()
 
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
@@ -126,8 +124,8 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             params = json.dumps(params)
 
             with swap_stdin_and_argv(stdin_data=params):
-                reload(basic)
                 with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
                         argument_spec = dict(
                             username=dict(),
@@ -148,8 +146,8 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
             params = json.dumps(params)
             with swap_stdin_and_argv(stdin_data=params):
-                reload(basic)
                 with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
                         argument_spec = dict(
                             username=dict(),
