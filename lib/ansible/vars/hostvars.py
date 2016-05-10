@@ -99,3 +99,9 @@ class HostVars(collections.Mapping):
     def __len__(self):
         return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
 
+    def __repr__(self):
+        out = {}
+        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+            name = host.name
+            out[name] = self.get(name)
+        return repr(out)
