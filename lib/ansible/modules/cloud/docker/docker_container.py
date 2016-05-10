@@ -477,7 +477,6 @@ EXAMPLES = '''
 - name: Start 4 load-balanced containers
   docker_container:
     name: "container{{ item }}"
-    state: started
     recreate: yes
     image: someuser/anotherappimage
     command: sleep 1d
@@ -491,7 +490,7 @@ EXAMPLES = '''
 - name: Syslogging output
   docker_container:
     name: myservice
-    state: started
+    image: busybox
     log_driver: syslog
     log_options:
       syslog-address: tcp://my-syslog-server:514
@@ -651,6 +650,7 @@ class TaskParameters(DockerBaseClass):
                                        MaximumRetryCount=self.restart_retries)
         if self.volumes:
             self.volumes = self._expand_host_paths()
+
         self.log("volumes:")
         self.log(self.volumes, pretty_print=True)
 
@@ -691,7 +691,6 @@ class TaskParameters(DockerBaseClass):
         Returns parameters used to create a container
         '''
         create_params = dict(
-            image='image',
             command='command',
             hostname='hostname',
             user='user',
@@ -715,7 +714,7 @@ class TaskParameters(DockerBaseClass):
             volumes=self._get_mounts(),
         )
 
-        for key, value in create_params.iteritems():
+        for key, value in create_params.items():
             if getattr(self, value, None) is not None:
                 result[key] = getattr(self, value)
         return result
@@ -727,13 +726,13 @@ class TaskParameters(DockerBaseClass):
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
                     host = os.path.abspath(host)
-                    new_vols.append(host + ':' + container + ':' + mode)
+                    new_vols.append("%s:%s:%s" % (host, container, mode))
                 else:
                     host, container = vol.split(':')
                     host = os.path.abspath(host)
-                    new_vols.append(host + ':' + container)
+                    new_vols.append("%s:%s:rw" % (host, container))
             else:
-                new_vols.append(os.path.abspath(vol))
+                new_vols.append("%s:%s:rw" % (os.path.abspath(vol), vol))
         return new_vols
 
     def _get_mounts(self):
@@ -745,6 +744,8 @@ class TaskParameters(DockerBaseClass):
                     result.append(host)
                 else:
                     result.append(vol)
+        self.log("mounts:")
+        self.log(result, pretty_print=True)
         return result
 
     def _host_config(self):
@@ -828,14 +829,18 @@ class TaskParameters(DockerBaseClass):
         if self.volumes:
             for vol in self.volumes:
                 if ':' in vol:
-                    volumespec = vol.split(':')
-                    if len(volumespec) == 3:
+                    if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
                     else:
                         host, container, mode = (vol.split(':') + ['rw'])
                     self.volume_binds[host] = dict(
                         bind=container,
                         mode=mode
+                    )
+                else:
+                    self.volume_binds[vol] = dict(
+                        bind=vol,
+                        mode='rw'
                     )
 
 
@@ -980,11 +985,8 @@ class Container(DockerBaseClass):
         host_config['Ulimits'] = self._get_expected_ulimits(host_config['Ulimits'])
 
         # The previous version of the docker module ignored the detach state by
-        # assuming if the container was running, it must have detached.
+        # assuming if the container was running, it must have been detached.
         detach = not (config.get('AttachStderr') and config.get('AttachStdout'))
-
-        self.log(self.parameters.command, pretty_print=True)
-        self.log(self.parameters.expected_ulimits, pretty_print=True)
 
         # Map parameters to container inspect results
         config_mapping = dict(
@@ -1277,9 +1279,10 @@ class Container(DockerBaseClass):
         image_ports = []
         if image:
             image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
-        param_ports = (self.parameters.exposed_ports or [])
-        if not isinstance(param_ports, list):
-            param_ports = [param_ports]
+        if self.parameters.exposed_ports:
+            param_ports = [str(p) for p in self.parameters.exposed_ports]
+        else:
+            param_ports = []
         return list(set(image_ports + param_ports))
 
     def _get_expected_ulimits(self, config_ulimits):
@@ -1306,14 +1309,11 @@ class Container(DockerBaseClass):
         self.log('_get_expected_cmd')
         if not self.parameters.command:
             return None
-        expected_commands = []
-        commands = self.parameters.command
-        if not isinstance(commands, list):
-            commands = [commands]
-        for cmd in commands:
-            self.log(cmd)
-            expected_commands = expected_commands + shlex.split(cmd)
-        return expected_commands
+        # expected_commands = []
+        # commands = self.parameters.command
+        # for cmd in commands:
+        #     expected_commands = expected_commands + shlex.split(cmd)
+        return self.parameters.command
 
     def _convert_simple_dict_to_list(self, param_name, join_with=':'):
         if getattr(self.parameters, param_name, None) is None:
@@ -1348,12 +1348,13 @@ class ContainerManager(DockerBaseClass):
 
         # remove for now, until we decide about general framework
         try:
-            del results['actions']
+            del self.results['actions']
         except:
             pass
 
         if self.client.module._diff:
             self.results['diff'] = self.diff
+
         if self.facts:
             self.results['ansbile_facts'] = {'ansible_docker_container': self.facts}
 
@@ -1364,7 +1365,7 @@ class ContainerManager(DockerBaseClass):
         if not container.found:
             self.log('No container found')
             # New container
-            new_container = self.container_create(self.parameters.create_parameters)
+            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
             container = self.update_limits(container)
@@ -1379,10 +1380,10 @@ class ContainerManager(DockerBaseClass):
         different, differences = container.has_different_configuration(image)
         image_different = self._image_is_different(image, container)
         if image_different or different or self.parameters.recreate:
-            self.diff = differences
+            self.diff['differences'] = differences
             self.container_stop(container.Id)
             self.container_remove(container.Id)
-            new_container = self.container_create(self.parameters.create_parameters)
+            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
         if image_different:
@@ -1466,17 +1467,20 @@ class ContainerManager(DockerBaseClass):
             return self._get_container(container.Id)
         return container
 
-    def container_create(self, create_parameters):
+    def container_create(self, image, create_parameters):
         self.log("create container")
+        self.log("image: %s parameters:" % image)
         self.log(create_parameters, pretty_print=True)
+        self.results['actions'].append(dict(created="Created container", create_parameters=create_parameters))
+        self.results['changed'] = True
+        new_container = None
         if not self.check_mode:
             try:
-                new_container = self.client.create_container(create_parameters)
-                self.results['actions'].append(dict(created=new_container.get('Id'), create_parameters=create_parameters))
-                self.results['changed'] = True
+                new_container = self.client.create_container(image, **create_parameters)
             except Exception, exc:
                 self.fail("Error creating container: %s" % str(exc))
             return self._get_container(new_container['Id'])
+        return new_container
 
     def container_start(self, container_id):
         self.log("start container %s" % (container_id))
@@ -1593,7 +1597,7 @@ def main():
         networks=dict(type='dict'),
         oom_killer=dict(type='bool'),
         paused=dict(type='bool', default=False),
-        pid_mode=dict(type='str', default='host'),
+        pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
         published_ports=dict(type='list', aliases=['ports']),
         pull=dict(type='bool', default=False),
