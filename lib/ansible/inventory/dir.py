@@ -59,8 +59,11 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append("The file %s is marked as executable, but failed to execute correctly. " % hostsfile + \
-                            "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % hostsfile)
+            myerr.append(("The inventory file '%s' is marked as executable, but" +
+                          " failed to execute correctly. If this is not supposed" +
+                          " to be an executable script, correct it with" +
+                          " `chmod -x '%s'`.") % (hostsfile, hostsfile))
+
             myerr.append(str(e))
 
     # YAML/JSON
@@ -70,8 +73,10 @@ def get_file_parser(hostsfile, groups, loader):
             processed = True
         except Exception as e:
             if shebang_present and not loader.is_executable(hostsfile):
-                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
-                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+                myerr.append(("The inventory file '%s' looks like it should be" +
+                              " an executable inventory script, but is not marked" +
+                              " executable. Perhaps you want to correct this with" +
+                              " `chmod +x '%s'`?") % (hostsfile, hostsfile))
             else:
                 myerr.append(str(e))
 
@@ -82,8 +87,10 @@ def get_file_parser(hostsfile, groups, loader):
             processed = True
         except Exception as e:
             if shebang_present and not loader.is_executable(hostsfile):
-                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
-                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+                myerr.append(("The inventory file '%s' looks like it should be" +
+                              " an executable inventory script, but is not marked" +
+                              " executable. Perhaps you want to correct this with" +
+                              " `chmod +x '%s'`?") % (hostsfile, hostsfile))
             else:
                 myerr.append(str(e))
 
