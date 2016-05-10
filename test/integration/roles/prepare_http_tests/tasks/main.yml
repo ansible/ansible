@@ -1,0 +1,23 @@
+- name: RedHat - Enable the dynamic CA configuration feature
+  command: update-ca-trust force-enable
+  when: ansible_os_family == 'RedHat'
+
+- name: RedHat - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/etc/pki/ca-trust/source/anchors/ansible.pem"
+  when: ansible_os_family == 'RedHat'
+
+- name: Debian - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/usr/local/share/ca-certificates/ansible.crt"
+  when: ansible_os_family == 'Debian'
+
+- name: Redhat - Update ca trust
+  command: update-ca-trust extract
+  when: ansible_os_family == 'RedHat'
+
+- name: Debian - Update ca certificates
+  command: update-ca-certificates
+  when: ansible_os_family == 'Debian'
