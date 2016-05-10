@@ -35,7 +35,7 @@ options:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
-        command syntanx as some commands are automatically modified by the
+        command syntax as some commands are automatically modified by the
         device config parser.
     required: true
   parents:
