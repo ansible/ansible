@@ -174,6 +174,7 @@ Ansible Changes By Release
   10-first-callback.py and 20-second-callback.py.
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 * Fixes for unarchive when filenames contain non-ascii characters
+* Fixes for s3_bucket when setting an s3_url.
 
 ###Deprecations:
 
