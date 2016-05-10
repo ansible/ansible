@@ -3,6 +3,10 @@ Ansible Changes By Release
 
 ## 2.2 TBD - ACTIVE DEVELOPMENT
 
+####New Modules:
+- aws
+  * ec2_customer_gateway
+
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
