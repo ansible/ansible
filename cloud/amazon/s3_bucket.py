@@ -97,6 +97,7 @@ EXAMPLES = '''
 '''
 
 import xml.etree.ElementTree as ET
+import urlparse
 
 try:
     import boto.ec2
