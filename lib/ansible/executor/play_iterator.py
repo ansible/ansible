@@ -475,8 +475,7 @@ class PlayIterator:
         if state is None:
             return False
         elif state.fail_state != self.FAILED_NONE:
-            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0 or \
-               state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
                 return False
             else:
                 return True
