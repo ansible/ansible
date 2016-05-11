@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -40,7 +41,7 @@ EXAMPLES = '''
 ansible webservers -m ping
 '''
 
-import exceptions
+from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
@@ -52,11 +53,10 @@ def main():
     result = dict(ping='pong')
     if module.params['data']:
         if module.params['data'] == 'crash':
-            raise exceptions.Exception("boom")
+            raise Exception("boom")
         result['ping'] = module.params['data']
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()
 
