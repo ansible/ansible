@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_unicode
 
 try:
@@ -247,9 +248,7 @@ class PlaybookExecutor:
         re-running on ONLY the failed hosts.  This may duplicate some variable
         information in group_vars/host_vars but that is ok, and expected.
         '''
-        dirname = os.path.dirname(retry_path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+        makedirs_safe(os.path.dirname(retry_path))
 
         try:
             with open(retry_path, 'w') as fd:
