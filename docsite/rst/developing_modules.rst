@@ -211,10 +211,11 @@ Binary Modules Input
 
 Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
 supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
-would resemble something similar to::
+would resemble something similar to the following payload for a module accepting the same arguments as the
+``ping`` module::
 
     {
-        "name": "Ansible",
+        "data": "pong",
         "_ansible_verbosity": 4,
         "_ansible_diff": false,
         "_ansible_debug": false,
