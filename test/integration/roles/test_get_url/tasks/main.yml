@@ -66,18 +66,18 @@
         - result.failed
 
 - name: test https fetch
-  get_url: url="https://ansible.http.tests/get" dest={{output_dir}}/get_url.txt force=yes
+  get_url: url="https://{{ httpbin_host }}/get" dest={{output_dir}}/get_url.txt force=yes
   register: result
 
 - name: assert the get_url call was successful
   assert:
     that:
-    - result.changed 
+    - result.changed
     - '"OK" in result.msg'
 
 - name: test https fetch to a site with mismatched hostname and certificate
   get_url:
-    url: "https://fail.ansible.http.tests/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
@@ -95,7 +95,7 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
-    url: "https://fail.ansible.http.tests/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/get_url_no_validate.html"
     validate_certs: no
   register: result
@@ -114,12 +114,12 @@
 # SNI is only built into the stdlib from python-2.7.9 onwards
 - name: Test that SNI works
   get_url:
-    url: 'https://sni1.ansible.http.tests/'
+    url: 'https://{{ sni_host }}/'
     dest: "{{ output_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
 
-- command: "grep 'sni1.ansible.http.tests' {{ output_dir}}/sni.html"
+- command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
   when: "{{ python_has_ssl_context }}"
 
@@ -142,12 +142,12 @@
 # specifically a test site.  So the tests may break due to the hosting changing
 - name: Test that SNI works
   get_url:
-    url: 'https://sni1.ansible.http.tests/'
+    url: 'https://{{ sni_host }}/'
     dest: "{{ output_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
 
-- command: "grep 'sni1.ansible.http.tests' {{ output_dir}}/sni.html"
+- command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
   when: "{{ python_has_ssl_context }}"
 
@@ -169,12 +169,12 @@
 
 - name: Test get_url with redirect
   get_url:
-    url: 'http://ansible.http.tests/redirect/6'
+    url: 'http://{{ httpbin_host }}/redirect/6'
     dest: "{{ output_dir }}/redirect.json"
 
 - name: Test that setting file modes work
   get_url:
-    url: 'http://ansible.http.tests/'
+    url: 'http://{{ httpbin_host }}/'
     dest: '{{ output_dir }}/test'
     mode: '0707'
   register: result
@@ -191,7 +191,7 @@
 
 - name: Test that setting file modes on an already downlaoded file work
   get_url:
-    url: 'http://ansible.http.tests/'
+    url: 'http://{{ httpbin_host }}/'
     dest: '{{ output_dir }}/test'
     mode: '0070'
   register: result

@@ -94,7 +94,7 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
-    url: "https://fail.ansible.http.tests/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
@@ -117,7 +117,7 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
-    url: "https://fail.ansible.http.tests/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
   register: result
@@ -134,7 +134,7 @@
 
 - name: test redirect without follow_redirects
   uri:
-    url: 'http://ansible.http.tests/redirect/2'
+    url: 'http://{{ httpbin_host }}/redirect/2'
     follow_redirects: 'none'
     status_code: 302
   register: result
@@ -142,21 +142,21 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "http://ansible.http.tests/relative-redirect/1"'
+      - 'result.location|default("") == "http://{{ httpbin_host }}/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
-    url: 'https://ansible.http.tests/redirect/2'
+    url: 'https://{{ httpbin_host }}/redirect/2'
   register: result
 
 - name: Assert SSL with redirect
   assert:
     that:
-      - 'result.url|default("") == "https://ansible.http.tests/get"'
+      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
 
 - name: redirect to bad SSL site
   uri:
-    url: 'http://fail.ansible.http.tests'
+    url: 'http://{{ badssl_host }}'
   register: result
   ignore_errors: true
 
@@ -164,30 +164,30 @@
   assert:
     that:
       - result|failed
-      - '"fail.ansible.http.tests" in result.msg'
+      - 'badssl_host in result.msg'
 
 - name: test basic auth
   uri:
-    url: 'http://ansible.http.tests/basic-auth/user/passwd'
+    url: 'http://{{ httpbin_host }}/basic-auth/user/passwd'
     user: user
     password: passwd
 
 - name: test basic forced auth
   uri:
-    url: 'http://ansible.http.tests/hidden-basic-auth/user/passwd'
+    url: 'http://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
     force_basic_auth: true
     user: user
     password: passwd
 
 - name: test PUT
   uri:
-    url: 'http://ansible.http.tests/put'
+    url: 'http://{{ httpbin_host }}/put'
     method: PUT
     body: 'foo=bar'
 
 - name: test OPTIONS
   uri:
-    url: 'http://ansible.http.tests/'
+    url: 'http://{{ httpbin_host }}/'
     method: OPTIONS
   register: result
 
@@ -208,7 +208,7 @@
 # test run.
 - name: Test that SNI succeeds on python versions that have SNI
   uri:
-    url: 'https://sni1.ansible.http.tests/'
+    url: 'https://{{ sni_host }}/'
     return_content: true
   when: ansible_python.has_sslcontext
   register: result
@@ -217,12 +217,12 @@
   assert:
     that:
       - result|success
-      - '"sni1.ansible.http.tests" == result.content'
+      - 'sni_host == result.content'
   when: ansible_python.has_sslcontext
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
   uri:
-    url: 'https://sni1.ansible.http.tests'
+    url: 'https://{{ sni_host }}'
   ignore_errors: true
   when: not ansible_python.has_sslcontext
   register: result
@@ -248,7 +248,7 @@
 
 - name: Verify SNI verificaiton succeeds on old python with urllib3 contrib
   uri:
-    url: 'https://sni1.ansible.http.tests'
+    url: 'https://{{ sni_host }}'
     return_content: true
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
   register: result
@@ -257,7 +257,7 @@
   assert:
     that:
       - result|success
-      - '"sni1.ansible.http.tests" == result.content'
+      - 'sni_host == result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: Uninstall ndg-httpsclient and urllib3
@@ -277,7 +277,7 @@
 
 - name: validate the status_codes are correct
   uri:
-    url: https://ansible.http.tests/status/202
+    url: "https://{{ httpbin_host }}/status/202"
     status_code: 202
     method: POST
     body: foo
