@@ -1,4 +1,4 @@
-# Latest version of centos
+# Latest version of fedora 23
 FROM fedora:23
 RUN dnf -y update; dnf clean all
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
@@ -11,7 +11,9 @@ rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf -y install \
     acl \
+    asciidoc \
     dbus-python \
+    bzip2 \
     file \
     findutils \
     glibc-common \
@@ -19,6 +21,8 @@ RUN dnf -y install \
     iproute \
     make \
     mercurial \
+    mariadb-server \
+    MySQL-python \
     procps \
     PyYAML \
     python-coverage \
@@ -32,6 +36,7 @@ RUN dnf -y install \
     python-pip \
     python-setuptools \
     python-virtualenv \
+    rpm-build \
     rubygems \
     subversion \
     sudo \
@@ -40,7 +45,8 @@ RUN dnf -y install \
     which \
     openssh-clients \
     openssh-server \
-    yum
+    yum \
+    zip
 RUN localedef --quiet -f ISO-8859-1 -i pt_BR pt_BR
 RUN localedef --quiet -f ISO-8859-1 -i es_MX es_MX
 RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
