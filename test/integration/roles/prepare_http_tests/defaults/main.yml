@@ -1,0 +1,3 @@
+badssl_host: wrong.host.badssl.com
+httpbin_host: httpbin.org
+sni_host: sni.velox.ch
