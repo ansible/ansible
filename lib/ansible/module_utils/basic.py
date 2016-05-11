@@ -1175,7 +1175,7 @@ class AnsibleModule(object):
         return aliases_results
 
     def _check_arguments(self, check_invalid_arguments):
-        for (k,v) in self.params.items():
+        for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
