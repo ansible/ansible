@@ -39,6 +39,7 @@ from ansible.utils.vars import combine_vars
 from ansible.parsing.utils.addresses import parse_address
 
 HOSTS_PATTERNS_CACHE = {}
+INVENTORY_VARS_PATH = {}
 
 try:
     from __main__ import display
@@ -702,6 +703,29 @@ class Inventory(object):
         """ Read host_vars/ files """
         return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=new_pb_basedir)
 
+    def get_file_vars_path(self, basedir, sub_dir, element_name):
+        '''
+        Retrieve basedir path and return None if does not exist
+        This function use a cache of already visited path and test basedir
+        before trying to go further.
+        If dir does not exist, return None
+        '''
+        if basedir not in INVENTORY_VARS_PATH:
+            INVENTORY_VARS_PATH[basedir] = to_unicode(os.path.abspath(basedir), errors='strict')
+        else:
+            if INVENTORY_VARS_PATH[basedir] is None:
+                return None
+        key = basedir + sub_dir + element_name
+        if key in INVENTORY_VARS_PATH:
+            return INVENTORY_VARS_PATH[key]
+
+        base_path = os.path.join(basedir, sub_dir + "/" + element_name)
+        if not os.path.exists(base_path):
+            INVENTORY_VARS_PATH[key] = None
+        else:
+            INVENTORY_VARS_PATH[key] = base_path
+        return INVENTORY_VARS_PATH[key]
+
     def get_group_vars(self, group, new_pb_basedir=False):
         """ Read group_vars/ files """
         return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir)
@@ -742,11 +766,15 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='strict')
+                base_path = self.get_file_vars_path(to_bytes(basedir), b"group_vars", to_bytes(group.name))
+                if base_path is None:
+                    continue
                 results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='strict')
+                base_path = self.get_file_vars_path(to_bytes(basedir), b"host_vars", to_bytes(host.name))
+                if base_path is None:
+                    continue
                 results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
 
         # all done, results is a dictionary of variables for this particular host.
