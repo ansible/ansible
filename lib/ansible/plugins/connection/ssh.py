@@ -325,225 +325,234 @@ class Connection(ConnectionBase):
         else:
             cmd = list(map(to_bytes, cmd))
 
-        if not in_data:
-            try:
-                # Make sure stdin is a proper pty to avoid tcgetattr errors
-                master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = os.fdopen(master, 'w', 0)
-                os.close(slave)
-            except (OSError, IOError):
-                p = None
+        try:
+            if not in_data:
+                try:
+                    # Make sure stdin is a proper pty to avoid tcgetattr errors
+                    master, slave = pty.openpty()
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdin = os.fdopen(master, 'w', 0)
+                    os.close(slave)
+                except (OSError, IOError):
+                    p = None
 
-        if not p:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdin = p.stdin
+            if not p:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdin = p.stdin
 
-        # If we are using SSH password authentication, write the password into
-        # the pipe we opened in _build_command.
+            # If we are using SSH password authentication, write the password into
+            # the pipe we opened in _build_command.
 
-        if self._play_context.password:
-            os.close(self.sshpass_pipe[0])
-            os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
-            os.close(self.sshpass_pipe[1])
+            if self._play_context.password:
+                os.close(self.sshpass_pipe[0])
+                os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
+                os.close(self.sshpass_pipe[1])
 
-        ## SSH state machine
-        #
-        # Now we read and accumulate output from the running process until it
-        # exits. Depending on the circumstances, we may also need to write an
-        # escalation password and/or pipelined input to the process.
+            ## SSH state machine
+            #
+            # Now we read and accumulate output from the running process until it
+            # exits. Depending on the circumstances, we may also need to write an
+            # escalation password and/or pipelined input to the process.
 
-        states = [
-            'awaiting_prompt', 'awaiting_escalation', 'ready_to_send', 'awaiting_exit'
-        ]
+            states = [
+                'awaiting_prompt', 'awaiting_escalation', 'ready_to_send', 'awaiting_exit'
+            ]
 
-        # Are we requesting privilege escalation? Right now, we may be invoked
-        # to execute sftp/scp with sudoable=True, but we can request escalation
-        # only when using ssh. Otherwise we can send initial data straightaway.
+            # Are we requesting privilege escalation? Right now, we may be invoked
+            # to execute sftp/scp with sudoable=True, but we can request escalation
+            # only when using ssh. Otherwise we can send initial data straightaway.
 
-        state = states.index('ready_to_send')
-        if b'ssh' in cmd:
-            if self._play_context.prompt:
-                # We're requesting escalation with a password, so we have to
-                # wait for a password prompt.
-                state = states.index('awaiting_prompt')
-                display.debug('Initial state: %s: %s' % (states[state], self._play_context.prompt))
-            elif self._play_context.become and self._play_context.success_key:
-                # We're requesting escalation without a password, so we have to
-                # detect success/failure before sending any initial data.
-                state = states.index('awaiting_escalation')
-                display.debug('Initial state: %s: %s' % (states[state], self._play_context.success_key))
+            state = states.index('ready_to_send')
+            if b'ssh' in cmd:
+                if self._play_context.prompt:
+                    # We're requesting escalation with a password, so we have to
+                    # wait for a password prompt.
+                    state = states.index('awaiting_prompt')
+                    display.debug('Initial state: %s: %s' % (states[state], self._play_context.prompt))
+                elif self._play_context.become and self._play_context.success_key:
+                    # We're requesting escalation without a password, so we have to
+                    # detect success/failure before sending any initial data.
+                    state = states.index('awaiting_escalation')
+                    display.debug('Initial state: %s: %s' % (states[state], self._play_context.success_key))
 
-        # We store accumulated stdout and stderr output from the process here,
-        # but strip any privilege escalation prompt/confirmation lines first.
-        # Output is accumulated into tmp_*, complete lines are extracted into
-        # an array, then checked and removed or copied to stdout or stderr. We
-        # set any flags based on examining the output in self._flags.
+            # We store accumulated stdout and stderr output from the process here,
+            # but strip any privilege escalation prompt/confirmation lines first.
+            # Output is accumulated into tmp_*, complete lines are extracted into
+            # an array, then checked and removed or copied to stdout or stderr. We
+            # set any flags based on examining the output in self._flags.
 
-        stdout = stderr = ''
-        tmp_stdout = tmp_stderr = ''
+            stdout = stderr = ''
+            tmp_stdout = tmp_stderr = ''
 
-        self._flags = dict(
-            become_prompt=False, become_success=False,
-            become_error=False, become_nopasswd_error=False
-        )
+            self._flags = dict(
+                become_prompt=False, become_success=False,
+                become_error=False, become_nopasswd_error=False
+            )
 
-        # select timeout should be longer than the connect timeout, otherwise
-        # they will race each other when we can't connect, and the connect
-        # timeout usually fails
-        timeout = 2 + self._play_context.timeout
-        rpipes = [p.stdout, p.stderr]
-        for fd in rpipes:
-            fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+            # select timeout should be longer than the connect timeout, otherwise
+            # they will race each other when we can't connect, and the connect
+            # timeout usually fails
+            timeout = 2 + self._play_context.timeout
+            rpipes = [p.stdout, p.stderr]
+            for fd in rpipes:
+                fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-        # If we can send initial data without waiting for anything, we do so
-        # before we call select.
+            # If we can send initial data without waiting for anything, we do so
+            # before we call select.
 
-        if states[state] == 'ready_to_send' and in_data:
-            self._send_initial_data(stdin, in_data)
-            state += 1
-
-        while True:
-            rfd, wfd, efd = select.select(rpipes, [], [], timeout)
-
-            # We pay attention to timeouts only while negotiating a prompt.
-
-            if not rfd:
-                if state <= states.index('awaiting_escalation'):
-                    # If the process has already exited, then it's not really a
-                    # timeout; we'll let the normal error handling deal with it.
-                    if p.poll() is not None:
-                        break
-                    self._terminate_process(p)
-                    raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, stdout))
-
-            # Read whatever output is available on stdout and stderr, and stop
-            # listening to the pipe if it's been closed.
-
-            if p.stdout in rfd:
-                chunk = p.stdout.read()
-                if chunk == '':
-                    rpipes.remove(p.stdout)
-                tmp_stdout += chunk
-                display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
-
-            if p.stderr in rfd:
-                chunk = p.stderr.read()
-                if chunk == '':
-                    rpipes.remove(p.stderr)
-                tmp_stderr += chunk
-                display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
-
-            # We examine the output line-by-line until we have negotiated any
-            # privilege escalation prompt and subsequent success/error message.
-            # Afterwards, we can accumulate output without looking at it.
-
-            if state < states.index('ready_to_send'):
-                if tmp_stdout:
-                    output, unprocessed = self._examine_output('stdout', states[state], tmp_stdout, sudoable)
-                    stdout += output
-                    tmp_stdout = unprocessed
-
-                if tmp_stderr:
-                    output, unprocessed = self._examine_output('stderr', states[state], tmp_stderr, sudoable)
-                    stderr += output
-                    tmp_stderr = unprocessed
-            else:
-                stdout += tmp_stdout
-                stderr += tmp_stderr
-                tmp_stdout = tmp_stderr = ''
-
-            # If we see a privilege escalation prompt, we send the password.
-            # (If we're expecting a prompt but the escalation succeeds, we
-            # didn't need the password and can carry on regardless.)
-
-            if states[state] == 'awaiting_prompt':
-                if self._flags['become_prompt']:
-                    display.debug('Sending become_pass in response to prompt')
-                    stdin.write('{0}\n'.format(to_bytes(self._play_context.become_pass )))
-                    self._flags['become_prompt'] = False
-                    state += 1
-                elif self._flags['become_success']:
-                    state += 1
-
-            # We've requested escalation (with or without a password), now we
-            # wait for an error message or a successful escalation.
-
-            if states[state] == 'awaiting_escalation':
-                if self._flags['become_success']:
-                    display.debug('Escalation succeeded')
-                    self._flags['become_success'] = False
-                    state += 1
-                elif self._flags['become_error']:
-                    display.debug('Escalation failed')
-                    self._terminate_process(p)
-                    self._flags['become_error'] = False
-                    raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
-                elif self._flags['become_nopasswd_error']:
-                    display.debug('Escalation requires password')
-                    self._terminate_process(p)
-                    self._flags['become_nopasswd_error'] = False
-                    raise AnsibleError('Missing %s password' % self._play_context.become_method)
-                elif self._flags['become_prompt']:
-                    # This shouldn't happen, because we should see the "Sorry,
-                    # try again" message first.
-                    display.debug('Escalation prompt repeated')
-                    self._terminate_process(p)
-                    self._flags['become_prompt'] = False
-                    raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
-
-            # Once we're sure that the privilege escalation prompt, if any, has
-            # been dealt with, we can send any initial data and start waiting
-            # for output.
-
-            if states[state] == 'ready_to_send':
-                if in_data:
-                    self._send_initial_data(stdin, in_data)
+            if states[state] == 'ready_to_send' and in_data:
+                self._send_initial_data(stdin, in_data)
                 state += 1
 
-            # Now we're awaiting_exit: has the child process exited? If it has,
-            # and we've read all available output from it, we're done.
+            while True:
+                try:
+                    rfd, wfd, efd = select.select(rpipes, [], [], timeout)
+                except ValueError as e:
+                    raise AnsibleError("Unable to communicate: %s" % to_str(e))
 
-            if p.poll() is not None:
-                if not rpipes or not rfd:
+                # We pay attention to timeouts only while negotiating a prompt.
+
+                if not rfd:
+                    if state <= states.index('awaiting_escalation'):
+                        # If the process has already exited, then it's not really a
+                        # timeout; we'll let the normal error handling deal with it.
+                        if p.poll() is not None:
+                            break
+                        self._terminate_process(p)
+                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, stdout))
+
+                # Read whatever output is available on stdout and stderr, and stop
+                # listening to the pipe if it's been closed.
+
+                if p.stdout in rfd:
+                    chunk = p.stdout.read()
+                    if chunk == '':
+                        rpipes.remove(p.stdout)
+                    tmp_stdout += chunk
+                    display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
+
+                if p.stderr in rfd:
+                    chunk = p.stderr.read()
+                    if chunk == '':
+                        rpipes.remove(p.stderr)
+                    tmp_stderr += chunk
+                    display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
+
+                # We examine the output line-by-line until we have negotiated any
+                # privilege escalation prompt and subsequent success/error message.
+                # Afterwards, we can accumulate output without looking at it.
+
+                if state < states.index('ready_to_send'):
+                    if tmp_stdout:
+                        output, unprocessed = self._examine_output('stdout', states[state], tmp_stdout, sudoable)
+                        stdout += output
+                        tmp_stdout = unprocessed
+
+                    if tmp_stderr:
+                        output, unprocessed = self._examine_output('stderr', states[state], tmp_stderr, sudoable)
+                        stderr += output
+                        tmp_stderr = unprocessed
+                else:
+                    stdout += tmp_stdout
+                    stderr += tmp_stderr
+                    tmp_stdout = tmp_stderr = ''
+
+                # If we see a privilege escalation prompt, we send the password.
+                # (If we're expecting a prompt but the escalation succeeds, we
+                # didn't need the password and can carry on regardless.)
+
+                if states[state] == 'awaiting_prompt':
+                    if self._flags['become_prompt']:
+                        display.debug('Sending become_pass in response to prompt')
+                        stdin.write('{0}\n'.format(to_bytes(self._play_context.become_pass )))
+                        self._flags['become_prompt'] = False
+                        state += 1
+                    elif self._flags['become_success']:
+                        state += 1
+
+                # We've requested escalation (with or without a password), now we
+                # wait for an error message or a successful escalation.
+
+                if states[state] == 'awaiting_escalation':
+                    if self._flags['become_success']:
+                        display.debug('Escalation succeeded')
+                        self._flags['become_success'] = False
+                        state += 1
+                    elif self._flags['become_error']:
+                        display.debug('Escalation failed')
+                        self._terminate_process(p)
+                        self._flags['become_error'] = False
+                        raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+                    elif self._flags['become_nopasswd_error']:
+                        display.debug('Escalation requires password')
+                        self._terminate_process(p)
+                        self._flags['become_nopasswd_error'] = False
+                        raise AnsibleError('Missing %s password' % self._play_context.become_method)
+                    elif self._flags['become_prompt']:
+                        # This shouldn't happen, because we should see the "Sorry,
+                        # try again" message first.
+                        display.debug('Escalation prompt repeated')
+                        self._terminate_process(p)
+                        self._flags['become_prompt'] = False
+                        raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+
+                # Once we're sure that the privilege escalation prompt, if any, has
+                # been dealt with, we can send any initial data and start waiting
+                # for output.
+
+                if states[state] == 'ready_to_send':
+                    if in_data:
+                        self._send_initial_data(stdin, in_data)
+                    state += 1
+
+                # Now we're awaiting_exit: has the child process exited? If it has,
+                # and we've read all available output from it, we're done.
+
+                if p.poll() is not None:
+                    if not rpipes or not rfd:
+                        break
+
+                    # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
+                    # first connection goes into the background and we never see EOF
+                    # on stderr. If we see EOF on stdout and the process has exited,
+                    # we're probably done. We call select again with a zero timeout,
+                    # just to make certain we don't miss anything that may have been
+                    # written to stderr between the time we called select() and when
+                    # we learned that the process had finished.
+
+                    if p.stdout not in rpipes:
+                        timeout = 0
+                        continue
+
+                # If the process has not yet exited, but we've already read EOF from
+                # its stdout and stderr (and thus removed both from rpipes), we can
+                # just wait for it to exit.
+
+                elif not rpipes:
+                    p.wait()
                     break
 
-                # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
-                # first connection goes into the background and we never see EOF
-                # on stderr. If we see EOF on stdout and the process has exited,
-                # we're probably done. We call select again with a zero timeout,
-                # just to make certain we don't miss anything that may have been
-                # written to stderr between the time we called select() and when
-                # we learned that the process had finished.
+                # Otherwise there may still be outstanding data to read.
 
-                if p.stdout not in rpipes:
-                    timeout = 0
-                    continue
+            if C.HOST_KEY_CHECKING:
+                if cmd[0] == b"sshpass" and p.returncode == 6:
+                    raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
-            # If the process has not yet exited, but we've already read EOF from
-            # its stdout and stderr (and thus removed both from rpipes), we can
-            # just wait for it to exit.
+            controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
+            if p.returncode != 0 and controlpersisterror:
+                raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
-            elif not rpipes:
-                p.wait()
-                break
+            if p.returncode == 255 and in_data:
+                raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
-            # Otherwise there may still be outstanding data to read.
-
-        # close stdin after process is terminated and stdout/stderr are read
-        # completely (see also issue #848)
-        stdin.close()
-
-        if C.HOST_KEY_CHECKING:
-            if cmd[0] == b"sshpass" and p.returncode == 6:
-                raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
-
-        controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
-        if p.returncode != 0 and controlpersisterror:
-            raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
-
-        if p.returncode == 255 and in_data:
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        finally:
+            # try to close file descriptors after process is terminated
+            # and stdout/stderr are read completely (see also issue #848)
+            for sub_fd in [p.stdin, p.stdout, p.stderr]:
+                try:
+                    sub_fd.close()
+                except:
+                    pass
 
         return (p.returncode, stdout, stderr)
 
