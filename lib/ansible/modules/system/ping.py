@@ -45,10 +45,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             data=dict(required=False, default=None),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
     result = dict(ping='pong')
     if module.params['data']:
