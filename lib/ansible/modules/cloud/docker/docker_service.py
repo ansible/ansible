@@ -32,7 +32,7 @@ description:
   - Works with compose versions 1 and 2.
   - Compose can be read from a docker-compose.yml (or .yaml) file or inline using the C(definition) option.
   - See the examples for more details.
-  - Supports check mode and differences.
+  - Supports check mode.
 
 options:
   project_src:
@@ -411,15 +411,15 @@ class ContainerManager(DockerBaseClass):
         self.dependencies = None
         self.services = None
         self.scale = None
-        self.diff = None
+        self.debug = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
 
         self.check_mode = client.check_mode
 
-        if not self.diff:
-            self.diff = client.module._diff
+        if not self.debug:
+            self.debug = client.module._debug
 
         self.options = dict()
         self.options.update(self._get_auth_options())
@@ -461,7 +461,7 @@ class ContainerManager(DockerBaseClass):
             self.client.fail("Configuration error - %s" % str(exc))
 
     def exec_module(self):
-        result = None
+        result = dict()
 
         if self.state == 'present':
             result = self.cmd_up()
@@ -491,7 +491,7 @@ class ContainerManager(DockerBaseClass):
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, diff=dict(), ansible_facts=dict())
+        result = dict(changed=False, actions=dict(), ansible_facts=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -517,11 +517,11 @@ class ContainerManager(DockerBaseClass):
                 plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
-                if self.diff:
-                    result['diff'][service.name] = dict()
-                    result['diff'][service.name][plan.action] = []
+                if self.debug:
+                    result['actions'][service.name] = dict()
+                    result['actions'][service.name][plan.action] = []
                     for container in plan.containers:
-                        result['diff'][service.name][plan.action].append(dict(
+                        result['actions'][service.name][plan.action].append(dict(
                             id=container.id,
                             name=container.name,
                             short_id=container.short_id,
@@ -579,16 +579,16 @@ class ContainerManager(DockerBaseClass):
     def cmd_down(self):
         result = dict(
             changed=False,
-            diff=dict(),
+            actions=dict(),
         )
 
         for service in self.project.services:
             containers = service.containers(stopped=True)
             if len(containers):
                 result['changed'] = True
-            if self.diff:
-                result['diff'][service.name] = dict()
-                result['diff'][service.name]['deleted'] = [container.name for container in containers]
+            if self.debug:
+                result['actions'][service.name] = dict()
+                result['actions'][service.name]['deleted'] = [container.name for container in containers]
 
         if not self.check_mode and result['changed']:
             image_type = image_type_from_opt('--rmi', self.remove_images)
@@ -602,16 +602,16 @@ class ContainerManager(DockerBaseClass):
     def cmd_stop(self, service_names):
         result = dict(
             changed=False,
-            diff=dict()
+            actions=dict()
         )
         for service in self.project.services:
             if not service_names or service.name in service_names:
-                result['diff'][service.name] = dict()
-                result['diff'][service.name]['stop'] = []
+                result['actions'][service.name] = dict()
+                result['actions'][service.name]['stop'] = []
                 for container in service.containers(stopped=False):
                     result['changed'] = True
-                    if self.diff:
-                        result['diff'][service.name]['stop'].append(dict(
+                    if self.debug:
+                        result['actions'][service.name]['stop'].append(dict(
                             id=container.id,
                             name=container.name,
                             short_id=container.short_id,
@@ -628,17 +628,17 @@ class ContainerManager(DockerBaseClass):
     def cmd_restart(self, service_names):
         result = dict(
             changed=False,
-            diff=dict()
+            actions=dict()
         )
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
-                result['diff'][service.name] = dict()
-                result['diff'][service.name]['restart'] = []
+                result['actions'][service.name] = dict()
+                result['actions'][service.name]['restart'] = []
                 for container in service.containers(stopped=True):
                     result['changed'] = True
-                    if self.diff:
-                        result['diff'][service.name]['restart'].append(dict(
+                    if self.debug:
+                        result['actions'][service.name]['restart'].append(dict(
                             id=container.id,
                             name=container.name,
                             short_id=container.short_id,
@@ -655,17 +655,17 @@ class ContainerManager(DockerBaseClass):
     def cmd_scale(self):
         result = dict(
             changed=False,
-            diff=dict()
+            actions=dict()
         )
 
         for service in self.project.services:
             if service.name in self.scale:
-                result['diff'][service.name] = dict()
+                result['actions'][service.name] = dict()
                 containers = service.containers(stopped=True)
                 if len(containers) != self.scale[service.name]:
                     result['changed'] = True
-                    if self.diff:
-                        result['diff'][service.name]['scale'] = self.scale[service.name] - len(containers)
+                    if self.debug:
+                        result['actions'][service.name]['scale'] = self.scale[service.name] - len(containers)
                     if not self.check_mode:
                         try:
                             service.scale(self.scale[service.name])
@@ -692,7 +692,7 @@ def main():
         scale=dict(type='dict'),
         services=dict(type='list'),
         dependencies=dict(type='bool', default=True),
-        diff=dict(type='bool', default=False)
+        debug=dict(type='bool', default=False)
     )
 
     mutually_exclusive = [
