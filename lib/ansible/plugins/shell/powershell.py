@@ -54,8 +54,8 @@ class ShellModule(object):
             return path
         return '\'%s\'' % path
 
-    # powershell requires that script files end with .ps1
     def get_remote_filename(self, pathname):
+        # powershell requires that script files end with .ps1
         base_name = os.path.basename(pathname.strip())
         name, ext = os.path.splitext(base_name.strip())
         if ext.lower() not in ['.ps1', '.exe']:

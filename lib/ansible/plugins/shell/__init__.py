@@ -165,6 +165,7 @@ class ShellBase(object):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
             cmd = pipes.quote(cmd)
+
         cmd_parts = []
         if shebang:
             shebang = shebang.replace("#!", "").strip()

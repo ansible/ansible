@@ -100,13 +100,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
-    def _is_binary(self, module_path):
-        textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
-
-        with open(module_path, 'rb') as f:
-            start = f.read(1024)
-        return bool(start.translate(None, textchars))
-
     def _configure_module(self, module_name, module_args, task_vars=None):
         '''
         Handles the loading and templating of the module code through the
@@ -152,12 +145,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
+        (module_path, module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
-        if self._is_binary(module_path):
-            return ('non_native_want_json', None, None, module_path, True)
-
-        return (module_style, module_shebang, module_data, module_path, False)
+        return (module_style, module_shebang, module_data, module_path)
 
     def _compute_environment_string(self):
         '''
@@ -301,7 +291,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return remote_path
 
-    def _fixup_perms(self, remote_path, remote_user, execute=False, recursive=True):
+    def _fixup_perms(self, remote_path, remote_user, execute=True, recursive=True):
         """
         We need the files we upload to be readable (and sometimes executable)
         by the user being sudo'd to but we want to limit other people's access
@@ -579,9 +569,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
 
-        (module_style, shebang, module_data, module_path, is_binary) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-
-        if not shebang and not is_binary:
+        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
         # a remote tmp path may be necessary and not already created
@@ -593,13 +582,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp:
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
-            if module_style in ['old', 'non_native_want_json']:
+            if module_style in ('old', 'non_native_want_json', 'binary'):
                 # we'll also need a temp file to hold our module arguments
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote")
-            if is_binary:
+            if module_style == 'binary':
                 self._transfer_file(module_path, remote_module_path)
             else:
                 self._transfer_data(remote_module_path, module_data)
@@ -610,7 +599,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 for k,v in iteritems(module_args):
                     args_data += '%s="%s" ' % (k, pipes.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
-            elif module_style == 'non_native_want_json':
+            elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
@@ -618,7 +607,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Fix permissions of the tmp path and tmp files.  This should be
         # called after all files have been transferred.
-        self._fixup_perms(tmp, remote_user, recursive=True, execute=is_binary)
+        self._fixup_perms(tmp, remote_user, recursive=True)
 
         cmd = ""
         in_data = None
