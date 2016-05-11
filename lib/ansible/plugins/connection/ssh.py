@@ -569,11 +569,15 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        if in_data:
-            cmd = self._build_command('ssh', self.host, cmd)
+        #if in_data:
+        #    cmd = self._build_command('ssh', self.host, cmd)
+        if not in_data and sudoable:
+            args = ('ssh', '-tt', self.host, cmd)
         else:
-            cmd = self._build_command('ssh', '-tt', self.host, cmd)
+            #cmd = self._build_command('ssh', '-tt', self.host, cmd)
+            args = ('ssh', self.host, cmd)
 
+        cmd = self._build_command(*args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         return (returncode, stdout, stderr)
