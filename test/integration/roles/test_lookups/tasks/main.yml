@@ -84,7 +84,7 @@
 # ENV LOOKUP
 
 - name: get first environment var name
-  shell: env | head -n1 | cut -d\= -f1
+  shell: env | fgrep -v '.' | head -n1 | cut -d\= -f1
   register: known_var_name
 
 - name: get first environment var value
