@@ -178,6 +178,8 @@ except BotoServerError, e:
 
 For more information on botocore exception handling see [http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling]
 
+Boto3 provides lots of useful info when an exception is thrown so pass this to the user along with the message.
+
 ```python
 # Import ClientError from botocore
 try:
@@ -193,7 +195,20 @@ except ImportError:
 try:
     result = connection.aws_call()
 except ClientError, e:
-    module.fail_json(msg=e.message)
+    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+```
+
+If you need to perform an action based on the error boto3 returned, use the error code.
+
+```python
+# Make a call to AWS
+try:
+    result = connection.aws_call()
+except ClientError, e:
+    if e.response['Error']['Code'] == 'NoSuchEntity':
+        return None
+    else:
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 ```
 
 ### Helper functions
@@ -220,7 +235,7 @@ key and the dict value is the tag value.
 
 Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts.
 
-### get_ec2_security_group_ids_from_names
+#### get_ec2_security_group_ids_from_names
 
 Pass this function a list of security group names or combination of security group names and IDs and this function will
 return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
