@@ -31,7 +31,13 @@ import struct
 import datetime
 import getpass
 import pwd
-import ConfigParser
+
+try:
+    # python2
+    import ConfigParser as configparser
+except ImportError:
+    # python3
+    import configparser
 from ansible.module_utils.basic import get_all_subclasses
 
 # py2 vs py3; replace with six via ziploader
@@ -40,7 +46,12 @@ try:
 except ImportError:
     from io import StringIO
 
-from string import maketrans
+try:
+    # python2
+    from string import maketrans
+except ImportError:
+    # python3
+    maketrans = str.maketrans
 
 try:
     import selinux
@@ -260,10 +271,10 @@ class Facts(object):
                 fact = json.loads(out)
             except ValueError:
                 # load raw ini
-                cp = ConfigParser.ConfigParser()
+                cp = configparser.ConfigParser()
                 try:
                     cp.readfp(StringIO(out))
-                except ConfigParser.Error:
+                except configparser.Error:
                     fact = "error loading fact - please check content"
                 else:
                     fact = {}
@@ -1176,7 +1187,8 @@ class LinuxHardware(Hardware):
             sysfs_no_links = 0
             try:
                 path = os.readlink(os.path.join("/sys/block/", block))
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 if e.errno == errno.EINVAL:
                     path = block
                     sysfs_no_links = 1
