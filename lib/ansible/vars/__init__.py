@@ -324,7 +324,7 @@ class VariableManager:
 
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
                 all_vars = combine_vars(all_vars, task._role.get_role_params(task._block._dep_chain))
             all_vars = combine_vars(all_vars, task.get_vars())
 
