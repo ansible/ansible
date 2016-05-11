@@ -480,6 +480,11 @@ And this data can be accessed in a ``template/playbook`` as::
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
 
+.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
+
+.. _ConfigParser: https://docs.python.org/2/library/configparser.html
+.. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
+
 If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
 can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
 Here is an example of what that might look like::
