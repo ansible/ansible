@@ -96,10 +96,16 @@ options:
       default: false
   recreate:
       description:
-        - Whether or not to recreate containers whose configuration has driftd from the service definition.
-      type: bool
+        - By default containers will be recreated when their configuration differs from the service definition.
+        - Setting to I(never) ignores configuration differences and leaves existing containers unchanged.
+        - Setting to I(always) forces recreation of all existing containers.
+      type: str
       required: false
-      default: true
+      choices:
+        - always
+        - never
+        - smart
+      default: smart
   build:
       description:
         - Whether or not to build images before starting containers.
@@ -109,13 +115,6 @@ options:
       type: bool
       required: false
       default: true
-  force_recreate:
-      description:
-        - Use with state I(present) to always recreate containers, even when they exist and there is no configuration
-          drift.
-      type: bool
-      required: false
-      default: false
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
@@ -402,7 +401,6 @@ class ContainerManager(DockerBaseClass):
         self.definition = None
         self.hostname_check = None
         self.timeout = None
-        self.force_recreate = None
         self.remove_images = None
         self.remove_orphans = None
         self.remove_volumes = None
@@ -413,12 +411,15 @@ class ContainerManager(DockerBaseClass):
         self.dependencies = None
         self.services = None
         self.scale = None
-
-        self.check_mode = client.check_mode
-        self.diff = client.module._diff
+        self.diff = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
+
+        self.check_mode = client.check_mode
+
+        if not self.diff:
+            self.diff = client.module._diff
 
         self.options = dict()
         self.options.update(self._get_auth_options())
@@ -431,14 +432,14 @@ class ContainerManager(DockerBaseClass):
             self.options[u'--file'] = self.project_files
 
         if not HAS_COMPOSE:
-            self.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
+            self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
 
         self.log("options: ")
         self.log(self.options, pretty_print=True)
 
         if self.definition:
             if not self.project_name:
-                self.fail("Parameter error - project_name required when providing definition.")
+                self.client.fail("Parameter error - project_name required when providing definition.")
 
             self.project_src = tempfile.mkdtemp(prefix="ansible")
             compose_file = os.path.join(self.project_src, "docker-compose.yml")
@@ -448,19 +449,16 @@ class ContainerManager(DockerBaseClass):
                 with open(compose_file, 'w') as f:
                     f.write(yaml.dump(self.definition, default_flow_style=False))
             except Exception as exc:
-                self.fail("Error writing to %s - %s" % (compose_file, str(exc)))
+                self.client.fail("Error writing to %s - %s" % (compose_file, str(exc)))
         else:
             if not self.project_src:
-                self.fail("Parameter error - project_src required.")
+                self.client.fail("Parameter error - project_src required.")
 
         try:
             self.log("project_src: %s" % self.project_src)
             self.project = project_from_options(self.project_src, self.options)
         except Exception as exc:
-            self.fail("Configuration error - %s" % str(exc))
-
-    def fail(self, msg):
-        self.client.fail(msg)
+            self.client.fail("Configuration error - %s" % str(exc))
 
     def exec_module(self):
         result = None
@@ -496,23 +494,27 @@ class ContainerManager(DockerBaseClass):
         result = dict(changed=False, diff=dict(), ansible_facts=dict())
 
         up_options = {
-            u'--no-recreate': not self.recreate,
+            u'--no-recreate': False,
             u'--build': self.build,
             u'--no-build': False,
             u'--no-deps': False,
+            u'--force-recreate': False,
         }
 
-        if self.force_recreate:
-            up_options[u'--no-recreate'] = False
-
-        up_options[u'--force-recreate'] = self.force_recreate
+        if self.recreate == 'never':
+            up_options[u'--no-recreate'] = True
+        elif self.recreate == 'always':
+            up_options[u'--force-recreate'] = True
 
         if self.remove_orphans:
             up_options[u'--remove-orphans'] = True
 
+        converge = convergence_strategy_from_opts(up_options)
+        self.log("convergence strategy: %s" % converge)
+
         for service in self.project.services:
             if not service_names or service.name in service_names:
-                plan = service.convergence_plan(strategy=convergence_strategy_from_opts(up_options))
+                plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
                 if self.diff:
@@ -530,12 +532,12 @@ class ContainerManager(DockerBaseClass):
                 self.project.up(
                     service_names=service_names,
                     start_deps=start_deps,
-                    strategy=convergence_strategy_from_opts(up_options),
+                    strategy=converge,
                     do_build=build_action_from_opts(up_options),
                     detached=detached,
                     remove_orphans=self.remove_orphans)
             except Exception as exc:
-                self.fail("Error bring %s up - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error bring %s up - %s" % (self.project.name, str(exc)))
 
         if self.stopped:
             result.update(self.cmd_stop(service_names))
@@ -593,7 +595,7 @@ class ContainerManager(DockerBaseClass):
             try:
                 self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
-                self.fail("Error bringing %s down - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error bringing %s down - %s" % (self.project.name, str(exc)))
 
         return result
 
@@ -619,7 +621,7 @@ class ContainerManager(DockerBaseClass):
             try:
                 self.project.stop(service_names=service_names)
             except Exception as exc:
-                self.fail("Error stopping services for %s - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error stopping services for %s - %s" % (self.project.name, str(exc)))
 
         return result
 
@@ -646,7 +648,7 @@ class ContainerManager(DockerBaseClass):
             try:
                 self.project.restart(service_names=service_names)
             except Exception as exc:
-                self.fail("Error restarting services for %s - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error restarting services for %s - %s" % (self.project.name, str(exc)))
 
         return result
 
@@ -668,7 +670,7 @@ class ContainerManager(DockerBaseClass):
                         try:
                             service.scale(self.scale[service.name])
                         except Exception as exc:
-                            self.fail("Error scaling %s - %s" % (service.name, str(exc)))
+                            self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
         return result
 
 
@@ -680,9 +682,8 @@ def main():
         state=dict(type='str', choices=['absent', 'present'], default='present'),
         definition=dict(type='dict'),
         hostname_check=dict(type='bool', default=False),
-        recreate=dict(type='bool', default=True),
+        recreate=dict(type='str', choices=['always','never','smart'], default='smart'),
         build=dict(type='bool', default=True),
-        force_recreate=dict(type='bool', default=False),
         remove_images=dict(type='str', choices=['all', 'local']),
         remove_volumes=dict(type='bool', default=False),
         remove_orphans=dict(type='bool', default=False),
@@ -690,7 +691,8 @@ def main():
         restarted=dict(type='bool', default=False),
         scale=dict(type='dict'),
         services=dict(type='list'),
-        dependencies=dict(type='bool', default=True)
+        dependencies=dict(type='bool', default=True),
+        diff=dict(type='bool', default=False)
     )
 
     mutually_exclusive = [
