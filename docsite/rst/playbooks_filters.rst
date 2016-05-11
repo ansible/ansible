@@ -165,6 +165,25 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. versionadded:: 2.0
+
+The above filters also work with two dicts. The following returns a dict
+that contains all of the keys in `dict1` and `dict2`::
+
+    {{ dict1 | union(dict2) }}
+
+If `dict2` contains any keys that are also in `dict1`, the resulting
+dict will contain the value from `dict2` for those keys. If you don't
+want this behaviour, you can set `strict` to `True`::
+
+    {{ dict1 | union(dict2, strict=True) }}
+
+In this case, the values from `dict1` will be used in the resulting hash
+for any common keys.
+
+The `intersect`, `difference`, and `symmetric_difference` filters also
+take a `strict` argument.
+
 .. _version_comparison_filters:
 
 Version Comparison Filters
