@@ -130,6 +130,13 @@ EXAMPLES = '''
     consul_kv:
       key: ansible/groups/dc1/somenode
       value: 'top_secret'
+
+  - name: Register a key/value pair with an associated session
+    consul_kv:
+      key: stg/node/server_birthday
+      value: 20160509
+      session: "{{ sessionid }}"
+      state: acquire
 '''
 
 import sys
@@ -157,6 +164,8 @@ def execute(module):
 
 def lock(module, state):
 
+    consul_api = get_consul_api(module)
+
     session = module.params.get('session')
     key = module.params.get('key')
     value = module.params.get('value')
@@ -166,18 +175,22 @@ def lock(module, state):
             msg='%s of lock for %s requested but no session supplied' %
             (state, key))
 
-    if state == 'acquire':
-        successful = consul_api.kv.put(key, value,
-                                       cas=module.params.get('cas'),
-                                       acquire=session,
-                                       flags=module.params.get('flags'))
-    else:
-        successful = consul_api.kv.put(key, value,
-                                       cas=module.params.get('cas'),
-                                       release=session,
-                                       flags=module.params.get('flags'))
+    index, existing = consul_api.kv.get(key)
 
-    module.exit_json(changed=successful,
+    changed = not existing or (existing and existing['Value'] != value)
+    if changed and not module.check_mode:
+        if state == 'acquire':
+            changed = consul_api.kv.put(key, value,
+                                        cas=module.params.get('cas'),
+                                        acquire=session,
+                                        flags=module.params.get('flags'))
+        else:
+            changed = consul_api.kv.put(key, value,
+                                        cas=module.params.get('cas'),
+                                        release=session,
+                                        flags=module.params.get('flags'))
+
+    module.exit_json(changed=changed,
                      index=index,
                      key=key)
 
@@ -251,9 +264,10 @@ def main():
         port=dict(default=8500, type='int'),
         recurse=dict(required=False, type='bool'),
         retrieve=dict(required=False, default=True),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent', 'acquire', 'release']),
         token=dict(required=False, default='anonymous', no_log=True),
-        value=dict(required=False)
+        value=dict(required=False),
+        session=dict(required=False)
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=False)
