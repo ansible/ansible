@@ -99,7 +99,7 @@ class Task(Base, Conditional, Taggable, Become):
     def get_path(self):
         ''' return the absolute path of the task with its line number '''
 
-        if hasattr(self, '_ds'):
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             return "%s:%s" % (self._ds._data_source, self._ds._line_number)
 
     def get_name(self):
