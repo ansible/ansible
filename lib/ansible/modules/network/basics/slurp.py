@@ -35,6 +35,7 @@ options:
     default: null
     aliases: []
 notes:
+   -  This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the original file size.
    - "See also: M(fetch)"
 requirements: []
 author: 
