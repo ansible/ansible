@@ -123,6 +123,7 @@ class StrategyModule(StrategyBase):
                             # if there is metadata, check to see if the allow_duplicates flag was set to true
                             if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
                                 display.debug("'%s' skipped because role has already run" % task)
+                                del self._blocked_hosts[host_name]
                                 continue
 
                         if task.action == 'meta':
