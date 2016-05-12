@@ -174,6 +174,19 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+class AnsibleSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh connection plugin had a fatal error '''
+    pass
+
+
+class AnsibleSshInitialWriteConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error during the initial data write '''
+    pass
+
+class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error (255 return code from ssh command '''
+    pass
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
