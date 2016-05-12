@@ -129,6 +129,7 @@ from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
+import boto3
 import six
 
 from six.moves import configparser
@@ -261,6 +262,12 @@ class Ec2Inventory(object):
         self.rds_enabled = True
         if config.has_option('ec2', 'rds'):
             self.rds_enabled = config.getboolean('ec2', 'rds')
+
+        # Return cluster info?
+        if config.has_option('ec2', 'cluster_enabled'):
+            self.cluster_enabled = config.getboolean('ec2', 'cluster_enabled')
+        else:
+            self.cluster_enabled = False
 
         # Include ElastiCache instances?
         self.elasticache_enabled = True
@@ -447,6 +454,8 @@ class Ec2Inventory(object):
             if self.elasticache_enabled:
                 self.get_elasticache_clusters_by_region(region)
                 self.get_elasticache_replication_groups_by_region(region)
+            if self.cluster_enabled:
+                self.get_db_clusters_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -502,7 +511,7 @@ class Ec2Inventory(object):
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
-                backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error, 'getting EC2 instances')
 
@@ -529,6 +538,55 @@ class Ec2Inventory(object):
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
+
+    def get_db_clusters_by_region(self, region):
+        client = boto3.client('rds', region_name=region)
+        clusters = client.describe_db_clusters()["DBClusters"]
+        account_id = boto.connect_iam().get_user().arn.split(':')[4]
+        c_dict = {}
+        for c in clusters:
+            # remove these datetime objects as there is no serialisation to json
+            # currently in place and we don't need the data yet
+            if 'EarliestRestorableTime' in c:
+                del c['EarliestRestorableTime']
+            if 'LatestRestorableTime' in c:
+                del c['LatestRestorableTime']
+
+            if self.ec2_instance_filters == {}:
+                matches_filter = True
+            else:
+                matches_filter = False
+
+            try:
+                # arn:aws:rds:<region>:<account number>:<resourcetype>:<name>
+                tags = client.list_tags_for_resource(
+                    ResourceName='arn:aws:rds:' + region + ':' + account_id + ':cluster:' + c['DBClusterIdentifier'])
+                c['Tags'] = tags['TagList']
+
+                if self.ec2_instance_filters:
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        # get AWS tag key e.g. tag:env will be 'env'
+                        tag_name = filter_key.split(":", 1)[1]
+                        # Filter values is a list (if you put multiple values for the same tag name)
+                        matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
+
+                        if matches_filter:
+                            # it matches a filter, so stop looking for further matches
+                            break
+
+            except Exception as e:
+                if e.message.find('DBInstanceNotFound') >= 0:
+                    # AWS RDS bug (2016-01-06) means deletion does not fully complete and leave an 'empty' cluster.
+                    # Ignore errors when trying to find tags for these
+                    pass
+
+            # ignore empty clusters caused by AWS bug
+            if len(c['DBClusterMembers']) == 0:
+                continue
+            elif matches_filter:
+                c_dict[c['DBClusterIdentifier']] = c
+
+        self.inventory['db_clusters'] = c_dict
 
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
@@ -739,7 +797,7 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
@@ -858,7 +916,7 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'security_groups', key)
 
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
 
@@ -1383,4 +1441,3 @@ class Ec2Inventory(object):
 
 # Run the script
 Ec2Inventory()
-
