@@ -563,6 +563,8 @@ class ModuleValidator(Validator):
 
 
 class PythonPackageValidator(Validator):
+    BLACKLIST_FILES = frozenset(('__pycache__',))
+
     def __init__(self, path):
         super(PythonPackageValidator, self).__init__()
 
@@ -579,6 +581,9 @@ class PythonPackageValidator(Validator):
 
     def validate(self):
         super(PythonPackageValidator, self).validate()
+
+        if self.basename in self.BLACKLIST_FILES:
+            return
 
         init_file = os.path.join(self.path, '__init__.py')
         if not os.path.exists(init_file):
