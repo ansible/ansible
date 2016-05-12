@@ -660,6 +660,7 @@ class Distribution(object):
         # The platform module provides information about the running
         # system/distribution. Use this as a baseline and fix buggy systems
         # afterwards
+        self.facts['distribution'] = self.system
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
