@@ -457,6 +457,46 @@ which will produce this output::
     # host: myhost
     #
 
+.. _config_encoders:
+
+Config Encoder Filters
+----------------------
+
+.. versionadded:: 2.2
+
+Config Encoder filters were developed to facilitate creation of configuration
+files from a YAML data structure. Imagine the following INI file::
+
+    [section1]
+    option11=value11
+    option12=value12
+
+Such configuration file can be described as a YAML data structure::
+
+    myapp_config:
+      section1:
+        option11: value11
+        option12: value12
+
+The variable is then used together with the ``encode_ini`` Config Encoder
+filter in the template file ``myapp.cfg.j2`` like this::
+
+    {{ myapp_config | encode_ini }}
+
+And finally, the template file is used in a task like this::
+
+    - name: Create config file
+      template:
+        src: myapp.cfg.j2
+        dest: /etc/myapp/myapp.cfg
+
+When the task is executed, it creates exactly the same file as the
+original INI file.
+
+More information about Config Encoder filters including all supported
+configuration file formats and complete usage guide can be found in
+:doc:`playbooks_filters_config_encoders`.
+
 .. _other_useful_filters:
 
 Other Useful Filters
