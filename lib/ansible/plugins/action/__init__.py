@@ -145,7 +145,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_path, module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
         return (module_style, module_shebang, module_data, module_path)
 
