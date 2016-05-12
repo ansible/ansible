@@ -256,59 +256,67 @@ class TaskExecutor:
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
         '''
-        # _task.action could contain templatable strings (via action: and
-        # local_action:)  Template it before comparing.  If we don't end up
-        # optimizing it here, the templatable string might use template vars
-        # that aren't available until later (it could even use vars from the
-        # with_items loop) so don't make the templated string permanent yet.
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
-        task_action = self._task.action
-        if templar._contains_vars(task_action):
-            task_action = templar.template(task_action, fail_on_undefined=False)
+        try:
+            # Hack just for the backport to 2.0
+            loop_var = 'item'
 
-        if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
-            if all(isinstance(o, string_types) for o in items):
-                final_items = []
+            # _task.action could contain templatable strings (via action: and
+            # local_action:)  Template it before comparing.  If we don't end up
+            # optimizing it here, the templatable string might use template vars
+            # that aren't available until later (it could even use vars from the
+            # with_items loop) so don't make the templated string permanent yet.
+            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+            task_action = self._task.action
+            if templar._contains_vars(task_action):
+                task_action = templar.template(task_action, fail_on_undefined=False)
 
-                name = None
-                for allowed in ['name', 'pkg', 'package']:
-                    name = self._task.args.pop(allowed, None)
-                    if name is not None:
-                        break
+            if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
+                if all(isinstance(o, string_types) for o in items):
+                    final_items = []
 
-                # This gets the information to check whether the name field
-                # contains a template that we can squash for
-                template_no_item = template_with_item = None
-                if name:
-                    if templar._contains_vars(name):
-                        variables['item'] = '\0$'
-                        template_no_item = templar.template(name, variables, cache=False)
-                        variables['item'] = '\0@'
-                        template_with_item = templar.template(name, variables, cache=False)
-                        del variables['item']
+                    name = None
+                    for allowed in ['name', 'pkg', 'package']:
+                        name = self._task.args.pop(allowed, None)
+                        if name is not None:
+                            break
 
-                    # Check if the user is doing some operation that doesn't take
-                    # name/pkg or the name/pkg field doesn't have any variables
-                    # and thus the items can't be squashed
-                    if template_no_item != template_with_item:
-                        for item in items:
-                            variables['item'] = item
-                            if self._task.evaluate_conditional(templar, variables):
-                                new_item = templar.template(name, cache=False)
-                                final_items.append(new_item)
-                        self._task.args['name'] = final_items
-                        # Wrap this in a list so that the calling function loop
-                        # executes exactly once
-                        return [final_items]
-                    else:
-                        # Restore the name parameter
-                        self._task.args['name'] = name
-            #elif:
-                # Right now we only optimize single entries.  In the future we
-                # could optimize more types:
-                # * lists can be squashed together
-                # * dicts could squash entries that match in all cases except the
-                #   name or pkg field.
+                    # This gets the information to check whether the name field
+                    # contains a template that we can squash for
+                    template_no_item = template_with_item = None
+                    if name:
+                        if templar._contains_vars(name):
+                            variables[loop_var] = '\0$'
+                            template_no_item = templar.template(name, variables, cache=False)
+                            variables[loop_var] = '\0@'
+                            template_with_item = templar.template(name, variables, cache=False)
+                            del variables[loop_var]
+
+                        # Check if the user is doing some operation that doesn't take
+                        # name/pkg or the name/pkg field doesn't have any variables
+                        # and thus the items can't be squashed
+                        if template_no_item != template_with_item:
+                            for item in items:
+                                variables[loop_var] = item
+                                if self._task.evaluate_conditional(templar, variables):
+                                    new_item = templar.template(name, cache=False)
+                                    final_items.append(new_item)
+                            self._task.args['name'] = final_items
+                            # Wrap this in a list so that the calling function loop
+                            # executes exactly once
+                            return [final_items]
+                        else:
+                            # Restore the name parameter
+                            self._task.args['name'] = name
+                #elif:
+                    # Right now we only optimize single entries.  In the future we
+                    # could optimize more types:
+                    # * lists can be squashed together
+                    # * dicts could squash entries that match in all cases except the
+                    #   name or pkg field.
+        except:
+            # Squashing is an optimization.  If it fails for any reason,
+            # simply use the unoptimized list of items.
+            pass
         return items
 
     def _execute(self, variables=None):
