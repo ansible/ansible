@@ -280,48 +280,36 @@ class TaskExecutor:
             task_action = templar.template(task_action, fail_on_undefined=False)
 
         if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
-            if all(isinstance(o, string_types) for o in items):
-                final_items = []
+            # flatten lists of lists
+            if all([isinstance(item, list) for item in items]):
+                items = [x for y in items for x in y]
+            # use list rather than set to preserve ordering
+            final_items = list()
 
-                name = None
-                for allowed in ['name', 'pkg', 'package']:
-                    name = self._task.args.pop(allowed, None)
-                    if name is not None:
-                        break
+            name = None
+            for allowed in ['name', 'pkg', 'package']:
+                name = self._task.args.pop(allowed, None)
+                if name is not None:
+                    break
 
-                # This gets the information to check whether the name field
-                # contains a template that we can squash for
-                template_no_item = template_with_item = None
-                if name:
-                    if templar._contains_vars(name):
-                        variables[loop_var] = '\0$'
-                        template_no_item = templar.template(name, variables, cache=False)
-                        variables[loop_var] = '\0@'
-                        template_with_item = templar.template(name, variables, cache=False)
-                        del variables[loop_var]
-
-                    # Check if the user is doing some operation that doesn't take
-                    # name/pkg or the name/pkg field doesn't have any variables
-                    # and thus the items can't be squashed
-                    if template_no_item != template_with_item:
-                        for item in items:
-                            variables[loop_var] = item
-                            if self._task.evaluate_conditional(templar, variables):
-                                new_item = templar.template(name, cache=False)
-                                final_items.append(new_item)
-                        self._task.args['name'] = final_items
-                        # Wrap this in a list so that the calling function loop
-                        # executes exactly once
-                        return [final_items]
-                    else:
-                        # Restore the name parameter
-                        self._task.args['name'] = name
-            #elif:
-                # Right now we only optimize single entries.  In the future we
-                # could optimize more types:
-                # * lists can be squashed together
-                # * dicts could squash entries that match in all cases except the
-                #   name or pkg field.
+            for item in items:
+                variables[loop_var] = item
+                if self._task.evaluate_conditional(templar, variables):
+                    new_item = templar.template(name, cache=False)
+                    # Do not add templated name if other task arguments
+                    # e.g. state are also templated - this could be
+                    # optimised if results of all other templates are
+                    # the same
+                    if new_item != name and \
+                            not any([v != templar.template(v, cache=False)
+                                for (k, v) in self._task.args.items()]) and \
+                            not new_item in final_items:
+                        final_items.append(new_item)
+            if final_items:
+                self._task.args['name'] = final_items
+                return [final_items]
+            else:
+                self._task.args['name'] = name
         return items
 
     def _execute(self, variables=None):
