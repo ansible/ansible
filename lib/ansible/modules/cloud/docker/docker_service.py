@@ -139,6 +139,12 @@ options:
       required: false
       type: bool
       default: false
+  debug:
+      description:
+        - Include I(actions) in the return values.
+      required: false
+      type: bool
+      default: false
 '''
 
 EXAMPLES = '''
@@ -357,6 +363,35 @@ service:
                           returned: success
                           type: str
                           example: running
+
+actions:
+  description: Provides the actions to be taken on each service as determined by compose.
+  returned: when in check mode or I(debug) true
+  type: complex
+  contains:
+      service_name:
+          description: Name of the service.
+          returned: always
+          type: complex
+          contains:
+              action:
+                  description: A descriptive name of the action to be performed on the set of containers
+                               within the service.
+                  returned: always
+                  type: list
+                  contains:
+                      id:
+                          description: the container's long ID
+                          returned: always
+                          type: string
+                      name:
+                          description: the container's name
+                          returned: always
+                          type: string
+                      short_id:
+                          description: the container's short ID
+                          returned: always
+                          type: string
 '''
 
 HAS_COMPOSE = True
@@ -475,6 +510,9 @@ class ContainerManager(DockerBaseClass):
             self.log("removing %s" % self.project_src)
             os.rmdir(self.project_src)
 
+        if not self.check_mode and not self.debug and result.get('actions'):
+            result.pop('actions')
+
         return result
 
     def _get_auth_options(self):
@@ -517,7 +555,7 @@ class ContainerManager(DockerBaseClass):
                 plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
-                if self.debug:
+                if self.debug or self.check_mode:
                     result['actions'][service.name] = dict()
                     result['actions'][service.name][plan.action] = []
                     for container in plan.containers:
@@ -586,7 +624,7 @@ class ContainerManager(DockerBaseClass):
             containers = service.containers(stopped=True)
             if len(containers):
                 result['changed'] = True
-            if self.debug:
+            if self.debug or self.check_mode:
                 result['actions'][service.name] = dict()
                 result['actions'][service.name]['deleted'] = [container.name for container in containers]
 
@@ -637,7 +675,7 @@ class ContainerManager(DockerBaseClass):
                 result['actions'][service.name]['restart'] = []
                 for container in service.containers(stopped=True):
                     result['changed'] = True
-                    if self.debug:
+                    if self.debug or self.check_mode:
                         result['actions'][service.name]['restart'].append(dict(
                             id=container.id,
                             name=container.name,
@@ -664,7 +702,7 @@ class ContainerManager(DockerBaseClass):
                 containers = service.containers(stopped=True)
                 if len(containers) != self.scale[service.name]:
                     result['changed'] = True
-                    if self.debug:
+                    if self.debug or self.check_mode:
                         result['actions'][service.name]['scale'] = self.scale[service.name] - len(containers)
                     if not self.check_mode:
                         try:
