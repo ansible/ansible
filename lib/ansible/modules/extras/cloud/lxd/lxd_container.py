@@ -34,9 +34,9 @@ options:
         required: true
     config:
         description:
-          - a config dictionary for creating a container.
+          - A config dictionary for creating a container.
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
-          - required when the container is not created yet and the state is
+          - Required when the container is not created yet and the state is
             not absent.
         required: false
     state:
@@ -52,9 +52,9 @@ options:
         default: started
     timeout_for_addresses:
         description:
-          - a timeout of waiting for IPv4 addresses are set to the all network
+          - A timeout of waiting for IPv4 addresses are set to the all network
             interfaces in the container after starting or restarting.
-          - if this values is equal to or less than 0, ansible does not
+          - If this value is equal to or less than 0, Ansible does not
             wait for IPv4 addresses.
         required: false
         default: 0
