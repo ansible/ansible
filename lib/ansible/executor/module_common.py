@@ -490,11 +490,9 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
-def _is_binary(module_path):
+def _is_binary(module_data):
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
-
-    with open(module_path, 'rb') as f:
-        start = f.read(1024)
+    start = module_data[:1024]
     return bool(start.translate(None, textchars))
 
 def _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression):
@@ -511,7 +509,9 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     # module_substyle is extra information that's useful internally.  It tells
     # us what we have to look to substitute in the module files and whether
     # we're using module replacer or ziploader to format the module itself.
-    if REPLACER in module_data:
+    if _is_binary(module_data):
+        module_substyle = module_style = 'binary'
+    elif REPLACER in module_data:
         # Do REPLACER before from ansible.module_utils because we need make sure
         # we substitute "from ansible.module_utils basic" for REPLACER
         module_style = 'new'
@@ -528,8 +528,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         module_substyle = 'jsonargs'
     elif b'WANT_JSON' in module_data:
         module_substyle = module_style = 'non_native_want_json'
-    elif _is_binary(module_path):
-        module_substyle = module_style = 'binary'
 
     shebang = None
     # Neither old-style, non_native_want_json nor binary modules should be modified
