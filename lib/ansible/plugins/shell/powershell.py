@@ -54,10 +54,12 @@ class ShellModule(object):
             return path
         return '\'%s\'' % path
 
-    # powershell requires that script files end with .ps1
-    def get_remote_filename(self, base_name):
-        if not base_name.strip().lower().endswith('.ps1'):
-            return base_name.strip() + '.ps1'
+    def get_remote_filename(self, pathname):
+        # powershell requires that script files end with .ps1
+        base_name = os.path.basename(pathname.strip())
+        name, ext = os.path.splitext(base_name.strip())
+        if ext.lower() not in ['.ps1', '.exe']:
+            return name + '.ps1'
 
         return base_name.strip()
 
@@ -146,6 +148,10 @@ class ShellModule(object):
             cmd_parts.insert(0, '&')
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
+        elif not shebang:
+            # The module is assumed to be a binary
+            cmd_parts[0] = self._unquote(cmd_parts[0])
+            cmd_parts.append(arg_path)
         script = '''
             Try
             {
