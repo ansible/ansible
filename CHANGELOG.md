@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 2.2 TBD - ACTIVE DEVELOPMENT
+
+####New Modules:
+- aws
+  * ec2_customer_gateway
+
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
@@ -26,6 +32,8 @@ Ansible Changes By Release
 * The way new-style python modules (which include all of the non-windows modules shipped with Ansible) are assembled before execution on the remote machine has been changed. The new way stays closer to how python imports modules which will make it easier to write modules which rely heavily on shared code.
 * Reduce the situations in which a module can end up as world readable.  For details, see: https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user
 * Re-implemented the retry file feature, which had been left out of 2.0 (fix was backported to 2.0.1 originally).
+* Improved winrm argument validation and feature sniffing (for upcoming pywinrm NTLM support).
+* Improved winrm error handling: basic parsing of stderr from CLIXML stream.
 
 ####New Modules:
 - aws
@@ -55,12 +63,55 @@ Ansible Changes By Release
   * cs_zone_facts
 - clustering
   * kubernetes
+- cumulus
+  * cl_bond
+  * cl_bridge
+  * cl_img_install
+  * cl_interface
+  * cl_interface_policy
+  * cl_license
+  * cl_ports
+- eos
+  * eos_command
+  * eos_config
+  * eos_eapi
+  * eos_template
 - gitlab
   * gitlab_group
   * gitlab_project
   * gitlab_user
+- ios
+  * ios_command
+  * ios_config
+  * ios_template
+- iosxr
+  * iosxr_command
+  * iosxr_config
+  * iosxr_template
+- junos
+  * junos_command
+  * junos_config
+  * junos_facts
+  * junos_netconf
+  * junos_package
+  * junos_template
 - make
 - mongodb_parameter
+- nxos
+  * nxos_command
+  * nxos_config
+  * nxos_facts
+  * nxos_feature
+  * nxos_interface
+  * nxos_ip_interface
+  * nxos_nxapi
+  * nxos_ping
+  * nxos_switchport
+  * nxos_template
+  * nxos_vlan
+  * nxos_vrf
+  * nxos_vrf_interface
+  * nxos_vrrp
 - openstack
   * os_flavor_facts
   * os_group
@@ -71,13 +122,20 @@ Ansible Changes By Release
   * os_project_facts
   * os_user_facts
   * os_user_role
+- openswitch
+  * ops_command
+  * ops_config
+  * ops_facts
+  * ops_template
 - softlayer
   * sl_vm
 - vmware
   * vmware_maintenancemode
   * vmware_vm_shell
 - windows
+  * win_acl_inheritance
   * win_owner
+  * win_reboot
   * win_regmerge
   * win_timezone
 - yum_repository
@@ -89,6 +147,8 @@ Ansible Changes By Release
 ####New Filters:
 * extract
 * ip4_hex
+* regex_search
+* regex_findall
 
 ####New Callbacks:
 * actionable (only shows changed and failed)

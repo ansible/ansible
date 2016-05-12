@@ -289,6 +289,8 @@ def process_module(module, options, env, template, outputname, module_map, alias
                 del doc['options'][k]['version_added']
             if not 'description' in doc['options'][k]:
                 raise AnsibleError("Missing required description for option %s in %s " % (k, module))
+            if not 'required' in doc['options'][k]:
+                raise AnsibleError("Missing required 'required' for option %s in %s " % (k, module))
             if not isinstance(doc['options'][k]['description'],list):
                 doc['options'][k]['description'] = [doc['options'][k]['description']]
 

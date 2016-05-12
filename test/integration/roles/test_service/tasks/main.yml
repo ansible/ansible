@@ -13,7 +13,7 @@
 - include: 'sysv_setup.yml'
   when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('6', '>=') and ansible_distribution_version|version_compare('7', '<'))
 - include: 'systemd_setup.yml'
-  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('7', '>=') and ansible_distribution_version|version_compare('8', '<'))) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>='))
+  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('7', '>=') and ansible_distribution_version|version_compare('8', '<'))) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>=')) or (ansible_distribution == 'Debian' and ansible_distribution_version|version_compare('8', '>='))
 - include: 'upstart_setup.yml'
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '<')
 

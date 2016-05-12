@@ -34,6 +34,28 @@ To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
+Also a cobbler.ini file should be added to /etc/ansible so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
+
+
+    [cobbler]
+
+    # Set Cobbler's hostname or IP address
+    host = http://127.0.0.1/cobbler_api
+
+    # API calls to Cobbler can be slow. For this reason, we cache the results of an API
+    # call. Set this to the path you want cache files to be written to. Two files
+    # will be written to this directory:
+    #   - ansible-cobbler.cache
+    #   - ansible-cobbler.index
+
+    cache_path = /tmp
+
+    # The number of seconds a cache file is considered valid. After this many
+    # seconds, a new API call will be made, and the cache file will be updated.
+
+    cache_max_age = 900
+
+
 First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
 Let's explore what this does.  In cobbler, assume a scenario somewhat like the following::
@@ -111,7 +133,7 @@ If you use boto profiles to manage multiple AWS accounts, you can pass ``--profi
     aws_access_key_id = <prod access key>
     aws_secret_access_key = <prod secret key>
 
-You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``anisble-playbook`` though.
+You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``ansible-playbook`` though.
 But you can use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
 
 Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.

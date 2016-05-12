@@ -30,11 +30,14 @@ import zipfile
 from io import BytesIO
 
 # from Ansible
-from ansible import __version__
+from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_unicode
-from ansible.plugins.strategy import action_write_locks
+# Must import strategy and use write_locks from there
+# If we import write_locks directly then we end up binding a
+# variable to the object and then it never gets updated.
+from ansible.plugins import strategy
 
 try:
     from __main__ import display
@@ -118,7 +121,7 @@ def invoke_module(module, modlib_path, json_params):
     else:
         os.environ['PYTHONPATH'] = modlib_path
 
-    p = subprocess.Popen(['%(interpreter)s', module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = subprocess.Popen([%(interpreter)s, module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     (stdout, stderr) = p.communicate(json_params)
 
     if not isinstance(stderr, (bytes, unicode)):
@@ -215,7 +218,7 @@ def debug(command, zipped_mod, json_params):
         else:
             os.environ['PYTHONPATH'] = basedir
 
-        p = subprocess.Popen(['%(interpreter)s', script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen([%(interpreter)s, script_path, args_path], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
 
         if not isinstance(stderr, (bytes, unicode)):
@@ -372,12 +375,12 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter)
+    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter).strip()
 
     if interpreter_config not in task_vars:
         return (None, interpreter)
 
-    interpreter = task_vars[interpreter_config]
+    interpreter = task_vars[interpreter_config].strip()
     shebang = u'#!' + interpreter
 
     if args:
@@ -533,6 +536,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         constants = dict(
                 SELINUX_SPECIAL_FS=C.DEFAULT_SELINUX_SPECIAL_FS,
                 SYSLOG_FACILITY=_get_facility(task_vars),
+                ANSIBLE_VERSION=__version__,
                 )
         params = dict(ANSIBLE_MODULE_ARGS=module_args,
                 ANSIBLE_MODULE_CONSTANTS=constants,
@@ -551,19 +555,34 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
+            display.debug('ZIPLOADER: using cached module: %s' % cached_module_filename)
             zipdata = open(cached_module_filename, 'rb').read()
             # Fool the check later... I think we should just remove the check
             py_module_names.add(('basic',))
         else:
-            with action_write_locks[module_name]:
+            if module_name in strategy.action_write_locks:
+                display.debug('ZIPLOADER: Using lock for %s' % module_name)
+                lock = strategy.action_write_locks[module_name]
+            else:
+                # If the action plugin directly invokes the module (instead of
+                # going through a strategy) then we don't have a cross-process
+                # Lock specifically for this module.  Use the "unexpected
+                # module" lock instead
+                display.debug('ZIPLOADER: Using generic lock for %s' % module_name)
+                lock = strategy.action_write_locks[None]
+
+            display.debug('ZIPLOADER: Acquiring lock')
+            with lock:
+                display.debug('ZIPLOADER: Lock acquired: %s' % id(lock))
                 # Check that no other process has created this while we were
                 # waiting for the lock
                 if not os.path.exists(cached_module_filename):
+                    display.debug('ZIPLOADER: Creating module')
                     # Create the module zip data
                     zipoutput = BytesIO()
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-                    zf.writestr('ansible/__init__.py', b''.join((b"__version__ = '", to_bytes(__version__), b"'\n")))
-                    zf.writestr('ansible/module_utils/__init__.py', b'')
+                    zf.writestr('ansible/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\ntry:\n    from ansible.release import __version__,__author__\nexcept ImportError:\n    __version__="' + to_bytes(__version__) + b'"\n    __author__="' + to_bytes(__author__) + b'"\n')
+                    zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
                     zf.writestr('ansible_module_%s.py' % module_name, module_data)
 
@@ -579,15 +598,19 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                         # Note -- if we have a global function to setup, that would
                         # be a better place to run this
                         os.mkdir(lookup_path)
+                    display.debug('ZIPLOADER: Writing module')
                     with open(cached_module_filename + '-part', 'w') as f:
                         f.write(zipdata)
 
                     # Rename the file into its final position in the cache so
                     # future users of this module can read it off the
                     # filesystem instead of constructing from scratch.
+                    display.debug('ZIPLOADER: Renaming module')
                     os.rename(cached_module_filename + '-part', cached_module_filename)
+                    display.debug('ZIPLOADER: Done creating module')
 
             if zipdata is None:
+                display.debug('ZIPLOADER: Reading module after lock')
                 # Another process wrote the file while we were waiting for
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
@@ -601,6 +624,17 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
+
+        executable = interpreter.split(u' ', 1)
+        if len(executable) == 2 and executable[0].endswith(u'env'):
+            # Handle /usr/bin/env python style interpreter settings
+            interpreter = u"'{0}', '{1}'".format(*executable)
+        else:
+            # Still have to enclose the parts of the interpreter in quotes
+            # because we're substituting it into the template as a python
+            # string
+            interpreter = u"'{0}'".format(interpreter)
+
         output.write(to_bytes(ACTIVE_ZIPLOADER_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,

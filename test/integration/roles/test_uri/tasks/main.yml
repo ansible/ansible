@@ -94,16 +94,10 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
-    url: "https://www.kennethreitz.org/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
-  # kennethreitz having trouble staying up.  Eventually need to install our own
-  # certs & web server to test this... also need to install and test it with
-  # a proxy so the complications are inevitable
-  until: "'read operation timed out' not in result.msg"
-  retries: 30
-  delay: 10
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
@@ -123,13 +117,10 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
-    url: "https://www.kennethreitz.org/"
+    url: "https://{{ badssl_host }}/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
   register: result
-  until: "'read operation timed out' not in result.msg"
-  retries: 30
-  delay: 10
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"
@@ -143,7 +134,7 @@
 
 - name: test redirect without follow_redirects
   uri:
-    url: 'http://httpbin.org/redirect/2'
+    url: 'http://{{ httpbin_host }}/redirect/2'
     follow_redirects: 'none'
     status_code: 302
   register: result
@@ -151,21 +142,21 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "http://httpbin.org/relative-redirect/1"'
+      - 'result.location|default("") == "http://{{ httpbin_host }}/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
-    url: 'https://httpbin.org/redirect/2'
+    url: 'https://{{ httpbin_host }}/redirect/2'
   register: result
 
 - name: Assert SSL with redirect
   assert:
     that:
-      - 'result.url|default("") == "https://httpbin.org/get"'
+      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
 
 - name: redirect to bad SSL site
   uri:
-    url: 'http://wrong.host.badssl.com'
+    url: 'http://{{ badssl_host }}'
   register: result
   ignore_errors: true
 
@@ -173,30 +164,30 @@
   assert:
     that:
       - result|failed
-      - '"wrong.host.badssl.com" in result.msg'
+      - 'badssl_host in result.msg'
 
 - name: test basic auth
   uri:
-    url: 'http://httpbin.org/basic-auth/user/passwd'
+    url: 'http://{{ httpbin_host }}/basic-auth/user/passwd'
     user: user
     password: passwd
 
 - name: test basic forced auth
   uri:
-    url: 'http://httpbin.org/hidden-basic-auth/user/passwd'
+    url: 'http://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
     force_basic_auth: true
     user: user
     password: passwd
 
 - name: test PUT
   uri:
-    url: 'http://httpbin.org/put'
+    url: 'http://{{ httpbin_host }}/put'
     method: PUT
     body: 'foo=bar'
 
 - name: test OPTIONS
   uri:
-    url: 'http://httpbin.org/'
+    url: 'http://{{ httpbin_host }}/'
     method: OPTIONS
   register: result
 
@@ -211,9 +202,13 @@
   set_fact:
     is_ubuntu_precise: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'precise' }}"
 
+# These tests are just side effects of how the site is hosted.  It's not
+# specifically a test site.  So the tests may break due to the hosting
+# changing.  Eventually we need to standup a webserver with SNI as part of the
+# test run.
 - name: Test that SNI succeeds on python versions that have SNI
   uri:
-    url: 'https://sni.velox.ch'
+    url: 'https://{{ sni_host }}/'
     return_content: true
   when: ansible_python.has_sslcontext
   register: result
@@ -222,12 +217,12 @@
   assert:
     that:
       - result|success
-      - '"Great! Your client" in result.content'
+      - 'sni_host == result.content'
   when: ansible_python.has_sslcontext
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
   uri:
-    url: 'https://sni.velox.ch'
+    url: 'https://{{ sni_host }}'
   ignore_errors: true
   when: not ansible_python.has_sslcontext
   register: result
@@ -253,7 +248,7 @@
 
 - name: Verify SNI verificaiton succeeds on old python with urllib3 contrib
   uri:
-    url: 'https://sni.velox.ch'
+    url: 'https://{{ sni_host }}'
     return_content: true
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
   register: result
@@ -262,7 +257,7 @@
   assert:
     that:
       - result|success
-      - '"Great! Your client" in result.content'
+      - 'sni_host == result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: Uninstall ndg-httpsclient and urllib3
@@ -282,7 +277,7 @@
 
 - name: validate the status_codes are correct
   uri:
-    url: https://httpbin.org/status/202
+    url: "https://{{ httpbin_host }}/status/202"
     status_code: 202
     method: POST
     body: foo

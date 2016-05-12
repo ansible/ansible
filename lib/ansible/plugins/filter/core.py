@@ -106,7 +106,7 @@ def to_nice_json(a, *args, **kw):
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
 
-def bool(a):
+def to_bool(a):
     ''' return a bool for the arg '''
     if a is None or type(a) == bool:
         return a
@@ -431,7 +431,7 @@ class FilterModule(object):
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
 
             # value as boolean
-            'bool': bool,
+            'bool': to_bool,
 
             # quote string for shell usage
             'quote': quote,

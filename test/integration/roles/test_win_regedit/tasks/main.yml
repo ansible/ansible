@@ -349,11 +349,35 @@
     that:
       - "check56_result.changed == true"
 
+# test empty data value (some things depend on this, having no data is not equivalent)
+
+- name: set an empty data value
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: helloempty
+    data: ""
+  register: check61_result
+
+- assert:
+    that:
+      - "check61_result.changed == true"
+
+- name: set an empty data value again (should not change)
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: helloempty
+    data: ""
+  register: check62_result
+
+- assert:
+    that:
+      - "check62_result.changed == false"
 # tear down
 
 - name: remove registry key used for testing
   win_regedit:
     key: 'HKCU:\SOFTWARE\Cow Corp'
     state: absent
+
 
 # END OF win_regedit tests

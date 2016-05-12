@@ -163,7 +163,7 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
+                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
@@ -230,7 +230,7 @@ class StrategyModule(StrategyBase):
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
-                        if task.any_errors_fatal or run_once:
+                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:

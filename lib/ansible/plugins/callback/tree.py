@@ -63,7 +63,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         self.result_to_tree(result)
 
-    def v2_runner_on_failed(self, result):
+    def v2_runner_on_failed(self, result, ignore_errors=False):
         self.result_to_tree(result)
 
     def v2_runner_on_unreachable(self, result):

@@ -58,7 +58,7 @@ class StrategyModule(StrategyBase):
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
-            hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts and not iterator.is_failed(host)]
+            hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
             if len(hosts_left) == 0:
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
@@ -190,6 +190,9 @@ class StrategyModule(StrategyBase):
 
             # pause briefly so we don't spin lock
             time.sleep(0.001)
+
+        # collect all the final results
+        results = self._wait_on_pending_results(iterator)
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered

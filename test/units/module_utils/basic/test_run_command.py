@@ -67,7 +67,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
         self.module = AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
