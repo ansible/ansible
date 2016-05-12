@@ -127,10 +127,12 @@ class WorkerProcess(multiprocessing.Process):
             self._rslt_q.put(task_result)
             display.debug("done sending task result")
 
-        except AnsibleConnectionFailure:
+        except AnsibleConnectionFailure as e:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host, self._task, dict(unreachable=True))
+            failure_dict = dict(unreachable=True)
+            failure_dict['_connection_failure_exception'] = e
+            task_result = TaskResult(self._host, self._task, failure_dict)
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:

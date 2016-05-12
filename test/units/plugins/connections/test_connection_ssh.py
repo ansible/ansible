@@ -288,10 +288,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         # test multiple failures
         conn._exec_command.side_effect = [(255, '', '')]*10
         self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+        
+        # test multiple failures, verify it raise ssh.AnsibleConnectionFailure
+        conn._exec_command.side_effect = [(255, '', '')]*10
+        self.assertRaises(ssh.AnsibleSshConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
         # test other failure from exec_command
         conn._exec_command.side_effect = [Exception('bad')]*10
         self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
+        
+        # test other failure from exec_command also raise AnsibleConnectionFailure
+        conn._exec_command.side_effect = [AnsibleConnectionFailure('There was an ansible connection failure')]*10
+        self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+        
+        # test other failure from exec_command also raise ssh.AnsibleSshConnectionFailure
+        conn._exec_command.side_effect = [ssh.AnsibleSshConnectionFailure('There was an ansible ssh connection failure')]*10
+        self.assertRaises(ssh.AnsibleSshConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
     @patch('os.path.exists')
     def test_plugins_connection_ssh_put_file(self, mock_ospe):

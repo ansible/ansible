@@ -44,6 +44,27 @@ except ImportError:
 SSHPASS_AVAILABLE = None
 
 
+class AnsibleSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh connection plugin had a fatal error '''
+    pass
+
+
+# Could track retry attempts here. A little odd.
+class AnsibleAttemptedSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh connection plugin had a fatal error but may attempt to retry '''
+    pass
+
+
+class AnsibleSshInitialWriteConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error during the initial data write '''
+    pass
+
+
+class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error (255 return code from ssh command '''
+    pass
+
+
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
@@ -248,7 +269,7 @@ class Connection(ConnectionBase):
             fh.write(in_data)
             fh.close()
         except (OSError, IOError):
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            raise AnsibleSshInitialWriteConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         display.debug('Sent initial data (%d bytes)' % len(in_data))
 
@@ -551,7 +572,7 @@ class Connection(ConnectionBase):
             raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
         if p.returncode == 255 and in_data:
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            raise AnsibleSshCommandErrorConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, stdout, stderr)
 
@@ -603,8 +624,9 @@ class Connection(ConnectionBase):
                 if return_tuple[0] != 255:
                     break
                 else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
-            except (AnsibleConnectionFailure, Exception) as e:
+                    raise AnsibleSshConnectionFailure("Failed to connect to the host via ssh.")
+            except (AnsibleSshConnectionFailure, Exception) as e:
+                # Do we really want to retry on any Exception?
                 if attempt == remaining_tries - 1:
                     raise
                 else:
@@ -612,7 +634,7 @@ class Connection(ConnectionBase):
                     if pause > 30:
                         pause = 30
 
-                    if isinstance(e, AnsibleConnectionFailure):
+                    if isinstance(e, AnsibleSshConnectionFailure):
                         msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
                     else:
                         msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)

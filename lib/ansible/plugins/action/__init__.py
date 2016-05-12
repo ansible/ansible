@@ -33,7 +33,7 @@ from abc import ABCMeta, abstractmethod
 from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleTmpPathCreationConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.release import __version__
 from ansible.parsing.utils.jsonify import jsonify
@@ -238,7 +238,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         ' Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u": %s" % result['stdout']
-            raise AnsibleConnectionFailure(output)
+            raise AnsibleTmpPathCreationConnectionFailure(output)
 
         try:
             stdout_parts = result['stdout'].strip().split('%s=' % basefile, 1)
