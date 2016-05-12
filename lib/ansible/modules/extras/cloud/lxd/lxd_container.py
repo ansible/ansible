@@ -59,17 +59,11 @@ options:
         required: false
         default: 0
 requirements:
-  - 'lxd >= 2.0 # OS package'
-  - 'python >= 2.6 # OS Package'
-  - 'pylxd >= 2.0 # OS or PIP Package from https://github.com/lxc/pylxd'
+  - 'pylxd >= 2.0'
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
-  - If your distro does not have a package for "python-pylxd", which is a
-    requirement for this module, it can be installed from source at
-    "https://github.com/lxc/pylxd" or installed via pip using the package
-    name pylxd.
 """
 
 EXAMPLES = """
