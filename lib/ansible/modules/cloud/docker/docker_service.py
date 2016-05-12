@@ -85,7 +85,7 @@ options:
   definition:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
-        - Mutually exclusive with project_src and project_files
+        - Mutually exclusive with C(project_src) and C(project_files).
       type: complex
       required: false
   hostname_check:
@@ -430,7 +430,7 @@ class ContainerManager(DockerBaseClass):
 
         self.client = client
         self.project_src = None
-        self.project_files = None
+        self.files = None
         self.project_name = None
         self.state = None
         self.definition = None
@@ -463,8 +463,8 @@ class ContainerManager(DockerBaseClass):
         if self.project_name:
             self.options[u'--project-name'] = self.project_name
 
-        if self.project_files:
-            self.options[u'--file'] = self.project_files
+        if self.files:
+            self.options[u'--file'] = self.files
 
         if not HAS_COMPOSE:
             self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
@@ -734,7 +734,6 @@ def main():
     )
 
     mutually_exclusive = [
-        ('force_recreate', 'no_recreate'),
         ('definition', 'project_src'),
         ('definition', 'files')
     ]
