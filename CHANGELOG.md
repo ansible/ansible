@@ -175,6 +175,7 @@ Ansible Changes By Release
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 * Fixes for unarchive when filenames contain non-ascii characters
 * Fixes for s3_bucket when setting an s3_url.
+* Fix for connections which return extra data after the module's done sending its information.
 
 ###Deprecations:
 
