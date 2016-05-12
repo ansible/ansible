@@ -322,7 +322,12 @@ class ActionModule(ActionBase):
             self._task.args['rsync_path'] = '"%s"' % rsync_path
 
         if use_ssh_args:
-            self._task.args['ssh_args'] = C.ANSIBLE_SSH_ARGS
+            ssh_args = [
+                getattr(self._play_context, 'ssh_args', ''),
+                getattr(self._play_context, 'ssh_common_args', ''),
+                getattr(self._play_context, 'ssh_extra_args', ''),
+            ]
+            self._task.args['ssh_args'] = ' '.join([a for a in ssh_args if a])
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', task_vars=task_vars))
