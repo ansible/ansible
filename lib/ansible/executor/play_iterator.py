@@ -295,10 +295,10 @@ class PlayIterator:
                         setup_block = self._blocks[0]
                         if setup_block.has_tasks() and len(setup_block.block) > 0:
                             task = setup_block.block[0]
-                        if not peek:
-                            # mark the host as having gathered facts, because we're
-                            # returning the setup task to be executed
-                            host.set_gathered_facts(True)
+                            if not peek:
+                                # mark the host as having gathered facts, because we're
+                                # returning the setup task to be executed
+                                host.set_gathered_facts(True)
                 else:
                     # This is the second trip through ITERATING_SETUP, so we clear
                     # the flag and move onto the next block in the list while setting
