@@ -739,7 +739,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression)
 
     if module_style == 'binary':
-        return (module_path, module_data, module_style, shebang)
+        return (module_data, module_style, shebang)
     elif shebang is None:
         lines = module_data.split(b"\n", 1)
         if lines[0].startswith(b"#!"):
@@ -762,4 +762,4 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     else:
         shebang = to_bytes(shebang, errors='strict')
 
-    return (module_path, module_data, module_style, shebang)
+    return (module_data, module_style, shebang)
