@@ -419,10 +419,10 @@ class TaskExecutor:
             self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
 
         # Read some values from the task, so that we can modify them if need be
-        if self._task.until is not None:
+        if self._task.until:
             retries = self._task.retries
-            if retries <= 0:
-                retries = 1
+            if retries is None:
+                retries = 3
         else:
             retries = 1
 
@@ -436,7 +436,7 @@ class TaskExecutor:
 
         display.debug("starting attempt loop")
         result = None
-        for attempt in range(retries):
+        for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
@@ -499,23 +499,23 @@ class TaskExecutor:
                 _evaluate_changed_when_result(result)
                 _evaluate_failed_when_result(result)
 
-            if attempt < retries - 1:
+            if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
-                    result['attempts'] = attempt + 1
-                    result['retries'] = retries
-                    result['_ansible_retry'] = True
-                    display.debug('Retrying task, attempt %d of %d' % (attempt + 1, retries))
-                    self._rslt_q.put(TaskResult(self._host, self._task, result), block=False)
-                    time.sleep(delay)
+                    if attempt < retries:
+                        result['attempts'] = attempt
+                        result['_ansible_retry'] = True
+                        result['retries'] = retries
+                        display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
+                        self._rslt_q.put(TaskResult(self._host, self._task, result), block=False)
+                        time.sleep(delay)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
-                result['attempts'] = retries
                 result['failed'] = True
 
         # do the final update of the local variables here, for both registered
