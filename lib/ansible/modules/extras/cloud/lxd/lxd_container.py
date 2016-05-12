@@ -117,6 +117,7 @@ except ImportError:
 else:
     HAS_PYLXD = True
 
+from requests.exceptions import ConnectionError
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -200,6 +201,8 @@ class LxdContainerManagement(object):
             return self.client.containers.get(self.container_name)
         except NameError:
             return None
+        except ConnectionError:
+            self.module.fail_json(msg="Cannot connect to lxd server")
 
     @staticmethod
     def _container_to_module_state(container):
