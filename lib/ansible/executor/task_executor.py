@@ -232,7 +232,7 @@ class TaskExecutor:
             loop_var = self._task.loop_control.loop_var or 'item'
 
         if loop_var in task_vars:
-            raise AnsibleError("the loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions" % loop_var)
+            display.warning("The loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         items = self._squash_items(items, loop_var, task_vars)
         for item in items:
