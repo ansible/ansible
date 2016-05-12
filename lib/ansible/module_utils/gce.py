@@ -27,10 +27,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import json
 import os
 import traceback
 
 from libcloud.compute.types import Provider
+from distutils.version import LooseVersion
+
+import libcloud
 from libcloud.compute.providers import get_driver
 
 USER_AGENT_PRODUCT="Ansible-gce"
@@ -39,6 +43,7 @@ USER_AGENT_VERSION="v1"
 def gce_connect(module, provider=None):
     """Return a Google Cloud Engine connection."""
     service_account_email = module.params.get('service_account_email', None)
+    credentials_file = module.params.get('credentials_file', None)
     pem_file = module.params.get('pem_file', None)
     project_id = module.params.get('project_id', None)
 
@@ -50,6 +55,8 @@ def gce_connect(module, provider=None):
         project_id = os.environ.get('GCE_PROJECT', None)
     if not pem_file:
         pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
+    if not credentials_file:
+        credentials_file = os.environ.get('GCE_CREDENTIALS_FILE_PATH', pem_file)
 
     # If we still don't have one or more of our credentials, attempt to
     # get the remaining values from the libcloud secrets file.
@@ -62,25 +69,41 @@ def gce_connect(module, provider=None):
         if hasattr(secrets, 'GCE_PARAMS'):
             if not service_account_email:
                 service_account_email = secrets.GCE_PARAMS[0]
-            if not pem_file:
-                pem_file = secrets.GCE_PARAMS[1]
+            if not credentials_file:
+                credentials_file = secrets.GCE_PARAMS[1]
         keyword_params = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
         if not project_id:
             project_id = keyword_params.get('project', None)
 
     # If we *still* don't have the credentials we need, then it's time to
     # just fail out.
-    if service_account_email is None or pem_file is None or project_id is None:
+    if service_account_email is None or credentials_file is None or project_id is None:
         module.fail_json(msg='Missing GCE connection parameters in libcloud '
                              'secrets file.')
         return None
+    else:
+        # We have credentials but lets make sure that if they are JSON we have the minimum
+        # libcloud requirement met
+        try:
+            # Try to read credentials as JSON
+            with open(credentials_file) as credentials:
+                json.loads(credentials.read())
+            # If the credentials are proper JSON and we do not have the minimum
+            # required libcloud version, bail out and return a descriptive error
+            if LooseVersion(libcloud.__version__) < '0.17.0':
+                module.fail_json(msg='Using JSON credentials but libcloud minimum version not met. '
+                                     'Upgrade to libcloud>=0.17.0.')
+                return None
+        except ValueError, e:
+            # Not JSON
+            pass
 
     # Allow for passing in libcloud Google DNS (e.g, Provider.GOOGLE)
     if provider is None:
         provider = Provider.GCE
 
     try:
-        gce = get_driver(provider)(service_account_email, pem_file,
+        gce = get_driver(provider)(service_account_email, credentials_file,
                 datacenter=module.params.get('zone', None),
                 project=project_id)
         gce.connection.user_agent_append("%s/%s" % (
