@@ -30,18 +30,24 @@
 import json
 import os
 import traceback
-
-from libcloud.compute.types import Provider
 from distutils.version import LooseVersion
 
-import libcloud
-from libcloud.compute.providers import get_driver
+try:
+    from libcloud.compute.types import Provider
+    import libcloud
+    from libcloud.compute.providers import get_driver
+    HAS_LIBCLOUD_BASE = True
+except ImportError:
+    HAS_LIBCLOUD_BASE = False
 
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
 
 def gce_connect(module, provider=None):
     """Return a Google Cloud Engine connection."""
+    if not HAS_LIBCLOUD_BASE:
+        module.fail_json(msg='libcloud must be installed to use this module')
+
     service_account_email = module.params.get('service_account_email', None)
     credentials_file = module.params.get('credentials_file', None)
     pem_file = module.params.get('pem_file', None)
