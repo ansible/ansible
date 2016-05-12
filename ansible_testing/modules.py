@@ -51,7 +51,7 @@ BLACKLIST_IMPORTS = {
         'msg': ('requests import found, should use '
                 'ansible.module_utils.urls instead')
     },
-    'boto': {
+    'boto(?:\.|$)': {
         'new_only': True,
         'msg': ('boto import found, new modules should use boto3')
     },
@@ -216,13 +216,14 @@ class ModuleValidator(Validator):
                     if isinstance(grandchild, ast.Import):
                         names.extend(grandchild.names)
             for name in names:
-                if name.name in BLACKLIST_IMPORTS:
-                    msg = BLACKLIST_IMPORTS[name.name]['msg']
-                    new_only = BLACKLIST_IMPORTS[name.name]['new_only']
-                    if self._is_new_module() and new_only:
-                        self.errors.append(msg)
-                    elif not new_only:
-                        self.errors.append(msg)
+                for blacklist_import, options in BLACKLIST_IMPORTS.items():
+                    if re.search(blacklist_import, name.name):
+                        msg = options['msg']
+                        new_only = options['new_only']
+                        if self._is_new_module() and new_only:
+                            self.errors.append(msg)
+                        elif not new_only:
+                            self.errors.append(msg)
 
 
     def _find_module_utils(self, main):
