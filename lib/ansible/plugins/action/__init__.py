@@ -240,7 +240,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleConnectionFailure(output)
 
         try:
-            rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
+            stdout_parts = result['stdout'].strip().split('%s=' % basefile, 1)
+            rc = self._connection._shell.join_path(stdout_parts[-1], u'').splitlines()[-1]
         except IndexError:
             # stdout was empty or just space, set to / to trigger error in next if
             rc = '/'
