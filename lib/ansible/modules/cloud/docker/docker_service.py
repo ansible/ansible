@@ -23,7 +23,7 @@ module: docker_service
 
 short_description: Manage docker services and containers.
 
-version_added: "2.2"
+version_added: "2.1"
 
 author: "Chris Houseknecht (@chouseknecht)"
 
