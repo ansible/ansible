@@ -315,7 +315,7 @@ class LxdContainerManagement(object):
             "changed" : state_changed,
             "old_state" : self.old_state,
             "logs" : self.logs
-            }
+        }
         if self.addresses is not None:
             result_json['addresses'] = self.addresses
         self.module.exit_json(**result_json)
