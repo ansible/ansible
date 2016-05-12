@@ -70,19 +70,19 @@ EXAMPLES = """
 - name: Create a started container
   lxd_container:
     name: cent01
-    source: { type: image, alias: centos/7/amd64 }
-    state: started
+    config: { source: { type: image, alias: centos/7/amd64 } }
+    state: restarted
 
 - name: Create a stopped container
   lxd_container:
     name: cent01
-    source: { type: image, alias: centos/7/amd64 }
+    config: { source: { type: image, alias: centos/7/amd64 } }
     state: stopped
 
 - name: Restart a container
   lxd_container:
     name: cent01
-    source: { type: image, alias: centos/7/amd64 }
+    config: { source: { type: image, alias: centos/7/amd64 } }
     state: restarted
 """
 
