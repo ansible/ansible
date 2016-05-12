@@ -133,9 +133,13 @@ class Connection(ConnectionBase):
         ## Next, additional arguments based on the configuration.
 
         # sftp batch mode allows us to correctly catch failed transfers, but can
-        # be disabled if the client side doesn't support the option.
+        # be disabled if the client side doesn't support the option. However,
+        # sftp batch mode does not prompt for passwords so it must be disabled
+        # if not using controlpersist and using sshpass
+        controlpersist, controlpath = self._persistence_controls(self._command)
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
-            self._command += ['-b', '-']
+            if controlpersist:
+                self._command += ['-b', '-']
 
         self._command += ['-C']
 
