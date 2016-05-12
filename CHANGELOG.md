@@ -3,6 +3,10 @@ Ansible Changes By Release
 
 ## 2.2 TBD - ACTIVE DEVELOPMENT
 
+###Major Changes:
+
+* Added support for binary modules
+
 ####New Modules:
 - aws
   * ec2_customer_gateway
