@@ -50,7 +50,8 @@ class ShellBase(object):
         return os.path.join(*args)
 
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
-    def get_remote_filename(self, base_name):
+    def get_remote_filename(self, pathname):
+        base_name = os.path.basename(pathname.strip())
         return base_name.strip()
 
     def path_has_trailing_slash(self, path):
@@ -164,7 +165,13 @@ class ShellBase(object):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
             cmd = pipes.quote(cmd)
-        cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+
+        cmd_parts = []
+        if shebang:
+            shebang = shebang.replace("#!", "").strip()
+        else:
+            shebang = ""
+        cmd_parts.extend([env_string.strip(), shebang, cmd])
         if arg_path is not None:
             cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
