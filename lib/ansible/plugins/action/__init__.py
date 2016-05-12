@@ -324,7 +324,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # contain a path to a tmp dir but doesn't know if it needs to
             # exist or not.  If there's no path, then there's no need for us
             # to do work
-            self._display.debug('_fixup_perms called with remote_path==None.  Sure this is correct?')
+            display.debug('_fixup_perms called with remote_path==None.  Sure this is correct?')
             return remote_path
 
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
@@ -360,7 +360,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # fs acls failed -- do things this insecure way only
                         # if the user opted in in the config file
-                        self._display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
@@ -480,21 +480,49 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             return initial_fragment
 
-    def _filter_leading_non_json_lines(self, data):
+    @staticmethod
+    def _filter_non_json_lines(data):
         '''
         Used to avoid random output from SSH at the top of JSON output, like messages from
         tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
-        need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-        filter only leading lines since multiline JSON is valid.
+        need to filter anything which does not start with '{', '[', or is an empty line.
+        Have to be careful how we filter trailing junk as multiline JSON is valid.
         '''
-        idx = 0
-        for line in data.splitlines(True):
-            if line.startswith((u'{', u'[')):
+        # Filter initial junk
+        lines = data.splitlines()
+        for start, line in enumerate(lines):
+            line = line.strip()
+            if line.startswith(u'{'):
+                endchar = u'}'
                 break
-            idx = idx + len(line)
+            elif line.startswith(u'['):
+                endchar = u']'
+                break
+        else:
+            display.debug('No start of json char found')
+            raise ValueError('No start of json char found')
 
-        return data[idx:]
+        # Filter trailing junk
+        lines = lines[start:]
+        lines.reverse()
+        for end, line in enumerate(lines):
+            if line.strip().endswith(endchar):
+                break
+        else:
+            display.debug('No end of json char found')
+            raise ValueError('No end of json char found')
+
+        if end < len(lines) - 1:
+            # Trailing junk is uncommon and can point to things the user might
+            # want to change.  So print a warning if we find any
+            trailing_junk = lines[:end]
+            trailing_junk.reverse()
+            display.warning('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+
+        lines = lines[end:]
+        lines.reverse()
+        return '\n'.join(lines)
 
     def _strip_success_message(self, data):
         '''
@@ -539,7 +567,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_diff'] = self._play_context.diff
 
         # let module know our verbosity
-        module_args['_ansible_verbosity'] = self._display.verbosity
+        module_args['_ansible_verbosity'] = display.verbosity
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
@@ -627,7 +655,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _parse_returned_data(self, res):
         try:
-            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', u'')))
+            data = json.loads(self._filter_non_json_lines(res.get('stdout', u'')))
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)
