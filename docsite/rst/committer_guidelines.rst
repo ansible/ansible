@@ -60,28 +60,28 @@ People
 ======
 Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, via a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act.
 
-* James Cammarata 
-* Brian Coca
-* Matt Davis
-* Toshio Kuratomi
-* Jason McKerr 
-* Robyn Bergeron 
-* Greg DeKoenigsberg
-* Monty Taylor
-* Matt Martz 
-* Nate Case
-* James Tanner
-* Peter Sprygada
-* Abhijit Menon-Sen
-* Michael Scherer
-* René Moser
-* David Shrewsbury
-* Sandra Wills
-* Graham Mainwaring
-* Jon Davila
-* Chris Houseknecht
-* Trond Hindenes
-* Jon Hawkesworth
-* Will Thames
-* Adrian Likins
-* Ryan Brown
+* James Cammarata (IRC: jimi|ansible, GitHub: @jimi-c)
+* Brian Coca (IRC: bcoca, GitHub: @bcoca)
+* Matt Davis (IRC: nitzmahone, GitHub: @nitzmahone)
+* Toshio Kuratomi (IRC: abadger1999, GitHub: @abadger)
+* Jason McKerr (IRC: newtMcKerr, GitHub: @mckerrj)
+* Robyn Bergeron (IRC: rbergeron, GitHub: @robynbergeron)
+* Greg DeKoenigsberg (IRC: gregdek, GitHub: @gregdek)
+* Monty Taylor (GitHub: @emonty)
+* Matt Martz (IRC: sivel, GitHub: @sivel)
+* Nate Case (IRC: Qualthos, GitHub: @Qalthos)
+* James Tanner (IRC: jtanner, GitHub: @jctanner)
+* Peter Sprygada (GitHub: @privateip)
+* Abhijit Menon-Sen (GitHub: @amenonsen)
+* Michael Scherer (GitHub: @mscherer)
+* René Moser (GitHub: @resmo)
+* David Shrewsbury (IRC: Shrews, GitHub: @Shrews)
+* Sandra Wills (IRC: docschick, GitHub: @docschick)
+* Graham Mainwaring (GitHub: @ghjm)
+* Jon Davila (GitHub: @defionscode)
+* Chris Houseknecht (GitHub: @chouseknecht)
+* Trond Hindenes (GitHub: @trondhindenes)
+* Jon Hawkesworth (GitHub: @jhawkesworth)
+* Will Thames (IRC: willthames, GitHub: @willthames)
+* Adrian Likins (IRC: alikins, GitHub: @alikins)
+* Ryan Brown (IRC: ryansb, GitHub: @ryansb)
