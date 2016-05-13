@@ -659,7 +659,7 @@ def main():
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
             keep_newer        = dict(required=False, default=False, type='bool'),
-            exclude           = dict(requited=False, default=[], type='list'),
+            exclude           = dict(required=False, default=[], type='list'),
             extra_opts        = dict(required=False, default=[], type='list'),
             validate_certs    = dict(required=False, default=True, type='bool'),
         ),
