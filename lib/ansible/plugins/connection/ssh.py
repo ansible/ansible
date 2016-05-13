@@ -116,6 +116,13 @@ class Connection(ConnectionBase):
 
         self._command = []
 
+        ## Need to do a pre-emptive check for controlpersist
+        ssh_args = []
+        if self._play_context.ssh_args:
+            ssh_args = self._split_ssh_args(self._play_context.ssh_args)
+        controlpersist, controlpath = self._persistence_controls(ssh_args)
+
+
         ## First, the command name.
 
         # If we want to use password authentication, we have to set up a pipe to
@@ -136,9 +143,8 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
-        controlpersist, controlpath = self._persistence_controls(self._command)
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
-            if controlpersist:
+            if controlpersist or not self._play_context.password:
                 self._command += ['-b', '-']
 
         self._command += ['-C']
@@ -151,9 +157,8 @@ class Connection(ConnectionBase):
 
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
-        if self._play_context.ssh_args:
-            args = self._split_ssh_args(self._play_context.ssh_args)
-            self._add_args("ansible.cfg set ssh_args", args)
+        if ssh_args:
+            self._add_args("ansible.cfg set ssh_args", ssh_args)
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
