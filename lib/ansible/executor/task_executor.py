@@ -634,6 +634,8 @@ class TaskExecutor:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
         if self._play_context.accelerate:
+            # accelerate is deprecated as of 2.1...
+            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead')
             # launch the accelerated daemon here
             ssh_connection = connection
             handler = self._shared_loader_obj.action_loader.get(
