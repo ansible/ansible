@@ -207,6 +207,7 @@ EXAMPLES = '''
         type: vmxnet3
         network: dvSwitch Network
         network_type: dvs
+        mac_address: 76:F7:C0:32:11:F0
     vm_hardware:
       memory_mb: 2048
       num_cpus: 2
@@ -222,7 +223,7 @@ EXAMPLES = '''
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
 
-# Reconfigure the CPU and Memory on the newly created VM
+# Reconfigure the CPU and Memory on the newly created VM and generate a new MAC address
 # Will return the changes made
 
 - vsphere_guest:
@@ -245,6 +246,7 @@ EXAMPLES = '''
         type: vmxnet3
         network: VM Network
         network_type: standard
+        mac_address: regenerate
     vm_hardware:
       memory_mb: 4096
       num_cpus: 4
@@ -463,7 +465,7 @@ def add_floppy(module, s, config_target, config, devices, default_devs, type="im
     devices.append(floppy_spec)
 
 
-def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
+def add_nic(module, s, nfmor, config, devices, mac_address, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
     # add a NIC
     # Different network card types are: "VirtualE1000",
     # "VirtualE1000e","VirtualPCNet32", "VirtualVmxnet", "VirtualNmxnet2",
@@ -513,7 +515,12 @@ def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name=
             msg="Error adding nic backing to vm spec. No network type of:"
             " %s" % (network_type))
 
-    nic_ctlr.set_element_addressType("generated")
+    if mac_address == "GENERATED":
+        nic_ctlr.set_element_addressType("Generated")
+    else:
+        nic_ctlr.set_element_addressType("Manual")
+        nic_ctlr.set_element_macAddress(mac_address)
+
     nic_ctlr.set_element_backing(nic_backing)
     nic_ctlr.set_element_key(4)
     nic_spec.set_element_device(nic_ctlr)
@@ -999,7 +1006,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             except (KeyError, ValueError):
                 vsphere_client.disconnect()
                 module.fail_json(msg="Error in '%s' definition. Size needs to be specified as an integer." % disk)
-            
+
             # Make sure the new disk size is higher than the current value
             dev = dev_list[disk_num]
             if disksize < int(dev.capacityInKB):
@@ -1099,33 +1106,51 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                                  "VirtualNmxnet2", "VirtualVmxnet3"]:
                     devNum = dev.deviceInfo.label[len(dev.deviceInfo.label) - 1]
                     if devNum == nicNum:
+                        # Determine if we have a mac_address to change
+                        try:
+                            mac_address = vm_nic[k]['mac_address']
+                            mac_address = mac_address.upper()
+                        except KeyError:
+                            mac_address = False
+                        if mac_address != False:
+                            # MAC addresses are the same, don't update
+                            if mac_address not in ("REGENERATE", "GENERATED") and mac_address == dev.macAddress.upper():
+                                mac_address = False
+                            # MAC address is already set to type Automatic (generated)
+                            if mac_address == "GENERATED" and mac_address == dev.addressType.upper():
+                                mac_address = False
+
+                        # Determine switch change
                         fromdvs = dev.deviceInfo.summary.split(':')[0] == 'DVSwitch'
                         if todvs and fromdvs:
                             if dev.backing.port._obj.get_element_portgroupKey() != portgroupKey:
-                                nics[k] = (dev, portgroupKey, 1)
+                                nics[k] = (dev, portgroupKey, 1, mac_address)
                         elif fromdvs and not todvs:
-                            nics[k] = (dev, '', 2)
+                            nics[k] = (dev, '', 2, mac_address)
                         elif not fromdvs and todvs:
-                            nics[k] = (dev, portgroupKey, 3)
+                            nics[k] = (dev, portgroupKey, 3, mac_address)
                         elif not fromdvs and not todvs:
                             if dev.backing._obj.get_element_deviceName() != vm_nic[k]['network']:
-                                nics[k] = (dev, '', 2)
+                                nics[k] = (dev, '', 2, mac_address)
                             else:
                                 pass
-                        else:
-                            module.exit_json()
+                        # If no switch changes, but mac_address change
+                        if mac_address != False and k not in nics:
+                            nics[k] = (dev, '', 4, mac_address)
 
         if len(nics) > 0:
             for nic, obj in nics.iteritems():
                 """
-                1,2 and 3 are used to mark which action should be taken
+                1,2,3 and 4 are used to mark which action should be taken
                 1 = from a distributed switch to a distributed switch
                 2 = to a standard switch
                 3 = to a distributed switch
+                4 = no switch change
                 """
                 dev = obj[0]
                 pgKey = obj[1]
                 dvsKey = obj[2]
+                macKey = obj[3]
                 if dvsKey == 1:
                     dev.backing.port._obj.set_element_portgroupKey(pgKey)
                     dev.backing.port._obj.set_element_portKey('')
@@ -1145,6 +1170,23 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                         "nic_backing").pyclass()
                     nic_backing.set_element_deviceName(vm_nic[nic]['network'])
                     dev._obj.set_element_backing(nic_backing)
+                if macKey != False:
+                    if macKey == "GENERATED":
+                        # This will just change to type to Automatic without changing the mac_address
+                        # If you regenerate your MAC and then later set to generated you might see
+                        # changes=1 due to VMWare setting a type of ASSIGNED
+                        # However, in VCenter it always appears as "Automatic"
+                        # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.vm.device.VirtualEthernetCard.html
+                        dev._obj.set_element_addressType("Generated")
+                    elif macKey == "REGENERATE":
+                        # This will give you a brand new mac_address
+                        dev._obj.set_element_addressType("Generated")
+                        dev._obj.set_element_macAddress("")
+                    elif macKey != dev.macAddress.upper():
+                        # This sets your own mac_address
+                        dev._obj.set_element_addressType("Manual")
+                        dev._obj.set_element_macAddress(mac_address)
+
             for nic, obj in nics.iteritems():
                 dev = obj[0]
                 spec = request.new_spec()
@@ -1405,6 +1447,11 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if vm_nic:
         for nic in sorted(vm_nic):
             try:
+                mac_address = vm_nic[nic]['mac_address']
+                mac_address = mac_address.upper()
+            except KeyError:
+                mac_address = "GENERATED"
+            try:
                 nictype = vm_nic[nic]['type']
             except KeyError:
                 vsphere_client.disconnect()
@@ -1426,7 +1473,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                     msg="Error on %s definition. network_type needs to be "
                     " specified." % nic)
             # Add the nic to the VM spec.
-            add_nic(module, vsphere_client, nfmor, config, devices,
+            add_nic(module, vsphere_client, nfmor, config, devices, mac_address,
                     nictype, network, network_type)
 
     config.set_element_deviceChange(devices)
