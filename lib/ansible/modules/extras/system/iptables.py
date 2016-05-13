@@ -347,7 +347,7 @@ def construct_rule(params):
     append_param(rule, params['uid_owner'], '--uid-owner', False)
     append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
-    append_param(rule, params['icmp_type'], '--icmp_type', False)
+    append_param(rule, params['icmp_type'], '--icmp-type', False)
     return rule
 
 
