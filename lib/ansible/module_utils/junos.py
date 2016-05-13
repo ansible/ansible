@@ -350,6 +350,8 @@ def get_module(**kwargs):
         module.fail_json(msg='paramiko is required but does not appear to be installed')
     elif module.params['transport'] == 'netconf' and not HAS_PYEZ:
         module.fail_json(msg='junos-eznc >= 1.2.2 is required but does not appear to be installed')
+    elif module.params['transport'] == 'netconf' and not HAS_JXMLEASE:
+        module.fail_json(msg='jxmlease is required but does not appear to be installed')
 
     module.connect()
     return module
