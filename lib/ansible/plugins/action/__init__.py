@@ -35,6 +35,7 @@ from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
+from ansible.release import __version__
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes, to_unicode
 
@@ -569,6 +570,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
+
+        # give the module information about the ansible version
+        module_args['_ansible_version'] = __version__
+
+        # set the syslog facility to be used in the module
+        module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
+
+        # let module know about filesystems that selinux treats specially
+        module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang and module_style != 'binary':

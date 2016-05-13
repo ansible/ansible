@@ -43,7 +43,7 @@ except ImportError:
 
 class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
 
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
@@ -80,7 +80,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
 
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
@@ -129,7 +129,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             }
 
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
@@ -190,7 +190,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
 
     # overriding run lets us use context managers for setup/teardown-esque behavior
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
