@@ -263,7 +263,7 @@ def rax_required_together():
 
 def setup_rax_module(module, rax_module, region_required=True):
     """Set up pyrax in a standard way for all modules"""
-    rax_module.USER_AGENT = 'ansible/%s %s' % (module.constants['ANSIBLE_VERSION'],
+    rax_module.USER_AGENT = 'ansible/%s %s' % (module.ansible_version,
                                                rax_module.USER_AGENT)
 
     api_key = module.params.get('api_key')
