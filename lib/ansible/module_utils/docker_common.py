@@ -21,6 +21,7 @@ import re
 import json
 import sys
 import copy
+import logging
 
 from urlparse import urlparse
 from ansible.module_utils.basic import *
@@ -57,8 +58,6 @@ DOCKER_COMMON_ARGS = dict(
     ssl_version=dict(type='str'),
     tls=dict(type='bool'),
     tls_verify=dict(type='bool'),
-    debug=dict(type='bool', default=False),
-    filter_logger=dict(type='bool', default=False),
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = [
@@ -106,24 +105,21 @@ def human_to_bytes(number):
 
 class DockerBaseClass(object):
 
-    def __init__(self):
-        self.debug = False
+    def __init__(self, module=None):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.module = module
 
     def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if self.module and self.module.debug_logger:
+            self.module.debug(msg, pretty_print=pretty_print)
 
 
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
                  required_together=None, required_if=None):
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -155,26 +151,19 @@ class AnsibleDockerClient(Client):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
-        self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode   
-        self._connect_params = self._get_connect_params()
+        self.check_mode = self.module.check_mode
+        self.connect_params = self._get_connect_params()
 
         try:
-            super(AnsibleDockerClient, self).__init__(**self._connect_params)
+            super(AnsibleDockerClient, self).__init__(**self.connect_params)
         except APIError, exc:
             self.fail("Docker API error: %s" % exc)
         except Exception, exc:
             self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if self.module.debug_logger:
+            self.module.debug(msg, pretty_print=pretty_print)
 
     def fail(self, msg):
         self.module.fail_json(msg=msg)

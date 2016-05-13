@@ -564,6 +564,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
+        # set remote_log_target in module arguments. provides path for capturing logging messages.
+        module_args['_ansible_remote_log_target'] = C.DEFAULT_REMOTE_LOG_TARGET
+
         # let module know we are in diff mode
         module_args['_ansible_diff'] = self._play_context.diff
 
