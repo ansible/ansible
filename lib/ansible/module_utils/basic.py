@@ -1179,7 +1179,7 @@ class AnsibleModule(object):
 
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
-                    self.exit_json(skipped=True, msg="remote module does not support check mode")
+                    self.exit_json(skipped=True, msg="remote module '%s' does not support check mode" % os.path.basename(__file__))
                 self.check_mode = True
 
             elif k == '_ansible_no_log':
@@ -1195,7 +1195,7 @@ class AnsibleModule(object):
                 self._verbosity = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
-                self.fail_json(msg="unsupported parameter for module: %s" % k)
+                self.fail_json(msg="unsupported parameter for module '%s': %s" % (os.path.basename(__file__), k))
 
             #clean up internal params:
             if k.startswith('_ansible_'):
