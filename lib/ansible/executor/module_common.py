@@ -388,12 +388,6 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
 
     return (shebang, interpreter)
 
-def _get_facility(task_vars):
-    facility = C.DEFAULT_SYSLOG_FACILITY
-    if 'ansible_syslog_facility' in task_vars:
-        facility = task_vars['ansible_syslog_facility']
-    return facility
-
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
@@ -539,15 +533,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     py_module_names = set()
 
     if module_substyle == 'python':
-        # ziploader for new-style python classes
-        constants = dict(
-                SELINUX_SPECIAL_FS=C.DEFAULT_SELINUX_SPECIAL_FS,
-                SYSLOG_FACILITY=_get_facility(task_vars),
-                ANSIBLE_VERSION=__version__,
-                )
-        params = dict(ANSIBLE_MODULE_ARGS=module_args,
-                ANSIBLE_MODULE_CONSTANTS=constants,
-                )
+        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         python_repred_params = to_bytes(repr(json.dumps(params)), errors='strict')
 
         try:
@@ -697,7 +683,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         # The main event -- substitute the JSON args string into the module
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
-        facility = b'syslog.' + to_bytes(_get_facility(task_vars), errors='strict')
+        facility = b'syslog.' + to_bytes(task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY), errors='strict')
         module_data = module_data.replace(b'syslog.LOG_USER', facility)
 
     return (module_data, module_style, shebang)

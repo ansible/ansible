@@ -400,7 +400,7 @@ def test_distribution_version():
 
     from ansible.module_utils import basic
 
-    args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+    args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
     with swap_stdin_and_argv(stdin_data=args):
         module = basic.AnsibleModule(argument_spec=dict())
 

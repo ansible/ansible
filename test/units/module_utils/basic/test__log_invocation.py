@@ -36,7 +36,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
             dict(
                 ANSIBLE_MODULE_ARGS=dict(
                     foo=False, bar=[1,2,3], bam="bam", baz=u'baz'),
-                ANSIBLE_MODULE_CONSTANTS=dict()
                 ))):
             from ansible.module_utils import basic
 
