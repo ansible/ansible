@@ -73,6 +73,12 @@ options:
     description:
     - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
     required: false
+  shrink:
+    version_added: "2.2"
+    description:
+    - shrink if current size is higher than size requested
+    required: false
+    default: yes
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -110,6 +116,9 @@ EXAMPLES = '''
 
 # Reduce the logical volume to 512m
 - lvol: vg=firefly lv=test size=512 force=yes
+
+# Set the logical volume to 512m and do not try to shrink if size is lower than current one
+- lvol: vg=firefly lv=test size=512 shrink=no
 
 # Remove the logical volume.
 - lvol: vg=firefly lv=test state=absent force=yes
@@ -168,6 +177,7 @@ def main():
             opts=dict(type='str'),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
+            shrink=dict(type='bool', default='yes'),
             snapshot=dict(type='str', default=None),
             pvs=dict(type='str')
         ),
@@ -190,6 +200,7 @@ def main():
     opts = module.params['opts']
     state = module.params['state']
     force = module.boolean(module.params['force'])
+    shrink = module.boolean(module.params['shrink'])
     size_opt = 'L'
     size_unit = 'm'
     snapshot = module.params['snapshot']
@@ -328,7 +339,7 @@ def main():
                     tool = module.get_bin_path("lvextend", required=True)
                 else:
                     module.fail_json(msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" % (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit))
-            elif this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
+            elif shrink and this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
                 if size_requested == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 elif not force:
@@ -358,7 +369,7 @@ def main():
             tool = None
             if int(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif int(size) < this_lv['size']:
+            elif shrink and int(size) < this_lv['size']:
                 if int(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
