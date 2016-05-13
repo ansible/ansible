@@ -558,7 +558,7 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_version', '_ansible_syslog_facility']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -782,7 +782,7 @@ class AnsibleModule(object):
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
 
             if path_mount_point == mount_point:
-                for fs in self.constants['SELINUX_SPECIAL_FS']:
+                for fs in self._selinux_special_fs:
                     if fs in fstype:
                         special_context = self.selinux_context(path_mount_point)
                         return (True, special_context)
@@ -1175,7 +1175,8 @@ class AnsibleModule(object):
         return aliases_results
 
     def _check_arguments(self, check_invalid_arguments):
-        for (k,v) in self.params.items():
+        self._syslog_facility = 'LOG_USER'
+        for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
@@ -1193,6 +1194,15 @@ class AnsibleModule(object):
 
             elif k == '_ansible_verbosity':
                 self._verbosity = v
+
+            elif k == '_ansible_selinux_special_fs':
+                self._selinux_special_fs = v
+
+            elif k == '_ansible_syslog_facility':
+                self._syslog_facility = v
+
+            elif k == '_ansible_version':
+                self.ansible_version = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -1505,7 +1515,6 @@ class AnsibleModule(object):
 
         try:
             self.params = params['ANSIBLE_MODULE_ARGS']
-            self.constants = params['ANSIBLE_MODULE_CONSTANTS']
         except KeyError:
             # This helper used too early for fail_json to work.
             print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS and ANSIBLE_MODULE_CONSTANTS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
@@ -1514,7 +1523,7 @@ class AnsibleModule(object):
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
             module = 'ansible-%s' % os.path.basename(__file__)
-            facility = getattr(syslog, self.constants.get('SYSLOG_FACILITY', 'LOG_USER'), syslog.LOG_USER)
+            facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
             syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
 
