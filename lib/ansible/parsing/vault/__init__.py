@@ -68,8 +68,13 @@ try:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.backends import default_backend
     HAS_PBKDF2HMAC = True
-except Exception:
+except ImportError:
     pass
+except Exception as e:
+    if e.__module__ == 'pkg_resources' and e.__class__.__name__ == 'DistributionNotFound':
+        pass
+    else:
+        raise
 
 from ansible.compat.six import PY3
 from ansible.utils.unicode import to_unicode, to_bytes
