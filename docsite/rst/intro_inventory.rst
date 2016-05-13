@@ -203,7 +203,7 @@ As alluded to above, setting the following variables controls how ansible intera
 Host connection:
 
 ansible_connection
-    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are smart, ssh or paramiko.  The default is smart. Non-SSH based types are described in the next section.
+    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
 
 
 .. include:: ansible_ssh_changes_note.rst
