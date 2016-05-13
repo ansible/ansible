@@ -109,6 +109,7 @@ options:
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
     aliases: []
+    required: false
   service_account_email:
     version_added: "1.6"
     description:

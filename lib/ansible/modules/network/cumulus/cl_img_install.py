@@ -41,12 +41,15 @@ options:
               and version is set to '2.5.0', then the module will assume it is
               installing '2.5.0' not '2.2.3'. If version is not included, then
               the module will assume '2.2.3' is the version to install.
+        default: None
+        required: false
     switch_slot:
         description:
             - Switch slots after installing the image.
               To run the installed code, reboot the switch
         choices: ['yes', 'no']
         default: 'no'
+        required: false
 
 requirements: ["Cumulus Linux OS"]
 

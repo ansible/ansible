@@ -29,6 +29,7 @@ options:
       - Indicate desired state of the resource
     choices: ['present', 'absent']
     default: present
+    required: false
 author: 
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
