@@ -26,3 +26,4 @@ __metaclass__ = type
 # This is for backwards compat.  Code should be ported to get these from
 # ansible.release instead of from here.
 from ansible.release import __version__, __author__
+__version__ = '2.1.0.0'
