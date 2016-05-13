@@ -60,28 +60,57 @@ People
 ======
 Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, via a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act.
 
-* James Cammarata (IRC: jimi|ansible, GitHub: @jimi-c)
-* Brian Coca (IRC: bcoca, GitHub: @bcoca)
-* Matt Davis (IRC: nitzmahone, GitHub: @nitzmahone)
-* Toshio Kuratomi (IRC: abadger1999, GitHub: @abadger)
-* Jason McKerr (IRC: newtMcKerr, GitHub: @mckerrj)
-* Robyn Bergeron (IRC: rbergeron, GitHub: @robynbergeron)
-* Greg DeKoenigsberg (IRC: gregdek, GitHub: @gregdek)
-* Monty Taylor (GitHub: @emonty)
-* Matt Martz (IRC: sivel, GitHub: @sivel)
-* Nate Case (IRC: Qalthos, GitHub: @Qalthos)
-* James Tanner (IRC: jtanner, GitHub: @jctanner)
-* Peter Sprygada (GitHub: @privateip)
-* Abhijit Menon-Sen (GitHub: @amenonsen)
-* Michael Scherer (GitHub: @mscherer)
-* René Moser (GitHub: @resmo)
-* David Shrewsbury (IRC: Shrews, GitHub: @Shrews)
-* Sandra Wills (IRC: docschick, GitHub: @docschick)
-* Graham Mainwaring (GitHub: @ghjm)
-* Jon Davila (GitHub: @defionscode)
-* Chris Houseknecht (GitHub: @chouseknecht)
-* Trond Hindenes (GitHub: @trondhindenes)
-* Jon Hawkesworth (GitHub: @jhawkesworth)
-* Will Thames (IRC: willthames, GitHub: @willthames)
-* Adrian Likins (IRC: alikins, GitHub: @alikins)
-* Ryan Brown (IRC: ryansb, GitHub: @ryansb)
++---------------------+----------------------+--------------------+----------------------+
+| Name                | Github ID            | IRC Nick           | Other                |
++=====================+======================+====================+======================+
++---------------------+----------------------+--------------------+----------------------+
+| James Cammarata     | jimi-c               | jimi               |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Brian Coca          | bcoca                | bcoca              | mdyson@cyberdyne.com |
++---------------------+----------------------+--------------------+----------------------+
+| Matt Davis          | nitzmahone           | nitzmahone         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Toshio Kuratomi     | abadger              | abadger1999        |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jason McKerr        | mckerrj              | newtMcKerr         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Robyn Bergeron      | robynbergeron        | rbergeron          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Greg DeKoenigsberg  | gregdek              | gregdek            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Monty Taylor        | emonty               | mordred            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Matt Martz          | sivel                | sivel              |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Nate Case           | qalthos              | Qalthos            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| James Tanner        | jctanner             | jtanner            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Peter Sprygada      | privateip            | privateip          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Abhijit Menon-Sen   | amenonsen            | crab               |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Michael Scherer     | mscherer             |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| René Moser          | resmo                | resmo              |                      |
++---------------------+----------------------+--------------------+----------------------+
+| David Shrewsbury    | Shrews               | Shrews             |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Sandra Wills        | docschick            | docschick          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Graham Mainwaring   | ghjm                 |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jon Davila          | defionscode          |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Chris Houseknecht   | chouseknecht         |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Trond Hindenes      | trondhindenes        |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jon Hawkesworth     | jhawkseworth         | jhawkseworth       |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Will Thames         | wilthames            | willthames         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Ryan Brown          | ryansb               | ryansb             |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Adrian Likins       | alikins              | alikins            |                      |
++---------------------+----------------------+--------------------+----------------------+
