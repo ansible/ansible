@@ -269,7 +269,9 @@ options:
   icmp_type:
     version_added: "2.2"
     description:
-      - "This allows specification of the ICMP type, which can be a numeric ICMP type, type/code pair, or one of the ICMP type names shown by the command 'iptables -p icmp -h'"
+      - "This allows specification of the ICMP type, which can be a numeric ICMP type, 
+        type/code pair, or one of the ICMP type names shown by the command 
+        'iptables -p icmp -h'"
     required: false
 '''
 
