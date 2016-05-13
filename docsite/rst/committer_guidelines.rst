@@ -69,7 +69,7 @@ Individuals who've been asked to become a part of this group have generally been
 * Greg DeKoenigsberg (IRC: gregdek, GitHub: @gregdek)
 * Monty Taylor (GitHub: @emonty)
 * Matt Martz (IRC: sivel, GitHub: @sivel)
-* Nate Case (IRC: Qualthos, GitHub: @Qalthos)
+* Nate Case (IRC: Qalthos, GitHub: @Qalthos)
 * James Tanner (IRC: jtanner, GitHub: @jctanner)
 * Peter Sprygada (GitHub: @privateip)
 * Abhijit Menon-Sen (GitHub: @amenonsen)
