@@ -49,6 +49,7 @@ options:
       - yes
       - no
     default: null
+    required: false
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature
@@ -56,6 +57,7 @@ options:
       - yes
       - no
     default: null
+    required: false
   include_management_tools:
     description:
       - Adds the corresponding management tools to the specified feature
@@ -63,6 +65,7 @@ options:
       - yes
       - no
     default: null
+    required: false
   source:
     description:
       - Specify a source to install the feature from
