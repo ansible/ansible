@@ -160,14 +160,14 @@ class VcaAnsibleModule(AnsibleModule):
 
         org = self.params['org']
         if not org:
-            raise VcaError('missing required or for service_type vchs')
+            raise VcaError('missing required org for service_type vchs')
 
         self.vca.login_to_org(service_id, org)
 
     def login_vcd(self):
         org = self.params['org']
         if not org:
-            raise VcaError('missing required or for service_type vchs')
+            raise VcaError('missing required org for service_type vcd')
 
         if not self.vca.token:
             raise VcaError('unable to get token for service_type vcd')
