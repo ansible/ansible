@@ -259,6 +259,8 @@ class ImageManager(DockerBaseClass):
         if not image or self.force:
             if self.path:
                 # Build the image
+                if not os.path.isdir(self.path):
+                    self.fail("Requested build path %s could not be found or you do not have access." % self.path)
                 image_name = self.name
                 if self.tag:
                     image_name = "%s:%s" % (self.name, self.tag)
