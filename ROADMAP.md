@@ -17,13 +17,13 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
 ## Windows, General
 * Figuring out privilege escalation (runas w/ username/password)
 * Implement kerberos encryption over http
-* pywinrm conversion to requests (Some mess here on pywinrm/requests. will need docs etc.)
-* NTLM support
+* ~~pywinrm conversion to requests (Some mess here on pywinrm/requests. will need docs etc.)~~ DONE
+* ~~NTLM support~~ DONE
 
 ## Modules
 * Windows
-  * Finish cleaning up tests and support for post-beta release
-  * Strict mode cleanup (one module in core)
+  * ~~Finish cleaning up tests and support for post-beta release~~ DONE
+  * ~~Strict mode cleanup (one module in core)~~ DONE
   * Domain user/group management
   * Finish win\_host and win\_rm in the domain/workgroup modules. 
      * Close 2 existing PRs (These were deemed insufficient)
@@ -42,16 +42,16 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
   * VMware modules moved to official pyvmomi bindings
   * VMware inventory script updates for pyvmomi, adding tagging support
 * Azure (Notes: We've made progress here now that Microsoft has swaped out the code generator on the Azure Python SDK. We have basic modules working against all of these resources at this time. Could ship it against current SDK, but may break. Or should the version be pinned?)
-  * Minimal Azure coverage using new ARM api
-  * Resource Group
-  * Virtual Network
-  * Subnet
-  * Public IP
-  * Network Interface
-  * Storage Account
-  * Security Group
-  * Virtual Machine
-  * Update of inventory script to use new API, adding tagging support
+  * ~~Minimal Azure coverage using new ARM api~~ DONE
+  * ~~Resource Group~~ DONE
+  * ~~Virtual Network~~ DONE
+  * ~~Subnet~~ DONE
+  * ~~Public IP~~ DONE
+  * ~~Network Interface~~ DONE
+  * ~~Storage Account~~ DONE
+  * ~~Security Group~~ DONE
+  * ~~Virtual Machine~~ DONE
+  * ~~Update of inventory script to use new API, adding tagging support~~ DONE
 * Docker:
   * Start Docker module refactor
   * Update to match current docker CLI capabilities
