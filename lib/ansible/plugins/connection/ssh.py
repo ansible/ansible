@@ -152,8 +152,8 @@ class Connection(ConnectionBase):
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
         if self._play_context.ssh_args:
-            ssh_args = self._split_ssh_args(self._play_context.ssh_args)
-            self._add_args("ansible.cfg set ssh_args", ssh_args)
+            args = self._split_ssh_args(self._play_context.ssh_args)
+            self._add_args("ansible.cfg set ssh_args", _args)
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
