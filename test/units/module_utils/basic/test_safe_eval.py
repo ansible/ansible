@@ -31,7 +31,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
     def test_module_utils_basic_safe_eval(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
