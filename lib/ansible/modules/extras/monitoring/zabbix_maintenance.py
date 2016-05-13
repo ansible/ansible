@@ -108,6 +108,7 @@ options:
             - The timeout of API request (seconds).
         default: 10
         version_added: "2.1"
+        required: false
 notes:
     - Useful for setting hosts in maintenance mode before big update,
       and removing maintenance window after update.
