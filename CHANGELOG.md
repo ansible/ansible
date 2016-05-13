@@ -182,6 +182,7 @@ Ansible Changes By Release
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
   completely in 2.3, after which time it will be an error.
+* Deprecated accelerated mode.
 
 ## 2.0.2 "Over the Hills and Far Away"
 
