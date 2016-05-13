@@ -300,7 +300,7 @@ ansible_become
 ansible_docker_extra_args
     Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
 
-Here an example of how to instantly depoloy to created containers::
+Here is an example of how to instantly deploy to created containers::
 
   - name: create jenkins container
     docker:
