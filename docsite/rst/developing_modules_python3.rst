@@ -114,6 +114,21 @@ modules should create their octals like this::
     # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
     EXECUTABLE_PERMS = int('0755', 8)
 
+Bundled six
+-----------
+
+The third-party python-six library exists to help projects create code that
+runs on both Python-2 and Python-3.  Ansible includes version 1.4.1 in
+module_utils so that other modules can use it without requiring that it is
+installed on the remote system.  To make use of it, import it like this::
+
+    from ansible.module_utils import six
+
+.. note:: Why version 1.4.1?
+
+    six-1.4.1 is the last version of python-six to support Python-2.4.  As
+    long as Ansible modules need to run on Python-2.4 we won't be able to
+    update the bundled copy of six.
 
 Compile Test
 ------------
