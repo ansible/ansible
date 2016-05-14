@@ -23,7 +23,7 @@ module: docker_service
 
 short_description: Manage docker services and containers.
 
-version_added: "2.2"
+version_added: "2.1"
 
 author: "Chris Houseknecht (@chouseknecht)"
 
@@ -145,6 +145,14 @@ options:
       required: false
       type: bool
       default: false
+
+extends_documentation_fragment:
+    - docker
+
+requirements:
+    - "python >= 2.6"
+    - "docker-compose >= 1.7.0"
+    - "Docker API >= 1.20"
 '''
 
 EXAMPLES = '''
