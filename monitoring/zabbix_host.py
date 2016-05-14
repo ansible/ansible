@@ -362,8 +362,9 @@ class Host(object):
         if set(list(template_ids)) != set(exist_template_ids):
             return True
 
-        if host['proxy_hostid'] != proxy_id:
-            return True
+        if proxy_id is not None:
+            if host['proxy_hostid'] != proxy_id:
+                return True
 
         return False
 
