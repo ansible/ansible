@@ -218,9 +218,6 @@ def run_acl(module, cmd, check_rc=True):
 
 
 def main():
-    if get_platform().lower() != 'linux':
-        module.fail_json(msg="The acl module is only available for Linux distributions.")
-
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['path'], type='path'),
@@ -244,6 +241,9 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    if get_platform().lower() != 'linux':
+        module.fail_json(msg="The acl module is only available for Linux distributions.")
 
     path = module.params.get('name')
     entry = module.params.get('entry')
