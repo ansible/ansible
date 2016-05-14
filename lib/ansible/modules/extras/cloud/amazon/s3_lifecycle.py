@@ -70,10 +70,11 @@ options:
     choices: [ 'enabled', 'disabled' ]
   storage_class:
     description:
-      - "The storage class to transition to. Currently there is only one valid value - 'glacier'."
+      - "The storage class to transition to. Currently there are two supported values - 'glacier' or 'standard_ia'."
+      - "The 'standard_ia' class is only being available from Ansible version 2.2."
     required: false
     default: glacier
-    choices: [ 'glacier' ]
+    choices: [ 'glacier', 'standard_ia']
   transition_date:
     description:
       - "Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified, this parameter is required."
@@ -131,6 +132,15 @@ EXAMPLES = '''
     prefix: /logs/
     state: absent
 
+# Configure a lifecycle rule to transition all backup files older than 31 days in /backups/ to standard infrequent access class.
+- s3_lifecycle:
+    name: mybucket
+    prefix: /backups/
+    storage_class: standard_ia
+    transition_days: 31
+    state: present
+    status: enabled
+
 '''
 
 import xml.etree.ElementTree as ET
@@ -144,6 +154,7 @@ except ImportError:
     HAS_DATEUTIL = False
 
 try:
+    import boto
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
@@ -347,15 +358,15 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True),
+            name = dict(required=True, type='str'),
             expiration_days = dict(default=None, required=False, type='int'),
             expiration_date = dict(default=None, required=False, type='str'),
             prefix = dict(default=None, required=False),
             requester_pays = dict(default='no', type='bool'),
-            rule_id = dict(required=False),
+            rule_id = dict(required=False, type='str'),
             state = dict(default='present', choices=['present', 'absent']),
             status = dict(default='enabled', choices=['enabled', 'disabled']),
-            storage_class = dict(default='glacier', choices=['glacier']),
+            storage_class = dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
             transition_days = dict(default=None, required=False, type='int'),
             transition_date = dict(default=None, required=False, type='str')
         )
@@ -396,6 +407,7 @@ def main():
     expiration_date = module.params.get("expiration_date")
     transition_date = module.params.get("transition_date")
     state = module.params.get("state")
+    storage_class = module.params.get("storage_class")
 
     # If expiration_date set, check string is valid
     if expiration_date is not None:
@@ -409,6 +421,10 @@ def main():
             datetime.datetime.strptime(transition_date, "%Y-%m-%dT%H:%M:%S.000Z")
         except ValueError, e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
+
+    boto_required_version = (2,40,0)
+    if storage_class == 'standard_ia' and tuple(map(int, (boto.__version__.split(".")))) < boto_required_version:
+        module.fail_json(msg="'standard_ia' class requires boto >= 2.40.0")
 
     if state == 'present':
         create_lifecycle_rule(connection, module)
