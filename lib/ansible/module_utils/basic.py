@@ -219,6 +219,9 @@ except ImportError:
 
 _literal_eval = literal_eval
 
+# Backwards compat.  There were present in basic.py before
+from ansible.module_utils.pycompat import get_exception
+
 # Internal global holding passed in params and constants.  This is consulted
 # in case multiple AnsibleModules are created.  Otherwise each AnsibleModule
 # would attempt to read from stdin.  Other code should not use this directly
@@ -251,21 +254,6 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 PERM_BITS = int('07777', 8)      # file mode permission bits
 EXEC_PERM_BITS = int('00111', 8) # execute permission bits
 DEFAULT_PERM = int('0666', 8)    # default file permission bits
-
-
-def get_exception():
-    """Get the current exception.
-
-    This code needs to work on Python 2.4 through 3.x, so we cannot use
-    "except Exception, e:" (SyntaxError on Python 3.x) nor
-    "except Exception as e:" (SyntaxError on Python 2.4-2.5).
-    Instead we must use ::
-
-        except Exception:
-            e = get_exception()
-
-    """
-    return sys.exc_info()[1]
 
 
 def get_platform():
