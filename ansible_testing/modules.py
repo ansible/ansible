@@ -504,6 +504,11 @@ class ModuleValidator(Validator):
                                    'is not a valid version number: %r' %
                                    (option, version_added))
                 continue
+            except:
+                # If there is any other exception it should have been caught
+                # in schema validation, so we won't duplicate errors by
+                # listing it again
+                continue
 
             if (strict_ansible_version != mod_version_added and
                     (version_added < strict_ansible_version or
