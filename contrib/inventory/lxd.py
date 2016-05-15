@@ -34,22 +34,27 @@ except:
 
 # Set up defaults
 resource = 'local:'
+group = 'lxd'
+connection = 'lxd'
+hosts = {}
 result = {}
-hosts = []
 
 # Read the settings from the lxd.ini file
 config = configparser.SafeConfigParser()
 config.read(os.path.dirname(os.path.realpath(__file__)) + '/lxd.ini')
-
-# Resource
 if config.has_option('lxd', 'resource'):
     resource = config.get('lxd', 'resource')
+if config.has_option('lxd', 'group'):
+    group = config.get('lxd', 'group')
+if config.has_option('lxd', 'connection'):
+    connection = config.get('lxd', 'connection')
 
 # Ensure executable exists
 if distutils.spawn.find_executable('lxc'):
 
-    # Set up containers result array
-    result['containers'] = {}
+    # Set up containers result and hosts array
+    result[group] = {}
+    result[group]['hosts'] = []
 
     # Run the command and load json result
     pipe = Popen(['lxc', 'list', resource, '--format', 'json'], stdout=PIPE, universal_newlines=True)
@@ -73,12 +78,15 @@ if distutils.spawn.find_executable('lxc'):
                     if 'family' in address and address['family'] == 'inet':
                         if 'address' in address:
                             ip = address['address']
-                            hosts.append(ip)
+                            name = item['name']
+
+                            # Add the host to the results and the host array
+                            result[group]['hosts'].append(name)
+                            hosts[name] = ip
 
     # Set the other containers result values
-    result['containers']['hosts'] = hosts
-    result['containers']['vars'] = {}
-    result['containers']['vars']['ansible_connection'] = 'local'
+    result[group]['vars'] = {}
+    result[group]['vars']['ansible_connection'] = connection
 
 # Process arguments
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
@@ -87,6 +95,9 @@ elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     if sys.argv[2] == 'localhost':
         print(json.dumps({'ansible_connection': 'local'}))
     else:
-        print(json.dumps({'ansible_connection': 'local'}))
+        if connection == 'lxd':
+            print(json.dumps({'ansible_connection': connection}))
+        else:
+            print(json.dumps({'ansible_connection': connection, 'ansible_host': hosts[sys.argv[2]]}))
 else:
     print("Need an argument, either --list or --host <host>")
