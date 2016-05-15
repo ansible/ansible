@@ -38,12 +38,17 @@ options:
     version_added: "2.1"
   pattern:
     description:
-      - A regex of queues to apply the policy to.
-    required: true
+      - A regex of queues to apply the policy to. Required when
+        C(state=present). 'Required' flag was changed to 'false' in 2.8.
+        version.
+    required: false
+    default: null
   tags:
     description:
-      - A dict or string describing the policy.
-    required: true
+      - A dict or string describing the policy. Required when
+        C(state=present). 'Required' flag was changed to 'false' in 2.8.
+    required: false
+    default: null
   priority:
     description:
       - The priority of the policy.
@@ -102,16 +107,19 @@ class RabbitMqPolicy(object):
             return out.splitlines()
         return list()
 
-    def list(self):
+    def has_modifications(self):
+        if self._pattern is None or self._tags is None:
+            self._module.fail_json(msg=('pattern and tags are required for '
+                                        'state=present'))
+
         policies = self._exec(['list_policies'], True)
 
-        for policy in policies:
-            if not policy:
-                continue
-            policy_name = policy.split('\t')[1]
-            if policy_name == self._name:
-                return True
-        return False
+        return not any(self._policy_check(policy) for policy in policies)
+
+    def should_be_deleted(self):
+        policies = self._exec(['list_policies'], True)
+
+        return any(self._policy_check_by_name(policy) for policy in policies)
 
     def set(self):
         args = ['set_policy']
@@ -128,14 +136,40 @@ class RabbitMqPolicy(object):
     def clear(self):
         return self._exec(['clear_policy', self._name])
 
+    def _policy_check(self, policy):
+        if not policy:
+            return False
+
+        policy_data = policy.split('\t')
+
+        policy_name = policy_data[1]
+        apply_to = policy_data[2]
+        pattern = policy_data[3].replace('\\\\', '\\')
+        tags = json.loads(policy_data[4])
+        priority = policy_data[5]
+
+        return (policy_name == self._name and
+                apply_to == self._apply_to and
+                tags == self._tags and
+                priority == self._priority and
+                pattern == self._pattern)
+
+    def _policy_check_by_name(self, policy):
+        if not policy:
+            return False
+
+        policy_name = policy.split('\t')[1]
+
+        return policy_name == self._name
+
 
 def main():
     arg_spec = dict(
         name=dict(required=True),
         vhost=dict(default='/'),
-        pattern=dict(required=True),
+        pattern=dict(required=False, default=None),
         apply_to=dict(default='all', choices=['all', 'exchanges', 'queues']),
-        tags=dict(type='dict', required=True),
+        tags=dict(type='dict', required=False, default=None),
         priority=dict(default='0'),
         node=dict(default='rabbit'),
         state=dict(default='present', choices=['present', 'absent']),
@@ -151,14 +185,12 @@ def main():
     rabbitmq_policy = RabbitMqPolicy(module, name)
 
     result = dict(changed=False, name=name, state=state)
-    if rabbitmq_policy.list():
-        if state == 'absent':
-            rabbitmq_policy.clear()
-            result['changed'] = True
-        else:
-            result['changed'] = False
-    elif state == 'present':
+
+    if state == 'present' and rabbitmq_policy.has_modifications():
         rabbitmq_policy.set()
+        result['changed'] = True
+    elif state == 'absent' and rabbitmq_policy.should_be_deleted():
+        rabbitmq_policy.clear()
         result['changed'] = True
 
     module.exit_json(**result)
