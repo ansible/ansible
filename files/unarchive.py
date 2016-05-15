@@ -768,7 +768,7 @@ def main():
             if res_args['extract_results']['rc'] != 0:
                 module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         except IOError:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         else:
             res_args['changed'] = True
 
@@ -784,7 +784,7 @@ def main():
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
             except (IOError, OSError):
                 e = get_exception()
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
+                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e), **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
