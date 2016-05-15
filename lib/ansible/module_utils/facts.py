@@ -675,7 +675,7 @@ class Distribution(object):
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
-        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'FreeBSD', 'OpenBSD')
 
         self.facts['distribution'] = self.system
 
@@ -763,6 +763,13 @@ class Distribution(object):
         rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
         data = out.split()[-1]
         self.facts['distribution_version'] = data
+
+    def get_distribution_FreeBSD(self):
+        self.facts['distribution_release'] = platform.release()
+        data = re.search('(\d+)\.(\d+)-RELEASE.*', self.facts['distribution_release'])
+        if data:
+            self.facts['distribution_major_version'] = data.group(1)
+            self.facts['distribution_version'] = '{0}.{1}'.format(data.group(1), data.group(2))
 
     def get_distribution_OpenBSD(self):
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
