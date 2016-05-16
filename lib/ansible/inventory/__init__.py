@@ -159,8 +159,8 @@ class Inventory(object):
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
             self.get_group_vars(group)
 
-        # set host vars from host_vars/ files and vars plugins
-        for host in self.get_hosts():
+        # get host vars from host_vars/ files and vars plugins
+        for host in self.get_hosts(ignore_limits_and_restrictions=True):
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
 
