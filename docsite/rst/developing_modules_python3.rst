@@ -104,6 +104,20 @@ construction to make this work under both Python-2.4 and Python-3::
         e = get_exception()
         module.fail_json(msg="Tried to divide by zero!")
 
+Another deprecated construct is the following::
+
+    try:
+        a = 2/0
+    except ValueError, AttributeError:
+        module.fail_json(msg="Tried to divide by zero!")
+
+This doesn't compile in python 3 and should be replaced by the following::
+
+    try:
+        a = 2/0
+    except (ValueError, AttributeError):
+        module.fail_json(msg="Tried to divide by zero!")
+
 Octal numbers
 -------------
 
