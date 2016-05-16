@@ -223,7 +223,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, aliases=['path'], type='str'),
+            name=dict(required=True, aliases=['path'], type='path'),
             entry=dict(required=False, type='str'),
             entity=dict(required=False, type='str', default=''),
             etype=dict(
@@ -245,7 +245,7 @@ def main():
         supports_check_mode=True,
     )
 
-    path = os.path.expanduser(module.params.get('name'))
+    path = module.params.get('name')
     entry = module.params.get('entry')
     entity = module.params.get('entity')
     etype = module.params.get('etype')
