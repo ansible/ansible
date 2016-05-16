@@ -144,7 +144,7 @@ class VcaAnsibleModule(AnsibleModule):
             meth()
         except AttributeError:
             self.fail('no login method exists for service_type %s' % service_type)
-        except VcaError, e:
+        except VcaError as e:
             self.fail(e.message, response=self.vca.response, **e.kwargs)
 
     def login_vca(self):
@@ -318,7 +318,7 @@ def vca_login(module):
             _vchs_login(vca, password, service, org)
         elif service_type == 'vcd':
             _vcd_login(vca, password, org)
-    except VcaError, e:
+    except VcaError as e:
         module.fail_json(msg=e.message, **e.kwargs)
 
     return vca
