@@ -100,7 +100,7 @@ def gce_connect(module, provider=None):
                 module.fail_json(msg='Using JSON credentials but libcloud minimum version not met. '
                                      'Upgrade to libcloud>=0.17.0.')
                 return None
-        except ValueError, e:
+        except ValueError as e:
             # Not JSON
             pass
 
@@ -114,9 +114,9 @@ def gce_connect(module, provider=None):
                 project=project_id)
         gce.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except (RuntimeError, ValueError), e:
+    except (RuntimeError, ValueError) as e:
         module.fail_json(msg=str(e), changed=False)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     return gce
