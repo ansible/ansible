@@ -96,7 +96,8 @@ class ProxmoxAPI(object):
             'password': self.options.password,
         })
 
-        data = json.load(open_url(request_path, data=request_params))
+        data = json.load(open_url(request_path, data=request_params,
+            validate_certs=self.options.validate))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
@@ -107,7 +108,8 @@ class ProxmoxAPI(object):
         request_path = '{}{}'.format(self.options.url, url)
 
         headers = {'Cookie': 'PVEAuthCookie={}'.format(self.credentials['ticket'])}
-        request = open_url(request_path, data=data, headers=headers)
+        request = open_url(request_path, data=data, headers=headers,
+                validate_certs=self.options.validate)
 
         response = json.load(request)
         return response['data']
@@ -212,6 +214,9 @@ def main_host(options):
     return {}
 
 def main():
+
+    bool_validate_cert = True if os.environ.has_key('PROXMOX_INVALID_CERT') else False
+
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
     parser.add_option('--list', action="store_true", default=False, dest="list")
     parser.add_option('--host', dest="host")
@@ -219,6 +224,7 @@ def main():
     parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
     parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
+    parser.add_option('--trust-invalid-certs', action="store_true", default=bool_validate_cert, dest='validate')
     (options, args) = parser.parse_args()
 
     if options.list:
