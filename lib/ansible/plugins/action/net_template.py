@@ -93,6 +93,17 @@ class ActionModule(ActionBase):
         except IOError:
             return dict(failed=True, msg='unable to load src file')
 
+        # Create a template search path in the following order:
+        # [working_path, self_role_path, dependent_role_paths, dirname(source)]
+        searchpath = [working_path]
+        if self._task._role is not None:
+            searchpath.append(self._task._role._role_path)
+            dep_chain = self._task._block.get_dep_chain()
+            if dep_chain is not None:
+                for role in dep_chain:
+                    searchpath.append(role._role_path)
+        searchpath.append(os.path.dirname(source))
+        self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
 
 
