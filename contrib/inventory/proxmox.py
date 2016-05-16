@@ -215,7 +215,7 @@ def main_host(options):
 
 def main():
 
-    bool_validate_cert = True if os.environ.has_key('PROXMOX_INVALID_CERT') else False
+    bool_validate_cert = False if os.environ.has_key('PROXMOX_INVALID_CERT') else True
 
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
     parser.add_option('--list', action="store_true", default=False, dest="list")
