@@ -156,6 +156,7 @@ class Facts(object):
                  { 'path' : '/usr/sbin/urpmi',      'name' : 'urpmi' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
+                 { 'path' : '/usr/pkg/bin/pkgin',   'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
                  { 'path' : '/usr/local/bin/brew',  'name' : 'homebrew' },
