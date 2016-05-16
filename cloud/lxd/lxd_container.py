@@ -64,26 +64,75 @@ notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
+  - There are two ways to can run commands in containers.
+    - Use the command module, for example:
+      - name: Install python in the created container
+        command: lxc exec my-ubuntu -- apt install -y python
+    - Use the ansible lxd connection plugin bundled in Ansible 2.1 or later.
+      - In order to use this method, first you need to install python in the container
+        with the above method. See the first example below.
+  - You can copy a file in the localhost to the created container
+    running `command: lxc file push filename container_name/dir/filename`
+    on localhost. See the first example below.
+  - You can copy a file in the creatd container to the localhost
+    running `command: lxc file pull container_name/dir/filename filename`.
+    See the first example below.
 """
 
 EXAMPLES = """
-- name: Create a started container
-  lxd_container:
-    name: cent01
-    config: { source: { type: image, alias: centos/7/amd64 } }
-    state: restarted
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a started container
+      lxd_container:
+        name: my-ubuntu
+        state: started
+        config:
+          source:
+            type: image
+            mode: pull
+            server: https://images.linuxcontainers.org
+            protocol: lxd
+            alias: "ubuntu/xenial/amd64"
+          profiles: ["default"]
+    - name: Install python in the created container "nettest"
+      command: lxc exec my-ubuntu -- apt install -y python
+    - name: Copy somefile.txt to /tmp/renamed.txt in the created container "nettest"
+      command: lxc file push somefile.txt nettest/tmp/renamed.txt
+    - name: Copy /etc/hosts in the created container "nettest" to localhost with name "nettest-hosts"
+      command: lxc file pull nettest/etc/hosts nettest-hosts
 
-- name: Create a stopped container
-  lxd_container:
-    name: cent01
-    config: { source: { type: image, alias: centos/7/amd64 } }
-    state: stopped
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a stopped container
+      lxd_container:
+        name: my-ubuntu
+        state: stopped
+        config:
+          source:
+            type: image
+            mode: pull
+            server: https://images.linuxcontainers.org
+            protocol: lxd
+            alias: "ubuntu/xenial/amd64"
+          profiles: ["default"]
 
-- name: Restart a container
-  lxd_container:
-    name: cent01
-    config: { source: { type: image, alias: centos/7/amd64 } }
-    state: restarted
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Restart a container
+      lxd_container:
+        name: my-ubuntu
+        state: restarted
+        config:
+          source:
+            type: image
+            mode: pull
+            server: https://images.linuxcontainers.org
+            protocol: lxd
+            alias: "ubuntu/xenial/amd64"
+          profiles: ["default"]
 """
 
 RETURN="""
