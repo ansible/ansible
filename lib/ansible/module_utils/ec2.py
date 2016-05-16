@@ -364,7 +364,10 @@ def boto3_tag_list_to_ansible_dict(tags_list):
 
     tags_dict = {}
     for tag in tags_list:
-        tags_dict[tag['Key']] = tag['Value']
+        if 'key' in tag:
+            tags_dict[tag['key']] = tag['value']
+        elif 'Key' in tag:
+            tags_dict[tag['Key']] = tag['Value']
 
     return tags_dict
 
