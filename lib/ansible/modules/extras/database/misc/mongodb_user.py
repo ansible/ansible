@@ -159,6 +159,17 @@ else:
 # MongoDB module specific support methods.
 #
 
+def check_compatibility(module, client):
+    srv_info = client.server_info()
+    if LooseVersion(srv_info['version']) >= LooseVersion('3.2') and LooseVersion(PyMongoVersion) <= LooseVersion('3.2'):
+        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
+    elif LooseVersion(srv_info['version']) >= LooseVersion('3.0') and LooseVersion(PyMongoVersion) <= LooseVersion('2.8'):
+        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
+    elif LooseVersion(srv_info['version']) >= LooseVersion('2.6') and LooseVersion(PyMongoVersion) <= LooseVersion('2.7'):
+        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
+    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+        module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
+
 def user_find(client, user, db_name):
     for mongo_user in client["admin"].system.users.find():
         if mongo_user['user'] == user and mongo_user['db'] == db_name:
@@ -177,8 +188,6 @@ def user_add(module, client, db_name, user, password, roles):
             db.add_user(user, password, None, roles=roles)
         except OperationFailure, e:
             err_msg = str(e)
-            if LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
-                err_msg = err_msg + ' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)'
             module.fail_json(msg=err_msg)
 
 def user_remove(module, client, db_name, user):
@@ -308,6 +317,8 @@ def main():
 
     except ConnectionFailure, e:
         module.fail_json(msg='unable to connect to database: %s' % str(e))
+
+    check_compatibility(module, client)
 
     if state == 'present':
         if password is None and update_password == 'always':
