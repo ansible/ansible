@@ -12,7 +12,7 @@ if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/boilerplate.sh
     ./test/code-smell/required-and-default-attributes.sh
     if test x"$TOXENV" != x'py24' ; then tox ; fi
-    if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common).py' lib/ansible/module_utils ; fi
+    if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common|vca|vmware).py' lib/ansible/module_utils ; fi
 else
     if [ ! -e /tmp/cid_httptester ]; then
         docker pull sivel/httptester
