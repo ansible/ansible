@@ -31,6 +31,7 @@ try:
 except ImportError:
     HAS_PARAMIKO = False
 
+from ansible.module_utils.basic import get_exception
 
 ANSI_RE = re.compile(r'(\x1b\[\?1h\x1b=)')
 
@@ -135,7 +136,8 @@ class Shell(object):
                 if self.read(window):
                     resp = self.strip(recv.getvalue())
                     return self.sanitize(cmd, resp)
-            except ShellError, exc:
+            except ShellError:
+                exc = get_exception()
                 exc.command = cmd
                 raise
 
