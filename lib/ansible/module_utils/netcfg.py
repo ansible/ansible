@@ -382,7 +382,7 @@ class Conditional(object):
         return self.number(value) <= self.value
 
     def contains(self, value):
-        return self.value in value
+        return str(self.value) in value
 
 
 
