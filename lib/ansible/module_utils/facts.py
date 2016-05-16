@@ -664,15 +664,11 @@ class Distribution(object):
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
-        systems_platform_working = ('NetBSD', 'FreeBSD')
         systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
 
-        if self.system in systems_platform_working:
-            # the distribution is provided by platform module already and needs no fixes
-            pass
+        self.facts['distribution'] = self.system
 
-        elif self.system in systems_implemented:
-            self.facts['distribution'] = self.system
+        if self.system in systems_implemented:
             cleanedname = self.system.replace('-','')
             distfunc = getattr(self, 'get_distribution_'+cleanedname)
             distfunc()
