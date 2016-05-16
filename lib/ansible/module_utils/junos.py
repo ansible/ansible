@@ -158,7 +158,8 @@ class Netconf(object):
 
             self.config = Config(self.device)
 
-        except Exception, exc:
+        except Exception:
+            exc = get_exception()
             self._fail('unable to connect to %s: %s' % (host, str(exc)))
 
     def run_commands(self, commands, **kwargs):
@@ -169,9 +170,11 @@ class Netconf(object):
             try:
                 resp = self.device.cli(command=cmd, format=fmt)
                 response.append(resp)
-            except (ValueError, RpcError), exc:
+            except (ValueError, RpcError):
+                exc = get_exception()
                 self._fail('Unable to get cli output: %s' % str(exc))
-            except Exception, exc:
+            except Exception:
+                exc = get_exception()
                 self._fail('Uncaught exception - please report: %s' % str(exc))
 
         return response
@@ -180,14 +183,16 @@ class Netconf(object):
         try:
             self.config.unlock()
             self._locked = False
-        except UnlockError, exc:
+        except UnlockError:
+            exc = get_exception()
             self.module.log('unable to unlock config: {0}'.format(str(exc)))
 
     def lock_config(self):
         try:
             self.config.lock()
             self._locked = True
-        except LockError, exc:
+        except LockError:
+            exc = get_exception()
             self.module.log('unable to lock config: {0}'.format(str(exc)))
 
     def check_config(self):
@@ -200,7 +205,8 @@ class Netconf(object):
             if confirm and confirm > 0:
                 kwargs['confirm'] = confirm
             return self.config.commit(**kwargs)
-        except CommitError, exc:
+        except CommitError:
+            exc = get_exception()
             msg = 'Unable to commit configuration: {0}'.format(str(exc))
             self._fail(msg=msg)
 
@@ -215,7 +221,8 @@ class Netconf(object):
         try:
             self.config.load(candidate, format=format, merge=merge,
                     overwrite=overwrite)
-        except ConfigLoadError, exc:
+        except ConfigLoadError:
+            exc = get_exception()
             msg = 'Unable to load config: {0}'.format(str(exc))
             self._fail(msg=msg)
 
@@ -234,7 +241,8 @@ class Netconf(object):
 
         try:
             result = self.config.rollback(identifier)
-        except Exception, exc:
+        except Exception:
+            exc = get_exception()
             msg = 'Unable to rollback config: {0}'.format(str(exc))
             self._fail(msg=msg)
 
