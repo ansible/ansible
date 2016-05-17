@@ -310,7 +310,8 @@ def main():
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
-                except (OSError, IOError), e:
+                except (OSError, IOError):
+                    e = get_exception()
                     module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
 
         module.exit_json(changed=changed, **args)
@@ -330,7 +331,8 @@ def main():
             if not os.path.exists(name) and not module.check_mode:
                 try:
                     os.makedirs(name)
-                except (OSError, IOError), e:
+                except (OSError, IOError):
+                    e = get_exception()
                     module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
 
         name, changed = set_mount(module, **args)
