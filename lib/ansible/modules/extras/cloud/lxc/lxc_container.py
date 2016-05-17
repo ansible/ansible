@@ -568,7 +568,7 @@ def create_script(command):
         f.close()
 
     # Ensure the script is executable.
-    os.chmod(script_file, 0700)
+    os.chmod(script_file, int('0700',8))
 
     # Output log file.
     stdout_file = os.fdopen(tempfile.mkstemp(prefix='lxc-attach-script-log')[0], 'ab')
@@ -1371,7 +1371,7 @@ class LxcContainerManagement(object):
         :type source_dir: ``str``
         """
 
-        old_umask = os.umask(0077)
+        old_umask = os.umask(int('0077',8))
 
         archive_path = self.module.params.get('archive_path')
         if not os.path.isdir(archive_path):
