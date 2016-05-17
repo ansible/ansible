@@ -20,20 +20,24 @@ Ansible currently supports the following networking devices:
 * Juniper JUNOS 
 * OpenSwitch
 
-.. _networking_prerequisites:
-
-Network Automation Prerequisites
-````````````````````````
-
-TBD
-
-
 .. _networking_installation:
 
 Network Automation Installation
 ````````````````````````
 
-TBD
+Download the latest Ansible network release `here <http://releases.ansible.com/ansible-network/latest/>`_.
+
+Playbooks for testing Ansible core network modules can be found `here <https://github.com/ansible/test-network-modules>`_.
+
+
+.. _networking_module_index:
+
+Available Networking Modules
+````````````````````````
+
+Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
+
+To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <http://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
 
 .. _understanding_provider_arguments:
 
@@ -162,29 +166,19 @@ ssh_keyfile ANSIBLE_NET_SSH_KEYFILE
 authorize ANSIBLE_NET_AUTHORIZE
 auth_pass ANSIBLE_NET_AUTH_PASS
 
-Variables are evaulated in the following order, list from lowest to highest priority:
+Variables are evaulated in the following order, listed from lowest to highest priority:
 
 * Default
 * Environment
 * Provider
 * Task arguments
 
-
-.. _networking_module_index:
-
-Available Networking Modules
-````````````````````````
-
-Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
-
-To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <http://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
-
 .. _networking_module_conditionals:
 
 Conditionals in Networking Modules
 ````````````````````````
 
-Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use unique conditional statements.
+Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements.
 
 * eq - Equal
 * neq - Not equal
@@ -195,5 +189,14 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 * contains - Object contains specified item
 
 
+Conditionals used with networking command modules only evaluate results, not stdout. For example, the following example won't work::
+
+    ---
+    waitfor: "stdout_lines[0][6] contains '100.00'"
+
+To evaluate this properly, you'll need to compare against results. For example::
+
+    ---
+    result[0] contains '100.00'
 
 
