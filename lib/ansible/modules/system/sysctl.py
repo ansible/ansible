@@ -275,7 +275,8 @@ class SysctlModule(object):
                 f = open(self.sysctl_file, "r")
                 lines = f.readlines()
                 f.close()
-            except IOError, e:
+            except IOError:
+                e = get_exception()
                 self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, str(e)))
 
         for line in lines:
@@ -325,7 +326,8 @@ class SysctlModule(object):
         try:
             for l in self.fixed_lines:
                 f.write(l.strip() + "\n")
-        except IOError, e:
+        except IOError:
+            e = get_exception()
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
         f.flush()
         f.close()
