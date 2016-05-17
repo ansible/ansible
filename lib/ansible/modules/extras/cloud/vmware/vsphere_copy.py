@@ -82,6 +82,9 @@ import mmap
 import errno
 import socket
 
+from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.urls import open_url
+
 def vmware_path(datastore, datacenter, path):
     ''' Constructs a URL path that VSphere accepts reliably '''
     path = "/folder/%s" % path.lstrip("/")
@@ -140,13 +143,15 @@ def main():
         r = open_url(url, data=data, headers=headers, method='PUT',
                 url_username=login, url_password=password, validate_certs=validate_certs,
                 force_basic_auth=True)
-    except socket.error, e:
+    except socket.error:
+        e = get_exception()
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
             module.fail_json(msg='Failed to upload, image probably in use', status=None, errno=e[0], reason=str(e), url=url)
         else:
             module.fail_json(msg=str(e), status=None, errno=e[0], reason=str(e), url=url)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         error_code = -1
         try:
             if isinstance(e[0], int):
@@ -167,8 +172,5 @@ def main():
 
         module.fail_json(msg='Failed to upload', errno=None, status=status, reason=r.msg, length=length, headers=dict(r.headers), chunked=chunked, url=url)
 
-# Import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
