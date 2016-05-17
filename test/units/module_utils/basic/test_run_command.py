@@ -30,8 +30,7 @@ from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
 
 from units.mock.procenv import swap_stdin_and_argv
 
-from ansible.module_utils import basic
-from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.basic
 
 class OpenBytesIO(BytesIO):
     """BytesIO with dummy close() method
@@ -62,13 +61,13 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path == '/inaccessible':
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
-        self.module = AnsibleModule(argument_spec=dict())
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
         self.os = patch('ansible.module_utils.basic.os').start()

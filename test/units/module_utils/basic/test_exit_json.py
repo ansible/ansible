@@ -28,8 +28,6 @@ from ansible.compat.tests import unittest
 from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 
 from ansible.module_utils import basic
-from ansible.module_utils.basic import heuristic_log_sanitize
-from ansible.module_utils.basic import return_values, remove_values
 
 
 empty_invocation = {u'module_args': {}}
@@ -37,7 +35,7 @@ empty_invocation = {u'module_args': {}}
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitJson(unittest.TestCase):
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         self.stdin_swap_ctx = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap_ctx.__enter__()
 
@@ -45,7 +43,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         self.stdout_swap_ctx = swap_stdout()
         self.fake_stream = self.stdout_swap_ctx.__enter__()
 
-        reload(basic)
+        basic._ANSIBLE_ARGS = None
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
@@ -122,12 +120,12 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     def test_exit_json_removes_values(self):
         self.maxDiff = None
         for args, return_val, expected in self.dataset:
-            params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
+            params = dict(ANSIBLE_MODULE_ARGS=args)
             params = json.dumps(params)
 
             with swap_stdin_and_argv(stdin_data=params):
-                reload(basic)
                 with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
                         argument_spec = dict(
                             username=dict(),
@@ -145,11 +143,11 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
             expected = copy.deepcopy(expected)
             del expected['changed']
             expected['failed'] = True
-            params = dict(ANSIBLE_MODULE_ARGS=args, ANSIBLE_MODULE_CONSTANTS={})
+            params = dict(ANSIBLE_MODULE_ARGS=args)
             params = json.dumps(params)
             with swap_stdin_and_argv(stdin_data=params):
-                reload(basic)
                 with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
                     module = basic.AnsibleModule(
                         argument_spec = dict(
                             username=dict(),

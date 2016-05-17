@@ -46,7 +46,7 @@ Ask for privilege escalation password.
 *-k*, *--ask-pass*::
 
 Prompt for the connection password, if it is needed for the transport used.
-For example, using ssh and not having  a key-based authentication with ssh-agent.
+For example, using ssh and not having a key-based authentication with ssh-agent.
 
 *--ask-su-pass*::
 
@@ -96,7 +96,7 @@ Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
 *-h*, *--help*::
 
-Show help page and exit
+Show help page and exit.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
@@ -128,7 +128,7 @@ environment variable.
 
 *--private-key=*'PRIVATE_KEY_FILE'::
 
-Use this file to authenticate the connection
+Use this file to authenticate the connection.
 
 *--start-at-task=*'START_AT'::
 
@@ -140,11 +140,11 @@ One-step-at-a-time: confirm each task before running.
 
 *-S*, --su*::
 
-Run operations with su (deprecated, use become)
+Run operations with su (deprecated, use become).
 
 *-R SU-USER*, *--su-user=*'SU_USER'::
 
-run operations with su as this user (default=root) (deprecated, use become)
+run operations with su as this user (default=root) (deprecated, use become).
 
 *-s*, *--sudo*::
 
@@ -178,7 +178,7 @@ Only run plays and tasks whose tags do not match these values.
 
 *--syntax-check*::
 
-Look for syntax errors in the playbook, but don't run anything
+Look for syntax errors in the playbook, but don't run anything.
 
 *-t*, 'TAGS', *--tags=*'TAGS'::
 
@@ -227,7 +227,7 @@ EXIT STATUS
 ENVIRONMENT
 -----------
 
-The following environment variables may be specified.
+The following environment variables may be specified:
 
 ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 

@@ -163,7 +163,7 @@ def rax_find_volume(module, rax_module, name):
             volume = cbs.find(name=name)
         except rax_module.exc.NotFound:
             volume = None
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e)
     return volume
 
@@ -263,7 +263,7 @@ def rax_required_together():
 
 def setup_rax_module(module, rax_module, region_required=True):
     """Set up pyrax in a standard way for all modules"""
-    rax_module.USER_AGENT = 'ansible/%s %s' % (module.constants['ANSIBLE_VERSION'],
+    rax_module.USER_AGENT = 'ansible/%s %s' % (module.ansible_version,
                                                rax_module.USER_AGENT)
 
     api_key = module.params.get('api_key')
@@ -302,7 +302,7 @@ def setup_rax_module(module, rax_module, region_required=True):
                        os.environ.get('RAX_CREDS_FILE'))
         region = (region or os.environ.get('RAX_REGION') or
                   rax_module.get_setting('region'))
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     try:
@@ -317,7 +317,7 @@ def setup_rax_module(module, rax_module, region_required=True):
             rax_module.set_credential_file(credentials, region=region)
         else:
             raise Exception('No credentials supplied!')
-    except Exception, e:
+    except Exception as e:
         if e.message:
             msg = str(e.message)
         else:

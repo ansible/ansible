@@ -43,6 +43,7 @@ def f5_argument_spec():
         user=dict(type='str', required=True),
         password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
         validate_certs = dict(default='yes', type='bool'),
+        server_port = dict(type='int', default=443, required=False),
         state = dict(type='str', default='present', choices=['present', 'absent']),
         partition = dict(type='str', default='Common')
     )
@@ -57,12 +58,16 @@ def f5_parse_arguments(module):
         if not hasattr(ssl, 'SSLContext'):
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
-    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'])
+    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'],module.params['server_port'])
 
-def bigip_api(bigip, user, password, validate_certs):
+def bigip_api(bigip, user, password, validate_certs, port=443):
     try:
-        # bigsuds >= 1.0.3
-        api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs)
+        if bigsuds.__version__ >= '1.0.4':
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs, port=port)
+        elif bigsuds.__version__ == '1.0.3':
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs)
+        else:
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
     except TypeError:
         # bigsuds < 1.0.3, no verify param
         if validate_certs:
@@ -92,5 +97,3 @@ def fq_list_names(partition,list_names):
     if list_names is None:
         return None
     return map(lambda x: fq_name(partition,x),list_names)
-
-

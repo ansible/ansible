@@ -60,26 +60,56 @@ People
 ======
 Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, via a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act.
 
-* James Cammarata 
-* Brian Coca
-* Matt Davis
-* Toshio Kuratomi
-* Jason McKerr 
-* Robyn Bergeron 
-* Greg DeKoenigsberg
-* Monty Taylor
-* Matt Martz 
-* Nate Case
-* James Tanner
-* Peter Sprygada
-* Abhijit Menon-Sen
-* Michael Scherer
-* René Moser
-* David Shrewsbury
-* Sandra Wills
-* Graham Mainwaring
-* Jon Davila
-* Chris Houseknecht
-* Trond Hindenes
-* Jon Hawkesworth
-* Will Thames
++---------------------+----------------------+--------------------+----------------------+
+| Name                | Github ID            | IRC Nick           | Other                |
++=====================+======================+====================+======================+
+| James Cammarata     | jimi-c               | jimi               |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Brian Coca          | bcoca                | bcoca              | mdyson@cyberdyne.com |
++---------------------+----------------------+--------------------+----------------------+
+| Matt Davis          | nitzmahone           | nitzmahone         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Toshio Kuratomi     | abadger              | abadger1999        |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jason McKerr        | mckerrj              | newtMcKerr         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Robyn Bergeron      | robynbergeron        | rbergeron          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Greg DeKoenigsberg  | gregdek              | gregdek            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Monty Taylor        | emonty               | mordred            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Matt Martz          | sivel                | sivel              |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Nate Case           | qalthos              | Qalthos            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| James Tanner        | jctanner             | jtanner            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Peter Sprygada      | privateip            | privateip          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Abhijit Menon-Sen   | amenonsen            | crab               |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Michael Scherer     | mscherer             | misc               |                      |
++---------------------+----------------------+--------------------+----------------------+
+| René Moser          | resmo                | resmo              |                      |
++---------------------+----------------------+--------------------+----------------------+
+| David Shrewsbury    | Shrews               | Shrews             |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Sandra Wills        | docschick            | docschick          |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Graham Mainwaring   | ghjm                 |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jon Davila          | defionscode          |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Chris Houseknecht   | chouseknecht         |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Trond Hindenes      | trondhindenes        |                    |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Jon Hawkesworth     | jhawkseworth         | jhawkseworth       |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Will Thames         | wilthames            | willthames         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Ryan Brown          | ryansb               | ryansb             |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Adrian Likins       | alikins              | alikins            |                      |
++---------------------+----------------------+--------------------+----------------------+

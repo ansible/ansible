@@ -54,15 +54,18 @@ class ActionModule(ActionBase):
             module_args['_ansible_no_log'] = True
 
         # configure, upload, and chmod the target module
-        (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        self._transfer_data(remote_module_path, module_data)
+        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        if module_style == 'binary':
+            self._transfer_file(module_path, remote_module_path)
+        else:
+            self._transfer_data(remote_module_path, module_data)
 
         # configure, upload, and chmod the async_wrapper module
-        (async_module_style, shebang, async_module_data) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
+        (async_module_style, shebang, async_module_data, _) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
         self._transfer_data(async_module_path, async_module_data)
 
         argsfile = None
-        if module_style == 'non_native_want_json':
+        if module_style in ('non_native_want_json', 'binary'):
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(module_args))
         elif module_style == 'old':
             args_data = ""

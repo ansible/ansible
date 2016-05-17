@@ -329,7 +329,7 @@ be applied to single tasks only, once a playbook is completed.
 .. _interpolate_variables:
 
 When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,

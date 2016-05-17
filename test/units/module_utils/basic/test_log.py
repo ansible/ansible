@@ -28,7 +28,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 from units.mock.procenv import swap_stdin_and_argv
 
-from ansible.module_utils import basic
+import ansible.module_utils.basic
 
 
 try:
@@ -43,26 +43,26 @@ except ImportError:
 
 class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
 
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
-        self.am = basic.AnsibleModule(
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
 
-        self.has_journal = basic.has_journal
+        self.has_journal = ansible.module_utils.basic.has_journal
         if self.has_journal:
             # Systems with journal can still test syslog
-            basic.has_journal = False
+            ansible.module_utils.basic.has_journal = False
 
     def tearDown(self):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
-        basic.has_journal = self.has_journal
+        ansible.module_utils.basic.has_journal = self.has_journal
 
     def test_smoketest_syslog(self):
         # These talk to the live daemons on the system.  Need to do this to
@@ -80,14 +80,14 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
 
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
-        self.am = basic.AnsibleModule(
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
 
@@ -95,7 +95,7 @@ class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
 
-    @unittest.skipUnless(basic.has_journal, 'python systemd bindings not installed')
+    @unittest.skipUnless(ansible.module_utils.basic.has_journal, 'python systemd bindings not installed')
     def test_smoketest_journal(self):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
@@ -129,24 +129,24 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             }
 
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
-        self.am = basic.AnsibleModule(
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
 
-        self.has_journal = basic.has_journal
+        self.has_journal = ansible.module_utils.basic.has_journal
         if self.has_journal:
             # Systems with journal can still test syslog
-            basic.has_journal = False
+            ansible.module_utils.basic.has_journal = False
 
     def tearDown(self):
         # teardown/reset
-        basic.has_journal = self.has_journal
+        ansible.module_utils.basic.has_journal = self.has_journal
 
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
@@ -190,18 +190,18 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
 
     # overriding run lets us use context managers for setup/teardown-esque behavior
     def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        reload(basic)
-        self.am = basic.AnsibleModule(
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
 
-        self.has_journal = basic.has_journal
-        basic.has_journal = True
+        self.has_journal = ansible.module_utils.basic.has_journal
+        ansible.module_utils.basic.has_journal = True
 
         self.module_patcher = None
 
@@ -210,20 +210,20 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
             self.module_patcher = patch.dict('sys.modules', {'systemd': MagicMock(), 'systemd.journal': MagicMock()})
             self.module_patcher.start()
             try:
-                reload(basic)
+                reload(ansible.module_utils.basic)
             except NameError:
-                self._fake_out_reload(basic)
+                self._fake_out_reload(ansible.module_utils.basic)
 
     def tearDown(self):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
 
         # teardown/reset
-        basic.has_journal = self.has_journal
+        ansible.module_utils.basic.has_journal = self.has_journal
 
         if self.module_patcher:
             self.module_patcher.stop()
-            reload(basic)
+            reload(ansible.module_utils.basic)
 
     @patch('systemd.journal.send')
     def test_no_log(self, mock_func):
