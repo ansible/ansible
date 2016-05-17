@@ -285,7 +285,8 @@ class User(object):
         if module.params['expires']:
             try:
                 self.expires = time.gmtime(module.params['expires'])
-            except Exception,e:
+            except Exception:
+                e = get_exception()
                 module.fail_json("Invalid expires time %s: %s" %(self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
@@ -585,9 +586,10 @@ class User(object):
             if self.module.check_mode:
                 return (0, '', '')
             try:
-                os.mkdir(ssh_dir, 0700)
+                os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
-            except OSError, e:
+            except OSError:
+                e = get_exception()
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
@@ -657,12 +659,14 @@ class User(object):
             if os.path.exists(skeleton):
                 try:
                     shutil.copytree(skeleton, path, symlinks=True)
-                except OSError, e:
+                except OSError:
+                    e = get_exception()
                     self.module.exit_json(failed=True, msg="%s" % e)
         else:
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError:
+                e = get_exception()
                 self.module.exit_json(failed=True, msg="%s" % e)
 
     def chown_homedir(self, uid, gid, path):
@@ -673,7 +677,8 @@ class User(object):
                     os.chown(path, uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
-        except OSError, e:
+        except OSError:
+            e = get_exception()
             self.module.exit_json(failed=True, msg="%s" % e)
 
 
@@ -1291,7 +1296,8 @@ class SunOS(User):
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
-                except Exception, err:
+                except Exception:
+                    err = get_exception()
                     self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
         return (rc, out, err)
@@ -1378,7 +1384,8 @@ class SunOS(User):
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
                     rc = 0
-                except Exception, err:
+                except Exception:
+                    err = get_exception()
                     self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
         return (rc, out, err)
