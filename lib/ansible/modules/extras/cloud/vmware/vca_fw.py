@@ -181,7 +181,7 @@ def main():
 
     try:
         desired_rules = validate_fw_rules(fw_rules)
-    except VcaError, e:
+    except VcaError as e:
         module.fail_json(msg=e.message)
 
     result = dict(changed=False)

@@ -154,7 +154,7 @@ def main():
 
     try:
         desired_rules = validate_nat_rules(nat_rules)
-    except VcaError, e:
+    except VcaError as e:
         module.fail_json(msg=e.message)
 
     rules = gateway.get_nat_rules()
