@@ -158,6 +158,9 @@ class Shell(object):
                 responses.append(self.receive(command))
         except socket.timeout:
             raise ShellError("timeout trying to send command", cmd)
+        except socket.error:
+            exc = get_exception()
+            raise ShellError("problem sending command to host: %s" % exc.message)
         return responses
 
     def close(self):

@@ -98,20 +98,19 @@ class NetworkModule(AnsibleModule):
         return self.invoke(self.connection.run_commands, commands, **kwargs)
 
     def configure(self, commands, **kwargs):
+        return self.load_config(commands, **kwargs)
+
+    def load_config(self, commands, *args, **kwargs):
         commands = to_list(commands)
-        return self.invoke(self.connection.configure, commands, **kwargs)
+        return self.invoke(self.connection.load_config, commands, *args, **kwargs)
 
     def get_config(self, **kwargs):
         return self.invoke(self.connection.get_config, **kwargs)
 
-    def load_config(self, *args, **kwargs):
-        return self.invoke(self.connection.load_config, *args, **kwargs)
-
-    def commit(self, *args, **kwargs):
-        return self.invoke(self.connection.commit, *args, **kwargs)
+    def commit_config(self, *args, **kwargs):
+        return self.invoke(self.connection.commit_config, *args, **kwargs)
 
 def get_module(**kwargs):
-
     argument_spec = NET_TRANSPORT_ARGS.copy()
     argument_spec['transport']['choices'] = NET_CONNECTIONS.keys()
     argument_spec.update(NET_CONNECTION_ARGS.copy())
