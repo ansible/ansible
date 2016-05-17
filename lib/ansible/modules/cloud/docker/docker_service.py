@@ -434,7 +434,7 @@ class ContainerManager(DockerBaseClass):
 
     def __init__(self, client):
 
-        super(ContainerManager, self).__init__(module=client.module)
+        super(ContainerManager, self).__init__()
 
         self.client = client
         self.project_src = None
