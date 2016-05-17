@@ -21,7 +21,7 @@ script:
   - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/dnf\.py|/layman\.py|/maven_artifact\.py|clustering/(consul.*|znode)\.py|notification/pushbullet\.py|database/influxdb/influxdb.*\.py' .
   - python2.6 -m compileall -fq .
   - python2.7 -m compileall -fq .
-  - python3.4 -m compileall -fq system/at.py
-  - python3.5 -m compileall -fq system/at.py
+  - python3.4 -m compileall -fq system/at.py cloud/vmware cloud/lxc
+  - python3.5 -m compileall -fq system/at.py cloud/vmware cloud/lxc
   - ansible-validate-modules .
   #- ./test-docs.sh extras
