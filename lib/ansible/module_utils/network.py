@@ -78,11 +78,17 @@ class NetworkModule(AnsibleModule):
             kwargs['params'] = self.params
             return method(*args, **kwargs)
         except AttributeError:
-            exc = get_exception()
-            self.fail_json(msg='failed to execute %s' % method.__name__, exc=str(exc))
+            if kwargs.get('raise_exception'):
+                raise
+            else:
+                exc = get_exception()
+                self.fail_json(msg='failed to execute %s' % method.__name__, exc=str(exc))
         except NetworkError:
-            exc = get_exception()
-            self.fail_json(msg=exc.message, **exc.kwargs)
+            if kwargs.get('raise_exception'):
+                raise
+            else:
+                exc = get_exception()
+                self.fail_json(msg=exc.message, **exc.kwargs)
 
     def connect(self):
         return self.invoke(self.connection.connect)
