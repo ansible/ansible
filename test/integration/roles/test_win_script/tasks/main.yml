@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: get tempdir path
+  raw: $env:TEMP
+  register: tempdir
+
+- name: set script path dynamically
+  set_fact:
+    test_win_script_filename: "{{ tempdir.stdout_lines[0] }}/testing_win_script.txt"
+
 - name: run simple test script
   script: test_script.ps1
   register: test_script_result
