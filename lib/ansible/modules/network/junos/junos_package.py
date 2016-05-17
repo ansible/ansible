@@ -93,7 +93,11 @@ EXAMPLES = """
     reboot: no
 """
 
-from jnpr.junos.utils.sw import SW
+try:
+    from jnpr.junos.utils.sw import SW
+    HAS_SW = True
+except ImportError:
+    HAS_SW = False
 
 def install_package(module):
     junos = SW(module.connection.device)
@@ -125,6 +129,9 @@ def main():
 
     module = get_module(argument_spec=spec,
                         supports_check_mode=True)
+
+    if not HAS_SW:
+        module.fail_json(msg='Missing jnpr.junos.utils.sw module')
 
     result = dict(changed=False)
 
