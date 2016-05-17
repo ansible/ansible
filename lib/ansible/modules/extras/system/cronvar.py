@@ -363,7 +363,7 @@ def main():
     res_args = dict()
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
-    os.umask(022)
+    os.umask(int('022',8))
     cronvar = CronVar(module, user, cron_file)
 
     module.debug('cronvar instantiated - name: "%s"' % name)
