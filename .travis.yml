@@ -22,8 +22,8 @@ script:
   - python2.4 -m compileall -fq cloud/amazon/_ec2_ami_search.py cloud/amazon/ec2_facts.py
   - python2.6 -m compileall -fq .
   - python2.7 -m compileall -fq .
-  - python3.4 -m compileall -fq system/ping.py
-  - python3.5 -m compileall -fq system/ping.py
+  - python3.4 -m compileall -fq system/ping.py system/group.py system/selinux.py system/setup.py commands/ source_control/ inventory/
+  - python3.5 -m compileall -fq system/ping.py system/group.py system/selinux.py system/setup.py commands/ source_control/ inventory/
   - ansible-validate-modules --exclude 'utilities/' .
     #- ansible-validate-modules --exclude 'cloud/amazon/ec2_lc\.py|cloud/amazon/ec2_scaling_policy\.py|cloud/amazon/ec2_scaling_policy\.py|cloud/amazon/ec2_asg\.py|cloud/azure/azure\.py|packaging/os/rhn_register\.py|network/openswitch/ops_template\.py|system/hostname\.py|utilities/' .
   #- ./test-docs.sh core
