@@ -236,6 +236,13 @@ class TaskQueueManager:
             start_at_done = self._start_at_done,
         )
 
+        # because the TQM may survive multiple play runs, we start by
+        # marking any hosts as failed in the iterator here which may
+        # have been marked as failed in previous runs.
+        for host_name in self._failed_hosts.keys():
+            host = self._inventory.get_host(host_name)
+            iterator.mark_host_failed(host)
+
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
