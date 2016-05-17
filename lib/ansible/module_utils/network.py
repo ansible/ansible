@@ -189,8 +189,12 @@ class NetworkModule(AnsibleModule):
                 if self.params['authorize']:
                     self.authorize()
         except NetworkError:
-            exc = get_exception()
-            module.fail_json(msg=exc.message)
+            if kwargs.get('raise_exception'):
+                raise
+            else:
+                exc = get_exception()
+                self.fail_json(msg=exc.message, **exc.kwargs)
+
 
     def disconnect(self):
         if self.connected:
