@@ -47,7 +47,7 @@ notes:
   - "templates are loaded with C(trim_blocks=True)."
   - By default, windows line endings are not created in the generated file.
   - "In order to ensure windows line endings are in the generated file, add the following header
-    as the first line of your template: #jinja2: newline_sequence:'\\\\r\\\\n' and ensure each line
+    as the first line of your template: ``#jinja2: newline_sequence:'\\r\\n'`` and ensure each line
     of the template ends with \\\\r\\\\n"
   - Beware fetching files from windows machines when creating templates
     because certain tools, such as Powershell ISE,  and regedit's export facility
