@@ -69,7 +69,7 @@ def has_boolean_value(module, name):
     bools = []
     try:
         rc, bools = selinux.security_get_boolean_names()
-    except OSError, e:
+    except OSError:
         module.fail_json(msg="Failed to get list of boolean names")
     if name in bools:
         return True
@@ -80,7 +80,7 @@ def get_boolean_value(module, name):
     state = 0
     try:
         state = selinux.security_get_boolean_active(name)
-    except OSError, e:
+    except OSError:
         module.fail_json(msg="Failed to determine current state for boolean %s" % name)
     if state == 1:
         return True
@@ -138,7 +138,8 @@ def semanage_boolean_value(module, name, state):
 
         semanage.semanage_disconnect(handle)
         semanage.semanage_handle_destroy(handle)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
 
@@ -149,7 +150,7 @@ def set_boolean_value(module, name, state):
         value = 1
     try:
         rc = selinux.security_set_boolean(name, value)
-    except OSError, e:
+    except OSError:
         module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
     if rc == 0:
         return True
