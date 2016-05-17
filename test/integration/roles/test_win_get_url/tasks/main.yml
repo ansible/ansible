@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: get tempdir path
+  raw: $env:TEMP
+  register: tempdir
+
+- name: set output path dynamically
+  set_fact:
+    test_win_get_url_dir_path: "{{ tempdir.stdout_lines[0] }}"
+
 - name: remove test file if it exists
   raw: >
     PowerShell -Command Remove-Item "{{test_win_get_url_path}}" -Force
