@@ -241,7 +241,7 @@ class CronTab(object):
                 f = open(self.cron_file, 'r')
                 self.lines = f.read().splitlines()
                 f.close()
-            except IOError, e:
+            except IOError:
                 # cron file does not exist
                 return
             except:
@@ -278,7 +278,7 @@ class CronTab(object):
             fileh = open(self.cron_file, 'w')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
-            os.chmod(path, 0644)
+            os.chmod(path, int('0644', 8))
             fileh = os.fdopen(filed, 'w')
 
         fileh.write(self.render())
@@ -354,7 +354,7 @@ class CronTab(object):
         try:
             os.unlink(self.cron_file)
             return True
-        except OSError, e:
+        except OSError:
             # cron file does not exist
             return False
         except:
@@ -568,7 +568,7 @@ def main():
     res_args     = dict()
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
-    os.umask(022)
+    os.umask(int('022', 8))
     crontab = CronTab(module, user, cron_file)
 
     module.debug('cron instantiated - name: "%s"' % name)
