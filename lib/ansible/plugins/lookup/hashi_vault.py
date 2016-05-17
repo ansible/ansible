@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
 #
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
@@ -47,9 +47,23 @@ class HashiVault:
         except ImportError:
             AnsibleError("Please pip install hvac to use this module")
 
-        self.url = kwargs.pop('url')
-        self.secret = kwargs.pop('secret')
-        self.token = kwargs.pop('token')
+        self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+            
+        self.token = kwargs.get('token')
+        if self.token==None:
+            raise AnsibleError("No Vault Token specified")
+        
+        # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
+        s = kwargs.get('secret')
+        if s==None:
+            raise AnsibleError("No secret specified")
+
+        s_f = s.split(':')
+        self.secret = s_f[0]
+        if len(s_f)>=2:
+            self.secret_field = s_f[1]
+        else:
+            self.secret_field = 'value'
 
         self.client = hvac.Client(url=self.url, token=self.token)
 
@@ -62,20 +76,27 @@ class HashiVault:
         data = self.client.read(self.secret)
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
-        else:
-            return data['data']['value']
+        
+        if self.secret_field=='': # secret was specified with trailing ':'
+            return data['data']
+        
+        if self.secret_field not in data['data']:
+            raise AnsibleError("The secret %s does not contain the field '%s'. " % (self.secret, self.secret_field))
+        
+        return data['data'][self.secret_field]
 
 
 class LookupModule(LookupBase):
-
     def run(self, terms, variables, **kwargs):
-
         vault_args = terms[0].split(' ')
         vault_dict = {}
         ret = []
 
         for param in vault_args:
-            key, value = param.split('=')
+            try:
+                key, value = param.split('=')
+            except ValueError as e:
+                raise AnsibleError("hashi_vault plugin needs key=value pairs, but received %s" % terms)
             vault_dict[key] = value
 
         vault_conn = HashiVault(**vault_dict)
@@ -84,4 +105,6 @@ class LookupModule(LookupBase):
            key = term.split()[0]
            value = vault_conn.get()
            ret.append(value)
+           
         return ret
+        

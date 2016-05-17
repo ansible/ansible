@@ -35,6 +35,7 @@ from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
+from ansible.release import __version__
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes, to_unicode
 
@@ -147,7 +148,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # insert shared code and arguments into the module
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
-        return (module_style, module_shebang, module_data)
+        return (module_style, module_shebang, module_data, module_path)
 
     def _compute_environment_string(self):
         '''
@@ -240,7 +241,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleConnectionFailure(output)
 
         try:
-            rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
+            stdout_parts = result['stdout'].strip().split('%s=' % basefile, 1)
+            rc = self._connection._shell.join_path(stdout_parts[-1], u'').splitlines()[-1]
         except IndexError:
             # stdout was empty or just space, set to / to trigger error in next if
             rc = '/'
@@ -291,7 +293,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return remote_path
 
-    def _fixup_perms(self, remote_path, remote_user, execute=False, recursive=True):
+    def _fixup_perms(self, remote_path, remote_user, execute=True, recursive=True):
         """
         We need the files we upload to be readable (and sometimes executable)
         by the user being sudo'd to but we want to limit other people's access
@@ -324,7 +326,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # contain a path to a tmp dir but doesn't know if it needs to
             # exist or not.  If there's no path, then there's no need for us
             # to do work
-            self._display.debug('_fixup_perms called with remote_path==None.  Sure this is correct?')
+            display.debug('_fixup_perms called with remote_path==None.  Sure this is correct?')
             return remote_path
 
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
@@ -360,7 +362,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # fs acls failed -- do things this insecure way only
                         # if the user opted in in the config file
-                        self._display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
@@ -480,21 +482,49 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             return initial_fragment
 
-    def _filter_leading_non_json_lines(self, data):
+    @staticmethod
+    def _filter_non_json_lines(data):
         '''
         Used to avoid random output from SSH at the top of JSON output, like messages from
         tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
-        need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-        filter only leading lines since multiline JSON is valid.
+        need to filter anything which does not start with '{', '[', or is an empty line.
+        Have to be careful how we filter trailing junk as multiline JSON is valid.
         '''
-        idx = 0
-        for line in data.splitlines(True):
-            if line.startswith((u'{', u'[')):
+        # Filter initial junk
+        lines = data.splitlines()
+        for start, line in enumerate(lines):
+            line = line.strip()
+            if line.startswith(u'{'):
+                endchar = u'}'
                 break
-            idx = idx + len(line)
+            elif line.startswith(u'['):
+                endchar = u']'
+                break
+        else:
+            display.debug('No start of json char found')
+            raise ValueError('No start of json char found')
 
-        return data[idx:]
+        # Filter trailing junk
+        lines = lines[start:]
+        lines.reverse()
+        for end, line in enumerate(lines):
+            if line.strip().endswith(endchar):
+                break
+        else:
+            display.debug('No end of json char found')
+            raise ValueError('No end of json char found')
+
+        if end < len(lines) - 1:
+            # Trailing junk is uncommon and can point to things the user might
+            # want to change.  So print a warning if we find any
+            trailing_junk = lines[:end]
+            trailing_junk.reverse()
+            display.warning('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+
+        lines = lines[end:]
+        lines.reverse()
+        return '\n'.join(lines)
 
     def _strip_success_message(self, data):
         '''
@@ -539,10 +569,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_diff'] = self._play_context.diff
 
         # let module know our verbosity
-        module_args['_ansible_verbosity'] = self._display.verbosity
+        module_args['_ansible_verbosity'] = display.verbosity
 
-        (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        if not shebang:
+        # give the module information about the ansible version
+        module_args['_ansible_version'] = __version__
+
+        # set the syslog facility to be used in the module
+        module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
+
+        # let module know about filesystems that selinux treats specially
+        module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
+
+        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
         # a remote tmp path may be necessary and not already created
@@ -552,15 +591,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp = self._make_tmp_path(remote_user)
 
         if tmp:
-            remote_module_filename = self._connection._shell.get_remote_filename(module_name)
+            remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
-            if module_style in ['old', 'non_native_want_json']:
+            if module_style in ('old', 'non_native_want_json', 'binary'):
                 # we'll also need a temp file to hold our module arguments
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote")
-            self._transfer_data(remote_module_path, module_data)
+            if module_style == 'binary':
+                self._transfer_file(module_path, remote_module_path)
+            else:
+                self._transfer_data(remote_module_path, module_data)
             if module_style == 'old':
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
@@ -568,7 +610,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 for k,v in iteritems(module_args):
                     args_data += '%s="%s" ' % (k, pipes.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
-            elif module_style == 'non_native_want_json':
+            elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
@@ -627,7 +669,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _parse_returned_data(self, res):
         try:
-            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', u'')))
+            data = json.loads(self._filter_non_json_lines(res.get('stdout', u'')))
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)

@@ -62,12 +62,15 @@ class CacheModule(BaseCacheModule):
                 return None
 
     def get(self, key):
-
-        if self.has_expired(key) or key == "":
-            raise KeyError
+        """ This checks the in memory cache first as the fact was not expired at 'gather time'
+        and it would be problematic if the key did expire after some long running tasks and
+        user gets 'undefined' error in the same play """
 
         if key in self._cache:
             return self._cache.get(key)
+
+        if self.has_expired(key) or key == "":
+            raise KeyError
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:

@@ -180,8 +180,10 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_host = MagicMock()
 
+        loop_var = 'item'
+
         def _evaluate_conditional(templar, variables):
-            item = variables.get('item')
+            item = variables.get(loop_var)
             if item == 'b':
                 return False
             return True
@@ -230,9 +232,31 @@ class TestTaskExecutor(unittest.TestCase):
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
+        mock_task.action = '{{unknown}}'
+        mock_task.args={'name': '{{item}}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, ['a', 'b', 'c'])
+
+        # Maybe should raise an error in this case.  The user would have to specify:
+        # - yum: name="{{ packages[item] }}"
+        #   with_items:
+        #     - ['a', 'b']
+        #     - ['foo', 'bar']
+        # you can't use a list as a dict key so that would probably throw
+        # an error later.  If so, we can throw it now instead.
+        # Squashing in this case would not be intuitive as the user is being
+        # explicit in using each list entry as a key.  
+        job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "foo": "baz", "bar": "quux" })
+        items = [['a', 'b'], ['foo', 'bar']]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages[item] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+
         #
         # Replaces
         #
+        items = ['a', 'b', 'c']
         mock_task.action = 'yum'
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
@@ -243,22 +267,74 @@ class TestTaskExecutor(unittest.TestCase):
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
 
+        # New loop_var
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{a_loop_var_item}}'}
+        mock_task.loop_control = {'loop_var': 'a_loop_var_item'}
+        loop_var = 'a_loop_var_item'
+        new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
+        self.assertEqual(new_items, [['a', 'c']])
+        loop_var = 'item'
+
         #
-        # Smoketests -- these won't optimize but make sure that they don't
-        # traceback either
+        # These are presently not optimized but could be in the future.
+        # Expected output if they were optimized is given as a comment
+        # Please move these to a different section if they are optimized
         #
-        mock_task.action = '{{unknown}}'
-        mock_task.args={'name': '{{item}}'}
+
+        # Squashing lists
+        job_vars = dict(pkg_mgr='yum')
+        items = [['a', 'b'], ['foo', 'bar']]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ item }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
+        #self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
+        self.assertEqual(new_items, items)
+
+        # Retrieving from a dict
+        items = ['a', 'b', 'foo']
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages[item] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        #self.assertEqual(new_items, [['foo', 'baz']])
+        self.assertEqual(new_items, items)
+
+        # Another way to retrieve from a dict
+        job_vars = dict(pkg_mgr='yum')
+        items = [{'package': 'foo'}, {'package': 'bar'}]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ item["package"] }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        #self.assertEqual(new_items, [['foo', 'bar']])
+        self.assertEqual(new_items, items)
 
         items = [dict(name='a', state='present'),
                 dict(name='b', state='present'),
                 dict(name='c', state='present')]
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{item}}'}
+        mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, items)
+        #self.assertEqual(new_items, [dict(name=['a', 'b', 'c'], state='present')])
+
+        items = [dict(name='a', state='present'),
+                dict(name='b', state='present'),
+                dict(name='c', state='absent')]
+        mock_task.action = 'yum'
+        mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+        #self.assertEqual(new_items, [dict(name=['a', 'b'], state='present'),
+        #        dict(name='c', state='absent')])
+
+        # Could do something like this to recover from bad deps in a package
+        job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
+        items = [ 'absent', 'latest' ]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})
@@ -334,8 +410,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.async = 3
-        mock_task.poll  = 1
+        mock_task.async = 0.1
+        mock_task.poll  = 0.05
 
         mock_play_context = MagicMock()
 

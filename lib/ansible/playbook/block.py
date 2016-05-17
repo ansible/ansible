@@ -66,7 +66,7 @@ class Block(Base, Become, Conditional, Taggable):
         all_vars = self.vars.copy()
 
         if self._role:
-            all_vars.update(self._role.get_vars(self._dep_chain))
+            all_vars.update(self._role.get_vars(self._dep_chain, include_params=False))
         if self._parent_block:
             all_vars.update(self._parent_block.get_vars())
         if self._task_include:

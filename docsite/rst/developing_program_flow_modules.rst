@@ -79,7 +79,7 @@ New-style powershell modules use the :ref:`module_replacer` framework for
 constructing modules.  These modules get a library of powershell code embedded
 in them before being sent to the managed node.
 
-.. _flow_josnargs_modules:
+.. _flow_jsonargs_modules:
 
 JSONARGS
 ^^^^^^^^
@@ -325,7 +325,7 @@ string and substituted into the combined module file.  In :ref:`ziploader`,
 the JSON-ified string is passed into the module via stdin.  When
 a  :class:`ansible.module_utils.basic.AnsibleModule` is instantiated,
 it parses this string and places the args into
-:attribute:`AnsibleModule.params` where it can be accessed by the module's
+:attr:`AnsibleModule.params` where it can be accessed by the module's
 other code.
 
 .. _flow_passing_module_constants:
@@ -357,7 +357,7 @@ For now, :code:`ANSIBLE_VERSION` is also available at its old location inside of
 :ref:`ziploader` passes these as part of the JSON-ified argument string via stdin.
 When
 :class:`ansible.module_utils.basic.AnsibleModule` is instantiated, it parses this
-string and places the constants into :attribute:`AnsibleModule.constants`
+string and places the constants into :attr:`AnsibleModule.constants`
 where other code can access it.
 
 Unlike the ``ANSIBLE_VERSION``, where some efforts were made to keep the old

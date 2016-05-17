@@ -388,12 +388,6 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
 
     return (shebang, interpreter)
 
-def _get_facility(task_vars):
-    facility = C.DEFAULT_SYSLOG_FACILITY
-    if 'ansible_syslog_facility' in task_vars:
-        facility = task_vars['ansible_syslog_facility']
-    return facility
-
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
@@ -490,6 +484,11 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
+def _is_binary(module_data):
+    textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
+    start = module_data[:1024]
+    return bool(start.translate(None, textchars))
+
 def _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -504,7 +503,9 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     # module_substyle is extra information that's useful internally.  It tells
     # us what we have to look to substitute in the module files and whether
     # we're using module replacer or ziploader to format the module itself.
-    if REPLACER in module_data:
+    if _is_binary(module_data):
+        module_substyle = module_style = 'binary'
+    elif REPLACER in module_data:
         # Do REPLACER before from ansible.module_utils because we need make sure
         # we substitute "from ansible.module_utils basic" for REPLACER
         module_style = 'new'
@@ -523,24 +524,16 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         module_substyle = module_style = 'non_native_want_json'
 
     shebang = None
-    # Neither old-style nor non_native_want_json modules should be modified
+    # Neither old-style, non_native_want_json nor binary modules should be modified
     # except for the shebang line (Done by modify_module)
-    if module_style in ('old', 'non_native_want_json'):
+    if module_style in ('old', 'non_native_want_json', 'binary'):
         return module_data, module_style, shebang
 
     output = BytesIO()
     py_module_names = set()
 
     if module_substyle == 'python':
-        # ziploader for new-style python classes
-        constants = dict(
-                SELINUX_SPECIAL_FS=C.DEFAULT_SELINUX_SPECIAL_FS,
-                SYSLOG_FACILITY=_get_facility(task_vars),
-                ANSIBLE_VERSION=__version__,
-                )
-        params = dict(ANSIBLE_MODULE_ARGS=module_args,
-                ANSIBLE_MODULE_CONSTANTS=constants,
-                )
+        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         python_repred_params = to_bytes(repr(json.dumps(params)), errors='strict')
 
         try:
@@ -690,7 +683,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         # The main event -- substitute the JSON args string into the module
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
-        facility = b'syslog.' + to_bytes(_get_facility(task_vars), errors='strict')
+        facility = b'syslog.' + to_bytes(task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY), errors='strict')
         module_data = module_data.replace(b'syslog.LOG_USER', facility)
 
     return (module_data, module_style, shebang)
@@ -731,7 +724,9 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
     (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression)
 
-    if shebang is None:
+    if module_style == 'binary':
+        return (module_data, module_style, shebang)
+    elif shebang is None:
         lines = module_data.split(b"\n", 1)
         if lines[0].startswith(b"#!"):
             shebang = lines[0].strip()

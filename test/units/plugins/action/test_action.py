@@ -33,6 +33,8 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
+from nose.tools import eq_, raises
+
 from ansible.release import __version__ as ansible_version
 from ansible import constants as C
 from ansible.compat.six import text_type
@@ -215,7 +217,7 @@ class TestActionBase(unittest.TestCase):
             with patch.object(os, 'rename') as m:
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
-                (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
+                (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args)
                 self.assertEqual(style, "new")
                 self.assertEqual(shebang, b"#!/usr/bin/python")
 
@@ -227,7 +229,7 @@ class TestActionBase(unittest.TestCase):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
-            (style, shebang, data) = action_base._configure_module('stat', mock_task.args)
+            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args)
             self.assertEqual(style, "new")
             self.assertEqual(shebang, None)
 
@@ -570,7 +572,7 @@ class TestActionBase(unittest.TestCase):
         action_base._low_level_execute_command = MagicMock()
         action_base._fixup_perms = MagicMock()
 
-        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data')
+        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
         action_base._late_needs_tmp_path.return_value = False
         action_base._compute_environment_string.return_value = ''
         action_base._connection.has_pipelining = True
@@ -579,12 +581,12 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(action_base._execute_module(module_name='foo', module_args=dict(z=9, y=8, x=7), task_vars=dict(a=1)), dict(rc=0, stdout="ok", stdout_lines=['ok']))
 
         # test with needing/removing a remote tmp path
-        action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data')
+        action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data', 'path')
         action_base._late_needs_tmp_path.return_value = True
         action_base._make_tmp_path.return_value = '/the/tmp/path'
         self.assertEqual(action_base._execute_module(), dict(rc=0, stdout="ok", stdout_lines=['ok']))
 
-        action_base._configure_module.return_value = ('non_native_want_json', '#!/usr/bin/python', 'this is the module data')
+        action_base._configure_module.return_value = ('non_native_want_json', '#!/usr/bin/python', 'this is the module data', 'path')
         self.assertEqual(action_base._execute_module(), dict(rc=0, stdout="ok", stdout_lines=['ok']))
 
         play_context.become = True
@@ -592,14 +594,14 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(action_base._execute_module(), dict(rc=0, stdout="ok", stdout_lines=['ok']))
 
         # test an invalid shebang return
-        action_base._configure_module.return_value = ('new', '', 'this is the module data')
+        action_base._configure_module.return_value = ('new', '', 'this is the module data', 'path')
         action_base._late_needs_tmp_path.return_value = False
         self.assertRaises(AnsibleError, action_base._execute_module)
 
         # test with check mode enabled, once with support for check
         # mode and once with support disabled to raise an error
         play_context.check_mode = True
-        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data')
+        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
         self.assertEqual(action_base._execute_module(), dict(rc=0, stdout="ok", stdout_lines=['ok']))
         action_base._supports_check_mode = False
         self.assertRaises(AnsibleError, action_base._execute_module)
@@ -630,3 +632,42 @@ class TestActionBase(unittest.TestCase):
             play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable=None)
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user
+
+# Note: Using nose's generator test cases here so we can't inherit from
+# unittest.TestCase
+class TestFilterNonJsonLines(object):
+    parsable_cases = (
+            (u'{"hello": "world"}', u'{"hello": "world"}'),
+            (u'{"hello": "world"}\n', u'{"hello": "world"}'),
+            (u'{"hello": "world"} ', u'{"hello": "world"} '),
+            (u'{"hello": "world"} \n', u'{"hello": "world"} '),
+            (u'Message of the Day\n{"hello": "world"}', u'{"hello": "world"}'),
+            (u'{"hello": "world"}\nEpilogue', u'{"hello": "world"}'),
+            (u'Several\nStrings\nbefore\n{"hello": "world"}\nAnd\nAfter\n', u'{"hello": "world"}'),
+            (u'{"hello": "world",\n"olá": "mundo"}', u'{"hello": "world",\n"olá": "mundo"}'),
+            (u'\nPrecedent\n{"hello": "world",\n"olá": "mundo"}\nAntecedent', u'{"hello": "world",\n"olá": "mundo"}'),
+            )
+
+    unparsable_cases = (
+            u'No json here',
+            u'"olá": "mundo"',
+            u'{"No json": "ending"',
+            u'{"wrong": "ending"]',
+            u'["wrong": "ending"}',
+            )
+
+    def check_filter_non_json_lines(self, stdout_line, parsed):
+        eq_(parsed, ActionBase._filter_non_json_lines(stdout_line))
+
+    def test_filter_non_json_lines(self):
+        for stdout_line, parsed in self.parsable_cases:
+            yield self.check_filter_non_json_lines, stdout_line, parsed
+
+    @raises(ValueError)
+    def check_unparsable_filter_non_json_lines(self, stdout_line):
+        ActionBase._filter_non_json_lines(stdout_line)
+
+    def test_unparsable_filter_non_json_lines(self):
+        for stdout_line in self.unparsable_cases:
+            yield self.check_unparsable_filter_non_json_lines, stdout_line
+

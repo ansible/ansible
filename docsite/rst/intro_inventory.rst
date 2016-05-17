@@ -203,7 +203,7 @@ As alluded to above, setting the following variables controls how ansible intera
 Host connection:
 
 ansible_connection
-    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are smart, ssh or paramiko.  The default is smart. Non-SSH based types are described in the next section.
+    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
 
 
 .. include:: ansible_ssh_changes_note.rst
@@ -300,7 +300,7 @@ ansible_become
 ansible_docker_extra_args
     Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
 
-Here an example of how to instantly depoloy to created containers::
+Here is an example of how to instantly deploy to created containers::
 
   - name: create jenkins container
     docker:

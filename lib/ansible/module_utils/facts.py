@@ -156,6 +156,7 @@ class Facts(object):
                  { 'path' : '/usr/sbin/urpmi',      'name' : 'urpmi' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
+                 { 'path' : '/usr/pkg/bin/pkgin',   'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
                  { 'path' : '/usr/local/bin/brew',  'name' : 'homebrew' },
@@ -179,7 +180,7 @@ class Facts(object):
         # about those first.
         if load_on_init:
             self.get_platform_facts()
-            self.facts.update(Distribution().populate())
+            self.facts.update(Distribution(module).populate())
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
@@ -604,6 +605,10 @@ class Distribution(object):
     This is unit tested. Please extend the tests to cover all distributions if you have them available.
     """
 
+    # every distribution name mentioned here, must have one of
+    #  - allowempty == True
+    #  - be listed in SEARCH_STRING
+    #  - have a function get_distribution_DISTNAME implemented
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
@@ -643,36 +648,32 @@ class Distribution(object):
         FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
     )
 
-    def __init__(self):
+    def __init__(self, module):
         self.system = platform.system()
         self.facts = {}
+        self.module = module
 
     def populate(self):
-        if self.system == 'Linux':
-            self.get_distribution_facts()
+        self.get_distribution_facts()
         return self.facts
 
     def get_distribution_facts(self):
-
         # The platform module provides information about the running
         # system/distribution. Use this as a baseline and fix buggy systems
         # afterwards
+        self.facts['distribution'] = self.system
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
-        systems_platform_working = ('NetBSD', 'FreeBSD')
         systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
 
-        if self.system in systems_platform_working:
-            # the distribution is provided by platform module already and needs no fixes
-            pass
+        self.facts['distribution'] = self.system
 
-        elif self.system in systems_implemented:
-            self.facts['distribution'] = self.system
+        if self.system in systems_implemented:
             cleanedname = self.system.replace('-','')
             distfunc = getattr(self, 'get_distribution_'+cleanedname)
             distfunc()
-        else:
+        elif self.system == 'Linux':
             # try to find out which linux distribution this is
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
@@ -687,12 +688,12 @@ class Distribution(object):
 
                 if not os.path.exists(path):
                     continue
+                # if allowempty is set, we only check for file existance but not content
+                if 'allowempty' in ddict and ddict['allowempty']:
+                    self.facts['distribution'] = name
+                    break
                 if os.path.getsize(path) == 0:
-                    if 'allowempty' in ddict and ddict['allowempty']:
-                        self.facts['distribution'] = name
-                        break
-                    else:
-                        continue
+                    continue
 
                 data = get_file_content(path)
                 if name in self.SEARCH_STRING:
@@ -707,13 +708,19 @@ class Distribution(object):
                     break
                 else:
                     # call a dedicated function for parsing the file content
-                    distfunc = getattr(self, 'get_distribution_' + name)
-                    parsed = distfunc(name, data, path)
-                    if parsed is None or parsed:
-                        # distfunc return False if parsing failed
-                        # break only if parsing was succesful
-                        # otherwise continue with other distributions
-                        break
+                    try:
+                        distfunc = getattr(self, 'get_distribution_' + name)
+                        parsed = distfunc(name, data, path)
+                        if parsed is None or parsed:
+                            # distfunc return False if parsing failed
+                            # break only if parsing was succesful
+                            # otherwise continue with other distributions
+                            break
+                    except AttributeError:
+                        # this should never happen, but if it does fail quitely and not with a traceback
+                        pass
+
+
 
                     # to debug multiple matching release files, one can use:
                     # self.facts['distribution_debug'].append({path + ' ' + name:
@@ -779,10 +786,6 @@ class Distribution(object):
         release = re.search('DISTRIB_CODENAME="(.*)"', data)
         if release:
             self.facts['distribution_release'] = release.groups()[0]
-
-    def get_distribution_Archlinux(self, name, data, path):
-        self.facts['distribution'] = 'Archlinux'
-        self.facts['distribution_version'] = data
 
     def get_distribution_Alpine(self, name, data, path):
         self.facts['distribution'] = 'Alpine'
