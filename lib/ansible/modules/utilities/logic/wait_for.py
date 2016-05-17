@@ -326,7 +326,7 @@ def _convert_host_to_hex(host):
             ips.append((family, hexip_hf))
     return ips
 
-def _create_connection( (host, port), connect_timeout):
+def _create_connection(host, port, connect_timeout):
     """
     Connect to a 2-tuple (host, port) and return
     the socket object.
@@ -413,7 +413,7 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection( (host, port), connect_timeout)
+                    s = _create_connection(host, port, connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                     time.sleep(1)
@@ -459,7 +459,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
                 try:
-                    s = _create_connection((host, port), min(connect_timeout, alt_connect_timeout))
+                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
                 except:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
