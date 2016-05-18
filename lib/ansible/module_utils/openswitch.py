@@ -114,7 +114,20 @@ class Rest(object):
             if not port:
                 port = 80
 
-        self.baseurl = '%s://%s:%s/rest/v1' % (proto, host, port)
+        baseurl = '%s://%s:%s' % (proto, host, port)
+        headers = dict({'Content-Type': 'application/x-www-form-urlencoded'})
+        # Get a cookie and save it the rest of the operations.
+        url = '%s/%s' % (baseurl, 'login')
+        data = 'username=%s&password=%s' % (self.module.params['username'],
+                self.module.params['password'])
+        resp, hdrs = fetch_url(self.module, url, data=data,
+                headers=headers, method='POST')
+
+        # Update the base url for the rest of the operations.
+        self.baseurl = '%s/rest/v1' % (baseurl)
+        self.headers = dict({'Content-Type': 'application/json',
+                             'Accept': 'application/json',
+                             'Cookie': resp.headers.get('Set-Cookie')})
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -127,7 +140,7 @@ class Rest(object):
 
         if headers is None:
             headers = dict()
-        headers.update({'Content-Type': 'application/json'})
+        headers.update(self.headers)
 
         resp, hdrs = fetch_url(self.module, url, data=data, headers=headers,
                 method=method)
