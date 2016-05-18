@@ -225,6 +225,16 @@ except ImportError:
 
 def create_virtual_instance(module):
 
+  instances = vsManager.list_instances(
+    hostname = module.params.get('hostname'),
+    domain = module.params.get('domain'),
+    datacenter = module.params.get('datacenter')
+  )
+  
+  if instances:
+    return False, None
+
+
   # Check if OS or Image Template is provided (Can't be both, defaults to OS)
   if (module.params.get('os_code') != None and module.params.get('os_code') != ''):
     module.params['image_id'] = ''
@@ -303,6 +313,7 @@ def cancel_instance(module):
 
 
 def main():
+
   module = AnsibleModule(
     argument_spec=dict(
       instance_id=dict(),
@@ -338,7 +349,7 @@ def main():
 
   elif module.params.get('state') == 'present':
       (changed, instance) = create_virtual_instance(module)
-      if module.params.get('wait') == True:
+      if module.params.get('wait') == True and instance:
         (changed, instance) = wait_for_instance(module, instance['id'])
 
   module.exit_json(changed=changed, instance=json.loads(json.dumps(instance, default=lambda o: o.__dict__)))
