@@ -438,25 +438,31 @@ def update_group(module=None, iam=None, name=None, new_name=None, new_path=None)
 
 def create_role(module, iam, name, path, role_list, prof_list):
     changed = False
+    iam_role_result = None
+    instance_profile_result = None
     try:
         if name not in role_list:
             changed = True
-            iam.create_role(
-                name, path=path).create_role_response.create_role_result.role.role_name
+            iam_role_result = iam.create_role(
+                name, path=path).create_role_response.create_role_result.role
 
             if name not in prof_list:
-                iam.create_instance_profile(name, path=path)
+                instance_profile_result = iam.create_instance_profile(name, 
+                    path=path).create_instance_profile_response.create_instance_profile_result.instance_profile
                 iam.add_role_to_instance_profile(name, name)
     except boto.exception.BotoServerError, err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
                              list_roles_result.roles]
-    return changed, updated_role_list
+
+    return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
 def delete_role(module, iam, name, role_list, prof_list):
     changed = False
+    iam_role_result = None
+    instance_profile_result = None
     try:
         if name in role_list:
             cur_ins_prof = [rp['instance_profile_name'] for rp in
@@ -473,7 +479,7 @@ def delete_role(module, iam, name, role_list, prof_list):
                 for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
                   iam.delete_role_policy(name, policy)
               try:
-                iam.delete_role(name)
+                iam_role_result = iam.delete_role(name)
               except boto.exception.BotoServerError, err:
                   error_msg = boto_exception(err)
                   if ('must detach all policies first') in error_msg:
@@ -491,13 +497,13 @@ def delete_role(module, iam, name, role_list, prof_list):
 
         for prof in prof_list:
             if name == prof:
-                iam.delete_instance_profile(name)
+                instance_profile_result = iam.delete_instance_profile(name)
     except boto.exception.BotoServerError, err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
                              list_roles_result.roles]
-    return changed, updated_role_list
+    return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
 def main():
@@ -713,15 +719,16 @@ def main():
     elif iam_type == 'role':
         role_list = []
         if state == 'present':
-            changed, role_list = create_role(
+            changed, role_list, role_result, instance_profile_result = create_role(
                 module, iam, name, path, orig_role_list, orig_prof_list)
         elif state == 'absent':
-            changed, role_list = delete_role(
+            changed, role_list, role_result, instance_profile_result = delete_role(
                 module, iam, name, orig_role_list, orig_prof_list)
         elif state == 'update':
             module.fail_json(
                 changed=False, msg='Role update not currently supported by boto.')
-        module.exit_json(changed=changed, roles=role_list)
+        module.exit_json(changed=changed, roles=role_list, role_result=role_result,
+            instance_profile_result=instance_profile_result)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
