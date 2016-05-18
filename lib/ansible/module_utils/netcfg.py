@@ -259,6 +259,8 @@ class NetworkConfig(object):
             config.append(line)
             if parent:
                 parent.children.append(line)
+                if parent.parents:
+                    line.parents.append(*parent.parents)
                 line.parents.append(parent)
             parent = line
             offset += self.indent
