@@ -219,9 +219,7 @@ class DocCLI(CLI):
             opt = doc['options'][o]
             desc = CLI.tty_ify(" ".join(opt['description']))
 
-            required = opt.get('required')
-            if required is None:
-                raise("Missing required field 'Required'")
+            required = opt.get('required', False)
             if not isinstance(required, bool):
                 raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
@@ -275,8 +273,8 @@ class DocCLI(CLI):
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])
                 desc = desc + " (Choices: " + choices + ")"
-            if 'default' in opt:
-                default = str(opt['default'])
+            if 'default' in opt or not required:
+                default = str(opt.get('default', '(null)'))
                 desc = desc + " [Default: " + default + "]"
             text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
