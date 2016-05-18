@@ -541,7 +541,8 @@ def main():
         if not cursor:
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
                                    connect_timeout=connect_timeout)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
 
     if not sql_log_bin:
@@ -550,11 +551,13 @@ def main():
     if priv is not None:
         try:
             mode = get_mode(cursor)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg=str(e))
         try:
             priv = privileges_unpack(priv, mode)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="invalid privileges string: %s" % str(e))
 
     if state == "present":
@@ -565,14 +568,16 @@ def main():
                 else:
                     changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error):
+                e = get_exception()
                 module.fail_json(msg=str(e))
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error):
+                e = get_exception()
                 module.fail_json(msg=str(e))
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
