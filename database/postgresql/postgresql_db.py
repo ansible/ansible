@@ -280,7 +280,8 @@ def main():
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
                 cursor_factory=psycopg2.extras.DictCursor)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     try:
@@ -295,21 +296,25 @@ def main():
         if state == "absent":
             try:
                 changed = db_delete(cursor, db)
-            except SQLParseError, e:
+            except SQLParseError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
 
         elif state == "present":
             try:
                 changed = db_create(cursor, db, owner, template, encoding,
                                 lc_collate, lc_ctype)
-            except SQLParseError, e:
+            except SQLParseError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
-    except NotSupportedError, e:
+    except NotSupportedError:
+        e = get_exception()
         module.fail_json(msg=str(e))
     except SystemExit:
         # Avoid catching this on Python 2.4 
         raise
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Database query failed: %s" % e)
 
     module.exit_json(changed=changed, db=db)

@@ -289,7 +289,8 @@ def main():
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
                                connect_timeout=connect_timeout)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
         else:
@@ -305,7 +306,8 @@ def main():
             else:
                 try:
                     changed = db_delete(cursor, db)
-                except Exception, e:
+                except Exception:
+                    e = get_exception()
                     module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
             if module.check_mode:
@@ -336,7 +338,8 @@ def main():
             else:
                 try:
                     changed = db_create(cursor, db, encoding, collation)
-                except Exception, e:
+                except Exception:
+                    e = get_exception()
                     module.fail_json(msg="error creating database: " + str(e))
 
     module.exit_json(changed=changed, db=db)
