@@ -280,7 +280,8 @@ def apply_value_map(value_map, resource):
 def execute_config_command(commands, module):
     try:
         module.configure(commands)
-    except ShellError, clie:
+    except ShellError:
+        clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
 
@@ -309,7 +310,8 @@ def execute_show(cmds, module, command_type=None):
             response = module.execute(cmds, command_type=command_type)
         else:
             response = module.execute(cmds)
-    except ShellError, clie:
+    except ShellError:
+        clie = get_exception()
         module.fail_json(msg='Error sending {0}'.format(command),
                          error=str(clie))
     return response
