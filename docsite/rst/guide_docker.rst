@@ -37,7 +37,7 @@ Use the *shipit* command in `ansible-container <https://github.com/ansible/ansib
 to launch your docker-compose file on `OpenShift <https://www.openshift.org/>`_. Go from an app on your laptop to a fully
 scalable app in the cloud in just a few moments.
 
-There's more planned. See the latest ideas and thinking at the `Ansbile proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
+There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
 
 Requirements
 ------------
