@@ -3,6 +3,10 @@ Getting Started with Docker
 
 Ansible offers the following modules for orchestrating Docker containers:
 
+    docker_service
+        Use your existing Docker compose files to orchestrate containers on a single Docker daemon or on
+        Swarm. Supports compose versions 1 and 2.
+
     docker_container
         Manages the container lifecycle by providing the ability to create, update, stop, start and destroy a
         container.
@@ -23,10 +27,17 @@ Ansible offers the following modules for orchestrating Docker containers:
 
 
 Ansible 2.1.0 includes major updates to the Docker modules, marking the start of a project to create a complete and
-integrated set of tools for orchestrating containers. The docker_image and docker_login modules as well as the dynamic
-inventory script were refactored to use a common set of parameters and environment variables for shaping Docker API
-connections. The docker_container and docker_image_facts modules are new.
+integrated set of tools for orchestrating containers. In addition to the above modules, we are also working on the
+following:
 
+Still using Dockerfile to build images? Check out `ansible-container <https://github.com/ansible/ansible-container>`_,
+and start building images from your Ansible playbooks.
+
+Use the *shipit* command in `ansible-container <https://github.com/ansible/ansible-container>`_
+to launch your docker-compose file on `OpenShift <https://www.openshift.org/>`_. Go from an app on your laptop to a fully
+scalable app in the cloud in just a few moments.
+
+There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
 
 Requirements
 ------------
@@ -36,7 +47,13 @@ installed on the host running Ansible. You will need to have >= 1.7.0 installed.
 
 .. code-block:: bash
 
-    $ pip install docker-py>=1.7.0
+    $ pip install 'docker-py>=1.7.0'
+
+The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
+
+.. code-block:: bash
+
+   $ pip install 'docker-compose>=1.7.0'
 
 
 Connecting to the Docker API
@@ -44,7 +61,7 @@ Connecting to the Docker API
 
 You can connect to a local or remote API using parameters passed to each task or by setting environment variables.
 The order of precedence is command line parameters and then environment variables. If neither a command line
-option for a environment variable is found, then a default value will be used. The default values are provided under
+option or an environment variable is found, a default value will be used. The default values are provided under
 `Parameters`_
 
 
