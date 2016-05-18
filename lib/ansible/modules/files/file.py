@@ -250,12 +250,14 @@ def main():
                 if prev_state == 'directory':
                     try:
                         shutil.rmtree(path, ignore_errors=False)
-                    except Exception, e:
+                    except Exception:
+                        e = get_exception()
                         module.fail_json(msg="rmtree failed: %s" % str(e))
                 else:
                     try:
                         os.unlink(path)
-                    except Exception, e:
+                    except Exception:
+                        e = get_exception()
                         module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
             module.exit_json(path=path, changed=True, diff=diff)
         else:
@@ -301,7 +303,8 @@ def main():
                     if not os.path.exists(curpath):
                         try:
                             os.mkdir(curpath)
-                        except OSError, ex:
+                        except OSError:
+                            ex = get_exception()
                             # Possibly something else created the dir since the os.path.exists
                             # check above. As long as it's a dir, we don't need to error out.
                             if not (ex.errno == errno.EEXIST and os.path.isdir(curpath)):
@@ -309,7 +312,8 @@ def main():
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path']=curpath
                         changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
 
         # We already know prev_state is not 'absent', therefore it exists in some form.
@@ -376,7 +380,8 @@ def main():
                     else:
                         os.symlink(src, tmppath)
                     os.rename(tmppath, path)
-                except OSError, e:
+                except OSError:
+                    e = get_exception()
                     if os.path.exists(tmppath):
                         os.unlink(tmppath)
                     module.fail_json(path=path, msg='Error while replacing: %s' % str(e))
@@ -386,7 +391,8 @@ def main():
                         os.link(src,path)
                     else:
                         os.symlink(src, path)
-                except OSError, e:
+                except OSError:
+                    e = get_exception()
                     module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
         if module.check_mode and not os.path.exists(path):
@@ -401,18 +407,21 @@ def main():
             if prev_state == 'absent':
                 try:
                     open(path, 'w').close()
-                except OSError, e:
+                except OSError:
+                    e = get_exception()
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % str(e))
             elif prev_state in ['file', 'directory', 'hard']:
                 try:
                     os.utime(path, None)
-                except OSError, e:
+                except OSError:
+                    e = get_exception()
                     module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
             else:
                 module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
                 module.set_fs_attributes_if_different(file_args, True, diff)
-            except SystemExit, e:
+            except SystemExit:
+                e = get_exception()
                 if e.code:
                     # We take this to mean that fail_json() was called from
                     # somewhere in basic.py

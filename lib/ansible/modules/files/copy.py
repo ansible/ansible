@@ -291,7 +291,8 @@ def main():
                 # the execute bit for the current user set, in
                 # which case the stat() call will raise an OSError
                 os.stat(os.path.dirname(dest))
-            except OSError, e:
+            except OSError:
+                e = get_exception()
                 if "permission denied" in str(e).lower():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))

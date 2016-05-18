@@ -326,7 +326,8 @@ def main():
             st = os.stat(path)
         else:
             st = os.lstat(path)
-    except OSError, e:
+    except OSError:
+        e = get_exception()
         if e.errno == errno.ENOENT:
             d = { 'exists' : False }
             module.exit_json(changed=False, stat=d)

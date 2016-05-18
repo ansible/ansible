@@ -695,7 +695,8 @@ def main():
                     f.write(data)
                 f.close()
                 src = package
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Failure downloading %s, %s" % (src, e))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
@@ -706,7 +707,8 @@ def main():
     try:
         if os.path.getsize(src) == 0:
             module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Source '%s' not readable" % src)
 
     # is dest OK to receive tar file?
@@ -746,7 +748,8 @@ def main():
             file_args['path'] = os.path.join(dest, filename)
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
-            except (IOError, OSError), e:
+            except (IOError, OSError):
+                e = get_exception()
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
 
     if module.params['list_files']:

@@ -124,7 +124,8 @@ def _run_xattr(module,cmd,check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="%s!" % e.strerror)
 
     #result = {'raw': out}
