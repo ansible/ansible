@@ -156,7 +156,8 @@ def cleanup(path, result=None):
     if os.path.exists(path):
         try:
             os.remove(path)
-        except (IOError, OSError), e:
+        except (IOError, OSError):
+            e = get_exception()
             # don't error on possible race conditions, but keep warning
             if result is not None:
                 result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, str(e))]
@@ -203,7 +204,8 @@ def main():
     if regexp != None:
         try:
             compiled_regexp = re.compile(regexp)
-        except re.error, e:
+        except re.error:
+            e = get_exception()
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
     if validate and "%s" not in validate:
