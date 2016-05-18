@@ -220,7 +220,7 @@ except ImportError:
 _literal_eval = literal_eval
 
 # Backwards compat.  There were present in basic.py before
-from ansible.module_utils.pycompat import get_exception
+from ansible.module_utils.pycompat24 import get_exception
 
 # Internal global holding passed in params and constants.  This is consulted
 # in case multiple AnsibleModules are created.  Otherwise each AnsibleModule
