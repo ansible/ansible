@@ -27,7 +27,9 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 description:
-  - Manage the life cycle of docker containers.
+  - This is the original Ansible module for managing the docker container life cycle.
+  - Additional and newer modules are available. For the latest on orchestrating containers with Ansible
+    visit our Getting Started with Docker guide at U(https://github.com/ansible/ansible/blob/devel/docsite/rst/guide_docker.rst).
 options:
   count:
     description:
