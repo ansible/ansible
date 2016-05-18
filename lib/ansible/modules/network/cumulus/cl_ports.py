@@ -84,7 +84,8 @@ def hash_existing_ports_conf(module):
 
     try:
         existing_ports_conf = open(PORTS_CONF).readlines()
-    except IOError, error_msg:
+    except IOError:
+        error_msg = get_exception()
         _msg = "Failed to open %s: %s" % (PORTS_CONF, error_msg)
         module.fail_json(msg=_msg)
         return # for testing only should return on module.fail_json
@@ -143,7 +144,8 @@ def make_copy_of_orig_ports_conf(module):
 
     try:
         shutil.copyfile(PORTS_CONF, PORTS_CONF + '.orig')
-    except IOError, error_msg:
+    except IOError:
+        error_msg = get_exception()
         _msg = "Failed to save the original %s: %s" % (PORTS_CONF, error_msg)
         module.fail_json(msg=_msg)
         return  # for testing only
@@ -165,7 +167,8 @@ def write_to_ports_conf(module):
                 temp.write(_str)
             temp.seek(0)
             shutil.copyfile(temp.name, PORTS_CONF)
-        except IOError, error_msg:
+        except IOError:
+            error_msg = get_exception()
             module.fail_json(
                 msg="Failed to write to %s: %s" % (PORTS_CONF, error_msg))
     finally:

@@ -225,7 +225,8 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
-    except Exception, err:
+    except Exception:
+        err = get_exception()
         os.remove(tempname)
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
@@ -391,7 +392,8 @@ def main():
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
-        except Exception, err:
+        except Exception: 
+            err = get_exception()
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
         changed = True

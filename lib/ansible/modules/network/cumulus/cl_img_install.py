@@ -114,7 +114,8 @@ def check_url(module, url):
 def run_cl_cmd(module, cmd, check_rc=True):
     try:
         (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=e.strerror)
     # trim last line as it is always empty
     ret = out.splitlines()
