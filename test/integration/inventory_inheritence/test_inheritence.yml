@@ -1,0 +1,8 @@
+---
+
+- name: Test inheritence
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug: var=a
+    - debug: var=b

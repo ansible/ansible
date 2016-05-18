@@ -51,11 +51,22 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST, parent_path=C.DEFAULT_PARENT_PATH):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
         self.host_list = host_list
+
+        # Store parent path in an array
+        self.parent_list = []
+        if parent_path is not None:
+            # Split parent path using ':' (ex: /first/path:/second/path)
+            for parent_dir in parent_path.split(':'):
+                parent_dir = os.path.realpath(parent_dir)
+                if not os.path.isdir(parent_dir):
+                    raise AnsibleError('parent path does not exist: %s' % parent_dir)
+                self.parent_list.append(parent_dir)
+                vars_loader.add_directory(parent_dir, with_subdir=True)
         self._loader = loader
         self._variable_manager = variable_manager
 
@@ -720,9 +731,9 @@ class Inventory(object):
         # look in both the inventory base directory and the playbook base directory
         # unless we do an update for a new playbook base dir
         if not new_pb_basedir:
-            basedirs = [_basedir, self._playbook_basedir]
+            basedirs = self.parent_list + [_basedir, self._playbook_basedir]
         else:
-            basedirs = [self._playbook_basedir]
+            basedirs = self.parent_list + [self._playbook_basedir]
 
         for basedir in basedirs:
             # this can happen from particular API usages, particularly if not run
