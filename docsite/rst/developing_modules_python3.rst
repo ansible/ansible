@@ -75,7 +75,13 @@ come up with one.  I see three possibilities:
    will include the version of Python that is required.
 
 Methods 2 and 3 will both require that we modify modules or otherwise add this
-additional information somewhere.
+additional information somewhere.  2 needs only a little code changes in
+executor/module_common.py to parse.  3 will require a lot of work.  This is
+probably not worthwhile if this is the only change but could be worthwhile if
+there's other things as well.  1 requires that we port all modules to work
+with python3 syntax but only the code path to get to the library import being
+attempted and then a fail_json() being called because the libraries are
+unavailable needs to actually work.
 
 Tips, tricks, and idioms to adopt
 =================================
@@ -95,7 +101,7 @@ exception catching syntax::
 For modules which also run on Python-2.4, we have to use an uglier
 construction to make this work under both Python-2.4 and Python-3::
 
-    from ansible.module_utils.pycompat import get_exception
+    from ansible.module_utils.pycompat24 import get_exception
     [...]
 
     try:
