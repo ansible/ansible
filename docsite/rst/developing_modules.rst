@@ -638,8 +638,8 @@ The following  checklist items are important guidelines for people who want to c
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
     * Descriptions should always start with a Capital letter and end with a full stop. Consistency always helps.
-    * The `required` setting should always be present, be it true *or* false
-    * If `required` is false, you should document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
+    * The `required` setting is only required when true, otherwise it is assumed to be false.
+    * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
     * Documenting `default` is not needed for `required: true`.
     * Remove unnecessary doc like `aliases: []` or `choices: []`.
     * The version is not a float number and value the current development version.
