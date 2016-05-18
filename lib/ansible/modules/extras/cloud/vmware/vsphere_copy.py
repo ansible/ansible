@@ -82,7 +82,8 @@ import mmap
 import errno
 import socket
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import open_url
 
 def vmware_path(datastore, datacenter, path):
