@@ -33,7 +33,7 @@ following:
 Still using Dockerfile to build images? Check out `ansible-container <https://github.com/j00bar/ansible-container>`_,
 and start building images from your Ansible playbooks.
 
-Use the 'shipit' command in `ansible-container <https://github.com/j00bar/ansible-container>`_
+Use the *shipit* command in `ansible-container <https://github.com/j00bar/ansible-container>`_
 to launch your docker-compose file on `OpenShift <https://www.openshift.org/>`_. Go from an app on your laptop to a fully
 scalable app in the cloud in just a few moments.
 
@@ -47,13 +47,13 @@ installed on the host running Ansible. You will need to have >= 1.7.0 installed.
 
 .. code-block:: bash
 
-    $ pip install docker-py>=1.7.0
+    $ pip install 'docker-py>=1.7.0'
 
 The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
 
 .. code-block:: bash
 
-   $ pip install docker-compose>=1.7.0
+   $ pip install 'docker-compose>=1.7.0'
 
 
 Connecting to the Docker API
