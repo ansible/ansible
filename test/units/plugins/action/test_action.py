@@ -610,6 +610,7 @@ class TestActionBase(unittest.TestCase):
         play_context = PlayContext()
         action_base = DerivedActionBase(None, None, play_context, None, None, None)
         action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
+        action_base._connection._shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
 
         play_context.become = True
         play_context.become_user = play_context.remote_user = 'root'
