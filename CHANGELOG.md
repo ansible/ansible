@@ -10,6 +10,8 @@ Ansible Changes By Release
 ####New Modules:
 - aws
   * ec2_customer_gateway
+- cloudstack
+  * cs_router
 
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
