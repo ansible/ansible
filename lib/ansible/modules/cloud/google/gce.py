@@ -108,6 +108,7 @@ options:
       - name of the subnetwork in which the instance should be created
     required: false
     default: null
+    version_added: "2.2"
   persistent_boot_disk:
     description:
       - if set, create the instance with a persistent boot disk
