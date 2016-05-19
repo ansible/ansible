@@ -70,6 +70,11 @@ try:
     HAS_PBKDF2HMAC = True
 except ImportError:
     pass
+except Exception as e:
+    if e.__module__ == 'pkg_resources' and e.__class__.__name__ == 'DistributionNotFound':
+        pass
+    else:
+        raise
 
 from ansible.compat.six import PY3
 from ansible.utils.unicode import to_unicode, to_bytes
