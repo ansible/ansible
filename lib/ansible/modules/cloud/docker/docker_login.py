@@ -24,20 +24,17 @@
 DOCUMENTATION = '''
 ---
 module: docker_login
-
 short_description: Log into a Docker registry.
-
 version_added: "2.0"
-
 description:
     - Provides functionality similar to the "docker login" command.
     - Authenticate with a docker registry and add the credentials to your local Docker config file. Adding the
       credentials to the config files allows future connections to the registry using tools such as Ansible's Docker
       modules, the Docker CLI and docker-py without needing to provide credentials.
     - Running in check mode will perform the authentication without updating the config file.
-
 options:
   registry_url:
+    required: False
     description:
       - The registry URL.
     default: "https://index.docker.io/v1/"
@@ -47,40 +44,51 @@ options:
   username:
     description:
       - The username for the registry account
-    required: true
-    default: null
+    required: True
   password:
     description:
       - The plaintext password for the registry account
-    required: true
-    default: null
+    required: True
   email:
+    required: False
     description:
       - "The email address for the registry account. NOTE: private registries may not require this,
         but Docker Hub requires it."
     default: None
   reauthorize:
+    required: False
     description:
       - Refresh exiting authentication found in the configuration file.
-    default: false
+    default: no
+    choices: ['yes', 'no']
     aliases:
       - reauth
   config_path:
     description:
       - Custom path to the Docker CLI configuration file.
     default: ~/.docker/config.json
+    required: False
     aliases:
       - self.config_path
       - dockercfg_path
+  state:
+    version_added: '2.2'
+    description:
+      - This controls the current state of the user. C(present) will login in a user, C(absent) will log him out.
+      - To logout you only need the registry server, which defaults to DockerHub.
+      - Before 2.1 you could ONLY log in.
+      - docker does not support 'logout' with a custom config file.
+    choices: ['present', 'absent']
+    default: 'present'
+    required: False
 
 extends_documentation_fragment:
     - docker
-
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
     - "Docker API >= 1.20"
-
+    - 'Only to be able to logout (state=absent): the docker command line utility'
 authors:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
@@ -109,20 +117,16 @@ EXAMPLES = '''
     email: docker@docker.io
     config_path: /tmp/.mydockercfg
 
+- name: Log out of DockerHub
+  docker_login:
+    state: absent
+    email: docker@docker.com
 '''
 
 RETURN = '''
-actions:
-    description: List of actions taken by the module.
-    returned: always
-    type: list
-    sample: [
-        "Log into https://index.docker.io/v1/",
-        "Updated config file /Users/chouseknecht/.docker/config.json with new authorization for https://index.docker.io/v1/"
-    ]
 login_results:
     description: Results from the login.
-    returned: always
+    returned: when state='present'
     type: dict
     sample: {
         "email": "testuer@yahoo.com",
@@ -155,7 +159,10 @@ class LoginManager(DockerBaseClass):
         self.reauthorize = parameters.get('reauthorize')
         self.config_path = parameters.get('config_path')
 
-        self.login()
+        if parameters['state'] == 'present':
+            self.login()
+        else:
+            self.logout()
 
     def fail(self, msg):
         self.client.fail(msg)
@@ -190,6 +197,24 @@ class LoginManager(DockerBaseClass):
         if not self.check_mode:
             self.update_config_file()
 
+    def logout(self):
+        '''
+        Log out of the registry. On success update the config file.
+        TODO: port to API once docker.py supports this.
+
+        :return: None
+        '''
+
+        cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
+        #TODO: docker does not support config file in logout, restore this when they do
+        #if self.config_path and self.config_file_exists(self.config_path):
+        #    cmd += "--config '%s' " % self.config_path
+        cmd += "'%s'" % self.registry_url
+
+        (rc, out, err) = self.client.module.run_command(cmd)
+        if rc != 0:
+            self.fail("Could not log out: %s" % err)
+
     def config_file_exists(self, path):
         if os.path.exists(path):
             self.log("Configuration file %s exists" % (path))
@@ -223,7 +248,7 @@ class LoginManager(DockerBaseClass):
         '''
         If the authorization not stored in the config file or reauthorize is True,
         update the config file with the new authorization.
-        
+
         :return: None
         '''
 
@@ -265,16 +290,16 @@ def main():
 
     argument_spec=dict(
         registry_url=dict(type='str', required=False, default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
-        username=dict(type='str', required=True),
-        password=dict(type='str', required=True, no_log=True),
+        username=dict(type='str', required=False),
+        password=dict(type='str', required=False, no_log=True),
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
-        config_path=dict(type='str', default='~/.docker/config.json', aliases=['self.config_path',
-                                                                               'dockercfg_path']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        config_path=dict(type='str', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
     )
 
     required_if = [
-        ('registry_url', DEFAULT_DOCKER_REGISTRY, ['email'])
+        ('state', 'present', ['username', 'password']),
     ]
 
     client = AnsibleDockerClient(
@@ -289,7 +314,12 @@ def main():
         login_result={}
     )
 
+    if module.params['state'] == 'present' and module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not module.params['email']:
+        module.fail_json(msg="'email' is required when loging into DockerHub")
+
     LoginManager(client, results)
+    if 'actions' in results:
+        del results['actions']
     client.module.exit_json(**results)
 
 # import module snippets
