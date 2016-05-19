@@ -839,6 +839,18 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                                     module, vm_disk, changes)
     request = VI.ReconfigVM_TaskRequestMsg()
 
+    # Change extra config
+    if vm_extra_config:
+        spec = spec_singleton(spec, request, vm)
+        extra_config = []
+        for k,v in vm_extra_config.iteritems():
+            ec = spec.new_extraConfig()
+            ec.set_element_key(str(k))
+            ec.set_element_value(str(v))
+            extra_config.append(ec)
+        spec.set_element_extraConfig(extra_config)
+        changes["extra_config"] = vm_extra_config
+
     # Change Memory
     if 'memory_mb' in vm_hardware:
 
