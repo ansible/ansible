@@ -196,7 +196,7 @@ def connect_to_api(module, disconnect_atexit=True):
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
-    except requests.ConnectionError as  connection_error:
+    except (requests.ConnectionError, ssl.SSLError) as connection_error:
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
