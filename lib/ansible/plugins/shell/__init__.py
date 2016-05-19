@@ -57,6 +57,9 @@ class ShellBase(object):
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
+    def check_interp(self, interp):
+        return 'command -v "%s" || echo NOTFOUND' % interp
+
     def chmod(self, mode, path, recursive=True):
         path = pipes.quote(path)
         cmd = ['chmod']

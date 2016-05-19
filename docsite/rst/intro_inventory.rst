@@ -251,13 +251,9 @@ ansible_shell_type
     By default commands are formatted using ``sh``-style syntax.
     Setting this to ``csh`` or ``fish`` will cause commands executed on target systems to follow those shell's syntax instead.
 ansible_python_interpreter
-    The target host python path. This is useful for systems with more
-    than one Python or not located at :command:`/usr/bin/python` such as \*BSD, or where :command:`/usr/bin/python`
-    is not a 2.X series Python.  We do not use the :command:`/usr/bin/env` mechanism as that requires the remote user's
-    path to be set right and also assumes the :program:`python` executable is named python, where the executable might
-    be named something like :program:`python2.6`.
+    The target host Python path. A colon separated list of candidate paths can be supplied.
 ansible_*_interpreter
-    Works for anything such as ruby or perl and works just like ``ansible_python_interpreter``.
+    Similar variables are supported for other interpreted languages such as Perl or Ruby.
     This replaces shebang of modules which will run on that host.
 
 .. versionadded:: 2.1
@@ -275,6 +271,10 @@ Examples from a host file::
   aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
   freebsd_host      ansible_python_interpreter=/usr/local/bin/python
   ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
+
+  [all:vars]
+  # by default try some usual locations, and fall back to searching PATH
+  ansible_python_interpreter=/usr/local/bin/python2.6:/usr/bin/python:python
 
 Non-SSH connection types
 ++++++++++++++++++++++++

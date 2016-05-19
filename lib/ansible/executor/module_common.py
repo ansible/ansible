@@ -368,7 +368,7 @@ def _slurp(path):
     fd.close()
     return data
 
-def _get_shebang(interpreter, task_vars, args=tuple()):
+def _get_shebang(interpreter, handler, task_vars, args=tuple()):
     """
     Note not stellar API:
        Returns None instead of always returning a shebang line.  Doing it this
@@ -376,18 +376,17 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter).strip()
-
-    if interpreter_config not in task_vars:
+    lang = os.path.basename(interpreter)
+    computed_interpreter = handler._compute_interpreter(lang, task_vars=task_vars)
+    if computed_interpreter is None:
         return (None, interpreter)
 
-    interpreter = task_vars[interpreter_config].strip()
-    shebang = u'#!' + interpreter
+    shebang = u'#!' + computed_interpreter
 
     if args:
         shebang = shebang + u' ' + u' '.join(args)
 
-    return (shebang, interpreter)
+    return (shebang, computed_interpreter)
 
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     """
@@ -498,7 +497,7 @@ def _is_binary(module_data):
     start = module_data[:1024]
     return bool(start.translate(None, textchars))
 
-def _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression):
+def _find_snippet_imports(module_name, module_data, module_path, module_args, handler, task_vars, module_compression):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -624,7 +623,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                 py_module_names.add(('basic',))
         zipdata = to_unicode(zipdata, errors='strict')
 
-        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
+        shebang, interpreter = _get_shebang(u'/usr/bin/python', handler, task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
@@ -700,7 +699,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 
 # ******************************************************************************
 
-def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED'):
+def modify_module(module_name, module_path, module_args, handler, task_vars=dict(), module_compression='ZIP_STORED'):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -732,7 +731,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         # read in the module source
         module_data = f.read()
 
-    (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression)
+    (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, handler, task_vars, module_compression)
 
     if module_style == 'binary':
         return (module_data, module_style, to_unicode(shebang, nonstring='passthru'))
@@ -744,7 +743,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
             interpreter = args[0]
             interpreter = to_bytes(interpreter)
 
-            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, args[1:])[0], errors='strict', nonstring='passthru')
+            new_shebang = to_bytes(_get_shebang(interpreter, handler, task_vars, args[1:])[0], errors='strict', nonstring='passthru')
             if new_shebang:
                 lines[0] = shebang = new_shebang
 
