@@ -18,7 +18,7 @@ RUN zypper --non-interactive install --auto-agree-with-licenses \
     make \
     mercurial \
     mariadb \
-    MySQL-python \
+    python-mysql \
     openssh \
     rpm-build \
     ruby \
@@ -48,7 +48,7 @@ rm -f /etc/systemd/system/*.wants/*; \
 rm -f ${LIBSYSTEMD}/local-fs.target.wants/*; \
 rm -f ${LIBSYSTEMD}/sockets.target.wants/*udev*; \
 rm -f ${LIBSYSTEMD}/sockets.target.wants/*initctl*; \
-rm -f ${LIBSYSTEMD}/basic.target.wants/*; 
+rm -f ${LIBSYSTEMD}/basic.target.wants/*;
 
 # don't create systemd-session for ssh connections
 RUN sed -i /pam_systemd/d /etc/pam.d/common-session-pc
