@@ -145,12 +145,15 @@ ported a module so that its syntax works with Python-3, we need to modify
 .travis.yml so that the module is included in the syntax check.  Here's the
 relevant section of .travis.yml::
 
-    script:
-    [...]
-    - python3.4 -m compileall -fq system/ping.py
-    - python3.5 -m compileall -fq system/ping.py
+    env:
+      global:
+        - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
+          cloud/amazon/ec2_ami.py
+          [...]
+          utilities/logic/wait_for.py"
 
-At the moment this is a whitelist.  Just add your newly ported module to that
-line.  Eventually, not compiling on Python-3 will be the exception.  When that
-occurs, we will move to a blacklist for listing which modules do not compile
-under Python-3.
+The :envvar:`PY3_EXCLUDE_LIST` environment variable is a blacklist of modules
+which should not be tested (because we know that they are older modules which
+have not yet been ported to pass the Python-3 syntax checks.  To get another
+old module to compile with Python-3, remove the entry for it from the list.
+The goal is to have the LIST be empty.
