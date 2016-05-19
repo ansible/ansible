@@ -702,7 +702,7 @@ The following  checklist items are important guidelines for people who want to c
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* pep8: All new modules must be "PEP8ish" this is defined as ``ansible/Makefile``. This will shortly be enforced by ``ansible-validate-modules``. Changes to exising modules to make them pep8(ish) compliant will not be accepted unless they are done as part of refactoring of that particular area of the code. This is to prevent noise in the git history.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
@@ -711,8 +711,8 @@ The following  checklist items are important guidelines for people who want to c
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
-  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
+* When fetching URLs, please use either ``fetch_url`` or ``open_url from ansible.module_utils.urls``
+  rather than ``urllib2``; urllib2 does not natively verify TLS certificates and so is insecure for https.
 
 
 Windows modules checklist
