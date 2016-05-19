@@ -84,7 +84,7 @@ options:
     required: false
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Downloading a JPEG and saving it to a file with the ansible command.
 # Note the "dest" is quoted rather instead of escaping the backslashes
 $ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthrise.jpg dest='C:\Users\Administrator\earthrise.jpg'" all

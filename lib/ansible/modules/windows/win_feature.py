@@ -77,7 +77,7 @@ author:
     - "Trond Hindenes (@trondhindenes)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # This installs IIS.
 # The names of features available for install can be run by running the following Powershell Command:
 # PS C:\Users\Administrator> Import-Module ServerManager; Get-WindowsFeature
@@ -99,6 +99,4 @@ ansible -m "win_feature" -a "name=NET-Framework-Core source=C:/Temp/iso/sources/
         restart: yes
         include_sub_features: yes
         include_management_tools: yes
-
-
 '''
