@@ -27,7 +27,7 @@ Where needed, link to gists or github repos to show examples, rather than sendin
 
 We recommend using Google search to see if a topic has been answered recently, but comments found in older threads may no longer apply, depending on the topic.
 
-Before you post, be sure you are running the latest stable version of Ansible.  You can check this by comparing the output of 'ansible --version' with the version indicated on `PyPi <https://pypi.python.org/pypi/ansible>`.
+Before you post, be sure you are running the latest stable version of Ansible.  You can check this by comparing the output of ``ansible --version`` with the version indicated on `PyPi <https://pypi.python.org/pypi/ansible>`_.
 
 Alternatively, you can also join our IRC channel - #ansible on irc.freenode.net.  It's a very high traffic channel as well, if you don't get an answer you like, please stop by our mailing list, which is more likely
 to get attention of core developers since it's asynchronous.
@@ -102,7 +102,7 @@ Ansible documentation is a community project too!
 If you would like to help with the 
 documentation, whether correcting a typo or improving a section, or maybe even 
 documenting a new feature, submit a github pull request to  the code that
-lives in the “docsite/rst” subdirectory of the project for most pages, and there is an "Edit on GitHub"
+lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
 Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on github, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
@@ -147,18 +147,18 @@ Note that we do keep Ansible to a particular aesthetic, so if you are unclear ab
 is a good fit or not, having the discussion on the development list is often a lot easier than having
 to modify a pull request later.
 
-When submitting patches, be sure to run the unit tests first “make tests” and always use, these are the same basic
-tests that will automatically run on Travis when creating the PR. There are more in depth tests in the tests/integration
+When submitting patches, be sure to run the unit tests first ``make tests`` and always use, these are the same basic
+tests that will automatically run on Travis when creating the PR. There are more in depth tests in the ``tests/integration``
 directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are setup
 with tags so you can run subsets, some of the tests require cloud credentials and will only run if they are provided.
-When adding new features of fixing bugs it would be nice to add new tests to avoid regressions.
+When adding new features of fixing bugs it would be nice to add new tests to avoid regressions. For more information about testing see `test/README.md <https://github.com/ansible/ansible/blob/devel/test/README.md>`_.
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that
-contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic
+contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
 branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
 If you make a mistake you do not need to close your PR, create a clean branch locally and then push to github
-with --force to overwrite the existing branch (permissible in this case as no one else should be using that
+with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
 We’ll then review your contributions and engage with you about questions and  so on.
@@ -168,7 +168,7 @@ in!  See the notes about priorities in a later section for understanding our wor
 Be patient, your request might not get merged right away, we also try to keep the devel branch more
 or less usable so we like to examine Pull requests carefully, which takes time.
 
-Patches should always be made against the 'devel' branch.
+Patches should always be made against the ``devel`` branch.
 
 Keep in mind that small and focused requests are easier to examine and accept, having example cases
 also help us understand the utility of a bug fix or a new feature.
@@ -187,8 +187,8 @@ You can also contribute by testing and revising other requests, specially if it 
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
 good place to start discussions (ansible-devel and IRC exist for this).
 
-Tip: To easily run from a checkout, source "./hacking/env-setup" and that's it -- no install
-required.  You're now live!
+Tip: To easily run from a checkout, source ``./hacking/env-setup`` and that's it -- no install
+required.  You're now live! For more information see `hacking/README.md <https://github.com/ansible/ansible/blob/devel/hacking/README.md>`_.
 
 Other Topics
 ============
@@ -231,7 +231,7 @@ IRC Meetings
 ------------
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
-participate. For more information about Ansible meetings, consult the [Ansible community meeting page](https://github.com/ansible/community/blob/master/MEETINGS.md).
+participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Release Numbering
 -----------------
@@ -261,7 +261,7 @@ Ansible has several IRC channels on Freenode (irc.freenode.net):
 
 - #ansible - For general use questions and support.
 - #ansible-devel - For discussions on developer topics and code related to features/bugs.
-- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists.
+- #ansible-meeting - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
 - #ansible-notices - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
