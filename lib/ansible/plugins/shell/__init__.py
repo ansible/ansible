@@ -178,3 +178,11 @@ class ShellBase(object):
         if rm_tmp:
             new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd
+
+    def append_command(self, cmd, cmd_to_append):
+        """Append an additional command if supported by the shell"""
+
+        if self._SHELL_AND:
+            cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
+
+        return cmd
