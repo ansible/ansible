@@ -103,7 +103,11 @@ options:
       - name of the network, 'default' will be used if not specified
     required: false
     default: "default"
-    aliases: []
+  subnetwork:
+    description:
+      - name of the subnetwork in which the instance should be created
+    required: false
+    default: null
   persistent_boot_disk:
     description:
       - if set, create the instance with a persistent boot disk
@@ -300,6 +304,10 @@ def get_instance_info(inst):
         netname = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
     except:
         netname = None
+    try:
+        subnetname = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
+    except:
+        subnetname = None
     if 'disks' in inst.extra:
         disk_names = [disk_info['source'].split('/')[-1]
                       for disk_info
@@ -320,6 +328,7 @@ def get_instance_info(inst):
         'metadata': metadata,
         'name': inst.name,
         'network': netname,
+        'subnetwork': subnetname,
         'private_ip': inst.private_ips[0],
         'public_ip': public_ip,
         'status': ('status' in inst.extra) and inst.extra['status'] or None,
@@ -345,6 +354,7 @@ def create_instances(module, gce, instance_names):
     machine_type = module.params.get('machine_type')
     metadata = module.params.get('metadata')
     network = module.params.get('network')
+    subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     disks = module.params.get('disks')
     state = module.params.get('state')
@@ -456,6 +466,8 @@ def create_instances(module, gce, instance_names):
         )
         if preemptible is not None:
             gce_args['ex_preemptible'] = preemptible
+        if subnetwork is not None:
+            gce_args['ex_subnetwork'] = subnetwork
 
         inst = None
         try:
@@ -542,6 +554,7 @@ def main():
             metadata = dict(),
             name = dict(),
             network = dict(default='default'),
+            subnetwork = dict(),
             persistent_boot_disk = dict(type='bool', default=False),
             disks = dict(type='list'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
@@ -573,6 +586,7 @@ def main():
     metadata = module.params.get('metadata')
     name = module.params.get('name')
     network = module.params.get('network')
+    subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     state = module.params.get('state')
     tags = module.params.get('tags')
@@ -596,6 +610,10 @@ def main():
 
     if preemptible is not None and hasattr(libcloud, '__version__') and libcloud.__version__ < '0.20':
         module.fail_json(msg="Apache Libcloud 0.20.0+ is required to use 'preemptible' option",
+                         changed=False)
+
+    if subnetwork is not None and not hasattr(gce, 'ex_get_subnetwork'):
+        module.fail_json(msg="Your Apache Libcloud is not recent enough to enable support for subnetworks",
                          changed=False)
 
     json_output = {'zone': zone}
