@@ -140,7 +140,7 @@ def get_installed_state(m, packages):
     "get installed state of packages"
 
     cmd = get_cmd(m, 'search')
-    cmd.extend(['--match-exact', '--verbose', '--installed-only'])
+    cmd.extend(['--match-exact', '--details', '--installed-only'])
     cmd.extend(packages)
     return parse_zypper_xml(m, cmd, fail_not_found=False)[0]
 
