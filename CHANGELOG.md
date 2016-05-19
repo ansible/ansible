@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 2.1.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
+
+###Minor Changes:
+
+* If the user is not using paramiko or vault, allow Ansible to run if pycrypto is not installed.
+
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
