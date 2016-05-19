@@ -274,9 +274,12 @@ def create_eni(connection, vpc_id, module):
     module.exit_json(changed=changed, interface=get_eni_info(eni))
 
 
-def modify_eni(connection, vpc_id, module):
+def modify_eni(connection, vpc_id, module, looked_up_eni_id):
 
-    eni_id = module.params.get("eni_id")
+    if looked_up_eni_id is None:
+        eni_id = module.params.get("eni_id")
+    else:
+        eni_id = looked_up_eni_id
     instance_id = module.params.get("instance_id")
     if instance_id == 'None':
         instance_id = None
@@ -413,39 +416,58 @@ def get_sec_group_list(groups):
     return remote_security_groups
 
 
-def _get_vpc_id(conn, subnet_id):
+def _get_vpc_id(connection, module, subnet_id):
 
     try:
-        return conn.get_all_subnets(subnet_ids=[subnet_id])[0].vpc_id
+        return connection.get_all_subnets(subnet_ids=[subnet_id])[0].vpc_id
     except BotoServerError as e:
         module.fail_json(msg=e.message)
+
+
+def get_eni_id_by_ip(connection, module):
+
+    subnet_id = module.params.get('subnet_id')
+    private_ip_address = module.params.get('private_ip_address')
+
+    try:
+        all_eni = connection.get_all_network_interfaces(filters={'private-ip-address': private_ip_address, 'subnet-id': subnet_id})
+    except BotoServerError as e:
+        module.fail_json(msg=e.message)
+
+    if all_eni:
+        return all_eni[0].id
+    else:
+        return None
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            eni_id = dict(default=None),
-            instance_id = dict(default=None),
-            private_ip_address = dict(),
-            subnet_id = dict(),
-            description = dict(),
-            security_groups = dict(type='list'),
-            device_index = dict(default=0, type='int'),
-            state = dict(default='present', choices=['present', 'absent']),
-            force_detach = dict(default='no', type='bool'),
-            source_dest_check = dict(default=None, type='bool'),
-            delete_on_termination = dict(default=None, type='bool'),
-            secondary_private_ip_addresses = dict(default=None, type='list'),
-            secondary_private_ip_address_count = dict(default=None, type='int')
+            eni_id=dict(default=None, type='str'),
+            instance_id=dict(default=None, type='str'),
+            private_ip_address=dict(type='str'),
+            subnet_id=dict(type='str'),
+            description=dict(type='str'),
+            security_groups=dict(default=[], type='list'),
+            device_index=dict(default=0, type='int'),
+            state=dict(default='present', choices=['present', 'absent']),
+            force_detach=dict(default='no', type='bool'),
+            source_dest_check=dict(default=None, type='bool'),
+            delete_on_termination=dict(default=None, type='bool'),
+            secondary_private_ip_addresses=dict(default=None, type='list'),
+            secondary_private_ip_address_count=dict(default=None, type='int')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if = ([
+                           mutually_exclusive=[
+                               ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
+                            ],
+                           required_if=([
                                ('state', 'present', ['subnet_id']),
                                ('state', 'absent', ['eni_id']),
-                           ])
+                            ])
                            )
 
     if not HAS_BOTO:
@@ -464,22 +486,23 @@ def main():
 
     state = module.params.get("state")
     eni_id = module.params.get("eni_id")
+    private_ip_address = module.params.get('private_ip_address')
 
     if state == 'present':
         subnet_id = module.params.get("subnet_id")
-        vpc_id = _get_vpc_id(vpc_connection, subnet_id)
+        vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
+        # If private_ip_address is not None, look up to see if an ENI already exists with that IP
+        if eni_id is None and private_ip_address is not None:
+            eni_id = get_eni_id_by_ip(connection, module)
         if eni_id is None:
             create_eni(connection, vpc_id, module)
         else:
-            modify_eni(connection, vpc_id, module)
+            modify_eni(connection, vpc_id, module, eni_id)
     elif state == 'absent':
         delete_eni(connection, module)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
-
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 if __name__ == '__main__':
     main()
