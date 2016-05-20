@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: SoftLayer
+module: sl_vm
 short_description: create or cancel a virtual instance in SoftLayer
 description:
   - Creates or cancels SoftLayer instances. When created, optionally waits for it to be 'running'.
@@ -230,7 +230,7 @@ def create_virtual_instance(module):
     domain = module.params.get('domain'),
     datacenter = module.params.get('datacenter')
   )
-  
+
   if instances:
     return False, None
 
@@ -308,7 +308,7 @@ def cancel_instance(module):
       canceled = False
   else:
     return False, None
-  
+
   return canceled, None
 
 
