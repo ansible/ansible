@@ -1076,10 +1076,14 @@ class ElbManager(object):
 
     def _get_backend_policies(self):
         """Get a list of backend policies"""
-        return [
-            str(backend.instance_port) + ':' + policy.policy_name for backend in self.elb.backends
-            for policy in backend.policies
-        ]
+        policies = []
+        if self.elb.backends is not None:
+            for backend in self.elb.backends:
+                if backend.policies is not None:
+                    for policy in backend.policies:
+                        policies.append(str(backend.instance_port) + ':' + policy.policy_name)
+
+        return policies
 
     def _set_backend_policies(self):
         """Sets policies for all backends"""
@@ -1112,9 +1116,10 @@ class ElbManager(object):
 
     def _get_proxy_protocol_policy(self):
         """Find out if the elb has a proxy protocol enabled"""
-        for policy in self.elb.policies.other_policies:
-            if policy.policy_name == 'ProxyProtocol-policy':
-                return policy.policy_name
+        if self.elb.policies is not None and self.elb.policies.other_policies is not None:
+            for policy in self.elb.policies.other_policies:
+                if policy.policy_name == 'ProxyProtocol-policy':
+                    return policy.policy_name
 
         return None
 
@@ -1135,11 +1140,20 @@ class ElbManager(object):
         b = set(b)
         return [aa for aa in a if aa not in b]
 
+    def _get_instance_ids(self):
+        """Get the current list of instance ids installed in the elb"""
+        instances = []
+        if self.elb.instances is not None:
+            for instance in self.elb.instances:
+                instances.append(instance.id)
+
+        return instances
+
     def _set_instance_ids(self):
         """Register or deregister instances from an lb instance"""
         assert_instances = self.instance_ids or []
 
-        has_instances = [has_instance.id for has_instance in self.elb.instances]
+        has_instances = self._get_instance_ids()
 
         add_instances = self._diff_list(assert_instances, has_instances)
         if add_instances:
