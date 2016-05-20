@@ -25,9 +25,9 @@ else
     fi
 
     # Should we test "make deb" or "make rpm"?
-    if [ "X${MAKETARGETS:-""}" -ne "X" ]; then
+    if [ "X${RELEASE_MAKE_TARGETS:-""}" -ne "X" ]; then
         # Excute the following command before conditionally running integration tests
-        RELEASE_BUILD_CMD="make ${MAKETARGETS} && "
+        RELEASE_BUILD_CMD="make ${RELEASE_MAKE_TARGETS} && "
     fi
 
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
