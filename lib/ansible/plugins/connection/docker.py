@@ -115,7 +115,7 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = self._get_docker_cmd
+        cmd = self._get_docker_cmd()
 
         cmd += ['version']
 
@@ -126,7 +126,7 @@ class Connection(ConnectionBase):
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = self._get_docker_cmd + [
+        new_docker_cmd = self._get_docker_cmd() + [
             'version', '--format', "'{{.Server.Version}}'"
         ]
 
@@ -136,7 +136,7 @@ class Connection(ConnectionBase):
 
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
-        p = subprocess.Popen(self._get_docker_cmd + ['inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
+        p = subprocess.Popen(self._get_docker_cmd() + ['inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
@@ -155,7 +155,7 @@ class Connection(ConnectionBase):
             version we are using, it will be provided to docker exec.
         """
 
-        local_cmd = self._get_docker_cmd
+        local_cmd = self._get_docker_cmd()
 
         local_cmd += ['exec']
 
@@ -242,7 +242,7 @@ class Connection(ConnectionBase):
         # file path
         out_dir = os.path.dirname(out_path)
 
-        args = self._get_docker_cmd + ["cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = self._get_docker_cmd() + ["cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
         args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
