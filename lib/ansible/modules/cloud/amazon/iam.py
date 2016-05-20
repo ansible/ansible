@@ -158,6 +158,40 @@ def boto_exception(err):
     return error
 
 
+def _paginate(func, attr):
+    '''
+    paginates the results from func by continuously passing in
+    the returned marker if the results were truncated. this returns
+    an iterator over the items in the returned response. `attr` is
+    the name of the attribute to iterate over in the response.
+    '''
+    finished, marker = False, None
+    while not finished:
+        res = func(marker=marker)
+        for item in getattr(res, attr):
+            yield item
+
+        finished = res.is_truncated == 'false'
+        if not finished:
+            marker = res.marker
+
+
+def list_all_groups(iam):
+    return [item['group_name'] for item in _paginate(iam.get_all_groups, 'groups')]
+
+
+def list_all_users(iam):
+    return [item['user_name'] for item in _paginate(iam.get_all_users, 'users')]
+
+
+def list_all_roles(iam):
+    return [item['role_name'] for item in _paginate(iam.list_roles, 'roles')]
+
+
+def list_all_instance_profiles(iam):
+    return [item['instance_profile_name'] for item in _paginate(iam.list_instance_profiles, 'instance_profiles')]
+
+
 def create_user(module, iam, name, pwd, path, key_state, key_count):
     key_qty = 0
     keys = []
@@ -452,9 +486,7 @@ def create_role(module, iam, name, path, role_list, prof_list):
     except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
-        updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
-                             list_roles_result.roles]
-
+        updated_role_list = list_all_roles(iam)
     return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
@@ -500,8 +532,7 @@ def delete_role(module, iam, name, role_list, prof_list):
     except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
-        updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
-                             list_roles_result.roles]
+        updated_role_list = list_all_roles(iam)
     return changed, updated_role_list, iam_role_result, instance_profile_result
 
 
@@ -584,22 +615,13 @@ def main():
     changed = False
 
     try:
-        orig_group_list = [gl['group_name'] for gl in iam.get_all_groups().
-                list_groups_result.
-                groups]
+        orig_group_list = list_all_groups(iam)
 
-        orig_user_list = [ul['user_name'] for ul in iam.get_all_users().
-                list_users_result.
-                users]
+        orig_user_list = list_all_users(iam)
 
-        orig_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
-                list_roles_result.
-                roles]
+        orig_role_list = list_all_roles(iam)
 
-        orig_prof_list = [ap['instance_profile_name'] for ap in iam.list_instance_profiles().
-                list_instance_profiles_response.
-                list_instance_profiles_result.
-                instance_profiles]
+        orig_prof_list = list_all_instance_profiles(iam)
     except boto.exception.BotoServerError as err:
         module.fail_json(msg=err.message)
 
