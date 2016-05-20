@@ -19,7 +19,8 @@ __metaclass__ = type
 
 import os
 from errno import EEXIST
-from ansible.utils.unicode import to_bytes
+from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_bytes, to_str
 
 __all__ = ['unfrackpath']
 
@@ -42,4 +43,4 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(path)
         except OSError as e:
             if e.errno != EEXIST:
-                raise
+                raise AnsibleError("Unable to create local directories(%s): %s" % (path, to_str(e)))
