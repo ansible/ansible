@@ -296,7 +296,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     cmd = [git_path, 'submodule', 'foreach', git_path, 'rev-parse', version]
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg='Unable to determine hashes of submodules')
+        module.fail_json(msg='Unable to determine hashes of submodules', stdout=out, stderr=err, rc=rc)
     submodules = {}
     subm_name = None
     for line in out.splitlines():
@@ -400,7 +400,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         return version
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
-        module.fail_json(msg="Could not determine remote revision for %s" % version)
+        module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
 
     if tag:
     # Find the dereferenced tag if this is an annotated tag.
@@ -427,7 +427,7 @@ def get_branches(git_path, module, dest):
     cmd = '%s branch -a' % (git_path,)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Could not determine branch data - received %s" % out)
+        module.fail_json(msg="Could not determine branch data - received %s" % out, stdout=out, stderr=err)
     for line in out.split('\n'):
         branches.append(line.strip())
     return branches
@@ -437,7 +437,7 @@ def get_tags(git_path, module, dest):
     cmd = '%s tag' % (git_path,)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Could not determine tag data - received %s" % out)
+        module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in out.split('\n'):
         tags.append(line.strip())
     return tags
@@ -653,7 +653,7 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
     cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, branchref)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Failed to fetch branch from remote: %s" % version)
+        module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
 def switch_version(git_path, module, dest, remote, version, verify_commit):
     cmd = ''
@@ -700,7 +700,7 @@ def verify_commit_sign(git_path, module, dest, version):
     cmd = "%s verify-commit %s" % (git_path, version)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version)
+        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
     return (rc, out, err)
 
 # ===========================================
