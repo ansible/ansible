@@ -69,8 +69,8 @@ notes:
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
   - You can copy a file from the host to the container
-    with `command=lxc file push filename container_name/dir/filename`
-    on localhost. See the first example below.
+    with the Ansible `copy` and `template` module and the `lxd` connection plugin.
+    See the example below.
   - You can copy a file in the creatd container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
     See the first example below.
@@ -82,7 +82,7 @@ EXAMPLES = """
   tasks:
     - name: Create a started container
       lxd_container:
-        name: my-ubuntu
+        name: mycontainer
         state: started
         config:
           source:
@@ -92,19 +92,28 @@ EXAMPLES = """
             protocol: lxd
             alias: "ubuntu/xenial/amd64"
           profiles: ["default"]
-    - name: Install python in the created container "nettest"
-      command: lxc exec my-ubuntu -- apt install -y python
-    - name: Copy somefile.txt to /tmp/renamed.txt in the created container "nettest"
-      command: lxc file push somefile.txt nettest/tmp/renamed.txt
-    - name: Copy /etc/hosts in the created container "nettest" to localhost with name "nettest-hosts"
-      command: lxc file pull nettest/etc/hosts nettest-hosts
+    - name: Install python in the created container "mycontainer"
+      command: lxc exec mycontainer -- apt install -y python
+    - name: Copy /etc/hosts in the created container "mycontainer" to localhost with name "mycontainer-hosts"
+      command: lxc file pull mycontainer/etc/hosts mycontainer-hosts
+
+
+# Note your container must be in the inventory for the below example.
+#
+# [containers]
+# mycontainer ansible_connection=lxd
+#
+- hosts:
+    - mycontainer
+  tasks:
+    - template: src=foo.j2 dest=/etc/bar
 
 - hosts: localhost
   connection: local
   tasks:
     - name: Create a stopped container
       lxd_container:
-        name: my-ubuntu
+        name: mycontainer
         state: stopped
         config:
           source:
@@ -120,7 +129,7 @@ EXAMPLES = """
   tasks:
     - name: Restart a container
       lxd_container:
-        name: my-ubuntu
+        name: mycontainer
         state: restarted
         config:
           source:
