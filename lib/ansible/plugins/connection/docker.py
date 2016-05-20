@@ -74,9 +74,6 @@ class Connection(ConnectionBase):
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
-        if self._play_context.docker_extra_args:
-            self.docker_cmd += self._play_context.docker_extra_args.split(' ')
-
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
@@ -103,13 +100,22 @@ class Connection(ConnectionBase):
             # This saves overhead from calling into docker when we don't need to
             self.actual_user = self._get_docker_remote_user()
 
+    def _get_docker_cmd(self):
+
+        dcmd = [self.docker_cmd]
+
+        if self._play_context.docker_extra_args:
+            dcmd += self._play_context.docker_extra_args.split(' ')
+
+        return dcmd
+
     @staticmethod
     def _sanitize_version(version):
         return re.sub('[^0-9a-zA-Z\.]', '', version)
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd]
+        cmd = self._get_docker_cmd
 
         cmd += ['version']
 
@@ -120,8 +126,7 @@ class Connection(ConnectionBase):
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
+        new_docker_cmd = self._get_docker_cmd + [
             'version', '--format', "'{{.Server.Version}}'"
         ]
 
@@ -131,7 +136,7 @@ class Connection(ConnectionBase):
 
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
-        p = subprocess.Popen([self.docker_cmd, 'inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
+        p = subprocess.Popen(self._get_docker_cmd + ['inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
@@ -150,7 +155,7 @@ class Connection(ConnectionBase):
             version we are using, it will be provided to docker exec.
         """
 
-        local_cmd = [self.docker_cmd]
+        local_cmd = self._get_docker_cmd
 
         local_cmd += ['exec']
 
@@ -237,7 +242,7 @@ class Connection(ConnectionBase):
         # file path
         out_dir = os.path.dirname(out_path)
 
-        args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = self._get_docker_cmd + ["cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
         args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
