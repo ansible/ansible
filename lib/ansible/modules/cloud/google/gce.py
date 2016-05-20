@@ -614,7 +614,7 @@ def main():
                          changed=False)
 
     if subnetwork is not None and not hasattr(gce, 'ex_get_subnetwork'):
-        module.fail_json(msg="Your Apache Libcloud is not recent enough to enable support for subnetworks",
+        module.fail_json(msg="Apache Libcloud 1.0.0+ is required to use 'subnetwork' option",
                          changed=False)
 
     json_output = {'zone': zone}
