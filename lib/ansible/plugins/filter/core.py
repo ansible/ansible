@@ -408,7 +408,16 @@ def pyformat(fmt, *args, **kwargs):
         if isinstance(arg, dict):
             variables.update(arg)
     variables.update(kwargs)
-    return fmt % variables
+
+    # Attempt to use Python 2.7 or Python 3 style formatting
+    if hasattr(str, 'format'):
+        result = fmt.format(variables)
+        if result == fmt:
+            return fmt % variables
+        else:
+            return result
+    else:
+        return fmt % variables
 
 
 class FilterModule(object):
