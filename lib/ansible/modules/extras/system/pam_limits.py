@@ -27,6 +27,8 @@ DOCUMENTATION = '''
 ---
 module: pam_limits
 version_added: "2.0"
+authors:
+    - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
      - The M(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
