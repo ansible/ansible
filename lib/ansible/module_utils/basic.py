@@ -422,7 +422,7 @@ def remove_values(value, no_log_strings):
             value = unicode(bytes_value, 'utf-8', errors='replace')
         else:
             value = bytes_value
-    elif isinstance(value, Sequence):
+    elif isinstance(value, (Sequence, type({}.keys()))):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
         return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
@@ -2018,7 +2018,7 @@ class AnsibleModule(object):
         # passwords from the args list
         if isinstance(args, basestring):
             if isinstance(args, unicode):
-                b_args = args.encode('utf-8')
+                b_args = str(args.encode('utf-8'))
             else:
                 b_args = args
             to_clean_args = shlex.split(b_args)

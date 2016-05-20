@@ -67,6 +67,12 @@ else:
     def iteritems(d):
         return d.iteritems()
 
+try:
+    # Python 2
+    long
+except NameError:
+    # Python 3
+    long = int
 
 try:
     import selinux
@@ -947,7 +953,7 @@ class Hardware(Facts):
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -2030,7 +2036,7 @@ class Network(Facts):
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -2790,7 +2796,7 @@ class Virtual(Facts):
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
