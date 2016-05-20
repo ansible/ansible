@@ -280,7 +280,9 @@ def main():
     lines[n0:n0] = blocklines
 
     if lines:
-        result = '\n'.join(lines)+'\n'
+        result = '\n'.join(lines)
+        if original.endswith('\n'):
+            result += '\n'
     else:
         result = ''
     if original == result:
