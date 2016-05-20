@@ -205,7 +205,7 @@ import time
 
 #TODO: get this info from API
 STATES = ['present', 'absent']
-DATACENTERS = ['ams01','ams03','dal01','dal05','dal06','dal09','fra02','hkg02','hou02','lon2','mel01','mex01','mil01','mon01','par01','sjc01','sjc03','sao01','sea01','sng01','syd01','tok02','tor01','wdc01','wdc04']
+DATACENTERS = ['ams01','ams03','dal01','dal05','dal06','dal09','fra02','hkg02','hou02','lon02','mel01','mex01','mil01','mon01','par01','sjc01','sjc03','sao01','sea01','sng01','syd01','tok02','tor01','wdc01','wdc04']
 CPU_SIZES = [1,2,4,8,16]
 MEMORY_SIZES = [1024,2048,4096,6144,8192,12288,16384,32768,49152,65536]
 INITIALDISK_SIZES = [25,100]
