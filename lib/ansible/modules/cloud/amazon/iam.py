@@ -196,11 +196,10 @@ def delete_user(module, iam, name):
         except boto.exception.BotoServerError, err:
             error_msg = boto_exception(err)
             if ('Cannot find Login Profile') in error_msg:
-
                del_meta = iam.delete_user(name).delete_user_response
-            else:
-              iam.delete_login_profile(name)
-              del_meta = iam.delete_user(name).delete_user_response
+        else:
+          iam.delete_login_profile(name)
+          del_meta = iam.delete_user(name).delete_user_response
     except Exception as ex:
         module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
