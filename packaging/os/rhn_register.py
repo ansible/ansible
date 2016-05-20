@@ -120,7 +120,7 @@ try:
     import up2date_client
     import up2date_client.config
     HAS_UP2DATE_CLIENT = True
-except ImportError, e:
+except ImportError:
     HAS_UP2DATE_CLIENT = False
 
 # INSERT REDHAT SNIPPETS
@@ -387,7 +387,8 @@ def main():
                 rhn.enable()
                 rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
                 rhn.subscribe(channels)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
 
             module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
@@ -399,7 +400,8 @@ def main():
         else:
             try:
                 rhn.unregister()
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Failed to unregister: %s" % e)
 
             module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)

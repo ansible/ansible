@@ -81,11 +81,6 @@ env:
       cloud/rackspace/rax_scaling_group.py
       cloud/rackspace/rax_scaling_policy.py
       cloud/vmware/vsphere_guest.py
-      packaging/os/apt.py
-      packaging/os/apt_repository.py
-      packaging/os/redhat_subscription.py
-      packaging/os/rhn_register.py
-      packaging/os/yum.py
       utilities/helper/accelerate.py
       utilities/logic/async_status.py
       utilities/logic/async_wrapper.py
