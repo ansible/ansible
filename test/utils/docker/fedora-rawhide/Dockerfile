@@ -11,7 +11,9 @@ rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf -y install \
     acl \
+    asciidoc \
     dbus-python \
+    bzip2 \
     file \
     findutils \
     git \
@@ -19,6 +21,8 @@ RUN dnf -y install \
     iproute \
     make \
     mercurial \
+    mariadb-server \
+    MySQL-python \
     procps \
     PyYAML \
     python-coverage \
@@ -32,6 +36,7 @@ RUN dnf -y install \
     python-pip \
     python-setuptools \
     python-virtualenv \
+    rpm-build \
     rubygems \
     subversion \
     sudo \
@@ -40,7 +45,8 @@ RUN dnf -y install \
     which \
     openssh-clients \
     openssh-server \
-    yum
+    yum \
+    zip
 RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8
 RUN /usr/bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/

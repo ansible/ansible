@@ -11,13 +11,18 @@ rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN yum -y install \
     acl \
+    asciidoc \
     dbus-python \
+    bzip2 \
     epel-release \
     file \
     git \
     iproute \
     make \
     mercurial \
+    mariadb-server \
+    MySQL-python \
+    rpm-build \
     rubygems \
     subversion \
     sudo \

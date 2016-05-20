@@ -1,14 +1,20 @@
 # Latest version of centos
 FROM centos:centos6
-RUN yum -y update; yum clean all; 
+RUN yum -y update; yum clean all;
 RUN yum -y install \
     acl \
+    asciidoc \
+    bzip2 \
     epel-release \
     file \
     gcc \
     git \
     make \
     mercurial \
+    mysql \
+    mysql-server \
+    MySQL-python \
+    rpm-build \
     rubygems \
     sed \
     subversion \
@@ -16,7 +22,8 @@ RUN yum -y install \
     unzip \
     openssh-clients \
     openssh-server \
-    which
+    which \
+    zip
 RUN yum -y install \
     PyYAML \
     python-coverage \
