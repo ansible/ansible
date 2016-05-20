@@ -224,9 +224,9 @@ def main():
         state=dict(
             default=None, required=True, choices=['present', 'absent']),
         name=dict(default=None, required=False),
-        cert=dict(default=None, required=False),
-        key=dict(default=None, required=False),
-        cert_chain=dict(default=None, required=False),
+        cert=dict(default=None, required=False, type='path'),
+        key=dict(default=None, required=False, type='path'),
+        cert_chain=dict(default=None, required=False, type='path'),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False),
