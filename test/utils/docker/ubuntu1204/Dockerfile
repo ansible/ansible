@@ -1,20 +1,34 @@
 FROM ubuntu:precise
 RUN apt-get clean; apt-get update -y;
 RUN apt-get install -y \
+    apache2 \
+    asciidoc \
     acl \
+    bzip2 \
+    cdbs \
+    debhelper \
     debianutils \
+    devscripts \
+    docbook-xml \
+    dpkg-dev \
+    fakeroot \
     gawk \
     git \
+    libxml2-utils \
     locales \
     make \
     mercurial \
+    mysql-server \
+    reprepro \
     ruby \
     rubygems \
     subversion \
     sudo \
     openssh-client \
     openssh-server \
-    unzip
+    unzip \
+    zip \
+    xsltproc
 
 # helpful things taken from the ubuntu-upstart Dockerfile:
 # https://github.com/tianon/dockerfiles/blob/4d24a12b54b75b3e0904d8a285900d88d3326361/sbin-init/ubuntu/upstart/14.04/Dockerfile
@@ -51,6 +65,7 @@ RUN apt-get install -y \
     python-jinja2 \
     python-keyczar \
     python-mock \
+    python-mysqldb \
     python-nose \
     python-paramiko \
     python-pip \
