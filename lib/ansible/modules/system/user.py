@@ -429,7 +429,8 @@ class User(object):
                 cmd.append(self.group)
 
         if self.groups is not None:
-            current_groups = self.user_group_membership()
+            # get a list of all groups for the user, including the primary
+            current_groups = self.user_group_membership(exclude_primary=False)
             groups_need_mod = False
             groups = []
 
@@ -458,7 +459,6 @@ class User(object):
                 else:
                     cmd.append('-G')
                     cmd.append(','.join(groups))
-
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
@@ -522,12 +522,19 @@ class User(object):
                 groups.remove(g)
         return groups
 
-    def user_group_membership(self):
+    def user_group_membership(self, exclude_primary=True):
+        ''' Return a list of groups the user belongs to '''
         groups = []
         info = self.get_pwd_info()
         for group in grp.getgrall():
-            if self.name in group.gr_mem and not info[3] == group.gr_gid:
-                groups.append(group[0])
+            if self.name in group.gr_mem:
+                # Exclude the user's primary group by default
+                if not exclude_primary:
+                    groups.append(group[0])
+                else:
+                    if info[3] != group.gr_gid:
+                        groups.append(group[0])
+
         return groups
 
     def user_exists(self):
