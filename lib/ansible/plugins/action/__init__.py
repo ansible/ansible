@@ -581,6 +581,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
@@ -598,7 +599,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
 
         if remote_module_path or module_style != 'new':
-            display.debug("transferring module to remote")
+            display.debug("transferring module to remote %s" % remote_module_path)
             if module_style == 'binary':
                 self._transfer_file(module_path, remote_module_path)
             else:
