@@ -158,6 +158,9 @@ class Ec2Inventory(object):
         # Boto profile to use (if any)
         self.boto_profile = None
 
+        # AWS credentials.
+        self.credentials = {}
+
         # Read settings and parse CLI arguments
         self.parse_cli_args()
         self.read_settings()
@@ -225,7 +228,7 @@ class Ec2Inventory(object):
         configRegions_exclude = config.get('ec2', 'regions_exclude')
         if (configRegions == 'all'):
             if self.eucalyptus_host:
-                self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name)
+                self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
@@ -324,6 +327,29 @@ class Ec2Inventory(object):
         if config.has_option('ec2', 'boto_profile') and not self.boto_profile:
             self.boto_profile = config.get('ec2', 'boto_profile')
 
+        # AWS credentials (prefer environment variables)
+        if not (self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID') or
+                os.environ.get('AWS_PROFILE')):
+            if config.has_option('credentials', 'aws_access_key_id'):
+                aws_access_key_id = config.get('credentials', 'aws_access_key_id')
+            else:
+                aws_access_key_id = None
+            if config.has_option('credentials', 'aws_secret_access_key'):
+                aws_secret_access_key = config.get('credentials', 'aws_secret_access_key')
+            else:
+                aws_secret_access_key = None
+            if config.has_option('credentials', 'aws_security_token'):
+                aws_security_token = config.get('credentials', 'aws_security_token')
+            else:
+                aws_security_token = None
+            if aws_access_key_id:
+                self.credentials = {
+                    'aws_access_key_id': aws_access_key_id,
+                    'aws_secret_access_key': aws_secret_access_key
+                }
+                if aws_security_token:
+                    self.credentials['security_token'] = aws_security_token
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if self.boto_profile:
@@ -333,8 +359,9 @@ class Ec2Inventory(object):
 
         cache_name = 'ansible-ec2'
         aws_profile = lambda: (self.boto_profile or
-                              os.environ.get('AWS_PROFILE') or
-                              os.environ.get('AWS_ACCESS_KEY_ID'))
+                               os.environ.get('AWS_PROFILE') or
+                               os.environ.get('AWS_ACCESS_KEY_ID') or
+                               self.credentials.get('aws_access_key_id', None))
         if aws_profile():
             cache_name = '%s-%s' % (cache_name, aws_profile())
         self.cache_path_cache = cache_dir + "/%s.cache" % cache_name
@@ -454,7 +481,7 @@ class Ec2Inventory(object):
     def connect(self, region):
         ''' create connection to api server'''
         if self.eucalyptus:
-            conn = boto.connect_euca(host=self.eucalyptus_host)
+            conn = boto.connect_euca(host=self.eucalyptus_host, **self.credentials)
             conn.APIVersion = '2010-08-31'
         else:
             conn = self.connect_to_aws(ec2, region)
@@ -468,7 +495,7 @@ class Ec2Inventory(object):
         return connect_args
 
     def connect_to_aws(self, module, region):
-        connect_args = {}
+        connect_args = self.credentials
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
@@ -502,7 +529,7 @@ class Ec2Inventory(object):
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
-                backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error, 'getting EC2 instances')
 
@@ -739,7 +766,7 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
@@ -858,7 +885,7 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'security_groups', key)
 
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
 
@@ -1383,4 +1410,3 @@ class Ec2Inventory(object):
 
 # Run the script
 Ec2Inventory()
-
