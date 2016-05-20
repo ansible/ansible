@@ -1220,6 +1220,8 @@ class AnsibleModule(object):
         self._syslog_facility = 'LOG_USER'
         for (k,v) in list(self.params.items()):
 
+            if isinstance(k, bytes):
+                k = k.decode('utf-8')
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
@@ -1599,7 +1601,7 @@ class AnsibleModule(object):
                 if not isinstance(param_val, basestring):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
-                    param_val = param_val.encode('utf-8')
+                    param_val = str(param_val.encode('utf-8'))
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
         msg = []
@@ -2095,11 +2097,15 @@ class AnsibleModule(object):
                 rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
                 if cmd.stdout in rfd:
                     dat = os.read(cmd.stdout.fileno(), 9000)
+                    if isinstance(dat, bytes):
+                        dat = dat.decode('utf-8', 'replace')
                     stdout += dat
                     if dat == '':
                         rpipes.remove(cmd.stdout)
                 if cmd.stderr in rfd:
                     dat = os.read(cmd.stderr.fileno(), 9000)
+                    if isinstance(dat, bytes):
+                        dat = dat.decode('utf-8', 'replace')
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
