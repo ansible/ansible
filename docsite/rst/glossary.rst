@@ -68,9 +68,9 @@ when a term comes up on the mailing list.
         discussed in the :doc:`playbook documentation <playbooks>`.
 
     Diff Mode
-        A ``--diff`` flag can be passed to Ansible to show how template files
-        change when they are overwritten or how they might change when used
-        with ``--check`` mode.   These diffs come out in unified diff format.
+        A ``--diff`` flag can be passed to Ansible to show what changed on
+        modules that support it. You can combine it with ``--check`` to get a
+        good 'dry run'.  File diffs are normally iin unified diff format.
 
     Executor
         A core software component of Ansible that is the power behind
