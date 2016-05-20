@@ -520,7 +520,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             changed=False,
             actions=[],
             powerstate_change=None,
-            ansible_facts=dict('azure_rm_vm')
+            ansible_facts=dict(azure_rm_vm=None)
         )
 
         super(AzureRMVirtualMachine, self).__init__(derived_arg_spec=self.module_arg_spec,
