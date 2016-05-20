@@ -1,0 +1,29 @@
+language: python
+
+env: TOXENV=py24
+
+matrix:
+  include:
+    - python: 2.6
+      env: TOXENV=py26
+    - python: 2.7
+      env: TOXENV=py27
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
+
+build:
+  ci:
+    - if [ "${TOXENV}" = "py24" ]; then add-apt-repository ppa:fkrull/deadsnakes && apt-get update -qq && apt-get install python2.4 -qq; fi
+    - pip install tox
+    - TARGET=sanity ./test/utils/run_tests.sh
+
+integrations:
+  notifications:
+    - integrationName: email
+      type: email
+      on_success: never
+      on_failure: never
+      on_start: never
+      on_pull_request: never
