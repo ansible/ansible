@@ -25,7 +25,7 @@ else
     fi
 
     # Should we test "make deb" or "make rpm"?
-    if [ "X${RELEASE_MAKE_TARGETS:-""}" -ne "X" ]; then
+    if [ "X${RELEASE_MAKE_TARGETS:-""}" != "X" ]; then
         # Excute the following command before conditionally running integration tests
         RELEASE_BUILD_CMD="make ${RELEASE_MAKE_TARGETS} && "
     fi
