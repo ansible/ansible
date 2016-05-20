@@ -14,20 +14,26 @@ if [ "${TARGET}" = "sanity" ]; then
     if test x"$TOXENV" != x'py24' ; then tox ; fi
     if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common|vca|vmware).py' lib/ansible/module_utils ; fi
 else
+<<<<<<< 4c1d47e7b20b76643894849c08eeaf5066935465
+=======
+    DOCKER_IMAGE="gundalow/ansible:${TARGET}"
+    # Setup local http server for tests to use
+>>>>>>> HACK build and test deb/rpm and 1604 and opensuse
     if [ ! -e /tmp/cid_httptester ]; then
         docker pull sivel/httptester
         docker run -d --name=httptester sivel/httptester > /tmp/cid_httptester
+    fi
 
     # Should we test "make deb" or "make rpm"?
     if [ "X${MAKETARGETS:-""}" -ne "X" ]; then
-        RELEASE_BUILD_CMD="make ${MAKETARGETS}"
-    else
-        RELEASE_BUILD_CMD="true"
+        # Excute the following command before conditionally running integration tests
+        RELEASE_BUILD_CMD="make ${MAKETARGETS} && "
     fi
+
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
-    docker pull ansible/ansible:${TARGET}
-    docker run -d --volume="${PWD}:/root/ansible:Z" $LINKS --name "${C_NAME}" ${TARGET_OPTIONS:=''} ansible/ansible:${TARGET} > /tmp/cid_${TARGET}
-    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS:-''}'; cd /root/ansible; . hacking/env-setup; ${RELEASE_BUILD_CMD} && (cd test/integration; LC_ALL=en_US.utf-8 make ${MAKE_TARGET:-})"
+    docker pull "${DOCKER_IMAGE}"
+    docker run -d --volume="${PWD}:/root/ansible:Z" $LINKS --name "${C_NAME}" ${TARGET_OPTIONS:=''} "${DOCKER_IMAGE}" > /tmp/cid_${TARGET}
+    docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS:-''}'; cd /root/ansible; . hacking/env-setup; ${RELEASE_BUILD_CMD:-} (cd test/integration; LC_ALL=en_US.utf-8 make ${MAKE_TARGET:-})"
     docker kill $(cat /tmp/cid_${TARGET})
 
     if [ "X${TESTS_KEEP_CONTAINER:-""}" = "X" ]; then
