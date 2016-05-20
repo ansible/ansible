@@ -31,7 +31,7 @@ module: os_server_metadata
 short_description: Add/Update/Delete Metadata in Compute Instances from
 OpenStack extends_documentation_fragment: openstack
 version_added: "2.2"
-author: "Mario Santos (@_RuiZinK_)"
+author: "Mario Santos (@ruizink)"
 description:
    - Add, Update or Remove metadata in compute instances from OpenStack.
 options:
@@ -91,6 +91,18 @@ EXAMPLES = '''
             group:
 '''
 
+RETURN = '''
+server_id:
+    description: The compute instance id where the change was made
+    returned: success
+    type: string
+    sample: "324c4e91-3e03-4f62-9a4d-06119a8a8d16"
+metadata:
+    description: The metadata of compute instance after the change
+    returned: success
+    type: dict
+    sample: {'key1': 'value1', 'key2': 'value2'}
+'''
 
 def _needs_update(server_metadata={}, metadata={}):
     return len(set(metadata.items()) - set(server_metadata.items())) != 0
