@@ -2150,7 +2150,9 @@ class AnsibleModule(object):
 
         # reset the pwd
         os.chdir(prev_dir)
-
+        if sys.version_info < (3,):
+            stdout = stdout.encode('utf-8')
+            stderr = stderr.encode('utf-8')
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
