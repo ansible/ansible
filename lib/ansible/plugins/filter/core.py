@@ -404,20 +404,21 @@ def pyformat(fmt, *args, **kwargs):
     '''
     variables = {}
     for arg in args:
-        # Only support dictionaries at this time
+        # Supports dictionaries
         if isinstance(arg, dict):
             variables.update(arg)
+
+    # And supports key-value pairs
     variables.update(kwargs)
 
-    # Attempt to use Python 2.7 or Python 3 style formatting
+    # Attempt to use new-style formatting (Python 2.7 or Python 3+)
     if hasattr(str, 'format'):
-        result = fmt.format(variables)
-        if result == fmt:
-            return fmt % variables
-        else:
+        result = fmt.format(**variables)
+        if result != fmt:
             return result
-    else:
-        return fmt % variables
+
+    # Perform old-style formatting using name placeholders (keywords)
+    return fmt % variables
 
 
 class FilterModule(object):
