@@ -252,7 +252,7 @@ class VariableManager:
             # we merge in vars from groups specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_group_vars())
 
-            for group in sorted(host.get_groups(), key=lambda g: g.depth):
+            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
