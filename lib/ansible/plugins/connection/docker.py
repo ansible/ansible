@@ -74,6 +74,9 @@ class Connection(ConnectionBase):
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
+        if self._play_context.docker_extra_args:
+            self.docker_cmd += self._play_context.docker_extra_args.split(' ')
+
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
@@ -107,9 +110,6 @@ class Connection(ConnectionBase):
     def _get_docker_version(self):
 
         cmd = [self.docker_cmd]
-
-        if self._play_context.docker_extra_args:
-            cmd += self._play_context.docker_extra_args.split(' ')
 
         cmd += ['version']
 
@@ -151,9 +151,6 @@ class Connection(ConnectionBase):
         """
 
         local_cmd = [self.docker_cmd]
-
-        if self._play_context.docker_extra_args:
-            local_cmd += self._play_context.docker_extra_args.split(' ')
 
         local_cmd += ['exec']
 
