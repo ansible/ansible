@@ -12,6 +12,7 @@ RUN yum -y install \
     make \
     mercurial \
     mysql \
+    mysql-server \
     MySQL-python \
     rpm-build \
     rubygems \
