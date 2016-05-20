@@ -124,6 +124,12 @@ except ImportError:
     Mapping = (dict,)
 
 try:
+    from collections.abc import KeysView
+    SEQUENCES_TYPE = (Sequence, KeysView)
+except ImportError:
+    SEQUENCES_TYPE = Sequence
+
+try:
     import json
     # Detect the python-json library which is incompatible
     # Look for simplejson if that's the case
@@ -422,7 +428,7 @@ def remove_values(value, no_log_strings):
             value = unicode(bytes_value, 'utf-8', errors='replace')
         else:
             value = bytes_value
-    elif isinstance(value, (Sequence, type({}.keys()))):
+    elif isinstance(value, SEQUENCES_TYPE):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
         return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
