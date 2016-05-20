@@ -475,7 +475,8 @@ def main():
             if pool != '^$':
                 try:
                     result = rhn.update_subscriptions(pool)
-                except Exception, e:
+                except Exception:
+                    e = get_exception()
                     module.fail_json(msg="Failed to update subscriptions for '%s': %s" % (server_hostname, e))
                 else:
                     module.exit_json(**result)
@@ -488,7 +489,8 @@ def main():
                 rhn.register(username, password, autosubscribe, activationkey, org_id,
                              consumer_type, consumer_name, consumer_id)
                 subscribed_pool_ids = rhn.subscribe(pool)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
             else:
                 module.exit_json(changed=True,
@@ -502,7 +504,8 @@ def main():
             try:
                 rhn.unsubscribe()
                 rhn.unregister()
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Failed to unregister: %s" % e)
             else:
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)

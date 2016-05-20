@@ -492,7 +492,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
                 if package_version_compare(pkg_version, installed_version) == 0:
                     # Does not need to down-/upgrade, move on to next package
                     continue
-            except Exception, e:
+            except Exception:
                 # Must not be installed, continue with installation
                 pass
             # Check if package is installable
