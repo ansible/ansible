@@ -42,7 +42,7 @@ options:
       - The type of database.  Used only when command=create.
     required: false
     default: null
-    choices: [ 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres']
+    choices: [ 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
@@ -1023,7 +1023,7 @@ def main():
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
             instance_name     = dict(required=False),
             source_instance   = dict(required=False),
-            db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
+            db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora'], required=False),
             size              = dict(required=False),
             instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
