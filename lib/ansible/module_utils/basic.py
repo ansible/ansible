@@ -764,6 +764,8 @@ class AnsibleModule(object):
         '''
         if isinstance(path, unicode):
             path = path.encode("utf-8")
+        if isinstance(path, bytes):
+            path = path.decode("utf-8")
         return path
 
     # If selinux fails to find a default, return an array of None
@@ -1972,6 +1974,8 @@ class AnsibleModule(object):
         elif isinstance(args, basestring):
             if isinstance(args, unicode):
                 args = args.encode('utf-8')
+            if isinstance(args, bytes):
+                args = args.decode('utf-8')
             args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
