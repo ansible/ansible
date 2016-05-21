@@ -12,19 +12,26 @@
 # DOMAIN or PRIVATE zones.  Provide this switch if you want to enable winrm on
 # a device with an interface in PUBLIC zone.
 #
+# Set $ForceNewSSLCert if the system has been syspreped and a new SSL Cert
+# must be forced on the WinRM Listener when re-running this script. This
+# is necessary when a new SID and CN name is created.
+#
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
+# Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
 #
 # Version 1.0 - July 6th, 2014
 # Version 1.1 - November 11th, 2014
 # Version 1.2 - May 15th, 2015
+# Version 1.3 - April 4th, 2016
 
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
     [int]$CertValidityDays = 365,
     [switch]$SkipNetworkProfileCheck,
-    $CreateSelfSignedCert = $true
+    $CreateSelfSignedCert = $true,
+    [switch]$ForceNewSSLCert
 )
 
 Function New-LegacySelfSignedCert
@@ -147,6 +154,36 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
 Else
 {
     Write-Verbose "SSL listener is already active."
+    
+    # Force a new SSL cert on Listener if the $ForceNewSSLCert
+    if($ForceNewSSLCert){
+        
+        # Create the new cert.
+        If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
+        {
+            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My"
+            $thumbprint = $cert.Thumbprint
+            Write-Host "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        }
+        Else
+        {
+            $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName
+            Write-Host "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        }
+
+        $valueset = @{}
+        $valueset.Add('Hostname', $SubjectName)
+        $valueset.Add('CertificateThumbprint', $thumbprint)
+
+        # Delete the listener for SSL
+        $selectorset = @{}
+        $selectorset.Add('Transport', 'HTTPS')
+        $selectorset.Add('Address', '*')
+        Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
+
+        # Add new Listener with new SSL cert
+        New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
+    }
 }
 
 # Check for basic authentication.

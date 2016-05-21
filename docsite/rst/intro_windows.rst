@@ -217,6 +217,9 @@ Pass the -CertValidityDays option to customize the expiration date of the genera
 Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)
   powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
 
+Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)
+  powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
+
 .. note::
    On Windows 7 and Server 2008 R2 machines, due to a bug in Windows
    Management Framework 3.0, it may be necessary to install this
