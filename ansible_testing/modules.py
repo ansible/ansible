@@ -72,6 +72,7 @@ class Validator(object):
         self.errors = []
         self.warnings = []
         self.traces = []
+        self.warning_traces = []
 
     @abc.abstractproperty
     def object_name(self):
@@ -98,7 +99,11 @@ class Validator(object):
 
         ret = []
 
-        for trace in self.traces:
+        traces = self.traces[:]
+        if warnings and self.warnings:
+            traces.extend(self.warning_traces)
+
+        for trace in traces:
             print('TRACE:')
             print('\n    '.join(('    %s' % trace).splitlines()))
         for error in self.errors:
@@ -224,7 +229,6 @@ class ModuleValidator(Validator):
                             self.errors.append(msg)
                         elif not new_only:
                             self.errors.append(msg)
-
 
     def _find_module_utils(self, main):
         linenos = []
@@ -468,13 +472,14 @@ class ModuleValidator(Validator):
                 existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
-                self.errors.append('Existing DOCUMENTATION fragment missing: '
-                                   '%s' % fragment)
+                self.warnings.append('Pre-existing DOCUMENTATION fragment '
+                                     'missing: %s' % fragment)
                 return
             except Exception as e:
-                self.traces.append(e)
-                self.errors.append('Unknown existing DOCUMENTATION error, see '
-                                   'TRACE')
+                self.warning_traces.append(e)
+                self.warnings.append('Unknown pre-existing DOCUMENTATION '
+                                     'error, see TRACE. Submodule refs may '
+                                     'need updated')
                 return
 
         try:
