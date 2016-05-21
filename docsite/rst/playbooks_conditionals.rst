@@ -268,8 +268,8 @@ fields::
 
           - name: add home dirs to the backup spooler
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-            with_items: home_dirs.stdout_lines
-            # same as with_items: home_dirs.stdout.split()
+            with_items: "{{ home_dirs.stdout_lines }}"
+            # same as with_items: "{{ home_dirs.stdout.split() }}"
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 You may check the registered variable's string contents for emptiness::
