@@ -269,6 +269,7 @@ class TaskExecutor:
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
         '''
+        name = None
         try:
             # _task.action could contain templatable strings (via action: and
             # local_action:)  Template it before comparing.  If we don't end up
@@ -284,7 +285,6 @@ class TaskExecutor:
                 if all(isinstance(o, string_types) for o in items):
                     final_items = []
 
-                    name = None
                     for allowed in ['name', 'pkg', 'package']:
                         name = self._task.args.pop(allowed, None)
                         if name is not None:
@@ -326,6 +326,10 @@ class TaskExecutor:
         except:
             # Squashing is an optimization.  If it fails for any reason,
             # simply use the unoptimized list of items.
+
+            # Restore the name parameter
+            if name is not None:
+                self._task.args['name'] = name
             pass
         return items
 
