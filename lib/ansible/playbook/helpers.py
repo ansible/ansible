@@ -38,7 +38,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     return a list of Block() objects, where implicit blocks
     are created for each bare Task.
     '''
- 
+
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
@@ -81,6 +81,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
     from ansible.playbook.task_include import TaskInclude
+    from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
 
     assert isinstance(ds, list)
@@ -103,8 +104,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             task_list.append(t)
         else:
             if 'include' in task_ds:
-                t = TaskInclude.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-
+                if use_handlers:
+                    t = HandlerTaskInclude.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                else:
+                    t = TaskInclude.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
                 all_vars = variable_manager.get_vars(loader=loader, play=play, task=t)
                 templar = Templar(loader=loader, variables=all_vars)
 
@@ -121,7 +124,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     if t.loop is not None:
                         raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
 
-                    # FIXME: all of this code is very similar (if not identical) to that in 
+                    # FIXME: all of this code is very similar (if not identical) to that in
                     #        plugins/strategy/__init__.py, and should be unified to avoid
                     #        patches only being applied to one or the other location
                     if task_include:
@@ -233,11 +236,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         task_list.extend(included_blocks)
                 else:
                     task_list.append(t)
-            elif use_handlers:
-                t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-                task_list.append(t)
             else:
-                t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                if use_handlers:
+                    t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                else:
+                    t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
                 task_list.append(t)
 
     return task_list
