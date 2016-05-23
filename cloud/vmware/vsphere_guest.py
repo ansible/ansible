@@ -683,7 +683,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
         try:
             hostmor = [k for k,
                        v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
-        except IndexError, e:
+        except IndexError:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
 
@@ -708,7 +708,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
         try:
             cluster = [k for k,
                        v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
-        except IndexError, e:
+        except IndexError:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
                              cluster_name)
@@ -717,7 +717,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
             rpmor = [k for k, v in vsphere_client.get_resource_pools(
                 from_mor=cluster).items()
                 if v == resource_pool][0]
-        except IndexError, e:
+        except IndexError:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Resource Pool named: %s" %
                              resource_pool)
@@ -1012,7 +1012,8 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                 vm.power_off(sync_run=True)
                 vm.get_status()
 
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(
                     msg='Failed to shutdown vm %s: %s' % (guest, e)
                 )
@@ -1035,7 +1036,8 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         if vm.is_powered_off() and poweron:
             try:
                 vm.power_on(sync_run=True)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(
                     msg='Failed to power on vm %s : %s' % (guest, e)
                 )
@@ -1236,7 +1238,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     try:
         hostmor = [k for k,
                    v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
-    except IndexError, e:
+    except IndexError:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
 
@@ -1262,7 +1264,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         try:
             cluster = [k for k,
                        v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
-        except IndexError, e:
+        except IndexError:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
                              cluster_name)
@@ -1271,7 +1273,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             rpmor = [k for k, v in vsphere_client.get_resource_pools(
                 from_mor=cluster).items()
                 if v == resource_pool][0]
-        except IndexError, e:
+        except IndexError:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Resource Pool named: %s" %
                              resource_pool)
@@ -1459,7 +1461,8 @@ def delete_vm(vsphere_client, module, guest, vm, force):
                     vm.power_off(sync_run=True)
                     vm.get_status()
 
-                except Exception, e:
+                except Exception:
+                    e = get_exception()
                     module.fail_json(
                         msg='Failed to shutdown vm %s: %s' % (guest, e))
             else:
@@ -1483,7 +1486,8 @@ def delete_vm(vsphere_client, module, guest, vm, force):
             module.fail_json(msg="Error removing vm: %s %s" %
                              task.get_error_message())
         module.exit_json(changed=True, changes="VM %s deleted" % guest)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(
             msg='Failed to delete vm %s : %s' % (guest, e))
 
@@ -1525,8 +1529,8 @@ def power_state(vm, state, force):
                         % power_status
             return True
 
-        except Exception, e:
-            return e
+        except Exception:
+            return get_exception()
 
     return False
 
@@ -1768,7 +1772,8 @@ def main():
                 module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
         else:
             raise
-    except VIApiException, err:
+    except VIApiException:
+        err = get_exception()
         module.fail_json(msg="Cannot connect to %s: %s" %
                          (vcenter_hostname, err))
 
@@ -1783,7 +1788,8 @@ def main():
         if vmware_guest_facts:
             try:
                 module.exit_json(ansible_facts=gather_facts(vm))
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
         # Power Changes

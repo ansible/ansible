@@ -12,7 +12,7 @@ addons:
       - python3.5
 env:
   global:
-    # 77 modules.  Let's whittle this down!
+    # 76 modules.  Let's whittle this down!
     - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
       cloud/amazon/ec2_ami.py
       cloud/amazon/ec2_asg.py
@@ -80,7 +80,6 @@ env:
       cloud/rackspace/rax_queue.py
       cloud/rackspace/rax_scaling_group.py
       cloud/rackspace/rax_scaling_policy.py
-      cloud/vmware/vsphere_guest.py
       utilities/helper/accelerate.py
       utilities/logic/async_status.py
       utilities/logic/async_wrapper.py"
