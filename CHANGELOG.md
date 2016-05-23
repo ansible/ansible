@@ -10,8 +10,11 @@ Ansible Changes By Release
 ####New Modules:
 - aws
   * ec2_customer_gateway
+  * ec2_vpc_nacl_facts
 - cloudstack
   * cs_router
+- smartos
+  * smartos_image_facts
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
