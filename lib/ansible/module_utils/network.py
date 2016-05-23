@@ -47,23 +47,132 @@ def to_list(val):
     else:
         return list()
 
+def connect(module):
+    try:
+        if not module.connected:
+            module.connect()
+            if module.params['authorize']:
+                module.authorize()
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
+
+class Command(object):
+
+    def __init__(self, command, output=None, prompt=None, response=None):
+        self.command = command
+        self.output = output
+        self.prompt = prompt
+        self.response = response
+        self.conditions = set()
+
+    def __str__(self):
+        return self.command
+
+class Cli(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+        self.default_output = connection.default_output or 'text'
+        self.commands = list()
+
+    def __call__(self, commands, output=None):
+        commands = self.to_command(commands, output)
+        return self.connection.run_commands(commands)
+
+    def to_command(self, commands, output=None):
+        output = output or self.default_output
+        objects = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, Command):
+                cmd = Command(cmd, output)
+            objects.append(cmd)
+        return objects
+
+    def add_commands(self, commands, output=None):
+        commands = self.to_command(commands, output)
+        self.commands.extend(commands)
+
+    def run_commands(self):
+        responses = self.connection.run_commands(self.commands)
+        return responses
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def invoke(self, method, raise_exc=False, *args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+        except AttributeError:
+            exc = get_exception()
+            raise NetworkError('undefined method "%s"' % method.__name__, exc=str(exc))
+        except NetworkError:
+            if raise_exc:
+                raise
+            exc = get_exception()
+            self.fail_json(msg=exc.message, **exc.kwargs)
+        except NotImplementedError:
+            raise NetworkError('method not supported "%s"' % method.__name__)
+
+    def __call__(self, commands, raise_exc=False):
+        lines = to_list(commands)
+        return self.invoke(self.connection.configure, raise_exc, commands)
+
+    def load_config(self, commands, raise_exc=False):
+        commands = to_list(commands)
+        return self.invoke(self.connection.load_config, commands, raise_exc)
+
+    def get_config(self):
+        return self.invoke(self.connection.get_config)
+
+    def commit_config(self, raise_exc=False):
+        return self.invoke(self.connection.commit_config, raise_exc)
+
+    def replace_config(self, raise_exc=False):
+        return self.invoke(self.connection.replace_config, raise_exc)
+
+    def abort_config(self, raise_exc=False):
+        return self.invoke(self.connection.abort_config, raise_exc)
+
+
 class NetworkError(Exception):
 
     def __init__(self, msg, **kwargs):
         super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
 
+
 class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
         super(NetworkModule, self).__init__(*args, **kwargs)
+        self.connection = None
+        self._cli = None
         self._config = None
 
     @property
+    def cli(self):
+        if not self.connected:
+            connect(self)
+        if self._cli:
+            return self._cli
+        self._cli = Cli(self.connection)
+        return self._cli
+
+    @property
     def config(self):
-        if not self._config:
-            self._config = self.get_config()
+        if not self.connected:
+            connect(self)
+        if self._config:
+            return self._config
+        self._config = Config(self.connection)
         return self._config
+
+    @property
+    def connected(self):
+        return self.connection._connected
 
     def _load_params(self):
         super(NetworkModule, self)._load_params()
@@ -74,48 +183,34 @@ class NetworkModule(AnsibleModule):
                     if self.params.get(key) is None and value is not None:
                         self.params[key] = value
 
-    def invoke(self, method, *args, **kwargs):
-        try:
-            kwargs['params'] = self.params
-            return method(*args, **kwargs)
-        except AttributeError:
-            if kwargs.get('raise_exception'):
-                raise
-            else:
-                exc = get_exception()
-                self.fail_json(msg='failed to execute %s' % method.__name__, exc=str(exc))
-        except NetworkError:
-            if kwargs.get('raise_exception'):
-                raise
-            else:
-                exc = get_exception()
-                self.fail_json(msg=exc.message, **exc.kwargs)
-
     def connect(self):
-        return self.invoke(self.connection.connect)
+        try:
+            if not self.connected:
+                self.connection.connect(self.params)
+                if self.params['authorize']:
+                    self.authorize()
+        except NetworkError:
+            exc = get_exception()
+            module.fail_json(msg=exc.message)
 
     def disconnect(self):
-        return self.invoke(self.connection.disconnect)
+        try:
+            if self.connected:
+                self.connection.disconnect()
+        except NetworkError:
+            exc = get_exception()
+            module.fail_json(msg=exc.message)
 
     def authorize(self):
-        return self.invoke(self.connection.authorize)
+        try:
+            if self.connected:
+                self.connection.authorize(self.params)
+        except NetworkError:
+            exc = get_exception()
+            module.fail_json(msg=exc.message)
 
-    def run_commands(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.invoke(self.connection.run_commands, commands, **kwargs)
 
-    def configure(self, commands, **kwargs):
-        return self.load_config(commands, **kwargs)
-
-    def load_config(self, commands, *args, **kwargs):
-        commands = to_list(commands)
-        return self.invoke(self.connection.load_config, commands, *args, **kwargs)
-
-    def get_config(self, **kwargs):
-        return self.invoke(self.connection.get_config, **kwargs)
-
-    def commit_config(self, *args, **kwargs):
-        return self.invoke(self.connection.commit_config, *args, **kwargs)
+def get_module(connect_on_load=True, **kwargs):
 
 
 class NetCli(object):
@@ -233,13 +328,8 @@ def get_module(connect_on_load=True, **kwargs):
         exc = get_exception()
         module.fail_json(msg=exc.message)
 
-    try:
-        module.connect()
-        if module.params['authorize']:
-            module.authorize()
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    if connect_on_load:
+        connect(module)
 
     return module
 
