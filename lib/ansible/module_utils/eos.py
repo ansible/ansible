@@ -43,6 +43,8 @@ class Eapi(object):
         self.url = None
         self.url_args = ModuleStub(url_argument_spec(), self._error)
         self.enable = None
+        self.default_output = 'json'
+        self._connected = False
 
     def _error(self, msg):
         raise NetworkError(msg, url=self.url)
@@ -78,9 +80,11 @@ class Eapi(object):
                 port = 80
 
         self.url = '%s://%s:%s/command-api' % (proto, host, port)
+        self._connected = True
 
     def disconnect(self, **kwargs):
         self.url = None
+        self._connected = False
 
     def authorize(self, params, **kwargs):
         if params.get('auth_pass'):
@@ -89,7 +93,29 @@ class Eapi(object):
         else:
             self.enable = 'enable'
 
-    def run_commands(self, commands, format='json', **kwargs):
+    def run_commands(self, commands):
+        output = None
+        cmds = list()
+        responses = list()
+
+        for cmd in commands:
+            if output and output != cmd.output:
+                responses.extend(self.execute(cmds, format=output))
+                cmds = list()
+
+            output = cmd.output
+            cmds.append(str(cmd))
+
+        if cmds:
+            responses.extend(self.execute(cmds, format=output))
+
+        for index, cmd in enumerate(commands):
+            if cmd.output == 'text':
+                responses[index] = responses[index].get('output')
+
+        return responses
+
+    def execute(self, commands, format='json', **kwargs):
         """Send commands to the device.
         """
         if self.url is None:
@@ -147,43 +173,33 @@ class Cli(NetCli, EosConfigMixin):
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=True, **kwargs)
         self.shell.send('terminal length 0')
+        self._connected = True
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
-        self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
+        self.execute(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
-    def get_config(self, **kwargs):
-        return self.run_commands('show running-config')[0]
+    def run_commands(self, commands):
+        cmds = list(prepare_commands(commands))
+        responses = self.execute(cmds)
+        for index, cmd in enumerate(commands):
+            if cmd.output == 'json':
+                responses[index] = json.loads(responses[index])
+        return responses
 
-    def load_config(self, commands, session_name='ansible_temp_session', commit=False, **kwargs):
-        commands = to_list(commands)
-        commands.insert(0, 'configure session %s' % session_name)
-        commands.append('show session-config diffs')
-        commands.append('end')
 
-        responses = self.run_commands(commands)
-        if commit:
-            self.commit_config(session_name)
-        return responses[-2]
+def prepare_config(commands):
+    commands = to_list(commands)
+    commands.insert(0, 'configure terminal')
+    commands.append('end')
+    return commands
 
-    def replace_config(self, contents, params, **kwargs):
-        remote_user = params['username']
-        remote_path = '/home/%s/ansible-config' % remote_user
 
-        commands = [
-            'bash echo "%s" > %s' % (contents, remote_path),
-            'diff running-config file:/%s' % remote_path,
-            'config replace file:/%s' % remote_path,
-        ]
-
-        responses = self.run_commands(commands)
-        return responses[-2]
-
-    def commit_config(self, session_name, **kwargs):
-        session = 'configure session %s' % session_name
-        commands = [session, 'commit', 'no '+session]
-        self.run_commands(commands)
-
-    def abort_config(self, session_name, **kwargs):
-        command = 'no configure session %s' % session_name
-        self.run_commands([command])
+def prepare_commands(commands):
+    jsonify = lambda x: '%s | json' % x
+    for cmd in to_list(commands):
+        if cmd.output == 'json':
+            cmd = jsonify(cmd)
+        else:
+            cmd = str(cmd)
+        yield cmd
