@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
                 pass # could not get it from template!
 
         if module == 'auto':
-            facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_service_mgr'), task_vars=task_vars)
+            facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
             self._display.debug("Facts %s" % facts)
             if 'failed' not in facts:
                 module = getattr(facts['ansible_facts'], 'ansible_service_mgr', 'auto')
