@@ -102,6 +102,7 @@ class AnsibleCloudStack(object):
         self.account = None
         self.project = None
         self.ip_address = None
+        self.vpc = None
         self.zone = None
         self.vm = None
         self.os_type = None
@@ -173,6 +174,32 @@ class AnsibleCloudStack(object):
                 return my_dict[key]
             self.module.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
+
+
+    def get_vpc(self, key=None):
+        """Return a VPC dictionary or the value of given key of."""
+        if self.vpc:
+            return self._get_by_key(key, self.vpc)
+
+        vpc = self.module.params.get('vpc')
+        if not vpc:
+            return None
+
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+        }
+        vpcs = self.cs.listVPCs(**args)
+        if not vpcs:
+            self.module.fail_json(msg="No VPCs available.")
+
+        for v in vpcs['vpc']:
+            if vpc in [v['displaytext'], v['name'], v['id']]:
+                self.vpc = v
+                return self._get_by_key(key, self.vpc)
+        self.module.fail_json(msg="VPC '%s' not found" % vpc)
 
 
     def get_project(self, key=None):
