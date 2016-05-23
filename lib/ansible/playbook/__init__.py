@@ -61,6 +61,7 @@ class Playbook:
             self._basedir = os.path.normpath(os.path.join(self._basedir, os.path.dirname(file_name)))
 
         # set the loaders basedir
+        cur_basedir = self._loader.get_basedir()
         self._loader.set_basedir(self._basedir)
 
         self._file_name = file_name
@@ -74,6 +75,8 @@ class Playbook:
 
         ds = self._loader.load_from_file(os.path.basename(file_name))
         if not isinstance(ds, list):
+            # restore the basedir in case this error is caught and handled
+            self._loader.set_basedir(cur_basedir)
             raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
 
         # Parse the playbook entries. For plays, we simply parse them
@@ -81,6 +84,8 @@ class Playbook:
         # PlaybookInclude() object
         for entry in ds:
             if not isinstance(entry, dict):
+                # restore the basedir in case this error is caught and handled
+                self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
             if 'include' in entry:
@@ -92,6 +97,9 @@ class Playbook:
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)
+
+        # we're done, so restore the old basedir in the loader
+        self._loader.set_basedir(cur_basedir)
 
     def get_loader(self):
         return self._loader
