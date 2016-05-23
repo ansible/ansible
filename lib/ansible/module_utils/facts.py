@@ -67,6 +67,12 @@ else:
     def iteritems(d):
         return d.iteritems()
 
+try:
+    # Python 2
+    long
+except NameError:
+    # Python 3
+    long = int
 
 try:
     import selinux
