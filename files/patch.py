@@ -185,7 +185,8 @@ def main():
             apply_patch( patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary, strip=p.strip,
                          dry_run=module.check_mode, backup=p.backup )
             changed = True
-        except PatchError, e:
+        except PatchError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     module.exit_json(changed=changed)
