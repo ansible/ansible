@@ -54,14 +54,14 @@ requirements:
 '''
 
 RETURN = """
-sts_creds:
+credentials:
     description: The Credentials object returned by the AWS Security Token Service
     returned: always
     type: list
     sample:
-      access_key: ASXXXXXXXXXXXXXXXXXX
+      access_key_id: ASXXXXXXXXXXXXXXXXXX
       expiration: "2016-04-08T11:59:47+00:00"
-      secret_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      secret_access_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       session_token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 changed:
     description: True if obtaining the credentials succeeds
@@ -80,9 +80,9 @@ register: session_credentials
 
 # Use the session token obtained above to tag an instance in account 123456789012
 ec2_tag:
-  aws_access_key: "{{ session_credentials.sts_creds.access_key }}"
-  aws_secret_key: "{{ session_credentials.sts_creds.secret_key }}"
-  security_token: "{{ session_credentials.sts_creds.session_token }}"
+  aws_access_key: "{{ session_credentials.credentials.access_key_id }}"
+  aws_secret_key: "{{ session_credentials.credentials.secret_access_key }}"
+  security_token: "{{ session_credentials.credentials.session_token }}"
   resource: i-xyzxyz01
   state: present
   tags:
@@ -97,9 +97,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-
 
 def normalize_credentials(credentials):
     access_key = credentials.get('AccessKeyId', None)
@@ -112,6 +109,7 @@ def normalize_credentials(credentials):
         'session_token': session_token,
         'expiration': expiration
     }
+
 
 def get_session_token(connection, module):
     duration_seconds = module.params.get('duration_seconds')
@@ -130,19 +128,19 @@ def get_session_token(connection, module):
     try:
         response = connection.get_session_token(**args)
         changed = True
-    except ClientError as e:
-        module.fail_json(msg=e)
+    except ClientError, e:
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    credentials = normalize_credentials(response.get('Credentials', {}))
-    module.exit_json(changed=changed, sts_creds=credentials)
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            duration_seconds = dict(required=False, default=None, type='int'),
-            mfa_serial_number = dict(required=False, default=None),
-            mfa_token = dict(required=False, default=None)
+            duration_seconds=dict(required=False, default=None, type='int'),
+            mfa_serial_number=dict(required=False, default=None, type='str'),
+            mfa_token=dict(required=False, default=None, type='str')
         )
     )
 
@@ -159,6 +157,8 @@ def main():
 
     get_session_token(connection, module)
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 if __name__ == '__main__':
     main()
