@@ -124,6 +124,12 @@ except ImportError:
     Mapping = (dict,)
 
 try:
+    from collections.abc import KeysView
+    SEQUENCES_TYPE = (Sequence, KeysView)
+except ImportError:
+    SEQUENCES_TYPE = Sequence
+
+try:
     import json
     # Detect the python-json library which is incompatible
     # Look for simplejson if that's the case
@@ -422,7 +428,7 @@ def remove_values(value, no_log_strings):
             value = unicode(bytes_value, 'utf-8', errors='replace')
         else:
             value = bytes_value
-    elif isinstance(value, Sequence):
+    elif isinstance(value, SEQUENCES_TYPE):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
         return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
@@ -758,6 +764,8 @@ class AnsibleModule(object):
         '''
         if isinstance(path, unicode):
             path = path.encode("utf-8")
+        if isinstance(path, bytes):
+            path = path.decode("utf-8")
         return path
 
     # If selinux fails to find a default, return an array of None
@@ -1220,6 +1228,8 @@ class AnsibleModule(object):
         self._syslog_facility = 'LOG_USER'
         for (k,v) in list(self.params.items()):
 
+            if isinstance(k, bytes):
+                k = k.decode('utf-8')
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
@@ -1599,7 +1609,7 @@ class AnsibleModule(object):
                 if not isinstance(param_val, basestring):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
-                    param_val = param_val.encode('utf-8')
+                    param_val = str(param_val.encode('utf-8'))
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
         msg = []
@@ -1964,6 +1974,8 @@ class AnsibleModule(object):
         elif isinstance(args, basestring):
             if isinstance(args, unicode):
                 args = args.encode('utf-8')
+            if isinstance(args, bytes):
+                args = args.decode('utf-8')
             args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
@@ -2016,7 +2028,7 @@ class AnsibleModule(object):
         # passwords from the args list
         if isinstance(args, basestring):
             if isinstance(args, unicode):
-                b_args = args.encode('utf-8')
+                b_args = str(args.encode('utf-8'))
             else:
                 b_args = args
             to_clean_args = shlex.split(b_args)
@@ -2095,11 +2107,15 @@ class AnsibleModule(object):
                 rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
                 if cmd.stdout in rfd:
                     dat = os.read(cmd.stdout.fileno(), 9000)
+                    if isinstance(dat, bytes):
+                        dat = dat.decode('utf-8', 'replace')
                     stdout += dat
                     if dat == '':
                         rpipes.remove(cmd.stdout)
                 if cmd.stderr in rfd:
                     dat = os.read(cmd.stderr.fileno(), 9000)
+                    if isinstance(dat, bytes):
+                        dat = dat.decode('utf-8', 'replace')
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
@@ -2144,7 +2160,9 @@ class AnsibleModule(object):
 
         # reset the pwd
         os.chdir(prev_dir)
-
+        if sys.version_info < (3,):
+            stdout = stdout.encode('utf-8')
+            stderr = stderr.encode('utf-8')
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
