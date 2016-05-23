@@ -83,8 +83,7 @@ env:
       cloud/vmware/vsphere_guest.py
       utilities/helper/accelerate.py
       utilities/logic/async_status.py
-      utilities/logic/async_wrapper.py
-      utilities/logic/wait_for.py"
+      utilities/logic/async_wrapper.py"
 before_install:
   - git config user.name "ansible"
   - git config user.email "ansible@ansible.com"
