@@ -95,7 +95,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 play=play,
                 parent_block=block,
                 role=role,
-                task_include=task_include,
+                task_include=None,
                 use_handlers=use_handlers,
                 variable_manager=variable_manager,
                 loader=loader,
