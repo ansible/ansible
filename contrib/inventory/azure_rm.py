@@ -180,7 +180,7 @@ Version: 1.0.0
 
 import argparse
 import ConfigParser
-import json 
+import json
 import os
 import re
 import sys
