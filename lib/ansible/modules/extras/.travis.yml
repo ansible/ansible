@@ -76,7 +76,6 @@ env:
       database/vertica/vertica_schema.py
       database/vertica/vertica_user.py
       f5/bigip_gtm_virtual_server.py
-      files/patch.py
       monitoring/bigpanda.py
       monitoring/boundary_meter.py
       monitoring/circonus_annotation.py
