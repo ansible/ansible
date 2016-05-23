@@ -26,7 +26,7 @@ short_description: Get SmartOS image details.
 description:
     - Retrieve facts about all installed images on SmartOS. Facts will be
       inserted to the ansible_facts key.
-version_added: "2.0"
+version_added: "2.2"
 author: Adam Števko (@xen0l)
 options:
     filters:
