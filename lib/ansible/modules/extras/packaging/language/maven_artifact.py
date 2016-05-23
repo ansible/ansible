@@ -25,6 +25,7 @@ from lxml import etree
 import os
 import hashlib
 import sys
+import posixpath
 
 DOCUMENTATION = '''
 ---
@@ -133,9 +134,9 @@ class Artifact(object):
         return self.version and self.version.endswith("SNAPSHOT")
 
     def path(self, with_version=True):
-        base = self.group_id.replace(".", "/") + "/" + self.artifact_id
+        base = posixpath.join(self.group_id.replace(".", "/"), self.artifact_id)
         if with_version and self.version:
-            return base + "/" + self.version
+            return posixpath.join(base, self.version)
         else:
             return base
 
@@ -182,8 +183,7 @@ class Artifact(object):
 class MavenDownloader:
     def __init__(self, module, base="http://repo1.maven.org/maven2"):
         self.module = module
-        if base.endswith("/"):
-            base = base.rstrip("/")
+        base = base.rstrip("/")
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
 
@@ -213,9 +213,9 @@ class MavenDownloader:
         elif not artifact.is_snapshot():
             version = artifact.version
         if artifact.classifier:
-            return self.base + "/" + artifact.path() + "/" + artifact.artifact_id + "-" + version + "-" + artifact.classifier + "." + artifact.extension
+            return posixpath.join(self.base, artifact.path(), artifact.artifact_id + "-" + version + "-" + artifact.classifier + "." + artifact.extension)
 
-        return self.base + "/" + artifact.path() + "/" + artifact.artifact_id + "-" + version + "." + artifact.extension
+        return posixpath.join(self.base, artifact.path(), artifact.artifact_id + "-" + version + "." + artifact.extension)
 
     def _request(self, url, failmsg, f):
         # Hack to add parameters in the way that fetch_url expects
@@ -240,9 +240,10 @@ class MavenDownloader:
         if not self.verify_md5(filename, url + ".md5"):
             response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
             if response:
-                with open(filename, 'w') as f:
-                    # f.write(response.read())
-                    self._write_chunks(response, f, report_hook=self.chunk_report)
+                f = open(filename, 'w')
+                # f.write(response.read())
+                self._write_chunks(response, f, report_hook=self.chunk_report)
+                f.close()
                 return True
             else:
                 return False
@@ -286,9 +287,10 @@ class MavenDownloader:
 
     def _local_md5(self, file):
         md5 = hashlib.md5()
-        with open(file, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), ''):
-                md5.update(chunk)
+        f = open(file, 'rb')
+        for chunk in iter(lambda: f.read(8192), ''):
+            md5.update(chunk)
+        f.close()
         return md5.hexdigest()
 
 
@@ -328,12 +330,12 @@ def main():
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
-    except ValueError as e:
+    except ValueError, e:
         module.fail_json(msg=e.args[0])
 
     prev_state = "absent"
     if os.path.isdir(dest):
-        dest = dest + "/" + artifact_id + "-" + version + "." + extension
+        dest = posixpath.join(dest, artifact_id + "-" + version + "." + extension)
     if os.path.lexists(dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
         prev_state = "present"
     else:
@@ -349,7 +351,7 @@ def main():
             module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
-    except ValueError as e:
+    except ValueError, e:
         module.fail_json(msg=e.args[0])
 
 
