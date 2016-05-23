@@ -6,8 +6,9 @@
  - Docs Pull Request
 
 ##### ANSIBLE VERSION
+<!--- Paste verbatim output from “ansible --version” between quotes below -->
 ```
-<!--- Paste verbatim output from “ansible --version” between quotes -->
+
 ```
 
 ##### SUMMARY
@@ -19,6 +20,7 @@ commit message and your description; but you should still explain what
 the change does.
 -->
 
+<!-- Paste verbatim command output below, e.g. before and after your change -->
 ```
-<!-- Paste verbatim command output here, e.g. before and after your change -->
+
 ```
