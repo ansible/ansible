@@ -39,6 +39,7 @@ def get_file_parser(hostsfile, groups, loader):
     # class we can show a more apropos error
 
     shebang_present = False
+    exec_failed = False
     processed = False
     myerr = []
     parser = None
@@ -61,6 +62,7 @@ def get_file_parser(hostsfile, groups, loader):
             processed = True
         except Exception as e:
             myerr.append(str(e))
+            exec_failed = True
     elif shebang_present:
         myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
 
@@ -73,7 +75,7 @@ def get_file_parser(hostsfile, groups, loader):
             myerr.append(str(e))
 
     # ini
-    if not processed:
+    if not processed and not exec_failed and not shebang_present:
         try:
             parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
