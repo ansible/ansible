@@ -54,6 +54,9 @@ debug: msg="{{ smartos_images[item]['name'] }}-{{smartos_images[item]['version']
 with_items: smartos_images.keys()
 '''
 
+RETURN = '''
+# this module returns ansible_facts
+'''
 
 try:
     import json
