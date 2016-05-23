@@ -82,7 +82,12 @@ if __name__ == '__main__':
             else:
                 raise AnsibleError("Unknown Ansible alias: %s" % me)
         except ImportError as e:
-            if e.message.endswith(' %s' % sub):
+            # ImportError members have changed in py3
+            if 'msg' in dir(e):
+                msg = e.msg
+            else:
+                msg = e.message
+            if msg.endswith(' %s' % sub):
                 raise AnsibleError("Ansible sub-program not implemented: %s" % me)
             else:
                 raise
