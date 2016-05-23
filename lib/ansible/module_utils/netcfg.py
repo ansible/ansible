@@ -18,6 +18,7 @@
 #
 
 import re
+import time
 import collections
 import itertools
 import shlex
@@ -109,10 +110,12 @@ class NetworkConfig(object):
         return self._config
 
     def __str__(self):
-        config = collections.OrderedDict()
-        for item in self._config:
-            self.expand(item, config)
-        return '\n'.join(self.flatten(config))
+        text = ''
+        for item in self.items:
+            if not item.parents:
+                expand = self.get_section(item.text)
+                text += '%s\n' % self.get_section(item.text)
+        return str(text).strip()
 
     def load(self, contents):
         self._config = parse(contents, indent=self.indent)
@@ -166,6 +169,31 @@ class NetworkConfig(object):
         for c in obj.children:
             if c.raw not in current_level:
                 current_level[c.raw] = collections.OrderedDict()
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return '\n'.join([item.raw for item in section])
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
 
     def flatten(self, data, obj=None):
         if obj is None:
@@ -386,6 +414,56 @@ class Conditional(object):
     def contains(self, value):
         return str(self.value) in value
 
+class FailedConditionsError(Exception):
 
+    def __init__(self, msg, failed_conditions):
+        super(FailedConditionsError, self).__init__(msg)
+        self.failed_conditions = failed_conditions
 
+class CommandRunner(collections.Mapping):
+
+    def __init__(self, module):
+        self.module = module
+
+        self.items = dict()
+        self.conditionals = set()
+
+        self.retries = 10
+        self.interval = 1
+
+    def __getitem__(self, key):
+        return self.items[key]
+
+    def __len__(self):
+        return len(self.items)
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def add_command(self, command, output=None):
+        self.module.cli.add_commands(command, output=output)
+
+    def add_conditional(self, condition):
+        self.conditionals.add(Conditional(condition))
+
+    def run_commands(self):
+        responses = self.module.cli.run_commands()
+        for cmd, resp in itertools.izip(self.module.cli.commands, responses):
+            self.items[str(cmd)] = resp
+
+    def run(self):
+        while self.retries > 0:
+            self.run_commands()
+            for item in list(self.conditionals):
+                if item(self.items.values()):
+                    self.conditionals.remove(item)
+
+            if not self.conditionals:
+                break
+
+            time.sleep(self.interval)
+            self.retries -= 1
+        else:
+            failed_conditions = [item.raw for item in self.conditionals]
+            raise FailedConditionsError('timeout waiting for value', failed_conditions)
 
