@@ -28,7 +28,7 @@ version_added: "1.7"
 author: Trond Hindenes
 short_description: Installs/Uninstalls a installable package, either from local file system or url
 description:
-     - Installs or uninstalls a package
+     - Installs or uninstalls a package.  Optionally uses a product_id to check if the package needs installing.  You can find product ids for installed programs in the windows registry either in ``HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall`` or for 32 bit programs ``HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall``
 options:
   path:
     description:
