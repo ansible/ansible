@@ -34,12 +34,14 @@ options:
     required: true
   src:
     description:
-      - device to be mounted on I(name).
-    required: true
+        - device to be mounted on I(name). Required when C(state=present) or C(state=mounted)
+    required: false
+    default: null
   fstype:
     description:
-      - file-system type
-    required: true
+      - file-system type. Required when C(state=present) or C(state=mounted)
+    required: false
+    default: null
   opts:
     description:
       - mount options (see fstab(5))
@@ -261,21 +263,25 @@ def main():
             opts   = dict(default=None),
             passno = dict(default=None, type='str'),
             dump   = dict(default=None),
-            src    = dict(required=True),
-            fstype = dict(required=True),
+            src    = dict(required=False),
+            fstype = dict(required=False),
             fstab  = dict(default='/etc/fstab')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if = (
+            ['state', 'mounted', ['src', 'fstype']],
+            ['state', 'present', ['src', 'fstype']]
+        )
     )
 
 
     changed = False
     rc = 0
-    args = {
-        'name': module.params['name'],
-        'src': module.params['src'],
-        'fstype': module.params['fstype']
-    }
+    args = {'name': module.params['name']}
+    if module.params['src'] is not None:
+        args['src'] = module.params['src']
+    if module.params['fstype'] is not None:
+        args['fstype'] = module.params['fstype']
     if module.params['passno'] is not None:
         args['passno'] = module.params['passno']
     if module.params['opts'] is not None:
