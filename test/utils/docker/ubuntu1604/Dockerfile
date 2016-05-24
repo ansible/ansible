@@ -15,6 +15,7 @@ RUN apt-get install -y \
     acl \
     bzip2 \
     cdbs \
+    curl \
     debhelper \
     debianutils \
     devscripts \

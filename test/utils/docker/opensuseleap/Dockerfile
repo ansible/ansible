@@ -9,10 +9,12 @@ RUN zypper --non-interactive install --auto-agree-with-licenses \
     acl \
     asciidoc \
     bzip2 \
+    curl \
     dbus-1-python \
     gcc \
     git \
     glibc-locale \
+    glibc-i18ndata \
     iproute \
     lsb-release \
     make \
