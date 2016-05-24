@@ -111,6 +111,14 @@ options:
     required: false
     default: null
     aliases: []
+  mode:
+    version_added: TBD
+    description:
+      - network mode supporting subnets introduced into Google Cloud
+    required: false
+    default: "legacy"
+    choices: ["legacy", "auto", "custom"]
+    aliases: []
 
 requirements:
     - "python >= 2.6"
@@ -197,6 +205,7 @@ def main():
             pem_file = dict(),
             credentials_file = dict(),
             project_id = dict(),
+            mode = dict(default='legacy', choices=['legacy', 'auto', 'custom']),
         )
     )
 
@@ -213,6 +222,7 @@ def main():
     src_tags = module.params.get('src_tags')
     target_tags = module.params.get('target_tags')
     state = module.params.get('state')
+    mode = module.params.get('mode')
 
     changed = False
     json_output = {'state': state}
@@ -235,7 +245,7 @@ def main():
                     changed=False)
 
             try:
-                network = gce.ex_create_network(name, ipv4_range)
+                network = gce.ex_create_network(name, ipv4_range, mode=mode)
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
