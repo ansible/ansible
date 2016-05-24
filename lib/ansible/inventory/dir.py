@@ -65,7 +65,7 @@ def get_file_parser(hostsfile, groups, loader):
         myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
 
     # YAML/JSON
-    if not processed and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
+    if not processed and not shebang_present and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
         try:
             parser = InventoryYAMLParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
@@ -73,7 +73,7 @@ def get_file_parser(hostsfile, groups, loader):
             myerr.append(str(e))
 
     # ini
-    if not processed:
+    if not processed and not shebang_present:
         try:
             parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
