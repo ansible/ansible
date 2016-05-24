@@ -207,7 +207,7 @@ This should return something like::
 .. _binary_module_reading_input:
 
 Binary Modules Input
-~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++
 
 Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
 supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
