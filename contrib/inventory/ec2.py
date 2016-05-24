@@ -521,8 +521,20 @@ class Ec2Inventory(object):
             else:
                 reservations = conn.get_all_instances()
 
+            # Pull the tags back in a second step
+            # AWS are on record as saying that the tags fetched in the first `get_all_instances` request are not
+            # reliable and may be missing, and the only way to guarantee they are there is by calling `get_all_tags`
+            instance_ids = []
+            for reservation in reservations:
+                instance_ids.extend([instance.id for instance in reservation.instances])
+            tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids})
+            tags_by_instance_id = defaultdict(dict)
+            for tag in tags:
+                tags_by_instance_id[tag.res_id][tag.name] = tag.value
+
             for reservation in reservations:
                 for instance in reservation.instances:
+                    instance.tags = tags_by_instance_id[instance.id]
                     self.add_instance(instance, region)
 
         except boto.exception.BotoServerError as e:
