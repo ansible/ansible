@@ -253,6 +253,8 @@ def main():
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
+            except TypeError:
+                module.fail_json(msg="Update libcloud to a more recent version (1.0+) that supports network 'mode' parameter", changed=False)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
