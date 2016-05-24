@@ -289,14 +289,12 @@ no_log: setup
 
 test_binary_modules:
 	mytmpdir=$(MYTMPDIR); \
-	ls -al $$mytmpdir; \
 	curl https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
 	[ $$? != 0 ] && wget -qO- https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
-	ls -al $$mytmpdir; \
 	cd library; \
 	GOROOT=$$mytmpdir/go GOOS=linux GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_linux helloworld.go; \
 	GOROOT=$$mytmpdir/go GOOS=windows GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_win32nt.exe helloworld.go; \
 	GOROOT=$$mytmpdir/go GOOS=darwin GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_darwin helloworld.go; \
 	cd ..; \
 	rm -rf $$mytmpdir; \
-	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+	ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
