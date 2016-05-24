@@ -65,7 +65,7 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     db-[a:f].example.com
 
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 You can also select the connection type and user on a per host basis:
 
@@ -206,7 +206,7 @@ ansible_connection
     Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
 
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 SSH connection:
 
