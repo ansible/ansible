@@ -237,7 +237,7 @@ whether the interpreter in the shebang line has a specific path configured via
 an ``ansible_$X_interpreter`` inventory variable.  If it does, Ansible
 substitutes that path for the interpreter path given in the module.  After
 this, Ansible returns the complete module data and the module type to the
-:ref:`Normal Action <_flow_normal_action_plugin>` which continues execution of
+:ref:`Normal Action <flow_normal_action_plugin>` which continues execution of
 the module.
 
 Next we'll go into some details of the two assembler frameworks.
@@ -377,7 +377,7 @@ other code.
 Internal arguments
 ^^^^^^^^^^^^^^^^^^
 
-Both :ref:`module replacer` and :ref:`Ansiballz` send additional arguments to
+Both :ref:`module_replacer` and :ref:`Ansiballz` send additional arguments to
 the module beyond those which the user specified in the playbook.  These
 additional arguments are internal parameters that help implement global
 Ansible features.  Modules often do not need to know about these explicitly as
