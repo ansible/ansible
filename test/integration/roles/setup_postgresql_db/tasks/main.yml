@@ -8,7 +8,7 @@
       paths: '../vars'
 
 # Make sure we start fresh
-- name: remove old db (red hat)
+- name: remove old db (RedHat or Suse)
   command: rm -rf "{{ pg_dir }}"
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
