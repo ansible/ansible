@@ -449,9 +449,6 @@ def grant_privileges(cursor, user, privs):
     grant_funcs = dict(table=grant_table_privileges, database=grant_database_privileges)
     check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
 
-    grant_funcs = dict(table=grant_table_privileges, database=grant_database_privileges)
-    check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
-
     changed = False
     for type_ in privs:
         for name, privileges in privs[type_].iteritems():
