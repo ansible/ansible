@@ -240,12 +240,16 @@ def main():
 
         # user wants to create a new network that doesn't yet exist
         if name and not network:
-            if not ipv4_range:
-                module.fail_json(msg="Network '" + name + "' is not found. To create network, 'ipv4_range' parameter is required",
+            if not ipv4_range and mode != 'auto':
+                module.fail_json(msg="Network '" + name + "' is not found. To create network in legacy mode, 'ipv4_range' parameter is required",
                     changed=False)
+            if mode == 'legacy':
+                kwargs = {}
+            else:
+                kwargs = {'mode': mode}
 
             try:
-                network = gce.ex_create_network(name, ipv4_range, mode=mode)
+                network = gce.ex_create_network(name, ipv4_range, **kwargs)
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
