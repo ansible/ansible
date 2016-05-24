@@ -28,31 +28,28 @@ version_added: "1.7"
 author: Trond Hindenes
 short_description: Installs/Uninstalls a installable package, either from local file system or url
 description:
-     - Installs or uninstalls a package.  Optionally uses a product_id to check if the package needs installing.  You can find product ids for installed programs in the windows registry either in ``HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall`` or for 32 bit programs ``HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall``
+     - Installs or uninstalls a package.
+     - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
 options:
   path:
     description:
       - Location of the package to be installed (either on file system, network share or url)
     required: true
-    default: null
-    aliases: []
   name:
     description:
       - name of the package. Just for logging reasons, will use the value of path if name isn't specified
     required: false
     default: null
-    aliases: []
   product_id:
     description:
       - product id of the installed package (used for checking if already installed)
     required: true
-    default: null
     aliases: [productid]
   arguments:
     description:
       - Any arguments the installer needs
     default: null
-    aliases: []
+    required: false
   state:
     description:
       - Install or Uninstall
@@ -60,28 +57,27 @@ options:
       - present
       - absent
     default: present
+    required: false
     aliases: [ensure]
   user_name:
     description:
       - Username of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_password for this to function properly.
     default: null
-    aliases: []
+    required: false
   user_password:
     description:
       - Password of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
     default: null
-    aliases: []
+    required: false
 '''
 
 EXAMPLES = '''
 # Playbook example
-  - name: Install the vc thingy
-    win_package:
-      name="Microsoft Visual C thingy"
-      path="http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe"
-      Product_Id="{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}"
-      Arguments="/install /passive /norestart"
-
-
+- name: Install the vc thingy
+  win_package:
+    name="Microsoft Visual C thingy"
+    path="http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe"
+    Product_Id="{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}"
+    Arguments="/install /passive /norestart"
 '''
 
