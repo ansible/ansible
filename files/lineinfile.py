@@ -39,8 +39,8 @@ description:
   - This module will search a file for a line, and ensure that it is present or absent.
   - This is primarily useful when you want to change a single line in
     a file only. See the M(replace) module if you want to change
-    multiple, similar lines; for other cases, see the M(copy) or
-    M(template) modules.
+    multiple, similar lines or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
+    For other cases, see the M(copy) or M(template) modules.
 version_added: "0.7"
 options:
   dest:
@@ -89,7 +89,7 @@ options:
     description:
       - Used with C(state=present). If specified, the line will be inserted
         after the last match of specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file. 
+        available; C(EOF) for inserting the line at the end of the file.
         If specified regular expression has no matches, EOF will be used instead.
         May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
@@ -98,7 +98,7 @@ options:
     version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression. A value is 
+        before the last match of specified regular expression. A value is
         available; C(BOF) for inserting the line at the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
