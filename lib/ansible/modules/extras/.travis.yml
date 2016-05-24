@@ -24,6 +24,7 @@ env:
       cloud/amazon/ec2_snapshot_facts.py
       cloud/amazon/ec2_vol_facts.py
       cloud/amazon/ec2_vpc_igw.py
+      cloud/amazon/ec2_vpc_nacl.py
       cloud/amazon/ec2_vpc_net_facts.py
       cloud/amazon/ec2_vpc_route_table_facts.py
       cloud/amazon/ec2_vpc_route_table.py
@@ -109,6 +110,7 @@ env:
       notification/mqtt.py
       notification/sns.py
       notification/typetalk.py
+      packaging/language/maven_artifact.py
       packaging/os/layman.py
       packaging/os/yum_repository.py
       source_control/gitlab_group.py
