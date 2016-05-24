@@ -80,13 +80,13 @@ options:
     version_added: "1.9"
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated. 
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site. 
+      - This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
+      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
       - Prior to 2.1 the code worked as if this was set to C(yes).
     required: false
     default: "yes"
     choices: ["yes", "no"]
-    version_added: "2.1" 
+    version_added: "2.1"
 author: "Ansible Core Team"
 '''
 
@@ -124,6 +124,14 @@ EXAMPLES = '''
 - authorized_key: user=root key="{{ item }}" state=present exclusive=yes
   with_file:
     - public_keys/doe-jane
+
+# Copies the key from the user who is running ansible to the remote machine
+- set_fact:
+    my_ssh_key: "{{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
+
+- authorized_key: user=ubuntu key="{{ lookup('file', my_ssh_key) }}"
+  sudo: yes
+
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
