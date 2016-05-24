@@ -54,8 +54,8 @@ options:
     description:
       - If you want to refresh your catalog from the mirror, set this to (C(yes)).
     required: false
-    choices: ["yes", "no"]
-    default: no
+    default: False
+    version_added: "2.1"
 '''
 
 EXAMPLES = '''
@@ -129,7 +129,7 @@ def main():
             name = dict(required = True),
             state = dict(required = True, choices=['present', 'absent','latest']),
             site = dict(default = None),
-            update_catalog = dict(required = False, default = "no", type='bool', choices=["yes","no"]),
+            update_catalog = dict(required = False, default = False, type='bool'),
         ),
         supports_check_mode=True
     )
