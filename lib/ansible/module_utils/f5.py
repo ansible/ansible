@@ -60,6 +60,7 @@ def f5_parse_arguments(module):
 
     return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'],module.params['server_port'])
 
+
 def bigip_api(bigip, user, password, validate_certs, port=443):
     try:
         if bigsuds.__version__ >= '1.0.4':
@@ -86,14 +87,20 @@ def bigip_api(bigip, user, password, validate_certs, port=443):
 
     return api
 
+
 # Fully Qualified name (with the partition)
 def fq_name(partition,name):
     if name is not None and not name.startswith('/'):
         return '/%s/%s' % (partition,name)
     return name
 
-# Fully Qualified name (with partition) for a list 
+
+# Fully Qualified name (with partition) for a list
 def fq_list_names(partition,list_names):
     if list_names is None:
         return None
     return map(lambda x: fq_name(partition,x),list_names)
+
+
+class F5ModuleError(Exception):
+    pass
