@@ -56,13 +56,21 @@ Ansible Changes By Release
 - azure:
   * azure_rm_deployment
   * azure_rm_networkinterface
+  * azure_rm_networkinterface_facts
+  * azure_rm_publicipaddress
+  * azure_rm_publicipaddress_facts
   * azure_rm_resourcegroup
+  * azure_rm_resourcegroup_facts
   * azure_rm_securitygroup
+  * azure_rm_securitygroup_facts
   * azure_rm_storageaccount
+  * azure_rm_storageaccount_facts
   * azure_rm_storageblob
   * azure_rm_subnet
   * azure_rm_virtualmachine
+  * azure_rm_virtualmachineimage_facts
   * azure_rm_virtualnetwork
+  * azure_rm_virtualnetwork_facts
 - cloudflare_dns
 - cloudstack
   * cs_cluster
