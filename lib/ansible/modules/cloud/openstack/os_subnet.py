@@ -71,6 +71,12 @@ options:
         - The ip that would be assigned to the gateway for this subnet
      required: false
      default: None
+   no_gateway_ip:
+     description:
+        - The gateway IP would not be assigned for this subnet
+     required: false
+     default: false
+     version_added: "2.2"
    dns_nameservers:
      description:
         - List of DNS nameservers for this subnet.
@@ -188,6 +194,7 @@ def _needs_update(subnet, module, cloud):
     pool_start = module.params['allocation_pool_start']
     pool_end = module.params['allocation_pool_end']
     gateway_ip = module.params['gateway_ip']
+    no_gateway_ip = module.params['no_gateway_ip']
     dns = module.params['dns_nameservers']
     host_routes = module.params['host_routes']
     curr_pool = subnet['allocation_pools'][0]
@@ -209,6 +216,8 @@ def _needs_update(subnet, module, cloud):
         new_hr = sorted(host_routes, key=lambda t: t.keys())
         if sorted(curr_hr) != sorted(new_hr):
             return True
+    if no_gateway_ip and subnet['gateway_ip']:
+        return True
     return False
 
 
@@ -232,6 +241,7 @@ def main():
         ip_version=dict(default='4', choices=['4', '6']),
         enable_dhcp=dict(default='true', type='bool'),
         gateway_ip=dict(default=None),
+        no_gateway_ip=dict(default=False, type='bool'),
         dns_nameservers=dict(default=None, type='list'),
         allocation_pool_start=dict(default=None),
         allocation_pool_end=dict(default=None),
@@ -257,6 +267,7 @@ def main():
     enable_dhcp = module.params['enable_dhcp']
     subnet_name = module.params['name']
     gateway_ip = module.params['gateway_ip']
+    no_gateway_ip = module.params['no_gateway_ip']
     dns = module.params['dns_nameservers']
     pool_start = module.params['allocation_pool_start']
     pool_end = module.params['allocation_pool_end']
@@ -277,6 +288,9 @@ def main():
         module.fail_json(msg='allocation pool requires start and end values')
     else:
         pool = None
+
+    if no_gateway_ip and gateway_ip:
+        module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -303,6 +317,7 @@ def main():
                                              enable_dhcp=enable_dhcp,
                                              subnet_name=subnet_name,
                                              gateway_ip=gateway_ip,
+                                             disable_gateway_ip=no_gateway_ip,
                                              dns_nameservers=dns,
                                              allocation_pools=pool,
                                              host_routes=host_routes,
@@ -316,6 +331,7 @@ def main():
                                         subnet_name=subnet_name,
                                         enable_dhcp=enable_dhcp,
                                         gateway_ip=gateway_ip,
+                                        disable_gateway_ip=no_gateway_ip,
                                         dns_nameservers=dns,
                                         allocation_pools=pool,
                                         host_routes=host_routes)
