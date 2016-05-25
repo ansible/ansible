@@ -218,7 +218,7 @@
     that:
       - result|success
       - 'sni_host == result.content'
-  when: ansible_python.has_sslcontext and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '16.04')
+  when: ansible_python.has_sslcontext
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
   uri:
