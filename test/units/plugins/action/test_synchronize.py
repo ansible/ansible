@@ -4,12 +4,12 @@
 (Epdb) pprint(DeepDiff(self.final_task_vars, out_task_vars), indent=2)
 { 'dic_item_added': set([u"root['ansible_python_interpreter']"]),
   'dic_item_removed': set([ u"root['hostvars']['127.0.0.1']",
-			    u"root['hostvars']['::1']",
-			    u"root['hostvars']['localhost']"]),
+                            u"root['hostvars']['::1']",
+                            u"root['hostvars']['localhost']"]),
   'iterable_item_added': { u"root['hostvars']['el6host']['groups']['all'][1]": u'::1',
-			   u"root['hostvars']['el6host']['groups']['ungrouped'][1]": u'::1',
-			   u"root['vars']['hostvars']['el6host']['groups']['all'][1]": u'::1',
-			   u"root['vars']['hostvars']['el6host']['groups']['ungrouped'][1]": u'::1'}}
+                           u"root['hostvars']['el6host']['groups']['ungrouped'][1]": u'::1',
+                           u"root['vars']['hostvars']['el6host']['groups']['all'][1]": u'::1',
+                           u"root['vars']['hostvars']['el6host']['groups']['ungrouped'][1]": u'::1'}}
 '''
 
 import json
@@ -108,12 +108,12 @@ class SynchronizeTester(object):
         #if 'delegate' in fixturepath:
         #    import epdb; epdb.st()
 
-	metapath = os.path.join(fixturepath, 'meta.yaml')
-	with open(metapath, 'rb') as f:
-	    fdata = f.read()
-	test_meta = yaml.load(fdata)
+        metapath = os.path.join(fixturepath, 'meta.yaml')
+        with open(metapath, 'rb') as f:
+            fdata = f.read()
+        test_meta = yaml.load(fdata)
 
-	# load inital play context vars
+        # load inital play context vars
         if '_play_context' in test_meta:
             if test_meta['_play_context']:
                 self.task.args = {}
@@ -122,7 +122,7 @@ class SynchronizeTester(object):
                         v = None
                     setattr(self._play_context, k, v)
 
-	# load inital task context vars
+        # load inital task context vars
         if '_task' in test_meta:
             if test_meta['_task']:
                 self.task.args = {}
@@ -132,32 +132,32 @@ class SynchronizeTester(object):
                         v = None
                     setattr(self.task, k, v)
 
-	# load inital task vars
+        # load inital task vars
         if 'task_args' in test_meta:
             if test_meta['task_args']:
                 self.task.args = {}
                 for k,v in test_meta['task_args'].iteritems():
                     self.task.args[k] = v
 
-	# load inital task vars
-	invarspath = os.path.join(fixturepath, 
-		test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
+        # load inital task vars
+        invarspath = os.path.join(fixturepath, 
+                test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
         with open(invarspath, 'rb') as f:
             fdata = f.read()
         in_task_vars = json.loads(fdata)
 
-	# load expected final task vars
-	outvarspath = os.path.join(fixturepath, 
-		test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
+        # load expected final task vars
+        outvarspath = os.path.join(fixturepath, 
+                test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
         with open(outvarspath, 'rb') as f:
             fdata = f.read()
         out_task_vars = json.loads(fdata)
 
-	# fixup the connection
-	for k,v in test_meta['connection'].iteritems():
+        # fixup the connection
+        for k,v in test_meta['connection'].iteritems():
             setattr(self.connection, k, v)
 
-	# fixup the hostvars
+        # fixup the hostvars
         if test_meta['hostvars']:
             for k,v in test_meta['hostvars'].iteritems():
                 in_task_vars['hostvars'][k] = v
@@ -165,14 +165,14 @@ class SynchronizeTester(object):
         #if 'delegate' in fixturepath:
         #    import epdb; epdb.st()
 
-	# initalize and run the module
+        # initalize and run the module
         SAM = ActionModule(self.task, self.connection, self._play_context, 
                            self.loader, self.templar, self.shared_loader_obj)
         SAM._execute_module = self._execute_module
         result = SAM.run(task_vars=in_task_vars)
 
-	# run assertions
-	for check in test_meta['asserts']:
+        # run assertions
+        for check in test_meta['asserts']:
             value = eval(check)
             if not value:
                 print(check, value)
