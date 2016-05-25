@@ -117,7 +117,7 @@ class SynchronizeTester(object):
         if '_play_context' in test_meta:
             if test_meta['_play_context']:
                 self.task.args = {}
-                for k,v in test_meta['_play_context'].iteritems():
+                for k,v in test_meta['_play_context'].items():
                     if v == 'None':
                         v = None
                     setattr(self._play_context, k, v)
@@ -126,7 +126,7 @@ class SynchronizeTester(object):
         if '_task' in test_meta:
             if test_meta['_task']:
                 self.task.args = {}
-                for k,v in test_meta['_task'].iteritems():
+                for k,v in test_meta['_task'].items():
                     #import epdb; epdb.st()
                     if v == 'None':
                         v = None
@@ -136,7 +136,7 @@ class SynchronizeTester(object):
         if 'task_args' in test_meta:
             if test_meta['task_args']:
                 self.task.args = {}
-                for k,v in test_meta['task_args'].iteritems():
+                for k,v in test_meta['task_args'].items():
                     self.task.args[k] = v
 
         # load inital task vars
@@ -144,6 +144,7 @@ class SynchronizeTester(object):
                 test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
         with open(invarspath, 'rb') as f:
             fdata = f.read()
+        fdata = fdata.decode("utf-8")    
         in_task_vars = json.loads(fdata)
 
         # load expected final task vars
@@ -151,15 +152,16 @@ class SynchronizeTester(object):
                 test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
         with open(outvarspath, 'rb') as f:
             fdata = f.read()
+        fdata = fdata.decode("utf-8")    
         out_task_vars = json.loads(fdata)
 
         # fixup the connection
-        for k,v in test_meta['connection'].iteritems():
+        for k,v in test_meta['connection'].items():
             setattr(self.connection, k, v)
 
         # fixup the hostvars
         if test_meta['hostvars']:
-            for k,v in test_meta['hostvars'].iteritems():
+            for k,v in test_meta['hostvars'].items():
                 in_task_vars['hostvars'][k] = v
 
         #if 'delegate' in fixturepath:
