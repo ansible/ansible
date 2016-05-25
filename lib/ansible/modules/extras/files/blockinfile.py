@@ -281,7 +281,7 @@ def main():
 
     if lines:
         result = '\n'.join(lines)
-        if original.endswith('\n'):
+        if original and original.endswith('\n'):
             result += '\n'
     else:
         result = ''
