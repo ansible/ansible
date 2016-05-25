@@ -191,10 +191,10 @@ For example::
     ---
     - name: wait for interface to be admin enabled
       eos_command:
-      commands:
-          - show interface Ethernet4 | json
-      waitfor:
-          - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
+          commands:
+              - show interface Ethernet4 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
 
 In the above example task, the command :code:`show interface Ethernet4 | json`
 is executed on the remote device and the results are evaluated.  If
@@ -210,12 +210,12 @@ results in an interface.  For instance::
     ---
     - name: wait for interfaces to be admin enabled
       eos_command:
-      commands:
-          - show interface Ethernet4 | json
-          - show interface Ethernet5 | json
-      waitfor:
-          - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
-          - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
+          commands:
+              - show interface Ethernet4 | json
+              - show interface Ethernet5 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
+              - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
 
 In the above example, two commands are executed on the
 remote device, and the results are evaluated.  By specifying the result
