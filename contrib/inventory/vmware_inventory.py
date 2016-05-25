@@ -137,8 +137,8 @@ class VMWareInventory(object):
         ''' Get instances and cache the data '''
 
         instances = self.get_instances()
-	self.instances = instances
-	self.inventory = self.instances_to_inventory(instances)
+        self.instances = instances
+        self.inventory = self.instances_to_inventory(instances)
         self.write_to_cache(self.inventory, self.cache_path_cache)
 
 
@@ -168,22 +168,22 @@ class VMWareInventory(object):
         scriptbasename = os.path.basename(scriptbasename)
         scriptbasename = scriptbasename.replace('.py', '')
 
-	defaults = {'vmware': {
-			'server': '',
-			'port': 443,
-			'username': '',
-			'password': '',
-			'ini_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), '%s.ini' % scriptbasename),
-			'cache_name': 'ansible-vmware',
-			'cache_path': '~/.ansible/tmp',
-			'cache_max_age': 3600,
+        defaults = {'vmware': {
+            'server': '',
+            'port': 443,
+            'username': '',
+            'password': '',
+            'ini_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), '%s.ini' % scriptbasename),
+            'cache_name': 'ansible-vmware',
+            'cache_path': '~/.ansible/tmp',
+            'cache_max_age': 3600,
                         'max_object_level': 1,
                         'alias_pattern': '{{ config.name + "_" + config.uuid }}',
                         'host_pattern': '{{ guest.ipaddress }}',
                         'host_filters': '{{ guest.gueststate == "running" }}',
                         'groupby_patterns': '{{ guest.guestid }},{{ "templates" if config.template else "guests"}}',
                         'lower_var_keys': True }
-		   }
+           }
 
         if six.PY3:
             config = configparser.ConfigParser()
@@ -195,10 +195,10 @@ class VMWareInventory(object):
         vmware_ini_path = os.path.expanduser(os.path.expandvars(vmware_ini_path))
         config.read(vmware_ini_path)
 
-	# apply defaults
-	for k,v in defaults['vmware'].iteritems():
-	    if not config.has_option('vmware', k):
-                config.set('vmware', k, str(v))
+        # apply defaults
+        for k,v in defaults['vmware'].iteritems():
+            if not config.has_option('vmware', k):
+                    config.set('vmware', k, str(v))
 
         # where is the cache?
         self.cache_dir = os.path.expanduser(config.get('vmware', 'cache_path'))
@@ -206,19 +206,19 @@ class VMWareInventory(object):
             os.makedirs(self.cache_dir)
 
         # set the cache filename and max age
-	cache_name = config.get('vmware', 'cache_name')
+        cache_name = config.get('vmware', 'cache_name')
         self.cache_path_cache = self.cache_dir + "/%s.cache" % cache_name
         self.cache_max_age = int(config.getint('vmware', 'cache_max_age'))
 
-	# mark the connection info 
+        # mark the connection info 
         self.server =  os.environ.get('VMWARE_SERVER', config.get('vmware', 'server'))
         self.port = int(os.environ.get('VMWARE_PORT', config.get('vmware', 'port')))
         self.username = os.environ.get('VMWARE_USERNAME', config.get('vmware', 'username'))
         self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password'))
 
-	# behavior control
-	self.maxlevel = int(config.get('vmware', 'max_object_level'))
-    	self.lowerkeys = config.get('vmware', 'lower_var_keys')
+        # behavior control
+        self.maxlevel = int(config.get('vmware', 'max_object_level'))
+        self.lowerkeys = config.get('vmware', 'lower_var_keys')
         if type(self.lowerkeys) != bool:
             if str(self.lowerkeys).lower() in ['yes', 'true', '1']:
                 self.lowerkeys = True
@@ -258,43 +258,43 @@ class VMWareInventory(object):
 
         instances = []        
 
-	kwargs = {'host': self.server,
-                  'user': self.username,
-                  'pwd': self.password,
-                  'port': int(self.port) }
+        kwargs = {'host': self.server,
+                      'user': self.username,
+                      'pwd': self.password,
+                      'port': int(self.port) }
 
-	if hasattr(ssl, 'SSLContext'):
-		# older ssl libs do not have an SSLContext method:
-    		# 	context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-		# 	AttributeError: 'module' object has no attribute 'SSLContext'
-		# older pyvmomi version also do not have an sslcontext kwarg:
-		# https://github.com/vmware/pyvmomi/commit/92c1de5056be7c5390ac2a28eb08ad939a4b7cdd
-        	context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        	context.verify_mode = ssl.CERT_NONE
-		kwargs['sslContext'] = context
+        if hasattr(ssl, 'SSLContext'):
+            # older ssl libs do not have an SSLContext method:
+                #     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            #     AttributeError: 'module' object has no attribute 'SSLContext'
+            # older pyvmomi version also do not have an sslcontext kwarg:
+            # https://github.com/vmware/pyvmomi/commit/92c1de5056be7c5390ac2a28eb08ad939a4b7cdd
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            kwargs['sslContext'] = context
 
-	if self.args.usevcr and not os.path.isdir('fixtures'):
-	    os.makedirs('fixtures')
+        if self.args.usevcr and not os.path.isdir('fixtures'):
+            os.makedirs('fixtures')
 
-	if self.args.usevcr and hasvcr and os.path.isfile('fixtures/get_instances.yaml'):
-	    self.debugl("### RUNNING IN VCR PLAY MODE")
+        if self.args.usevcr and hasvcr and os.path.isfile('fixtures/get_instances.yaml'):
+            self.debugl("### RUNNING IN VCR PLAY MODE")
             instances = self._get_instances_with_vcr_play(kwargs)
-	elif self.args.usevcr and hasvcr and not os.path.isfile('fixtures/get_instances.yaml'):
-	    self.debugl("### RUNNING IN VCR RECORD MODE")
+        elif self.args.usevcr and hasvcr and not os.path.isfile('fixtures/get_instances.yaml'):
+            self.debugl("### RUNNING IN VCR RECORD MODE")
             instances = self._get_instances_with_vcr_record(kwargs)
-	else:
-	    self.debugl("### RUNNING WITHOUT VCR")
+        else:
+            self.debugl("### RUNNING WITHOUT VCR")
             instances = self._get_instances(kwargs)
 
         self.debugl("### INSTANCES RETRIEVED")
-	return instances
+        return instances
 
 
     def _get_instances(self, inkwargs):
 
         ''' Make API calls without VCR fixtures '''
 
-	instances = []
+        instances = []
         si = SmartConnect(**inkwargs)
             
         if not si:
@@ -322,7 +322,7 @@ class VMWareInventory(object):
 
         ''' Make API calls with existing VCR fixtures '''
 
-	instances = []
+        instances = []
         si = SmartConnect(**kwargs)
         if not si:
             print("Could not connect to the specified host using specified "
@@ -349,7 +349,7 @@ class VMWareInventory(object):
 
         ''' Make API calls and record with vcr '''
 
-	instances = []
+        instances = []
         si = SmartConnect(**kwargs)
         if not si:
             print("Could not connect to the specified host using specified "
@@ -406,7 +406,7 @@ class VMWareInventory(object):
 
         ''' Convert a list of vm objects into a json compliant inventory '''
 
-	inventory = self._empty_inventory()
+        inventory = self._empty_inventory()
         inventory['all'] = {}
         inventory['all']['hosts'] = []
         last_idata = None
@@ -478,7 +478,7 @@ class VMWareInventory(object):
                 if k not in inventory[v]['hosts']:
                     inventory[v]['hosts'].append(k)    
 
-	return inventory
+        return inventory
 
 
     def create_template_mapping(self, inventory, pattern, dtype='string'):
@@ -517,12 +517,12 @@ class VMWareInventory(object):
 
         rdata = {}
 
-	# Do not serialize self
+        # Do not serialize self
         if hasattr(vobj, '__name__'):
             if vobj.__name__ == 'VMWareInventory':
                 return rdata
 
-	# Exit early if maxlevel is reached
+        # Exit early if maxlevel is reached
         if level > self.maxlevel:
             return rdata
 
@@ -542,7 +542,7 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     k = k.lower()
 
-		rdata[k] = self._process_object_types(v, level=level)
+            rdata[k] = self._process_object_types(v, level=level)
 
         else:    
 
@@ -569,7 +569,8 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
 
-		rdata[method] = self._process_object_types(methodToCall, level=level)
+            rdata[method] = self._process_object_types(methodToCall, level=level)
+
         return rdata
 
 
@@ -591,17 +592,17 @@ class VMWareInventory(object):
                 if type(vi) in self.safe_types:
                     rdata.append(vi)
                 else:
-		    if (level+1 <= self.maxlevel):
-			vid = self.facts_from_vobj(vi, level=(level+1))
-			if vid:
-			    rdata.append(vid)
+                    if (level+1 <= self.maxlevel):
+                        vid = self.facts_from_vobj(vi, level=(level+1))
+                        if vid:
+                            rdata.append(vid)
 
         elif hasattr(vobj, '__dict__'):
-	    if (level+1 <= self.maxlevel):
-		md = None
-		md = self.facts_from_vobj(vobj, level=(level+1))
-		if md:
-		    rdata = md
+            if (level+1 <= self.maxlevel):
+                md = None
+                md = self.facts_from_vobj(vobj, level=(level+1))
+                if md:
+                    rdata = md
         elif not vobj or type(vobj) in self.safe_types:
             rdata = vobj
         elif type(vobj) == datetime.datetime:
@@ -609,9 +610,9 @@ class VMWareInventory(object):
         else:
             self.debugl("unknown datatype: %s" % type(vobj))
 
-	if not rdata:
-		rdata = None
-        return rdata
+        if not rdata:
+            rdata = None
+            return rdata
 
 
     def get_host_info(self, host):
@@ -619,6 +620,7 @@ class VMWareInventory(object):
         ''' Return hostvars for a single host '''
 
         return self.inventory['_meta']['hostvars'][host]
+
 
 if __name__ == "__main__":
     # Run the script
