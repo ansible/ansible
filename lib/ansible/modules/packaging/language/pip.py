@@ -52,7 +52,11 @@ options:
   virtualenv:
     description:
       - An optional path to a I(virtualenv) directory to install into.
-        It cannot be specified together with the 'executable' parameter (added in 2.1).
+        It cannot be specified together with the 'executable' parameter
+        (added in 2.1).
+        If the virtualenv does not exist, it will be created before installing
+        packages. The optional virtualenv_site_packages, virtualenv_command,
+        and virtualenv_python options affect the creation of the virtualenv.
     required: false
     default: null
   virtualenv_site_packages:
@@ -129,7 +133,9 @@ options:
     default: null
 
 notes:
-   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified and the virtualenv needs to be initialized.
+   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
+     installed on the remote host if the virtualenv parameter is specified and
+     the virtualenv needs to be created.
 requirements: [ "virtualenv", "pip" ]
 author: "Matt Wright (@mattupstate)"
 '''
