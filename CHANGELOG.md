@@ -6,6 +6,7 @@ Ansible Changes By Release
 ###Major Changes:
 
 * Added support for binary modules
+* The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 
 ####New Modules:
 - aws
@@ -15,6 +16,7 @@ Ansible Changes By Release
   * cs_router
 - smartos
   * smartos_image_facts
+- systemd
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
