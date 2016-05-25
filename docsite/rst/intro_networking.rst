@@ -145,13 +145,6 @@ Running the above task will cause an error to be generated with a message that r
 
 Overall, this provides a very granular level of control over how credentials are used with modules.  It provides the playbook designer maximum control for changing context during a playbook run as needed.  
 
-.. _networking_module_types:
-
-Understanding Networking Module Types
-`````````````````````````````````````
-
-TBD
-
 .. _networking_environment_variables:
 
 Networking Environment Variables
@@ -188,13 +181,48 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 * contains - Object contains specified item
 
 
-Conditionals used with networking command modules only evaluate results, not stdout. For example, the following example won't work::
+Conditional statements evalute the results from the commands that are
+executed remotely on the device.  Once the task executes the command
+set, the waitfor argument can be used to evalute the results before
+returning control to the Ansible playbook.
+
+For example::
 
     ---
-    waitfor: "stdout_lines[0][6] contains '100.00'"
+    - name: wait for interface to be admin enabled
+      eos_command:
+          commands:
+              - show interface Ethernet4 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
 
-To evaluate this properly, you'll need to compare against results. For example::
+In the above example task, the command :code:`show interface Ethernet4 | json`
+is executed on the remote device and the results are evaluated.  If
+the path
+:code:`(result[0].interfaces.Ethernet4.interfaceStatus)` is not equal to
+"connected", then the command is retried.  This process continues
+until either the condition is satisfied or the number of retries has
+expired (by default, this is 10 retries at 1 second intervals).
+
+The commands module can also evaluate more than one set of command
+results in an interface.  For instance::
 
     ---
-    result[0] contains '100.00'
+    - name: wait for interfaces to be admin enabled
+      eos_command:
+          commands:
+              - show interface Ethernet4 | json
+              - show interface Ethernet5 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
+              - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
+
+In the above example, two commands are executed on the
+remote device, and the results are evaluated.  By specifying the result
+index value (0 or 1), the correct result output is checked against the
+conditional.
+
+The waitfor argument must always start with result and then the
+command index in [], where 0 is the first command in the commands list,
+1 is the second command, 2 is the third and so on.
 
