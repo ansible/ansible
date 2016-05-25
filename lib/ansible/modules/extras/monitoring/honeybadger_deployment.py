@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: honeybadger_deployment
 author: "Benjamin Curtis (@stympy)"
-version_added: "2.1"
+version_added: "2.2"
 short_description: Notify Honeybadger.io about app deployments
 description:
    - Notify Honeybadger.io about app deployments (see http://docs.honeybadger.io/article/188-deployment-tracking)
@@ -78,6 +78,11 @@ RETURN = '''# '''
 
 import urllib
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import *
+
 # ===========================================
 # Module execution.
 #
@@ -122,17 +127,14 @@ def main():
     try:
         data = urllib.urlencode(params)
         response, info = fetch_url(module, url, data=data)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg='Unable to notify Honeybadger: %s' % e)
     else:
         if info['status'] == 200:
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="HTTP result code: %d connecting to %s" % (info['status'], url))
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
