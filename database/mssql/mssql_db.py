@@ -73,7 +73,9 @@ options:
 notes:
    - Requires the pymssql Python package on the remote host. For Ubuntu, this
      is as easy as pip install pymssql (See M(pip).)
-requirements: [ pymssql ]
+requirements:
+   - python >= 2.7
+   - pymssql
 author: Vedit Firat Arig 
 '''
 
@@ -177,7 +179,7 @@ def main():
     try:
         conn = pymssql.connect(user=login_user, password=login_password, host=login_querystring, database='master')
         cursor = conn.cursor()
-    except Exception, e:
+    except Exception as e:
         if "Unknown database" in str(e):
                 errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
@@ -191,7 +193,7 @@ def main():
         if state == "absent":
             try:
                 changed = db_delete(conn, cursor, db)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "import":
             conn.autocommit(autocommit)
@@ -205,12 +207,12 @@ def main():
         if state == "present":
             try:
                 changed = db_create(conn, cursor, db)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg="error creating database: " + str(e))
         elif state == "import":
             try:
                 changed = db_create(conn, cursor, db)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg="error creating database: " + str(e))
 
             conn.autocommit(autocommit)
