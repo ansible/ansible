@@ -31,15 +31,20 @@ import jinja2
 import os
 import six
 import ssl
-from time import time
+import sys
 import uuid
 
 from collections import defaultdict
-from pyVim.connect import SmartConnect, Disconnect
-from pyVmomi import vim
 from six.moves import configparser
 from time import time
 
+HAS_PYVMOMI = False
+try:
+    from pyVmomi import vim
+    from pyVim.connect import SmartConnect, Disconnect
+    HAS_PYVMOMI = True
+except ImportError:
+    pass
 
 try:
     import json
@@ -76,7 +81,10 @@ class VMWareInventory(object):
     groupby_patterns = []
 
     bad_types = ['Array']
-    safe_types = [int, long, bool, str, float, None]
+    if (sys.version_info > (3, 0)):
+        safe_types = [int, bool, str, float, None]
+    else:
+        safe_types = [int, long, bool, str, float, None]
     iter_types = [dict, list]
     skip_keys = ['dynamicproperty', 'dynamictype', 'managedby', 'childtype']
 
@@ -239,8 +247,6 @@ class VMWareInventory(object):
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on PyVmomi')
         parser.add_argument('--debug', action='store_true', default=False,
                            help='show debug info')
-        parser.add_argument('--usevcr', action='store_true', default=None,
-                           help='use python-vcr to store pysphere data to yaml (for troubleshooting)')
         parser.add_argument('--list', action='store_true', default=True,
                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
@@ -273,18 +279,9 @@ class VMWareInventory(object):
             context.verify_mode = ssl.CERT_NONE
             kwargs['sslContext'] = context
 
-        if self.args.usevcr and not os.path.isdir('fixtures'):
-            os.makedirs('fixtures')
 
-        if self.args.usevcr and hasvcr and os.path.isfile('fixtures/get_instances.yaml'):
-            self.debugl("### RUNNING IN VCR PLAY MODE")
-            instances = self._get_instances_with_vcr_play(kwargs)
-        elif self.args.usevcr and hasvcr and not os.path.isfile('fixtures/get_instances.yaml'):
-            self.debugl("### RUNNING IN VCR RECORD MODE")
-            instances = self._get_instances_with_vcr_record(kwargs)
-        else:
-            self.debugl("### RUNNING WITHOUT VCR")
-            instances = self._get_instances(kwargs)
+        self.debugl("### RUNNING WITHOUT VCR")
+        instances = self._get_instances(kwargs)
 
         self.debugl("### INSTANCES RETRIEVED")
         return instances
@@ -302,61 +299,6 @@ class VMWareInventory(object):
                 "username and password")
             return -1
         atexit.register(Disconnect, si)
-        content = si.RetrieveContent()
-        for child in content.rootFolder.childEntity:
-            instances += self._get_instances_from_children(child)
-        if self.args.max_instances:
-            if len(instances) >= (self.args.max_instances+1):
-                instances = instances[0:(self.args.max_instances+1)]
-        instance_tuples = []    
-        for instance in sorted(instances):    
-            ifacts = self.facts_from_vobj(instance)
-            instance_tuples.append((instance, ifacts))
-        return instance_tuples
-
-
-    @vcr.use_cassette('get_instances.yaml',
-                      cassette_library_dir='fixtures',
-                      record_mode='once')
-    def _get_instances_with_vcr_record(self, kwargs):
-
-        ''' Make API calls with existing VCR fixtures '''
-
-        instances = []
-        si = SmartConnect(**kwargs)
-        if not si:
-            print("Could not connect to the specified host using specified "
-                "username and password")
-            return -1
-        atexit.register(Disconnect, si)
-        content = si.RetrieveContent()
-        for child in sorted(content.rootFolder.childEntity):
-            instances += self._get_instances_from_children(child)
-        if self.args.max_instances:
-            if len(instances) >= (self.args.max_instances+1):
-                instances = instances[0:(self.args.max_instances+1)]
-        instance_tuples = []    
-        for instance in sorted(instances):    
-            ifacts = self.facts_from_vobj(instance)
-            instance_tuples.append((instance, ifacts))
-        return instance_tuples
-
-
-    @vcr.use_cassette('get_instances.yaml',
-                      cassette_library_dir='fixtures',
-                      record_mode='never')
-    def _get_instances_with_vcr_play(self, kwargs):
-
-        ''' Make API calls and record with vcr '''
-
-        instances = []
-        si = SmartConnect(**kwargs)
-        if not si:
-            print("Could not connect to the specified host using specified "
-                "username and password")
-            return -1
-        ## No need to disconnect in play mode??? (hangs)
-        #atexit.register(Disconnect, si)
         content = si.RetrieveContent()
         for child in content.rootFolder.childEntity:
             instances += self._get_instances_from_children(child)
