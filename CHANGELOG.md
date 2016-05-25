@@ -6,6 +6,7 @@ Ansible Changes By Release
 ###Minor Changes:
 
 * If the user is not using paramiko or vault, allow Ansible to run if pycrypto is not installed.
+* Fixed a bug in pkg_util module that caused "update_catalog must be one of" error if 'update_catalog' arg was used.
 
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
@@ -167,7 +168,7 @@ Ansible Changes By Release
 
 ###Minor Changes:
 
-* Added support for pipelining mode to more connection plugins, which helps prevent 
+* Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
 * Added a new '!unsafe' YAML decorator, which can be used in playbooks to ensure a
   string is not templated. For example: `foo: !unsafe "Don't template {{me}}"`.
