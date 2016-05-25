@@ -201,7 +201,7 @@ is executed on the remote device and the results are evaluated.  If
 the path
 :code:`(result[0].interfaces.Ethernet4.interfaceStatus)` is not equal to
 "connected", then the command is retried.  This process continues
-until either the condition is statisfied or the number of retries has
+until either the condition is satisfied or the number of retries has
 expired (by default, this is 10 retries at 1 second intervals).
 
 The commands module can also evaluate more than one set of command
@@ -217,12 +217,12 @@ results in an interface.  For instance::
           - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
           - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
 
-In the above example, there are two commands that are executed on the
-remote device and the results are evaluated.  By specifying the result
+In the above example, two commands are executed on the
+remote device, and the results are evaluated.  By specifying the result
 index value (0 or 1), the correct result output is checked against the
 conditional.
 
 The waitfor argument must always start with result and then the
-command index in [] where 0 is the first command in the commands list,
+command index in [], where 0 is the first command in the commands list,
 1 is the second command, 2 is the third and so on.
 
