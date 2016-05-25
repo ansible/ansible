@@ -837,7 +837,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         urlopen_args.append(timeout)
 
     r = urllib2.urlopen(*urlopen_args)
-    return r
+    conn_type = parsed[0]
+    return r, conn_type
 
 #
 # Module-related functions
@@ -887,7 +888,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     r = None
     info = dict(url=url)
     try:
-        r = open_url(url, data=data, headers=headers, method=method,
+        r, conn_type = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
@@ -923,4 +924,4 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         e = get_exception()
         info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
 
-    return r, info
+    return r, info, conn_type
