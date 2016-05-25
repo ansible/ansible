@@ -27,8 +27,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 # ansible modules can be written in any language.  To simplify
