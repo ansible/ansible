@@ -22,6 +22,7 @@ __metaclass__ = type
 
 import ast
 import base64
+import codecs
 import imp
 import json
 import os
@@ -688,6 +689,14 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 
     return (module_data, module_style, shebang)
 
+def _check_bom(line):
+    """
+    Check if BOM is present in the script
+    """
+    boms = [codecs.BOM_UTF8, codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE, codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE]
+
+    return any(line.startswith(bom) for bom in boms)
+
 # ******************************************************************************
 
 def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED'):
@@ -740,6 +749,8 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
             if os.path.basename(interpreter).startswith(b'python'):
                 lines.insert(1, to_bytes(ENCODING_STRING))
+        elif _check_bom(lines[0]):
+            raise AnsibleError("BOM detected in module (%s). Module scripts encoded with BOM are not supported." % module_name)
         else:
             # No shebang, assume a binary module?
             pass
