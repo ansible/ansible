@@ -18,7 +18,6 @@ import sys
 import unittest
 import yaml
 
-from deepdiff import DeepDiff
 from pprint import pprint
 from ansible import plugins
 import ansible.plugins
