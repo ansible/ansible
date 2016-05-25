@@ -184,7 +184,7 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 Conditional statements evalute the results from the commands that are
 executed remotely on the device.  Once the task executes the command
 set, the waitfor argument can be used to evalute the results before
-return control to the Ansible playbook.
+returning control to the Ansible playbook.
 
 For example::
 
