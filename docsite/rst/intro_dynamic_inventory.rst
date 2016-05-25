@@ -30,11 +30,11 @@ While primarily used to kickoff OS installations and manage DHCP and DNS, Cobble
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a 'lightweight CMDB' by some admins.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
-Also a cobbler.ini file should be added to /etc/ansible so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
+Also a ``cobbler.ini`` file should be added to ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
 
 
     [cobbler]
@@ -58,7 +58,7 @@ Also a cobbler.ini file should be added to /etc/ansible so Ansible knows where t
 
 First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
-Let's explore what this does.  In cobbler, assume a scenario somewhat like the following::
+Let's explore what this does.  In Cobbler, assume a scenario somewhat like the following::
 
     cobbler profile add --name=webserver --distro=CentOS6-x86_64
     cobbler profile edit --name=webserver --mgmt-classes="webserver" --ksmeta="a=2 b=3"
@@ -78,12 +78,12 @@ Which could be executed just like this::
     ansible webserver -m template -a "src=/tmp/motd.j2 dest=/etc/motd"
 
 .. note::
-   The name 'webserver' came from cobbler, as did the variables for
+   The name 'webserver' came from Cobbler, as did the variables for
    the config file.  You can still pass in your own variables like
    normal in Ansible, but variables from the external inventory script
    will override any that have the same name.
 
-So, with the template above (motd.j2), this would result in the following data being written to /etc/motd for system 'foo'::
+So, with the template above (``motd.j2``), this would result in the following data being written to ``/etc/motd`` for system 'foo'::
 
     Welcome, I am templated with a value of a=2, b=3, and c=4
 
@@ -123,7 +123,7 @@ You can test the script by itself to make sure your config is correct::
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
 
-If you use boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
+If you use Boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
 
     [profile dev]
     aws_access_key_id = <dev access key>
@@ -328,7 +328,7 @@ to include it in the project.
 Using Inventory Directories and Multiple Inventory Sources
 ``````````````````````````````````````````````````````````
 
-If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
+If the location given to ``-i`` in Ansible is a directory (or as so configured in ``ansible.cfg``), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
 
