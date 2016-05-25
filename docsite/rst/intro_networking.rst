@@ -6,7 +6,7 @@ Networking Support
 .. _working_with_networking_devices:
 
 Working with Networking Devices
-````````````````````````
+```````````````````````````````
 
 Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices. 
 
@@ -23,17 +23,16 @@ Ansible currently supports the following networking devices:
 .. _networking_installation:
 
 Network Automation Installation
-````````````````````````
+```````````````````````````````
 
-Download the latest Ansible network release `here <http://releases.ansible.com/ansible-network/latest/>`_.
-
-Playbooks for testing Ansible core network modules can be found `here <https://github.com/ansible/test-network-modules>`_.
+* Download the `latest Ansible network release <http://releases.ansible.com/ansible-network/latest/>`_.
+* `Playbooks for testing <https://github.com/ansible/test-network-modules>`_ Ansible core network modules.
 
 
 .. _networking_module_index:
 
 Available Networking Modules
-````````````````````````
+````````````````````````````
 
 Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
 
@@ -42,7 +41,7 @@ To see what modules are available for networking devices, please browse the `"ne
 .. _understanding_provider_arguments:
 
 Connecting to Networking Devices
-````````````````````````
+````````````````````````````````
 
 All core networking modules implement a *provider* argument, which is a collection of arguments used to define the characteristics of how to connect to the device.  This section will assist in understanding how the provider argument is used.
 
@@ -149,14 +148,14 @@ Overall, this provides a very granular level of control over how credentials are
 .. _networking_module_types:
 
 Understanding Networking Module Types
-````````````````````````
+`````````````````````````````````````
 
 TBD
 
 .. _networking_environment_variables:
 
 Networking Environment Variables
-````````````````````````
+````````````````````````````````
 
 The following environment variables are available to Ansible networking modules:
 
@@ -176,7 +175,7 @@ Variables are evaulated in the following order, listed from lowest to highest pr
 .. _networking_module_conditionals:
 
 Conditionals in Networking Modules
-````````````````````````
+``````````````````````````````````
 
 Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements.
 
@@ -198,5 +197,4 @@ To evaluate this properly, you'll need to compare against results. For example::
 
     ---
     result[0] contains '100.00'
-
 

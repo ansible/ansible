@@ -67,6 +67,12 @@ else:
     def iteritems(d):
         return d.iteritems()
 
+try:
+    # Python 2
+    long
+except NameError:
+    # Python 3
+    long = int
 
 try:
     import selinux
@@ -373,7 +379,7 @@ class Facts(object):
             #FIXME: smf?
             self.facts['service_mgr'] = 'svcs'
         elif self.facts['system'] == 'Linux':
-            if self._check_systemd():
+            if self.is_systemd_managed():
                 self.facts['service_mgr'] = 'systemd'
             elif self.module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
@@ -509,7 +515,7 @@ class Facts(object):
         self.facts['date_time']['tz'] = time.strftime("%Z")
         self.facts['date_time']['tz_offset'] = time.strftime("%z")
 
-    def _check_systemd(self):
+    def is_systemd_managed(self):
         # tools must be installed
         if self.module.get_bin_path('systemctl'):
 

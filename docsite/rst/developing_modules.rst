@@ -207,7 +207,7 @@ This should return something like::
 .. _binary_module_reading_input:
 
 Binary Modules Input
-~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++
 
 Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
 supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
@@ -695,6 +695,7 @@ The following  checklist items are important guidelines for people who want to c
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes.
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
   import them into unittests in the future example::
 

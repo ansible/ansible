@@ -777,7 +777,7 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 

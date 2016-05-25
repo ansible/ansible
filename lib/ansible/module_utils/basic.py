@@ -27,8 +27,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 # ansible modules can be written in any language.  To simplify
@@ -122,6 +122,12 @@ except ImportError:
     # python2.5
     Sequence = (list, tuple)
     Mapping = (dict,)
+
+try:
+    from collections.abc import KeysView
+    SEQUENCETYPE = (Sequence, KeysView)
+except:
+    SEQUENCETYPE = Sequence
 
 try:
     import json
@@ -386,7 +392,7 @@ def return_values(obj):
                 # (still must deal with surrogateescape on python3)
                 yield obj.encode('utf-8')
         return
-    elif isinstance(obj, Sequence):
+    elif isinstance(obj, SEQUENCETYPE):
         for element in obj:
             for subelement in return_values(element):
                 yield subelement
@@ -422,7 +428,7 @@ def remove_values(value, no_log_strings):
             value = unicode(bytes_value, 'utf-8', errors='replace')
         else:
             value = bytes_value
-    elif isinstance(value, Sequence):
+    elif isinstance(value, SEQUENCETYPE):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
         return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
