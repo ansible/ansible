@@ -428,7 +428,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return mystat['stat']
 
-    def _remote_checksum(self, path, all_vars):
+    def _remote_checksum(self, path, all_vars, follow=False):
         '''
         Produces a remote checksum given a path,
         Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
@@ -440,7 +440,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         x = "0" # unknown error has occured
         try:
-            remote_stat = self._execute_remote_stat(path, all_vars, follow=False)
+            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
                 x = "3" # its a directory not a file
             else:
