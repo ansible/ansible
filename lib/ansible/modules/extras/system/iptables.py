@@ -226,6 +226,13 @@ options:
         this, the destination address is never altered."
     required: false
     default: null
+  to_source:
+    version_added: "2.2"
+    description:
+      - "This specifies a source address to use with SNAT: without
+        this, the source address is never altered."
+    required: false
+    default: null
   set_dscp_mark:
     version_added: "2.1"
     description:
@@ -277,8 +284,8 @@ options:
   icmp_type:
     version_added: "2.2"
     description:
-      - "This allows specification of the ICMP type, which can be a numeric ICMP type, 
-        type/code pair, or one of the ICMP type names shown by the command 
+      - "This allows specification of the ICMP type, which can be a numeric ICMP type,
+        type/code pair, or one of the ICMP type names shown by the command
         'iptables -p icmp -h'"
     required: false
 '''
@@ -336,6 +343,7 @@ def construct_rule(params):
     append_param(rule, params['match'], '-m', True)
     append_param(rule, params['jump'], '-j', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
+    append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
     append_param(rule, params['in_interface'], '-i', False)
     append_param(rule, params['out_interface'], '-o', False)
@@ -401,6 +409,7 @@ def main():
             chain=dict(required=True, default=None, type='str'),
             protocol=dict(required=False, default=None, type='str'),
             source=dict(required=False, default=None, type='str'),
+            to_source=dict(required=False, default=None, type='str'),
             destination=dict(required=False, default=None, type='str'),
             to_destination=dict(required=False, default=None, type='str'),
             match=dict(required=False, default=[], type='list'),
