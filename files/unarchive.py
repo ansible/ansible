@@ -123,7 +123,7 @@ import grp
 import datetime
 import time
 import binascii
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipfile
 import tarfile
 import subprocess
 
@@ -174,17 +174,41 @@ class ZipArchive(object):
 #                    mode += 2**(9+j)
         return ( mode & ~umask )
 
+    def _legacy_file_list(self, force_refresh=False):
+        unzip_bin = self.module.get_bin_path('unzip')
+        if not unzip_bin:
+            raise UnarchiveError('Python Zipfile cannot read %s and unzip not found' % self.src)
+
+        rc, out, err = self.module.run_command([unzip_bin, '-v', self.src])
+        if rc:
+            raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
+
+        for line in out.splitlines()[3:-2]:
+            fields = line.split(None, 7)
+            self._files_in_archive.append(fields[7])
+            self._infodict[fields[7]] = long(fields[6])
+
     def _crc32(self, path):
         if self._infodict:
             return self._infodict[path]
 
-        archive = ZipFile(self.src)
         try:
-            for item in archive.infolist():
-                self._infodict[item.filename] = long(item.CRC)
-        except:
-            archive.close()
-            raise UnarchiveError('Unable to list files in the archive')
+            archive = ZipFile(self.src)
+        except BadZipfile:
+            e = get_exception()
+            if e.args[0].lower().startswith('bad magic number'):
+                # Python2.4 can't handle zipfiles with > 64K files.  Try using
+                # /usr/bin/unzip instead
+                self._legacy_file_list()
+            else:
+                raise
+        else:
+            try:
+                for item in archive.infolist():
+                    self._infodict[item.filename] = long(item.CRC)
+            except:
+                archive.close()
+                raise UnarchiveError('Unable to list files in the archive')
 
         return self._infodict[path]
 
@@ -194,16 +218,26 @@ class ZipArchive(object):
             return self._files_in_archive
 
         self._files_in_archive = []
-        archive = ZipFile(self.src)
         try:
-            for member in archive.namelist():
-                if member not in self.excludes:
-                    self._files_in_archive.append(member)
-        except:
-            archive.close()
-            raise UnarchiveError('Unable to list files in the archive')
+            archive = ZipFile(self.src)
+        except BadZipfile:
+            e = get_exception()
+            if e.args[0].lower().startswith('bad magic number'):
+                # Python2.4 can't handle zipfiles with > 64K files.  Try using
+                # /usr/bin/unzip instead
+                self._legacy_file_list(force_refresh)
+            else:
+                raise
+        else:
+            try:
+                for member in archive.namelist():
+                    if member not in self.excludes:
+                        self._files_in_archive.append(member)
+            except:
+                archive.close()
+                raise UnarchiveError('Unable to list files in the archive')
 
-        archive.close()
+            archive.close()
         return self._files_in_archive
 
     def is_unarchived(self):
