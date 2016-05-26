@@ -205,6 +205,16 @@ EXAMPLES = '''
       type: "AAAA"
       ttl: "7200"
       value: "::1"
+      
+# Add a SRV record with multiple fields for a service on port 22222
+# For more information on SRV records see:
+# https://en.wikipedia.org/wiki/SRV_record
+- route53:
+      command: "create"
+      "zone": "foo.com"
+      "record": "_example-service._tcp.foo.com"
+      "type": "SRV"
+      "value": ["0 0 22222 host1.foo.com", "0 0 22222 host2.foo.com"]
 
 # Add a TXT record. Note that TXT and SPF records must be surrounded
 # by quotes when sent to Route 53:
