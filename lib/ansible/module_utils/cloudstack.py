@@ -102,6 +102,8 @@ class AnsibleCloudStack(object):
         self.account = None
         self.project = None
         self.ip_address = None
+        self.network = None
+        self.vpc = None
         self.zone = None
         self.vm = None
         self.os_type = None
@@ -173,6 +175,58 @@ class AnsibleCloudStack(object):
                 return my_dict[key]
             self.module.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
+
+
+    def get_vpc(self, key=None):
+        """Return a VPC dictionary or the value of given key of."""
+        if self.vpc:
+            return self._get_by_key(key, self.vpc)
+
+        vpc = self.module.params.get('vpc')
+        if not vpc:
+            return None
+
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+        }
+        vpcs = self.cs.listVPCs(**args)
+        if not vpcs:
+            self.module.fail_json(msg="No VPCs available.")
+
+        for v in vpcs['vpc']:
+            if vpc in [v['displaytext'], v['name'], v['id']]:
+                self.vpc = v
+                return self._get_by_key(key, self.vpc)
+        self.module.fail_json(msg="VPC '%s' not found" % vpc)
+
+
+    def get_network(self, key=None):
+        """Return a network dictionary or the value of given key of."""
+        if self.network:
+            return self._get_by_key(key, self.network)
+
+        network = self.module.params.get('network')
+        if not network:
+            return None
+
+        args = {
+            'account': self.get_account('name'),
+            'domainid': self.get_domain('id'),
+            'projectid': self.get_project('id'),
+            'zoneid': self.get_zone('id'),
+        }
+        networks = self.cs.listNetworks(**args)
+        if not networks:
+            self.module.fail_json(msg="No networks available.")
+
+        for n in networks['network']:
+            if network in [n['displaytext'], n['name'], n['id']]:
+                self.network = n
+                return self._get_by_key(key, self.network)
+        self.module.fail_json(msg="Network '%s' not found" % network)
 
 
     def get_project(self, key=None):
