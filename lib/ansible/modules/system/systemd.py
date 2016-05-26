@@ -348,7 +348,7 @@ def main():
             # this should not happen?
             module.fail_json(msg="Service is in unknown state", status=result['status'])
 
-        result['state'] = f module.params['state']
+        result['state'] = module.params['state']
 
     module.exit_json(**result)
 
