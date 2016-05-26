@@ -135,27 +135,27 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
     if from_path:
-        cmd = "{cpanm} {path}".format(cpanm=cpanm, path=from_path)
+        cmd = cpanm + " " + from_path
     else:
-        cmd = "{cpanm} {name}".format(cpanm=cpanm, name=name)
+        cmd = cpanm + " " + name
 
     if notest is True:
-        cmd = "{cmd} -n".format(cmd=cmd)
+        cmd = cmd + " -n"
 
     if locallib is not None:
-        cmd = "{cmd} -l {locallib}".format(cmd=cmd, locallib=locallib)
+        cmd = cmd + " -l " + locallib
 
     if mirror is not None:
-        cmd = "{cmd} --mirror {mirror}".format(cmd=cmd, mirror=mirror)
+        cmd = cmd + " --mirror " + mirror
 
     if mirror_only is True:
-        cmd = "{cmd} --mirror-only".format(cmd=cmd)
+        cmd = cmd + " --mirror-only"
 
     if installdeps is True:
-        cmd = "{cmd} --installdeps".format(cmd=cmd)
+        cmd = cmd + " --installdeps"
 
     if use_sudo is True:
-        cmd = "{cmd} --sudo".format(cmd=cmd)
+        cmd = cmd + " --sudo"
 
     return cmd
 
