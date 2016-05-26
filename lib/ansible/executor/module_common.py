@@ -750,7 +750,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
             if os.path.basename(interpreter).startswith(b'python'):
                 lines.insert(1, to_bytes(ENCODING_STRING))
         elif _check_bom(lines[0]):
-            raise AnsibleError("BOM detected in module (%s). Module scripts encoded with BOM are not supported." % module_name)
+            raise AnsibleError("Unsupported byte order mark detected, this type of file encoding is not supported for modules.")
         else:
             # No shebang, assume a binary module?
             pass
