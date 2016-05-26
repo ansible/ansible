@@ -599,25 +599,54 @@ class ContainerManager(DockerBaseClass):
             for container in service.containers(stopped=True):
                 inspection = container.inspect()
                 # pare down the inspection data to the most useful bits
-                facts = dict()
-                facts['cmd'] = inspection['Config']['Cmd']
-                facts['labels'] = inspection['Config']['Labels']
-                facts['image'] = inspection['Config']['Image']
-                facts['state'] = dict(
-                    running=inspection['State']['Running'],
-                    status=inspection['State']['Status'],
+                facts = dict(
+                    cmd=[],
+                    labels=dict(),
+                    image=None,
+                    state=dict(
+                        running=None,
+                        status=None
+                    ),
+                    networks=dict()
                 )
-                facts['networks'] = dict()
-                for key, value in inspection['NetworkSettings']['Networks'].items():
-                    facts['networks'][key] = dict(
-                        aliases=inspection['NetworkSettings']['Networks'][key]['Aliases'],
-                        globalIPv6=inspection['NetworkSettings']['Networks'][key]['GlobalIPv6Address'],
-                        globalIPv6PrefixLen=inspection['NetworkSettings']['Networks'][key]['GlobalIPv6PrefixLen'],
-                        IPAddress=inspection['NetworkSettings']['Networks'][key]['IPAddress'],
-                        IPPrefixLen=inspection['NetworkSettings']['Networks'][key]['IPPrefixLen'],
-                        links=inspection['NetworkSettings']['Networks'][key]['Links'],
-                        macAddress=inspection['NetworkSettings']['Networks'][key]['MacAddress'],
-                    )
+                if inspection['Config'].get('Cmd', None) is not None:
+                    facts['cmd'] = inspection['Config']['Cmd']
+                if inspection['Config'].get('Labels', None) is not None:
+                    facts['labels'] = inspection['Config']['Labels']
+                if inspection['Config'].get('Image', None) is not None:
+                    facts['image'] = inspection['Config']['Image']
+                if inspection['State'].get('Running', None) is not None:
+                    facts['state']['running'] = inspection['State']['Running']
+                if inspection['State'].get('Status', None) is not None:
+                    facts['state']['status'] = inspection['State']['Status']
+
+                if inspection.get('NetworkSettings') and inspection['NetworkSettings'].get('Networks'):
+                    networks = inspection['NetworkSettings']['Networks']
+                    for key in networks:
+                        facts['networks'][key] = dict(
+                            aliases=[],
+                            globalIPv6=None,
+                            globalIPv6PrefixLen=0,
+                            IPAddress=None,
+                            IPPrefixLen=0,
+                            links=None,
+                            macAddress=None,
+                        )
+                        if networks[key].get('Aliases', None) is not None:
+                            facts['networks'][key]['aliases'] = networks[key]['Aliases']
+                        if networks[key].get('GlobalIPv6Address', None) is not None:
+                            facts['networks'][key]['globalIPv6'] = networks[key]['GlobalIPv6Address']
+                        if networks[key].get('GlobalIPv6PrefixLen', None) is not None:
+                            facts['networks'][key]['globalIPv6PrefixLen'] = networks[key]['GlobalIPv6PrefixLen']
+                        if networks[key].get('IPAddress', None) is not None:
+                            facts['networks'][key]['IPAddress'] = networks[key]['IPAddress']
+                        if networks[key].get('IPPrefixLen', None) is not None:
+                            facts['networks'][key]['IPPrefixLen'] = networks[key]['IPPrefixLen']
+                        if networks[key].get('Links', None) is not None:
+                            facts['networks'][key]['links'] = networks[key]['Links']
+                        if networks[key].get('MacAddress', None) is not None:
+                            facts['networks'][key]['macAddress'] = networks[key]['MacAddress']
+
                 result['ansible_facts'][service.name][container.name] = facts
 
         return result
