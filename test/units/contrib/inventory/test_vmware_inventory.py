@@ -6,15 +6,16 @@ import pickle
 import unittest
 import sys
 
-if (sys.version_info > (3, 0)):
-    from contrib.inventory.vmware_inventory import VMWareInventory
-else:
-    # contrib's dirstruct doesn't contain __init__.py files
-    checkout_path = os.path.dirname(__file__)
-    checkout_path = checkout_path.replace('/test/units/contrib/inventory', '')
-    inventory_dir = os.path.join(checkout_path, 'contrib', 'inventory')
-    sys.path.insert(0, os.path.abspath(inventory_dir))
-    from vmware_inventory import VMWareInventory 
+
+# contrib's dirstruct doesn't contain __init__.py files
+checkout_path = os.path.dirname(__file__)
+checkout_path = checkout_path.replace('/test/units/contrib/inventory', '')
+inventory_dir = os.path.join(checkout_path, 'contrib', 'inventory')
+sys.path.append(os.path.abspath(inventory_dir))
+from vmware_inventory import VMWareInventory 
+# cleanup so that nose's path is not polluted with other inv scripts
+sys.path.remove(os.path.abspath(inventory_dir))
+
 
 
 
