@@ -21,7 +21,7 @@ DOCUMENTATION = """
 module: junos_facts
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remove device running Junos
+short_description: Collect facts from remote device running Junos
 description:
   - Collects fact information from a remote device running the Junos
     operating system.  By default, the module will collect basic fact
