@@ -321,7 +321,8 @@ def main():
                 (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                 if rc != 0:
                     module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
-                result['enabled'] = module.params['enabled']
+
+        result['enabled'] = enabled
 
     if module.params['state'] is not None:
         # What is current service state?
