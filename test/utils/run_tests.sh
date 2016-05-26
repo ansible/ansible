@@ -15,8 +15,8 @@ if [ "${TARGET}" = "sanity" ]; then
     if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common|vca|vmware).py' lib/ansible/module_utils ; fi
 else
     if [ ! -e /tmp/cid_httptester ]; then
-        docker pull ansible/httptester
-        docker run -d --name=httptester ansible/httptester > /tmp/cid_httptester
+        docker pull ansible/ansible:httptester
+        docker run -d --name=httptester ansible/ansible:httptester > /tmp/cid_httptester
     fi
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
     docker pull ansible/ansible:${TARGET}
