@@ -1322,14 +1322,14 @@ class AnsibleModule(object):
             choices = v.get('choices',None)
             if choices is None:
                 continue
-            if type(choices) == list:
+            if isinstance(choices, SEQUENCETYPE):
                 if k in self.params:
                     if self.params[k] not in choices:
                         choices_str=",".join([str(c) for c in choices])
                         msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
                         self.fail_json(msg=msg)
             else:
-                self.fail_json(msg="internal error: do not know how to interpret argument_spec")
+                self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
 
     def safe_eval(self, str, locals=None, include_exceptions=False):
 
