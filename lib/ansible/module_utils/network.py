@@ -94,8 +94,7 @@ class Cli(object):
         self.commands.extend(commands)
 
     def run_commands(self):
-        responses = self.connection.run_commands(self.commands)
-        return responses
+        return self.connection.run_commands(self.commands)
 
 class Config(object):
 
@@ -194,12 +193,12 @@ class NetworkModule(AnsibleModule):
             module.fail_json(msg=exc.message)
 
     def disconnect(self):
-        try:
-            if self.connected:
+        if self.connected:
+            try:
                 self.connection.disconnect()
-        except NetworkError:
-            exc = get_exception()
-            module.fail_json(msg=exc.message)
+            except NetworkError:
+                exc = get_exception()
+                self.fail_json(msg=exc.message)
 
     def authorize(self):
         try:
