@@ -333,7 +333,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                         ),
                         tags=results['tags']
                     )
-                    if results['dns_servers']:
+                    if results.get('dns_servers'):
                         vnet.dhcp_options = DhcpOptions(
                             dns_servers=results['dns_servers']
                         )
