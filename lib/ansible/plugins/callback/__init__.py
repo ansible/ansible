@@ -103,6 +103,10 @@ class CallbackBase:
         if self._display.verbosity < 3 and 'diff' in result:
             del abridged_result['diff']
 
+        # remove exception from screen output
+        if 'exception' in abridged_result:
+            del abridged_result['exception']
+
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
