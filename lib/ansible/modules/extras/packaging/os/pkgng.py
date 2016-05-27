@@ -75,6 +75,13 @@ options:
             - pkg will chroot in the specified environment
             - can not be used together with 'rootdir' option
         required: false
+    autoremove:
+        version_added: "2.2"
+        description:
+            - remove automatically installed packages which are no longer needed
+        required: false
+        choices: [ "yes", "no" ]
+        default: no
 author: "bleader (@bleader)" 
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
@@ -124,7 +131,7 @@ def pkgng_older_than(module, pkgng_path, compare_version):
 
 
 def remove_packages(module, pkgng_path, packages, dir_arg):
-    
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -137,7 +144,7 @@ def remove_packages(module, pkgng_path, packages, dir_arg):
 
         if not module.check_mode and query_package(module, pkgng_path, package, dir_arg):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -185,7 +192,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
-    
+
     if install_c > 0:
         return (True, "added %s package(s)" % (install_c))
 
@@ -271,6 +278,23 @@ def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
         return (True, "added %s annotations." % annotate_c)
     return (False, "changed no annotations")
 
+def autoremove_packages(module, pkgng_path, dir_arg):
+    rc, out, err = module.run_command("%s %s autoremove -n" % (pkgng_path, dir_arg))
+
+    autoremove_c = 0
+
+    match = re.search('^Deinstallation has been requested for the following ([0-9]+) packages', out, re.MULTILINE)
+    if match:
+        autoremove_c = int(match.group(1))
+
+    if autoremove_c == 0:
+        return False, "no package(s) to autoremove"
+
+    if not module.check_mode:
+        rc, out, err = module.run_command("%s %s autoremove -y" % (pkgng_path, dir_arg))
+
+    return True, "autoremoved %d package(s)" % (autoremove_c)
+
 def main():
     module = AnsibleModule(
             argument_spec       = dict(
@@ -280,7 +304,8 @@ def main():
                 annotation      = dict(default="", required=False),
                 pkgsite         = dict(default="", required=False),
                 rootdir         = dict(default="", required=False, type='path'),
-                chroot          = dict(default="", required=False, type='path')),
+                chroot          = dict(default="", required=False, type='path'),
+                autoremove      = dict(default=False, type='bool')),
             supports_check_mode = True,
             mutually_exclusive  =[["rootdir", "chroot"]])
 
@@ -302,7 +327,7 @@ def main():
             dir_arg = "--rootdir %s" % (p["rootdir"])
 
     if p["chroot"] != "":
-      dir_arg = '--chroot %s' % (p["chroot"])
+        dir_arg = '--chroot %s' % (p["chroot"])
 
     if p["state"] == "present":
         _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg)
@@ -311,6 +336,11 @@ def main():
 
     elif p["state"] == "absent":
         _changed, _msg = remove_packages(module, pkgng_path, pkgs, dir_arg)
+        changed = changed or _changed
+        msgs.append(_msg)
+
+    if p["autoremove"]:
+        _changed, _msg = autoremove_packages(module, pkgng_path, dir_arg)
         changed = changed or _changed
         msgs.append(_msg)
 
@@ -325,5 +355,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-    
-main()        
+
+main()
