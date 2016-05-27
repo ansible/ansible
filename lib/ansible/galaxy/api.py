@@ -70,7 +70,7 @@ class GalaxyAPI(object):
         self.version = None
         self.initialized = False
 
-        display.vvv('Validate TLS certificates: %s' % self._validate_certs)
+        display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
         if galaxy.options.api_server != C.GALAXY_SERVER:
