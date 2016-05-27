@@ -258,7 +258,7 @@ In particular, the "script" module can be used to run arbitrary PowerShell scrip
       tasks:
         - script: foo.ps1 --argument --other-argument
 
-Note there are a few other Ansible modules that don't start with "win" that also function, including "slurp", "raw", and "setup" (which is how fact gathering works).
+Note there are a few other Ansible modules that don't start with "win" that also function, including "fetch", "slurp", "raw", and "setup" (which is how fact gathering works).
 
 .. _developers_developers_developers:
 
@@ -339,6 +339,16 @@ Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on
          - name: Move file on remote Windows Server from one location to another
            raw: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
+You may wind up with a more readable playbook by using powershell equivalents of DOS commands.  For example to achieve the same effect as the example above you could use::
+
+    - name: another raw module example demonstrating powershell one liner
+      hosts: windows
+      tasks:
+         - name: Move file on remote Windows Server from one location to another
+           raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
+
+Bear in mind that using C(raw) will allways report changed and it is your responsiblity to ensure powershell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+
 And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
@@ -358,14 +368,14 @@ And for a final example, here's how to use the win_stat module to test for file 
                  - "stat_file.stat.size > 0"
                  - "stat_file.stat.md5"
 
-Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win" prefix.
+Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", "slurp" and "fetch" modules are also available.  These modules do not start with a "win" prefix.
 
 .. _windows_contributions:
 
 Windows Contributions
 `````````````````````
 
-Windows support in Ansible is still very new, and contributions are quite welcome, whether this is in the
+Windows support in Ansible is still relatively new, and contributions are quite welcome, whether this is in the
 form of new modules, tweaks to existing modules, documentation, or something else.  Please stop by the ansible-devel mailing list if you would like to get involved and say hi.
 
 .. seealso::
