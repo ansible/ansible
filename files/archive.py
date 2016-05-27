@@ -17,7 +17,7 @@ options:
     default: null
   compression:
     description:
-      - "The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
+      - The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
     choices: [ 'gz', 'bz2', 'zip' ]
   creates:
     description:
