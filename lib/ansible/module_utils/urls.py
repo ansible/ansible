@@ -98,14 +98,20 @@ except ImportError:
     # Python 3
     import http.client as httplib
 
-try:
-    import urllib2
-    HAS_URLLIB2 = True
-except:
-    HAS_URLLIB2 = False
+import ansible.module_utils.six.moves.urllib.request as urllib_request
+import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 try:
-    import urlparse
+    # python3
+    import urllib.request as urllib_request
+    from urllib.request import AbstractHTTPHandler
+except ImportError:
+    # python2
+    import urllib2 as urllib_request
+    from urllib2 import AbstractHTTPHandler
+
+try:
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
 except:
     HAS_URLPARSE = False
@@ -140,7 +146,8 @@ if HAS_SSL:
     PROTOCOL = ssl.PROTOCOL_TLSv1
 if not HAS_SSLCONTEXT and HAS_SSL:
     try:
-        import ctypes, ctypes.util
+        import ctypes
+        import ctypes.util
     except ImportError:
         # python 2.4 (likely rhel5 which doesn't have tls1.1 support in its openssl)
         pass
@@ -157,7 +164,6 @@ if not HAS_SSLCONTEXT and HAS_SSL:
             except AttributeError:
                 pass
         del libssl
-
 
 
 HAS_MATCH_HOSTNAME = True
@@ -308,17 +314,21 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 # Exceptions
 #
 
+
 class ConnectionError(Exception):
     """Failed to connect to the server"""
     pass
+
 
 class ProxyError(ConnectionError):
     """Failure to connect because of a proxy"""
     pass
 
+
 class SSLValidationError(ConnectionError):
     """Failure to connect due to SSL validation failing"""
     pass
+
 
 class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
@@ -327,7 +337,7 @@ class NoSSLError(SSLValidationError):
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
 CustomHTTPSConnection = CustomHTTPSHandler = None
-if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
+if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
@@ -355,16 +365,18 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
             if HAS_SSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
             elif HAS_URLLIB3_SNI_SUPPORT:
-                self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL, server_hostname=server_hostname)
+                self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL,
+                        server_hostname=server_hostname)
             else:
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
-    class CustomHTTPSHandler(urllib2.HTTPSHandler):
+    class CustomHTTPSHandler(urllib_request.HTTPSHandler):
 
         def https_open(self, req):
             return self.do_open(CustomHTTPSConnection, req)
 
-        https_request = urllib2.AbstractHTTPHandler.do_request_
+        https_request = AbstractHTTPHandler.do_request_
+
 
 def generic_urlparse(parts):
     '''
@@ -424,7 +436,8 @@ def generic_urlparse(parts):
             generic_parts['port']     = None
     return generic_parts
 
-class RequestWithMethod(urllib2.Request):
+
+class RequestWithMethod(urllib_request.Request):
     '''
     Workaround for using DELETE/PUT/etc with urllib2
     Originally contained in library/net_infrastructure/dnsmadeeasy
@@ -434,13 +447,13 @@ class RequestWithMethod(urllib2.Request):
         if headers is None:
             headers = {}
         self._method = method.upper()
-        urllib2.Request.__init__(self, url, data, headers)
+        urllib_request.Request.__init__(self, url, data, headers)
 
     def get_method(self):
         if self._method:
             return self._method
         else:
-            return urllib2.Request.get_method(self)
+            return urllib_request.Request.get_method(self)
 
 
 def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
@@ -450,7 +463,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     where ``open_url`` or ``fetch_url`` are used multiple times in a module.
     """
 
-    class RedirectHandler(urllib2.HTTPRedirectHandler):
+    class RedirectHandler(urllib_request.HTTPRedirectHandler):
         """This is an implementation of a RedirectHandler to match the
         functionality provided by httplib2. It will utilize the value of
         ``follow_redirects`` that is passed into ``RedirectHandlerFactory``
@@ -460,12 +473,12 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
             handler = maybe_add_ssl_handler(newurl, validate_certs)
             if handler:
-                urllib2._opener.add_handler(handler)
+                urllib_request._opener.add_handler(handler)
 
             if follow_redirects == 'urllib2':
-                return urllib2.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+                return urllib_request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
             elif follow_redirects in ['no', 'none', False]:
-                raise urllib2.HTTPError(newurl, code, msg, hdrs, fp)
+                raise urllib_error.HTTPError(newurl, code, msg, hdrs, fp)
 
             do_redirect = False
             if follow_redirects in ['all', 'yes', True]:
@@ -481,13 +494,12 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
                 newheaders = dict((k,v) for k,v in req.headers.items()
                                   if k.lower() not in ("content-length", "content-type")
                                  )
-                return urllib2.Request(newurl,
-                                       headers=newheaders,
-                                       origin_req_host=req.get_origin_req_host(),
-                                       unverifiable=True)
+                return urllib_request.Request(newurl,
+                               headers=newheaders,
+                               origin_req_host=req.get_origin_req_host(),
+                               unverifiable=True)
             else:
-                raise urllib2.HTTPError(req.get_full_url(), code, msg, hdrs,
-                                        fp)
+                raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
     return RedirectHandler
 
@@ -519,7 +531,7 @@ def build_ssl_validation_error(hostname, port, paths):
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
 
-class SSLValidationHandler(urllib2.BaseHandler):
+class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     A custom handler class for SSL validation.
 
@@ -606,7 +618,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
         env_no_proxy = os.environ.get('no_proxy')
         if env_no_proxy:
             env_no_proxy = env_no_proxy.split(',')
-            netloc = urlparse.urlparse(url).netloc
+            netloc = urlparse(url).netloc
 
             for host in env_no_proxy:
                 if netloc.endswith(host) or netloc.split(':')[0].endswith(host):
@@ -637,7 +649,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
-                proxy_parts = generic_urlparse(urlparse.urlparse(https_proxy))
+                proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
                 s.connect((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
@@ -690,13 +702,15 @@ class SSLValidationHandler(urllib2.BaseHandler):
 
     https_request = http_request
 
+
 def maybe_add_ssl_handler(url, validate_certs):
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed[0] == 'https' and validate_certs:
         if not HAS_SSL:
-            raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False, however this is unsafe and not recommended')
+            raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
+                             ' however this is unsafe and not recommended')
 
         # do the cert validation
         netloc = parsed[1]
@@ -712,13 +726,15 @@ def maybe_add_ssl_handler(url, validate_certs):
         # add it to the list of handlers
         return SSLValidationHandler(hostname, port)
 
-# Rewrite of fetch_url to not require the module environment
+
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         force=False, last_mod_time=None, timeout=10, validate_certs=True,
         url_username=None, url_password=None, http_agent=None,
         force_basic_auth=False, follow_redirects='urllib2'):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
+
+    Does not require the module environment
     '''
     handlers = []
     ssl_handler = maybe_add_ssl_handler(url, validate_certs)
@@ -727,7 +743,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed[0] != 'ftp':
         username = url_username
 
@@ -749,10 +765,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             parsed[1] = netloc
 
             # reconstruct url without credentials
-            url = urlparse.urlunparse(parsed)
+            url = urlunparse(parsed)
 
         if username and not force_basic_auth:
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
             passman.add_password(None, netloc, username, password)
@@ -760,7 +776,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # because we have put None at the start it will always
             # use this username/password combination for  urls
             # for which `theurl` is a super-url
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+            authhandler = urllib_request.HTTPBasicAuthHandler(passman)
 
             # create the AuthHandler
             handlers.append(authhandler)
@@ -781,7 +797,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                     headers["Authorization"] = basic_auth_header(username, password)
 
     if not use_proxy:
-        proxyhandler = urllib2.ProxyHandler({})
+        proxyhandler = urllib_request.ProxyHandler({})
         handlers.append(proxyhandler)
 
     if HAS_SSLCONTEXT and not validate_certs:
@@ -791,7 +807,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.options |= ssl.OP_NO_SSLv3
         context.verify_mode = ssl.CERT_NONE
         context.check_hostname = False
-        handlers.append(urllib2.HTTPSHandler(context=context))
+        handlers.append(urllib_request.HTTPSHandler(context=context))
 
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
@@ -801,15 +817,15 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
 
-    opener = urllib2.build_opener(*handlers)
-    urllib2.install_opener(opener)
+    opener = urllib_request.build_opener(*handlers)
+    urllib_request.install_opener(opener)
 
     if method:
         if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
         request = RequestWithMethod(url, method.upper(), data)
     else:
-        request = urllib2.Request(url, data)
+        request = urllib_request.Request(url, data)
 
     # add the custom agent header, to help prevent issues
     # with sites that block the default urllib agent string
@@ -836,15 +852,17 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         # have a timeout parameter
         urlopen_args.append(timeout)
 
-    r = urllib2.urlopen(*urlopen_args)
+    r = urllib_request.urlopen(*urlopen_args)
     return r
 
 #
 # Module-related functions
 #
 
+
 def basic_auth_header(username, password):
     return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+
 
 def url_argument_spec():
     '''
@@ -863,15 +881,14 @@ def url_argument_spec():
 
     )
 
+
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
     '''
 
-    if not HAS_URLLIB2:
-        module.fail_json(msg='urllib2 is not installed')
-    elif not HAS_URLPARSE:
+    if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
 
     # Get validate_certs from the module params
@@ -904,7 +921,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError):
         e = get_exception()
         module.fail_json(msg=str(e))
-    except urllib2.HTTPError:
+    except urllib_error.HTTPError:
         e = get_exception()
         try:
             body = e.read()
@@ -912,7 +929,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = ''
         info.update(dict(msg=str(e), body=body, **e.info()))
         info['status'] = e.code
-    except urllib2.URLError:
+    except urllib_error.URLError:
         e = get_exception()
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
