@@ -110,7 +110,7 @@ import tarfile
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path = dict(required=True),
+            path = dict(type='list', required=True),
             compression = dict(choices=['gz', 'bz2', 'zip'], default='gz', required=False),
             creates = dict(required=False),
             remove = dict(required=False, default=True, type='bool'),
@@ -133,11 +133,8 @@ def main():
     archive = False
     successes = []
 
-    if isinstance(paths, basestring):
-        paths = [paths]
-
     for i, path in enumerate(paths):
-        path = os.path.expanduser(params['path'])
+        path = os.path.expanduser(path)
 
         # Detect glob-like characters
         if any((c in set('*?')) for c in path):
@@ -146,7 +143,7 @@ def main():
             expanded_paths.append(path)
 
     if len(expanded_paths) == 0:
-        module.fail_json(path, msg='Error, no source paths were found')
+        module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
 
     # If we actually matched multiple files or TRIED to, then
     # treat this as a multi-file archive
@@ -170,7 +167,7 @@ def main():
         # Use the longest common directory name among all the files
         # as the archive root path
         if arcroot == '':
-            arcroot = os.path.dirname(path)
+            arcroot = os.path.dirname(path) + os.sep
         else:
             for i in xrange(len(arcroot)):
                 if path[i] != arcroot[i]:
@@ -259,8 +256,7 @@ def main():
                 archive.close()
                 state = 'archive'
 
-
-        if state == 'archive' and remove:
+        if state in ['archive', 'incomplete'] and remove:
             for path in successes:
                 try:
                     if os.path.isdir(path):
