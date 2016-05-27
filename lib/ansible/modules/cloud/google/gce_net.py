@@ -263,6 +263,9 @@ def main():
             if mode == 'legacy':
                 json_output['ipv4_range'] = network.cidr
             if network and mode == 'custom' and subnet_name:
+                if not hasattr(gce, 'ex_get_subnetwork'):
+                     module.fail_json(msg="Update libcloud to a more recent version (>1.0) that supports network 'mode' parameter", changed=False)
+
                 subnet = gce.ex_get_subnetwork(subnet_name, region=subnet_region)
                 json_output['subnet_name'] = subnet_name
                 json_output['ipv4_range'] = subnet.cidr
@@ -400,6 +403,8 @@ def main():
                 gce.ex_destroy_firewall(fw)
                 changed = True
         elif subnet_name:
+            if not hasattr(gce, 'ex_get_subnetwork') or not hasattr(gce, 'ex_destroy_subnetwork'):
+                module.fail_json(msg='Update libcloud to a more recent version (>1.0) that supports subnetwork creation', changed=changed)
             json_output['name'] = subnet_name
             subnet = None
             try:
@@ -422,7 +427,12 @@ def main():
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
-                gce.ex_destroy_network(network)
+#                json_output['d4'] = 'deleting %s' % name
+                try:
+                    gce.ex_destroy_network(network)
+                except Exception, e:
+                    module.fail_json(msg=unexpected_error_msg(e), changed=False)
+#                json_output['d5'] = 'deleted %s' % name
                 changed = True
 
     json_output['changed'] = changed
