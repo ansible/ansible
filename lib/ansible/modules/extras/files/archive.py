@@ -28,7 +28,7 @@ version_added: 2.2
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
-     - The M(archive) module packs an archive. It is the opposite of the unarchive module. By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving - set copy=yes to pack an archive which does not already exist on the target. The source files are deleted after archiving.
+     - The M(archive) module packs an archive. It is the opposite of the unarchive module. By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying remove=True.
 options:
   path:
     description:
@@ -41,22 +41,28 @@ options:
     choices: [ 'gz', 'bz2', 'zip' ]
   creates:
     description:
-      - The file name of the destination archive. When it already exists, this step will B(not) be run. This is required when 'path' refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
-    required: false
+      - The file name of the destination archive. This is required when 'path' refers to multiple files by either specifying a glob, a directory or multiple paths in a list. 
+    required: false, unless multiple source paths or globs are specified
     default: null
+  remove:
+    description:
+      - Remove any added source files and trees after adding to archive.
+    type: bool
+    required: false
+    default: false
+
 author: "Ben Doherty (@bendoh)"
 notes:
     - requires tarfile, zipfile, gzip, and bzip2 packages on target host
-    - can product I(gzip), I(bzip2) and I(zip) compressed files or archives
-    - removes source files by default
+    - can produce I(gzip), I(bzip2) and I(zip) compressed files or archives
 '''
 
 EXAMPLES = '''
 # Compress directory /path/to/foo/ into /path/to/foo.tgz
 - archive: path=/path/to/foo creates=/path/to/foo.tgz
 
-# Compress regular file /path/to/foo into /path/to/foo.gz
-- archive: path=/path/to/foo
+# Compress regular file /path/to/foo into /path/to/foo.gz and remove it
+- archive: path=/path/to/foo remove=True
 
 # Create a zip archive of /path/to/foo
 - archive: path=/path/to/foo compression=zip
@@ -113,7 +119,7 @@ def main():
             path = dict(type='list', required=True),
             compression = dict(choices=['gz', 'bz2', 'zip'], default='gz', required=False),
             creates = dict(required=False),
-            remove = dict(required=False, default=True, type='bool'),
+            remove = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
