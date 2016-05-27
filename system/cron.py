@@ -488,7 +488,7 @@ class CronTab(object):
                 return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
             else:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD , pipes.quote(path), user)
+        return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
 
 
 
