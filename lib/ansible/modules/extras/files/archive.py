@@ -28,21 +28,20 @@ version_added: 2.2
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
-     - The M(archive) module packs an archive. It is the opposite of the unarchive module. By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying remove=True.
+     - The M(archive) module packs an archive. It is the opposite of the unarchive module. By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying C(remove)=I(True).
 options:
   path:
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to archive or compress.
-    required: false
-    default: null
+    required: true
   compression:
     description:
       - The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
     choices: [ 'gz', 'bz2', 'zip' ]
   creates:
     description:
-      - The file name of the destination archive. This is required when 'path' refers to multiple files by either specifying a glob, a directory or multiple paths in a list. 
-    required: false, unless multiple source paths or globs are specified
+      - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
+    required: false
     default: null
   remove:
     description:
