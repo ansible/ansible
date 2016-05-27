@@ -229,11 +229,7 @@ def main():
                         if os.path.isdir(path) and not path.endswith(os.sep + '.'):
                             basename = os.path.basename(path) + os.sep
 
-                        filter_create = lambda f:
-                            if filecmp.cmp(f.name, creates):
-                                return f
-
-                        archive.add(path, path[len(arcroot):], filter=filter_create)
+                        archive.add(path, path[len(arcroot):], filter=lambda f: not filecmp.cmp(f.name, creates) and f)
                         successes.append(path)
 
                 # Slightly more difficult (and less efficient!) compression using zipfile module
