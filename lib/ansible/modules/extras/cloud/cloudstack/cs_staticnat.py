@@ -42,6 +42,12 @@ options:
       - VM guest NIC secondary IP address for the static NAT.
     required: false
     default: false
+  network:
+    description:
+      - Network the IP address is related to.
+    required: false
+    default: null
+    version_added: "2.2"
   state:
     description:
       - State of the static NAT.
@@ -198,6 +204,7 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
         args['virtualmachineid'] = self.get_vm(key='id')
         args['ipaddressid'] = ip_address['id']
         args['vmguestip'] = self.get_vm_guest_ip()
+        args['networkid'] = self.get_network(key='id')
         if not self.module.check_mode:
             res = self.cs.enableStaticNat(**args)
             if 'errortext' in res:
@@ -223,7 +230,7 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
                 res = self.cs.disableStaticNat(ipaddressid=ip_address['id'])
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-                res = self._poll_job(res, 'staticnat')
+                self._poll_job(res, 'staticnat')
                 res = self.cs.enableStaticNat(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
@@ -253,9 +260,8 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    res = self._poll_job(res, 'staticnat')
+                    self._poll_job(res, 'staticnat')
         return ip_address
-
 
 
 def main():
@@ -264,6 +270,7 @@ def main():
         ip_address = dict(required=True),
         vm = dict(default=None),
         vm_guest_ip = dict(default=None),
+        network = dict(default=None),
         state = dict(choices=['present', 'absent'], default='present'),
         zone = dict(default=None),
         domain = dict(default=None),
