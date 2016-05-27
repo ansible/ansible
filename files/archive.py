@@ -272,6 +272,8 @@ def main():
 
                         shutil.copyfileobj(f_in, f_out)
 
+                    successes.append(path)
+
                 except OSError:
                     e = get_exception()
 
