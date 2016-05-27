@@ -68,6 +68,12 @@ class Inventory(object):
         self._pattern_cache  = {}
         self._vars_plugins   = []
 
+        self._basedir = self.basedir()
+
+        # Contains set of filenames under group_vars directories
+        self._group_vars_files = self._find_group_vars_files(self._basedir)
+        self._host_vars_files = self._find_host_vars_files(self._basedir)
+
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
 
@@ -128,7 +134,7 @@ class Inventory(object):
                 self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
             else:
                 self.parser = get_file_parser(host_list, self.groups, self._loader)
-                vars_loader.add_directory(self.basedir(), with_subdir=True)
+                vars_loader.add_directory(self._basedir, with_subdir=True)
 
             if not self.parser:
                 # should never happen, but JIC
@@ -687,13 +693,20 @@ class Inventory(object):
             #       we do this shouldn't be too much of an issue. Still, this should
             #       be fixed at some point to allow a "first load" to touch all of the
             #       directories, then later runs only touch the new basedir specified
-            for group in self.groups.values():
-                #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
-                group.vars = combine_vars(group.vars, self.get_group_vars(group))
-            # get host vars from host_vars/ files
-            for host in self.get_hosts():
-                #host.vars = combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
-                host.vars = combine_vars(host.vars, self.get_host_vars(host))
+            found_group_vars = self._find_group_vars_files(self._playbook_basedir)
+            if found_group_vars:
+                self._group_vars_files = self._group_vars_files.union(found_group_vars)
+                for group in self.groups.values():
+                    #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
+                    group.vars = combine_vars(group.vars, self.get_group_vars(group))
+
+            found_host_vars = self._find_host_vars_files(self._playbook_basedir)
+            if found_host_vars:
+                self._host_vars_files = self._find_host_vars_files(self._playbook_basedir)
+                # get host vars from host_vars/ files
+                for host in self.get_hosts():
+                    #host.vars = combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+                    host.vars = combine_vars(host.vars, self.get_host_vars(host))
             # invalidate cache
             self._vars_per_host = {}
             self._vars_per_group = {}
@@ -706,6 +719,26 @@ class Inventory(object):
         """ Read group_vars/ files """
         return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir)
 
+    def _find_group_vars_files(self, basedir):
+        """ Find group_vars/ files """
+        if basedir in ('', None):
+            basedir = './'
+        path = os.path.realpath(os.path.join(basedir, 'group_vars'))
+        found_vars = set()
+        if os.path.exists(path):
+            found_vars = set(os.listdir(unicode(path)))
+        return found_vars
+
+    def _find_host_vars_files(self, basedir):
+        """ Find host_vars/ files """
+        if basedir in ('', None):
+            basedir = './'
+        path = os.path.realpath(os.path.join(basedir, 'host_vars'))
+        found_vars = set()
+        if os.path.exists(path):
+            found_vars = set(os.listdir(unicode(path)))
+        return found_vars
+
     def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False):
         """
         Loads variables from group_vars/<groupname> and host_vars/<hostname> in directories parallel
@@ -715,14 +748,15 @@ class Inventory(object):
 
         results = {}
         scan_pass = 0
-        _basedir = self.basedir()
+        _basedir = self._basedir
+        _playbook_basedir = self._playbook_basedir
 
         # look in both the inventory base directory and the playbook base directory
         # unless we do an update for a new playbook base dir
         if not new_pb_basedir:
-            basedirs = [_basedir, self._playbook_basedir]
+            basedirs = [_basedir, _playbook_basedir]
         else:
-            basedirs = [self._playbook_basedir]
+            basedirs = [_playbook_basedir]
 
         for basedir in basedirs:
             # this can happen from particular API usages, particularly if not run
@@ -737,14 +771,15 @@ class Inventory(object):
                 continue
 
             # save work of second scan if the directories are the same
-            if _basedir == self._playbook_basedir and scan_pass != 1:
+            if _basedir == _playbook_basedir and scan_pass != 1:
                 continue
 
-            if group and host is None:
+            # Before trying to load vars from file, check that the directory contains relvant file names
+            if host is None and any(map(lambda ext: group.name + ext in self._group_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # load vars in dir/group_vars/name_of_group
                 base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='strict')
                 results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
-            elif host and group is None:
+            elif group is None and any(map(lambda ext: host.name + ext in self._host_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # same for hostvars in dir/host_vars/name_of_host
                 base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='strict')
                 results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
