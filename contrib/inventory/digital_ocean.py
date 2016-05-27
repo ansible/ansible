@@ -365,24 +365,39 @@ or environment variables (DO_API_TOKEN)''')
             else:
                 dest = droplet['ip_address']
 
+            ip = dest
+            # Adding group variables
             dest = { 'hosts': [ dest ], 'vars': self.group_variables }
 
+            # If droplets have been tagged via the API, use those tags
+            # as groups.
+            if droplet['tags']:
+                for tag in droplet['tags']:
+                    self.push(self.inventory, tag, ip)
+
+            # Unique groups likely used for connectivity so we add both the
+            # hosts and vars.
             self.inventory[droplet['id']] = dest
             self.inventory[droplet['name']] = dest
-            self.inventory['region_' + droplet['region']['slug']] = dest
-            self.inventory['image_' + str(droplet['image']['id'])] = dest
-            self.inventory['size_' + droplet['size']['slug']] = dest
+
+            # Always append to the inventory for non-unique groups
+            self.push(self.inventory,'region_' + droplet['region']['slug'], ip)
+            self.push(self.inventory,'image_' + str(droplet['image']['id']), ip)
+            self.push(self.inventory,'size_' + droplet['size']['slug'], ip)
+            # Generic all encompasing group. Can be optional.
+            self.push(self.inventory, 'digitalocean', ip)
 
             image_slug = droplet['image']['slug']
             if image_slug:
-                self.inventory['image_' + self.to_safe(image_slug)] = dest
+                self.push(self.inventory, 'image_' + self.to_safe(image_slug), ip)
             else:
                 image_name = droplet['image']['name']
                 if image_name:
-                    self.inventory['image_' + self.to_safe(image_name)] = dest
+                    self.push(self.inventory,'image_' + self.to_safe(image_name), ip)
 
-            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest
-            self.inventory['status_' + droplet['status']] = dest
+            # Always append to the inventory for non-unique groups
+            self.push(self.inventory,'distro_' + self.to_safe(droplet['image']['distribution']), ip)
+            self.push(self.inventory,'status_' + droplet['status'], ip)
 
 
     def load_droplet_variables_for_host(self):
