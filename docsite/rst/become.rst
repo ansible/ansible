@@ -31,6 +31,20 @@ become_user
 become_method
     at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'
 
+For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
+
+    - name: Ensure the httpd service is running
+      service:
+        name: httpd
+        state: running
+      become: true
+
+To run a command as the ``apache`` user::
+
+    - name: Run a command as the apache uesr
+      command: somecommand
+      become: true
+      become_user: apache
 
 Connection variables
 --------------------
@@ -48,6 +62,9 @@ ansible_become_user
 ansible_become_pass
     allows you to set the privilege escalation password
 
+For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
+
+    webserver ansible_user=manager ansible_become=true
 
 New command line options
 ------------------------
