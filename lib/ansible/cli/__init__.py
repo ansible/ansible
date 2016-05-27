@@ -240,6 +240,9 @@ class CLI(object):
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host path (default=%s) or comma separated host list." % C.DEFAULT_HOST_LIST,
                 default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
+            parser.add_option('-p', '--parent-path', dest='parent',
+                help="specify additional parent group/host vars directory (default=%s)" % C.DEFAULT_PARENT_PATH,
+                default=C.DEFAULT_PARENT_PATH, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',

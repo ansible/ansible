@@ -129,7 +129,7 @@ class PlaybookCLI(CLI):
         variable_manager.options_vars = load_options_vars(self.options)
 
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
+        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory, parent_path=self.options.parent)
         variable_manager.set_inventory(inventory)
 
         # (which is not returned in list_hosts()) is taken into account for
