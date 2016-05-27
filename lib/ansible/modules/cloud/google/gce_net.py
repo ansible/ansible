@@ -112,12 +112,33 @@ options:
     default: null
     aliases: []
   mode:
-    version_added: TBD
+    version_added: "2.2"
     description:
       - network mode supporting subnets introduced into Google Cloud
     required: false
     default: "legacy"
     choices: ["legacy", "auto", "custom"]
+    aliases: []
+  subnet_name:
+    version_added: "2.2"
+    description:
+      - name of subnet to create
+    required: false
+    default: null
+    aliases: []
+  subnet_region:
+    version_added: "2.2"
+    description:
+      - region of subnet to create
+    required: false
+    default: null
+    aliases: []
+  subnet_desc:
+    version_added: "2.2"
+    description:
+      - description of subnet to create
+    required: false
+    default: null
     aliases: []
 
 requirements:
