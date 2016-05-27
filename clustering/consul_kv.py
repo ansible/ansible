@@ -244,7 +244,7 @@ def get_consul_api(module, token=None):
     return consul.Consul(host=module.params.get('host'),
                          port=module.params.get('port'),
                          scheme=module.params.get('scheme'),
-                         validate_certs=module.params.get('validate_certs'),
+                         verify=module.params.get('validate_certs'),
                          token=module.params.get('token'))
 
 def test_dependencies(module):
