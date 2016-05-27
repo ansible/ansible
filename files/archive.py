@@ -72,7 +72,12 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: The current state of the archived file.
+    description:
+        The current state of the archived file.
+        If 'absent', then no source files were found and the archive does not exist.
+        If 'compress', then the file source file is in the compressed state.
+        If 'archive', then the source file or paths are currently archived.
+        If 'incomplete', then an archive was created, but not all source paths were found.
     type: string
     returned: always
 missing:
@@ -98,6 +103,7 @@ import glob
 import shutil
 import gzip
 import bz2
+import filecmp
 import zipfile
 import tarfile
 
@@ -157,6 +163,7 @@ def main():
 
     archive_paths = []
     missing = []
+    exclude = []
     arcroot = ''
 
     for path in expanded_paths:
@@ -172,9 +179,9 @@ def main():
             if i < len(arcroot):
                 arcroot = os.path.dirname(arcroot[0:i+1])
 
-        if path == creates:
-            # Don't allow the archive to specify itself! this is an error.
-            module.fail_json(path=', '.join(paths), msg='Error, created archive would be included in archive')
+        # Don't allow archives to be created anywhere within paths to be removed
+        if remove and os.path.isdir(path) and creates.startswith(path):
+            module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
 
         if os.path.lexists(path):
             archive_paths.append(path)
@@ -208,18 +215,40 @@ def main():
 
         if state != 'archive':
             try:
+                # Easier compression using tarfile module
                 if compression == 'gz' or compression == 'bz2':
                     archive = tarfile.open(creates, 'w|' + compression)
 
                     for path in archive_paths:
-                        archive.add(path, path[len(arcroot):])
+                        basename = ''
+
+                        # Prefix trees in the archive with their basename, unless specifically prevented with '.'
+                        if os.path.isdir(path) and not path.endswith(os.sep + '.'):
+                            basename = os.path.basename(path) + os.sep
+
+                        archive.add(path, path[len(arcroot):], filter=lambda f: f if f.name != creates else None)
                         successes.append(path)
 
+                # Slightly more difficult (and less efficient!) compression using zipfile module
                 elif compression == 'zip':
-                    archive = zipfile.ZipFile(creates, 'w')
+                    archive = zipfile.ZipFile(creates, 'w', zipfile.ZIP_DEFLATED)
 
                     for path in archive_paths:
-                        archive.write(path, path[len(arcroot):])
+                        basename = ''
+
+                        # Prefix trees in the archive with their basename, unless specifically prevented with '.'
+                        if os.path.isdir(path) and not path.endswith(os.sep + '.'):
+                            basename = os.path.basename(path) + os.sep
+
+                        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+                            for dirname in dirnames:
+                                archive.write(dirpath + os.sep + dirname, basename + dirname)
+                            for filename in filenames:
+                                fullpath = dirpath + os.sep + filename
+
+                                if not filecmp.cmp(fullpath, creates):
+                                    archive.write(fullpath, basename + filename)
+
                         successes.append(path)
 
             except OSError:
@@ -228,8 +257,10 @@ def main():
 
             if archive:
                 archive.close()
+                state = 'archive'
 
-        if state != 'archive' and remove:
+
+        if state == 'archive' and remove:
             for path in successes:
                 try:
                     if os.path.isdir(path):
@@ -275,7 +306,7 @@ def main():
 
                 try:
                     if compression == 'zip':
-                        archive = zipfile.ZipFile(creates, 'wb')
+                        archive = zipfile.ZipFile(creates, 'w', zipfile.ZIP_DEFLATED)
                         archive.write(path, path[len(arcroot):])
                         archive.close()
                         state = 'archive' # because all zip files are archives
