@@ -175,7 +175,7 @@ def main():
                         successes.append(path)
 
                 elif compression == 'zip':
-                    archive = zipfile.ZipFile(creates, 'wb')
+                    archive = zipfile.ZipFile(creates, 'w')
 
                     for path in archive_paths:
                         archive.write(path, path[len(arcroot):])
