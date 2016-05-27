@@ -129,11 +129,11 @@ class GalaxyCLI(CLI):
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
-        if self.action in ("import","info","init","install","login","search","setup","delete"):
-            self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
-                help='The API server destination')
-            self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
-                help='Ignore SSL certificate validation errors.')
+        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
+            help='The API server destination')
+
+        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
+            help='Ignore SSL certificate validation errors.')
 
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
