@@ -46,6 +46,7 @@ description:
   - 'When environment variables are managed: no comment line is added, but, when the module
     needs to find/check the state, it uses the "name" parameter to find the environment
     variable definition line.'
+  - 'When using symbols such as %, they must be properly escaped.'
 version_added: "0.9"
 options:
   name:
