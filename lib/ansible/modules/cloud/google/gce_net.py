@@ -206,6 +206,9 @@ def main():
             credentials_file = dict(),
             project_id = dict(),
             mode = dict(default='legacy', choices=['legacy', 'auto', 'custom']),
+            subnet_name = dict(),
+            subnet_region = dict(),
+            subnet_desc = dict(),
         )
     )
 
@@ -223,16 +226,25 @@ def main():
     target_tags = module.params.get('target_tags')
     state = module.params.get('state')
     mode = module.params.get('mode')
+    subnet_name = module.params.get('subnet_name')
+    subnet_region = module.params.get('subnet_region')
+    subnet_desc = module.params.get('subnet_desc')
 
     changed = False
     json_output = {'state': state}
 
     if state in ['active', 'present']:
         network = None
+        subnet = None
         try:
             network = gce.ex_get_network(name)
             json_output['name'] = name
-            json_output['ipv4_range'] = network.cidr
+            if mode == 'legacy':
+                json_output['ipv4_range'] = network.cidr
+            if network and mode == 'custom' and subnet_name:
+                subnet = gce.ex_get_subnetwork(subnet_name, region=subnet_region)
+                json_output['subnet_name'] = subnet_name
+                json_output['ipv4_range'] = subnet.cidr
         except ResourceNotFoundError:
             pass
         except Exception as e:
@@ -241,22 +253,36 @@ def main():
         # user wants to create a new network that doesn't yet exist
         if name and not network:
             if not ipv4_range and mode != 'auto':
-                module.fail_json(msg="Network '" + name + "' is not found. To create network in legacy mode, 'ipv4_range' parameter is required",
+                module.fail_json(msg="Network '" + name + "' is not found. To create network in legacy or custom mode, 'ipv4_range' parameter is required",
                     changed=False)
-            if mode == 'legacy':
-                kwargs = {}
-            else:
-                kwargs = {'mode': mode}
+            args = [ipv4_range if mode =='legacy' else None]
+            kwargs = {}
+            if mode != 'legacy':
+                kwargs['mode'] = mode
 
             try:
-                network = gce.ex_create_network(name, ipv4_range, **kwargs)
+                network = gce.ex_create_network(name, *args, **kwargs)
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
             except TypeError:
-                module.fail_json(msg="Update libcloud to a more recent version (1.0+) that supports network 'mode' parameter", changed=False)
+                module.fail_json(msg="Update libcloud to a more recent version (>1.0) that supports network 'mode' parameter", changed=False)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
+
+        if (subnet_name or ipv4_range) and not subnet and mode == 'custom':
+            if not hasattr(gce, 'ex_create_subnetwork'):
+                module.fail_json(msg='Update libcloud to a more recent version (>1.0) that supports subnetwork creation', changed=changed)
+            if not subnet_name or not ipv4_range or not subnet_region:
+                module.fail_json(msg="subnet_name, ipv4_range, and subnet_region required for custom mode", changed=changed)
+
+            try:
+                subnet = gce.ex_create_subnetwork(subnet_name, cidr=ipv4_range, network=name, region=subnet_region, description=subnet_desc)
+                json_output['subnet_name'] = subnet_name
+                json_output['ipv4_range'] = ipv4_range
+                changed = True
+            except Exception, e:
+                module.fail_json(msg=unexpected_error_msg(e), changed=changed)
 
         if fwname:
             # user creating a firewall rule
@@ -351,6 +377,18 @@ def main():
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if fw:
                 gce.ex_destroy_firewall(fw)
+                changed = True
+        elif subnet_name:
+            json_output['name'] = subnet_name
+            subnet = None
+            try:
+                subnet = gce.ex_get_subnetwork(subnet_name, region=subnet_region)
+            except ResourceNotFoundError:
+                pass
+            except Exception, e:
+                module.fail_json(msg=unexpected_error_msg(e), changed=False)
+            if subnet:
+                gce.ex_destroy_subnetwork(subnet)
                 changed = True
         elif name:
             json_output['name'] = name
