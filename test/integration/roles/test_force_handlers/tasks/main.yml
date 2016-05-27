@@ -10,15 +10,15 @@
     - echoing handler
   when: inventory_hostname == 'A' or inventory_hostname == 'B'
 
-- name: fail task for all
+- name: EXPECTED FAILURE fail task for all
   fail: msg="Fail All"
   when: fail_all is defined and fail_all
 
-- name: fail task for A
+- name: EXPECTED FAILURE fail task for A
   fail: msg="Fail A"
   when: inventory_hostname == 'A'
 
-- name: fail task for C
+- name: EXPECTED FAILURE fail task for C
   fail: msg="Fail C"
   when: inventory_hostname == 'C'
   

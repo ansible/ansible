@@ -20,7 +20,7 @@
   - debug:
       msg: assert works ({{ assert_out.failed }})
 
-  - name: ensure fail action stops execution
+  - name: EXPECTED FAILURE ensure fail action stops execution
     fail:
       msg: fail actually failed (this is expected)
 

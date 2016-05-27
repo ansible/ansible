@@ -1,1 +1,2 @@
-- fail: msg="{{msg}}"
+- name: EXPECTED FAILURE
+  fail: msg="{{msg}}"
