@@ -50,6 +50,27 @@ EXAMPLES = '''
     compression: bz2
 '''
 
+RETURN = '''
+state:
+    description: The current state of the archived file.
+    type: string
+    returned: always
+missing:
+    description: Any files that were missing from the source.
+    type: list
+    returned: success
+archived:
+    description: Any files that were compressed or added to the archive.
+    type: list
+    returned: success
+arcroot:
+    description: The archive root.
+    type: string
+expanded_paths:
+    description: The list of matching paths from paths argument.
+    type: list
+'''
+
 import stat
 import os
 import errno
