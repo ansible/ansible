@@ -40,9 +40,10 @@ options:
   db_engine:
     description:
       - The type of database.  Used only when command=create.
+      - mariadb was added in version 2.2
     required: false
     default: null
-    choices: [ 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
+    choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
@@ -319,6 +320,7 @@ except ImportError:
     has_rds2 = False
 
 DEFAULT_PORTS= {
+    'mariadb': 3306,
     'mysql': 3306,
     'oracle': 1521,
     'sqlserver': 1433,
@@ -1023,7 +1025,7 @@ def main():
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
             instance_name     = dict(required=False),
             source_instance   = dict(required=False),
-            db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora'], required=False),
+            db_engine         = dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora'], required=False),
             size              = dict(required=False),
             instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
