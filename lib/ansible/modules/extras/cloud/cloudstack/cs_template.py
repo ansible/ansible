@@ -89,7 +89,7 @@ options:
     default: false
   cross_zones:
     description:
-      - Whether the template should be syned or removed across zones.
+      - Whether the template should be synced or removed across zones.
       - Only used if C(state) is present or absent.
     required: false
     default: false
@@ -132,7 +132,7 @@ options:
       - Name the hypervisor to be used for creating the new template.
       - Relevant when using C(state=present).
     required: false
-    default: none
+    default: null
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
   requires_hvm:
     description:
