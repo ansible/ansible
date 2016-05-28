@@ -55,8 +55,9 @@ if ($factpath -ne $null) {
 $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
 $win32_bios = Get-CimInstance Win32_Bios
+$ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
 $osversion = [Environment]::OSVersion
-$capacity = $win32_cs.TotalPhysicalMemory # Win32_PhysicalMemory is empty on some virtual platforms
+$user = [Security.Principal.WindowsIdentity]::GetCurrent()
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
 $ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
@@ -82,33 +83,66 @@ Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
 
 Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
 
-# FIXME: Reformat the date to MM/DD/YEAR format
 Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
 Set-Attr $result.ansible_facts "ansible_bios_version" $win32_bios.SMBIOSBIOSVersion
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME
-Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
-Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model
+Set-Attr $result.ansible_facts "ansible_fqdn" ($ip_props.Hostname + "." + $ip_props.DomainName)
+Set-Attr $result.ansible_facts "ansible_processor_count" $win32_cs.NumberOfProcessors
+Set-Attr $result.ansible_facts "ansible_processor_vcpus" ($win32_cs.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
+Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model.Trim()
 Set-Attr $result.ansible_facts "ansible_product_serial" $win32_bios.SerialNumber
-Set-Attr $result.ansible_facts "ansible_product_version" $win32_cs.Name
+Set-Attr $result.ansible_facts "ansible_product_version" ([string] $win32_cs.SystemFamily)
 Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
+Set-Attr $result.ansible_facts "ansible_system_description" ([string] $win32_os.Description)
 Set-Attr $result.ansible_facts "ansible_system_vendor" $win32_cs.Manufacturer
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_os_name" ($win32_os.Name.Split('|')[0]).Trim()
 Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
+Set-Attr $result.ansible_facts "ansible_distribution_major_version" $osversion.Version.Major.ToString()
+Set-Attr $result.ansible_facts "ansible_kernel" $osversion.Version.ToString()
+
+Set-Attr $result.ansible_facts "ansible_machine_id" $user.User.AccountDomainSid.Value
+Set-Attr $result.ansible_facts "ansible_domain" $ip_props.DomainName
+Set-Attr $result.ansible_facts "ansible_nodename" ($ip_props.HostName + "." + $ip_props.DomainName)
 Set-Attr $result.ansible_facts "ansible_windows_domain" $win32_cs.Domain
 
+Set-Attr $result.ansible_facts "ansible_owner_name" ([string] $win32_cs.PrimaryOwnerName)
+Set-Attr $result.ansible_facts "ansible_owner_contact" ([string] $win32_cs.PrimaryOwnerContact)
+
+Set-Attr $result.ansible_facts "ansible_user_dir" $env:userprofile
+Set-Attr $result.ansible_facts "ansible_user_gecos" ([string] $user.Label)
+Set-Attr $result.ansible_facts "ansible_user_id" $env:username
+Set-Attr $result.ansible_facts "ansible_user_uid" ([int] $user.User.Value.Substring(42))
+Set-Attr $result.ansible_facts "ansible_user_sid" $user.User.Value
+
+# Use English locale
+[System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
 $date = New-Object psobject
-Set-Attr $date "date" (Get-Date -format d)
-Set-Attr $date "year" (Get-Date -format yyyy)
-Set-Attr $date "month" (Get-Date -format MM)
-Set-Attr $date "day" (Get-Date -format dd)
-Set-Attr $date "hour" (Get-Date -format HH)
-Set-Attr $date "minute" (Get-Date -format mm)
-Set-Attr $date "iso8601" (Get-Date -format s)
+$datetime = (Get-Date)
+$datetime_utc = $datetime.ToUniversalTime()
+Set-Attr $date "date" $datetime.ToString("yyyy-MM-dd")
+Set-Attr $date "day" $datetime.ToString("dd")
+Set-Attr $date "epoch" (Get-Date -UFormat "%s")
+Set-Attr $date "hour" $datetime.ToString("HH")
+Set-Attr $date "iso8601" $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ssZ")
+Set-Attr $date "iso8601_basic" $datetime.ToString("yyyyMMddTHHmmssffffff")
+Set-Attr $date "iso8601_basic_short" $datetime.ToString("yyyyMMddTHHmmss")
+Set-Attr $date "iso8601_micro" $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ")
+Set-Attr $date "minute" $datetime.ToString("mm")
+Set-Attr $date "month" $datetime.ToString("MM")
+Set-Attr $date "second" $datetime.ToString("ss")
+Set-Attr $date "time" $datetime.ToString("HH:mm:ss")
+Set-Attr $date "tz_offset" $datetime.ToString("zzzz")
+Set-Attr $date "tz" ([System.TimeZoneInfo]::Local.Id)
+Set-Attr $date "weekday" $datetime.ToString("dddd")
+Set-Attr $date "weekday_number" (Get-Date -UFormat "%w")
+Set-Attr $date "weeknumber" (Get-Date -UFormat "%W")
+Set-Attr $date "year" $datetime.ToString("yyyy")
 Set-Attr $result.ansible_facts "ansible_date_time" $date
 
-Set-Attr $result.ansible_facts "ansible_totalmem" $capacity
+Set-Attr $result.ansible_facts "ansible_memtotal_mb" ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+Set-Attr $result.ansible_facts "ansible_swaptotal_mb" ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
 
 Set-Attr $result.ansible_facts "ansible_lastboot" $win32_os.lastbootuptime.ToString("u")
 Set-Attr $result.ansible_facts "ansible_uptime_seconds" $([System.Convert]::ToInt64($(Get-Date).Subtract($win32_os.lastbootuptime).TotalSeconds))
@@ -165,6 +199,7 @@ if ($winrm_cert_expiry)
 
 $PendingReboot = Get-PendingRebootStatus
 Set-Attr $result.ansible_facts "ansible_reboot_pending" $PendingReboot
+Set-Attr $result.ansible_facts "module_setup" $true
 
 # See if Facter is on the System Path
 Try {
