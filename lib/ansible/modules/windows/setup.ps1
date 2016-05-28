@@ -54,6 +54,7 @@ if ($factpath -ne $null) {
 
 $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
+$win32_bios = Get-CimInstance Win32_Bios
 $osversion = [Environment]::OSVersion
 $capacity = $win32_cs.TotalPhysicalMemory # Win32_PhysicalMemory is empty on some virtual platforms
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
@@ -81,13 +82,21 @@ Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
 
 Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
 
-Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
+# FIXME: Reformat the date to MM/DD/YEAR format
+Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate
+Set-Attr $result.ansible_facts "ansible_bios_version" $win32_bios.SMBIOSBIOSVersion
+Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
+Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model
+Set-Attr $result.ansible_facts "ansible_product_serial" $win32_bios.SerialNumber
+Set-Attr $result.ansible_facts "ansible_product_version" $win32_cs.Name
 Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
+Set-Attr $result.ansible_facts "ansible_system_vendor" $win32_cs.Manufacturer
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_os_name" ($win32_os.Name.Split('|')[0]).Trim()
 Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
+Set-Attr $result.ansible_facts "ansible_windows_domain" $win32_cs.Domain
 
 $date = New-Object psobject
 Set-Attr $date "date" (Get-Date -format d)
