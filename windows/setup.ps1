@@ -83,7 +83,7 @@ Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
 Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
 
 # FIXME: Reformat the date to MM/DD/YEAR format
-Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate
+Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
 Set-Attr $result.ansible_facts "ansible_bios_version" $win32_bios.SMBIOSBIOSVersion
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
