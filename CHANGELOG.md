@@ -14,6 +14,7 @@ Ansible Changes By Release
   * ec2_vpc_nacl_facts
 - cloudstack
   * cs_router
+  * cs_snapshot_policy
 - smartos
   * smartos_image_facts
 - systemd
@@ -188,7 +189,7 @@ Ansible Changes By Release
 
 ###Minor Changes:
 
-* Added support for pipelining mode to more connection plugins, which helps prevent 
+* Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
 * Added a new '!unsafe' YAML decorator, which can be used in playbooks to ensure a
   string is not templated. For example: `foo: !unsafe "Don't template {{me}}"`.
