@@ -38,6 +38,7 @@ options:
     description:
       - The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
     choices: [ 'gz', 'bz2', 'zip' ]
+    default: 'gz'
   creates:
     description:
       - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
