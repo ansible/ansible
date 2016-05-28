@@ -32,7 +32,7 @@ ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
 if os.getenv('ANSIBLE_ETCD_URL') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
 
-ANSIBLE_ETCD_VERSION = 'v2'
+ANSIBLE_ETCD_VERSION = 'v1'
 if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_VERSION']
 
