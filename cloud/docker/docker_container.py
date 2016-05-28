@@ -1356,7 +1356,7 @@ class ContainerManager(DockerBaseClass):
             self.results['diff'] = self.diff
 
         if self.facts:
-            self.results['ansbile_facts'] = {'ansible_docker_container': self.facts}
+            self.results['ansible_facts'] = {'ansible_docker_container': self.facts}
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
