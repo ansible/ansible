@@ -97,6 +97,14 @@ options:
       - Dictionary of key,value pairs.
     default: null
     required: false
+  env_file:
+    version_added: "2.2"
+    description:
+      - Path to a file containing environment variables I(FOO=BAR).
+      - If variable also present in C(env), then C(env) value will override.
+      - Requires docker-py >= 1.4.0.
+    default: null
+    required: false
   entrypoint:
     description:
       - String or list of commands that overwrite the default ENTRYPOINT of the image.
@@ -582,6 +590,7 @@ class TaskParameters(DockerBaseClass):
         self.dns_opts = None
         self.dns_search_domains = None
         self.env = None
+        self.env_file = None
         self.entrypoint = None
         self.etc_hosts = None
         self.exposed_ports = None
@@ -655,6 +664,7 @@ class TaskParameters(DockerBaseClass):
         self.log("volumes:")
         self.log(self.volumes, pretty_print=True)
 
+        self.env = self._get_environment()
         self.ulimits = self._parse_ulimits()
         self.log_config = self._parse_log_config()
         self.exp_links = None
@@ -924,6 +934,21 @@ class TaskParameters(DockerBaseClass):
             return LogConfig(**options)
         except ValueError, exc:
             self.fail('Error parsing logging options - %s' % (exc))
+
+    def _get_environment(self):
+        """
+        If environment file is combined with explicit environment variables, the explicit environment variables
+        take precedence.
+        """
+        final_env = {}
+        if self.env_file:
+            parsed_env_file = utils.parse_env_file(self.env_file)
+            for name, value in parsed_env_file.iteritems():
+                final_env[name] = str(value)
+        if self.env:
+            for name, value in self.env.iteritems():
+                final_env[name] = str(value)
+        return final_env
 
 
 class Container(DockerBaseClass):
@@ -1578,6 +1603,7 @@ def main():
         dns_opts=dict(type='list'),
         dns_search_domains=dict(type='list'),
         env=dict(type='dict'),
+        env_file=dict(type='path'),
         entrypoint=dict(type='list'),
         etc_hosts=dict(type='dict'),
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
