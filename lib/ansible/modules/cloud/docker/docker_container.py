@@ -1309,11 +1309,7 @@ class Container(DockerBaseClass):
         self.log('_get_expected_cmd')
         if not self.parameters.command:
             return None
-        # expected_commands = []
-        # commands = self.parameters.command
-        # for cmd in commands:
-        #     expected_commands = expected_commands + shlex.split(cmd)
-        return self.parameters.command
+        return shlex.split(self.parameters.command)
 
     def _convert_simple_dict_to_list(self, param_name, join_with=':'):
         if getattr(self.parameters, param_name, None) is None:
@@ -1559,7 +1555,7 @@ def main():
     argument_spec = dict(
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
-        command=dict(type='list'),
+        command=dict(type='str'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
