@@ -1273,10 +1273,15 @@ class Container(DockerBaseClass):
 
     def _get_expected_env(self, image):
         self.log('_get_expected_env')
-        param_env = (self._convert_simple_dict_to_list('env', '=') or [])
+        expected_env = dict()
         if image and image['ContainerConfig'].get('Env'):
-            image_env = image['ContainerConfig'].get('Env')
-            param_env = list(set(param_env + image_env))
+            for env_var in image['ContainerConfig']['Env']:
+                parts = env_var.split('=')
+                expected_env[parts[0]] = parts[1]
+        expected_env.update(self.parameters.env)
+        param_env = []
+        for key, value in expected_env.items():
+            param_env.append("%s=%s" % (key, value))
         return param_env
 
     def _get_expected_exposed(self, image):
