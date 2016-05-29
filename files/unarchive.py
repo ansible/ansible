@@ -701,6 +701,9 @@ def main():
 #        supports_check_mode = True,
     )
 
+    # We screenscrape a huge amount of commands so use C locale anytime we do
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     src    = os.path.expanduser(module.params['src'])
     dest   = os.path.expanduser(module.params['dest'])
     copy   = module.params['copy']
