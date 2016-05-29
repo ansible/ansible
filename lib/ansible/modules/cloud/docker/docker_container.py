@@ -305,10 +305,12 @@ options:
     required: false
   restart_policy:
     description:
-      - Container restart policy.
+      - Container restart policy. Place quotes around I(no) option.
     choices:
-      - on-failure
       - always
+      - no
+      - on-failure
+      - unless-stopped 
     default: on-failure
     required: false
   restart_retries:
