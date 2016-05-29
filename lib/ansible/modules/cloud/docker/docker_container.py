@@ -1278,7 +1278,8 @@ class Container(DockerBaseClass):
             for env_var in image['ContainerConfig']['Env']:
                 parts = env_var.split('=')
                 expected_env[parts[0]] = parts[1]
-        expected_env.update(self.parameters.env)
+        if self.parameters.env:
+            expected_env.update(self.parameters.env)
         param_env = []
         for key, value in expected_env.items():
             param_env.append("%s=%s" % (key, value))
