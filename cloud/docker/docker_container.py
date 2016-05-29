@@ -25,6 +25,7 @@ short_description: manage docker containers
 
 description:
   - Manage the life cycle of docker containers.
+  - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
 
 version_added: "2.1.0"
 
@@ -612,6 +613,7 @@ class TaskParameters(DockerBaseClass):
         self.recreate = None
         self.restart = None
         self.restart_retries = None
+        self.restart_policy = None
         self.shm_size = None
         self.security_opts = None
         self.state = None
@@ -645,9 +647,6 @@ class TaskParameters(DockerBaseClass):
 
         self.links = self._parse_links()
 
-        if self.restart_policy is not None:
-            self.restart_policy = dict(Name=self.restart_policy,
-                                       MaximumRetryCount=self.restart_retries)
         if self.volumes:
             self.volumes = self._expand_host_paths()
 
@@ -763,7 +762,6 @@ class TaskParameters(DockerBaseClass):
             binds='volume_binds',
             volumes_from='volumes_from',
             network_mode='network_mode',
-            restart_policy='restart_policy',
             cap_add='capabilities',
             extra_hosts='etc_hosts',
             read_only='read_only',
@@ -783,6 +781,11 @@ class TaskParameters(DockerBaseClass):
         for key, value in host_config_params.iteritems():
             if getattr(self, value, None) is not None:
                 params[key] = getattr(self, value)
+
+        if self.restart_policy:
+            params['restart_policy'] = dict(Name=self.restart_policy,
+                                            MaximumRetryCount=self.restart_retries)
+
         return self.client.create_host_config(**params)
 
     def _parse_publish_ports(self):
@@ -1342,11 +1345,11 @@ class ContainerManager(DockerBaseClass):
         elif state == 'absent':
             self.absent()
 
-        # remove for now, until we decide about general framework
-        try:
-            del self.results['actions']
-        except:
-            pass
+        if not self.check_mode:
+            try:
+                del self.results['actions']
+            except:
+                pass
 
         if self.client.module._diff:
             self.results['diff'] = self.diff
@@ -1600,7 +1603,7 @@ def main():
         read_only=dict(type='bool', default=False),
         recreate=dict(type='bool', default=False),
         restart=dict(type='bool', default=False),
-        restart_policy=dict(type='str', choices=['on-failure', 'always']),
+        restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=0),
         shm_size=dict(type='str'),
         security_opts=dict(type=list),
