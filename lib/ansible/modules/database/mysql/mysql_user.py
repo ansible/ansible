@@ -62,7 +62,15 @@ options:
     version_added: "2.1"
   priv:
     description:
-      - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
+      - "MySQL privileges string in the format: C(db.table:priv1,priv2)."
+      - "Multiple privileges can be specified by separating each one using
+        a forward slash: C(db.table:priv/db.table:priv)."
+      - The format is based on MySQL C(GRANT) statement.
+      - Database and table names can be quoted, MySQL-style.
+      - If column privileges are used, the C(priv1,priv2) part must be
+        exactly as returned by a C(SHOW GRANT) statement. If not followed,
+        the module will always report changes. It includes grouping columns
+        by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
     required: false
     default: null
   append_privs:
@@ -474,7 +482,7 @@ def privileges_unpack(priv, mode):
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
             for i in output[pieces[0]]:
-                privs.append(re.sub(r'\(.*\)','',i))
+                privs.append(re.sub(r'\s*\(.*\)','',i))
         else:
             output[pieces[0]] = pieces[1].upper().split(',')
             privs = output[pieces[0]]
