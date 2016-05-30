@@ -253,6 +253,15 @@ options:
       - none
     default: null
     required: false
+  networks:
+     description:
+       - List of networks to which the container is a member.
+       - Each network is dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
+       - For each network C(name) is required. Optional parameters C(links) and C(aliases) are type list.
+       - For more information see U(https://docs.docker.com/engine/userguide/networking/dockernetworks/).
+       - To remove a container from one or more networks, use the C(purge_networks) option.
+     default: null
+     required: false
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -288,6 +297,11 @@ options:
   pull:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
+    default: false
+    required: false
+  purge_networks:
+    description:
+       - Remove the container from all networks not included in C(networks) parameter.
     default: false
     required: false
   read_only:
@@ -619,6 +633,7 @@ class TaskParameters(DockerBaseClass):
         self.paused = None
         self.pid_mode = None
         self.privileged = None
+        self.purge_networks = None
         self.pull = None
         self.read_only = None
         self.recreate = None
@@ -669,6 +684,14 @@ class TaskParameters(DockerBaseClass):
         self.log_config = self._parse_log_config()
         self.exp_links = None
         self._parse_volumes()
+
+        if self.networks:
+            for network in self.networks:
+                if not network.get('name'):
+                    self.fail("Parameter error: network must have a name attribute.")
+                id = self._get_network_id(network['name'])
+                if not id:
+                    self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -950,6 +973,16 @@ class TaskParameters(DockerBaseClass):
                 final_env[name] = str(value)
         return final_env
 
+    def _get_network_id(self, network_name):
+        network_id = None
+        try:
+            for network in self.client.networks(names=[network_name]):
+                network_id = network['Id']
+        except Exception, exc:
+            self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
+        return network_id
+
+
 
 class Container(DockerBaseClass):
 
@@ -1170,26 +1203,50 @@ class Container(DockerBaseClass):
         different = (len(differences) > 0)
         return different, differences
 
-    def has_missing_networks(self):
+    def has_network_differences(self):
         '''
-        Check if the container is connected to requested networks
+        Check if the container is connected to requested networks with expected options: links, aliases, ipv4, ipv6
         '''
-        missing_networks = []
-        missing = False
+        different = False
+        differences = []
 
         if not self.parameters.networks:
-            return missing, missing_networks
+            return different, differences
 
         if not self.container.get('NetworkSettings'):
             self.fail("has_missing_networks: Error parsing container properties. NetworkSettings missing.")
 
         connected_networks = self.container['NetworkSettings']['Networks']
-        for network, config in self.parameters.networks.iteritems():
-            if connected_networks.get(network, None) is None:
-                missing_networks.append(network)
-        if len(missing_networks) > 0:
-            missing = True
-        return missing, missing_networks
+        for network in self.parameters.networks:
+            if connected_networks.get(network['name'], None) is None:
+                different = True
+                differences.append(dict(
+                    parameter=network,
+                    container=None
+                ))
+            else:
+                diff = False
+                if network.get('ipv4_address') and network['ipv4_address'] != connected_networks[network['name']].get('IPAddress'):
+                    diff = True
+                if network.get('ipv6_address') and network['ipv6_address'] != connected_networks[network['name']].get('GlobalIPv6Address'):
+                    diff = True
+                if network.get('aliases') and network['aliases'] != connected_networks[network['name']].get('Aliases'):
+                    diff = True
+                if network.get('links') and network['links'] != connected_networks[network['name']].get('Links'):
+                    diff = True
+                if diff:
+                    different = True
+                    differences.append(dict(
+                        prarameter=network,
+                        container=dict(
+                            name=network['name'],
+                            ipv4_address=connected_networks[network['name']].get('IPAddress'),
+                            ipv6_address=connected_networks[network['name']].get('GlobalIPv6Address'),
+                            aliases=connected_networks[network['name']].get('Aliases'),
+                            links=connected_networks[network['name']].get('Links')
+                        )
+                    ))
+        return different, differences
 
     def has_extra_networks(self):
         '''
@@ -1198,19 +1255,20 @@ class Container(DockerBaseClass):
         extra_networks = []
         extra = False
 
-        if not self.parameters.networks:
-            return extra, extra_networks
-
         if not self.container.get('NetworkSettings'):
             self.fail("has_extra_networks: Error parsing container properties. NetworkSettings missing.")
 
-        connected_networks = self.container['NetworkSettings']['Networks']
-        for network in connected_networks:
-            if network not in ('bridge', 'host') and not network.startswith('container:'):
-                if network not in self.parameters.networks:
-                    extra_networks.append(network)
-        if len(extra_networks) > 0:
-            extra = True
+        connected_networks = self.container['NetworkSettings'].get('Networks')
+        if connected_networks:
+            for network, network_config in connected_networks.iteritems():
+                keep = False
+                if self.parameters.networks:
+                    for expected_network in self.parameters.networks:
+                        if expected_network['name'] == network:
+                            keep = True
+                if not keep:
+                    extra = True
+                    extra_networks.append(dict(name=netowork, id=network_config['NetworkID']))
         return extra, extra_networks
 
     def _get_expected_entrypoint(self, image):
@@ -1422,9 +1480,25 @@ class ContainerManager(DockerBaseClass):
             self.diff['image_different'] = True
 
         container = self.update_limits(container)
-        container = self.update_networks(container)
 
-        # TODO implement has_extra_networks
+        has_network_differences, network_differences = container.has_network_differences()
+        if has_network_differences:
+            if self.diff.get('differences'):
+                self.diff['differences'].append(dict(network_differences=network_differences))
+            else:
+                self.diff['differences'] = dict(network_differences=network_differences)
+            self.results['changed'] = True
+            container = self.update_networks(container, network_differences)
+
+        if self.parameters.purge_networks:
+            has_extra_networks, extra_networks = container.has_extra_networks()
+            if has_extra_networks:
+                if self.diff.get('differences'):
+                    self.diff['differences'].append(dict(purge_networks=extra_networks))
+                else:
+                    self.diff['differences'] = dict(purge_networks=extra_networks)
+                self.results['changed'] = True
+                container = self.remove_networks(container, extra_networks)
 
         if state == 'started' and not container.running:
             container = self.container_start(container.Id)
@@ -1488,16 +1562,42 @@ class ContainerManager(DockerBaseClass):
             return self._get_container(container.Id)
         return container
 
-    def update_networks(self, container):
-        networks_missing, missing_networks = container.has_missing_networks()
-        if networks_missing:
-            self.log("networks missing")
-            self.log(missing_networks, pretty_print=True)
-        if networks_missing and not self.check_mode:
-            for network in missing_networks:
-                self.connect_container_to_network(container.Id, network)
-            return self._get_container(container.Id)
-        return container
+    def update_networks(self, container, differences):
+        for diff in differences:
+            # remove the container from the network, if connected
+            if diff.get('container'):
+                self.results['actions'].append(dict(removed_from_network=diff['parameter']['name']))
+                if not self.check_mode:
+                    try:
+                        self.client.disconnect_container_from_network(container.Id, diff['parameter']['id'])
+                    except Exception, exc:
+                        self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
+                                                                                      str(exc)))
+            # connect to the network
+            params = dict(
+                ipv4_address=diff['parameter'].get('ipv4_address', None),
+                ipv6_address=diff['parameter'].get('ipv6_address', None),
+                links=diff['parameter'].get('links', None),
+                aliases=diff['parameter'].get('aliases', None)
+            )
+            self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
+            if not self.check_mode:
+                try:
+                    self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
+                except Exception, exc:
+                    self.fail("Error connecting container to network %s - %s" % (diff['parameter']['name'], str(exc)))
+        return self._get_container(container.Id)
+
+    def remove_networks(self, container, networks):
+        for network in networks:
+            self.results['actions'].append(dict(removed_from_network=network['name']))
+            if not self.check_mode:
+                try:
+                    self.client.disconnect_container_from_network(container.Id, network['id'])
+                except Exception, exc:
+                    self.fail("Error disconnecting container from network %s - %s" % (network['name'],
+                                                                                      str(exc)))
+        return self._get_container(container.Id)
 
     def container_create(self, image, create_parameters):
         self.log("create container")
@@ -1627,13 +1727,14 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
-        networks=dict(type='dict'),
+        networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
         published_ports=dict(type='list', aliases=['ports']),
         pull=dict(type='bool', default=False),
+        purge_networks=dict(type='bool', deault=False),
         read_only=dict(type='bool', default=False),
         recreate=dict(type='bool', default=False),
         restart=dict(type='bool', default=False),
