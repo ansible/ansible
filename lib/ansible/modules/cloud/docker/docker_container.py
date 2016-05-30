@@ -255,9 +255,10 @@ options:
     required: false
   networks:
      description:
-       - List of networks that the container belongs to.
+       - List of networks the container belongs to.
        - Each network is a dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
-       - For each network C(name) is required. Optional parameters C(links) and C(aliases) are of type list.
+       - For each network C(name) is required, all other keys are optional.
+       - If included, C(links) or C(aliases) are lists.
        - For more information see U(https://docs.docker.com/engine/userguide/networking/dockernetworks/).
        - To remove a container from one or more networks, use the C(purge_networks) option.
      default: null
@@ -523,6 +524,43 @@ EXAMPLES = '''
       syslog-address: tcp://my-syslog-server:514
       syslog-facility: daemon
       syslog-tag: myservice
+
+- name: Start a container with a command
+  docker_container:
+    name: sleepy
+    image: ubuntu:14.04
+    command: sleep infinity
+
+- name: Add container to networks
+  docker_container:
+    docker_container:
+    name: sleepy
+    networks:
+      - name: TestingNet
+        ipv4_address: 172.1.1.18
+      - name: TestingNet2
+        ipv4_address: 172.1.10.20
+
+- name: Update network with aliases
+  docker_container:
+    name: sleepy
+    networks:
+      - name: TestingNet
+        aliases:
+          - sleepyz
+          - zzzz
+
+- name: Remove container from one network
+  docker_container:
+    name: sleepy
+    networks:
+      - name: TestingNet2
+    purge_networks: yes
+
+- name: Remove container from all networks
+  docker_container:
+    name: sleepy
+    purge_networks: yes
 
 '''
 
@@ -979,7 +1017,9 @@ class TaskParameters(DockerBaseClass):
         network_id = None
         try:
             for network in self.client.networks(names=[network_name]):
-                network_id = network['Id']
+                if network['Name'] == network_name:
+                    network_id = network['Id']
+                    break
         except Exception, exc:
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
@@ -1590,8 +1630,6 @@ class ContainerManager(DockerBaseClass):
             )
             self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
             if not self.check_mode:
-                self.log("network diffs:")
-                self.log(diff, pretty_print=True)
                 try:
                     self.log("Connecting conainer to network %s" % diff['parameter']['id'])
                     self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
