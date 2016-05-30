@@ -63,6 +63,7 @@ class Base:
     _always_run           = FieldAttribute(isa='bool')
     _run_once             = FieldAttribute(isa='bool')
     _ignore_errors        = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool')
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [

@@ -434,6 +434,9 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
+        if task.check_mode:
+            new_info.check_mode = True
+
         # have always_run override check mode
         if task.always_run:
             new_info.check_mode = False
