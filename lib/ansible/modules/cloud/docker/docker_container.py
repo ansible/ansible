@@ -255,13 +255,14 @@ options:
     required: false
   networks:
      description:
-       - List of networks to which the container is a member.
-       - Each network is dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
-       - For each network C(name) is required. Optional parameters C(links) and C(aliases) are type list.
+       - List of networks that the container belongs to.
+       - Each network is a dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
+       - For each network C(name) is required. Optional parameters C(links) and C(aliases) are of type list.
        - For more information see U(https://docs.docker.com/engine/userguide/networking/dockernetworks/).
        - To remove a container from one or more networks, use the C(purge_networks) option.
      default: null
      required: false
+     version_added: "2.2"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -304,6 +305,7 @@ options:
        - Remove the container from all networks not included in C(networks) parameter.
     default: false
     required: false
+    version_added: "2.2"
   read_only:
     description:
       - Mount the container's root file system as read-only.
