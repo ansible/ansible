@@ -32,7 +32,7 @@ description:
 options:
   path:
     description:
-      - Remote absolute path, glob, or list of paths or globs for the file or files to archive or compress.
+      - Remote absolute path, glob, or list of paths or globs for the file or files to compress or archive.
     required: true
   compression:
     description:
@@ -134,7 +134,7 @@ def main():
     changed = False
     state = 'absent'
 
-    # Simple or archive file compression (inapplicable with 'zip')
+    # Simple or archive file compression (inapplicable with 'zip' since it's always an archive)
     archive = False
     successes = []
 
