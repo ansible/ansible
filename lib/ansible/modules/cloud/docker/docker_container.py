@@ -259,7 +259,7 @@ options:
        - Each network is a dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
        - For each network C(name) is required, all other keys are optional.
        - If included, C(links) or C(aliases) are lists.
-       - For more information see U(https://docs.docker.com/engine/userguide/networking/dockernetworks/).
+       - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
      default: null
      required: false
@@ -303,7 +303,8 @@ options:
     required: false
   purge_networks:
     description:
-       - Remove the container from all networks not included in C(networks) parameter.
+       - Remove the container from ALL networks not included in C(networks) parameter.
+       - Any default networks such as I(bridge), if not found in C(networks), will be removed as well.
     default: false
     required: false
     version_added: "2.2"
@@ -357,16 +358,16 @@ options:
     required: false
   state:
     description:
-      - '"absent" - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
+      - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
          rather than stopping it. Use keep_volumes to retain volumes associated with the removed container.'
-      - '"present" - Asserts the existence of a container matching the name and any provided configuration parameters. If no
+      - 'I(present)" - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
         with the requested config. Image version will be taken into account when comparing configuration. To ignore image
         version use the ignore_image option. Use the recreate option to force the re-creation of the matching container. Use
         force_kill to kill the container rather than stopping it. Use keep_volumes to retain volumes associated with a removed
         container.'
-      - '"started" - Asserts there is a running container matching the name and any provided configuration. If no container
+      - 'I(started) - Asserts there is a running container matching the name and any provided configuration. If no container
         matches the name, a container will be created and started. If a container matching the name is found but the
         configuration does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed
         and a new container will be created with the requested configuration and started. Image version will be taken into
@@ -374,7 +375,7 @@ options:
         re-create a matching container, even if it is running. Use restart to force a matching container to be stopped and
         restarted. Use force_kill to kill a container rather than stopping it. Use keep_volumes to retain volumes associated
         with a removed container.'
-      - '"stopped" - a container matching the specified name will be stopped. Use force_kill to kill a container rather than
+      - 'I(stopped) - a container matching the specified name will be stopped. Use force_kill to kill a container rather than
         stopping it.'
     required: false
     default: started
@@ -525,6 +526,28 @@ EXAMPLES = '''
       syslog-facility: daemon
       syslog-tag: myservice
 
+- name: Create db container and connect to network
+  docker_container:
+    name: db_test
+    image: "postgres:latest"
+    networks:
+      - name: "{{ docker_network_name }}"
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- name: Start container, connect to network and link
+  docker_container:
+    name: sleeper
+    image: ubuntu:14.04
+    networks:
+      - name: TestingNet
+        ipv4_address: "172.1.1.100"
+        aliases:
+          - sleepyzz
+        links:
+          - db_test:db
+      - name: TestingNet2
+
 - name: Start a container with a command
   docker_container:
     name: sleepy
@@ -538,6 +561,8 @@ EXAMPLES = '''
     networks:
       - name: TestingNet
         ipv4_address: 172.1.1.18
+        links:
+          - sleeper
       - name: TestingNet2
         ipv4_address: 172.1.10.20
 
@@ -711,7 +736,7 @@ class TaskParameters(DockerBaseClass):
             self.publish_all_ports = True
             self.published_ports = None
 
-        self.links = self._parse_links()
+        self.links = self._parse_links(self.links)
 
         if self.volumes:
             self.volumes = self._expand_host_paths()
@@ -732,6 +757,8 @@ class TaskParameters(DockerBaseClass):
                 network['id'] = self._get_network_id(network['name'])
                 if not network['id']:
                     self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
+                if network.get('links'):
+                    network['links'] = self._parse_links(network['links'])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -940,21 +967,22 @@ class TaskParameters(DockerBaseClass):
             exposed.append(port_with_proto)
         return exposed
 
-    def _parse_links(self):
+    @staticmethod
+    def _parse_links(links):
         '''
         Turn links into a dictionary
         '''
-        if self.links is None:
+        if links is None:
             return None
 
-        links = {}
-        for link in self.links:
+        result = {}
+        for link in links:
             parsed_link = link.split(':', 1)
             if len(parsed_link) == 2:
-                links[parsed_link[0]] = parsed_link[1]
+                result[parsed_link[0]] = parsed_link[1]
             else:
-                links[parsed_link[0]] = parsed_link[0]
-        return links
+                result[parsed_link[0]] = parsed_link[0]
+        return result
 
     def _parse_ulimits(self):
         '''
@@ -1272,11 +1300,19 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('ipv6_address') and network['ipv6_address'] != connected_networks[network['name']].get('GlobalIPv6Address'):
                     diff = True
-                if network.get('aliases') and network['aliases'] != connected_networks[network['name']].get('Aliases'):
-                    self.log('network aliases different')
+                if network.get('aliases') and not connected_networks[network['name']].get('Aliases'):
                     diff = True
-                if network.get('links') and network['links'] != connected_networks[network['name']].get('Links'):
+                if network.get('aliases') and connected_networks[network['name']].get('Aliases'):
+                    if set(network.get('aliases')) != set(connected_networks[network['name']].get('Aliases')):
+                        diff = True
+                if network.get('links') and not connected_networks[network['name']].get('Links'):
                     diff = True
+                if network.get('links') and connected_networks[network['name']].get('Links'):
+                    expected_links = []
+                    for link, alias in network['links'].iteritems():
+                        expected_links.append("%s:%s" % (link, alias))
+                    if set(expected_links) != set(connected_networks[network['name']].get('Links', [])):
+                        diff = True
                 if diff:
                     different = True
                     differences.append(dict(
@@ -1289,7 +1325,6 @@ class Container(DockerBaseClass):
                             links=connected_networks[network['name']].get('Links')
                         )
                     ))
-        self.log(differences, pretty_print=True)
         return different, differences
 
     def has_extra_networks(self):
@@ -1632,6 +1667,7 @@ class ContainerManager(DockerBaseClass):
             if not self.check_mode:
                 try:
                     self.log("Connecting conainer to network %s" % diff['parameter']['id'])
+                    self.log(params, pretty_print=True)
                     self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
                 except Exception, exc:
                     self.fail("Error connecting container to network %s - %s" % (diff['parameter']['name'], str(exc)))
