@@ -32,7 +32,6 @@ class DictDataLoader(DataLoader):
         super(DictDataLoader, self).__init__()
 
         self._file_mapping = file_mapping
-        self._build_unfracked_paths()
         self._build_known_directories()
 
     def load_from_file(self, path):
@@ -61,15 +60,6 @@ class DictDataLoader(DataLoader):
     def is_executable(self, path):
         # FIXME: figure out a way to make paths return true for this
         return False
-
-    def _build_unfracked_paths(self):
-        new_items = []
-        for path in self._file_mapping:
-            unfracked = os.path.normpath(os.path.realpath(path))
-            if unfracked != path:
-                new_items.append((unfracked, self._file_mapping[path]))
-        for ni in new_items:
-            self._file_mapping[ni[0]] = ni[1]
 
     def _add_known_directory(self, directory):
         if directory not in self._known_directories:
