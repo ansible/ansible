@@ -106,7 +106,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 result = self._read_worker_result()
                 if result is None:
-                    time.sleep(0.0001)
+                    time.sleep(0.01)
                     continue
 
                 # send callbacks for 'non final' results
