@@ -1,4 +1,3 @@
-"""
 import unittest
 from ansible.cli.galaxy import GalaxyCLI
 
@@ -10,4 +9,3 @@ class TestGalaxyCli(unittest.TestCase):
         y = x._display_role_info(role_info)
         
         assert(y == u'\nRole: foo\n\tdescription: bar')
-"""
