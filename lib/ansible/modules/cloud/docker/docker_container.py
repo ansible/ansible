@@ -532,8 +532,6 @@ EXAMPLES = '''
     image: "postgres:latest"
     networks:
       - name: "{{ docker_network_name }}"
-    debug: "{{ playbook_debug }}"
-  register: output
 
 - name: Start container, connect to network and link
   docker_container:
@@ -591,7 +589,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_docker_container:
-    description: Facts representing the current state of the container. Note that facts are not part of registred vars but accessible directly.
+    description: Facts representing the current state of the container. Note that facts are not part of registered vars but accessible directly.
     returned: always
     type: dict
     sample: '{
