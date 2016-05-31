@@ -28,6 +28,8 @@ from ansible.playbook.play import Play
 from ansible.playbook.role import Role
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+
 
 class TestPlay(unittest.TestCase):
 
@@ -102,6 +104,7 @@ class TestPlay(unittest.TestCase):
             post_tasks=[dict(action='shell echo "hello world"')],
         ))
 
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_with_roles(self):
         fake_loader = DictDataLoader({
             '/etc/ansible/roles/foo/tasks.yml': """

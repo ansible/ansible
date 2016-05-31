@@ -29,6 +29,8 @@ from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+
 
 class TestPlayIterator(unittest.TestCase):
 
@@ -55,7 +57,10 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
+        #import epdb; epdb.st()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
