@@ -359,7 +359,8 @@ class ModuleValidator(Validator):
         except Exception as e:
             errors.extend(e.errors)
 
-        for key, option in doc.get('options', {}).iteritems():
+        options = doc.get('options', {})
+        for key, option in (options or {}).iteritems():
             try:
                 option_schema(option)
             except Exception as e:
