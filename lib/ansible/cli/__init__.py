@@ -90,7 +90,10 @@ class CLI(object):
                 break
 
         if not self.action:
-            raise AnsibleOptionsError("Missing required action")
+            # if no need for action if version/help
+            tmp_options, tmp_args = self.parser.parse_args()
+            if not(hasattr(tmp_options, 'help') and tmp_options.help) or (hasattr(tmp_options, 'version') and tmp_options.version):
+                raise AnsibleOptionsError("Missing required action")
 
     def execute(self):
         """
