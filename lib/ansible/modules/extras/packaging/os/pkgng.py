@@ -32,53 +32,53 @@ version_added: "1.2"
 options:
     name:
         description:
-            - name of package to install/remove
+            - Name of package to install/remove.
         required: true
     state:
         description:
-            - state of the package
+            - State of the package.
         choices: [ 'present', 'absent' ]
         required: false
         default: present
     cached:
         description:
-            - use local package base or try to fetch an updated one
+            - Use local package base instead of fetching an updated one.
         choices: [ 'yes', 'no' ]
         required: false
         default: no
     annotation:
         description:
-            - a comma-separated list of keyvalue-pairs of the form
-              <+/-/:><key>[=<value>]. A '+' denotes adding an annotation, a
-              '-' denotes removing an annotation, and ':' denotes modifying an 
+            - A comma-separated list of keyvalue-pairs of the form
+              C(<+/-/:><key>[=<value>]). A C(+) denotes adding an annotation, a
+              C(-) denotes removing an annotation, and C(:) denotes modifying an
               annotation.
               If setting or modifying annotations, a value must be provided.
         required: false
         version_added: "1.6"
     pkgsite:
         description:
-            - for pkgng versions before 1.1.4, specify packagesite to use
-              for downloading packages, if not specified, use settings from
-              /usr/local/etc/pkg.conf
-              for newer pkgng versions, specify a the name of a repository
-              configured in /usr/local/etc/pkg/repos
+            - For pkgng versions before 1.1.4, specify packagesite to use
+              for downloading packages. If not specified, use settings from
+              C(/usr/local/etc/pkg.conf).
+            - For newer pkgng versions, specify a the name of a repository
+              configured in C(/usr/local/etc/pkg/repos).
         required: false
     rootdir:
         description:
-            - for pkgng versions 1.5 and later, pkg will install all packages
-              within the specified root directory
-            - can not be used together with 'chroot' option
+            - For pkgng versions 1.5 and later, pkg will install all packages
+              within the specified root directory.
+            - Can not be used together with I(chroot) option.
         required: false
     chroot:
         version_added: "2.1"
         description:
-            - pkg will chroot in the specified environment
-            - can not be used together with 'rootdir' option
+            - Pkg will chroot in the specified environment.
+            - Can not be used together with I(rootdir) option.
         required: false
     autoremove:
         version_added: "2.2"
         description:
-            - remove automatically installed packages which are no longer needed
+            - Remove automatically installed packages which are no longer needed.
         required: false
         choices: [ "yes", "no" ]
         default: no
