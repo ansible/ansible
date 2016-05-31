@@ -90,24 +90,24 @@ options:
 EXAMPLES = r'''
 # Downloading a JPEG and saving it to a file with the ansible command.
 # Note the "dest" is quoted rather instead of escaping the backslashes
-$ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthrise.jpg dest='C:\Users\Administrator\earthrise.jpg'" all
+$ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthrise.jpg dest='C:\\Users\\Administrator\\earthrise.jpg'" all
 
 # Playbook example
-- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg'
+- name: Download earthrise.jpg to 'C:\\Users\\RandomUser\\earthrise.jpg'
   win_get_url:
     url: 'http://www.example.com/earthrise.jpg'
-    dest: 'C:\Users\RandomUser\earthrise.jpg'
+    dest: 'C:\\Users\\RandomUser\\earthrise.jpg'
 
-- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg' only if modified
+- name: Download earthrise.jpg to 'C:\\Users\\RandomUser\\earthrise.jpg' only if modified
   win_get_url:
     url: 'http://www.example.com/earthrise.jpg'
-    dest: 'C:\Users\RandomUser\earthrise.jpg'
+    dest: 'C:\\Users\\RandomUser\\earthrise.jpg'
     force: no
 
-- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg' through a proxy server.
+- name: Download earthrise.jpg to 'C:\\Users\\RandomUser\\earthrise.jpg' through a proxy server.
   win_get_url:
     url: 'http://www.example.com/earthrise.jpg'
-    dest: 'C:\Users\RandomUser\earthrise.jpg'
+    dest: 'C:\\Users\\RandomUser\\earthrise.jpg'
     proxy_url: 'http://10.0.0.1:8080'
     proxy_username: 'username'
     proxy_password: 'password'
@@ -122,5 +122,5 @@ dest:
     description: destination file/path
     returned: always
     type: string
-    sample: 'C:\Users\RandomUser\earthrise.jpg'
+    sample: 'C:\\Users\\RandomUser\\earthrise.jpg'
 '''
