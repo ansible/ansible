@@ -485,22 +485,23 @@ class GalaxyCLI(CLI):
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.get_opt('roles_path')
-            roles_path = os.path.expanduser(roles_path)
-            if not os.path.exists(roles_path):
-                raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
-            elif not os.path.isdir(roles_path):
-                raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
-            path_files = os.listdir(roles_path)
-            for path_file in path_files:
-                gr = GalaxyRole(self.galaxy, path_file)
-                if gr.metadata:
-                    install_info = gr.install_info
-                    version = None
-                    if install_info:
-                        version = install_info.get("version", None)
-                    if not version:
-                        version = "(unknown version)"
-                    display.display("- %s, %s" % (path_file, version))
+            for path in roles_path:
+                role_path = os.path.expanduser(path)
+                if not os.path.exists(role_path):
+                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
+                elif not os.path.isdir(role_path):
+                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
+                path_files = os.listdir(role_path)
+                for path_file in path_files:
+                    gr = GalaxyRole(self.galaxy, path_file)
+                    if gr.metadata:
+                        install_info = gr.install_info
+                        version = None
+                        if install_info:
+                            version = install_info.get("version", None)
+                        if not version:
+                            version = "(unknown version)"
+                        display.display("- %s, %s" % (path_file, version))
         return 0
 
     def execute_search(self):
