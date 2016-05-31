@@ -38,7 +38,7 @@ import sys
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError
 
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
@@ -419,13 +419,19 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.options.inventory)
         self.variable_manager.set_inventory(self.inventory)
 
-        if len(self.inventory.list_hosts(self.pattern)) == 0:
+        no_hosts = False
+        if len(self.inventory.list_hosts()) == 0:
             # Empty inventory
+            no_hosts = True
             display.warning("provided hosts list is empty, only localhost is available")
 
         self.inventory.subset(self.options.subset)
+        hosts = self.inventory.list_hosts(self.pattern)
+        if len(hosts) == 0 and not no_hosts:
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+
         self.groups = self.inventory.list_groups()
-        self.hosts = [x.name for x in self.inventory.list_hosts(self.pattern)]
+        self.hosts = [x.name for x in hosts]
 
         # This hack is to work around readline issues on a mac:
         #  http://stackoverflow.com/a/7116997/541202
