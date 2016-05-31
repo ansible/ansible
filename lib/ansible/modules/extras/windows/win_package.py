@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: win_package
 version_added: "1.7"
 author: Trond Hindenes
-short_description: Installs/Uninstalls a installable package, either from local file system or url
+short_description: Installs/Uninstalls an installable package, either from local file system or url
 description:
      - Installs or uninstalls a package.
      - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
@@ -37,12 +37,13 @@ options:
     required: true
   name:
     description:
-      - name of the package. Just for logging reasons, will use the value of path if name isn't specified
+      - Name of the package, if name isn't specified the path will be used for log messages
     required: false
     default: null
   product_id:
     description:
       - product id of the installed package (used for checking if already installed)
+      - You can find product ids for installed programs in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
     required: true
     aliases: [productid]
   arguments:
