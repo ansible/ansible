@@ -65,7 +65,7 @@
 # test async "fire and forget, but check later"
 
 - name: 'start a task with "fire-and-forget"'
-  command: sleep 15
+  command: sleep 3
   async: 30
   poll: 0
   register: fnf_task
@@ -80,7 +80,8 @@
   async_status: jid={{ fnf_task.ansible_job_id }}
   register: fnf_result
   until: fnf_result.finished
-  retries: 30
+  retries: 10
+  delay: 1
 
 - name: assert task was successfully checked
   assert:

@@ -1,3 +1,8 @@
+---
+
+- name: ensure zypper ref works
+  command: zypper -n ref
+
 - name: Delete
   zypper_repository:
     name: test
@@ -42,6 +47,11 @@
     that:
       - "zypper_result.changed"
 
+- name: Remove repo by name (also to not mess up later tasks)
+  zypper_repository:
+    name: test
+    state: absent
+
 - name: use refresh option
   zypper_repository:
     name: testrefresh
@@ -83,22 +93,37 @@
 
 - name: check repo is updated by url
   command: zypper lr oss1
-  register: zypper_result
+  register: zypper_result1
   ignore_errors: yes
+
+- name: check repo is updated by url
+  command: zypper lr oss2
+  register: zypper_result2
 
 - assert:
     that:
-      - "zypper_result.rc == 6"
-      - "'not found' in zypper_result.stderr"
+      - "zypper_result1.rc == 6"
+      - "'not found' in zypper_result1.stderr"
+      - "zypper_result2.rc == 0"
+      - "'http://download.opensuse.org/distribution/leap/42.1/repo/oss/' in zypper_result2.stdout"
+
+
+- name: reset oss repo (to not break zypper later)
+  zypper_repository:
+    name: OSS
+    state: present
+    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+    priority: 99
+    refresh: yes
 
 - name: add two repos with same name
   zypper_repository:
     name: samename
     state: present
-    repo: "http://download.opensuse.org/distribution/leap/42.1/repo/{{item}}/"
+    repo: "{{ item }}"
   with_items:
-    - oss
-    - non-oss
+    - http://download.opensuse.org/repositories/science/openSUSE_Leap_42.1/
+    - http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_42.1/
 
 - name: check repo is updated by name
   command: zypper lr samename
@@ -106,6 +131,13 @@
 
 - assert:
     that:
-      - "'/oss/' not in zypper_result.stdout"
-      - "'/non-oss/' in zypper_result.stdout"
+      - "'/science/' not in zypper_result.stdout"
+      - "'/devel:/languages:/python/' in zypper_result.stdout"
 
+- name: remove last added repos (by URL to test that)
+  zypper_repository:
+    repo: http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_42.1/
+    state: absent
+
+- name: ensure zypper ref still works
+  command: zypper -n ref
