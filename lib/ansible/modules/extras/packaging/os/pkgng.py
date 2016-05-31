@@ -99,10 +99,8 @@ EXAMPLES = '''
 '''
 
 
-import shlex
-import os
 import re
-import sys
+from ansible.module_utils.basic import AnsibleModule
 
 def query_package(module, pkgng_path, name, dir_arg):
 
@@ -352,8 +350,5 @@ def main():
     module.exit_json(changed=changed, msg=", ".join(msgs))
 
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()
