@@ -1,3 +1,6 @@
+- name: set service_type fact
+  set_fact: service_type=systemd
+
 - name: install the systemd unit file
   copy: src=ansible.systemd dest=/etc/systemd/system/ansible_test.service
   register: install_systemd_result
