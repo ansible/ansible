@@ -60,6 +60,12 @@ options:
     required: true
     default: null
     choices: [ "enabled", "disabled" ]
+  fail_on_not_found:
+    description:
+      - Fail whenever trying to enable/disable a backend host that does not exist
+    required: false
+    default: false
+    version_added: "2.2"
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`, or
@@ -105,6 +111,9 @@ EXAMPLES = '''
 # disable backend server in 'www' backend pool and drop open sessions to it
 - haproxy: state=disabled host={{ inventory_hostname }} backend=www socket=/var/run/haproxy.sock shutdown_sessions=true
 
+# disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
+- haproxy: state=disabled host={{ inventory_hostname }} fail_on_not_found=yes
+
 # enable server in 'www' backend pool
 - haproxy: state=enabled host={{ inventory_hostname }} backend=www
 
@@ -123,6 +132,7 @@ author: "Ravi Bhure (@ravibhure)"
 import socket
 import csv
 import time
+from string import Template
 
 
 DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
@@ -156,23 +166,17 @@ class HAProxy(object):
         self.weight = self.module.params['weight']
         self.socket = self.module.params['socket']
         self.shutdown_sessions = self.module.params['shutdown_sessions']
+        self.fail_on_not_found = self.module.params['fail_on_not_found']
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
-        self.command_results = []
-        self.status_servers = []
-        self.status_weights = []
-        self.previous_weights = []
-        self.previous_states  = []
-        self.current_states   = []
-        self.current_weights  = []
+        self.command_results = {}
 
     def execute(self, cmd, timeout=200, capture_output=True):
         """
         Executes a HAProxy command by sending a message to a HAProxy's local
         UNIX socket and waiting up to 'timeout' milliseconds for the response.
         """
-
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
         self.client.sendall('%s\n' % cmd)
@@ -183,9 +187,66 @@ class HAProxy(object):
             result += buf
             buf = self.client.recv(RECV_SIZE)
         if capture_output:
-            self.command_results = result.strip()
+            self.capture_command_output(cmd, result.strip())
         self.client.close()
         return result
+
+
+    def capture_command_output(self, cmd, output):
+        """
+        Capture the output for a command
+        """
+        if not 'command' in self.command_results.keys():
+            self.command_results['command'] = []
+        self.command_results['command'].append(cmd)
+        if not 'output' in self.command_results.keys():
+            self.command_results['output'] = []
+        self.command_results['output'].append(output)
+
+
+    def discover_all_backends(self):
+        """
+        Discover all entries with svname = 'BACKEND' and return a list of their corresponding
+        pxnames
+        """
+        data = self.execute('show stat', 200, False).lstrip('# ')
+        r = csv.DictReader(data.splitlines())
+        return map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r))
+
+
+    def execute_for_backends(self, cmd, pxname, svname, wait_for_status = None):
+        """
+        Run some command on the specified backends. If no backends are provided they will
+        be discovered automatically (all backends)
+        """
+        # Discover backends if none are given
+        if pxname is None:
+            backends = self.discover_all_backends()
+        else:
+            backends = [pxname]
+
+        # Run the command for each requested backend
+        for backend in backends:
+            # Fail when backends were not found
+            state = self.get_state_for(backend, svname)
+            if (self.fail_on_not_found or self.wait) and state is None:
+                self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
+
+            self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
+            if self.wait:
+                self.wait_until_status(backend, svname, wait_for_status)
+
+
+    def get_state_for(self, pxname, svname):
+        """
+        Find the state of specific services. When pxname is not set, get all backends for a specific host.
+        Returns a list of dictionaries containing the status and weight for those services.
+        """
+        data = self.execute('show stat', 200, False).lstrip('# ')
+        r = csv.DictReader(data.splitlines())
+        state = map(lambda d: { 'status': d['status'], 'weight': d['weight'] }, filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r))
+        return state or None
+
 
     def wait_until_status(self, pxname, svname, status):
         """
@@ -195,49 +256,16 @@ class HAProxy(object):
         not found, the module will fail.
         """
         for i in range(1, self.wait_retries):
-            data = self.execute('show stat', 200, False).lstrip('# ')
-            r = csv.DictReader(data.splitlines())
-            found = False
-            for row in r:
-                if row['pxname'] == pxname and row['svname'] == svname:
-                    found = True
-                    if row['status'] == status:
-                        return True;
-                    else:
-                        time.sleep(self.wait_interval)
+            state = self.get_state_for(pxname, svname)
 
-            if not found:
-                self.module.fail_json(msg="unable to find server %s/%s" % (pxname, svname))
+            # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
+            if state[0]['status'] == status:
+                return True
+            else:
+                time.sleep(self.wait_interval)
 
         self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." % (pxname, svname, status, self.wait_retries))
 
-    def get_current_state(self, host, backend):
-        """
-        Gets the each original state value from show stat. 
-        Runs before and after to determine if values are changed. 
-        This relies on weight always being the next element after 
-        status in "show stat" as well as status states remaining
-        as indicated in status_states and haproxy documentation.
-        """
-   
-        output = self.execute('show stat')
-        output = output.lstrip('# ').strip()
-        output = output.split(',')
-        result = output
-        status_states = [ 'UP','DOWN','DRAIN','NOLB','MAINT' ]
-        self.status_server = []
-        status_weight_pos = []
-        self.status_weight = []
-
-        for check, status in enumerate(result):
-            if status in status_states:
-                self.status_server.append(status) 
-                status_weight_pos.append(check + 1) 
-
-        for weight in status_weight_pos:
-                self.status_weight.append(result[weight])
-
-        return{'self.status_server':self.status_server, 'self.status_weight':self.status_weight}
 
     def enabled(self, host, backend, weight):
         """
@@ -245,33 +273,11 @@ class HAProxy(object):
         also supports to get current weight for server (default) and
         set the weight for haproxy backend server when provides.
         """
-        svname = host
-        if self.backend is None:
-            output = self.execute('show stat')
-            #sanitize and make a list of lines
-            output = output.lstrip('# ').strip()
-            output = output.split('\n')
-            result = output
+        cmd = "get weight $pxname/$svname; enable server $pxname/$svname"
+        if weight:
+            cmd += "; set weight $pxname/$svname %s" % weight
+        self.execute_for_backends(cmd, backend, host, 'UP')
 
-            for line in result:
-                if 'BACKEND' in line:
-                    result =  line.split(',')[0]
-                    pxname = result
-                    cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
-                    if weight:
-                        cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
-                    self.execute(cmd)
-                    if self.wait:
-                        self.wait_until_status(pxname, svname, 'UP')
-
-        else:
-            pxname = backend
-            cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
-            if weight:
-                cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
-            self.execute(cmd)
-            if self.wait:
-                self.wait_until_status(pxname, svname, 'UP')
 
     def disabled(self, host, backend, shutdown_sessions):
         """
@@ -279,64 +285,40 @@ class HAProxy(object):
         performed on the server until it leaves maintenance,
         also it shutdown sessions while disabling backend host server.
         """
-        svname = host
-        if self.backend is None:
-            output = self.execute('show stat')
-            #sanitize and make a list of lines
-            output = output.lstrip('# ').strip()
-            output = output.split('\n')
-            result = output
+        cmd = "get weight $pxname/$svname; disable server $pxname/$svname"
+        if shutdown_sessions:
+            cmd += "; shutdown sessions server $pxname/$svname"
+        self.execute_for_backends(cmd, backend, host, 'MAINT')
 
-            for line in result:
-                if 'BACKEND' in line:
-                    result =  line.split(',')[0]
-                    pxname = result
-                    cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
-                    if shutdown_sessions:
-                        cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
-                    self.execute(cmd)
-                    if self.wait:
-                        self.wait_until_status(pxname, svname, 'MAINT')
-
-        else:
-            pxname = backend
-            cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
-            if shutdown_sessions:
-                cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
-            self.execute(cmd)
-            if self.wait:
-                self.wait_until_status(pxname, svname, 'MAINT')
 
     def act(self):
         """
         Figure out what you want to do from ansible, and then do it.
         """
-
-        self.get_current_state(self.host, self.backend)
-        self.previous_states = ','.join(self.status_server)
-        self.previous_weights = ','.join(self.status_weight)
+        # Get the state before the run
+        state_before = self.get_state_for(self.backend, self.host)
+        self.command_results['state_before'] = state_before
 
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
-
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
-
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
-        self.get_current_state(self.host, self.backend)
-        self.current_states = ','.join(self.status_server)
-        self.current_weights = ','.join(self.status_weight)
+        # Get the state after the run
+        state_after = self.get_state_for(self.backend, self.host)
+        self.command_results['state_after'] = state_after
 
-
-        if self.current_weights != self.previous_weights:
-            self.module.exit_json(stdout=self.command_results, changed=True)  
-        elif self.current_states != self.previous_states:
-            self.module.exit_json(stdout=self.command_results, changed=True)
+        # Report change status
+        if state_before != state_after:
+           self.command_results['changed'] = True
+           self.module.exit_json(**self.command_results)
         else:
-            self.module.exit_json(stdout=self.command_results, changed=False)  
+            self.command_results['changed'] = False
+            self.module.exit_json(**self.command_results)
+
 
 def main():
 
@@ -349,11 +331,11 @@ def main():
             weight=dict(required=False, default=None),
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
             shutdown_sessions=dict(required=False, default=False),
+            fail_on_not_found=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
             wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
         ),
-
     )
 
     if not socket:
@@ -366,3 +348,4 @@ def main():
 from ansible.module_utils.basic import *
 
 main()
+
