@@ -535,7 +535,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             stdout = out
         if "diff" in retvals:
             diff = retvals["diff"]
-            diff["prepared"] += '\n\n' + out
+            if 'prepared' in diff:
+                diff['prepared'] += '\n\n' + out
         else:
             diff = out
         if "stderr" in retvals:
