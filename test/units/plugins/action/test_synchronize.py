@@ -24,7 +24,7 @@ import ansible.plugins
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.plugins.action.synchronize import ActionModule
 
-# Getting the incoming and outgoing task vars
+# Getting the incoming and outgoing task vars from the plugin's run method
 
 '''
 import copy
@@ -86,8 +86,9 @@ class SharedLoaderMock(object):
 
 class SynchronizeTester(object):
 
+    ''' A wrapper for mocking out synchronize environments '''
+
     task = TaskMock()
-    #import epdb; epdb.st()
     connection = ConnectionMock()
     _play_context = PlayContextMock()
     loader = None
@@ -103,10 +104,7 @@ class SynchronizeTester(object):
         self.final_task_vars = task_vars
         return {}
     
-    def runtest(self, fixturepath='fixtures/basic'):
-
-        #if 'delegate' in fixturepath:
-        #    import epdb; epdb.st()
+    def runtest(self, fixturepath='fixtures/synchronize/basic'):
 
         metapath = os.path.join(fixturepath, 'meta.yaml')
         with open(metapath, 'rb') as f:
@@ -164,9 +162,6 @@ class SynchronizeTester(object):
             for k,v in test_meta['hostvars'].items():
                 in_task_vars['hostvars'][k] = v
 
-        #if 'delegate' in fixturepath:
-        #    import epdb; epdb.st()
-
         # initalize and run the module
         SAM = ActionModule(self.task, self.connection, self._play_context, 
                            self.loader, self.templar, self.shared_loader_obj)
@@ -176,9 +171,9 @@ class SynchronizeTester(object):
         # run assertions
         for check in test_meta['asserts']:
             value = eval(check)
-            if not value:
-                print(check, value)
-                import epdb; epdb.st()
+            #if not value:
+            #    print(check, value)
+            #    import epdb; epdb.st()
             assert value, check
 
 
@@ -198,7 +193,7 @@ class TestSynchronizeAction(unittest.TestCase):
 
 
     fixturedir = os.path.dirname(__file__)
-    fixturedir = os.path.join(fixturedir, 'fixtures')
+    fixturedir = os.path.join(fixturedir, 'fixtures', 'synchronize')
     #print(basedir)
 
 
