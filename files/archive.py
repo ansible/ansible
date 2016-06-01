@@ -39,7 +39,7 @@ options:
       - The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
     choices: [ 'gz', 'bz2', 'zip' ]
     default: 'gz'
-  creates:
+  dest:
     description:
       - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
     required: false
@@ -59,7 +59,7 @@ notes:
 
 EXAMPLES = '''
 # Compress directory /path/to/foo/ into /path/to/foo.tgz
-- archive: path=/path/to/foo creates=/path/to/foo.tgz
+- archive: path=/path/to/foo dest=/path/to/foo.tgz
 
 # Compress regular file /path/to/foo into /path/to/foo.gz and remove it
 - archive: path=/path/to/foo remove=True
@@ -72,7 +72,7 @@ EXAMPLES = '''
     path:
         - /path/to/foo
         - /path/wong/foo
-    creates: /path/file.tar.bz2
+    dest: /path/file.tar.bz2
     compression: bz2
 '''
 
@@ -118,7 +118,7 @@ def main():
         argument_spec = dict(
             path = dict(type='list', required=True),
             compression = dict(choices=['gz', 'bz2', 'zip'], default='gz', required=False),
-            creates = dict(required=False),
+            dest = dict(required=False),
             remove = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
@@ -127,7 +127,7 @@ def main():
 
     params = module.params
     paths = params['path']
-    creates = params['creates']
+    dest = params['dest']
     remove = params['remove']
     expanded_paths = []
     compression = params['compression']
@@ -157,12 +157,12 @@ def main():
 
     # Default created file name (for single-file archives) to
     # <file>.<compression>
-    if not archive and not creates:
-        creates = '%s.%s' % (expanded_paths[0], compression)
+    if not archive and not dest:
+        dest = '%s.%s' % (expanded_paths[0], compression)
 
-    # Force archives to specify 'creates'
-    if archive and not creates:
-        module.fail_json(creates=creates, path=', '.join(paths), msg='Error, must specify "creates" when archiving multiple files or trees')
+    # Force archives to specify 'dest'
+    if archive and not dest:
+        module.fail_json(dest=dest, path=', '.join(paths), msg='Error, must specify "dest" when archiving multiple files or trees')
 
     archive_paths = []
     missing = []
@@ -185,7 +185,7 @@ def main():
             arcroot += os.sep
 
         # Don't allow archives to be created anywhere within paths to be removed
-        if remove and os.path.isdir(path) and creates.startswith(path):
+        if remove and os.path.isdir(path) and dest.startswith(path):
             module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
 
         if os.path.lexists(path):
@@ -194,9 +194,9 @@ def main():
             missing.append(path)
 
     # No source files were found but the named archive exists: are we 'compress' or 'archive' now?
-    if len(missing) == len(expanded_paths) and creates and os.path.exists(creates):
+    if len(missing) == len(expanded_paths) and dest and os.path.exists(dest):
         # Just check the filename to know if it's an archive or simple compressed file
-        if re.search(r'(\.tar\.gz|\.tgz|.tbz2|\.tar\.bz2|\.zip)$', os.path.basename(creates), re.IGNORECASE):
+        if re.search(r'(\.tar\.gz|\.tgz|.tbz2|\.tar\.bz2|\.zip)$', os.path.basename(dest), re.IGNORECASE):
             state = 'archive'
         else:
             state = 'compress'
@@ -205,7 +205,7 @@ def main():
     elif archive:
         if len(archive_paths) == 0:
             # No source files were found, but the archive is there.
-            if os.path.lexists(creates):
+            if os.path.lexists(dest):
                 state = 'archive'
         elif len(missing) > 0:
             # SOME source files were found, but not all of them
@@ -215,19 +215,19 @@ def main():
         size = 0
         errors = []
 
-        if os.path.lexists(creates):
-            size = os.path.getsize(creates)
+        if os.path.lexists(dest):
+            size = os.path.getsize(dest)
 
         if state != 'archive':
             try:
 
                 # Slightly more difficult (and less efficient!) compression using zipfile module
                 if compression == 'zip':
-                    arcfile = zipfile.ZipFile(creates, 'w', zipfile.ZIP_DEFLATED)
+                    arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
 
                 # Easier compression using tarfile module
                 elif compression == 'gz' or compression == 'bz2':
-                    arcfile = tarfile.open(creates, 'w|' + compression)
+                    arcfile = tarfile.open(dest, 'w|' + compression)
 
                 for path in archive_paths:
                     basename = ''
@@ -253,7 +253,7 @@ def main():
                         for filename in filenames:
                             fullpath = dirpath + os.sep + filename
 
-                            if not filecmp.cmp(fullpath, creates):
+                            if not filecmp.cmp(fullpath, dest):
                                 try:
                                     if compression == 'zip':
                                         arcfile.write(fullpath, basename + filename)
@@ -267,14 +267,14 @@ def main():
 
             except Exception:
                 e = get_exception()
-                return module.fail_json(msg='Error when writing %s archive at %s: %s' % (compression == 'zip' and 'zip' or ('tar.' + compression), creates, str(e)))
+                return module.fail_json(msg='Error when writing %s archive at %s: %s' % (compression == 'zip' and 'zip' or ('tar.' + compression), dest, str(e)))
 
             if arcfile:
                 arcfile.close()
                 state = 'archive'
 
             if len(errors) > 0:
-                module.fail_json(msg='Errors when writing archive at %s: %s' % (creates, '; '.join(errors)))
+                module.fail_json(msg='Errors when writing archive at %s: %s' % (dest, '; '.join(errors)))
 
         if state in ['archive', 'incomplete'] and remove:
             for path in successes:
@@ -288,10 +288,10 @@ def main():
                     errors.append(path)
 
             if len(errors) > 0:
-                module.fail_json(creates=creates, msg='Error deleting some source files: ' + str(e), files=errors)
+                module.fail_json(dest=dest, msg='Error deleting some source files: ' + str(e), files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
-        if os.path.getsize(creates) != size:
+        if os.path.getsize(dest) != size:
             changed = True
 
         if len(successes) and state != 'incomplete':
@@ -302,27 +302,27 @@ def main():
         path = expanded_paths[0]
 
         # No source or compressed file
-        if not (os.path.exists(path) or os.path.lexists(creates)):
+        if not (os.path.exists(path) or os.path.lexists(dest)):
             state = 'absent'
 
         # if it already exists and the source file isn't there, consider this done
-        elif not os.path.lexists(path) and os.path.lexists(creates):
+        elif not os.path.lexists(path) and os.path.lexists(dest):
             state = 'compress'
 
         else:
             if module.check_mode:
-                if not os.path.exists(creates):
+                if not os.path.exists(dest):
                     changed = True
             else:
                 size = 0
                 f_in = f_out = archive = None
 
-                if os.path.lexists(creates):
-                    size = os.path.getsize(creates)
+                if os.path.lexists(dest):
+                    size = os.path.getsize(dest)
 
                 try:
                     if compression == 'zip':
-                        archive = zipfile.ZipFile(creates, 'w', zipfile.ZIP_DEFLATED)
+                        archive = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
                         archive.write(path, path[len(arcroot):])
                         archive.close()
                         state = 'archive' # because all zip files are archives
@@ -331,9 +331,9 @@ def main():
                         f_in = open(path, 'rb')
 
                         if compression == 'gz':
-                            f_out = gzip.open(creates, 'wb')
+                            f_out = gzip.open(dest, 'wb')
                         elif compression == 'bz2':
-                            f_out = bz2.BZ2File(creates, 'wb')
+                            f_out = bz2.BZ2File(dest, 'wb')
                         else:
                             raise OSError("Invalid compression")
 
@@ -344,7 +344,7 @@ def main():
                 except OSError:
                     e = get_exception()
 
-                    module.fail_json(path=path, creates=creates, msg='Unable to write to compressed file: %s' % str(e))
+                    module.fail_json(path=path, dest=dest, msg='Unable to write to compressed file: %s' % str(e))
 
                 if archive:
                     archive.close()
@@ -354,7 +354,7 @@ def main():
                     f_out.close()
 
                 # Rudimentary check: If size changed then file changed. Not perfect, but easy.
-                if os.path.getsize(creates) != size:
+                if os.path.getsize(dest) != size:
                     changed = True
 
             state = 'compress'
@@ -367,7 +367,7 @@ def main():
                 e = get_exception()
                 module.fail_json(path=path, msg='Unable to remove source file: %s' % str(e))
 
-    module.exit_json(archived=successes, creates=creates, changed=changed, state=state, arcroot=arcroot, missing=missing, expanded_paths=expanded_paths)
+    module.exit_json(archived=successes, dest=dest, changed=changed, state=state, arcroot=arcroot, missing=missing, expanded_paths=expanded_paths)
 
 # import module snippets
 from ansible.module_utils.basic import *
