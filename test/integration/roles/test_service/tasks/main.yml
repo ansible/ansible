@@ -38,39 +38,47 @@
 - name: find the service with a pattern
   service: name=ansible_test pattern="ansible_test_ser*" state=started
   register: start2_result
+  when: service_type != "systemd"
 
 - name: assert that the service was started via the pattern
   assert:
     that:
     - "start2_result.name == 'ansible_test'"
     - "start2_result.state == 'started'"
+  when: service_type != "systemd"
 
 - name: restart the ansible test service
   service: name=ansible_test state=restarted
   register: restart_result
+  when: service_type != "systemd"
 
 - name: assert that the service was restarted
   assert:
     that:
     - "restart_result.state == 'started'"
+  when: service_type != "systemd"
 
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
   register: restart_sleep_result
+  when: service_type != "systemd"
 
 - name: assert that the service was restarted with a sleep
   assert:
     that:
     - "restart_sleep_result.state == 'started'"
+  when: service_type != "systemd"
 
 - name: reload the ansible test service
   service: name=ansible_test state=reloaded
   register: reload_result
+  when: service_type != "systemd"
 
 - name: assert that the service was reloaded
   assert:
     that:
     - "reload_result.state == 'started'"
+  when: service_type != "systemd"
 
 - name: stop the ansible test service
   service: name=ansible_test state=stopped
@@ -84,11 +92,13 @@
 - name: disable the ansible test service
   service: name=ansible_test enabled=no
   register: disable_result
+  when: service_type != "systemd"
 
 - name: assert that the service was disabled
   assert:
     that:
     - "disable_result.enabled == false"
+  when: service_type != "systemd"
 
 - name: try to enable a broken service
   service: name=ansible_broken_test enabled=yes
