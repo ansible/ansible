@@ -54,7 +54,7 @@ class TestCopyResultExclude(unittest.TestCase):
         self.mock_am.display = Mock()
 
         self.mock_am.run()
-        self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=None)
+        self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=False)
 
     def test_raw_check_mode_is_True(self):
 
