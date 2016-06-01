@@ -192,7 +192,7 @@ This approach is similar to applying a conditional to a task such as::
           when: inventory_hostname == webservers[0]
 
 .. note::
-     When used together with "serial", tasks marked as "run_once" will be ran on one host in *each* serial batch.
+     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
      :code:`inventory_hostname == my_group_name[0]` construct.
 
@@ -202,7 +202,7 @@ Local Playbooks
 ```````````````
 
 It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
 To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
