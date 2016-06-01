@@ -626,6 +626,8 @@ ansible_docker_container:
     }'
 '''
 
+import re
+
 from ansible.module_utils.docker_common import *
 
 try:
@@ -643,6 +645,7 @@ REQUIRES_CONVERSION_TO_BYTES = [
     'shm_size'
 ]
 
+VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
 
 class TaskParameters(DockerBaseClass):
     '''
@@ -739,14 +742,16 @@ class TaskParameters(DockerBaseClass):
         if self.volumes:
             self.volumes = self._expand_host_paths()
 
-        self.log("volumes:")
-        self.log(self.volumes, pretty_print=True)
-
         self.env = self._get_environment()
         self.ulimits = self._parse_ulimits()
         self.log_config = self._parse_log_config()
         self.exp_links = None
-        self._parse_volumes()
+        self.volume_binds = self._get_volume_binds(self.volumes)
+
+        self.log("volumes:")
+        self.log(self.volumes, pretty_print=True)
+        self.log("volume binds:")
+        self.log(self.volume_binds, pretty_print=True)
 
         if self.networks:
             for network in self.networks:
@@ -824,25 +829,38 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
-                    host = os.path.abspath(host)
+                    if re.match(r'[\.~]', host):
+                        host = os.path.abspath(host)
                     new_vols.append("%s:%s:%s" % (host, container, mode))
-                else:
-                    host, container = vol.split(':')
-                    host = os.path.abspath(host)
-                    new_vols.append("%s:%s:rw" % (host, container))
-            else:
-                new_vols.append(vol)
+                    continue
+                elif len(vol.split(':')) == 2:
+                    parts = vol.split(':')
+                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[\.~]', parts[0]):
+                        host = os.path.abspath(parts[0])
+                        new_vols.append("%s:%s:rw" % (host, parts[1]))
+                        continue
+            new_vols.append(vol)
         return new_vols
 
     def _get_mounts(self):
+        '''
+        Return a list of container mounts.
+        :return:
+        '''
         result = []
         if self.volumes:
             for vol in self.volumes:
                 if ':' in vol:
-                    host, container, _ = vol.split(':')
-                    result.append(host)
-                else:
-                    result.append(vol)
+                    if len(vol.split(':')) == 3:
+                        host, container, _ = vol.split(':')
+                        result.append(container)
+                        continue
+                    if len(vol.split(':')) == 2:
+                        parts = vol.split(':')
+                        if parts[1] not in VOLUME_PERMISSIONS:
+                            result.append(parts[1])
+                            continue
+                result.append(vol)
         self.log("mounts:")
         self.log(result, pretty_print=True)
         return result
@@ -923,24 +941,30 @@ class TaskParameters(DockerBaseClass):
                 binds[container_port] = bind
         return binds
 
-    def _parse_volumes(self):
+    @staticmethod
+    def _get_volume_binds(volumes):
         '''
-        Convert volumes parameter to host_config bind format.
-        https://docker-py.readthedocs.org/en/latest/volumes/
-        :return: array of binds
+        Extract host bindings, if any, from list of volume mapping strings.
+
+        :return: dictionary of bind mappings
         '''
-        if self.volumes:
-            for vol in self.volumes:
+        result = dict()
+        if volumes:
+            for vol in volumes:
+                host = None
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
-                    else:
-                        host, container, mode = (vol.split(':') + ['rw'])
-                    self.volume_binds[host] = dict(
+                    if len(vol.split(':')) == 2:
+                        parts = vol.split(':')
+                        if parts[1] not in VOLUME_PERMISSIONS:
+                            host, container, mode = (vol.split(':') + ['rw'])
+                if host is not None:
+                    result[host] = dict(
                         bind=container,
                         mode=mode
                     )
-
+        return result
 
     def _parse_exposed_ports(self):
         '''
@@ -1091,6 +1115,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_ports = self._get_expected_ports()
         self.parameters.expected_exposed = self._get_expected_exposed(image)
         self.parameters.expected_volumes = self._get_expected_volumes(image)
+        self.parameters.expected_binds = self._get_expected_binds(image)
         self.parameters.expected_ulimits = self._get_expected_ulimits(self.parameters.ulimits)
         self.parameters.expected_etc_hosts = self._convert_simple_dict_to_list('etc_hosts')
         self.parameters.expected_env = self._get_expected_env(image)
@@ -1154,7 +1179,8 @@ class Container(DockerBaseClass):
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
             uts=host_config.get('UTSMode'),
-            expected_volumes=host_config['Binds'],
+            expected_volumes=config.get('Volumes'),
+            expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
             volume_driver=host_config.get('VolumeDriver')
         )
@@ -1382,26 +1408,30 @@ class Container(DockerBaseClass):
             exp_links.append("/%s:%s/%s" % (link, ('/' + self.parameters.name), alias))
         return exp_links
 
-    def _get_expected_volumes(self, image):
-        self.log('_get_expected_volumes')
+    def _get_expected_binds(self, image):
+        self.log('_get_expected_binds')
         image_vols = []
         if image:
-            image_vols = self._get_volumes_from_binds(image['ContainerConfig'].get('Volumes'))
+            image_vols = self._get_image_binds(image['ContainerConfig'].get('Volumes'))
         param_vols = []
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
+                host = None
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
-                    else:
-                        host, container, mode = vol.split(':') + ['rw']
+                    if len(vol.split(':')) == 2:
+                        parts = vol.split(':')
+                        if parts[1] not in VOLUME_PERMISSIONS:
+                            host, container, mode = vol.split(':') + ['rw']
+                if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
-                else:
-                    param_vols.append(vol)
-                # flip to container first
-        return list(set(image_vols + param_vols))
+        result = list(set(image_vols + param_vols))
+        self.log("expected_binds:")
+        self.log(result, pretty_print=True)
+        return result
 
-    def _get_volumes_from_binds(self, volumes):
+    def _get_image_binds(self, volumes):
         '''
         Convert array of binds to array of strings with format host_path:container_path:mode
 
@@ -1410,13 +1440,14 @@ class Container(DockerBaseClass):
         '''
         results = []
         if isinstance(volumes, dict):
-            results += self._get_volume_from_dict(volumes)
+            results += self._get_bind_from_dict(volumes)
         elif isinstance(volumes, list):
             for vol in volumes:
-                results += self._get_volume_from_dict(vol)
+                results += self._get_bind_from_dict(vol)
         return results
 
-    def _get_volume_from_dict(self, volume_dict):
+    @staticmethod
+    def _get_bind_from_dict(volume_dict):
         results = []
         if volume_dict:
             for host_path, config in volume_dict.items():
@@ -1425,6 +1456,32 @@ class Container(DockerBaseClass):
                     mode = config.get('mode', 'rw')
                     results.append("%s:%s:%s" % (host_path, container_path, mode))
         return results
+
+    def _get_expected_volumes(self, image):
+        self.log('_get_expected_volumes')
+        expected_vols = dict()
+        if image and image['ContainerConfig'].get('Volumes'):
+            expected_vols.upate(image['ContainerConfig'].get('Volumes'))
+
+        if self.parameters.volumes:
+            for vol in self.parameters.volumes:
+                container = None
+                if ':' in vol:
+                    if len(vol.split(':')) == 3:
+                        host, container, mode = vol.split(':')
+                    if len(vol.split(':')) == 2:
+                        parts = vol.split(':')
+                        if parts[1] not in VOLUME_PERMISSIONS:
+                            host, container, mode = vol.split(':') + ['rw']
+                new_vol = dict()
+                if container:
+                    new_vol[container] = dict()
+                else:
+                    new_vol[vol] = dict()
+                expected_vols.update(new_vol)
+        self.log("expected_volumes:")
+        self.log(expected_vols, pretty_print=True)
+        return expected_vols
 
     def _get_expected_env(self, image):
         self.log('_get_expected_env')
@@ -1530,12 +1587,12 @@ class ContainerManager(DockerBaseClass):
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
-            container = self.update_limits(container)
-            container = self.update_networks(container)
+                container = self.update_limits(container)
+                container = self.update_networks(container)
             if state == 'started':
                 container = self.container_start(container.Id)
             self.facts = container.raw
-            return True
+            return
 
         # Existing container
         self.log(container.raw, pretty_print=True)
