@@ -45,7 +45,7 @@ class CallbackModule(CallbackBase):
 
     This plugin makes use of the following environment variables:
         JUNIT_OUTPUT_DIR (optional): Directory to write XML files to.
-                                     Default: Current working directory.
+                                     Default: ~/.ansible.log
 
     Requires:
         junit_xml
@@ -60,7 +60,7 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.getcwd())
+        self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -72,6 +72,9 @@ class CallbackModule(CallbackBase):
             self.disabled = True
             self._display.warning('The `junit_xml` python module is not installed. '
                                   'Disabling the `junit` callback plugin.')
+
+        if not os.path.exists(self._output_dir):
+            os.mkdir(self._output_dir)
 
     def _start_task(self, task):
         """ record the start of a task for one or more hosts """
