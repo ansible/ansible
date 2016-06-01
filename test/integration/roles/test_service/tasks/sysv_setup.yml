@@ -1,3 +1,6 @@
+- name: set service_type fact
+  set_fact: service_type=sysv
+
 - name: install the sysV init file
   copy: src=ansible.sysv dest=/etc/init.d/ansible_test mode=0755
   register: install_sysv_result
