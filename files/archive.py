@@ -231,36 +231,35 @@ def main():
 
                 for path in archive_paths:
                     if os.path.isdir(path):
-                        basename = ''
-
-                        # Prefix trees in the archive with their basename, unless specifically prevented with '.'
-                        if not path.endswith(os.sep + '.'):
-                            basename = os.path.basename(path) + os.sep
-
                         # Recurse into directories
                         for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+                            if not dirpath.endswith(os.sep):
+                                dirpath += os.sep
+
                             for dirname in dirnames:
-                                fullpath = dirpath + os.sep + dirname
+                                fullpath = dirpath + dirname
+                                arcname = fullpath[len(arcroot):]
 
                                 try:
                                     if compression == 'zip':
-                                        arcfile.write(fullpath, basename + dirname)
+                                        arcfile.write(fullpath, arcname)
                                     else:
-                                        arcfile.add(fullpath, basename + dirname, recursive=False)
+                                        arcfile.add(fullpath, arcname, recursive=False)
 
                                 except Exception:
                                     e = get_exception()
                                     errors.append('%s: %s' % (fullpath, str(e)))
 
                             for filename in filenames:
-                                fullpath = dirpath + os.sep + filename
+                                fullpath = dirpath + filename
+                                arcname = fullpath[len(arcroot):]
 
                                 if not filecmp.cmp(fullpath, dest):
                                     try:
                                         if compression == 'zip':
-                                            arcfile.write(fullpath, basename + filename)
+                                            arcfile.write(fullpath, arcname)
                                         else:
-                                            arcfile.add(fullpath, basename + filename, recursive=False)
+                                            arcfile.add(fullpath, arcname, recursive=False)
 
                                         successes.append(fullpath)
                                     except Exception:
