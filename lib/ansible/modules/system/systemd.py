@@ -325,6 +325,10 @@ def main():
         result['enabled'] = enabled
 
     if module.params['state'] is not None:
+
+        # default to desired state
+        result['state'] = module.params['state']
+
         # What is current service state?
         if 'ActiveState' in result['status']:
             action = None
@@ -338,6 +342,7 @@ def main():
                     result['changed'] = True
             else:
                 action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
+                result['state'] = 'started'
                 result['changed'] = True
 
             if action:
@@ -349,7 +354,6 @@ def main():
             # this should not happen?
             module.fail_json(msg="Service is in unknown state", status=result['status'])
 
-        result['state'] = module.params['state']
 
     module.exit_json(**result)
 
