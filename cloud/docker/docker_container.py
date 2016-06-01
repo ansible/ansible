@@ -336,7 +336,7 @@ options:
       - always
       - no
       - on-failure
-      - unless-stopped 
+      - unless-stopped
     default: on-failure
     required: false
   restart_retries:
@@ -831,7 +831,7 @@ class TaskParameters(DockerBaseClass):
                     host = os.path.abspath(host)
                     new_vols.append("%s:%s:rw" % (host, container))
             else:
-                new_vols.append("%s:%s:rw" % (os.path.abspath(vol), vol))
+                new_vols.append(vol)
         return new_vols
 
     def _get_mounts(self):
@@ -939,11 +939,6 @@ class TaskParameters(DockerBaseClass):
                     self.volume_binds[host] = dict(
                         bind=container,
                         mode=mode
-                    )
-                else:
-                    self.volume_binds[vol] = dict(
-                        bind=vol,
-                        mode='rw'
                     )
 
 
