@@ -44,12 +44,19 @@ decide to do something conditionally based on success or failure::
       - command: /bin/false
         register: result
         ignore_errors: True
+
       - command: /bin/something
         when: result|failed
+
+      # In older versions of ansible use |success, now both are valid but succedded uses the correct tense.
       - command: /bin/something_else
         when: result|succeeded
+
       - command: /bin/still/something_else
         when: result|skipped
+
+
+.. note:: the filters have been updated in 2.1 so both `success` and `succeded` work (`fail`/`failed`, etc).
 
 Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
