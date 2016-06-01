@@ -20,15 +20,18 @@ Example::
 
 .. _forcing_to_run_in_check_mode:
 
-Running a task in check mode
-````````````````````````````
+Enabling or disabling check mode for tasks
+``````````````````````````````````````````
 
-.. versionadded:: 1.3
+.. versionadded:: 2.2
 
-Sometimes you may want to have a task to be executed even in check
-mode. To achieve this, use the `always_run` clause on the task. Its
-value is a Jinja2 expression, just like the `when` clause. In simple
-cases a boolean YAML value would be sufficient as a value.
+Sometimes you may want to modify the check mode behavior of individual tasks. This is done via the `check_mode` option, which can
+be added to tasks.
+
+If the playbook is run with checkmode on the command line, you can force tasks to still run, by specifying `check_mode: no`.
+On the other hand you can setup a test section which, independetly of the command line arguments, always runs a tasks in check mode with `check_mode: yes`.
+
+Instead of `yes`/`no` you can use a Jinja2 expression, just like the `when` clause.
 
 Example::
 
@@ -36,11 +39,7 @@ Example::
 
       - name: this task is run even in check mode
         command: /something/to/run --even-in-check-mode
-        always_run: yes
-
-As a reminder, a task with a `when` clause evaluated to false, will
-still be skipped even if it has a `always_run` clause evaluated to
-true. 
+        check_mode: no
 
 Also if you want to skip, or ignore errors on some tasks in check mode
 you can use a boolean magic variable `ansible_check_mode` (added in version 2.1)
