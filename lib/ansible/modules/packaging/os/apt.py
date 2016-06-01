@@ -381,8 +381,8 @@ def parse_diff(output):
             # check for start marker from apt-get
             diff_start = diff.index('Reading state information...')
         except ValueError:
+            # show everything
             diff_start = -1
-            diff.insert(0, 'Unexpected apt output for --diff. Showing everything:')
     try:
         # check for end marker line from both apt-get and aptitude
         diff_end = (i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item)).next()
@@ -538,7 +538,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             if 'prepared' in diff:
                 diff['prepared'] += '\n\n' + out
         else:
-            diff = out
+            diff = parse_diff(out)
         if "stderr" in retvals:
             stderr = retvals["stderr"] + err
         else:
