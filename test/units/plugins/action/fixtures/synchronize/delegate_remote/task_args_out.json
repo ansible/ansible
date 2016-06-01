@@ -1,0 +1,5 @@
+{
+  "dest": "el6host:/tmp/deleteme", 
+  "src": "/tmp/deleteme", 
+  "_local_rsync_path": "rsync"
+}
