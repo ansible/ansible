@@ -1,7 +1,9 @@
-********************************
-Core 2.2, target: September 2016
-********************************
-
+****************
+Ansible Core 2.2
+****************
+**********************
+Target: September 2016
+**********************
 - **Docker** (lead by Chris Houseknecht)
     - Docker_network
     - Docker_volume
