@@ -29,6 +29,7 @@ from ansible.playbook.play import Play
 from ansible.vars import VariableManager
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
 
 class TestVariableManager(unittest.TestCase):
 
@@ -181,6 +182,7 @@ class TestVariableManager(unittest.TestCase):
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
     @patch.object(Inventory, 'basedir')
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self, mock_basedir):
         '''
         Tests complex variations and combinations of get_vars() with different

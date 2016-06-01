@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
             else:
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
+        remote_checksum = self._remote_checksum(dest, all_vars=task_vars, follow=True)
         if remote_checksum == '4':
             result['failed'] = True
             result['msg'] = "python isn't present on the system.  Unable to compute checksum"

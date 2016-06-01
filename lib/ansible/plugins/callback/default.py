@@ -46,9 +46,6 @@ class CallbackModule(CallbackBase):
 
             self._display.display(msg, color=C.COLOR_ERROR)
 
-            # finally, remove the exception from the result so it's not shown every time
-            del result._result['exception']
-
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
 
@@ -192,9 +189,6 @@ class CallbackModule(CallbackBase):
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
             self._display.display(msg, color=C.COLOR_ERROR)
-
-            # finally, remove the exception from the result so it's not shown every time
-            del result._result['exception']
 
         msg = "failed: "
         if delegated_vars:

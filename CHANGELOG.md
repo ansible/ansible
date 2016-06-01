@@ -6,6 +6,7 @@ Ansible Changes By Release
 ###Major Changes:
 
 * Added support for binary modules
+* The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 
 ####New Modules:
 - aws
@@ -13,8 +14,10 @@ Ansible Changes By Release
   * ec2_vpc_nacl_facts
 - cloudstack
   * cs_router
+  * cs_snapshot_policy
 - smartos
   * smartos_image_facts
+- systemd
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
@@ -56,13 +59,21 @@ Ansible Changes By Release
 - azure:
   * azure_rm_deployment
   * azure_rm_networkinterface
+  * azure_rm_networkinterface_facts (TECH PREVIEW)
+  * azure_rm_publicipaddress
+  * azure_rm_publicipaddress_facts (TECH PREVIEW)
   * azure_rm_resourcegroup
+  * azure_rm_resourcegroup_facts (TECH PREVIEW)
   * azure_rm_securitygroup
+  * azure_rm_securitygroup_facts (TECH PREVIEW)
   * azure_rm_storageaccount
+  * azure_rm_storageaccount_facts (TECH PREVIEW)
   * azure_rm_storageblob
   * azure_rm_subnet
   * azure_rm_virtualmachine
+  * azure_rm_virtualmachineimage_facts (TECH PREVIEW)
   * azure_rm_virtualnetwork
+  * azure_rm_virtualnetwork_facts (TECH PREVIEW)
 - cloudflare_dns
 - cloudstack
   * cs_cluster
@@ -178,7 +189,7 @@ Ansible Changes By Release
 
 ###Minor Changes:
 
-* Added support for pipelining mode to more connection plugins, which helps prevent 
+* Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
 * Added a new '!unsafe' YAML decorator, which can be used in playbooks to ensure a
   string is not templated. For example: `foo: !unsafe "Don't template {{me}}"`.

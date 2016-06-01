@@ -297,7 +297,7 @@ Refresh the cache
 
 Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
 
-    ./openstack.py --refresh
+    ./openstack.py --refresh --list
 
 .. _other_inventory_scripts:
 

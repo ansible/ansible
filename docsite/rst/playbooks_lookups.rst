@@ -49,7 +49,7 @@ a file at a given filepath.
 (Docs about crypted save modes are pending)
  
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
-up random passwords per host (what simplifies password management in 'host_vars' variables).
+up random passwords per host (which simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.

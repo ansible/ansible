@@ -54,13 +54,9 @@ class GalaxyRole(object):
 
         self._metadata = None
         self._install_info = None
+        self._validate_certs = not galaxy.options.ignore_certs
 
-        self._validate_certs = not C.GALAXY_IGNORE_CERTS
-
-        # set validate_certs
-        if galaxy.options.ignore_certs:
-            self._validate_certs = False
-        display.vvv('Validate TLS certificates: %s' % self._validate_certs)
+        display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.options = galaxy.options
         self.galaxy  = galaxy

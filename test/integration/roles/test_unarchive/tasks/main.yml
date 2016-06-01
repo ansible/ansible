@@ -21,9 +21,9 @@
   yum: name=zip state=latest
   when: ansible_pkg_mgr  ==  'yum'
 
-- name: Ensure zip is present to create test archive (dnf)
-  dnf: name=zip state=latest
-  when: ansible_pkg_mgr  ==  'dnf'
+  #- name: Ensure zip is present to create test archive (dnf)
+  #  dnf: name=zip state=latest
+  #  when: ansible_pkg_mgr  ==  'dnf'
 
 - name: Ensure zip is present to create test archive (apt)
   apt: name=zip state=latest
@@ -287,6 +287,35 @@
 - name: remove quotable chars test
   file: path="{{ output_dir }}/test-quotes~root" state=absent
 
+- name: create our unarchive destination
+  file:
+    path: "{{ output_dir }}/test-unarchive-nonascii-àâæçéèïîôœ-tar-gz"
+    state: directory
+
+- name: test that unarchive works with an archive that contains non-ascii filenames
+  unarchive:
+    # Both the filename of the tarball and the filename inside the tarball have
+    # nonascii chars
+    src: "test-unarchive-nonascii-àâæçéèïîôœ.tar.gz"
+    dest: "{{ output_dir }}/test-unarchive-nonascii-àâæçéèïîôœ-tar-gz"
+    mode: "u+rwX,go+rX"
+    copy: yes
+  register: nonascii_result0
+
+- name: Check that file is really there
+  stat:
+    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-àâæçéèïîôœ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
+  register: nonascii_stat0
+
+- name: Assert that nonascii tests succeeded
+  assert:
+    that:
+      - "nonascii_result0.changed == true"
+      - "nonascii_stat0.stat.exists == true"
+
+- name: remove nonascii test
+  file: path="{{ output_dir }}/test-unarchive-nonascii-àâæçéèïîôœ-tar-gz" state=absent
+
 # Test that unarchiving is performed if files are missing
 # https://github.com/ansible/ansible-modules-core/issues/1064
 - name: create our unarchive destination
@@ -327,6 +356,72 @@
   assert:
     that:
       - "unarchive10_1.changed == true"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+
+#
+# Symlink tests
+#
+
+- name: Create a destination dir
+  file:
+    path: "{{ output_dir }}/test-unarchive-tar-gz"
+    state: directory
+
+- name: Create a symlink to the detination dir
+  file:
+    path: "{{ output_dir }}/link-to-unarchive-dir"
+    src: "{{ output_dir }}/test-unarchive-tar-gz"
+    state: "link"
+
+- name: test that unarchive works when dest is a symlink to a dir
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/link-to-unarchive-dir"
+    mode: "u+rwX,go+rX"
+    copy: no
+  register: unarchive_11
+
+- name: Check that file is really there
+  stat:
+    path: "{{ output_dir | expanduser }}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive11_stat0
+
+- name: Assert that unarchive when dest is a symlink to a dir worked
+  assert:
+    that:
+      - "unarchive_11.changed == true"
+      - "unarchive11_stat0.stat.exists == true"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+
+
+- name: Create a file
+  file:
+    path: "{{ output_dir }}/test-unarchive-tar-gz"
+    state: touch
+
+- name: Create a symlink to the file
+  file:
+    path: "{{ output_dir }}/link-to-unarchive-file"
+    src: "{{ output_dir }}/test-unarchive-tar-gz"
+    state: "link"
+
+- name: test that unarchive fails when dest is a link to a file
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/link-to-unarchive-file"
+    mode: "u+rwX,go+rX"
+    copy: no
+  ignore_errors: True
+  register: unarchive_12
+
+- name: Assert that unarchive when dest is a file failed
+  assert:
+    that:
+      - "unarchive_12.failed == true"
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
