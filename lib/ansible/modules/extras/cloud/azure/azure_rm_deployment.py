@@ -37,6 +37,15 @@ options:
       - The geo-locations in which the resource group will be located.
     required: false
     default: westus
+  deployment_mode:
+    description:
+      - In incremental mode, resources are deployed without deleting existing resources that are not included in the template. 
+        In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
+    required: false
+    default: complete
+    choices:
+        - complete
+        - incremental
   state:
     description:
       - If state is "present", template will be created. If state is "present" and if deployment exists, it will be
