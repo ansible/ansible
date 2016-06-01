@@ -434,13 +434,14 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
-        if task.check_mode is not None:
-            new_info.check_mode = task.check_mode
-
-        # have always_run override check mode
         if task.always_run:
             display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.2", removed=False)
             new_info.check_mode = False
+
+        # check_mode replaces always_run, overwrite always_run if both are given
+        if task.check_mode is not None:
+            new_info.check_mode = task.check_mode
+
 
         return new_info
 
