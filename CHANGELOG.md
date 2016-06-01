@@ -15,6 +15,7 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- letsencrypt
 - smartos
   * smartos_image_facts
 - systemd
