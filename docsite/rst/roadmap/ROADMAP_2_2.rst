@@ -45,7 +45,7 @@ Target: September 2016
     - Improved handling of scratch disks on instances
   - External OpenStack (Stretch goal for this release)
 
-    - Ryan with some help from David Shrewsbury and Monty Taylor (Zuul/Openstack at RedHat).
+    - Ryan with some help from David Shrewsbury (Zuul/Openstack at RedHat).
     - Support Heat stack resources
     - Support LBaaS load balancers
   - Azure load balancer: Feature parity for AWS ELB (Stretch Goal)
