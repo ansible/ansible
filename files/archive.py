@@ -315,16 +315,16 @@ def main():
                     changed = True
             else:
                 size = 0
-                f_in = f_out = archive = None
+                f_in = f_out = arcfile = None
 
                 if os.path.lexists(dest):
                     size = os.path.getsize(dest)
 
                 try:
                     if compression == 'zip':
-                        archive = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
-                        archive.write(path, path[len(arcroot):])
-                        archive.close()
+                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED)
+                        arcfile.write(path, path[len(arcroot):])
+                        arcfile.close()
                         state = 'archive' # because all zip files are archives
 
                     else:
@@ -346,8 +346,8 @@ def main():
 
                     module.fail_json(path=path, dest=dest, msg='Unable to write to compressed file: %s' % str(e))
 
-                if archive:
-                    archive.close()
+                if arcfile:
+                    arcfile.close()
                 if f_in:
                     f_in.close()
                 if f_out:
