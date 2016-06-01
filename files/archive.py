@@ -157,7 +157,9 @@ def main():
 
     # Default created file name (for single-file archives) to
     # <file>.<compression>
-    if not archive and not dest:
+    if dest:
+        dest = os.path.expanduser(dest)
+    elif not archive:
         dest = '%s.%s' % (expanded_paths[0], compression)
 
     # Force archives to specify 'dest'
