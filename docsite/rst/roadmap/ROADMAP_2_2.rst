@@ -13,7 +13,8 @@ Target: September 2016
   - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support [ansible-container](https://github.com/ansible/ansible-container))
 
 - **Extras split from Core (Team, Community, lead by Jason M and Jimi-c) (Targeting 2.2, could move into 2.3).**
-  Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansible-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.
+    
+    Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansible-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.
 
   - Create proposal (Jason on Jimi)
   - Review modules for correct location (extras v core)
@@ -96,7 +97,7 @@ Target: September 2016
   - Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
 
 - **Python3 (Toshio):**
-  A note here from Jason M: Getting to complete, tested Python 3 is both a critical task and one that has so much work, and so many moving parts that we don’t expect this to be complete by the 2.2 release.  Toshio will lead this overall effort.
+    A note here from Jason M: Getting to complete, tested Python 3 is both a critical task and one that has so much work, and so many moving parts that we don’t expect this to be complete by the 2.2 release.  Toshio will lead this overall effort.
 
   - RHEL8 is coming which has no python2 in default install.  Ubuntu (non-LTS) already ships without python2.  These considerations make this high priority.
   - Natives are getting restless: [https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI](https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI)
@@ -131,12 +132,17 @@ Target: September 2016
 
     - Increase number of essential modules that have been ported.  Package managers, url fetching, etc.
 
-- **Infrastructure Buildout and Changes (Matt Clay):** Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It’s not necessarily feature work, but it’s **critical** to growing our product and our ability to get community changes in more securely and quickly.
+- **Infrastructure Buildout and Changes (Matt Clay):**
+    Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It’s not necessarily feature work, but it’s \*\*critical\*\* to growing our product and our ability to get community changes in more securely and quickly.
 
-  - **CI Performance** - Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
-  - **Core Module Test Organization** - Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
-  - **Documentation** - Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
-  - **Test Coverage** - Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
-    - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
-    - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
-    - OS X - Include OS X in CI coverage.
+  - **CI Performance**
+      Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
+  - **Core Module Test Organization**
+      Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
+  - **Documentation**
+      Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
+  - **Test Coverage**
+      Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
+      - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
+      - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
+      - OS X - Include OS X in CI coverage.
