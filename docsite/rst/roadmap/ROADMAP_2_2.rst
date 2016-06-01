@@ -5,13 +5,15 @@ Ansible Core 2.2
 Target: September 2016
 **********************
 - **Docker** (lead by Chris Houseknecht)
+
     - Docker_network
     - Docker_volume
     - Docker_file
     - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support [ansible-container](https://github.com/ansible/ansible-container).)
     - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support [ansible-container](https://github.com/ansible/ansible-container))
 
-- **Extras split from Core (Team, Community, lead by Jason M and Jimi-c) (Estimate is yes for 2.2).** Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansible-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.  
+- **Extras split from Core (Team, Community, lead by Jason M and Jimi-c) (Estimate is yes for 2.2).** Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansible-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work. 
+
     - Create proposal (Jason on Jimi)
     - Review modules for correct location (extras v core)
     - Extras is a completely different package (does not install with ansible)
@@ -19,6 +21,7 @@ Target: September 2016
     - Decide and implement release schedules between Ansible Core and Extras to ensure compatibility and longevity for modules and versions of Ansible.
 
 - **Tweaks/Fixes**
+
     - Add the ability to set_fact to deal with updating arrays and hashes (Jimi)
     - Connection handling stuff. (Toshio K. and Brian C.): This is a stretch goal for 2.2.  It may go into 2.3
         - Change connection polling to avoid resource limitations, see [https://github.com/ansible/ansible/issues/14143](https://github.com/ansible/ansible/issues/14143)
@@ -26,6 +29,7 @@ Target: September 2016
         - Code: https://github.com/kai11/ansible/blob/fix/select_fd_out_of_range_wip/lib/ansible/plugins/connection/ssh.py
 
 - **Cloud Modules (Ryan Brown) **
+
     - AWS
         - Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere)
         - Refactoring ec2.py to be more digestible
@@ -42,12 +46,14 @@ Target: September 2016
     - Azure load balancer: Feature parity for AWS ELB (Stretch Goal)
 
 - **VMWare (Brian, Jtanner)**
+
     - module/inventory script: port to pyvmomi (jtanner, bcoca)
     - inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)
         - https://github.com/ansible/ansible/pull/15967
     - vsphere_\*: feature parity with whereismyjetpack and viasat modules 
 
 - **Windows platform feature parity****(Matt D)**
+
     - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?)
     - Environment keyword support 
     - win_shell/win_command
@@ -55,12 +61,14 @@ Target: September 2016
     - (stretch goal) Pipelining 
 
 - **Windows-specific enhancements (Matt D)**
+
     - Multiple Kerberos credential support (done, shepherd fix to pykerberos)
     - Server 2016 testing/fixes 
     - (stretch goal) Nano Server connection + module_utils working
     - (stretch goal) Encrypted kerberos support in pywinrm 
 
 - **Network (Nate C/Peter S)**
+
     - Unify NetworkModules (module_utils/network.py) as much as possible 
     - Add support for config diff and replace on supported platforms (2 weeks)
     - Network facts modules 
@@ -69,9 +77,11 @@ Target: September 2016
     - GoBGP modules (stretch)
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
+
     - **https://github.com/ansible/proposals/blob/master/roles_revamp.md**
 
 - **Vault (Jtanner/Adrian) **
+
     - Extend ‘transparent vault file usage’ to other action plugins other than `copy` 
     - Add ‘per variable’ vault support (!vault YAML directive, existing PR already)
     - Add vault/unvault filters [https://github.com/ansible/ansible/issues/12087](https://github.com/ansible/ansible/issues/12087)
@@ -80,6 +90,7 @@ Target: September 2016
     - Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
 
 - **Python3 (Toshio):** A note here from Jason M: Getting to complete, tested Python 3 is both a critical task and one that has so much work, and so many moving parts that we don’t expect this to be complete by the 2.2 release.  Toshio will lead this overall effort.
+
     - RHEL8 is coming which has no python2 in default install.  Ubuntu (non-LTS) already ships without python2.  These considerations make this high priority.
     - Natives are getting restless: [https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI](https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI)
     - This is probably going to take multiple releases to complete.
@@ -108,6 +119,7 @@ Target: September 2016
         - Increase number of essential modules that have been ported.  Package managers, url fetching, etc.
 
 - **Infrastructure Buildout and Changes (Matt Clay):** Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It’s not necessarily feature work, but it’s **critical** to growing our product and our ability to get community changes in more securely and quickly.
+
     - **CI Performance** - Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
     - **Core Module Test Organization** - Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
     - **Documentation** - Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
