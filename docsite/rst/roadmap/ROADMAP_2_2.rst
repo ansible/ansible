@@ -12,8 +12,7 @@ Target: September 2016
   - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support [ansible-container](https://github.com/ansible/ansible-container).)
   - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support [ansible-container](https://github.com/ansible/ansible-container))
 
-- **Extras split from Core (Team, Community, lead by Jason M and Jimi-c) (Targeting 2.2, could move into 2.3).**
-
+- **Extras split from Core (Team, Community, lead by Jason M and Jimi-c) (Targeting 2.2, could move into 2.3).*
     Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansibl-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.
 
   - Create proposal (Jason on Jimi)
