@@ -16,6 +16,7 @@ Ansible Changes By Release
   * cs_router
   * cs_snapshot_policy
 - letsencrypt
+- netconf_config
 - smartos
   * smartos_image_facts
 - systemd
