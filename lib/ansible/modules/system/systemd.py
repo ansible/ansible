@@ -309,6 +309,9 @@ def main():
         if rc == 0 or (os.access(initscript, os.X_OK) and bool(glob.glob('/etc/rc?.d/S??' + unit))):
             enabled = True
 
+        # default to current state
+        result['enabled'] = enabled
+
         # Change enable/disable if needed
         if enabled != module.params['enabled']:
             result['changed'] = True
@@ -322,7 +325,7 @@ def main():
                 if rc != 0:
                     module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
 
-        result['enabled'] = enabled
+            result['enabled'] = not enabled
 
     if module.params['state'] is not None:
 
