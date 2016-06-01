@@ -230,40 +230,49 @@ def main():
                     arcfile = tarfile.open(dest, 'w|' + compression)
 
                 for path in archive_paths:
-                    basename = ''
+                    if os.path.isdir(path):
+                        basename = ''
 
-                    # Prefix trees in the archive with their basename, unless specifically prevented with '.'
-                    if os.path.isdir(path) and not path.endswith(os.sep + '.'):
-                        basename = os.path.basename(path) + os.sep
+                        # Prefix trees in the archive with their basename, unless specifically prevented with '.'
+                        if not path.endswith(os.sep + '.'):
+                            basename = os.path.basename(path) + os.sep
 
-                    for dirpath, dirnames, filenames in os.walk(path, topdown=True):
-                        for dirname in dirnames:
-                            fullpath = dirpath + os.sep + dirname
+                        # Recurse into directories
+                        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+                            for dirname in dirnames:
+                                fullpath = dirpath + os.sep + dirname
 
-                            try:
-                                if compression == 'zip':
-                                    arcfile.write(fullpath, basename + dirname)
-                                else:
-                                    arcfile.add(fullpath, basename + dirname, recursive=False)
-
-                            except Exception:
-                                e = get_exception()
-                                errors.append('%s: %s' % (fullpath, str(e)))
-
-                        for filename in filenames:
-                            fullpath = dirpath + os.sep + filename
-
-                            if not filecmp.cmp(fullpath, dest):
                                 try:
                                     if compression == 'zip':
-                                        arcfile.write(fullpath, basename + filename)
+                                        arcfile.write(fullpath, basename + dirname)
                                     else:
-                                        arcfile.add(fullpath, basename + filename, recursive=False)
+                                        arcfile.add(fullpath, basename + dirname, recursive=False)
 
-                                    successes.append(fullpath)
                                 except Exception:
                                     e = get_exception()
-                                    errors.append('Adding %s: %s' % (path, str(e)))
+                                    errors.append('%s: %s' % (fullpath, str(e)))
+
+                            for filename in filenames:
+                                fullpath = dirpath + os.sep + filename
+
+                                if not filecmp.cmp(fullpath, dest):
+                                    try:
+                                        if compression == 'zip':
+                                            arcfile.write(fullpath, basename + filename)
+                                        else:
+                                            arcfile.add(fullpath, basename + filename, recursive=False)
+
+                                        successes.append(fullpath)
+                                    except Exception:
+                                        e = get_exception()
+                                        errors.append('Adding %s: %s' % (path, str(e)))
+                    else:
+                        if compression == 'zip':
+                            arcfile.write(path, path[len(arcroot):])
+                        else:
+                            arcfile.add(path, path[len(arcroot):], recursive=False)
+
+                        successes.append(path)
 
             except Exception:
                 e = get_exception()
