@@ -61,23 +61,23 @@ options:
     aliases: [ 'timezone' ]
   state:
     description:
-      - State of the resource.
+      - State of the snapshot policy.
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
-      - Domain the resource is related to.
+      - Domain the volume is related to.
     required: false
     default: null
   account:
     description:
-      - Account the resource is related to.
+      - Account the volume is related to.
     required: false
     default: null
   project:
     description:
-      - Name of the project the resource is related to.
+      - Name of the project the volume is related to.
     required: false
     default: null
 extends_documentation_fragment: cloudstack
@@ -287,11 +287,9 @@ def main():
         time_zone=dict(default='UTC', aliases=['timezone']),
         max_snaps=dict(type='int', default=8, aliases=['max']),
         state=dict(choices=['present', 'absent'], default='present'),
-        zone=dict(default=None),
         domain=dict(default=None),
         account=dict(default=None),
         project=dict(default=None),
-        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
