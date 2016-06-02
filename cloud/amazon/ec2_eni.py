@@ -18,9 +18,8 @@ DOCUMENTATION = '''
 module: ec2_eni
 short_description: Create and optionally attach an Elastic Network Interface (ENI) to an instance
 description:
-    - Create and optionally attach an Elastic Network Interface (ENI) to an
-      instance. If an ENI ID is provided, an attempt is made to update the
-      existing ENI. By passing state=detached, an ENI can be detached from its instance.
+    - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID is provided, \
+    an attempt is made to update the existing ENI. By passing state=detached, an ENI can be detached from its instance.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
@@ -31,8 +30,8 @@ options:
     default: null
   instance_id:
     description:
-      - Instance ID that you wish to attach ENI to, if None the new ENI will be
-        created in detached state, existing ENI will keep current attachment state.
+      - Instance ID that you wish to attach ENI to, if None the new ENI will be created in detached state, existing \
+      ENI will keep current attachment state.
     required: false
     default: null
   private_ip_address:
