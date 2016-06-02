@@ -721,7 +721,7 @@ class TaskParameters(DockerBaseClass):
             if client.module.params.get(param_name):
                 try:
                     setattr(self, param_name, human_to_bytes(client.module.params.get(param_name)))
-                except ValueError, exc:
+                except ValueError as exc:
                     self.fail("Failed to convert %s to bytes: %s" % (param_name, exc))
 
         self.ports = self._parse_exposed_ports()
@@ -1013,7 +1013,7 @@ class TaskParameters(DockerBaseClass):
                 limits['hard'] = int(pieces[2])
             try:
                 results.append(Ulimit(**limits))
-            except ValueError, exc:
+            except ValueError as exc:
                 self.fail("Error parsing ulimits value %s - %s" % (limit, exc))
         return results
 
@@ -1034,7 +1034,7 @@ class TaskParameters(DockerBaseClass):
 
         try:
             return LogConfig(**options)
-        except ValueError, exc:
+        except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
 
     def _get_environment(self):
@@ -1059,7 +1059,7 @@ class TaskParameters(DockerBaseClass):
                 if network['Name'] == network_name:
                     network_id = network['Id']
                     break
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
 
@@ -1701,7 +1701,7 @@ class ContainerManager(DockerBaseClass):
                 if not self.check_mode:
                     try:
                         self.client.disconnect_container_from_network(container.Id, diff['parameter']['id'])
-                    except Exception, exc:
+                    except Exception as exc:
                         self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
                                                                                           str(exc)))
             # connect to the network
@@ -1717,7 +1717,7 @@ class ContainerManager(DockerBaseClass):
                     self.log("Connecting conainer to network %s" % diff['parameter']['id'])
                     self.log(params, pretty_print=True)
                     self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
-                except Exception, exc:
+                except Exception as exc:
                     self.fail("Error connecting container to network %s - %s" % (diff['parameter']['name'], str(exc)))
         return self._get_container(container.Id)
 
@@ -1727,7 +1727,7 @@ class ContainerManager(DockerBaseClass):
             if not self.check_mode:
                 try:
                     self.client.disconnect_container_from_network(container.Id, network['id'])
-                except Exception, exc:
+                except Exception as exc:
                     self.fail("Error disconnecting container from network %s - %s" % (network['name'],
                                                                                       str(exc)))
         return self._get_container(container.Id)
@@ -1742,7 +1742,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 new_container = self.client.create_container(image, **create_parameters)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error creating container: %s" % str(exc))
             return self._get_container(new_container['Id'])
         return new_container
@@ -1754,7 +1754,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 self.client.start(container=container_id)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
 
@@ -1767,7 +1767,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error removing container %s: %s" % (container_id, str(exc)))
         return response
 
@@ -1780,7 +1780,7 @@ class ContainerManager(DockerBaseClass):
             if not self.check_mode and callable(getattr(self.client, 'update_container')):
                 try:
                     self.client.update_container(container_id, **update_parameters)
-                except Exception, exc:
+                except Exception as exc:
                     self.fail("Error updating container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
 
@@ -1794,7 +1794,7 @@ class ContainerManager(DockerBaseClass):
                     response = self.client.kill(container_id, signal=self.parameters.kill_signal)
                 else:
                     response = self.client.kill(container_id)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error killing container %s: %s" % (container_id, exc))
         return response
 
@@ -1811,7 +1811,7 @@ class ContainerManager(DockerBaseClass):
                     response = self.client.stop(container_id, timeout=self.parameters.stop_timeout)
                 else:
                     response = self.client.stop(container_id)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
         return response
 

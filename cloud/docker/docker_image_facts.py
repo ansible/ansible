@@ -213,7 +213,7 @@ class ImageManager(DockerBaseClass):
         for image in images:
             try:
                 inspection = self.client.inspect_image(image['Id'])
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error inspecting image %s - %s" % (image['Id'], str(exc)))
             results.append(inspection)
         return results
