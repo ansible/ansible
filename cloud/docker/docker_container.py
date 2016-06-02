@@ -112,8 +112,8 @@ options:
     required: false
   etc_hosts:
     description:
-      - Dict of host-to-IP mappings, where each host name is key in the dictionary.
-        Hostname will be added to the container's /etc/hosts file.
+      - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
+        Each host name will be added to the container's /etc/hosts file.
     default: null
     required: false
   exposed_ports:
@@ -127,7 +127,7 @@ options:
       - exposed
   force_kill:
     description:
-      - Use with absent, present, started and stopped states to use the kill command rather than the stop command.
+      - Use the kill command when stopping a running container. 
     default: false
     required: false
   groups:
@@ -142,10 +142,10 @@ options:
     required: false
   ignore_image:
     description:
-      - When state is present or started the module compares the configuration of an existing
+      - When C(state) is I(present) or I(started) the module compares the configuration of an existing
         container to requested configuration. The evaluation includes the image version. If
         the image vesion in the registry does not match the container, the container will be
-        rebuilt. To stop this behavior set ignore_image to true.
+        recreated. Stop this behavior by setting C(ignore_image) to I(True).
     default: false
     required: false
   image:
@@ -317,12 +317,6 @@ options:
     description:
       - Use with present and started states to force the re-creation of an existing container.
     default: false
-    required: false
-  registry:
-    description:
-      - Registry URL from which to pull images. If not specified, images will be pulled from
-        the default registry found in the local docker config.json file.
-    default: null
     required: false
   restart:
     description:
