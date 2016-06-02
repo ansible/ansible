@@ -14,30 +14,6 @@ env:
   global:
     # 76 modules.  Let's whittle this down!
     - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
-      cloud/amazon/ec2_ami.py
-      cloud/amazon/ec2_asg.py
-      cloud/amazon/ec2_eip.py
-      cloud/amazon/ec2_elb_lb.py
-      cloud/amazon/ec2_elb.py
-      cloud/amazon/ec2_group.py
-      cloud/amazon/ec2_key.py
-      cloud/amazon/ec2_lc.py
-      cloud/amazon/ec2_metric_alarm.py
-      cloud/amazon/ec2_scaling_policy.py
-      cloud/amazon/ec2_snapshot.py
-      cloud/amazon/ec2_vol.py
-      cloud/amazon/ec2_vpc_net.py
-      cloud/amazon/ec2_vpc.py
-      cloud/amazon/elasticache.py
-      cloud/amazon/elasticache_subnet_group.py
-      cloud/amazon/iam_cert.py
-      cloud/amazon/iam_policy.py
-      cloud/amazon/iam.py
-      cloud/amazon/rds_param_group.py
-      cloud/amazon/rds.py
-      cloud/amazon/rds_subnet_group.py
-      cloud/amazon/route53.py
-      cloud/amazon/s3.py
       cloud/digital_ocean/digital_ocean_domain.py
       cloud/digital_ocean/digital_ocean.py
       cloud/digital_ocean/digital_ocean_sshkey.py
