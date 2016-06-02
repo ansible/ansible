@@ -1253,7 +1253,7 @@ class AnsibleModule(object):
                 self.ansible_version = v
 
             elif k == '_ansible_module_name':
-                self.ansible_module_name = v
+                self._name = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -1263,7 +1263,7 @@ class AnsibleModule(object):
                 del self.params[k]
 
         if self.check_mode and not self.supports_check_mode:
-                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self.ansible_module_name)
+                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check):
         count = 0
@@ -1541,7 +1541,7 @@ class AnsibleModule(object):
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
-            module = 'ansible-%s' % self.ansible_module_name
+            module = 'ansible-%s' % self._name
             facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
             syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
@@ -1557,7 +1557,7 @@ class AnsibleModule(object):
             if log_args is None:
                 log_args = dict()
 
-            module = 'ansible-%s' % self.ansible_module_name
+            module = 'ansible-%s' % self._name
             if isinstance(module, bytes):
                 module = module.decode('utf-8', 'replace')
 
