@@ -844,7 +844,7 @@ Paramiko Specific Settings
 --------------------------
 
 Paramiko is the default SSH connection implementation on Enterprise Linux 6 or earlier, and is not used by default on other
-platforms.  Settings live under the [paramiko] header.
+platforms.  Settings live under the [paramiko_connection] header.
 
 .. _record_host_keys:
 
