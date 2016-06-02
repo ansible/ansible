@@ -1461,7 +1461,7 @@ class Container(DockerBaseClass):
         self.log('_get_expected_volumes')
         expected_vols = dict()
         if image and image['ContainerConfig'].get('Volumes'):
-            expected_vols.upate(image['ContainerConfig'].get('Volumes'))
+            expected_vols.update(image['ContainerConfig'].get('Volumes'))
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
@@ -1479,6 +1479,9 @@ class Container(DockerBaseClass):
                 else:
                     new_vol[vol] = dict()
                 expected_vols.update(new_vol)
+
+        if not expected_vols:
+            expected_vols = None
         self.log("expected_volumes:")
         self.log(expected_vols, pretty_print=True)
         return expected_vols
@@ -1595,11 +1598,12 @@ class ContainerManager(DockerBaseClass):
             return
 
         # Existing container
-        self.log(container.raw, pretty_print=True)
         different, differences = container.has_different_configuration(image)
         image_different = self._image_is_different(image, container)
         if image_different or different or self.parameters.recreate:
             self.diff['differences'] = differences
+            self.log("differences")
+            self.log(differences, pretty_print=True)
             self.container_stop(container.Id)
             self.container_remove(container.Id)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
