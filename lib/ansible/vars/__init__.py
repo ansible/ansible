@@ -53,6 +53,11 @@ except ImportError:
 VARIABLE_CACHE = dict()
 HOSTVARS_CACHE = dict()
 
+class AnsibleInventoryVarsData(dict):
+    def __init__(self, *args, **kwargs):
+        super(AnsibleInventoryVarsData, self).__init__(*args, **kwargs)
+        self.path = None
+
 def preprocess_vars(a):
     '''
     Ensures that vars contained in the parameter passed in are
@@ -549,8 +554,11 @@ class VariableManager:
                 if loader.path_exists(path):
                     data = loader.load_from_file(path)
 
-        name = self._get_inventory_basename(path)
-        return (name, data)
+        rval = AnsibleInventoryVarsData()
+        rval.path = path
+        if data is not None:
+            rval.update(data)
+        return rval
 
     def add_host_vars_file(self, path, loader):
         '''
@@ -559,14 +567,21 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path, loader)
-        if data:
-            if name not in self._host_vars_files:
-                self._host_vars_files[name] = []
-            self._host_vars_files[name].append(data)
-            return data
+        name = self._get_inventory_basename(path)
+        if name not in self._host_vars_files:
+            self._host_vars_files[name] = []
+
+        for entry in self._host_vars_files[name]:
+            if entry.path == path:
+                data = entry
+                break
         else:
-            return dict()
+            data = self._load_inventory_file(path, loader)
+            if data:
+                self._host_vars_files[name].append(data)
+
+        return data
+
 
     def add_group_vars_file(self, path, loader):
         '''
@@ -575,14 +590,20 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path, loader)
-        if data:
-            if name not in self._group_vars_files:
-                self._group_vars_files[name] = []
-            self._group_vars_files[name].append(data)
-            return data
+        name = self._get_inventory_basename(path)
+        if name not in self._group_vars_files:
+            self._group_vars_files[name] = []
+
+        for entry in self._group_vars_files[name]:
+            if entry.path == path:
+                data = entry
+                break
         else:
-            return dict()
+            data = self._load_inventory_file(path, loader)
+            if data:
+                self._group_vars_files[name].append(data)
+
+        return data
 
     def clear_facts(self, hostname):
         '''
