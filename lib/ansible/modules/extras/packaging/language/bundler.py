@@ -118,7 +118,7 @@ EXAMPLES='''
 - bundler: state=present exclude_groups=production
 
 # Only install gems from the default and production groups
-- bundler: state=present deployment=yes
+- bundler: state=present deployment_mode=yes
 
 # Installs gems using a Gemfile in another directory
 - bundler: state=present gemfile=../rails_project/Gemfile
