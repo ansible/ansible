@@ -145,5 +145,5 @@ script:
   - python2.7 -m compileall -fq .
   - python3.4 -m compileall -fq . -x $(echo "$PY3_EXCLUDE_LIST"| tr ' ' '|')
   - python3.5 -m compileall -fq . -x $(echo "$PY3_EXCLUDE_LIST"| tr ' ' '|')
-  - ansible-validate-modules .
+  - ansible-validate-modules . --exclude 'cloud/azure/azure_rm_deployment\.py'
   #- ./test-docs.sh extras
