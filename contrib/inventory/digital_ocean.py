@@ -380,8 +380,8 @@ or environment variables (DO_API_TOKEN)''')
 
                         ]:
                 if group not in self.inventory:
-                    self.inventory[group] = set()
-                self.inventory[group].add(dest)
+                    self.inventory[group] = []
+                self.inventory[group].append(dest)
 
             # groups that are not always present
             for group in [
@@ -391,8 +391,8 @@ or environment variables (DO_API_TOKEN)''')
                 if group:
                     image = 'image_' + self.to_safe(group)
                     if image not in self.inventory:
-                        self.inventory[image] = set()
-                    self.inventory[image].add(dest)
+                        self.inventory[image] = []
+                    self.inventory[image].append(dest)
 
 
     def load_droplet_variables_for_host(self):
