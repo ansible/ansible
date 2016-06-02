@@ -23,7 +23,6 @@ env:
       cloud/amazon/ec2_key.py
       cloud/amazon/ec2_lc.py
       cloud/amazon/ec2_metric_alarm.py
-      cloud/amazon/ec2.py
       cloud/amazon/ec2_scaling_policy.py
       cloud/amazon/ec2_snapshot.py
       cloud/amazon/ec2_vol.py
