@@ -68,6 +68,8 @@ Example playbook entries using the ejabberd_user module to manage users state.
       action: ejabberd_user username=test host=server state=absent
 '''
 import syslog
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import *
 
 class EjabberdUserException(Exception):
     """ Base exeption for EjabberdUser class object """
@@ -98,7 +100,8 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('check_password', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException:
+            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return rc
 
@@ -111,7 +114,8 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('check_account', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException:
+            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return not bool(int(rc))
 
@@ -139,7 +143,8 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('change_password', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException:
+            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -150,7 +155,8 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('register', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException:
+            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -160,7 +166,8 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('unregister', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException:
+            e = get_exception()
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -209,6 +216,4 @@ def main():
     module.exit_json(**result)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()

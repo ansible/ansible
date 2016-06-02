@@ -226,6 +226,9 @@ procedure to remove it during cleanup.
 - debug: var=deploy_helper
 
 '''
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 class DeployHelper(object):
 
@@ -282,7 +285,8 @@ class DeployHelper(object):
         if not self.module.check_mode:
             try:
                 shutil.rmtree(path, ignore_errors=False)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 self.module.fail_json(msg="rmtree failed: %s" % str(e))
 
         return True
@@ -468,8 +472,7 @@ def main():
     module.exit_json(**result)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()
