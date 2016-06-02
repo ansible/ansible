@@ -292,7 +292,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
     if as_group.load_balancers and as_group.health_check_type == 'ELB':
         try:
             elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg=str(e))
     else:
         return
@@ -354,7 +354,7 @@ def wait_for_elb(asg_connection, module, group_name):
         log.debug("Waiting for ELB to consider intances healthy.")
         try:
             elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg=str(e))
 
         wait_timeout = time.time() + wait_timeout
@@ -391,7 +391,7 @@ def create_autoscaling_group(connection, module):
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
         try:
             ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     elif vpc_zone_identifier:
         vpc_zone_identifier = ','.join(vpc_zone_identifier)
@@ -435,7 +435,7 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group)
             changed = True
             return(changed, asg_properties)
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=str(e))
     else:
         as_group = as_groups[0]
@@ -490,7 +490,7 @@ def create_autoscaling_group(connection, module):
         if changed:
             try:
                 as_group.update()
-            except BotoServerError, e:
+            except BotoServerError as e:
                 module.fail_json(msg=str(e))
 
         if wait_for_instances:
@@ -499,7 +499,7 @@ def create_autoscaling_group(connection, module):
         try:
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=str(e))
         return(changed, asg_properties)
 
@@ -813,7 +813,7 @@ def main():
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
         if not connection:
             module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
     changed = create_changed = replace_changed = False
 

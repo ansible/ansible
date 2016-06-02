@@ -149,7 +149,7 @@ def main():
                             time.sleep(1)
                         if not action_complete:
                             module.fail_json(msg="timed out while waiting for the key to be removed")
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
             key = None
             changed = True

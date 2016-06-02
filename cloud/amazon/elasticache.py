@@ -225,7 +225,7 @@ class ElastiCacheManager(object):
                                                       cache_subnet_group_name=self.cache_subnet_group,
                                                       preferred_availability_zone=self.zone,
                                                       port=self.cache_port)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             self.module.fail_json(msg=e.message)
 
         self._refresh_data()
@@ -252,7 +252,7 @@ class ElastiCacheManager(object):
 
         try:
             response = self.conn.delete_cache_cluster(cache_cluster_id=self.name)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             self.module.fail_json(msg=e.message)
         cache_cluster_data = response['DeleteCacheClusterResponse']['DeleteCacheClusterResult']['CacheCluster']
         self._refresh_data(cache_cluster_data)
@@ -301,7 +301,7 @@ class ElastiCacheManager(object):
                                                   security_group_ids=self.security_group_ids,
                                                   apply_immediately=True,
                                                   engine_version=self.cache_engine_version)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             self.module.fail_json(msg=e.message)
 
         self._refresh_data()
@@ -329,7 +329,7 @@ class ElastiCacheManager(object):
         try:
             response = self.conn.reboot_cache_cluster(cache_cluster_id=self.name,
                                                       cache_node_ids_to_reboot=cache_node_ids)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             self.module.fail_json(msg=e.message)
 
         self._refresh_data()
@@ -428,7 +428,7 @@ class ElastiCacheManager(object):
                 region=connect_region,
                 **self.aws_connect_kwargs
             )
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg=e.message)
 
     def _get_port(self):

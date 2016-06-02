@@ -264,7 +264,7 @@ def get_volume(module, ec2):
         volume_ids = [id]
     try:
         vols = ec2.get_all_volumes(volume_ids=volume_ids, filters=filters)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     if not vols:
@@ -290,7 +290,7 @@ def get_volumes(module, ec2):
             vols = ec2.get_all_volumes()
         else:
             vols = ec2.get_all_volumes(filters={'attachment.instance-id': instance})
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
     return vols
 
@@ -344,7 +344,7 @@ def create_volume(module, ec2, zone):
 
             if name:
                 ec2.create_tags([volume.id], {"Name": name})
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     return volume, changed
@@ -369,7 +369,7 @@ def attach_volume(module, ec2, volume, instance):
                 device_name = '/dev/sdf'
             else:
                 device_name = '/dev/xvdf'
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     if volume.attachment_state() is not None:
@@ -387,7 +387,7 @@ def attach_volume(module, ec2, volume, instance):
                 time.sleep(3)
                 volume.update()
             changed = True
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
         modify_dot_attribute(module, ec2, instance, device_name)
@@ -404,7 +404,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
     try:
         instance.update()
         dot = instance.block_device_mapping[device_name].delete_on_termination
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     if delete_on_termination != dot:
@@ -419,7 +419,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
                 time.sleep(3)
                 instance.update()
             changed = True
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     return changed
@@ -524,7 +524,7 @@ def main():
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")

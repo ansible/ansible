@@ -227,7 +227,7 @@ def find_device(ec2, device_id, isinstance=True):
     if isinstance:
         try:
             reservations = ec2.get_all_reservations(instance_ids=[device_id])
-        except boto.exception.EC2ResponseError, e:
+        except boto.exception.EC2ResponseError as e:
             module.fail_json(msg=str(e))
 
         if len(reservations) == 1:
@@ -237,7 +237,7 @@ def find_device(ec2, device_id, isinstance=True):
     else:
         try:
             interfaces = ec2.get_all_network_interfaces(network_interface_ids=[device_id])
-        except boto.exception.EC2ResponseError, e:
+        except boto.exception.EC2ResponseError as e:
             module.fail_json(msg=str(e))
 
         if len(interfaces) == 1:

@@ -249,7 +249,7 @@ def main():
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     group_was_added = False
@@ -260,7 +260,7 @@ def main():
         try:
             all_groups = conn.get_all_dbparameter_groups(group_name, max_records=100)
             exists = len(all_groups) > 0
-        except BotoServerError, e:
+        except BotoServerError as e:
             if e.error_code != 'DBParameterGroupNotFound':
                 module.fail_json(msg = e.error_message)
             exists = False
@@ -289,10 +289,10 @@ def main():
                 else:
                     break
 
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
-    except NotModifiableError, e:
+    except NotModifiableError as e:
         msg = e.error_message
         if group_was_added:
             msg = '%s The group "%s" was added first.' % (msg, group_name)

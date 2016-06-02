@@ -408,7 +408,7 @@ def _throttleable_operation(max_retries):
             while True:
                 try:
                     return op(*args, **kwargs)
-                except boto.exception.BotoServerError, e:
+                except boto.exception.BotoServerError as e:
                     if retry < max_retries and e.code in \
                             ("Throttling", "RequestLimitExceeded"):
                         retry = retry + 1
@@ -624,7 +624,7 @@ class ElbManager(object):
         for x in range(0, max_retries):
             try:
                 result = self.elb_conn.get_all_lb_attributes(self.name)
-            except (boto.exception.BotoServerError, StandardError), e:
+            except (boto.exception.BotoServerError, StandardError) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
                     break
@@ -652,7 +652,7 @@ class ElbManager(object):
                         break
                     else:
                         time.sleep(polling_increment_secs)
-                except (boto.exception.BotoServerError, StandardError), e:
+                except (boto.exception.BotoServerError, StandardError) as e:
                     if 'InvalidNetworkInterfaceID' in e.code:
                         status_achieved = True
                         break
@@ -673,14 +673,14 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
 
     def _get_ec2_connection(self):
         try:
             return connect_to_aws(boto.ec2, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
             self.module.fail_json(msg=str(e))
 
     @_throttleable_operation(_THROTTLING_RETRIES)
@@ -817,7 +817,7 @@ class ElbManager(object):
     def _enable_zones(self, zones):
         try:
             self.elb.enable_zones(zones)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             if "Invalid Availability Zone" in e.error_message:
                 self.module.fail_json(msg=e.error_message)
             else:
@@ -827,7 +827,7 @@ class ElbManager(object):
     def _disable_zones(self, zones):
         try:
             self.elb.disable_zones(zones)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             if "Invalid Availability Zone" in e.error_message:
                 self.module.fail_json(msg=e.error_message)
             else:
@@ -1298,7 +1298,7 @@ def main():
 
                 group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
                 security_group_ids.extend(group_id)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg = str(e))
 
 

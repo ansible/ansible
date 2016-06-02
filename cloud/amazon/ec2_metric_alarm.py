@@ -165,7 +165,7 @@ def create_metric_alarm(connection, module):
             connection.create_alarm(alm)
             changed = True
             alarms = connection.describe_alarms(alarm_names=[name])
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=str(e))
 
     else:
@@ -200,7 +200,7 @@ def create_metric_alarm(connection, module):
         try:
             if changed:
                 connection.create_alarm(alarm)
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=str(e))
     result = alarms[0]
     module.exit_json(changed=changed, name=result.name,
@@ -232,7 +232,7 @@ def delete_metric_alarm(connection, module):
         try:
             connection.delete_alarms([name])
             module.exit_json(changed=True)
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=str(e))
     else:
         module.exit_json(changed=False)
@@ -272,7 +272,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")

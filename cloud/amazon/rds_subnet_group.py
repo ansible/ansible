@@ -113,7 +113,7 @@ def main():
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     try:
@@ -123,7 +123,7 @@ def main():
         try:
             matching_groups = conn.get_all_db_subnet_groups(group_name, max_records=100)
             exists = len(matching_groups) > 0
-        except BotoServerError, e:
+        except BotoServerError as e:
             if e.error_code != 'DBSubnetGroupNotFoundFault':
                 module.fail_json(msg = e.error_message)
         
@@ -142,7 +142,7 @@ def main():
                 if ( (matching_groups[0].name != group_name) or (matching_groups[0].description != group_description) or (matching_groups[0].subnet_ids != group_subnets) ):
                     changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
                     changed = True
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     module.exit_json(changed=changed)

@@ -251,7 +251,7 @@ def main():
             iam = connect_to_aws(boto.iam, region, **aws_connect_kwargs)
         else:
             iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
@@ -286,7 +286,7 @@ def main():
     try:
         cert_action(module, iam, name, path, new_name, new_path, state,
                 cert, key, cert_chain, orig_certs, orig_bodies, dup_ok)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err), debug=[cert,key])
 
 

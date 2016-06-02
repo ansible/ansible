@@ -122,7 +122,7 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
 
     try:
         matching_vpcs=vpc.get_all_vpcs(filters={'tag:Name' : name, 'cidr-block' : cidr_block})
-    except Exception, e:
+    except Exception as e:
         e_msg=boto_exception(e)
         module.fail_json(msg=e_msg)
 
@@ -150,7 +150,7 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
             return True
         else:
             return False
-    except Exception, e:
+    except Exception as e:
         e_msg=boto_exception(e)
         module.fail_json(msg=e_msg)
 
@@ -216,7 +216,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -233,21 +233,21 @@ def main():
             try:
                 vpc_obj = connection.create_vpc(cidr_block, instance_tenancy=tenancy)
                 changed = True
-            except BotoServerError, e:
+            except BotoServerError as e:
                 module.fail_json(msg=e)
 
         if dhcp_id is not None:
             try:
                 if update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
                     changed = True
-            except BotoServerError, e:
+            except BotoServerError as e:
                 module.fail_json(msg=e)
 
         if tags is not None or name is not None:
             try:
                 if update_vpc_tags(connection, module, vpc_obj, tags, name):
                     changed = True
-            except BotoServerError, e:
+            except BotoServerError as e:
                 module.fail_json(msg=e)
 
         # Note: Boto currently doesn't currently provide an interface to ec2-describe-vpc-attribute
@@ -256,14 +256,14 @@ def main():
         try:
             connection.modify_vpc_attribute(vpc_obj.id, enable_dns_support=dns_support)
             connection.modify_vpc_attribute(vpc_obj.id, enable_dns_hostnames=dns_hostnames)
-        except BotoServerError, e:
+        except BotoServerError as e:
             e_msg=boto_exception(e)
             module.fail_json(msg=e_msg)
 
         # get the vpc obj again in case it has changed
         try:
             vpc_obj = connection.get_all_vpcs(vpc_obj.id)[0]
-        except BotoServerError, e:
+        except BotoServerError as e:
             e_msg=boto_exception(e)
             module.fail_json(msg=e_msg)
 
@@ -279,7 +279,7 @@ def main():
                 connection.delete_vpc(vpc_obj.id)
                 vpc_obj = None
                 changed = True
-            except BotoServerError, e:
+            except BotoServerError as e:
                 e_msg = boto_exception(e)
                 module.fail_json(msg="%s. You may want to use the ec2_vpc_subnet, ec2_vpc_igw, "
                 "and/or ec2_vpc_route_table modules to ensure the other components are absent." % e_msg)
