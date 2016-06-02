@@ -290,7 +290,7 @@ def main():
             '''found a match, delete it'''
             try:
                 group.delete()
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
             else:
                 group = None
