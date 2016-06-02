@@ -58,7 +58,7 @@ EXAMPLES = '''
 - route53_zone: zone=example.com state=absent
 
 - name: private zone for devel
-  route53_zome: zone=devel.example.com state=present vpc_id={{myvpc_id}} comment='developer domain'
+  route53_zone: zone=devel.example.com state=present vpc_id={{myvpc_id}} comment='developer domain'
 
 # more complex example
 - name: register output after creating zone in parameterized region
