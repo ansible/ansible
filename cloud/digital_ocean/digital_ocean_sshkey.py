@@ -132,7 +132,7 @@ def core(module):
         # params['client_id'] will be None even if client_id is not passed in
         client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
         api_key = module.params['api_key'] or os.environ['DO_API_KEY']
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     changed = True

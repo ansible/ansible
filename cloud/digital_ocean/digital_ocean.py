@@ -317,7 +317,7 @@ def core(module):
 
     try:
         api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     changed = True
@@ -433,9 +433,9 @@ def main():
 
     try:
         core(module)
-    except TimeoutError, e:
+    except TimeoutError as e:
         module.fail_json(msg=str(e), id=e.id)
-    except (DoError, Exception), e:
+    except (DoError, Exception) as e:
         module.fail_json(msg=str(e))
 
 # import module snippets
