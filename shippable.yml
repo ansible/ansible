@@ -1,23 +1,33 @@
 language: python
 
-env: TOXENV=py24
+env:
+  matrix:
+    - TEST=code-smell
 
 matrix:
   include:
-    - python: 2.6
-      env: TOXENV=py26
-    - python: 2.7
-      env: TOXENV=py27
-    - python: 3.4
-      env: TOXENV=py34
-    - python: 3.5
-      env: TOXENV=py35
+    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py24
+      python: 2.7
+    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py26
+      python: 2.6
+    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py27
+      python: 2.7
+    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py34
+      python: 3.4
+    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py35
+      python: 3.5
+    - env: TEST=integration IMAGE=ansible/ansible:centos6
+    - env: TEST=integration IMAGE=ansible/ansible:centos7
+    - env: TEST=integration IMAGE=ansible/ansible:fedora-rawhide
+    - env: TEST=integration IMAGE=ansible/ansible:fedora23
+    - env: TEST=integration IMAGE=ansible/ansible:opensuseleap
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
 
 build:
   ci:
-    - if [ "${TOXENV}" = "py24" ]; then add-apt-repository ppa:fkrull/deadsnakes && apt-get update -qq && apt-get install python2.4 -qq; fi
-    - pip install tox
-    - TARGET=sanity ./test/utils/run_tests.sh
+    - test/utils/shippable/${TEST}.sh 2>&1 | gawk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush(); }'
 
 integrations:
   notifications:
