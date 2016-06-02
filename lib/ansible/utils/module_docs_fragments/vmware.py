@@ -34,4 +34,11 @@ options:
             - The password of the vSphere vCenter
         required: True
         aliases: ['pass', 'pwd']
+    validate_certs: 
+        description: 
+            - Allows connection when SSL certificates are not valid. Set to 
+              false when certificates are not trusted 
+        required: False 
+        default: 'True' 
+        choices: ['True', 'False'] 
 '''
