@@ -923,7 +923,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg = str(e))
 
     # Lookup any instances that much our run id.
@@ -1102,7 +1102,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     if spot_wait_timeout <= time.time():
                         module.fail_json(msg = "wait for spot requests timeout on %s" % time.asctime())
                     instids = spot_req_inst_ids.values()
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
@@ -1111,7 +1111,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         while wait_timeout > time.time() and num_running < len(instids):
             try:
                 res_list = ec2.get_all_instances(instids)
-            except boto.exception.BotoServerError, e:
+            except boto.exception.BotoServerError as e:
                 if e.error_code == 'InvalidInstanceID.NotFound':
                     time.sleep(1)
                     continue
@@ -1153,7 +1153,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         if instance_tags:
             try:
                 ec2.create_tags(instids, instance_tags)
-            except boto.exception.EC2ResponseError, e:
+            except boto.exception.EC2ResponseError as e:
                 module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
     instance_dict_array = []
@@ -1202,7 +1202,7 @@ def terminate_instances(module, ec2, instance_ids):
                 instance_dict_array.append(get_instance_info(inst))
                 try:
                     ec2.terminate_instances([inst.id])
-                except EC2ResponseError, e:
+                except EC2ResponseError as e:
                     module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
@@ -1216,7 +1216,7 @@ def terminate_instances(module, ec2, instance_ids):
                 filters={'instance-state-name':'terminated'})
             try:
                 num_terminated = len(response.pop().instances)
-            except Exception, e:
+            except Exception as e:
                 # got a bad response of some sort, possibly due to
                 # stale/cached data. Wait a second and then try again
                 time.sleep(1)
@@ -1308,7 +1308,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                         inst.start()
                     else:
                         inst.stop()
-                except EC2ResponseError, e:
+                except EC2ResponseError as e:
                     module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
@@ -1399,7 +1399,7 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 instance_dict_array.append(get_instance_info(inst))
                 try:
                     inst.reboot()
-                except EC2ResponseError, e:
+                except EC2ResponseError as e:
                     module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
@@ -1470,7 +1470,7 @@ def main():
     if region:
         try:
             vpc = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg = str(e))
     else:
         vpc = None
