@@ -338,7 +338,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             retry -= 1
             result = changes.commit()
             break
-        except boto.route53.exception.DNSServerError, e:
+        except boto.route53.exception.DNSServerError as e:
             code = e.body.split("<Code>")[1]
             code = code.split("</Code>")[0]
             if code != 'PriorRequestNotComplete' or retry < 0:
@@ -366,7 +366,7 @@ def invoke_with_throttling_retries(function_ref, *argv):
         try:
             retval=function_ref(*argv)
             return retval
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             if e.code != IGNORE_CODE or retries==MAX_RETRIES:
                 raise e
         time.sleep(5 * (2**retries))
@@ -470,7 +470,7 @@ def main():
     # connect to the route53 endpoint
     try:
         conn = Route53Connection(**aws_connect_kwargs)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     # Get all the existing hosted zones and save their ID's
@@ -574,7 +574,7 @@ def main():
 
     try:
         result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
-    except boto.route53.exception.DNSServerError, e:
+    except boto.route53.exception.DNSServerError as e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
         if "but it already exists" in txt:

@@ -177,7 +177,7 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
                     key_qty += 1
         else:
             keys = None
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=False, msg=str(err))
     else:
         user_info = dict(created_user=user_meta, password=pwd, access_keys=keys)
@@ -193,7 +193,7 @@ def delete_user(module, iam, name):
             iam.delete_access_key(key, name)
         try:
             login_profile = iam.get_login_profiles(name).get_login_profile_response
-        except boto.exception.BotoServerError, err:
+        except boto.exception.BotoServerError as err:
             error_msg = boto_exception(err)
             if ('Cannot find Login Profile') in error_msg:
                del_meta = iam.delete_user(name).delete_user_response
@@ -207,7 +207,7 @@ def delete_user(module, iam, name):
                 iam.delete_user_policy(name, policy)
             try:
                 del_meta = iam.delete_user(name)
-            except boto.exception.BotoServerError, err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
                       module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
@@ -236,7 +236,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
             [ck['status'] for ck in
                 iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         key_qty = len(current_keys)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if 'cannot be found' in error_msg and updated:
             current_keys, status = \
@@ -263,7 +263,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                         name, new_path=new_path).update_user_response.response_metadata
                 user['updates'] = dict(
                     old_username=name, new_username=new_name, old_path=c_path, new_path=new_path)
-            except boto.exception.BotoServerError, err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 module.fail_json(changed=False, msg=str(err))
             else:
@@ -278,7 +278,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
             try:
                 iam.create_login_profile(name, pwd)
                 changed = True
-            except boto.exception.BotoServerError, err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(str(err))
                 if 'Password does not conform to the account password policy' in error_msg:
                     module.fail_json(changed=False, msg="Passsword doesn't conform to policy")
@@ -293,7 +293,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                 key_qty += 1
                 changed = True
 
-        except boto.exception.BotoServerError, err:
+        except boto.exception.BotoServerError as err:
             module.fail_json(changed=False, msg=str(err))
 
     if keys and key_state:
@@ -304,7 +304,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                         try:
                             iam.update_access_key(
                                 access_key, key_state.capitalize(), user_name=name)
-                        except boto.exception.BotoServerError, err:
+                        except boto.exception.BotoServerError as err:
                             module.fail_json(changed=False, msg=str(err))
                         else:
                             changed = True
@@ -312,7 +312,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                 if key_state == 'remove':
                     try:
                         iam.delete_access_key(access_key, user_name=name)
-                    except boto.exception.BotoServerError, err:
+                    except boto.exception.BotoServerError as err:
                         module.fail_json(changed=False, msg=str(err))
                     else:
                         changed = True
@@ -327,7 +327,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                 iam.get_all_access_keys(name).
                 list_access_keys_result.
                 access_key_metadata]
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
 
     for fk, fks in zip(final_keys, final_key_status):
@@ -353,7 +353,7 @@ new_name=None):
             rg for rg in frozenset(orig_users_groups).difference(groups)]
         new_groups = [
             ng for ng in frozenset(groups).difference(orig_users_groups)]
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         if len(orig_users_groups) > 0:
@@ -365,7 +365,7 @@ new_name=None):
             for group in groups:
                 try:
                     iam.add_user_to_group(group, name)
-                except boto.exception.BotoServerError, err:
+                except boto.exception.BotoServerError as err:
                     error_msg = boto_exception(err)
                     if ('The group with name %s cannot be found.' % group) in error_msg:
                         module.fail_json(changed=False, msg="Group %s doesn't exist" % group)
@@ -382,7 +382,7 @@ def create_group(module=None, iam=None, name=None, path=None):
     try:
         iam.create_group(
             name, path).create_group_response.create_group_result.group
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         changed = True
@@ -393,14 +393,14 @@ def delete_group(module=None, iam=None, name=None):
     changed = False
     try:
         iam.delete_group(name)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if ('must detach all policies first') in error_msg:
             for policy in iam.get_all_group_policies(name).list_group_policies_result.policy_names:
                 iam.delete_group_policy(name, policy)
             try:
                 iam.delete_group(name)
-            except boto.exception.BotoServerError, err:
+            except boto.exception.BotoServerError as  err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
                       module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
@@ -429,7 +429,7 @@ def update_group(module=None, iam=None, name=None, new_name=None, new_path=None)
                 iam.update_group(name, new_group_name=new_name, new_path=new_path)
                 changed = True
                 name = new_name
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
 
     return changed, name, new_path, current_group_path
@@ -449,7 +449,7 @@ def create_role(module, iam, name, path, role_list, prof_list):
                 instance_profile_result = iam.create_instance_profile(name, 
                     path=path).create_instance_profile_response.create_instance_profile_result.instance_profile
                 iam.add_role_to_instance_profile(name, name)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
@@ -472,14 +472,14 @@ def delete_role(module, iam, name, role_list, prof_list):
                 iam.remove_role_from_instance_profile(profile, name)
             try:
               iam.delete_role(name)
-            except boto.exception.BotoServerError, err:
+            except boto.exception.BotoServerError as err:
               error_msg = boto_exception(err)
               if ('must detach all policies first') in error_msg:
                 for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
                   iam.delete_role_policy(name, policy)
               try:
                 iam_role_result = iam.delete_role(name)
-              except boto.exception.BotoServerError, err:
+              except boto.exception.BotoServerError as err:
                   error_msg = boto_exception(err)
                   if ('must detach all policies first') in error_msg:
                       module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
@@ -497,7 +497,7 @@ def delete_role(module, iam, name, role_list, prof_list):
         for prof in prof_list:
             if name == prof:
                 instance_profile_result = iam.delete_instance_profile(name)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(changed=changed, msg=str(err))
     else:
         updated_role_list = [rl['role_name'] for rl in iam.list_roles().list_roles_response.
@@ -577,7 +577,7 @@ def main():
             iam = connect_to_aws(boto.iam, region, **aws_connect_kwargs)
         else:
             iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
 
     result = {}
@@ -600,7 +600,7 @@ def main():
                 list_instance_profiles_response.
                 list_instance_profiles_result.
                 instance_profiles]
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         module.fail_json(msg=err.message)
 
     if iam_type == 'user':

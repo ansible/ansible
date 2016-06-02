@@ -196,7 +196,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
     if instance_id:
         try:
             volumes = ec2.get_all_volumes(filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
         if not volumes:
@@ -209,7 +209,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
             module.fail_json(msg = 'snapshot_id must be set when state is absent')
         try:
             ec2.delete_snapshot(snapshot_id)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             # exception is raised if snapshot does not exist
             if e.error_code == 'InvalidSnapshot.NotFound':
                 module.exit_json(changed=False)
@@ -222,7 +222,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
     if last_snapshot_min_age > 0:
         try:
             current_snapshots = ec2.get_all_snapshots(filters={'volume_id': volume_id})
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
         last_snapshot_min_age = last_snapshot_min_age * 60 # Convert to seconds
@@ -239,7 +239,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
         if snapshot_tags:
             for k, v in snapshot_tags.items():
                 snapshot.add_tag(k, v)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     module.exit_json(changed=changed,

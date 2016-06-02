@@ -205,7 +205,7 @@ def key_check(module, s3, bucket, obj, version=None):
     try:
         bucket = s3.lookup(bucket)
         key_check = bucket.get_key(obj, version_id=version)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         if version is not None and e.status == 400: # If a specified version doesn't exist a 400 is returned.
             key_check = None
         else:
@@ -229,7 +229,7 @@ def keysum(module, s3, bucket, obj, version=None):
 def bucket_check(module, s3, bucket):
     try:
         result = s3.lookup(bucket)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if result:
         return True
@@ -243,7 +243,7 @@ def create_bucket(module, s3, bucket, location=None):
         bucket = s3.create_bucket(bucket, location=location)
         for acl in module.params.get('permission'):
             bucket.set_acl(acl)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if bucket:
         return True
@@ -251,7 +251,7 @@ def create_bucket(module, s3, bucket, location=None):
 def get_bucket(module, s3, bucket):
     try:
         return s3.lookup(bucket)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def list_keys(module, bucket_object, prefix, marker, max_keys):
@@ -268,7 +268,7 @@ def delete_bucket(module, s3, bucket):
         bucket.delete_keys([key.name for key in bucket_contents])
         bucket.delete()
         return True
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def delete_key(module, s3, bucket, obj):
@@ -276,7 +276,7 @@ def delete_key(module, s3, bucket, obj):
         bucket = s3.lookup(bucket)
         bucket.delete_key(obj)
         module.exit_json(msg="Object deleted from bucket %s"%bucket, changed=True)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def create_dirkey(module, s3, bucket, obj):
@@ -285,7 +285,7 @@ def create_dirkey(module, s3, bucket, obj):
         key = bucket.new_key(obj)
         key.set_contents_from_string('')
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def path_check(path):
@@ -308,7 +308,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             key.set_acl(acl)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
-    except s3.provider.storage_copy_error, e:
+    except s3.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
@@ -320,7 +320,7 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
         try:
             key.get_contents_to_filename(dest)
             module.exit_json(msg="GET operation complete", changed=True)
-        except s3.provider.storage_copy_error, e:
+        except s3.provider.storage_copy_error as e:
             module.fail_json(msg= str(e))
         except SSLError as e:
             # actually fail on last pass through the loop.
@@ -335,7 +335,7 @@ def download_s3str(module, s3, bucket, obj, version=None):
         key = bucket.get_key(obj, version_id=version)
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
-    except s3.provider.storage_copy_error, e:
+    except s3.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
 def get_download_url(module, s3, bucket, obj, expiry, changed=True):
@@ -344,7 +344,7 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
         module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
-    except s3.provider.storage_response_error, e:
+    except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def is_fakes3(s3_url):
@@ -466,9 +466,9 @@ def main():
                 # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
                 s3 = boto.connect_s3(**aws_connect_kwargs)
 
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg='No Authentication Handler found: %s ' % str(e))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='Failed to connect to S3: %s' % str(e))
 
     if s3 is None: # this should never happen
