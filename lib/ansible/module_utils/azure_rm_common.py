@@ -75,7 +75,7 @@ try:
     from enum import Enum
     from msrest.serialization import Serializer
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute import __version__ as azure_compute_version
+    #from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
@@ -136,9 +136,9 @@ class AzureRMModuleBase(object):
         if not HAS_AZURE:
             self.fail("The Azure Python SDK is not installed (try 'pip install azure') - {0}".format(HAS_AZURE_EXC))
 
-        if azure_compute_version < AZURE_MIN_VERSION:
-            self.fail("Expecting azure.mgmt.compute.__version__ to be >= {0}. Found version {1} "
-                      "Do you have Azure >= 2.0.0rc2 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
+        #if azure_compute_version < AZURE_MIN_VERSION:
+        #    self.fail("Expecting azure.mgmt.compute.__version__ to be >= {0}. Found version {1} "
+        #              "Do you have Azure >= 2.0.0rc2 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
 
         self._network_client = None
         self._storage_client = None
