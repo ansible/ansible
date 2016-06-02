@@ -47,6 +47,8 @@ description:
    - "Although the defaults are choosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       protocol."
+requirements:
+  - "python >= 2.6"
 options:
   account_key:
     description:
@@ -214,7 +216,7 @@ def write_file(module, dest, content):
     f = open(tmpsrc, 'wb')
     try:
         f.write(content)
-    except Exception, err:
+    except Exception as err:
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
@@ -246,7 +248,7 @@ def write_file(module, dest, content):
         try:
             shutil.copyfile(tmpsrc, dest)
             changed = True
-        except Exception, err:
+        except Exception as err:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
     os.remove(tmpsrc)
@@ -350,7 +352,7 @@ class ACMEAccount(object):
         try:
             payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
-        except Exception, e:
+        except Exception as e:
             self.module.fail_json(msg="Failed to encode payload / headers as JSON: {0}".format(e))
 
         openssl_sign_cmd = [self._openssl_bin, "dgst", "-sha256", "-sign", self.key]
