@@ -145,7 +145,7 @@ except ImportError:
     import simplejson as json
 
 try:
-    from dopy.manager import DoError, DoManager
+    from dopy.manager import DoManager
 except ImportError as e:
     print("failed=True msg='`dopy` library required for this script'")
     sys.exit(1)
@@ -369,20 +369,30 @@ or environment variables (DO_API_TOKEN)''')
 
             self.inventory[droplet['id']] = dest
             self.inventory[droplet['name']] = dest
-            self.inventory['region_' + droplet['region']['slug']] = dest
-            self.inventory['image_' + str(droplet['image']['id'])] = dest
-            self.inventory['size_' + droplet['size']['slug']] = dest
 
-            image_slug = droplet['image']['slug']
-            if image_slug:
-                self.inventory['image_' + self.to_safe(image_slug)] = dest
-            else:
-                image_name = droplet['image']['name']
-                if image_name:
-                    self.inventory['image_' + self.to_safe(image_name)] = dest
+            # groups that are always present
+            for group in [
+                            'region_' + droplet['region']['slug'],
+                            'image_' + str(droplet['image']['id']),
+                            'size_' + droplet['size']['slug'],
+                            'distro_' + self.to_safe(droplet['image']['distribution']),
+                            'status_' + droplet['status'],
 
-            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest
-            self.inventory['status_' + droplet['status']] = dest
+                        ]:
+                if group not in self.inventory:
+                    self.inventory[group] = set()
+                self.inventory[group].add(dest)
+
+            # groups that are not always present
+            for group in [
+                            droplet['image']['slug'],
+                            droplet['image']['name']
+                         ]:
+                if group:
+                    image = 'image_' + self.to_safe(group)
+                    if image not in self.inventory:
+                        self.inventory[image] = set()
+                    self.inventory[image].add(dest)
 
 
     def load_droplet_variables_for_host(self):
