@@ -128,9 +128,6 @@ env:
       system/selinux_permissive.py
       system/seport.py
       system/svc.py
-      web_infrastructure/deploy_helper.py
-      web_infrastructure/ejabberd_user.py
-      web_infrastructure/jira.py
       windows/win_unzip.py"
 before_install:
   - git config user.name "ansible"
