@@ -104,6 +104,7 @@ metadata:
     sample: {'key1': 'value1', 'key2': 'value2'}
 '''
 
+
 def _needs_update(server_metadata={}, metadata={}):
     return len(set(metadata.items()) - set(server_metadata.items())) != 0
 
@@ -150,15 +151,14 @@ def main():
             # check if it needs update
             if _needs_update(server_metadata=server.metadata,
                              metadata=meta_param):
-                cloud.server_set_metadata(server_param,
-                                          meta_param)
+                cloud.set_server_metadata(server_param, meta_param)
                 changed = True
         elif state == 'absent':
             # remove from params the keys that do not exist in the server
             keys_to_delete = _get_keys_to_delete(server.metadata.keys(),
                                                  meta_param.keys())
             if len(keys_to_delete) > 0:
-                cloud.server_delete_metadata(server_param, keys_to_delete)
+                cloud.delete_server_metadata(server_param, keys_to_delete)
                 changed = True
 
         if changed:
