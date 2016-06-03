@@ -216,7 +216,7 @@ def main():
             json_output['ipv4_range'] = network.cidr
         except ResourceNotFoundError:
             pass
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
         # user wants to create a new network that doesn't yet exist
@@ -230,7 +230,7 @@ def main():
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
         if fwname:
@@ -252,7 +252,7 @@ def main():
                 changed = True
             except ResourceExistsError:
                 pass
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
             json_output['fwname'] = fwname
@@ -269,7 +269,7 @@ def main():
                 fw = gce.ex_get_firewall(fwname)
             except ResourceNotFoundError:
                 pass
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if fw:
                 gce.ex_destroy_firewall(fw)
@@ -283,7 +283,7 @@ def main():
             except ResourceNotFoundError:
 #                json_output['d2'] = 'not found network name %s' % name
                 pass
-            except Exception, e:
+            except Exception as e:
 #                json_output['d3'] = 'error with %s' % name
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
