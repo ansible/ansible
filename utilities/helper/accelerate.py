@@ -170,7 +170,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
             module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
     except OSError:
         e       = get_exception()
-        message = "fork #2 failed: {} ({})".format(e.errno, e.strerror)
+        message = "fork #1 failed: {} ({})".format(e.errno, e.strerror)
         module.fail_json(message)
 
     # decouple from parent environment
