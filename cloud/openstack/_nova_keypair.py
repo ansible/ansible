@@ -112,9 +112,9 @@ def main():
                               service_type='compute')
     try:
         nova.authenticate()
-    except exc.Unauthorized, e:
+    except exc.Unauthorized as e:
         module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exc.AuthorizationFailure, e:
+    except exc.AuthorizationFailure as e:
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
@@ -126,7 +126,7 @@ def main():
                     module.exit_json(changed = False, result = "Key present")            
         try:
             key = nova.keypairs.create(module.params['name'], module.params['public_key'])
-        except Exception, e:
+        except Exception as e:
             module.exit_json(msg = "Error in creating the keypair: %s" % e.message)
         if not module.params['public_key']:
             module.exit_json(changed = True, key = key.private_key)
@@ -136,7 +136,7 @@ def main():
             if key.name == module.params['name']:
                 try:
                     nova.keypairs.delete(module.params['name'])
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg = "The keypair deletion has failed: %s" % e.message)
                 module.exit_json( changed = True, result = "deleted")
         module.exit_json(changed = False, result = "not present")

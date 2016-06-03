@@ -133,7 +133,7 @@ def _get_ksclient(module, kwargs):
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
     global _os_keystone
     _os_keystone = kclient
@@ -143,7 +143,7 @@ def _get_ksclient(module, kwargs):
 def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error getting network endpoint: %s " %e.message)
     return endpoint
 
@@ -157,7 +157,7 @@ def _get_neutron_client(module, kwargs):
     }
     try:
         neutron = client.Client('2.0', **kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = " Error in connecting to neutron: %s " %e.message)
     return neutron
 
@@ -182,7 +182,7 @@ def _get_net_id(neutron, module):
     }
     try:
         networks = neutron.list_networks(**kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
@@ -220,7 +220,7 @@ def _create_network(module, neutron):
 
     try:
         net = neutron.create_network({'network':network})
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in creating network: %s" % e.message)
     return net['network']['id']
 
@@ -228,7 +228,7 @@ def _delete_network(module, net_id, neutron):
 
     try:
         id = neutron.delete_network(net_id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in deleting the network: %s" % e.message)
     return True
 
