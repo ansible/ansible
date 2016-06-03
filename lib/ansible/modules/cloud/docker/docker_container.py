@@ -1813,10 +1813,6 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
         return response
 
-    def connect_container_to_network(self, container_id, network    ):
-        # TODO - Implement network connecions
-        pass
-
 
 def main():
     argument_spec = dict(
