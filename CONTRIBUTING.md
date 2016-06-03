@@ -10,7 +10,7 @@ Please see [this web page](http://docs.ansible.com/community.html) for informati
 
 If you'd like to contribute code to an existing module
 ======================================================
-Each module in Extras is maintained by the owner of that module; each module's owner is indicated in the documentation section of the module itself. Any pull request for a module that is given a +1 by the owner in the comments will be merged by the Ansible team.
+Each module in Extras is maintained by the owner of that module; each module's owner is indicated in the documentation section of the module itself. Any pull request for a module that is given a "shipit" by the owner in the comments will be merged by the Ansible team.
 
 If you'd like to contribute a new module
 ========================================
