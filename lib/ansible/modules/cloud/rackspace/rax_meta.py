@@ -91,7 +91,7 @@ def rax_meta(module, address, name, server_id, meta):
         search_opts = dict(name='^%s$' % name)
         try:
             servers = cs.servers.list(search_opts=search_opts)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
     elif address:
         servers = []
@@ -101,13 +101,13 @@ def rax_meta(module, address, name, server_id, meta):
                     if address in addresses:
                         servers.append(server)
                         break
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
     elif server_id:
         servers = []
         try:
             servers.append(cs.servers.get(server_id))
-        except Exception, e:
+        except Exception as e:
             pass
 
     if len(servers) > 1:

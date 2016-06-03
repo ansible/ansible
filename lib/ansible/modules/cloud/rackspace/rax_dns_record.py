@@ -152,7 +152,7 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
                     try:
                         dns.update_ptr_record(item, record, name, data, ttl)
                         changed = True
-                    except Exception, e:
+                    except Exception as e:
                         module.fail_json(msg='%s' % e.message)
                     record.ttl = ttl
                     record.name = name
@@ -168,7 +168,7 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
             try:
                 results = dns.add_ptr_records(item, [record])
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         module.exit_json(changed=changed, records=results)
@@ -184,7 +184,7 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
             try:
                 dns.delete_ptr_records(item, data)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         module.exit_json(changed=changed, records=results)
@@ -210,7 +210,7 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
 
         try:
             domain = dns.find(name=domain)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
         try:
@@ -218,9 +218,9 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
                 record = domain.find_record(record_type, name=name)
             else:
                 record = domain.find_record(record_type, name=name, data=data)
-        except pyrax.exceptions.DomainRecordNotUnique, e:
+        except pyrax.exceptions.DomainRecordNotUnique as e:
             module.fail_json(msg='overwrite=true and there are multiple matching records')
-        except pyrax.exceptions.DomainRecordNotFound, e:
+        except pyrax.exceptions.DomainRecordNotFound as e:
             try:
                 record_data = {
                     'type': record_type,
@@ -235,7 +235,7 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
 
                 record = domain.add_records([record_data])[0]
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         update = {}
@@ -253,28 +253,28 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
                 record.update(**update)
                 changed = True
                 record.get()
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
         try:
             domain = dns.find(name=domain)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
         try:
             record = domain.find_record(record_type, name=name, data=data)
-        except pyrax.exceptions.DomainRecordNotFound, e:
+        except pyrax.exceptions.DomainRecordNotFound as e:
             record = {}
             pass
-        except pyrax.exceptions.DomainRecordNotUnique, e:
+        except pyrax.exceptions.DomainRecordNotUnique as e:
             module.fail_json(msg='%s' % e.message)
 
         if record:
             try:
                 record.delete()
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
     module.exit_json(changed=changed, record=rax_to_dict(record))

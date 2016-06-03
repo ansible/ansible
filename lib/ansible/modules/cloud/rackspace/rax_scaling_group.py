@@ -173,7 +173,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             f = open(user_data)
             user_data = f.read()
             f.close()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='Failed to load %s' % user_data)
 
     if state == 'present':
@@ -215,7 +215,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
                         'contents': f.read()
                     })
                     f.close()
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg='Failed to load %s' % lpath)
 
         lbs = []
@@ -237,7 +237,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
         try:
             sg = au.find(name=name)
-        except pyrax.exceptions.NoUniqueMatch, e:
+        except pyrax.exceptions.NoUniqueMatch as e:
             module.fail_json(msg='%s' % e.message)
         except pyrax.exceptions.NotFound:
             try:
@@ -252,7 +252,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
                                key_name=key_name, config_drive=config_drive,
                                user_data=user_data)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         if not changed:
@@ -344,9 +344,9 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             sg = au.find(name=name)
             sg.delete()
             changed = True
-        except pyrax.exceptions.NotFound, e:
+        except pyrax.exceptions.NotFound as e:
             sg = {}
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
         module.exit_json(changed=changed, autoscale_group=rax_to_dict(sg))
