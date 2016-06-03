@@ -371,7 +371,7 @@ def create_instances(module, gce, instance_names):
                     instance_external_ip = gce.ex_get_address(instance_external_ip)
             else:
                 instance_external_ip = 'ephemeral'
-        except GoogleBaseError, e:
+        except GoogleBaseError as e:
             module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
     else:
         instance_external_ip = external_ip
