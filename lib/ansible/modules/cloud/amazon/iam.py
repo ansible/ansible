@@ -506,7 +506,7 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
                 path=path).create_role_response.create_role_result.role.role_name
 
             if name not in prof_list:
-                instance_profile_result = iam.create_instance_profile(name, 
+                instance_profile_result = iam.create_instance_profile(name,
                     path=path).create_instance_profile_response.create_instance_profile_result.instance_profile
                 iam.add_role_to_instance_profile(name, name)
     except boto.exception.BotoServerError as err:
@@ -748,11 +748,12 @@ def main():
         group_exists = name in orig_group_list
 
         if state == 'present' and not group_exists:
-            new_group, changed = create_group(iam=iam, name=name, path=path)
+            new_group, changed = create_group(module=module, iam=iam, name=name, path=path)
             module.exit_json(changed=changed, group_name=new_group)
         elif state in ['present', 'update'] and group_exists:
             changed, updated_name, updated_path, cur_path = update_group(
-                iam=iam, name=name, new_name=new_name, new_path=new_path)
+                module=module, iam=iam, name=name, new_name=new_name,
+                new_path=new_path)
 
             if new_path and new_name:
                 module.exit_json(changed=changed, old_group_name=name,
@@ -774,11 +775,11 @@ def main():
 
         elif state == 'update' and not group_exists:
             module.fail_json(
-                changed=changed, msg="Update Failed. Group %s doesn't seem to exit!" % name)
+                changed=changed, msg="Update Failed. Group %s doesn't seem to exist!" % name)
 
         elif state == 'absent':
             if name in orig_group_list:
-                removed_group, changed = delete_group(iam=iam, name=name)
+                removed_group, changed = delete_group(module=module, iam=iam, name=name)
                 module.exit_json(changed=changed, delete_group=removed_group)
             else:
                 module.exit_json(changed=changed, msg="Group already absent")
