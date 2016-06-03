@@ -84,6 +84,8 @@ EXAMPLES = '''
 '''
 
 import datetime
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
@@ -275,7 +277,7 @@ class OSXDefaults(object):
 
         # Handle absent state
         if self.state == "absent":
-            print "Absent state detected!"
+            print ("Absent state detected!")
             if self.current_value is None:
                 return False
             if self.module.check_mode:
@@ -376,10 +378,10 @@ def main():
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except OSXDefaultsException, e:
+    except OSXDefaultsException:
+        e = get_exception()
         module.fail_json(msg=e.message)
 
 # /main ------------------------------------------------------------------- }}}
 
-from ansible.module_utils.basic import *
 main()

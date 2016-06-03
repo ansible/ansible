@@ -78,6 +78,8 @@ import os.path
 import tempfile
 import errno
 import re
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import *
 
 def enforce_state(module, params):
     """
@@ -121,7 +123,8 @@ def enforce_state(module, params):
     if replace_or_add or found != (state=="present"):
         try:
             inf=open(path,"r")
-        except IOError, e:
+        except IOError:
+            e = get_exception
             if e.errno == errno.ENOENT:
                 inf=None
             else:
@@ -139,7 +142,8 @@ def enforce_state(module, params):
                 outf.write(key)
             outf.flush()
             module.atomic_move(outf.name,path)
-        except (IOError,OSError),e:
+        except (IOError,OSError):
+            e = get_exception()
             module.fail_json(msg="Failed to write to file %s: %s" % \
                                  (path,str(e)))
 
@@ -173,7 +177,8 @@ def sanity_check(module,host,key,sshkeygen):
         outf=tempfile.NamedTemporaryFile()
         outf.write(key)
         outf.flush()
-    except IOError,e:
+    except IOError:
+        e = get_exception()
         module.fail_json(msg="Failed to write to temporary file %s: %s" % \
                              (outf.name,str(e)))
     rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,
@@ -224,7 +229,8 @@ def search_for_host_key(module,host,key,path,sshkeygen):
                 # This output format has been hardcoded in ssh-keygen since at least OpenSSH 4.0
                 # It always outputs the non-localized comment before the found key
                 found_line = int(re.search(r'found: line (\d+)', l).group(1))
-            except IndexError, e:
+            except IndexError:
+                e = get_exception()
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l,host)
@@ -274,6 +280,4 @@ def main():
     results = enforce_state(module,module.params)
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()
