@@ -37,6 +37,7 @@ dictionary.
  - brook_project: str
  - brook_template: str
  - brook_region: str
+ - brook_zone: str
  - brook_status: str
  - brook_tags: list(str)
  - brook_internal_ips: list(str)
@@ -217,6 +218,7 @@ class BrookInventory:
         hostvars['brook_project'] = hostvars.pop('project')
         hostvars['brook_template'] = hostvars.pop('template')
         hostvars['brook_region'] = hostvars.pop('region')
+        hostvars['brook_zone'] = hostvars.pop('zone')
         hostvars['brook_created_at'] = hostvars.pop('created_at')
         hostvars['brook_updated_at'] = hostvars.pop('updated_at')
         del hostvars['id']
