@@ -135,6 +135,8 @@ EXAMPLES = """
 import shutil
 import time
 import socket
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import *
 
 glusterbin = ''
 
@@ -147,7 +149,8 @@ def run_gluster(gargs, **kwargs):
         rc, out, err = module.run_command(args, **kwargs)
         if rc != 0:
             module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
-    except Exception, e:
+    except Exception:
+        e = get_exception
         module.fail_json(msg='error running gluster (%s) command: %s' % (' '.join(args), str(e)))
     return out
 
@@ -456,6 +459,4 @@ def main():
 
     module.exit_json(changed=changed, ansible_facts=facts)
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()

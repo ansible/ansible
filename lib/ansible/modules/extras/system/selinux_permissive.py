@@ -65,6 +65,8 @@ try:
     HAVE_SEOBJECT = True
 except ImportError:
     pass
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 
 def main():
@@ -90,7 +92,8 @@ def main():
 
     try:
         permissive_domains = seobject.permissiveRecords(store)
-    except ValueError, e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(domain=domain, msg=str(e))
 
     # not supported on EL 6
@@ -99,7 +102,8 @@ def main():
 
     try:
         all_domains = permissive_domains.get_all()
-    except ValueError, e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(domain=domain, msg=str(e))
 
     if permissive:
@@ -107,7 +111,8 @@ def main():
             if not module.check_mode:
                 try:
                     permissive_domains.add(domain)
-                except ValueError, e:
+                except ValueError:
+                    e = get_exception()
                     module.fail_json(domain=domain, msg=str(e))
             changed = True
     else:
@@ -115,7 +120,8 @@ def main():
             if not module.check_mode:
                 try:
                     permissive_domains.delete(domain)
-                except ValueError, e:
+                except ValueError:
+                    e = get_exception()
                     module.fail_json(domain=domain, msg=str(e))
             changed = True
 
@@ -123,8 +129,5 @@ def main():
                      permissive=permissive, domain=domain)
 
 
-#################################################
-# import module snippets
-from ansible.module_utils.basic import *
 
 main()

@@ -80,6 +80,9 @@ EXAMPLES = '''
 
 '''
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -110,7 +113,8 @@ def main():
 
     try:
         rc, out, err = module.run_command(cmd)
-    except Exception, e:
+    except Exception:
+        e = get_exception
         module.fail_json(msg=str(e))
 
     msg = "Unexpected failure!"
@@ -136,8 +140,6 @@ def main():
 
     module.fail_json(msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 main()
 
