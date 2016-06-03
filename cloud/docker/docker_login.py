@@ -183,7 +183,7 @@ class LoginManager(DockerBaseClass):
                 reauth=self.reauthorize,
                 dockercfg_path=self.config_path
             )
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
         self.results['login_result'] = response
 
@@ -209,14 +209,14 @@ class LoginManager(DockerBaseClass):
         if not os.path.exists(config_path_dir):
             try:
                 os.makedirs(config_path_dir)
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error: failed to create %s - %s" % (config_path_dir, str(exc)))
         self.write_config(path, dict(auths=dict()))
 
     def write_config(self, path, config):
         try:
             json.dump(config, open(path, "w"), indent=5, sort_keys=True)
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
 
     def update_config_file(self):
