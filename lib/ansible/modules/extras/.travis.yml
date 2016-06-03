@@ -116,18 +116,6 @@ env:
       source_control/gitlab_group.py
       source_control/gitlab_project.py
       source_control/gitlab_user.py
-      system/alternatives.py
-      system/cronvar.py
-      system/crypttab.py
-      system/getent.py
-      system/gluster_volume.py
-      system/known_hosts.py
-      system/locale_gen.py
-      system/modprobe.py
-      system/osx_defaults.py
-      system/selinux_permissive.py
-      system/seport.py
-      system/svc.py
       windows/win_unzip.py"
 before_install:
   - git config user.name "ansible"
