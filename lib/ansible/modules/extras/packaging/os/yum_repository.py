@@ -655,7 +655,7 @@ def main():
             mirrorlist=dict(),
             mirrorlist_expire=dict(),
             name=dict(required=True),
-            params=dict(),
+            params=dict(type='dict'),
             password=dict(no_log=True),
             priority=dict(),
             protect=dict(type='bool'),
