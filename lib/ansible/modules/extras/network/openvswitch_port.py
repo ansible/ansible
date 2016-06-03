@@ -238,7 +238,7 @@ def main():
             'state': {'default': 'present', 'choices': ['present', 'absent']},
             'timeout': {'default': 5, 'type': 'int'},
             'set': {'required': False, 'default': None},
-            'external_ids': {'default': {}, 'required': False},
+            'external_ids': {'default': {}, 'required': False, 'type': 'dict'},
         },
         supports_check_mode=True,
     )
