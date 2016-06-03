@@ -351,7 +351,13 @@ or environment variables (DO_API_TOKEN)''')
 
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
-        self.inventory = {}
+        self.inventory = {
+                            'all': {
+                                    'hosts': [],
+                                    'vars': self.group_variables
+                                   },
+                            '_meta': {'hostvars': {}}
+                        }
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
@@ -365,7 +371,7 @@ or environment variables (DO_API_TOKEN)''')
             else:
                 dest = droplet['ip_address']
 
-            dest = { 'hosts': [ dest ], 'vars': self.group_variables }
+            self.inventory['all']['hosts'].append(dest)
 
             self.inventory[droplet['id']] = dest
             self.inventory[droplet['name']] = dest
@@ -380,8 +386,8 @@ or environment variables (DO_API_TOKEN)''')
 
                         ]:
                 if group not in self.inventory:
-                    self.inventory[group] = []
-                self.inventory[group].append(dest)
+                    self.inventory[group] = { 'hosts': [ ], 'vars': {} }
+                self.inventory[group]['hosts'].append(dest)
 
             # groups that are not always present
             for group in [
@@ -391,8 +397,9 @@ or environment variables (DO_API_TOKEN)''')
                 if group:
                     image = 'image_' + self.to_safe(group)
                     if image not in self.inventory:
-                        self.inventory[image] = []
-                    self.inventory[image].append(dest)
+                        self.inventory[image] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[image]['hosts'].append(dest)
+
 
 
     def load_droplet_variables_for_host(self):
