@@ -168,8 +168,8 @@ class BrookInventory:
         for project_id in projects:
             project = projects_api.show_project(project_id=project_id)
             for instance in instances_api.index_instances(project_id=project_id):
-                # Get template used for this instance
-                template = templates_api.show_template(template_id=instance.template)
+                # Get template used for this instance if known
+                template = templates_api.show_template(template_id=instance.template) if instance.template else None
 
                 # Update hostvars
                 try:
@@ -227,7 +227,7 @@ class BrookInventory:
         # Substitute identifiers for names
         #
         hostvars['brook_project'] = project.name
-        hostvars['brook_template'] = template.name
+        hostvars['brook_template'] = template.name if template else None
 
         # Retrieve instance state
         #
