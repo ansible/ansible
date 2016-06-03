@@ -7,7 +7,7 @@ test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
 test_target="${TARGET:-}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
-toplevel_make_targets="${TOPLEVEL_MAKE_TARGETS}"
+toplevel_make_targets="${TOPLEVEL_MAKE_TARGETS:-}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
