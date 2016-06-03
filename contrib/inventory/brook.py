@@ -72,7 +72,7 @@ Support:
   This script is tested on Python 2.7 and 3.4. It may work on other versions though.
 
 Author: Francisco Ros <fjros@doalitic.com>
-Version: 0.1
+Version: 0.2
 """
 
 
@@ -124,9 +124,8 @@ class BrookInventory:
         self.project_id = config.get('brook', 'project_id')
 
         if not self.api_token:
-            print('You must provide (at least) your Brook.io API token to generate the dynamic '
-                  'inventory.')
-            sys.exit(1)
+            sys.exit('You must provide (at least) your Brook.io API token to generate the dynamic '
+                     'inventory.')
 
     def get_api_client(self):
         """Authenticate user via the provided credentials and return the corresponding API client.
