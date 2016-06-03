@@ -39,16 +39,22 @@ def mk_boolean(value):
     else:
         return False
 
-def shell_expand(path):
+def shell_expand(path, expand_relative_paths=False):
     '''
     shell_expand is needed as os.path.expanduser does not work
     when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE
     '''
     if path:
         path = os.path.expanduser(os.path.expandvars(path))
+        if expand_relative_paths and not path.startswith('/'):
+            # paths are always 'relative' to the config?
+            if 'CONFIG_FILE' in globals():
+                CFGDIR = os.path.dirname(CONFIG_FILE)
+                path = os.path.join(CFGDIR, path)
+            path = os.path.abspath(path)
     return path
 
-def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False):
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False, expand_relative_paths=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
@@ -73,7 +79,8 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
             value = tempfile.mkdtemp(prefix='ansible-local-tmp', dir=value)
         elif ispathlist:
             if isinstance(value, string_types):
-                value = [shell_expand(x) for x in value.split(os.pathsep)]
+                value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
+                         for x in value.split(os.pathsep)]
         elif isinstance(value, string_types):
             value = unquote(value)
     return value
@@ -140,7 +147,7 @@ DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern', None, None)
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
 DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, ispath=True)
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None, ispathlist=True)
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', ispathlist=True)
+DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', ispathlist=True, expand_relative_paths=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
 DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '$HOME/.ansible/tmp', istmppath=True)
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
