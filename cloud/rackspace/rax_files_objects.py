@@ -196,7 +196,7 @@ META_PREFIX = 'x-object-meta-'
 def _get_container(module, cf, container):
     try:
         return cf.get_container(container)
-    except pyrax.exc.NoSuchContainer, e:
+    except pyrax.exc.NoSuchContainer as e:
         module.fail_json(msg=e.message)
 
 
@@ -238,17 +238,17 @@ def upload(module, cf, container, src, dest, meta, expires):
     if dest and not is_dir:
         try:
             cont_obj = c.upload_file(src, obj_name=dest, ttl=expires, headers=meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
     elif is_dir:
         try:
             total_bytes = _upload_folder(cf, src, c, ttl=expires, headers=meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
     else:
         try:
             cont_obj = c.upload_file(src, ttl=expires, headers=meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
 
     EXIT_DICT['success'] = True
@@ -299,7 +299,7 @@ def download(module, cf, container, src, dest, structure):
     for obj in objs:
         try:
             c.download_object(obj, dest, structure=structure)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             results.append(obj)
@@ -348,7 +348,7 @@ def delete(module, cf, container, src, dest):
     for obj in objs:
         try:
             result = c.delete_object(obj)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             results.append(result)
@@ -396,7 +396,7 @@ def get_meta(module, cf, container, src, dest):
     for obj in objs:
         try:
             meta = c.get_object(obj).get_metadata()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             results[obj] = dict()
@@ -434,7 +434,7 @@ def put_meta(module, cf, container, src, dest, meta, clear_meta):
     for obj in objs:
         try:
             result = c.get_object(obj).set_metadata(meta, clear=clear_meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             results.append(result)
@@ -473,20 +473,20 @@ def delete_meta(module, cf, container, src, dest, meta):
             for k, v in meta.items():
                 try:
                     result = c.get_object(obj).remove_metadata_key(k)
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg=e.message)
                 else:
                     results.append(result)
         else:
             try:
                 o = c.get_object(obj)
-            except pyrax.exc.NoSuchObject, e:
+            except pyrax.exc.NoSuchObject as e:
                 module.fail_json(msg=e.message)
 
             for k, v in o.get_metadata().items():
                 try:
                     result = o.remove_metadata_key(k)
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg=e.message)
                 results.append(result)
 

@@ -89,14 +89,14 @@ def rax_dns(module, comment, email, name, state, ttl):
 
         try:
             domain = dns.find(name=name)
-        except pyrax.exceptions.NoUniqueMatch, e:
+        except pyrax.exceptions.NoUniqueMatch as e:
             module.fail_json(msg='%s' % e.message)
         except pyrax.exceptions.NotFound:
             try:
                 domain = dns.create(name=name, emailAddress=email, ttl=ttl,
                                     comment=comment)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         update = {}
@@ -112,7 +112,7 @@ def rax_dns(module, comment, email, name, state, ttl):
                 domain.update(**update)
                 changed = True
                 domain.get()
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
@@ -121,14 +121,14 @@ def rax_dns(module, comment, email, name, state, ttl):
         except pyrax.exceptions.NotFound:
             domain = {}
             pass
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
         if domain:
             try:
                 domain.delete()
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
     module.exit_json(changed=changed, domain=rax_to_dict(domain))

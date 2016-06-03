@@ -86,9 +86,9 @@ def cloud_network(module, state, label, cidr):
             try:
                 network = pyrax.cloud_networks.create(label, cidr=cidr)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
@@ -98,7 +98,7 @@ def cloud_network(module, state, label, cidr):
             changed = True
         except pyrax.exceptions.NetworkNotFound:
             pass
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     if network:

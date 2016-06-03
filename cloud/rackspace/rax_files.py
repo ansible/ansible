@@ -142,7 +142,7 @@ EXAMPLES = '''
 try:
     import pyrax
     HAS_PYRAX = True
-except ImportError, e:
+except ImportError as e:
     HAS_PYRAX = False
 
 EXIT_DICT = dict(success=True)
@@ -152,7 +152,7 @@ META_PREFIX = 'x-container-meta-'
 def _get_container(module, cf, container):
     try:
         return cf.get_container(container)
-    except pyrax.exc.NoSuchContainer, e:
+    except pyrax.exc.NoSuchContainer as e:
         module.fail_json(msg=e.message)
 
 
@@ -162,7 +162,7 @@ def _fetch_meta(module, container):
         for k, v in container.get_metadata().items():
             split_key = k.split(META_PREFIX)[-1]
             EXIT_DICT['meta'][split_key] = v
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=e.message)
 
 
@@ -172,7 +172,7 @@ def meta(cf, module, container_, state, meta_, clear_meta):
     if meta_ and state == 'present':
         try:
             meta_set = c.set_metadata(meta_, clear=clear_meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
     elif meta_ and state == 'absent':
         remove_results = []
@@ -214,12 +214,12 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
 
     try:
         c = cf.get_container(container_)
-    except pyrax.exc.NoSuchContainer, e:
+    except pyrax.exc.NoSuchContainer as e:
         # Make the container if state=present, otherwise bomb out
         if state == 'present':
             try:
                 c = cf.create_container(container_)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=e.message)
             else:
                 EXIT_DICT['changed'] = True
@@ -232,7 +232,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
         if state == 'absent':
             try:
                 cont_deleted = c.delete()
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=e.message)
             else:
                 EXIT_DICT['deleted'] = True
@@ -240,7 +240,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if meta_:
         try:
             meta_set = c.set_metadata(meta_, clear=clear_meta)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         finally:
             _fetch_meta(module, c)
@@ -248,7 +248,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if ttl:
         try:
             c.cdn_ttl = ttl
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             EXIT_DICT['ttl'] = c.cdn_ttl
@@ -256,7 +256,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if public:
         try:
             cont_public = c.make_public()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             EXIT_DICT['container_urls'] = dict(url=c.cdn_uri,
@@ -267,7 +267,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if private:
         try:
             cont_private = c.make_private()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             EXIT_DICT['set_private'] = True
@@ -275,7 +275,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if web_index:
         try:
             cont_web_index = c.set_web_index_page(web_index)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             EXIT_DICT['set_index'] = True
@@ -285,7 +285,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     if web_error:
         try:
             cont_err_index = c.set_web_error_page(web_error)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             EXIT_DICT['set_error'] = True

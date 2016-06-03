@@ -83,7 +83,7 @@ def save_database(module, cdb_id, name, character_set, collate):
 
     try:
         instance = cdb.get(cdb_id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
 
     changed = False
@@ -95,7 +95,7 @@ def save_database(module, cdb_id, name, character_set, collate):
             database = instance.create_database(name=name,
                                                 character_set=character_set,
                                                 collate=collate)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
         else:
             changed = True
@@ -109,7 +109,7 @@ def delete_database(module, cdb_id, name):
 
     try:
         instance = cdb.get(cdb_id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
 
     changed = False
@@ -119,7 +119,7 @@ def delete_database(module, cdb_id, name):
     if database:
         try:
             database.delete()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
         else:
             changed = True
