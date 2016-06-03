@@ -14,44 +14,6 @@ env:
   global:
     # 76 modules.  Let's whittle this down!
     - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
-      cloud/docker/docker_container.py
-      cloud/docker/docker_image_facts.py
-      cloud/docker/docker_login.py
-      cloud/google/gce_lb.py
-      cloud/google/gce_net.py
-      cloud/google/gce_pd.py
-      cloud/google/gce.py
-      cloud/google/gc_storage.py
-      cloud/openstack/_glance_image.py
-      cloud/openstack/_keystone_user.py
-      cloud/openstack/_nova_compute.py
-      cloud/openstack/_nova_keypair.py
-      cloud/openstack/_quantum_floating_ip_associate.py
-      cloud/openstack/_quantum_floating_ip.py
-      cloud/openstack/_quantum_network.py
-      cloud/openstack/_quantum_router_gateway.py
-      cloud/openstack/_quantum_router_interface.py
-      cloud/openstack/_quantum_router.py
-      cloud/openstack/_quantum_subnet.py
-      cloud/rackspace/rax_cbs_attachments.py
-      cloud/rackspace/rax_cbs.py
-      cloud/rackspace/rax_cdb_database.py
-      cloud/rackspace/rax_cdb.py
-      cloud/rackspace/rax_cdb_user.py
-      cloud/rackspace/rax_clb_nodes.py
-      cloud/rackspace/rax_clb.py
-      cloud/rackspace/rax_dns.py
-      cloud/rackspace/rax_dns_record.py
-      cloud/rackspace/rax_facts.py
-      cloud/rackspace/rax_files_objects.py
-      cloud/rackspace/rax_files.py
-      cloud/rackspace/rax_keypair.py
-      cloud/rackspace/rax_meta.py
-      cloud/rackspace/rax_network.py
-      cloud/rackspace/rax.py
-      cloud/rackspace/rax_queue.py
-      cloud/rackspace/rax_scaling_group.py
-      cloud/rackspace/rax_scaling_policy.py
       utilities/helper/accelerate.py
       utilities/logic/async_status.py
       utilities/logic/async_wrapper.py"
