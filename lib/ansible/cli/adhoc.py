@@ -76,8 +76,7 @@ class AdHocCLI(CLI):
 
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
-
-        if len(self.args) > 1:
+        elif len(self.args) > 1:
             raise AnsibleOptionsError("Extranous options or arguments")
 
         display.verbosity = self.options.verbosity
