@@ -245,6 +245,8 @@ class ActionModule(ActionBase):
                         original_basename=source_rel,
                     )
                 )
+                if 'content' in new_module_args:
+                    del new_module_args['content']
 
                 module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
