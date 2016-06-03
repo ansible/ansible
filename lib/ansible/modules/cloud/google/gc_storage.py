@@ -76,14 +76,14 @@ options:
     default: null
     aliases: []
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
-  gc_secret_key:
+  gs_secret_key:
     description:
-      - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used. 
+      - GS secret key. If not set then the value of the GS_SECRET_ACCESS_KEY environment variable is used.
     required: true
     default: null
-  gc_access_key:
+  gs_access_key:
     description:
-      - GCS access key. If not set then the value of the GCS_ACCESS_KEY environment variable is used.
+      - GS access key. If not set then the value of the GS_ACCESS_KEY_ID environment variable is used.
     required: true
     default: null
 
