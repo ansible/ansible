@@ -305,7 +305,7 @@ def main():
                 json_output['subnet_name'] = subnet_name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=changed)
 
         if fwname:
@@ -411,7 +411,7 @@ def main():
                 subnet = gce.ex_get_subnetwork(subnet_name, region=subnet_region)
             except ResourceNotFoundError:
                 pass
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if subnet:
                 gce.ex_destroy_subnetwork(subnet)
@@ -430,7 +430,7 @@ def main():
 #                json_output['d4'] = 'deleting %s' % name
                 try:
                     gce.ex_destroy_network(network)
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg=unexpected_error_msg(e), changed=False)
 #                json_output['d5'] = 'deleted %s' % name
                 changed = True
