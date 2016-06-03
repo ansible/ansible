@@ -120,7 +120,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
             try:
                 volume.attach_to_instance(server, mountpoint=device)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
             volume.get()
@@ -159,7 +159,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
                                            interval=3, attempts=0,
                                            verbose=False)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
             volume.get()

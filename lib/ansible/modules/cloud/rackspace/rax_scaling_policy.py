@@ -141,12 +141,12 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
     except ValueError:
         try:
             sg = au.find(name=scaling_group)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
     else:
         try:
             sg = au.get(scaling_group)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     if state == 'present':
@@ -168,7 +168,7 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
                                        desired_capacity=desired_capacity,
                                        args=args)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
         else:
@@ -217,7 +217,7 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
             else:
                 policy.delete()
                 changed = True
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
         module.exit_json(changed=changed, autoscale_policy=rax_to_dict(policy))

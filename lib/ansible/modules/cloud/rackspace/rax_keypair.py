@@ -109,7 +109,7 @@ def rax_keypair(module, name, public_key, state):
                 f = open(public_key)
                 public_key = f.read()
                 f.close()
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='Failed to load %s' % public_key)
 
         try:
@@ -118,9 +118,9 @@ def rax_keypair(module, name, public_key, state):
             try:
                 keypair = cs.keypairs.create(name, public_key)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
@@ -133,7 +133,7 @@ def rax_keypair(module, name, public_key, state):
             try:
                 keypair.delete()
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
     module.exit_json(changed=changed, keypair=rax_to_dict(keypair))
