@@ -74,8 +74,11 @@ class AdHocCLI(CLI):
 
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
-        if len(self.args) != 1:
+        if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
+
+        if len(self.args) > 1:
+            raise AnsibleOptionsError("Extranous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
