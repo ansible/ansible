@@ -727,8 +727,10 @@ class TaskParameters(DockerBaseClass):
                 except ValueError as exc:
                     self.fail("Failed to convert %s to bytes: %s" % (param_name, exc))
 
-        self.ports = self._parse_exposed_ports()
         self.published_ports = self._parse_publish_ports()
+        self.ports = self._parse_exposed_ports(self.published_ports)
+        self.log("expose ports:")
+        self.log(self.ports, pretty_print=True)
         self.publish_all_ports = None
         if self.published_ports == 'all':
             self.publish_all_ports = True
@@ -963,22 +965,38 @@ class TaskParameters(DockerBaseClass):
                     )
         return result
 
-    def _parse_exposed_ports(self):
+    def _parse_exposed_ports(self, published_ports):
         '''
         Parse exposed ports from docker CLI-style ports syntax.
         '''
-        if self.exposed_ports is None:
-            return None
-
         exposed = []
-        for port in self.exposed_ports:
-            port = str(port).strip()
-            if port.endswith('/tcp') or port.endswith('/udp'):
-                port_with_proto = tuple(port.split('/'))
-            else:
-                # assume tcp protocol if not specified
-                port_with_proto = (port, 'tcp')
-            exposed.append(port_with_proto)
+        if self.exposed_ports:
+            for port in self.exposed_ports:
+                port = str(port).strip()
+                protocol = 'tcp'
+                match = re.search(r'(/.+$)', port)
+                if match:
+                    protocol = match.group(1)
+                exposed.append((port, protocol))
+        if published_ports:
+            # Any published port should also be exposed
+            for publish_port in published_ports:
+                match = False
+                if isinstance(publish_port, basestring) and '/' in publish_port:
+                    port, protocol = publish_port.split('/')
+                    port = int(port)
+                else:
+                    protocol = 'tcp'
+                    port = int(publish_port)
+                for exposed_port in exposed:
+                    if isinstance(exposed_port[0], basestring) and '-' in exposed_port[0]:
+                        start_port, end_port = exposed_port[0].split('-')
+                        if int(start_port) <= port <= int(end_port):
+                            match = True
+                    elif exposed_port[0] == port:
+                        match = True
+                if not match:
+                    exposed.append((port, protocol))
         return exposed
 
     @staticmethod
@@ -1502,11 +1520,12 @@ class Container(DockerBaseClass):
         image_ports = []
         if image:
             image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
-        if self.parameters.exposed_ports:
-            param_ports = [str(p) for p in self.parameters.exposed_ports]
-        else:
-            param_ports = []
-        return list(set(image_ports + param_ports))
+        param_ports = []
+        if self.parameters.ports:
+            param_ports = [str(p[0]) for p in self.parameters.ports]
+        result = list(set(image_ports + param_ports))
+        self.log(result, pretty_print=True)
+        return result
 
     def _get_expected_ulimits(self, config_ulimits):
         self.log('_get_expected_ulimits')
