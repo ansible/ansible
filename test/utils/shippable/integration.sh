@@ -7,6 +7,7 @@ test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
 test_target="${TARGET:-}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
+toplevel_make_targets="${TOPLEVEL_MAKE_TARGETS}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
@@ -66,6 +67,10 @@ if [ "${controller_shared_dir}" ]; then
     cp -a "${SHIPPABLE_BUILD_DIR}" "${controller_shared_dir}"
 fi
 
+if [ "${toplevel_make_targets}" ]; then
+    make_targets="time make ${toplevel_make_targets} && "
+fi
+
 httptester_id=$(docker run -d "${http_image}")
 container_id=$(docker run -d \
     -v "/sys/fs/cgroup:/sys/fs/cgroup:ro" \
@@ -86,6 +91,6 @@ if [ "${copy_source}" ]; then
 fi
 
 docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults"
-docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
+docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && ${make_targets:-} cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
