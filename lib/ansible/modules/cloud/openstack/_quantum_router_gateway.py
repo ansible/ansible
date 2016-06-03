@@ -91,7 +91,7 @@ def _get_ksclient(module, kwargs):
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
     _os_keystone = kclient
@@ -101,7 +101,7 @@ def _get_ksclient(module, kwargs):
 def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error getting network endpoint: %s" % e.message)
     return endpoint
 
@@ -115,7 +115,7 @@ def _get_neutron_client(module, kwargs):
     }
     try:
         neutron = client.Client('2.0', **kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
     return neutron
 
@@ -125,7 +125,7 @@ def _get_router_id(module, neutron):
     }
     try:
         routers = neutron.list_routers(**kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
             return None
@@ -138,7 +138,7 @@ def _get_net_id(neutron, module):
     }
     try:
         networks = neutron.list_networks(**kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json("Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
@@ -151,7 +151,7 @@ def _get_port_id(neutron, module, router_id, network_id):
     }
     try:
         ports = neutron.list_ports(**kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
     if not ports['ports']:
         return None
@@ -163,14 +163,14 @@ def _add_gateway_router(neutron, module, router_id, network_id):
     }
     try:
         neutron.add_gateway_router(router_id, kwargs)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
     return True
 
 def  _remove_gateway_router(neutron, module, router_id):
     try:
         neutron.remove_gateway_router(router_id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
     return True
 

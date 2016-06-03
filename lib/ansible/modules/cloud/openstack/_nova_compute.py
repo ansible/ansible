@@ -283,7 +283,7 @@ def _delete_server(module, nova):
         if server_list:
             server = [x for x in server_list if x.name == module.params['name']]
             nova.servers.delete(server.pop())
-    except Exception, e:
+    except Exception as e:
         module.fail_json( msg = "Error in deleting vm: %s" % e.message)
     if module.params['wait'] == 'no':
         module.exit_json(changed = True, result = "deleted")
@@ -330,7 +330,7 @@ def _add_floating_ip_from_pool(module, nova, server):
         if not pool_ips:
             try:
                 new_ip = nova.floating_ips.create(pool)
-            except Exception, e: 
+            except Exception as e: 
                 module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
             pool_ips.append(new_ip.ip)
         # Add to the main list
@@ -345,7 +345,7 @@ def _add_floating_ip_from_pool(module, nova, server):
                 # race condition and some other cloud operation may have
                 # stolen an available floating ip
                 break
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
@@ -354,7 +354,7 @@ def _add_floating_ip_list(module, server, ips):
     for ip in ips:
         try:
             server.add_floating_ip(ip)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
@@ -390,7 +390,7 @@ def _add_floating_ip(module, nova, server):
     # a recent server object if the above code path exec'd
     try:
         server = nova.servers.get(server.id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in getting info from instance: %s " % e.message)
     return server
 
@@ -435,14 +435,14 @@ def _create_server(module, nova):
     try:
         server = nova.servers.create(*bootargs, **bootkwargs)
         server = nova.servers.get(server.id)
-    except Exception, e:
+    except Exception as e:
             module.fail_json( msg = "Error in creating instance: %s " % e.message)
     if module.params['wait'] == 'yes':
         expire = time.time() + int(module.params['wait_for'])
         while time.time() < expire:
             try:
                 server = nova.servers.get(server.id)
-            except Exception, e:
+            except Exception as e:
                     module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
             if server.status == 'ACTIVE':
                 server = _add_floating_ip(module, nova, server)
@@ -511,7 +511,7 @@ def _get_server_state(module, nova):
             servers = [x for x in servers if x.name == module.params['name']]
             if servers:
                 server = servers[0]
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     if server and module.params['state'] == 'present':
         if server.status != 'ACTIVE':
@@ -571,9 +571,9 @@ def main():
                               service_type='compute')
     try:
         nova.authenticate()
-    except exceptions.Unauthorized, e:
+    except exceptions.Unauthorized as e:
         module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exceptions.AuthorizationFailure, e:
+    except exceptions.AuthorizationFailure as e:
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
