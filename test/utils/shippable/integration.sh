@@ -68,7 +68,7 @@ if [ "${controller_shared_dir}" ]; then
 fi
 
 if [ "${toplevel_make_targets}" ]; then
-    make_targets="time make ${toplevel_make_targets} && "
+    make_targets="make ${toplevel_make_targets} && "
 fi
 
 httptester_id=$(docker run -d "${http_image}")
