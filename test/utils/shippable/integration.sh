@@ -67,7 +67,7 @@ if [ "${controller_shared_dir}" ]; then
     cp -a "${SHIPPABLE_BUILD_DIR}" "${controller_shared_dir}"
 fi
 
-if [ "${toplevel_make_targets}" ]; then
+if [ "${toplevel_make_targets}" != "" ]; then
     make_targets="make ${toplevel_make_targets} && "
 fi
 
