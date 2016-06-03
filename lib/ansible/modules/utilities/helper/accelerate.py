@@ -176,7 +176,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
     # decouple from parent environment
     os.chdir("/")
     os.setsid()
-    os.umask(Oo22)
+    os.umask(int('O22', 8))
 
     # do second fork
     try:
