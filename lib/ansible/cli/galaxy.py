@@ -270,47 +270,40 @@ class GalaxyCLI(CLI):
         from the galaxy API.
         """
 
-        if len(self.args) == 0:
-            # the user needs to specify a role
-            raise AnsibleOptionsError("- you must specify a user/role name")
+        roles_paths = self.get_opt("roles_path")
 
-        roles_path = self.get_opt("roles_path")
+        roles_to_show_info = []
+        if len(self.args) == 0:
+            roles_to_show_info.extend(self.find_roles_to_list_from_paths(roles_paths))
+            import pprint
+            pprint.pprint(roles_to_show_info)
+        else:
+            roles_to_show_info.extend(self.find_roles_to_list_from_names(self.args))
 
         data = ''
-        for role in self.args:
-
-            role_info = {'path_s': roles_path}
-            gr = GalaxyRole.from_name(self.galaxy, role)
-            role_info.update({'path': gr.path})
-
+        for gr in roles_to_show_info:
             display.vvvvv('%s' % gr)
-            install_info = gr.install_info
-            if install_info:
-                if 'version' in install_info:
-                    install_info['intalled_version'] = install_info['version']
-                    del install_info['version']
-                role_info.update(install_info)
+            if gr.install_info:
+                if 'version' in gr.install_info:
+                    gr.install_info['installed_version'] = gr.install_info['version']
+                    del gr.install_info['version']
 
             remote_data = False
-            if not self.options.offline:
-                remote_data = self.api.lookup_role_by_name(role, False)
+            print('%s %s' % (gr.install_info, self.options.offline))
+            if not gr.install_info:
+                if not self.options.offline:
+                    print('getting remote data')
+                    remote_data = self.api.lookup_role_by_name(gr.name, False)
 
             if remote_data:
-                role_info.update(remote_data)
+                gr.metadata.update(remote_data)
 
-            if gr.metadata:
-                role_info.update(gr.metadata)
-
-            req = RoleRequirement()
-            role_spec= req.role_yaml_parse({'role': role})
-            if role_spec:
-                role_info.update(role_spec)
-
-            data = self._display_role_info(role_info)
-            ### FIXME: This is broken in both 1.9 and 2.0 as
+            # TODO: just add a role repr/formatter that does this
+            data += u'%s' % gr
+            # FIXME: This is broken in both 1.9 and 2.0 as
             # _display_role_info() always returns something
             if not data:
-                data = u"\n- the role %s was not found" % role
+                data = u"\n- the role %s was not found" % gr.name
 
         self.pager(data)
 
@@ -474,7 +467,7 @@ class GalaxyCLI(CLI):
             roles_to_list.append(gr)
         return roles_to_list
 
-    def find_roles_to_list_from_paths(self, roles_paths, ):
+    def find_roles_to_list_from_paths(self, roles_paths):
         roles_to_list = []
         for roles_path in roles_paths:
             # NOTE: this check raises exceptions
