@@ -134,7 +134,7 @@ def grant_check(module, gs, obj):
             if not grant:
                 obj.set_acl('authenticated-read')
                 module.exit_json(changed=True, result="The objects permission as been set to authenticated-read") 
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     return True
 
@@ -144,7 +144,7 @@ def key_check(module, gs, bucket, obj):
     try:
         bucket = gs.lookup(bucket)
         key_check = bucket.get_key(obj)
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if key_check:
         grant_check(module, gs, key_check)
@@ -166,7 +166,7 @@ def keysum(module, gs, bucket, obj):
 def bucket_check(module, gs, bucket):
     try:
         result = gs.lookup(bucket)
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if result:
         grant_check(module, gs, result)
@@ -178,7 +178,7 @@ def create_bucket(module, gs, bucket):
     try:
         bucket = gs.create_bucket(bucket)
         bucket.set_acl(module.params.get('permission'))
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     if bucket:
         return True
@@ -191,7 +191,7 @@ def delete_bucket(module, gs, bucket):
             bucket.delete_key(key.name)
         bucket.delete()
         return True
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def delete_key(module, gs, bucket, obj):
@@ -199,7 +199,7 @@ def delete_key(module, gs, bucket, obj):
         bucket = gs.lookup(bucket)
         bucket.delete_key(obj)
         module.exit_json(msg="Object deleted from bucket ", changed=True)
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
  
 def create_dirkey(module, gs, bucket, obj):
@@ -208,7 +208,7 @@ def create_dirkey(module, gs, bucket, obj):
         key = bucket.new_key(obj)
         key.set_contents_from_string('')
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def path_check(path):
@@ -243,7 +243,7 @@ def upload_gsfile(module, gs, bucket, obj, src, expiry):
         key.set_acl(module.params.get('permission'))
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
-    except gs.provider.storage_copy_error, e:
+    except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
 def download_gsfile(module, gs, bucket, obj, dest):
@@ -252,7 +252,7 @@ def download_gsfile(module, gs, bucket, obj, dest):
         key = bucket.lookup(obj)
         key.get_contents_to_filename(dest)
         module.exit_json(msg="GET operation complete", changed=True)
-    except gs.provider.storage_copy_error, e:
+    except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
 def download_gsstr(module, gs, bucket, obj):
@@ -261,7 +261,7 @@ def download_gsstr(module, gs, bucket, obj):
         key = bucket.lookup(obj)
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
-    except gs.provider.storage_copy_error, e:
+    except gs.provider.storage_copy_error as e:
         module.fail_json(msg= str(e))
 
 def get_download_url(module, gs, bucket, obj, expiry):
@@ -270,7 +270,7 @@ def get_download_url(module, gs, bucket, obj, expiry):
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
         module.exit_json(msg="Download url:", url=url, expiration=expiry, changed=True)
-    except gs.provider.storage_response_error, e:
+    except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
@@ -388,7 +388,7 @@ def main():
 
     try:
         gs = boto.connect_gs(gs_access_key, gs_secret_key)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg = str(e))
  
     if mode == 'get':

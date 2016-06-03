@@ -218,7 +218,7 @@ def main():
         json_output['size_gb'] = int(disk.size)
     except ResourceNotFoundError:
         pass
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     # user wants a disk to exist.  If "instance_name" is supplied the user
@@ -259,7 +259,7 @@ def main():
             except QuotaExceededError:
                 module.fail_json(msg='Requested disk size exceeds quota',
                         changed=False)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
             if image is not None:
@@ -270,7 +270,7 @@ def main():
         if inst and not is_attached:
             try:
                 gce.attach_volume(inst, disk, device=name, ex_mode=mode)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['attached_to_instance'] = inst.name
             json_output['attached_mode'] = mode
@@ -282,15 +282,15 @@ def main():
         if inst and is_attached:
             try:
                 gce.detach_volume(disk, ex_node=inst)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             changed = True
         if not detach_only:
             try:
                 gce.destroy_volume(disk)
-            except ResourceInUseError, e:
+            except ResourceInUseError as e:
                 module.fail_json(msg=str(e.value), changed=False)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             changed = True
 
