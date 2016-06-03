@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 import tempfile
 from string import ascii_letters, digits
 
@@ -28,6 +29,10 @@ from ansible.compat.six.moves import configparser
 
 from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
+
+
+re_shell_var_bare = re.compile('\$([a-zA-Z]\w*)')
+re_shell_var_braces = re.compile('\${([a-zA-Z]\w*)}')
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -39,14 +44,31 @@ def mk_boolean(value):
     else:
         return False
 
+
 def shell_expand(path):
     '''
     shell_expand is needed as os.path.expanduser does not work
     when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE
     '''
-    if path:
-        path = os.path.expanduser(os.path.expandvars(path))
+    if path is None:
+        return path
+
+    # This handles ~ and ~user
+    path = os.path.expanduser(path)
+
+    # This handles $VAR and ${VAR}
+    try:
+        for pattern in [re_shell_var_bare, re_shell_var_braces]:
+            while True:
+                m = pattern.search(path)
+                if m is None:
+                    break
+
+                path = path[:m.start()] + os.environ[m.group(1)] + path[m.end():]
+    except KeyError as err:
+        raise AnsibleOptionsError("Undefined environment variable: {0}".format(err))
     return path
+
 
 def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False):
     ''' return a configuration variable with casting '''
