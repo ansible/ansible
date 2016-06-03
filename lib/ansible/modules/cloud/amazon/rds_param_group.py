@@ -232,7 +232,7 @@ def main():
     immediate               = module.params.get('immediate') or False
 
     if state == 'present':
-        for required in ['name', 'description', 'engine', 'params']:
+        for required in ['name', 'description', 'engine']:
             if not module.params.get(required):
                 module.fail_json(msg = str("Parameter %s required for state='present'" % required))
     else:
