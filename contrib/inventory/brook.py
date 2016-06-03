@@ -32,6 +32,7 @@ included, provided the requesting user belongs to it.
 
 The following variables are established for every host. They can be retrieved from the hostvars
 dictionary.
+ - brook_pid: str
  - brook_name: str
  - brook_description: str
  - brook_project: str
@@ -213,6 +214,7 @@ class BrookInventory:
         """
 
         hostvars = instance.to_dict()
+        hostvars['brook_pid'] = hostvars.pop('pid')
         hostvars['brook_name'] = hostvars.pop('name')
         hostvars['brook_description'] = hostvars.pop('description')
         hostvars['brook_project'] = hostvars.pop('project')
