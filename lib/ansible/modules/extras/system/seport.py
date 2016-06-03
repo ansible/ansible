@@ -80,6 +80,8 @@ try:
 except ImportError:
     HAVE_SEOBJECT=False
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 def semanage_port_exists(seport, port, proto):
     """ Get the SELinux port type definition from policy. Return None if it does
@@ -141,15 +143,20 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
                 seport.add(port, proto, serange, setype)
             change = change or not exists
 
-    except ValueError, e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError, e:
+    except IOError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError, e:
+    except KeyError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError, e:
+    except OSError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError, e:
+    except RuntimeError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
 
     return change
@@ -186,15 +193,20 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
                 seport.delete(port, proto)
             change = change or not exists
 
-    except ValueError, e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError,e:
+    except IOError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError, e:
+    except KeyError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError, e:
+    except OSError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError, e:
+    except RuntimeError:
+        e = get_exception()
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
 
     return change
@@ -257,5 +269,4 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
 main()

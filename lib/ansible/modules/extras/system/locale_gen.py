@@ -19,6 +19,7 @@ import os
 import os.path
 from subprocess import Popen, PIPE, call
 import re
+from ansible.module_utils.pycompat24 import get_exception
 
 DOCUMENTATION = '''
 ---
@@ -63,6 +64,9 @@ LOCALE_NORMALIZATION = {
 # ===========================================
 # location module specific support methods.
 #
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 def is_available(name, ubuntuMode):
     """Check if the given locale is available on the system. This is done by
@@ -224,12 +228,11 @@ def main():
                     apply_change(state, name)
                 else:
                     apply_change_ubuntu(state, name)
-            except EnvironmentError, e:
+            except EnvironmentError:
+                e = get_exception()
                 module.fail_json(msg=e.strerror, exitValue=e.errno)
 
         module.exit_json(name=name, changed=changed, msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 main()

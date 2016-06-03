@@ -61,6 +61,9 @@ EXAMPLES = '''
 DEFAULT_LINK_PRIORITY = 50
 
 import re
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def main():
 
@@ -135,12 +138,11 @@ def main():
             )
 
             module.exit_json(changed=True)
-        except subprocess.CalledProcessError, cpe:
+        except subprocess.CalledProcessError:
+            e = get_exception()
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()
