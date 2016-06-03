@@ -430,6 +430,7 @@ class AnsibleDockerClient(Client):
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
         if tag: 
+            images = list()
             lookup = "%s:%s" % (name, tag)
             for image in response:
                 self.log(image, pretty_print=True)
