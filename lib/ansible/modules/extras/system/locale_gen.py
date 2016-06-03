@@ -15,11 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import os.path
-from subprocess import Popen, PIPE, call
-import re
-from ansible.module_utils.pycompat24 import get_exception
 
 DOCUMENTATION = '''
 ---
@@ -48,6 +43,14 @@ EXAMPLES = '''
 - locale_gen: name=de_CH.UTF-8 state=present
 '''
 
+import os
+import os.path
+from subprocess import Popen, PIPE, call
+import re
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+
 LOCALE_NORMALIZATION = {
     ".utf8": ".UTF-8",
     ".eucjp": ".EUC-JP",
@@ -64,9 +67,6 @@ LOCALE_NORMALIZATION = {
 # ===========================================
 # location module specific support methods.
 #
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 def is_available(name, ubuntuMode):
     """Check if the given locale is available on the system. This is done by
