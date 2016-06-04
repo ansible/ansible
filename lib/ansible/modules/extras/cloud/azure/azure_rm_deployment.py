@@ -79,6 +79,28 @@ options:
         one of them is required if "state" parameter is "present".
     required: false
     default: null
+  deployment_mode:
+    description:
+      - Specifies whether the deployment template should delete resources not specified in the template (complete)
+        or ignore them (incremental).
+    default: complete
+    choices:
+      - complete
+      - incremental
+  deployment_name:
+    description:
+      - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
+        will overwrite the previous value in the resource group's deployment history.
+    default: ansible-arm
+  wait_for_deployment_completion:
+    description:
+      - Whether or not to block until the deployment has completed.
+    default: yes
+    choices: ['yes', 'no']
+  wait_for_deployment_polling_period:
+    description:
+      - Time (in seconds) to wait between polls when waiting for deployment completion.
+    default: 10
 
 extends_documentation_fragment:
     - azure
@@ -394,7 +416,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             deployment_mode=dict(type='str', default='complete', choices=['complete', 'incremental']),
             deployment_name=dict(type='str', default="ansible-arm"),
             wait_for_deployment_completion=dict(type='bool', default=True),
-            wait_for_deployment_polling_period=dict(type='int', default=30)
+            wait_for_deployment_polling_period=dict(type='int', default=10)
         )
 
         mutually_exclusive = [('template', 'template_link'),
@@ -488,7 +510,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
             deployment_result = self.get_poller_result(result)
             if self.wait_for_deployment_completion:
-                while deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
+                while deployment_result.properties is None or deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
                                                                               'Succeeded']:
                     time.sleep(self.wait_for_deployment_polling_period)
                     deployment_result = self.rm_client.deployments.get(self.resource_group_name, self.deployment_name)
