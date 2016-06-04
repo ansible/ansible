@@ -140,10 +140,14 @@ class Group:
             for kk in kid_hosts:
                 if kk not in seen:
                     seen[kk] = 1
+                    if self.name == 'all' and kk.implicit:
+                        continue
                     hosts.append(kk)
         for mine in self.hosts:
             if mine not in seen:
                 seen[mine] = 1
+                if self.name == 'all' and mine.implicit:
+                    continue
                 hosts.append(mine)
         return hosts
 
