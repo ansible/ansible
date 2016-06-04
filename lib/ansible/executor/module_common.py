@@ -339,7 +339,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         # import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
         for alias in (a for a in node.names if a.name.startswith('ansible.module_utils.')):
             py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
-            self.submodules.add((py_mod,))
+            py_mod = tuple(py_mod.split('.'))
+            self.submodules.add(py_mod)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -409,17 +410,25 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     # (Have to exclude them a second time once the paths are processed)
     for py_module_name in finder.submodules.difference(py_module_names):
         module_info = None
-        # Check whether either the last or the second to last identifier is
-        # a module name
-        for idx in (1, 2):
-            if len(py_module_name) < idx:
-                break
-            try:
-                module_info = imp.find_module(py_module_name[-idx],
-                        [os.path.join(_SNIPPET_PATH, *py_module_name[:-idx])])
-                break
-            except ImportError:
-                continue
+
+        if py_module_name[0] == 'six':
+            # Special case the python six library because it messes up the
+            # import process in an incompatible way
+            module_info = imp.find_module('six', [_SNIPPET_PATH])
+            py_module_name = ('six',)
+            idx = 0
+        else:
+            # Check whether either the last or the second to last identifier is
+            # a module name
+            for idx in (1, 2):
+                if len(py_module_name) < idx:
+                    break
+                try:
+                    module_info = imp.find_module(py_module_name[-idx],
+                            [os.path.join(_SNIPPET_PATH, *py_module_name[:-idx])])
+                    break
+                except ImportError:
+                    continue
 
         # Could not find the module.  Construct a helpful error message.
         if module_info is None:
@@ -534,7 +543,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        python_repred_params = to_bytes(repr(json.dumps(params)), errors='strict')
+        python_repred_params = repr(json.dumps(params))
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -592,7 +601,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                         # be a better place to run this
                         os.mkdir(lookup_path)
                     display.debug('ZIPLOADER: Writing module')
-                    with open(cached_module_filename + '-part', 'w') as f:
+                    with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
 
                     # Rename the file into its final position in the cache so
@@ -613,6 +622,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
                 # Fool the check later... I think we should just remove the check
                 py_module_names.add(('basic',))
+        zipdata = to_unicode(zipdata, errors='strict')
 
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
@@ -725,7 +735,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression)
 
     if module_style == 'binary':
-        return (module_data, module_style, shebang)
+        return (module_data, module_style, to_unicode(shebang, nonstring='passthru'))
     elif shebang is None:
         lines = module_data.split(b"\n", 1)
         if lines[0].startswith(b"#!"):
@@ -748,4 +758,4 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     else:
         shebang = to_bytes(shebang, errors='strict')
 
-    return (module_data, module_style, shebang)
+    return (module_data, module_style, to_unicode(shebang, nonstring='passthru'))
