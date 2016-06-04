@@ -170,7 +170,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
             module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
     except OSError:
         e       = get_exception()
-        message = "fork #1 failed: {} ({})".format(e.errno, e.strerror)
+        message = "fork #1 failed: %s (%s)" % (e.errno, e.strerror)
         module.fail_json(message)
 
     # decouple from parent environment
@@ -190,7 +190,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
             sys.exit(0)
     except OSError:
         e       = get_exception()
-        message = 'fork #2 failed: {} ({})'.format(e.errno, e.strerror)
+        message = 'fork #2 failed: %s (%s)' % (e.errno, e.strerror)
         module.fail_json(message)
 
     dev_null = file('/dev/null','rw')
@@ -695,7 +695,7 @@ def main():
                 e        = get_exception()
                 message  = 'the accelerate daemon appears to be running'
                 message += 'as a different user that this user cannot access'
-                message += 'pid={}'.format(daemon_pid)
+                message += 'pid=%s' % daemon_pid
 
                 if e.errno == errno.EPERM:
                     # no permissions means the pid is probably
