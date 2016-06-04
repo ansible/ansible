@@ -1506,7 +1506,7 @@ class Container(DockerBaseClass):
         expected_env = dict()
         if image and image['ContainerConfig'].get('Env'):
             for env_var in image['ContainerConfig']['Env']:
-                parts = env_var.split('=')
+                parts = env_var.split('=', 1)
                 expected_env[parts[0]] = parts[1]
         if self.parameters.env:
             expected_env.update(self.parameters.env)
