@@ -2,7 +2,7 @@ language: python
 
 env:
   matrix:
-    - TEST=code-smell
+    - TEST=code-smell INSTALL_DEPS=1
 
 matrix:
   include:
