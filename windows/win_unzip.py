@@ -65,9 +65,9 @@ options:
 author: Phil Schwartz
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
-$ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=true" all
+$ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib rm=true" all
 # Playbook example
 
 # Simple unzip
@@ -95,12 +95,12 @@ $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=t
   - name: Grab PSCX msi
     win_get_url:
       url: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=20959'
-      dest: 'C:\\pscx.msi'
+      dest: 'C:\pscx.msi'
   - name: Install PSCX
     win_msi:
-      path: 'C:\\pscx.msi'
+      path: 'C:\pscx.msi'
   - name: Unzip gz log
     win_unzip:
-      src: "C:\\Logs\\application-error-logs.gz"
-      dest: "C:\\ExtractedLogs\\application-error-logs"
+      src: "C:\Logs\application-error-logs.gz"
+      dest: "C:\ExtractedLogs\application-error-logs"
 '''
