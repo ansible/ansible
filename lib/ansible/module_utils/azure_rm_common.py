@@ -66,8 +66,6 @@ CIDR_PATTERN = re.compile("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){
 AZURE_SUCCESS_STATE = "Succeeded"
 AZURE_FAILED_STATE = "Failed"
 
-AZURE_MIN_VERSION = "2016-03-30"
-
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 
@@ -75,18 +73,14 @@ try:
     from enum import Enum
     from msrest.serialization import Serializer
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute import __version__ as azure_compute_version
+#    from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
-    from azure.mgmt.network.network_management_client import NetworkManagementClient,\
-                                                             NetworkManagementClientConfiguration
-    from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient,\
-                                                                         ResourceManagementClientConfiguration
-    from azure.mgmt.storage.storage_management_client import StorageManagementClient,\
-                                                             StorageManagementClientConfiguration
-    from azure.mgmt.compute.compute_management_client import ComputeManagementClient,\
-                                                             ComputeManagementClientConfiguration
+    from azure.mgmt.network.network_management_client import NetworkManagementClient
+    from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
+    from azure.mgmt.storage.storage_management_client import StorageManagementClient
+    from azure.mgmt.compute.compute_management_client import ComputeManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -136,9 +130,10 @@ class AzureRMModuleBase(object):
         if not HAS_AZURE:
             self.fail("The Azure Python SDK is not installed (try 'pip install azure') - {0}".format(HAS_AZURE_EXC))
 
-        if azure_compute_version < AZURE_MIN_VERSION:
-            self.fail("Expecting azure.mgmt.compute.__version__ to be >= {0}. Found version {1} "
-                      "Do you have Azure >= 2.0.0rc2 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
+        # re-enable after SDK hits release
+        # if azure_compute_version < AZURE_MIN_VERSION:
+        #     self.fail("Expecting azure.mgmt.compute.__version__ to be >= {0}. Found version {1} "
+        #               "Do you have Azure >= 2.0.0rc2 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
 
         self._network_client = None
         self._storage_client = None
@@ -405,7 +400,7 @@ class AzureRMModuleBase(object):
         serializer = Serializer()
         return serializer.body(obj, class_name)
 
-    def get_poller_result(self, poller, wait=20):
+    def get_poller_result(self, poller, wait=5):
         '''
         Consistent method of waiting on and retrieving results from Azure's long poller
 
@@ -596,9 +591,8 @@ class AzureRMModuleBase(object):
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
-            config = StorageManagementClientConfiguration(self.azure_credentials, self.subscription_id)
-            config.add_user_agent(ANSIBLE_USER_AGENT)
-            self._storage_client = StorageManagementClient(config)
+            config = StorageManagementClientConfiguration()
+            self._storage_client = StorageManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Storage')
         return self._storage_client
 
@@ -606,9 +600,7 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            config = NetworkManagementClientConfiguration(self.azure_credentials, self.subscription_id)
-            config.add_user_agent(ANSIBLE_USER_AGENT)
-            self._network_client = NetworkManagementClient(config)
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -616,17 +608,13 @@ class AzureRMModuleBase(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            config = ResourceManagementClientConfiguration(self.azure_credentials, self.subscription_id)
-            config.add_user_agent(ANSIBLE_USER_AGENT)
-            self._resource_client = ResourceManagementClient(config)
+            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            config = ComputeManagementClientConfiguration(self.azure_credentials, self.subscription_id)
-            config.add_user_agent(ANSIBLE_USER_AGENT)
-            self._compute_client = ComputeManagementClient(config)
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Compute')
         return self._compute_client
