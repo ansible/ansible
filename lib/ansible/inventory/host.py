@@ -60,6 +60,7 @@ class Host:
             uuid=self._uuid,
             gathered_facts=self._gathered_facts,
             groups=groups,
+            implicit=self.implicit,
         )
 
     def deserialize(self, data):
@@ -69,6 +70,7 @@ class Host:
         self.vars    = data.get('vars', dict())
         self.address = data.get('address', '')
         self._uuid   = data.get('uuid', uuid.uuid4())
+        self.implicit= data.get('implicit', False)
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -89,6 +91,7 @@ class Host:
 
         self._gathered_facts = False
         self._uuid = uuid.uuid4()
+        self.implicit = False
 
     def __repr__(self):
         return self.get_name()
