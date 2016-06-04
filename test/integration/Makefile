@@ -25,7 +25,9 @@ EUID := $(shell id -u -r)
 
 UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
-all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
+all: setup other non_destructive destructive
+
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
