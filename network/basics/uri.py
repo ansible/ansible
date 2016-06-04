@@ -30,6 +30,9 @@ try:
 except ImportError:
     import simplejson as json
 
+import ansible.module_utils.six
+
+
 DOCUMENTATION = '''
 ---
 module: uri
@@ -266,7 +269,7 @@ def write_file(module, url, dest, content):
 
 
 def url_filename(url):
-    fn = os.path.basename(urlparse.urlsplit(url)[2])
+    fn = os.path.basename(six.moves.urllib.parse.urlsplit(url)[2])
     if fn == '':
         return 'index.html'
     return fn
@@ -281,7 +284,7 @@ def absolute_location(url, location):
         return location
 
     elif location.startswith('/'):
-        parts = urlparse.urlsplit(url)
+        parts = six.moves.urllib.parse.urlsplit(url)
         base = url.replace(parts[2], '')
         return '%s%s' % (base, location)
 
