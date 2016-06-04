@@ -112,13 +112,20 @@ class Base:
         if hasattr(self, method):
             return getattr(self, method)()
 
-        if prop_name not in self._attributes:
-            return None
+        try:
+            value = self._attributes[prop_name]
+            value_found = True
+        except KeyError:
+            value = None
+            value_found = False
 
-        value = self._attributes[prop_name]
-        if value is None and hasattr(self, '_get_parent_attribute'):
+        if (value is None or not value_found) and hasattr(self, '_get_parent_attribute'):
             value = self._get_parent_attribute(prop_name)
-        return value
+            value_found = True
+
+        if value_found:
+            return value
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
     @staticmethod
     def _generic_s(prop_name, self, value):
