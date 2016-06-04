@@ -101,6 +101,8 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 class GitLabGroup(object):
     def __init__(self, module, git):
@@ -187,7 +189,8 @@ def main():
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
     # Validate if group exists and take action based on "state"
@@ -209,7 +212,7 @@ def main():
                     module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)
 
 
-from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()

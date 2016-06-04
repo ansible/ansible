@@ -163,6 +163,9 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+
 
 class GitLabProject(object):
     def __init__(self, module, git):
@@ -361,7 +364,8 @@ def main():
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
     # Validate if project exists and take action based on "state"
@@ -391,7 +395,7 @@ def main():
             else:
                 module.exit_json(changed=False)
 
-from ansible.module_utils.basic import *
+
 
 if __name__ == '__main__':
     main()
