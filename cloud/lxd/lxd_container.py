@@ -38,6 +38,19 @@ options:
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
           - Required when the container is not created yet and the state is
             not absent.
+          - If the container already exists and its metadata obtained from
+            GET /1.0/containers/<name>
+            https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10containersname
+            are different, they this module tries to apply the configurations.
+            The following keys in config will be compared and applied.
+              - architecture
+              - config
+                  - The key starts with 'volatile.' are ignored for comparison.
+              - devices
+              - ephemeral
+              - profiles
+          - Not all config values are supported to apply the existing container.
+            Maybe you need to delete and recreate a container.
         required: false
     state:
         choices:
@@ -238,13 +251,22 @@ class LxdContainerManagement(object):
         self.unix_socket_path = self.module.params['unix_socket_path']
         self.base_url = 'http+unix://{0}'.format(quote(self.unix_socket_path, safe=''))
         self.session = requests_unixsocket.Session()
+        self.logs = []
         self.actions = []
+
+    def _path_to_url(self, path):
+        return self.base_url + path
 
     def _send_request(self, method, path, json=None, ok_error_codes=None):
         try:
-            url = self.base_url + path
+            url = self._path_to_url(path)
             resp = self.session.request(method, url, json=json, timeout=self.timeout)
             resp_json = resp.json()
+            self.logs.append({
+                'type': 'sent request',
+                'request': {'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                'response': {'json': resp_json}
+            })
             resp_type = resp_json.get('type', None)
             if resp_type == 'error':
                 if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
@@ -252,7 +274,8 @@ class LxdContainerManagement(object):
                 self.module.fail_json(
                     msg='error response',
                     request={'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
-                    response={'json': resp_json}
+                    response={'json': resp_json},
+                    logs=self.logs
                 )
             return resp_json
         except ConnectionError:
@@ -263,7 +286,21 @@ class LxdContainerManagement(object):
         if resp_json['type'] == 'async':
             path = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
             resp_json = self._send_request('GET', path)
+            if resp_json['metadata']['status'] != 'Success':
+                url = self._path_to_url(path)
+                self.module.fail_json(
+                    msg='error response for waiting opearation',
+                    request={'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                    response={'json': resp_json},
+                    logs=self.logs
+                )
         return resp_json
+
+    def _get_container_json(self):
+        return self._send_request(
+            'GET', '/1.0/containers/{0}'.format(self.container_name),
+            ok_error_codes=[404]
+        )
 
     def _get_container_state_json(self):
         return self._send_request(
@@ -272,7 +309,7 @@ class LxdContainerManagement(object):
         )
 
     @staticmethod
-    def _container_state_json_to_module_state(resp_json):
+    def _container_json_to_module_state(resp_json):
         if resp_json['type'] == 'error':
             return 'absent'
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
@@ -316,8 +353,8 @@ class LxdContainerManagement(object):
     def _container_ipv4_addresses(self, ignore_devices=['lo']):
         resp_json = self._get_container_state_json()
         network = resp_json['metadata']['network'] or {}
-        network = dict((k, v) for k, v in network.iteritems() if k not in ignore_devices) or {}
-        addresses = dict((k, [a['address'] for a in v['addresses'] if a['family'] == 'inet']) for k, v in network.iteritems()) or {}
+        network = dict((k, v) for k, v in network.items() if k not in ignore_devices) or {}
+        addresses = dict((k, [a['address'] for a in v['addresses'] if a['family'] == 'inet']) for k, v in network.items()) or {}
         return addresses
 
     @staticmethod
@@ -338,7 +375,8 @@ class LxdContainerManagement(object):
             failed=True,
             msg='timeout for getting IPv4 addresses',
             changed=state_changed,
-            logs=self.actions)
+            actions=self.actions,
+            logs=self.logs)
 
     def _started(self):
         if self.old_state == 'absent':
@@ -347,6 +385,10 @@ class LxdContainerManagement(object):
         else:
             if self.old_state == 'frozen':
                 self._unfreeze_container()
+            elif self.old_state == 'stopped':
+                self._start_container()
+            if self._needs_to_apply_configs():
+                self._apply_configs()
         if self.wait_for_ipv4_addresses:
             self._get_addresses()
 
@@ -354,9 +396,17 @@ class LxdContainerManagement(object):
         if self.old_state == 'absent':
             self._create_container()
         else:
-            if self.old_state == 'frozen':
-                self._unfreeze_container()
-            self._stop_container()
+            if self.old_state == 'stopped':
+                if self._needs_to_apply_configs():
+                    self._start_container()
+                    self._apply_configs()
+                    self._stop_container()
+            else:
+                if self.old_state == 'frozen':
+                    self._unfreeze_container()
+                if self._needs_to_apply_configs():
+                    self._apply_configs()
+                self._stop_container()
 
     def _restarted(self):
         if self.old_state == 'absent':
@@ -365,6 +415,8 @@ class LxdContainerManagement(object):
         else:
             if self.old_state == 'frozen':
                 self._unfreeze_container()
+            if self._needs_to_apply_configs():
+                self._apply_configs()
             self._restart_container()
         if self.wait_for_ipv4_addresses:
             self._get_addresses()
@@ -384,12 +436,55 @@ class LxdContainerManagement(object):
         else:
             if self.old_state == 'stopped':
                 self._start_container()
+            if self._needs_to_apply_configs():
+                self._apply_configs()
             self._freeze_container()
+
+    def _needs_to_change_config(self, key):
+        if key not in self.config:
+            return False
+        if key == 'config':
+            old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if k.startswith('volatile.'))
+        else:
+            old_configs = self.old_container_json['metadata'][key]
+        return self.config[key] != old_configs
+
+    def _needs_to_apply_configs(self):
+        return (
+            self._needs_to_change_config('architecture') or
+            self._needs_to_change_config('config') or
+            self._needs_to_change_config('ephemeral') or
+            self._needs_to_change_config('devices') or
+            self._needs_to_change_config('profiles')
+        )
+
+    def _apply_configs(self):
+        old_metadata = self.old_container_json['metadata']
+        json = {
+            'architecture': old_metadata['architecture'],
+            'config': old_metadata['config'],
+            'devices': old_metadata['devices'],
+            'profiles': old_metadata['profiles']
+        }
+        if self._needs_to_change_config('architecture'):
+            json['architecture'] = self.config['architecture']
+        if self._needs_to_change_config('config'):
+            for k, v in self.config['config'].items():
+                json['config'][k] = v
+        if self._needs_to_change_config('ephemeral'):
+            json['ephemeral'] = self.config['ephemeral']
+        if self._needs_to_change_config('devices'):
+            json['devices'] = self.config['devices']
+        if self._needs_to_change_config('profiles'):
+            json['profiles'] = self.config['profiles']
+        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.container_name), json)
+        self.actions.append('apply_configs')
 
     def run(self):
         """Run the main method."""
 
-        self.old_state = self._container_state_json_to_module_state(self._get_container_state_json())
+        self.old_container_json = self._get_container_json()
+        self.old_state = self._container_json_to_module_state(self.old_container_json)
 
         action = getattr(self, LXD_ANSIBLE_STATES[self.state])
         action()
@@ -398,6 +493,7 @@ class LxdContainerManagement(object):
         result_json = {
             'changed': state_changed,
             'old_state': self.old_state,
+            'logs': self.logs,
             'actions': self.actions
         }
         if self.addresses is not None:
@@ -427,7 +523,7 @@ def main():
             ),
             wait_for_ipv4_addresses=dict(
                 type='bool',
-                default=True
+                default=False
             ),
             force_stop=dict(
                 type='bool',
