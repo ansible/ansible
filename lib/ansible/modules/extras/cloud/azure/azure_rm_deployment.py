@@ -371,8 +371,8 @@ try:
                                                       Deployment,
                                                       ResourceGroup,
                                                       Dependency)
-    from azure.mgmt.resource.resources import ResourceManagementClient, ResourceManagementClientConfiguration
-    from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientConfiguration
+    from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.network import NetworkManagementClient
 
 except ImportError:
     # This is handled in azure_rm_common
