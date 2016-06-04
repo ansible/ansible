@@ -30,7 +30,7 @@ try:
 except ImportError:
     import simplejson as json
 
-import ansible.module_utils.six
+import ansible.module_utils.six as six
 
 
 DOCUMENTATION = '''
