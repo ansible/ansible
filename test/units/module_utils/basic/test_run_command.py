@@ -168,13 +168,13 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
 
     def test_text_stdin(self):
         (rc, stdout, stderr) = self.module.run_command('/bin/foo', data='hello world')
-        self.assertEqual(self.cmd.stdin.getvalue(), 'hello world\n')
+        self.assertEqual(self.cmd.stdin.getvalue(), b'hello world\n')
 
     def test_ascii_stdout(self):
         self.cmd_out[sentinel.stdout] = BytesIO(b'hello')
         (rc, stdout, stderr) = self.module.run_command('/bin/cat hello.txt')
         self.assertEqual(rc, 0)
-        self.assertEqual(stdout, 'hello')
+        self.assertEqual(stdout, b'hello')
 
     def test_utf8_output(self):
         self.cmd_out[sentinel.stdout] = BytesIO(u'Žarn§'.encode('utf-8'))

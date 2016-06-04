@@ -112,10 +112,30 @@ class Base:
         if hasattr(self, method):
             return getattr(self, method)()
 
-        value = self._attributes[prop_name]
-        if value is None and hasattr(self, '_get_parent_attribute'):
+        # value_found is here because we think that value needs to be changed
+        # in the future.  self._attributes[prop_name] will return None
+        # sometimes, apparently if it's not explicitly set in the playbook.
+        # This would seem to make None a sentinel value.  However, the user
+        # could set the attribute to None explicitly (via !!nil) which will
+        # not be recognized because it's being used as a sentinel.  And
+        # sometimes _attributes[prop_name] throws a KeyError so None doesn't
+        # always mean that prop_name was not set.  To work around these
+        # issues, value_found is here so that if value's behaviour is changed
+        # in the future, things can still be made to work.
+        try:
+            value = self._attributes[prop_name]
+            value_found = True
+        except KeyError:
+            value = None
+            value_found = False
+
+        if (value is None or not value_found) and hasattr(self, '_get_parent_attribute'):
             value = self._get_parent_attribute(prop_name)
-        return value
+            value_found = True
+
+        if value_found:
+            return value
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
     @staticmethod
     def _generic_s(prop_name, self, value):

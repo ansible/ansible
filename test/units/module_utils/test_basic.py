@@ -114,7 +114,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
     #    from ansible.module_utils import basic
 
     @patch.object(builtins, '__import__')
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
+    @unittest.skipIf(sys.version_info[0] >= 3, "literal_eval is available in every version of Python3")
     def test_module_utils_basic_import_literal_eval(self, mock_import):
         def _mock_import(name, *args, **kwargs):
             try:
@@ -270,7 +270,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch('os.path.realpath', return_value='/path/to/foo/'):
             self.assertEqual(get_module_path(), '/path/to/foo')
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
 

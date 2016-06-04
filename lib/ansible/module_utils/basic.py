@@ -148,6 +148,8 @@ except ImportError:
         print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
 
+from ansible.module_utils.six import PY2, PY3, b, binary_type, text_type, string_types
+
 HAVE_SELINUX=False
 try:
     import selinux
@@ -540,11 +542,11 @@ def _load_params():
                 fd.close()
             else:
                 buffer = sys.argv[1]
-                if sys.version_info >= (3,):
+                if PY3:
                     buffer = buffer.encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
-            if sys.version_info < (3,):
+            if PY2:
                 buffer = sys.stdin.read()
             else:
                 buffer = sys.stdin.buffer.read()
@@ -557,7 +559,7 @@ def _load_params():
         print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
         sys.exit(1)
 
-    if sys.version_info < (3,):
+    if PY2:
         params = json_dict_unicode_to_bytes(params)
 
     try:
@@ -1567,7 +1569,7 @@ class AnsibleModule(object):
                 # TODO: surrogateescape is a danger here on Py3
                 journal_msg = remove_values(msg, self.no_log_values)
 
-            if sys.version_info >= (3,):
+            if PY3:
                 syslog_msg = journal_msg
             else:
                 syslog_msg = journal_msg.encode('utf-8', 'replace')
@@ -1967,9 +1969,13 @@ class AnsibleModule(object):
                 shell = True
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
-        elif isinstance(args, basestring):
-            if isinstance(args, unicode):
+        elif isinstance(args, string_types):
+            # On python2.6 and below, shlex has problems with text type
+            # On python3, shlex needs a text type.
+            if PY2 and isinstance(args, text_type):
                 args = args.encode('utf-8')
+            elif PY3 and isinstance(args, binary_type):
+                args = args.decode('utf-8', errors='surrogateescape')
             args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
@@ -1977,6 +1983,11 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
+            if isinstance(prompt_regex, text_type):
+                if PY3:
+                    prompt_regex = prompt_regex.encode('utf-8', errors='surrogateescape')
+                elif PY2:
+                    prompt_regex = prompt_regex.encode('utf-8')
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -2020,15 +2031,15 @@ class AnsibleModule(object):
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
-        if isinstance(args, basestring):
-            if isinstance(args, unicode):
-                b_args = args.encode('utf-8')
-            else:
-                b_args = args
-            to_clean_args = shlex.split(b_args)
-            del b_args
+        to_clean_args = args
+        if PY2:
+            if isinstance(args, text_type):
+                to_clean_args = args.encode('utf-8')
         else:
-            to_clean_args = args
+            if isinstance(args, binary_type):
+                to_clean_args = args.decode('utf-8', errors='replace')
+        if isinstance(args, (text_type, binary_type)):
+            to_clean_args = shlex.split(to_clean_args)
 
         clean_args = []
         is_passwd = False
@@ -2087,13 +2098,19 @@ class AnsibleModule(object):
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py
 
-            stdout = ''
-            stderr = ''
+            stdout = b('')
+            stderr = b('')
             rpipes = [cmd.stdout, cmd.stderr]
 
             if data:
                 if not binary_data:
                     data += '\n'
+                if isinstance(data, text_type):
+                    if PY3:
+                        errors = 'surrogateescape'
+                    else:
+                        errors = 'strict'
+                    data = data.encode('utf-8', errors=errors)
                 cmd.stdin.write(data)
                 cmd.stdin.close()
 
@@ -2102,12 +2119,12 @@ class AnsibleModule(object):
                 if cmd.stdout in rfd:
                     dat = os.read(cmd.stdout.fileno(), 9000)
                     stdout += dat
-                    if dat == '':
+                    if dat == b(''):
                         rpipes.remove(cmd.stdout)
                 if cmd.stderr in rfd:
                     dat = os.read(cmd.stderr.fileno(), 9000)
                     stderr += dat
-                    if dat == '':
+                    if dat == b(''):
                         rpipes.remove(cmd.stderr)
                 # if we're checking for prompts, do it now
                 if prompt_re:

@@ -276,7 +276,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = jsonify(data)
 
         afd, afile = tempfile.mkstemp()
-        afo = os.fdopen(afd, 'w')
+        afo = os.fdopen(afd, 'wb')
         try:
             data = to_bytes(data, errors='strict')
             afo.write(data)
