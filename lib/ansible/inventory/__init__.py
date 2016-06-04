@@ -439,10 +439,14 @@ class Inventory(object):
         for group in groups.values():
             if pattern == 'all':
                 for host in group.get_hosts():
+                    if host.implicit:
+                        continue
                     __append_host_to_results(host)
             else:
                 if self._match(group.name, pattern) and group.name not in ('all', 'ungrouped'):
                     for host in group.get_hosts():
+                        if host.implicit:
+                            continue
                         __append_host_to_results(host)
                 else:
                     matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
@@ -457,6 +461,7 @@ class Inventory(object):
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
         new_host.address = "127.0.0.1"
+        new_host.implicit = True
         new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
         if "ansible_python_interpreter" not in new_host.vars:
