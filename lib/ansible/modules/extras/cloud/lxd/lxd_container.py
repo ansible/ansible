@@ -50,16 +50,34 @@ options:
           - Define the state of a container.
         required: false
         default: started
-    timeout_for_addresses:
+    timeout:
         description:
-          - A timeout of waiting for IPv4 addresses are set to the all network
-            interfaces in the container after starting or restarting.
-          - If this value is equal to or less than 0, Ansible does not
-            wait for IPv4 addresses.
+          - A timeout of one LXC REST API call.
+          - This is also used as a timeout for waiting until IPv4 addresses
+            are set to the all network interfaces in the container after
+            starting or restarting.
         required: false
-        default: 0
+        default: 30
+    wait_for_ipv4_addresses:
+        description:
+          - If this is true, the lxd_module waits until IPv4 addresses
+            are set to the all network interfaces in the container after
+            starting or restarting.
+        required: false
+        default: false
+    force_stop:
+        description:
+          - If this is true, the lxd_module forces to stop the container
+            when it stops or restarts the container.
+        required: false
+        default: false
+    unix_socket_path:
+        description:
+          - The unix domain socket path for the LXD server.
+        required: false
+        default: /var/lib/lxd/unix.socket
 requirements:
-  - 'pylxd >= 2.0'
+  - 'requests_unixsocket'
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
@@ -156,23 +174,22 @@ lxd_container:
       description: the old state of the container
       returned: when state is started or restarted
       sample: "stopped"
-    logs:
+    actions:
       description: list of actions performed for the container
       returned: success
       type: list
-      sample: ["created", "started"]
+      sample: ["create", "start"]
 """
 
-from distutils.spawn import find_executable
+from ansible.compat.six.moves.urllib.parse import quote
 
 try:
-    from pylxd.client import Client
+    import requests_unixsocket
+    from requests.exceptions import ConnectionError
 except ImportError:
-    HAS_PYLXD = False
+    HAS_REQUETS_UNIXSOCKET = False
 else:
-    HAS_PYLXD = True
-
-from requests.exceptions import ConnectionError
+    HAS_REQUETS_UNIXSOCKET = True
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -214,61 +231,91 @@ class LxdContainerManagement(object):
         self.container_name = self.module.params['name']
         self.config = self.module.params.get('config', None)
         self.state = self.module.params['state']
-        self.timeout_for_addresses = self.module.params['timeout_for_addresses']
+        self.timeout = self.module.params['timeout']
+        self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
+        self.force_stop = self.module.params['force_stop']
         self.addresses = None
-        self.client = Client()
-        self.logs = []
+        self.unix_socket_path = self.module.params['unix_socket_path']
+        self.base_url = 'http+unix://{0}'.format(quote(self.unix_socket_path, safe=''))
+        self.session = requests_unixsocket.Session()
+        self.actions = []
+
+    def _send_request(self, method, path, json=None, ok_error_codes=None):
+        try:
+            url = self.base_url + path
+            resp = self.session.request(method, url, json=json, timeout=self.timeout)
+            resp_json = resp.json()
+            resp_type = resp_json.get('type', None)
+            if resp_type == 'error':
+                if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
+                    return resp_json
+                self.module.fail_json(
+                    msg='error response',
+                    request={'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                    response={'json': resp_json}
+                )
+            return resp_json
+        except ConnectionError:
+            self.module.fail_json(msg='cannot connect to the LXD server', unix_socket_path=self.unix_socket_path)
+
+    def _operate_and_wait(self, method, path, json=None):
+        resp_json = self._send_request(method, path, json=json)
+        if resp_json['type'] == 'async':
+            path = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
+            resp_json = self._send_request('GET', path)
+        return resp_json
+
+    def _get_container_state_json(self):
+        return self._send_request(
+            'GET', '/1.0/containers/{0}/state'.format(self.container_name),
+            ok_error_codes=[404]
+        )
+
+    @staticmethod
+    def _container_state_json_to_module_state(resp_json):
+        if resp_json['type'] == 'error':
+            return 'absent'
+        return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
+
+    def _change_state(self, action, force_stop=False):
+        json={'action': action, 'timeout': self.timeout}
+        if force_stop:
+            json['force'] = True
+        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.container_name), json)
 
     def _create_container(self):
         config = self.config.copy()
         config['name'] = self.container_name
-        self.client.containers.create(config, wait=True)
-        # NOTE: get container again for the updated state
-        self.container = self._get_container()
-        self.logs.append('created')
+        self._operate_and_wait('POST', '/1.0/containers', config)
+        self.actions.append('creat')
 
     def _start_container(self):
-        self.container.start(wait=True)
-        self.logs.append('started')
+        self._change_state('start')
+        self.actions.append('start')
 
     def _stop_container(self):
-        self.container.stop(wait=True)
-        self.logs.append('stopped')
+        self._change_state('stop', self.force_stop)
+        self.actions.append('stop')
 
     def _restart_container(self):
-        self.container.restart(wait=True)
-        self.logs.append('restarted')
+        self._change_state('restart', self.force_stop)
+        self.actions.append('restart')
 
     def _delete_container(self):
-        self.container.delete(wait=True)
-        self.logs.append('deleted')
+        return self._operate_and_wait('DELETE', '/1.0/containers/{0}'.format(self.container_name))
+        self.actions.append('delete')
 
     def _freeze_container(self):
-        self.container.freeze(wait=True)
-        self.logs.append('freezed')
+        self._change_state('freeze')
+        self.actions.append('freeze')
 
     def _unfreeze_container(self):
-        self.container.unfreeze(wait=True)
-        self.logs.append('unfreezed')
-
-    def _get_container(self):
-        try:
-            return self.client.containers.get(self.container_name)
-        except NameError:
-            return None
-        except ConnectionError:
-            self.module.fail_json(msg="Cannot connect to lxd server")
-
-    @staticmethod
-    def _container_to_module_state(container):
-        if container is None:
-            return "absent"
-        else:
-            return ANSIBLE_LXD_STATES[container.status]
+        self._change_state('unfreeze')
+        self.actions.append('unfreez')
 
     def _container_ipv4_addresses(self, ignore_devices=['lo']):
-        container = self._get_container()
-        network = container is not None and container.state().network or {}
+        resp_json = self._get_container_state_json()
+        network = resp_json['metadata']['network'] or {}
         network = dict((k, v) for k, v in network.iteritems() if k not in ignore_devices) or {}
         addresses = dict((k, [a['address'] for a in v['addresses'] if a['family'] == 'inet']) for k, v in network.iteritems()) or {}
         return addresses
@@ -278,95 +325,80 @@ class LxdContainerManagement(object):
         return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
 
     def _get_addresses(self):
-        if self.timeout_for_addresses <= 0:
-            return
-        due = datetime.datetime.now() + datetime.timedelta(seconds=self.timeout_for_addresses)
+        due = datetime.datetime.now() + datetime.timedelta(seconds=self.timeout)
         while datetime.datetime.now() < due:
             time.sleep(1)
             addresses = self._container_ipv4_addresses()
             if self._has_all_ipv4_addresses(addresses):
                 self.addresses = addresses
                 return
-        self._on_timeout()
+
+        state_changed = len(self.actions) > 0
+        self.module.fail_json(
+            failed=True,
+            msg='timeout for getting IPv4 addresses',
+            changed=state_changed,
+            logs=self.actions)
 
     def _started(self):
-        """Ensure a container is started.
-
-        If the container does not exist the container will be created.
-        """
-        if self.container is None:
+        if self.old_state == 'absent':
             self._create_container()
             self._start_container()
         else:
-            if self.container.status == 'Frozen':
+            if self.old_state == 'frozen':
                 self._unfreeze_container()
-            if self.container.status != 'Running':
-                self._start_container()
-        self._get_addresses()
+        if self.wait_for_ipv4_addresses:
+            self._get_addresses()
 
     def _stopped(self):
-        if self.container is None:
+        if self.old_state == 'absent':
             self._create_container()
         else:
-            if self.container.status == 'Frozen':
+            if self.old_state == 'frozen':
                 self._unfreeze_container()
-            if self.container.status != 'Stopped':
-                self._stop_container()
+            self._stop_container()
 
     def _restarted(self):
-        if self.container is None:
+        if self.old_state == 'absent':
             self._create_container()
             self._start_container()
         else:
-            if self.container.status == 'Frozen':
+            if self.old_state == 'frozen':
                 self._unfreeze_container()
-            if self.container.status == 'Running':
-                self._restart_container()
-            else:
-                self._start_container()
-        self._get_addresses()
+            self._restart_container()
+        if self.wait_for_ipv4_addresses:
+            self._get_addresses()
 
     def _destroyed(self):
-        if self.container is not None:
-            if self.container.status == 'Frozen':
+        if self.old_state != 'absent':
+            if self.old_state == 'frozen':
                 self._unfreeze_container()
-            if self.container.status == 'Running':
-                self._stop_container()
+            self._stop_container()
             self._delete_container()
 
     def _frozen(self):
-        if self.container is None:
+        if self.old_state == 'absent':
             self._create_container()
             self._start_container()
             self._freeze_container()
         else:
-            if self.container.status != 'Frozen':
-                if self.container.status != 'Running':
-                    self._start_container()
-                self._freeze_container()
-
-    def _on_timeout(self):
-        state_changed = len(self.logs) > 0
-        self.module.fail_json(
-            failed=True,
-            msg='timeout for getting addresses',
-            changed=state_changed,
-            logs=self.logs)
+            if self.old_state == 'stopped':
+                self._start_container()
+            self._freeze_container()
 
     def run(self):
         """Run the main method."""
 
-        self.container = self._get_container()
-        self.old_state = self._container_to_module_state(self.container)
+        self.old_state = self._container_state_json_to_module_state(self._get_container_state_json())
 
         action = getattr(self, LXD_ANSIBLE_STATES[self.state])
         action()
 
-        state_changed = len(self.logs) > 0
+        state_changed = len(self.actions) > 0
         result_json = {
-            "changed" : state_changed,
-            "old_state" : self.old_state,
-            "logs" : self.logs
+            'changed': state_changed,
+            'old_state': self.old_state,
+            'actions': self.actions
         }
         if self.addresses is not None:
             result_json['addresses'] = self.addresses
@@ -389,17 +421,29 @@ def main():
                 choices=LXD_ANSIBLE_STATES.keys(),
                 default='started'
             ),
-            timeout_for_addresses=dict(
+            timeout=dict(
                 type='int',
-                default=0
+                default=30
+            ),
+            wait_for_ipv4_addresses=dict(
+                type='bool',
+                default=True
+            ),
+            force_stop=dict(
+                type='bool',
+                default=False
+            ),
+            unix_socket_path=dict(
+                type='str',
+                default='/var/lib/lxd/unix.socket'
             )
         ),
         supports_check_mode=False,
     )
 
-    if not HAS_PYLXD:
+    if not HAS_REQUETS_UNIXSOCKET:
         module.fail_json(
-            msg='The `pylxd` module is not importable. Check the requirements.'
+            msg='The `requests_unixsocket` module is not importable. Check the requirements.'
         )
 
     lxd_manage = LxdContainerManagement(module=module)
