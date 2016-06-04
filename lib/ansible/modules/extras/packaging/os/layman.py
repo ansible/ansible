@@ -120,7 +120,7 @@ def download_url(module, url, dest):
     try:
         with open(dest, 'w') as f:
             shutil.copyfileobj(response, f)
-    except IOError, e:
+    except IOError as e:
         raise ModuleError("Failed to write: %s" % str(e))
 
 
@@ -248,7 +248,7 @@ def main():
         else:
             changed = uninstall_overlay(module, name)
 
-    except ModuleError, e:
+    except ModuleError as e:
         module.fail_json(msg=e.message)
     else:
         module.exit_json(changed=changed, name=name)

@@ -26,6 +26,8 @@ import os
 import hashlib
 import sys
 import posixpath
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 DOCUMENTATION = '''
 ---
@@ -330,7 +332,7 @@ def main():
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
-    except ValueError, e:
+    except ValueError as e:
         module.fail_json(msg=e.args[0])
 
     prev_state = "absent"
@@ -351,12 +353,10 @@ def main():
             module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
-    except ValueError, e:
+    except ValueError as e:
         module.fail_json(msg=e.args[0])
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()
