@@ -277,7 +277,6 @@ class OSXDefaults(object):
 
         # Handle absent state
         if self.state == "absent":
-            print ("Absent state detected!")
             if self.current_value is None:
                 return False
             if self.module.check_mode:
