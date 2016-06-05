@@ -171,7 +171,7 @@ def daemonize_self(module, password, port, minutes, pid_file):
     except OSError:
         e       = get_exception()
         message = "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
-        module.fail_json(message)
+        module.fail_json(msg=message)
 
     # decouple from parent environment
     os.chdir("/")
@@ -190,8 +190,8 @@ def daemonize_self(module, password, port, minutes, pid_file):
             sys.exit(0)
     except OSError:
         e       = get_exception()
-        message = 'fork #2 failed: %d (%s)' % (e.errno, e.strerror)
-        module.fail_json(message)
+        log('fork #2 failed: %d (%s)' % (e.errno, e.strerror))
+        sys.exit(1)
 
     dev_null = file('/dev/null','rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
