@@ -726,7 +726,7 @@ class Inventory(object):
         path = os.path.realpath(os.path.join(basedir, 'group_vars'))
         found_vars = set()
         if os.path.exists(path):
-            found_vars = set(os.listdir(unicode(path)))
+            found_vars = set(os.listdir(to_unicode(path)))
         return found_vars
 
     def _find_host_vars_files(self, basedir):
@@ -736,7 +736,7 @@ class Inventory(object):
         path = os.path.realpath(os.path.join(basedir, 'host_vars'))
         found_vars = set()
         if os.path.exists(path):
-            found_vars = set(os.listdir(unicode(path)))
+            found_vars = set(os.listdir(to_unicode(path)))
         return found_vars
 
     def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False):
