@@ -558,7 +558,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
     elif state in ('restarted'):
         for arg in ('name', 'linode_id'):
             if not eval(arg):
-                module.fail_json(msg='%s is required for active state' % arg)
+                module.fail_json(msg='%s is required for restarted state' % arg)
 
         if not servers:
             module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
