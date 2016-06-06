@@ -408,9 +408,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             instances.append(instance)
 
     elif state in ('restarted'):
-        for arg in ('linode_id'):
-            if not eval(arg):
-                module.fail_json(msg='%s is required for restarted state' % arg)
+        if not linode_id:
+            module.fail_json(msg='linode_id is required for restarted state')
 
         if not servers:
             module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
@@ -495,7 +494,7 @@ def main():
     except Exception as e:
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
-    linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
+    linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id,
                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
 
 # import module snippets
