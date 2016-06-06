@@ -27,6 +27,7 @@ except ImportError:
 
 try:
     import paramiko
+    from paramiko.ssh_exception import AuthenticationException
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
@@ -110,6 +111,8 @@ class Shell(object):
             self.shell.settimeout(timeout)
         except socket.gaierror:
             raise ShellError("unable to resolve host name")
+        except AuthenticationException:
+            raise ShellError('Unable to authenticate to remote device')
 
         if self.kickstart:
             self.shell.sendall("\n")
