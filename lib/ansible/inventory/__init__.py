@@ -148,10 +148,12 @@ class Inventory(object):
         for g in self.groups:
             group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
+            self.get_group_vars(group)
 
         # set host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
+            self.get_host_vars(host)
 
     def _match(self, str, pattern_str):
         try:
@@ -703,7 +705,7 @@ class Inventory(object):
 
             found_host_vars = self._find_host_vars_files(self._playbook_basedir)
             if found_host_vars:
-                self._host_vars_files = self._find_host_vars_files(self._playbook_basedir)
+                self._host_vars_files = self._host_vars_files.union(found_host_vars)
                 # get host vars from host_vars/ files
                 for host in self.get_hosts():
                     self.get_host_vars(host)
