@@ -437,6 +437,12 @@ class Ec2Inventory(object):
         except configparser.NoOptionError:
             self.pattern_include = None
 
+        # Do we need to filter tags using AND after retieve them?
+        try:
+            self.filter_tags = config.get('ec2', 'filter_tags')
+        except configparser.NoOptionError as e:
+            self.filter_tags = None
+
         # Do we need to exclude hosts that match a pattern?
         try:
             pattern_exclude = config.get('ec2', 'pattern_exclude');
@@ -799,6 +805,17 @@ class Ec2Inventory(object):
         # if we need to exclude hosts that match a pattern, skip those
         if self.pattern_exclude and self.pattern_exclude.match(hostname):
             return
+
+        # if we need to include hosts that match ALL tags specified, skip those that don't
+        if self.filter_tags:
+            include_flag = 0
+            include_flag_count=len(self.filter_tags.split(','))
+            for k, v in instance.tags.items():
+                for ft in self.filter_tags.split(','):
+                    if "{0}_{1}".format(k,v) == "_".join(ft.split('=')):
+                        include_flag+=1
+            if include_flag < include_flag_count:
+                return
 
         # Add to index
         self.index[hostname] = [region, instance.id]
