@@ -425,6 +425,7 @@ class StrategyBase:
         if not new_host:
             new_host = Host(name=host_name)
             self._inventory._hosts_cache[host_name] = new_host
+            self._inventory.get_host_vars(new_host)
 
             allgroup = self._inventory.get_group('all')
             allgroup.add_host(new_host)
@@ -438,6 +439,7 @@ class StrategyBase:
             if not self._inventory.get_group(group_name):
                 new_group = Group(group_name)
                 self._inventory.add_group(new_group)
+                self._inventory.get_group_vars(new_group)
                 new_group.vars = self._inventory.get_group_variables(group_name)
             else:
                 new_group = self._inventory.get_group(group_name)
