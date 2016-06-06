@@ -225,3 +225,20 @@ Function Get-FileChecksum($path)
     }
     return $hash
 }
+
+Function Get-PendingRebootStatus
+{
+    # Check if reboot is required, if so notify CA. The MSFT_ServerManagerTasks provider is missing on client SKUs
+    #Function returns true if computer has a pending reboot
+    $featureData = invoke-wmimethod -EA Ignore -Name GetServerFeature -namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
+    $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
+    if(($featureData -and $featureData.RequiresReboot) -or $regData)
+    {
+        return $True
+    }
+    else 
+    {
+        return $False
+    }
+
+}
