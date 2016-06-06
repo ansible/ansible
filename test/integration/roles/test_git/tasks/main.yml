@@ -601,6 +601,7 @@
     dest: '{{ checkout_dir }}'
     depth: 1
     version: master
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: switch to older branch with depth=1 (uses fetch)
   git:
@@ -609,10 +610,12 @@
     depth: 1
     version: earlybranch
   register: git_fetch
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: ensure the fetch succeeded
   assert:
     that: git_fetch|success
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
