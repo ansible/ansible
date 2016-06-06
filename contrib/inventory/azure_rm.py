@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
@@ -180,7 +180,7 @@ Version: 1.0.0
 
 import argparse
 import ConfigParser
-import json 
+import json
 import os
 import re
 import sys
