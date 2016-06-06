@@ -537,7 +537,7 @@ class VariableManager:
             # do not parse hidden files or dirs, e.g. .svn/
             paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
             for p in paths:
-                _found, results = self._load_inventory_file(path=p, loader=loader)
+                results = self._load_inventory_file(path=p, loader=loader)
                 if results is not None:
                     data = combine_vars(data, results)
 
