@@ -50,7 +50,7 @@ Target: September 2016
     - Support LBaaS load balancers
   - Azure load balancer: Feature parity for AWS ELB (Stretch Goal)
 
-- **VMWare (Brian, Jtanner)**
+- **VMware (Brian, Jtanner)**
 
   - module/inventory script: port to pyvmomi (jtanner, bcoca)
   - inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)
