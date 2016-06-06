@@ -76,7 +76,7 @@ EXAMPLES = '''
 - systemd:
     name: httpd
     enabled: yes
-    mased: no
+    masked: no
 '''
 
 RETURN = '''
