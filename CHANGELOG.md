@@ -17,6 +17,7 @@ Ansible Changes By Release
   * cs_snapshot_policy
 - letsencrypt
 - netconf_config
+- sensu_subscription
 - smartos
   * smartos_image_facts
 - systemd
