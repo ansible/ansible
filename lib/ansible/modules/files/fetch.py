@@ -45,7 +45,7 @@ options:
   fail_on_missing:
     version_added: "1.1"
     description:
-      - Makes it fails when the source file is missing.
+      - When set to 'yes', the task will fail if the source file is missing.
     required: false
     choices: [ "yes", "no" ]
     default: "no"
