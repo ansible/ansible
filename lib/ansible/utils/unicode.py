@@ -1,4 +1,4 @@
-# (c) 2012-2014, Toshio Kuraotmi <a.badger@gmail.com>
+# (c) 2012-2014, Toshio Kuratomi <a.badger@gmail.com>
 #
 # This file is part of Ansible
 #
