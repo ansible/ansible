@@ -179,14 +179,14 @@ def randompass():
     '''
     Generate a long random password that comply to Linode requirements
     '''
-    # Linode API currently requires the following: 
-    # It must contain at least two of these four character classes: 
+    # Linode API currently requires the following:
+    # It must contain at least two of these four character classes:
     # lower case letters - upper case letters - numbers - punctuation
     # we play it safe :)
     import random
     import string
     # as of python 2.4, this reseeds the PRNG from urandom
-    random.seed() 
+    random.seed()
     lower = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
     upper = ''.join(random.choice(string.ascii_uppercase) for x in range(6))
     number = ''.join(random.choice(string.digits) for x in range(6))
@@ -218,11 +218,11 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
+def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id,
                   payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
     instances = []
     changed = False
-    new_server = False   
+    new_server = False
     servers = []
     disks = []
     configs = []
@@ -233,7 +233,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
         # For the moment we only consider linode_id as criteria for match
         # Later we can use more (size, name, etc.) and update existing
         servers = api.linode_list(LinodeId=linode_id)
-        # Attempt to fetch details about disks and configs only if servers are 
+        # Attempt to fetch details about disks and configs only if servers are
         # found with linode_id
         if servers:
             disks = api.linode_disk_list(LinodeId=linode_id)
@@ -247,16 +247,16 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
         #  - need linode_id (entity)
         #  - need disk_id for linode_id - create disk from distrib
         #  - need config_id for linode_id - create config (need kernel)
-        
+
         # Any create step triggers a job that need to be waited for.
         if not servers:
-            for arg in ('name', 'plan', 'distribution', 'datacenter'):
-                if not eval(arg):
-                    module.fail_json(msg='%s is required for active state' % arg)
+            for arg in (name, plan, distribution, datacenter):
+                if not arg:
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
             # Create linode entity
             new_server = True
             try:
-                res = api.linode_create(DatacenterID=datacenter, PlanID=plan, 
+                res = api.linode_create(DatacenterID=datacenter, PlanID=plan,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
@@ -267,9 +267,9 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            for arg in ('name', 'linode_id', 'distribution'):
-                if not eval(arg):
-                    module.fail_json(msg='%s is required for active state' % arg)
+            for arg in (name, linode_id, distribution):
+                if not arg:
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
             # Create disks (1 from distrib, 1 for SWAP)
             new_server = True
             try:
@@ -282,17 +282,20 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 size = servers[0]['TOTALHD'] - swap
                 if ssh_pub_key:
                     res = api.linode_disk_createfromdistribution(
-                              LinodeId=linode_id, DistributionID=distribution, 
-                              rootPass=password, rootSSHKey=ssh_pub_key,
-                              Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        LinodeId=linode_id, DistributionID=distribution,
+                        rootPass=password, rootSSHKey=ssh_pub_key,
+                        Label='%s data disk (lid: %s)' % (name, linode_id),
+                        Size=size)
                 else:
                     res = api.linode_disk_createfromdistribution(
-                              LinodeId=linode_id, DistributionID=distribution, rootPass=password, 
-                              Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        LinodeId=linode_id, DistributionID=distribution,
+                        rootPass=password,
+                        Label='%s data disk (lid: %s)' % (name, linode_id),
+                        Size=size)
                 jobs.append(res['JobID'])
                 # Create SWAP disk
-                res = api.linode_disk_create(LinodeId=linode_id, Type='swap', 
-                                             Label='%s swap disk (lid: %s)' % (name, linode_id), 
+                res = api.linode_disk_create(LinodeId=linode_id, Type='swap',
+                                             Label='%s swap disk (lid: %s)' % (name, linode_id),
                                              Size=swap)
                 jobs.append(res['JobID'])
             except Exception as e:
@@ -300,9 +303,9 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            for arg in ('name', 'linode_id', 'distribution'):
-                if not eval(arg):
-                    module.fail_json(msg='%s is required for active state' % arg)
+            for arg in (name, linode_id, distribution):
+                if not arg:
+                    module.fail_json(msg='%s is required for %s state' % (arg, state))
 
             # Check architecture
             for distrib in api.avail_distributions():
@@ -364,12 +367,12 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
-                module.fail_json(msg = 'Timeout waiting on %s (lid: %s)' % 
+                module.fail_json(msg = 'Timeout waiting on %s (lid: %s)' %
                                  (server['LABEL'], server['LINODEID']))
             # Get a fresh copy of the server details
             server = api.linode_list(LinodeId=server['LINODEID'])[0]
             if server['STATUS'] == -2:
-                module.fail_json(msg = '%s (lid: %s) failed to boot' % 
+                module.fail_json(msg = '%s (lid: %s) failed to boot' %
                                  (server['LABEL'], server['LINODEID']))
             # From now on we know the task is a success
             # Build instance report
@@ -380,19 +383,18 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             else:
                 instance['status'] = 'Starting'
 
-            # Return the root password if this is a new box and no SSH key 
+            # Return the root password if this is a new box and no SSH key
             # has been provided
             if new_server and not ssh_pub_key:
                 instance['password'] = password
             instances.append(instance)
 
     elif state in ('stopped'):
-        for arg in ('name', 'linode_id'):
-            if not eval(arg):
-                module.fail_json(msg='%s is required for active state' % arg)
+        if not linode_id:
+            module.fail_json(msg='linode_id is required for stopped state')
 
         if not servers:
-            module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+            module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
@@ -438,6 +440,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
     # Ease parsing if only 1 instance
     if len(instances) == 1:
         module.exit_json(changed=changed, instance=instances[0])
+
     module.exit_json(changed=changed, instances=instances)
 
 def main():
