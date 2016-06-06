@@ -196,7 +196,7 @@ class StrategyBase:
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
                     self._cur_worker = 0
-                    time.sleep(0.01)
+                    time.sleep(0.005)
                 if queued:
                     break
 
@@ -389,7 +389,7 @@ class StrategyBase:
                     raise AnsibleError("unknown result message received: %s" % result[0])
 
             except Queue.Empty:
-                time.sleep(0.01)
+                time.sleep(0.005)
 
             if one_pass:
                 break
@@ -408,7 +408,7 @@ class StrategyBase:
         while self._pending_results > 0 and not self._tqm._terminated:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            time.sleep(0.01)
+            time.sleep(0.005)
         display.debug("no more pending results, returning what we have")
 
         return ret_results
