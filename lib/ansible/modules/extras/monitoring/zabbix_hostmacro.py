@@ -109,8 +109,8 @@ except ImportError:
 # Extend the ZabbixAPI
 # Since the zabbix-api python module too old (version 1.0, no higher version so far).
 class ZabbixAPIExtends(ZabbixAPI):
-    def __init__(self, server, timeout, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout)
+    def __init__(self, server, timeout, user, passwd, **kwargs):
+        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
 
 
 class HostMacro(object):
