@@ -106,7 +106,7 @@ options:
     description:
       - Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier
         that differentiates among multiple resource record sets that have the
-        same combination of DNS name and type. 
+        same combination of DNS name and type.
     required: false
     default: null
     version_added: "2.0"
@@ -205,7 +205,7 @@ EXAMPLES = '''
       type: "AAAA"
       ttl: "7200"
       value: "::1"
-      
+
 # Add a SRV record with multiple fields for a service on port 22222
 # For more information on SRV records see:
 # https://en.wikipedia.org/wiki/SRV_record
@@ -235,6 +235,25 @@ EXAMPLES = '''
       value="{{ elb_dns_name }}"
       alias=True
       alias_hosted_zone_id="{{ elb_zone_id }}"
+
+# Retrieve the details for elb.foo.com
+- route53:
+      command: get
+      zone: foo.com
+      record: elb.foo.com
+      type: A
+  register: rec
+
+# Delete an alias record using the results from the get command
+- route53:
+      command: delete
+      zone: foo.com
+      record: "{{ rec.set.record }}"
+      ttl: "{{ rec.set.ttl }}"
+      type: "{{ rec.set.type }}"
+      value: "{{ rec.set.value }}"
+      alias: True
+      alias_hosted_zone_id: "{{ rec.set.alias_hosted_zone_id }}"
 
 # Add an alias record that points to an Amazon ELB and evaluates it health:
 - route53:
@@ -579,7 +598,7 @@ def main():
         txt = txt.split("</Message>")[0]
         if "but it already exists" in txt:
                 module.exit_json(changed=False)
-        else:   
+        else:
                 module.fail_json(msg = txt)
     except TimeoutError:
         module.fail_json(msg='Timeout waiting for changes to replicate')
