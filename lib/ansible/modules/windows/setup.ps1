@@ -153,6 +153,9 @@ if ($winrm_cert_expiry)
     Set-Attr $result.ansible_facts "ansible_winrm_certificate_expires" $winrm_cert_expiry.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
 }
 
+$PendingReboot = Get-PendingRebootStatus
+Set-Attr $result.ansible_facts "ansible_reboot_pending" $PendingReboot
+
 # See if Facter is on the System Path
 Try {
     $facter_exe = Get-Command facter -ErrorAction Stop
