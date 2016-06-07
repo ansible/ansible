@@ -270,8 +270,12 @@ class DataLoader():
                 os.path.exists(self.path_dwim(candidate) and
                 os.path.samefile(to_bytes(candidate, errors='strict'),
                                  self.path_dwim(candidate)):
+                return self.path_dwim(candidate)
+        # We may be dealing with a case where we've requested the parent
+        # of a non-existent directory
+        for candidate in search:
+            if os.path.exists(self.path_dwim(candidate)):
                 break
-
         return self.path_dwim(candidate)
 
     def read_vault_password_file(self, vault_password_file):
