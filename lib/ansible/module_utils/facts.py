@@ -769,7 +769,7 @@ class Distribution(object):
         data = re.search('(\d+)\.(\d+)-RELEASE.*', self.facts['distribution_release'])
         if data:
             self.facts['distribution_major_version'] = data.group(1)
-            self.facts['distribution_version'] = '{0}.{1}'.format(data.group(1), data.group(2))
+            self.facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
 
     def get_distribution_OpenBSD(self):
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
