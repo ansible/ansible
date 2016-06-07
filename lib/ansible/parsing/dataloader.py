@@ -251,25 +251,25 @@ class DataLoader():
             cur_basedir = self._basedir
             self.set_basedir(basedir)
             # resolved base role/play path + templates/files/vars + relative filename
-            search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
+            search.append(os.path.join(basedir, dirname, source))
             self.set_basedir(cur_basedir)
 
             if isrole and not source.endswith(dirname):
                 # look in role's tasks dir w/o dirname
-                search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
+                search.append(os.path.join(basedir, 'tasks', source))
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
-            search.append(self.path_dwim(os.path.join(dirname,source)))
-            search.append(self.path_dwim(os.path.join(basedir, source)))
+            search.append(os.path.join(dirname,source))
+            search.append(os.path.join(basedir, source))
 
             # try to create absolute path for loader basedir + filename
-            search.append(self.path_dwim(source))
+            search.append(source)
 
         for candidate in search:
             if os.path.exists(to_bytes(candidate, errors='strict')):
                 break
 
-        return candidate
+        return self.path_dwim(candidate)
 
     def read_vault_password_file(self, vault_password_file):
         """
