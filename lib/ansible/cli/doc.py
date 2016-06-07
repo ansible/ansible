@@ -126,7 +126,7 @@ class DocCLI(CLI):
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
-                    elif self.options.show_:
+                    elif self.options.show_json:
                         text += self.get_json(doc)
                     else:
                         text += self.get_man_text(doc)
