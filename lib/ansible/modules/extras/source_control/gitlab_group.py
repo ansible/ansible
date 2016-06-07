@@ -146,7 +146,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(required=True),
-            validate_certs=dict(required=False, default=True, type=bool, aliases=['verify_ssl']),
+            validate_certs=dict(required=False, default=True, type='bool', aliases=['verify_ssl']),
             login_user=dict(required=False, no_log=True),
             login_password=dict(required=False, no_log=True),
             login_token=dict(required=False, no_log=True),
