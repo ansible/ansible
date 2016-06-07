@@ -17,6 +17,10 @@
 #
 # USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
 #
+# To skip SSL certificate verification you can either set the VAUL_SKIP_VERIFY
+# environment variable or set skip_verify to False:
+# {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 ssl_verify=False url=https://myvault:8200')}}
+#
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
 #
