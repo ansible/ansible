@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import json
 import os
 import traceback
 import textwrap
@@ -40,7 +41,7 @@ except ImportError:
 
 
 class DocCLI(CLI):
-    """ Vault command line class """
+    """ Doc command line class """
 
     def __init__(self, args):
 
@@ -55,6 +56,8 @@ class DocCLI(CLI):
             module_opts=True,
         )
 
+        self.parser.add_option("-j", "--json", action="store_true", default=False, dest='show_json',
+                help='Show module information as a JSON dump')
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
@@ -82,6 +85,9 @@ class DocCLI(CLI):
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
+
+        if self.options.show_snippet and self.options.show_json:
+            display.warning("Options --json and --snippet are mutually exclusive. Defaulting to snippet.")
 
         # process command line module list
         text = ''
@@ -120,10 +126,12 @@ class DocCLI(CLI):
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
+                    elif self.options.show_json:
+                        text += self.get_json(doc)
                     else:
                         text += self.get_man_text(doc)
                 else:
-                    # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
+                    # this typically means we couldn't even parse the docstring, not just that the JSON is busted,
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
@@ -230,6 +238,59 @@ class DocCLI(CLI):
         text.append('')
 
         return "\n".join(text)
+
+    def get_json(self, doc):
+        module_dict = {}
+
+        deprecated = 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0
+        module_dict['deprecated'] = deprecated
+
+        if 'author' in doc:
+            module_dict['author'] = doc['author']
+
+        if isinstance(doc['description'], list):
+            module_dict['description'] = " ".join(doc['description'])
+        else:
+            module_dict['description'] = doc['description']
+
+        if 'examples' in doc and len(doc['examples']) > 0:
+            module_dict['examples'] = doc['examples'] + doc['plainexamples']
+
+        if 'maintainers' in doc:
+            module_dict['maintainers'] = doc['maintainers']
+
+        if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
+            module_dict['notes'] = " ".join(doc['notes'])
+
+        if 'returndocs' in doc and doc['returndocs'] is not None:
+            module_dict['returndocs'] = doc['returndocs']
+
+        if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
+            module_dict['requirements'] = ", ".join(doc['requirements'])
+
+        module_dict['options'] = []
+        if 'option_keys' in doc and len(doc['option_keys']) > 0:
+            for opt_key in doc['option_keys']:
+                option_dict = {}
+                opt = doc['options'][opt_key]
+
+                option_dict['name'] = opt_key
+                option_dict['required'] = opt.get('required', False)
+
+                if isinstance(opt['description'], list):
+                    option_dict['description'] = " ".join(opt['description'])
+                else:
+                    option_dict['description'] = opt['description']
+
+                if 'choices' in opt:
+                    option_dict['choices'] = opt['choices']
+
+                if 'default' in opt:
+                    option_dict['default'] = opt['default']
+
+                module_dict['options'].append(option_dict)
+
+        return json.dumps(module_dict, indent=4)
 
     def get_man_text(self, doc):
 
