@@ -271,7 +271,7 @@ def main():
             sambaMSDFSRoot                  = dict(type='str',
                                                    default='0'),
             sambaName                       = dict(type='str',
-                                                   default=''),
+                                                   default=None),
             sambaNtAclSupport               = dict(type='str',
                                                    default='1'),
             sambaOplocks                    = dict(type='str',
@@ -329,15 +329,18 @@ def main():
                 obj[k] = module.params[k]
 
             diff = obj.diff()
-            for k in obj.keys():
-                if obj.hasChanged(k):
-                    changed=True
+            if exists:
+                for k in obj.keys():
+                    if obj.hasChanged(k):
+                        changed=True
+            else:
+                changed=True
             if not module.check_mode:
                 if not exists:
                     obj.create()
                 elif changed:
                     obj.modify()
-        except BaseException as e:
+        except Exception as e:
             module.fail_json(
                 msg='Creating/editing share {} in {} failed: {}'.format(name, container, e)
             )
