@@ -627,7 +627,6 @@ class Distribution(object):
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
-        {'path': '/etc/release', 'name': 'Solaris'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
         {'path': '/etc/os-release', 'name': 'SuSE'},
         {'path': '/etc/SuSE-release', 'name': 'SuSE'},
@@ -675,7 +674,7 @@ class Distribution(object):
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
-        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD', 'SunOS')
 
         self.facts['distribution'] = self.system
 
@@ -801,8 +800,8 @@ class Distribution(object):
         self.facts['distribution'] = 'Alpine'
         self.facts['distribution_version'] = data
 
-    def get_distribution_Solaris(self, name, data, path):
-        data = data.split('\n')[0]
+    def get_distribution_SunOS(self):
+        data = get_file_content('/etc/release').split('\n')[0]
         if 'Solaris' in data:
             ora_prefix = ''
             if 'Oracle Solaris' in data:
