@@ -323,25 +323,37 @@ class VariableManager:
                         display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                         continue
 
+            # By default, we now merge in all vars from all roles in the play,
+            # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
+        # next, we merge in the vars from the role, which will specifically
+        # follow the role dependency chain, and then we merge in the tasks
+        # vars (which will look at parent blocks/task includes)
+        if task:
+            if task._role:
+                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
+            all_vars = combine_vars(all_vars, task.get_vars())
+
+        # next, we merge in the vars cache (include vars) and nonpersistent
+        # facts cache (set_fact/register), in that order
         if host:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
             all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
+        # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
                 all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
-            all_vars = combine_vars(all_vars, task.get_vars())
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             all_vars = combine_vars(all_vars, task.get_include_params())
 
+        # finally, we merge in extra vars and the magic variables
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
 
