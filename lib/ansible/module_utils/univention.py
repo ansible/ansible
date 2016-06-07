@@ -86,7 +86,7 @@ def config_registry():
 
 
 def base_dn():
-    config_registry()['ldap/base']
+    return config_registry()['ldap/base']
 
 
 def uldap():
@@ -106,7 +106,7 @@ def uldap():
         return univention.admin.uldap.access(
             host      = config_registry()['ldap/master'],
             base      = base_dn(),
-            binddn    = bind_dn(),
+            binddn    = bind_dn,
             bindpw    = pwd,
             start_tls = 1
         )
@@ -122,20 +122,17 @@ def config():
 
 
 def init_modules():
-    import univention.admin.modules
-    univention.admin.modules.update()
-
-
-try:
-    init_modules()
-except:
-    pass
+    def construct():
+        import univention.admin.modules
+        univention.admin.modules.update()
+        return True
+    return _singleton('modules_initialized', construct)
 
 
 def position_base_dn():
     def construct():
         import univention.admin.uldap
-        univention.admin.uldap.position(base_dn())
+        return univention.admin.uldap.position(base_dn())
     return _singleton('position_base_dn', construct)
 
 
@@ -190,6 +187,7 @@ def module_by_name(module_name_):
 
     def construct():
         import univention.admin.modules
+        init_modules()
         module = univention.admin.modules.get(module_name_)
         univention.admin.modules.init(uldap(), position_base_dn(), module)
         return module
@@ -210,15 +208,15 @@ def get_umc_admin_objects():
 def umc_module_for_add(module, container_dn, superordinate=None):
     """Returns an UMC module object prepared for creating a new entry.
 
-   The module is a module specification according to the udm commandline.
-   Example values are:
-       * users/user
-       * shares/share
-       * groups/group
+    The module is a module specification according to the udm commandline.
+    Example values are:
+        * users/user
+        * shares/share
+        * groups/group
 
-   The container_dn MUST be the dn of the container (not of the object to
-   be created itself!).
-   """
+    The container_dn MUST be the dn of the container (not of the object to
+    be created itself!).
+    """
     mod = module_by_name(module)
 
     position = position_base_dn()
