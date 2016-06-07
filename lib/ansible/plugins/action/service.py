@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
                 del new_module_args['use']
 
             # for backwards compatibility
-            if new_module_args['state'] == 'running':
+            if 'state' in new_module_args and new_module_args['state'] == 'running':
                 new_module_args['state'] = 'started'
 
             self._display.vvvv("Running %s" % module)
