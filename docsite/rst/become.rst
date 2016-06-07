@@ -36,7 +36,7 @@ For example, to manage a system service (which requires ``root`` privileges) whe
     - name: Ensure the httpd service is running
       service:
         name: httpd
-        state: running
+        state: started
       become: true
 
 To run a command as the ``apache`` user::

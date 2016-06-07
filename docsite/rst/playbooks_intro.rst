@@ -126,7 +126,7 @@ the web servers, and then the database servers. For example::
       - name: ensure postgresql is at the latest version
         yum: name=postgresql state=latest
       - name: ensure that postgresql is started
-        service: name=postgresql state=running
+        service: name=postgresql state=started
 
 You can use this method to switch between the host group you're targeting,
 the username logging into the remote servers, whether to sudo or not, and so
@@ -274,7 +274,7 @@ the service module takes ``key=value`` arguments::
 
    tasks:
      - name: make sure apache is running
-       service: name=httpd state=running
+       service: name=httpd state=started
 
 The **command** and **shell** modules are the only modules that just take a list
 of arguments and don't use the ``key=value`` form.  This makes
