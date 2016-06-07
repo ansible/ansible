@@ -266,7 +266,10 @@ class DataLoader():
             search.append(source)
 
         for candidate in search:
-            if os.path.exists(to_bytes(candidate, errors='strict')):
+            if (os.path.exists(to_bytes(candidate, errors='strict')) and
+                os.path.exists(self.path_dwim(candidate) and
+                os.path.samefile(to_bytes(candidate, errors='strict'),
+                                 self.path_dwim(candidate)):
                 break
 
         return self.path_dwim(candidate)
