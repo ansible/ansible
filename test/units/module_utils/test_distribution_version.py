@@ -377,9 +377,153 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "NA",
             "distribution_version": "976.0.0",
         }
+    },
+    # Solaris and derivatives: https://gist.github.com/natefoo/7af6f3d47bb008669467
+    {
+        "name": "SmartOS Global Zone",
+        "uname_v": "joyent_20160330T234717Z",
+        "result": {
+            "distribution_release": "SmartOS 20160330T234717Z x86_64",
+            "distribution": "SmartOS",
+            "distribution_version": "joyent_20160330T234717Z"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                       SmartOS 20160330T234717Z x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2012 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n\n   Built with the following components:\n\n[\n        { \"repo\": \"smartos-live\", \"branch\": \"release-20160331\", \"rev\": \"a77c410f2afe6dc9853a915733caec3609cc50f1\", \"commit_date\": \"1459340323\", \"url\": \"git@github.com:joyent/smartos-live.git\" }\n        , { \"repo\": \"illumos-joyent\", \"branch\": \"release-20160331\", \"rev\": \"ab664c06caf06e9ce7586bff956e7709df1e702e\", \"commit_date\": \"1459362533\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-joyent\" }\n        , { \"repo\": \"illumos-extra\", \"branch\": \"release-20160331\", \"rev\": \"cc723855bceace3df7860b607c9e3827d47e0ff4\", \"commit_date\": \"1458153188\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-extra\" }\n        , { \"repo\": \"kvm\", \"branch\": \"release-20160331\", \"rev\": \"a8befd521c7e673749c64f118585814009fe4b73\", \"commit_date\": \"1450081968\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm\" }\n        , { \"repo\": \"kvm-cmd\", \"branch\": \"release-20160331\", \"rev\": \"c1a197c8e4582c68739ab08f7e3198b2392c9820\", \"commit_date\": \"1454723558\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm-cmd\" }\n        , { \"repo\": \"mdata-client\", \"branch\": \"release-20160331\", \"rev\": \"58158c44603a3316928975deccc5d10864832770\", \"commit_date\": \"1429917227\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/mdata-client\" }\n]\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "SmartOS Zone",
+        "uname_v": "joyent_20160330T234717Z",
+        "result": {
+            "distribution_release": "SmartOS x86_64",
+            "distribution": "SmartOS",
+            "distribution_version": "14.3.0"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2013 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n                   See joyent_20141002T182809Z for assembly date and time.\n",
+            "/etc/product": "Name: Joyent Instance\nImage: base64 14.3.0\nDocumentation: http://wiki.joyent.com/jpc2/Base+Instance\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "OpenIndiana",
+        "uname_v": "oi_151a9",
+        "result": {
+            "distribution_release": "OpenIndiana Development oi_151.1.9 X86 (powered by illumos)",
+            "distribution": "OpenIndiana",
+            "distribution_version": "oi_151a9"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. All rights reserved.\n                        Use is subject to license terms.\n                           Assembled 17 January 2014\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "OmniOS",
+        "uname_v": "omnios-10b9c79",
+        "result": {
+            "distribution_release": "OmniOS v11 r151012",
+            "distribution": "OmniOS",
+            "distribution_version": "r151012"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "  OmniOS v11 r151012\n  Copyright 2014 OmniTI Computer Consulting, Inc. All rights reserved.\n  Use is subject to license terms.\n\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "Nexenta 3",
+        "uname_v": "NexentaOS_134f",
+        "result": {
+            "distribution_release": "Open Storage Appliance v3.1.6",
+            "distribution": "Nexenta",
+            "distribution_version": "3.1.6"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2011 Oracle.  All Rights Reserved.\n                         Use is subject to license terms.\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "Nexenta 4",
+        "uname_v": "NexentaOS_4:cd604cd066",
+        "result": {
+            "distribution_release": "Open Storage Appliance 4.0.3-FP2",
+            "distribution": "Nexenta",
+            "distribution_version": "4.0.3-FP2"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2010 Oracle.  All Rights Reserved.\n                        Use is subject to license terms.\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "Solaris 10",
+        "uname_v": "Generic_141445-09",
+        "result": {
+            "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
+            "distribution": "Solaris",
+            "distribution_version": "10"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                       Solaris 10 10/09 s10x_u8wos_08a X86\n           Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n                           Assembled 16 September 2009\n"
+        },
+        "platform.system": "SunOS"
+    },
+    {
+        "name": "Solaris 11",
+        "uname_v": "11.0",
+        "result": {
+            "distribution_release": "Oracle Solaris 11 11/11 X86",
+            "distribution": "Solaris",
+            "distribution_version": "11"
+        },
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": "                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 18 October 2011\n"
+        },
+        "platform.system": "SunOS"
     }
-
-
 ]
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
@@ -429,6 +573,9 @@ def _test_one_distribution(facts, module, testcase):
             data = data.strip()
         return data
 
+    def mock_get_uname_version(module):
+        return testcase.get('uname_v', None)
+
     def mock_path_exists(fname):
         return fname in testcase['input']
 
@@ -439,11 +586,15 @@ def _test_one_distribution(facts, module, testcase):
         else:
             return 0
 
+    def mock_platform_system():
+        return testcase.get('platform.system', 'Linux')
+
     @patch('ansible.module_utils.facts.get_file_content', mock_get_file_content)
+    @patch('ansible.module_utils.facts.get_uname_version', mock_get_uname_version)
     @patch('os.path.exists', mock_path_exists)
     @patch('os.path.getsize', mock_path_getsize)
     @patch('platform.dist', lambda: testcase['platform.dist'])
-    @patch('platform.system', lambda: 'Linux')
+    @patch('platform.system', mock_platform_system)
     def get_facts(testcase):
         return facts.Facts(module).populate()
 
