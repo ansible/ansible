@@ -215,7 +215,7 @@ Below is an example tasks file that explains how a role works.  Our common role 
       tags: ntp
 
     - name: be sure ntpd is running and enabled
-      service: name=ntpd state=running enabled=yes
+      service: name=ntpd state=started enabled=yes
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end
