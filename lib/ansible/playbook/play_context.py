@@ -356,7 +356,7 @@ class PlayContext(Base):
 
             # and likewise for the remote user
             for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
-                if user_var in delegated_vars:
+                if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
                 delegated_vars['ansible_user'] = task.remote_user or self.remote_user
