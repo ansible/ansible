@@ -83,7 +83,8 @@ def sensu_subscription(module, path, name, state='present', backup=False):
 
     try:
         config = json.load(open(path))
-    except IOError, e:
+    except IOError:
+        e = get_exception()
         if e.errno is 2:  # File not found, non-fatal
             if state == 'absent':
                 reasons.append('file did not exist and state is `absent\'')
@@ -129,8 +130,9 @@ def sensu_subscription(module, path, name, state='present', backup=False):
             module.backup_local(path)
         try:
             open(path, 'w').write(json.dumps(config, indent=2) + '\n')
-        except IOError, e:
-            module.fail_json(msg=str(e))
+        except IOError:
+            e = get_exception()
+            module.fail_json(msg='Failed to write to file %s: %s' % (path, str(e)))
 
     return changed, reasons
 
