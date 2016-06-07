@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
 # Copyright (c) 2016, Adfinis SyGroup AG
@@ -23,18 +22,21 @@
 
 """univention corporate server access module"""
 
+import re
+
 try:
+    import univention
     import univention.uldap
     import univention.config_registry
     import univention.admin.uldap
     import univention.admin.objects
     import univention.admin.config
-    import re
-    import thread
     import ldap as orig_ldap
     has_lib_univention = True
 except ImportError:
     has_lib_univention = False
+
+
 
 __all__ = [
     'ldap_search',
