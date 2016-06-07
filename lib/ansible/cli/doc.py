@@ -41,7 +41,7 @@ except ImportError:
 
 
 class DocCLI(CLI):
-    """ Doc command line class """
+    """ Vault command line class """
 
     def __init__(self, args):
 
@@ -126,12 +126,12 @@ class DocCLI(CLI):
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
-                    elif self.options.show_json:
+                    elif self.options.show_:
                         text += self.get_json(doc)
                     else:
                         text += self.get_man_text(doc)
                 else:
-                    # this typically means we couldn't even parse the docstring, not just that the JSON is busted,
+                    # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
