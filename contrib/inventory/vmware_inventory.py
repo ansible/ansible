@@ -172,7 +172,7 @@ class VMWareInventory(object):
 
         ''' Reads the settings from the vmware_inventory.ini file '''
 
-        scriptbasename = os.path.realpath(__file__)
+        scriptbasename = __file__
         scriptbasename = os.path.basename(scriptbasename)
         scriptbasename = scriptbasename.replace('.py', '')
 
@@ -181,7 +181,7 @@ class VMWareInventory(object):
             'port': 443,
             'username': '',
             'password': '',
-            'ini_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), '%s.ini' % scriptbasename),
+            'ini_path': os.path.join(os.path.dirname(__file__), '%s.ini' % scriptbasename),
             'cache_name': 'ansible-vmware',
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': 3600,
@@ -279,17 +279,14 @@ class VMWareInventory(object):
             context.verify_mode = ssl.CERT_NONE
             kwargs['sslContext'] = context
 
-
-        self.debugl("### RUNNING WITHOUT VCR")
         instances = self._get_instances(kwargs)
-
         self.debugl("### INSTANCES RETRIEVED")
         return instances
 
 
     def _get_instances(self, inkwargs):
 
-        ''' Make API calls without VCR fixtures '''
+        ''' Make API calls '''
 
         instances = []
         si = SmartConnect(**inkwargs)
@@ -399,6 +396,7 @@ class VMWareInventory(object):
         for hf in self.host_filters:
             if not hf:
                 continue
+            self.debugl('FILTER: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
             for k,v in filter_map.iteritems():
                 if not v:
@@ -437,7 +435,9 @@ class VMWareInventory(object):
             except Exception as e:
                 self.debugl(str(e))
                 #import epdb; epdb.st()
-            if dtype == 'integer':
+            if not newkey:
+                continue
+            elif dtype == 'integer':
                 newkey = int(newkey)
             elif dtype == 'boolean':
                 if newkey.lower() == 'false':
@@ -484,7 +484,7 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     k = k.lower()
 
-            rdata[k] = self._process_object_types(v, level=level)
+                rdata[k] = self._process_object_types(v, level=level)
 
         else:    
 
@@ -511,7 +511,7 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
 
-            rdata[method] = self._process_object_types(methodToCall, level=level)
+                rdata[method] = self._process_object_types(methodToCall, level=level)
 
         return rdata
 
@@ -554,8 +554,7 @@ class VMWareInventory(object):
 
         if not rdata:
             rdata = None
-            return rdata
-
+        return rdata
 
     def get_host_info(self, host):
         
