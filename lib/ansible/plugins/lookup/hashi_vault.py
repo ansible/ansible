@@ -40,6 +40,11 @@ ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 if os.getenv('VAULT_ADDR') is not None:
     ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
 
+ANSIBLE_HASHI_VAULT_SKIP_VERIFY = False
+
+if os.getenv('VAULT_SKIP_VERIFY') is not None:
+    ANSIBLE_HASHI_VAULT_SKIP_VERIFY = True
+
 class HashiVault:
     def __init__(self, **kwargs):
         try:
@@ -48,6 +53,8 @@ class HashiVault:
             AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+
+        self.skip_verify = kwargs.get('skip_verify', ANSIBLE_HASHI_VAULT_SKIP_VERIFY)
 
         self.token = kwargs.get('token')
         if self.token==None:
@@ -65,7 +72,7 @@ class HashiVault:
         else:
             self.secret_field = 'value'
 
-        self.client = hvac.Client(url=self.url, token=self.token)
+        self.client = hvac.Client(url=self.url, token=self.token, verify=not self.skip_verify)
 
         if self.client.is_authenticated():
             pass
