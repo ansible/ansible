@@ -25,7 +25,6 @@ import errno
 import json
 import os
 import sys
-from io import BytesIO, StringIO
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
@@ -35,8 +34,126 @@ from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
 
+# Import the module we are testing...
+from ansible.module_utils import basic
+
+
+class TestCensorArgs(unittest.TestCase):
+    def test_empty(self):
+        no_log_values = set([])
+        basic.censor_args([], no_log_values)
+
+    def test_multiple_matches(self):
+        to_hide = 'SetecAstronomy'
+        no_log_values = set([to_hide])
+        ca = basic.censor_args(['a', 'baa', 'see', to_hide, 'eh', to_hide], no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_password(self):
+        to_hide = 'hunter42'
+        no_log_values = set([])
+        ca = basic.censor_args(['some', 'args', 'password', 'maybe', '--password', 'hunter42'], no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_password_equals(self):
+        to_hide = 'hunter42'
+        no_log_values = set([])
+        ca = basic.censor_args(['password=hunter42', 'some', 'args', 'password', 'maybe', '--password', '=', 'hunter42'], no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_just_password(self):
+        to_hide = 'hunter42'
+        no_log_values = set([])
+        ca = basic.censor_args(['--password', 'hunter42'], no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_string_and_unicode(self):
+        to_hide = u'hunter42'
+        no_log_values = set(['blip', to_hide])
+        ca = basic.censor_args(['--password', 'hunter42'], no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_args_string(self):
+        to_hide = 'thx1138'
+        no_log_values = set([to_hide])
+        ca = basic.censor_args('The secret key is thx1138', no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+    def test_args_unicode(self):
+        to_hide = 'thx1138'
+        no_log_values = set([to_hide])
+        ca = basic.censor_args(u'The secret key is thx1138', no_log_values)
+        assert ca.find(to_hide), 'failed to remove %s from %s' % (to_hide, ca)
+
+
+# Note: This is a test generator that nose knows what to do with, but not unittest.
+class TestReturnValues(object):
+    """Tests for module_utils.basic.return_values()."""
+
+    test_data_list = [None,
+                      0,
+                      1,
+                      37,
+                      11.11,
+                      False,
+                      True,
+                      [],
+                      {},
+                      '',
+                      b'',
+                      u'',
+                      'a string',
+                      b'a bytestring',
+                      u'a unicode string',
+                      [''],
+                      {'': ''},
+                      ['a string'],
+                      ['a string', 'another string'],
+                      [u'a unicode', 'another string'],
+                      [{'j': [False, True]}],
+                      [{'A': [], 'B': {}}],
+                      [{'B': ['C',b'D', u'E', ('Ff', 'Gg'), {'H': ['h', 'hh', 'hhh']}]}],
+                      ]
+
+    test_data_fails = [Ellipsis,
+                       set([])]
+
+    def test_remove_values(self):
+        for in_value in self.test_data_list:
+            yield self.verify, in_value
+
+    def verify(self, in_value):
+        """Feed in in_value and verify that all the returns items are stringtypes"""
+        rvg = basic.return_values(in_value)
+        for rv in rvg:
+            assert isinstance(rv, basestring), 'return_values fail for in_value=%s' % in_value
+
+    def test_remove_values_fail(self):
+        for in_value in self.test_data_fails:
+            yield self.verify_type_error, in_value
+
+    def verify_type_error(self, in_value):
+        rvg = basic.return_values(in_value)
+        try:
+            for rv in rvg:
+                assert isinstance(rv, basestring), 'remove_values fail'
+        except TypeError:
+            return
+        assert False, 'Expected return_value(%s) to raise a TypeError but it did not.' % in_value
+
+
+class BaseTestModuleUtilsBasic(unittest.TestCase):
+
+    def setUp(self):
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
 
 class TestModuleUtilsBasic(ModuleTestCase):
+
+
+class TestModuleUtilsBasic(BaseTestModuleUtilsBasic):
 
     def clear_modules(self, mods):
         for mod in mods:
@@ -279,10 +396,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None
-            am = basic.AnsibleModule(
-                argument_spec=arg_spec,
-                mutually_exclusive=mut_ex,
-                required_together=req_to,
+            basic.AnsibleModule(
+                argument_spec = arg_spec,
+                mutually_exclusive = mut_ex,
+                required_together = req_to,
                 no_log=True,
                 check_invalid_arguments=False,
                 add_file_common_args=True,
@@ -436,6 +553,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
             with patch('os.path.realpath', return_value='/path/to/real_file'):
                 res = am.load_file_common_arguments(params=extended_params)
                 self.assertEqual(res, final_params)
+
+
+class TestModuleUtilsBasicSelinux(BaseTestModuleUtilsBasic):
 
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):
         from ansible.module_utils import basic
@@ -623,6 +743,20 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
                 self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
                 self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
+
+
+class TestModuleUtilsBasicFileSystem(BaseTestModuleUtilsBasic):
+
+    def test_module_utils_basic_ansible_module_to_filesystem_str(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec = dict(),
+        )
+
+        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
+        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
 
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
