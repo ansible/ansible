@@ -327,20 +327,19 @@ class VariableManager:
                 for role in play.get_roles():
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
+        if host:
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
+
         if task:
             if task._role:
                 all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
                 all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
             all_vars = combine_vars(all_vars, task.get_vars())
 
-        if host:
-            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
-            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
-
-        # special case for include tasks, where the include params
-        # may be specified in the vars field for the task, which should
-        # have higher precedence than the vars/np facts above
-        if task:
+            # special case for include tasks, where the include params
+            # may be specified in the vars field for the task, which should
+            # have higher precedence than the vars/np facts above
             all_vars = combine_vars(all_vars, task.get_include_params())
 
         all_vars = combine_vars(all_vars, self._extra_vars)

@@ -801,11 +801,11 @@ In 2.x, we have made the order of precedence more specific (with the last listed
   * playbook group_vars
   * playbook host_vars
   * host facts
-  * registered vars
-  * set_facts
   * play vars
   * play vars_prompt
   * play vars_files
+  * registered vars
+  * set_facts
   * role and include vars
   * block vars (only for tasks in block)
   * task vars (only for the task)
