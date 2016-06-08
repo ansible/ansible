@@ -134,11 +134,11 @@ EXAMPLES = r"""
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     content: ""
 
-- name: insert/update "Match User" configuation block in /etc/ssh/sshd_config
+- name: Add mappings to /etc/hosts
   blockinfile:
     dest: /etc/hosts
     block: |
-      {{item.name}} {{item.ip}}
+      {{item.ip}} {{item.name}}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{item.name}}"
   with_items:
       - { name: host1, ip: 10.10.1.10 }
