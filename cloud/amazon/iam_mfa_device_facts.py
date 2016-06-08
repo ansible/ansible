@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: aws_mfa_devices
+module: iam_mfa_device_facts
 short_description: List the MFA (Multi-Factor Authentication) devices registered for a user
 description:
     - List the MFA (Multi-Factor Authentication) devices registered for a user
@@ -37,7 +37,7 @@ requirements:
 '''
 
 RETURN = """
-devices:
+mfa_devices:
     description: The MFA devices registered for the given user
     returned: always
     type: list
@@ -48,22 +48,18 @@ devices:
       - enable_date: "2016-03-11T23:25:37+00:00"
         serial_number: arn:aws:iam::085120003702:mfa/pwnall
         user_name: pwnall
-changed:
-    description: True if listing the devices succeeds
-    type: bool
-    returned: always
 """
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # List MFA devices (more details: http://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADevices.html)
-aws_mfa_devices:
+iam_mfa_device_facts:
 register: mfa_devices
 
 # Assume an existing role (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
 sts_assume_role:
-  mfa_serial_number: "{{ mfa_devices.devices[0].serial_number }}"
+  mfa_serial_number: "{{ mfa_devices.mfa_devices[0].serial_number }}"
   role_arn: "arn:aws:iam::123456789012:role/someRole"
   role_session_name: "someRoleSession"
 register: assumed_role
@@ -77,16 +73,6 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def normalize_mfa_device(mfa_device):
-    serial_number = mfa_device.get('SerialNumber', None)
-    user_name = mfa_device.get('UserName', None)
-    enable_date = mfa_device.get('EnableDate', None)
-    return {
-        'serial_number': serial_number,
-        'user_name': user_name,
-        'enable_date': enable_date
-    }
-
 def list_mfa_devices(connection, module):
     user_name = module.params.get('user_name')
     changed = False
@@ -96,27 +82,24 @@ def list_mfa_devices(connection, module):
         args['UserName'] = user_name
     try:
         response = connection.list_mfa_devices(**args)
-        changed = True
-    except ClientError, e:
-        module.fail_json(msg=e)
+    except ClientError as e:
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    mfa_devices = response.get('MFADevices', [])
-    devices = [normalize_mfa_device(mfa_device) for mfa_device in mfa_devices]
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
 
-    module.exit_json(changed=changed, devices=devices)
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            user_name = dict(required=False, default=None)
+            user_name=dict(required=False, default=None)
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required.')
+        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if region:
