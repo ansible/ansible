@@ -191,11 +191,12 @@ EXAMPLES = '''
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
     load_path: my_sinatra.tar
+    push: True
 '''
 
 RETURN = '''
 image:
-    description: Image inspection results for the affected image. 
+    description: Image inspection results for the affected image.
     returned: success
     type: complex
     sample: {}
@@ -236,7 +237,7 @@ class ImageManager(DockerBaseClass):
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
         self.http_timeout = parameters.get('http_timeout')
-        self.debug = parameters.get('debug') 
+        self.debug = parameters.get('debug')
         self.push = False
 
         if self.state in ['present', 'build']:
@@ -275,7 +276,6 @@ class ImageManager(DockerBaseClass):
                 if not os.path.isfile(self.load_path):
                     self.fail("Error loading image %s. Specified path %s does not exist." % (self.name,
                                                                                              self.load_path))
-                self.push = True
                 image_name = self.name
                 if self.tag:
                     image_name = "%s:%s" % (self.name, self.tag)
