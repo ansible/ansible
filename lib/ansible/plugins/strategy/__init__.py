@@ -120,7 +120,7 @@ class StrategyBase:
     def run(self, iterator, play_context, result=True):
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
-        failed_hosts      = self._tqm._failed_hosts.keys()
+        failed_hosts      = iterator.get_failed_hosts()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         display.debug("running handlers")
@@ -128,18 +128,20 @@ class StrategyBase:
 
         # now update with the hosts (if any) that failed or were
         # unreachable during the handler execution phase
-        failed_hosts      = set(failed_hosts).union(self._tqm._failed_hosts.keys())
+        failed_hosts      = set(failed_hosts).union(iterator.get_failed_hosts())
         unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
 
         # return the appropriate code, depending on the status hosts after the run
-        if len(unreachable_hosts) > 0:
-            return 3
+        if not isinstance(result, bool) and result != self._tqm.RUN_OK:
+            return result
+        elif len(unreachable_hosts) > 0:
+            return self._tqm.RUN_UNREACHABLE_HOSTS
         elif len(failed_hosts) > 0:
-            return 2
-        elif not result:
-            return 1
+            return self._tqm.RUN_FAILED_HOSTS
+        elif isinstance(result, bool) and not result:
+            return self._tqm.RUN_ERROR
         else:
-            return 0
+            return self._tqm.RUN_OK
 
     def get_hosts_remaining(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts)

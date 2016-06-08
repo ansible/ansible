@@ -271,7 +271,7 @@ class StrategyModule(StrategyBase):
                 if not work_to_do and len(iterator.get_failed_hosts()) > 0:
                     display.debug("out of hosts to run on")
                     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                    result = False
+                    result = self._tqm.RUN_ERROR
                     break
 
                 try:
@@ -284,7 +284,7 @@ class StrategyModule(StrategyBase):
                         variable_manager=self._variable_manager
                     )
                 except AnsibleError as e:
-                    return False
+                    return self._tqm.RUN_ERROR
 
                 include_failure = False
                 if len(included_files) > 0:
@@ -354,13 +354,15 @@ class StrategyModule(StrategyBase):
                         failed_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
-                if any_errors_fatal and len(failed_hosts) > 0:
+                if any_errors_fatal and (len(failed_hosts) > 0 or len(self._tqm._unreachable_hosts.keys()) > 0):
                     for host in hosts_left:
                         # don't double-mark hosts, or the iterator will potentially
                         # fail them out of the rescue/always states
                         if host.name not in failed_hosts:
                             self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
+                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    return self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
@@ -374,12 +376,14 @@ class StrategyModule(StrategyBase):
                             if host.name not in failed_hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
+                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                        return self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for max_fail_percentage")
 
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
-                return False
+                return self._tqm.RUN_UNKNOWN_ERROR
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
