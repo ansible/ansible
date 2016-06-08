@@ -527,7 +527,12 @@ class Ec2Inventory(object):
             instance_ids = []
             for reservation in reservations:
                 instance_ids.extend([instance.id for instance in reservation.instances])
-            tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids})
+
+            max_filter_value = 199
+            tags = []
+            for i in range(0, len(instance_ids), max_filter_value):
+                tags.extend(conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[i:i+max_filter_value]}))
+
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
                 tags_by_instance_id[tag.res_id][tag.name] = tag.value
