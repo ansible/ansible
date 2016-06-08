@@ -64,12 +64,17 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), 0)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 1)
+        mock_host = MagicMock()
+        mock_host.name = 'host1'
+
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), mock_tqm.RUN_OK)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), mock_tqm.RUN_ERROR)
         mock_tqm._failed_hosts = dict(host1=True)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 2)
+        mock_iterator.get_failed_hosts.return_value = [mock_host]
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), mock_tqm.RUN_FAILED_HOSTS)
         mock_tqm._unreachable_hosts = dict(host1=True)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 3)
+        mock_iterator.get_failed_hosts.return_value = []
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), mock_tqm.RUN_UNREACHABLE_HOSTS)
 
     def test_strategy_base_get_hosts(self):
         mock_hosts = []

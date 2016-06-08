@@ -141,6 +141,11 @@ class PlaybookExecutor:
                             # and run it...
                             result = self._tqm.run(play=play)
 
+                            # break the play if the result equals the special return code
+                            if result == self._tqm.RUN_FAILED_BREAK_PLAY:
+                                result = self._tqm.RUN_FAILED_HOSTS
+                                break_play = True
+
                             # check the number of failures here, to see if they're above the maximum
                             # failure percentage allowed, or if any errors are fatal. If either of those
                             # conditions are met, we break out, otherwise we only break out if the entire
@@ -159,7 +164,7 @@ class PlaybookExecutor:
 
                             # if the last result wasn't zero or 3 (some hosts were unreachable),
                             # break out of the serial batch loop
-                            if result not in (0, 3):
+                            if result not in (self._tqm.RUN_OK, self._tqm.RUN_UNREACHABLE_HOSTS):
                                 break
 
                         if break_play:

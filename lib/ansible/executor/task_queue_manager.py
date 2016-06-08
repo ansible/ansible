@@ -58,6 +58,13 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
+    RUN_OK                = 0
+    RUN_ERROR             = 1
+    RUN_FAILED_HOSTS      = 2
+    RUN_UNREACHABLE_HOSTS = 3
+    RUN_FAILED_BREAK_PLAY = 4
+    RUN_UNKNOWN_ERROR     = 255
+
     def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
         self._inventory        = inventory
