@@ -2568,7 +2568,7 @@ class LinuxNetwork(Network):
             if v == 'v6' and self.facts['os_family'] == 'RedHat' \
                 and (self.facts['distribution_version'].startswith('4.') \
                      or (self.facts['distribution_version'].startswith('4') \
-                         and self.facts['kernel'].startswith('2.6.9'))):
+                         and self.facts['kernel'].startswith('2.6.9-'))):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue
