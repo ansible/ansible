@@ -55,7 +55,18 @@ options:
       - When creating or updating, specify the desired path of the resource. If state is present, it will replace the current path to match what is passed in when they do not match.
     required: false
     default: "/"
-    aliases: []
+  trust_policy:
+    description:
+      - The inline (JSON or YAML) trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy_filepath).
+    required: false
+    default: null
+    version_added: "2.2"
+  trust_policy_filepath:
+    description:
+      - The path to the trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy).
+    required: false
+    default: null
+    version_added: "2.2"
   access_key_state:
     description:
       - When type is user, it creates, removes, deactivates or activates a user's access key(s). Note that actions apply only to keys specified.
@@ -132,6 +143,20 @@ task:
     state: update
     groups: "{{ item.created_group.group_name }}"
   with_items: new_groups.results
+
+# Example of role with custom trust policy for Lambda service
+- name: Create IAM role with custom trust relationship
+  iam:
+    iam_type: role
+    name: AAALambdaTestRole
+    state: present
+    trust_policy:
+      Version: '2012-10-17'
+      Statement:
+      - Action: sts:AssumeRole
+        Effect: Allow
+        Principal:
+          Service: lambda.amazonaws.com
 
 '''
 
@@ -469,15 +494,16 @@ def update_group(module=None, iam=None, name=None, new_name=None, new_path=None)
     return changed, name, new_path, current_group_path
 
 
-def create_role(module, iam, name, path, role_list, prof_list):
+def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc):
     changed = False
     iam_role_result = None
     instance_profile_result = None
     try:
         if name not in role_list:
             changed = True
-            iam_role_result = iam.create_role(
-                name, path=path).create_role_response.create_role_result.role
+            iam_role_result = iam.create_role(name,
+                assume_role_policy_document=trust_policy_doc,
+                path=path).create_role_response.create_role_result.role.role_name
 
             if name not in prof_list:
                 instance_profile_result = iam.create_instance_profile(name, 
@@ -552,6 +578,8 @@ def main():
         access_key_ids=dict(type='list', default=None, required=False),
         key_count=dict(type='int', default=1, required=False),
         name=dict(default=None, required=False),
+        trust_policy_filepath=dict(default=None, required=False),
+        trust_policy=dict(type='dict', default=None, required=False),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False)
@@ -560,7 +588,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[],
+        mutually_exclusive=[['trust_policy', 'trust_policy_filepath']],
     )
 
     if not HAS_BOTO:
@@ -577,7 +605,10 @@ def main():
     new_path = module.params.get('new_path')
     key_count = module.params.get('key_count')
     key_state = module.params.get('access_key_state')
+    trust_policy = module.params.get('trust_policy')
+    trust_policy_filepath = module.params.get('trust_policy_filepath')
     key_ids = module.params.get('access_key_ids')
+
     if key_state:
         key_state = key_state.lower()
         if any([n in key_state for n in ['active', 'inactive']]) and not key_ids:
@@ -600,6 +631,21 @@ def main():
     if iam_type == 'role' and state == 'update':
         module.fail_json(changed=False, msg="iam_type: role, cannot currently be updated, "
                              "please specificy present or absent")
+
+    # check if trust_policy is present -- it can be inline JSON or a file path to a JSON file
+    if trust_policy_filepath:
+        try:
+            with open(trust_policy_filepath, 'r') as json_data:
+                trust_policy_doc = json.dumps(json.load(json_data))
+        except Exception as e:
+            module.fail_json(msg=str(e) + ': ' + trust_policy_filepath)
+    elif trust_policy:
+        try:
+            trust_policy_doc = json.dumps(trust_policy)
+        except Exception as e:
+            module.fail_json(msg=str(e) + ': ' + trust_policy)
+    else:
+        trust_policy_doc = None
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -741,7 +787,7 @@ def main():
         role_list = []
         if state == 'present':
             changed, role_list, role_result, instance_profile_result = create_role(
-                module, iam, name, path, orig_role_list, orig_prof_list)
+                module, iam, name, path, orig_role_list, orig_prof_list, trust_policy_doc)
         elif state == 'absent':
             changed, role_list, role_result, instance_profile_result = delete_role(
                 module, iam, name, orig_role_list, orig_prof_list)
