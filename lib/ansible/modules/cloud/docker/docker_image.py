@@ -474,18 +474,21 @@ class ImageManager(DockerBaseClass):
         :return: image dict
         '''
         try:
-            self.log("Reading image data from %s" % self.load_path)
+            self.log("Opening image %s" % self.load_path)
             image_tar = open(self.load_path, 'r')
-            image_data = image_tar.read()
-            image_tar.close()
         except Exception as exc:
-            self.fail("Error reading image data %s - %s" % (self.load_path, str(exc)))
+            self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
 
         try:
             self.log("Loading image from %s" % self.load_path)
-            self.client.load_image(image_data)
+            self.client.load_image(image_tar)
         except Exception as exc:
             self.fail("Error loading image %s - %s" % (self.name, str(exc)))
+
+        try:
+            image_tar.close()
+        except Exception as exc:
+            self.fail("Error closing image %s - %s" % (self.name, str(exc)))
 
         return self.client.find_image(self.name, self.tag)
 
