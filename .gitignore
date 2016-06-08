@@ -62,3 +62,4 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
+/test/integration/.coveragerc

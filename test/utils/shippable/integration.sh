@@ -12,6 +12,7 @@ http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
 keep_containers="${KEEP_CONTAINERS:-}"
 copy_source="${COPY_SOURCE:-}"
+skip_coverage="${SKIP_COVERAGE:-}"
 
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
@@ -79,6 +80,35 @@ container_id=$(docker run -d \
 
 show_environment
 
+if [ ! "${skip_coverage}" ]; then
+    coverage_file="COVERAGE_FILE=\"/tmp/coverage/integration\""
+    coverage_path="PATH=\"${test_ansible_dir}/test/utils/shippable/coverage:\${PATH}\""
+
+    docker exec "${container_id}" /bin/sh -c "cat << EOF > \"${test_ansible_dir}/test/integration/.coveragerc\"
+[run]
+branch=True
+parallel=True
+concurrency=multiprocessing
+source=
+    ${test_ansible_dir}/bin/
+    ${test_ansible_dir}/lib/
+include=
+    ${test_ansible_dir}/bin/*
+    ${test_ansible_dir}/lib/*
+EOF
+"
+
+    docker exec "${container_id}" mkdir -p "/tmp/coverage"
+    docker exec "${container_id}" pip install coverage --upgrade
+    docker exec "${container_id}" /bin/sh -c "
+        if which python-coverage && ! which coverage; then \
+            ln -s \"\$(which python-coverage)\" \"/bin/coverage\"
+        fi"
+else
+    coverage_file=""
+    coverage_path=""
+fi
+
 docker exec "${container_id}" pip install junit-xml
 
 if [ "${copy_source}" ]; then
@@ -88,4 +118,14 @@ fi
 docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults"
 docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
+    ${coverage_file} \
+    ${coverage_path} \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
+
+if [ ! "${skip_coverage}" ]; then
+    docker exec "${container_id}" /bin/sh -c "export ${coverage_file}; \
+        cd '${test_ansible_dir}/test/integration'; \
+        coverage debug sys; \
+        coverage combine; \
+        coverage xml -o '${test_shared_dir}/shippable/codecoverage/integration.xml'"
+fi
