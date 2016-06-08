@@ -152,6 +152,7 @@ Set-Attr $date "weeknumber" (Get-Date -UFormat "%W")
 Set-Attr $date "year" $datetime.ToString("yyyy")
 Set-Attr $result.ansible_facts "ansible_date_time" $date
 
+# Win32_PhysicalMemory is empty on some virtual platforms
 Set-Attr $result.ansible_facts "ansible_memtotal_mb" ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
 Set-Attr $result.ansible_facts "ansible_swaptotal_mb" ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
 
