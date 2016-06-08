@@ -17,6 +17,8 @@ Ansible Changes By Release
   * cs_snapshot_policy
 - letsencrypt
 - netconf_config
+- openstack
+  * os_keystone_service.py
 - sensu_subscription
 - smartos
   * smartos_image_facts
