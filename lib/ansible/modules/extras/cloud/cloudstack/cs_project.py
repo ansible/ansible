@@ -53,6 +53,13 @@ options:
       - Account the project is related to.
     required: false
     default: null
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    version_added: "2.2"
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -66,6 +73,9 @@ EXAMPLES = '''
 - local_action:
     module: cs_project
     name: web
+    tags:
+      - { key: admin, value: john }
+      - { key: foo,   value: bar }
 
 # Rename a project
 - local_action:
@@ -167,6 +177,10 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             project = self.create_project(project)
         else:
             project = self.update_project(project)
+        if project:
+            project = self.ensure_tags(resource=project, resource_type='project')
+            # refresh resource
+            self.project = project
         return project
 
 
@@ -266,7 +280,8 @@ def main():
         state = dict(choices=['present', 'absent', 'active', 'suspended' ], default='present'),
         domain = dict(default=None),
         account = dict(default=None),
-        poll_async = dict(type='bool', choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(
