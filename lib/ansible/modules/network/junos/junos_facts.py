@@ -37,8 +37,8 @@ options:
         is then included in return facts.  By default, the configuration
         is returned as text.  The C(config_format) can be used to return
         different Junos configuration formats.
-    required: true
-    default: false
+    required: false
+    default: null
   config_format:
     description:
       - The C(config_format) argument is used to specify the desired
@@ -90,7 +90,7 @@ def main():
     """ Main entry point for AnsibleModule
     """
     spec = dict(
-        config=dict(required=True, type='bool'),
+        config=dict(type='bool'),
         config_format=dict(default='text', choices=['xml', 'set', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
     )
@@ -108,7 +108,7 @@ def main():
 
     facts['version_info'] = dict(facts['version_info'])
 
-    if module.params['config']:
+    if module.params['config'] is True:
         config_format = module.params['config_format']
         resp_config = module.get_config( config_format=config_format)
 
