@@ -128,7 +128,7 @@ Set-Attr $result.ansible_facts "ansible_user_uid" ([int] $user.User.Value.Substr
 Set-Attr $result.ansible_facts "ansible_user_sid" $user.User.Value
 
 # Use English locale
-[System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+$culture = New-Object System.Globalization.CultureInfo('en-US')
 $date = New-Object psobject
 $datetime = (Get-Date)
 $datetime_utc = $datetime.ToUniversalTime()
@@ -146,7 +146,7 @@ Set-Attr $date "second" $datetime.ToString("ss")
 Set-Attr $date "time" $datetime.ToString("HH:mm:ss")
 Set-Attr $date "tz_offset" $datetime.ToString("zzzz")
 Set-Attr $date "tz" ([System.TimeZoneInfo]::Local.Id)
-Set-Attr $date "weekday" $datetime.ToString("dddd")
+Set-Attr $date "weekday" $datetime.ToString("dddd", $culture)
 Set-Attr $date "weekday_number" (Get-Date -UFormat "%w")
 Set-Attr $date "weeknumber" (Get-Date -UFormat "%W")
 Set-Attr $date "year" $datetime.ToString("yyyy")
