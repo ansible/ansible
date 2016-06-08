@@ -55,6 +55,8 @@ if ($factpath -ne $null) {
 $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
 $win32_bios = Get-CimInstance Win32_Bios
+$win32_cpu = Get-CimInstance Win32_Processor
+
 $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
 $osversion = [Environment]::OSVersion
 $user = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -79,6 +81,12 @@ foreach ($adapter in $ActiveNetcfg)
     $formattednetcfg += $thisadapter;$thisadapter = $null
 }
 
+$cpu_list = @( )
+for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors); $i++) {
+    $cpu_list += $win32_cpu.Manufacturer
+    $cpu_list += $win32_cpu.Name
+}
+
 Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
 
 Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
@@ -87,8 +95,11 @@ Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate.ToStr
 Set-Attr $result.ansible_facts "ansible_bios_version" $win32_bios.SMBIOSBIOSVersion
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME
 Set-Attr $result.ansible_facts "ansible_fqdn" ($ip_props.Hostname + "." + $ip_props.DomainName)
+Set-Attr $result.ansible_facts "ansible_processor" $cpu_list
+Set-Attr $result.ansible_facts "ansible_processor_cores" $win32_cpu.NumberOfCores
 Set-Attr $result.ansible_facts "ansible_processor_count" $win32_cs.NumberOfProcessors
-Set-Attr $result.ansible_facts "ansible_processor_vcpus" ($win32_cs.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
+Set-Attr $result.ansible_facts "ansible_processor_threads_per_core" ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors / $win32_cpu.NumberOfCores)
+Set-Attr $result.ansible_facts "ansible_processor_vcpus" ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
 Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model.Trim()
 Set-Attr $result.ansible_facts "ansible_product_serial" $win32_bios.SerialNumber
 Set-Attr $result.ansible_facts "ansible_product_version" ([string] $win32_cs.SystemFamily)
@@ -199,6 +210,7 @@ if ($winrm_cert_expiry)
 
 $PendingReboot = Get-PendingRebootStatus
 Set-Attr $result.ansible_facts "ansible_reboot_pending" $PendingReboot
+
 Set-Attr $result.ansible_facts "module_setup" $true
 
 # See if Facter is on the System Path
