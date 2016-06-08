@@ -62,7 +62,11 @@ class HostVars(collections.Mapping):
         self._inventory = inventory
 
     def _find_host(self, host_name):
-        return self._inventory.get_host(host_name)
+        if host_name in C.LOCALHOST:
+            host = self._inventory.localhost
+        else:
+            host = self._inventory.get_host(host_name)
+        return host
 
     def __getitem__(self, host_name):
         host = self._find_host(host_name)
