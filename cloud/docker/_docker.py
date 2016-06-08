@@ -745,10 +745,6 @@ class DockerManager(object):
         if self.module.params.get('links'):
             self.links = self.get_links(self.module.params.get('links'))
 
-        env = self.module.params.get('env', None)
-        env_file = self.module.params.get('env_file', None)
-        self.environment = self.get_environment(env, env_file)
-
         self.ulimits = None
         if self.module.params.get('ulimits'):
             self.ulimits = []
@@ -846,6 +842,10 @@ class DockerManager(object):
                                     timeout=timeout)
 
         self.docker_py_versioninfo = get_docker_py_versioninfo()
+
+        env = self.module.params.get('env', None)
+        env_file = self.module.params.get('env_file', None)
+        self.environment = self.get_environment(env, env_file)
 
     def _check_capabilities(self):
         """
