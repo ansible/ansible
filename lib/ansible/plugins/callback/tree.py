@@ -23,7 +23,7 @@ import os
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes
-from ansible.constants import TREE_DIR
+
 
 
 class CallbackModule(CallbackBase):
@@ -39,6 +39,8 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
+        from ansible.constants import TREE_DIR
+        
         self.tree = TREE_DIR
         if not self.tree:
             self.tree = os.path.expanduser("~/.ansible/tree")
