@@ -268,7 +268,6 @@ class ImageManager(DockerBaseClass):
                 self.log("Building image %s" % image_name)
                 self.results['actions'].append("Built image %s from %s" % (image_name, self.path))
                 self.results['changed'] = True
-                self.push = True
                 if not self.check_mode:
                     self.results['image'] = self.build_image()
             elif self.load_path:
