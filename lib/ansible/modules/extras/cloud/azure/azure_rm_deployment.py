@@ -79,14 +79,6 @@ options:
         one of them is required if "state" parameter is "present".
     required: false
     default: null
-  deployment_mode:
-    description:
-      - Specifies whether the deployment template should delete resources not specified in the template (complete)
-        or ignore them (incremental).
-    default: complete
-    choices:
-      - complete
-      - incremental
   deployment_name:
     description:
       - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
