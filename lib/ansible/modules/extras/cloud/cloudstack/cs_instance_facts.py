@@ -178,12 +178,6 @@ cloudstack_instance.instance_name:
 
 import base64
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -269,9 +263,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=False,
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     cs_instance_facts = AnsibleCloudStackInstanceFacts(module=module).run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_instance_facts)

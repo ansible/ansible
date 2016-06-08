@@ -111,12 +111,6 @@ account:
   sample: example account
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -200,9 +194,6 @@ def main():
         required_together=cs_required_together(),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_sg = AnsibleCloudStackSecurityGroup(module)
