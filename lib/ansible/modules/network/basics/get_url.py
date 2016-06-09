@@ -182,13 +182,13 @@ EXAMPLES='''
   get_url: url="file:///tmp/afile.txt" dest=/tmp/afilecopy.txt  
 '''
 
-import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
 
 # ==============================================================
 # url handling
 
 def url_filename(url):
-    fn = os.path.basename(urlparse.urlsplit(url)[2])
+    fn = os.path.basename(urlsplit(url)[2])
     if fn == '':
         return 'index.html'
     return fn
