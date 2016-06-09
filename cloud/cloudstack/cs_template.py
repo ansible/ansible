@@ -476,7 +476,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    template = self._poll_job(template, 'template')
+                    template = self.poll_job(template, 'template')
         return template
 
 
@@ -564,7 +564,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                template = self._poll_job(template, 'template')
+                template = self.poll_job(template, 'template')
         return template
 
 
@@ -587,7 +587,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    res = self._poll_job(res, 'template')
+                    res = self.poll_job(res, 'template')
         return template
 
 

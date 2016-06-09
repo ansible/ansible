@@ -305,7 +305,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             portforwarding_rule = self.cs.createPortForwardingRule(**args)
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                portforwarding_rule = self._poll_job(portforwarding_rule, 'portforwardingrule')
+                portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
 
 
@@ -329,7 +329,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
                 portforwarding_rule = self.cs.createPortForwardingRule(**args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    portforwarding_rule = self._poll_job(portforwarding_rule, 'portforwardingrule')
+                    portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
 
 
@@ -345,7 +345,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
                 res = self.cs.deletePortForwardingRule(**args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    self._poll_job(res, 'portforwardingrule')
+                    self.poll_job(res, 'portforwardingrule')
         return portforwarding_rule
 
 

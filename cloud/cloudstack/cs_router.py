@@ -227,7 +227,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def stop_router(self):
@@ -248,7 +248,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def reboot_router(self):
@@ -268,7 +268,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def absent_router(self):
@@ -287,7 +287,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    self._poll_job(res, 'router')
+                    self.poll_job(res, 'router')
             return router
 
 
