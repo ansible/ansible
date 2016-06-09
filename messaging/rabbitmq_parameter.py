@@ -96,12 +96,17 @@ class RabbitMqParameter(object):
             component, name, value = param_item.split('\t')
 
             if component == self.component and name == self.name:
-                self._value = value
+                self._value = json.loads(value)
                 return True
         return False
 
     def set(self):
-        self._exec(['set_parameter', '-p', self.vhost, self.component, self.name, self.value])
+        self._exec(['set_parameter',
+                    '-p',
+                    self.vhost,
+                    self.component,
+                    self.name,
+                    json.dumps(self.value)])
 
     def delete(self):
         self._exec(['clear_parameter', '-p', self.vhost, self.component, self.name])
@@ -126,8 +131,8 @@ def main():
     component = module.params['component']
     name = module.params['name']
     value = module.params['value']
-    if not isinstance(value, str):
-        value = json.dumps(value)
+    if isinstance(value, str):
+        value = json.loads(value)
     vhost = module.params['vhost']
     state = module.params['state']
     node = module.params['node']
