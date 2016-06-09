@@ -108,7 +108,7 @@ Set-Attr $result.ansible_facts "ansible_system_description" ([string] $win32_os.
 Set-Attr $result.ansible_facts "ansible_system_vendor" $win32_cs.Manufacturer
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_os_name" ($win32_os.Name.Split('|')[0]).Trim()
-Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
+Set-Attr $result.ansible_facts "ansible_distribution" $win32_os.Caption
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
 Set-Attr $result.ansible_facts "ansible_distribution_major_version" $osversion.Version.Major.ToString()
 Set-Attr $result.ansible_facts "ansible_kernel" $osversion.Version.ToString()
@@ -127,8 +127,6 @@ Set-Attr $result.ansible_facts "ansible_user_id" $env:username
 Set-Attr $result.ansible_facts "ansible_user_uid" ([int] $user.User.Value.Substring(42))
 Set-Attr $result.ansible_facts "ansible_user_sid" $user.User.Value
 
-# Use English locale
-$culture = New-Object System.Globalization.CultureInfo('en-US')
 $date = New-Object psobject
 $datetime = (Get-Date)
 $datetime_utc = $datetime.ToUniversalTime()
@@ -146,7 +144,8 @@ Set-Attr $date "second" $datetime.ToString("ss")
 Set-Attr $date "time" $datetime.ToString("HH:mm:ss")
 Set-Attr $date "tz_offset" $datetime.ToString("zzzz")
 Set-Attr $date "tz" ([System.TimeZoneInfo]::Local.Id)
-Set-Attr $date "weekday" $datetime.ToString("dddd", $culture)
+# Ensure that the weekday is in English
+Set-Attr $date "weekday" $datetime.ToString("dddd", [System.Globalization.CultureInfo]::InvariantCulture)
 Set-Attr $date "weekday_number" (Get-Date -UFormat "%w")
 Set-Attr $date "weeknumber" (Get-Date -UFormat "%W")
 Set-Attr $date "year" $datetime.ToString("yyyy")
