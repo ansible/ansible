@@ -422,7 +422,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         args        = self._get_args()
         args['id']  = network['id']
 
-        if self._has_changed(args, network):
+        if self.has_changed(args, network):
             self.result['changed'] = True
             if not self.module.check_mode:
                 network = self.cs.updateNetwork(**args)

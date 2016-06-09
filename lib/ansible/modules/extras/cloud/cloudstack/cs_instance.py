@@ -677,7 +677,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_service_offering['id'] = instance['id']
         if self.module.params.get('service_offering'):
             args_service_offering['serviceofferingid'] = self.get_service_offering_id()
-        service_offering_changed = self._has_changed(args_service_offering, instance)
+        service_offering_changed = self.has_changed(args_service_offering, instance)
 
         # Instance data
         args_instance_update = {}
@@ -688,7 +688,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             args_instance_update['group'] = self.module.params.get('group')
         if self.module.params.get('display_name'):
             args_instance_update['displayname'] = self.module.params.get('display_name')
-        instance_changed = self._has_changed(args_instance_update, instance)
+        instance_changed = self.has_changed(args_instance_update, instance)
 
         # SSH key data
         args_ssh_key = {}
@@ -696,7 +696,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_ssh_key['projectid'] = self.get_project(key='id')
         if self.module.params.get('ssh_key'):
             args_ssh_key['keypair'] = self.module.params.get('ssh_key')
-        ssh_key_changed = self._has_changed(args_ssh_key, instance)
+        ssh_key_changed = self.has_changed(args_ssh_key, instance)
 
         security_groups_changed = self.security_groups_has_changed()
 

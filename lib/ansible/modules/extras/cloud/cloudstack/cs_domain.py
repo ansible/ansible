@@ -201,7 +201,7 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
         args['id']              = domain['id']
         args['networkdomain']   = self.module.params.get('network_domain')
 
-        if self._has_changed(args, domain):
+        if self.has_changed(args, domain):
             self.result['changed'] = True
             if not self.module.check_mode:
                 res = self.cs.updateDomain(**args)
