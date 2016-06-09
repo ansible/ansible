@@ -432,7 +432,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
-                    network = self._poll_job(network, 'network')
+                    network = self.poll_job(network, 'network')
         return network
 
 
@@ -490,7 +490,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
-                    network = self._poll_job(network, 'network')
+                    network = self.poll_job(network, 'network')
         return network
 
 
@@ -510,7 +510,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self._poll_job(res, 'network')
+                    res = self.poll_job(res, 'network')
             return network
 
 

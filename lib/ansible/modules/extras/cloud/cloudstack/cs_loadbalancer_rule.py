@@ -327,7 +327,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                res = self._poll_job(res, 'loadbalancer')
+                res = self.poll_job(res, 'loadbalancer')
         return rule
 
 

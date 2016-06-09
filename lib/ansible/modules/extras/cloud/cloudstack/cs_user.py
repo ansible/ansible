@@ -297,7 +297,7 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    user = self._poll_job(user, 'user')
+                    user = self.poll_job(user, 'user')
         return user
 
 

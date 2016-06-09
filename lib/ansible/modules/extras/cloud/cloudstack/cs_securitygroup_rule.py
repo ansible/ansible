@@ -322,7 +322,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
-            security_group = self._poll_job(res, 'securitygroup')
+            security_group = self.poll_job(res, 'securitygroup')
             key = sg_type + "rule" # ingressrule / egressrule
             if key in security_group:
                 rule = security_group[key][0]
@@ -353,7 +353,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
-            res = self._poll_job(res, 'securitygroup')
+            res = self.poll_job(res, 'securitygroup')
         return rule
 
 

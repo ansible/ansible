@@ -193,7 +193,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if project and poll_async:
-                    project = self._poll_job(project, 'project')
+                    project = self.poll_job(project, 'project')
         return project
 
 
@@ -214,7 +214,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if project and poll_async:
-                project = self._poll_job(project, 'project')
+                project = self.poll_job(project, 'project')
         return project
 
 
@@ -238,7 +238,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if project and poll_async:
-                    project = self._poll_job(project, 'project')
+                    project = self.poll_job(project, 'project')
         return project
 
 
@@ -258,7 +258,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self._poll_job(res, 'project')
+                    res = self.poll_job(res, 'project')
             return project
 
 
