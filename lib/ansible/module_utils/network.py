@@ -19,6 +19,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
+from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
@@ -116,7 +117,102 @@ class NetworkModule(AnsibleModule):
     def commit_config(self, *args, **kwargs):
         return self.invoke(self.connection.commit_config, *args, **kwargs)
 
-def get_module(**kwargs):
+
+class NetCli(object):
+    """Basic paramiko-based ssh transport any NetworkModule can use."""
+    def __init__(self):
+        if not HAS_PARAMIKO:
+            raise NetworkError(
+                msg='paramiko is required but does not appear to be installed.  '
+                'It can be installed using  `pip install paramiko`'
+            )
+
+        self.shell = None
+
+    def connect(self, params, kickstart, **kwargs):
+        host = params['host']
+        port = params.get('port') or 22
+
+        username = params['username']
+        password = params.get('password')
+        key_file = params.get('ssh_keyfile')
+        timeout = params['timeout']
+
+        try:
+            self.shell = Shell(
+                kickstart=kickstart,
+                prompts_re=self.CLI_PROMPTS_RE,
+                errors_re=self.CLI_ERRORS_RE,
+            )
+            self.shell.open(
+                host, port=port, username=username, password=password,
+                key_filename=key_file, timeout=timeout,
+            )
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(
+                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
+            )
+
+    def disconnect(self, **kwargs):
+        self.shell.close()
+
+    def run_commands(self, commands, **kwargs):
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(exc.message, commands=commands)
+
+
+class NetCli(object):
+    """Basic paramiko-based ssh transport any NetworkModule can use."""
+    def __init__(self):
+        if not HAS_PARAMIKO:
+            raise NetworkError(
+                msg='paramiko is required but does not appear to be installed.  '
+                'It can be installed using  `pip install paramiko`'
+            )
+
+        self.shell = None
+
+    def connect(self, params, kickstart, **kwargs):
+        host = params['host']
+        port = params.get('port') or 22
+
+        username = params['username']
+        password = params.get('password')
+        key_file = params.get('ssh_keyfile')
+        timeout = params['timeout']
+
+        try:
+            self.shell = Shell(
+                kickstart=kickstart,
+                prompts_re=self.CLI_PROMPTS_RE,
+                errors_re=self.CLI_ERRORS_RE,
+            )
+            self.shell.open(
+                host, port=port, username=username, password=password,
+                key_filename=key_file, timeout=timeout,
+            )
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(
+                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
+            )
+
+    def disconnect(self, **kwargs):
+        self.shell.close()
+
+    def run_commands(self, commands, **kwargs):
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(exc.message, commands=commands)
+
+
+def get_module(connect_on_load=True, **kwargs):
     argument_spec = NET_TRANSPORT_ARGS.copy()
     argument_spec['transport']['choices'] = NET_CONNECTIONS.keys()
     argument_spec.update(NET_CONNECTION_ARGS.copy())
