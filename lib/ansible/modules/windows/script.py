@@ -1,0 +1,1 @@
+../commands/script.py
