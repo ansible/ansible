@@ -633,7 +633,8 @@ class TaskExecutor:
                 except OSError:
                     conn_type = "paramiko"
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        connection = self._shared_loader_obj.connection_loader.get(
+            conn_type, self._play_context, self._new_stdin, variables=variables)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 

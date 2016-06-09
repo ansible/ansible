@@ -28,6 +28,7 @@ import distutils.spawn
 import os
 import os.path
 import pipes
+import shlex
 import subprocess
 import re
 
@@ -36,7 +37,7 @@ from distutils.version import LooseVersion
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -55,7 +56,7 @@ class Connection(ConnectionBase):
     # Have to look into that before re-enabling this
     become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin, variables, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         # Note: docker supports running as non-root in some configurations.
@@ -69,10 +70,18 @@ class Connection(ConnectionBase):
 
         if 'docker_command' in kwargs:
             self.docker_cmd = kwargs['docker_command']
+        elif 'docker_command' in variables:
+            # Declare 'docker_command' as a host var, and it will be
+            # used here.
+            self.docker_cmd = variables['docker_command']
         else:
             self.docker_cmd = distutils.spawn.find_executable('docker')
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
+        self.docker_cmd = self._split_cmd(self.docker_cmd)
+        display.vvv(
+            'DOCKER_COMMAND: %s' % self.docker_cmd,
+            host=self._play_context.remote_addr)
 
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
@@ -100,13 +109,23 @@ class Connection(ConnectionBase):
             # This saves overhead from calling into docker when we don't need to
             self.actual_user = self._get_docker_remote_user()
 
+    def _split_cmd(self, argstring):
+        """Split a command string using shell semantics.
+
+        Shamelessly stolen from the SSH connection plugin.
+        """
+        return [
+            to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring))
+            if x.strip()]
+
     @staticmethod
     def _sanitize_version(version):
         return re.sub('[^0-9a-zA-Z\.]', '', version)
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd]
+        # Force a quick copy, don't want to mutate base command.
+        cmd = [] + self.docker_cmd
 
         if self._play_context.docker_extra_args:
             cmd += self._play_context.docker_extra_args.split(' ')
@@ -120,8 +139,8 @@ class Connection(ConnectionBase):
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
+        # NOTE(bigjools): Is this missing docker_extra_args?
+        new_docker_cmd = self.docker_cmd + [
             'version', '--format', "'{{.Server.Version}}'"
         ]
 
@@ -131,8 +150,11 @@ class Connection(ConnectionBase):
 
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
-        p = subprocess.Popen([self.docker_cmd, 'inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            self.docker_cmd + [
+                'inspect', '--format', '{{.Config.User}}',
+                self._play_context.remote_addr],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
 
@@ -150,7 +172,8 @@ class Connection(ConnectionBase):
             version we are using, it will be provided to docker exec.
         """
 
-        local_cmd = [self.docker_cmd]
+        # Force a quick copy, don't want to mutate base command.
+        local_cmd = [] + self.docker_cmd
 
         if self._play_context.docker_extra_args:
             local_cmd += self._play_context.docker_extra_args.split(' ')
@@ -240,7 +263,8 @@ class Connection(ConnectionBase):
         # file path
         out_dir = os.path.dirname(out_path)
 
-        args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = self.docker_cmd + [
+            "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
         args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
