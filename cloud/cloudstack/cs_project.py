@@ -183,7 +183,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
         args['id']          = project['id']
         args['displaytext'] = self.get_or_fallback('display_text', 'name')
 
-        if self._has_changed(args, project):
+        if self.has_changed(args, project):
             self.result['changed'] = True
             if not self.module.check_mode:
                 project = self.cs.updateProject(**args)
