@@ -206,7 +206,6 @@ EXAMPLES = '''
 
 import re
 import tempfile
-from distutils.version import LooseVersion
 
 def get_submodule_update_params(module, git_path, cwd):
 
@@ -511,7 +510,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
         if rc != 0:
             module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
-def fetch(git_path, module, repo, dest, version, remote_head, remote, depth, bare, refspec):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
@@ -524,12 +523,12 @@ def fetch(git_path, module, repo, dest, version, remote_head, remote, depth, bar
     if depth:
         # try to find the minimal set of refs we need to fetch to get a
         # successful checkout
-        currenthead = get_head_branch(git_path, module, dest, remote)
         if refspec:
             refspecs.append(refspec)
         elif version == 'HEAD':
-            refspecs.append(currenthead)
+            refspecs.append('HEAD')
         elif is_remote_branch(git_path, module, dest, repo, version):
+            currenthead = get_head_branch(git_path, module, dest, remote)
             if currenthead != version:
                 # this workaroung is only needed for older git versions
                 # 1.8.3 is broken, 1.9.x works
@@ -542,7 +541,6 @@ def fetch(git_path, module, repo, dest, version, remote_head, remote, depth, bar
             refspecs.append('+refs/tags/'+version+':refs/tags/'+version)
         if refspecs:
             # if refspecs is empty, i.e. version is neither heads nor tags
-            # assume it is a version hash
             # fall back to a full clone, otherwise we might not be able to checkout
             # version
             fetch_cmd.extend(['--depth', str(depth)])
@@ -705,20 +703,6 @@ def verify_commit_sign(git_path, module, dest, version):
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
     return (rc, out, err)
 
-
-def git_version(git_path, module):
-    """return the installed version of git"""
-    cmd = "%s --version" % git_path
-    (rc, out, err) = module.run_command(cmd)
-    if rc != 0:
-        # one could fail_json here, but the version info is not that important, so let's try to fail only on actual git commands
-        return None
-    rematch = re.search('git version (.*)$', out)
-    if not rematch:
-        return None
-    return LooseVersion(rematch.groups()[0])
-
-
 # ===========================================
 
 def main():
@@ -762,9 +746,6 @@ def main():
     key_file  = module.params['key_file']
     ssh_opts  = module.params['ssh_opts']
 
-    return_values = {}
-    return_values['warnings'] = []
-
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
@@ -794,14 +775,11 @@ def main():
             add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     else:
         add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-    git_version_used = git_version(git_path, module)
-
-    if depth is not None and git_version_used < LooseVersion('1.8.2'):
-        return_values['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
-        depth = None
 
     recursive = module.params['recursive']
     track_submodules = module.params['track_submodules']
+
+    rc, out, err, status = (0, None, None, None)
 
     before = None
     local_mods = False
@@ -813,7 +791,7 @@ def main():
         # In those cases we do an ls-remote
         if module.check_mode or not allow_clone:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
-            module.exit_json(changed=True, before=before, after=remote_head, **return_values)
+            module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
         repo_updated = True
@@ -822,7 +800,7 @@ def main():
         # this does no checking that the repo is the actual repo
         # requested.
         before = get_version(module, git_path, dest)
-        module.exit_json(changed=False, before=before, after=before, **return_values)
+        module.exit_json(changed=False, before=before, after=before)
     else:
         # else do a pull
         local_mods = has_local_mods(module, git_path, dest, bare)
@@ -830,7 +808,7 @@ def main():
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
-                module.fail_json(msg="Local modifications exist in repository (force=no).", **return_values)
+                module.fail_json(msg="Local modifications exist in repository (force=no).")
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
@@ -840,7 +818,7 @@ def main():
         if before == remote_head:
             if local_mods:
                 module.exit_json(changed=True, before=before, after=remote_head,
-                    msg="Local modifications exist", **return_values)
+                    msg="Local modifications exist")
             elif is_remote_tag(git_path, module, dest, repo, version):
                 # if the remote is a tag and we have the tag locally, exit early
                 if version in get_tags(git_path, module, dest):
@@ -851,8 +829,8 @@ def main():
                     repo_updated = False
         if repo_updated is None:
             if module.check_mode:
-                module.exit_json(changed=True, before=before, after=remote_head, **return_values)
-            fetch(git_path, module, repo, dest, version, remote_head, remote, depth, bare, refspec)
+                module.exit_json(changed=True, before=before, after=remote_head)
+            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec)
             repo_updated = True
 
     # switch to version specified regardless of whether
@@ -867,9 +845,9 @@ def main():
 
         if module.check_mode:
             if submodules_updated:
-                module.exit_json(changed=True, before=before, after=remote_head, submodules_changed=True, **return_values)
+                module.exit_json(changed=True, before=before, after=remote_head, submodules_changed=True)
             else:
-                module.exit_json(changed=False, before=before, after=remote_head, **return_values)
+                module.exit_json(changed=False, before=before, after=remote_head)
 
         if submodules_updated:
             # Switch to version specified
@@ -890,7 +868,7 @@ def main():
             # No need to fail if the file already doesn't exist
             pass
 
-    module.exit_json(changed=changed, before=before, after=after, **return_values)
+    module.exit_json(changed=changed, before=before, after=after)
 
 # import module snippets
 from ansible.module_utils.basic import *
