@@ -320,7 +320,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['ipaddressid']         = self.get_ip_address(key='id')
         args['virtualmachineid']    = self.get_vm(key='id')
 
-        if self._has_changed(args, portforwarding_rule):
+        if self.has_changed(args, portforwarding_rule):
             self.result['changed'] = True
             if not self.module.check_mode:
                 # API broken in 4.2.1?, workaround using remove/create instead of update
