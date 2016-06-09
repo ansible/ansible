@@ -44,12 +44,14 @@ command will be searched in PATH.
 Specifying multiple interpreters
 --------------------------------
 
-In the context of managing farms of heterogeneous hosts, it may be impractical
-to maintain an up-to-date record of what exact interpreter path is to
-be used on a given machine. In such a context, Ansible can be configured
-to look for the interpreter from a set of possible candidates given as a
-colon-separated list.  Each item is either a full name, or just a base name
-that will be resolved from PATH:
+In general it is best to specify the exact location of the correct
+interpreter for each machine in the inventory. However, in the
+context of managing farms of heterogeneous hosts, it may be impractical
+to maintain an up-to-date record of what exact interpreter path is
+to be used on a given machine. In such a context, Ansible can be
+configured to look for the interpreter from a set of possible
+candidates given as a colon-separated list. Each item is either a
+full name, or just a base name that will be resolved from PATH:
 
 Example::
 
@@ -62,7 +64,9 @@ This indicates that Ansible should try the following Python interpreters in orde
 - '/usr/bin/python'
 - a 'python' binary from PATH
 
-Ansible stops the search as soon as a matching executable is found.
+Ansible stops the search as soon as a matching executable is found. Note that
+this is not supported for machines using a release of the fish shell older than
+2.2.0.
 
 Interpreter caching
 -------------------
