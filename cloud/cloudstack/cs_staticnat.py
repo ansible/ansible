@@ -217,7 +217,7 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
 
         # make an alias, so we can use _has_changed()
         ip_address['vmguestip'] = ip_address['vmipaddress']
-        if self.has_changed(args, ip_address):
+        if self.has_changed(args, ip_address, ['vmguestip', 'virtualmachineid']):
             self.result['changed'] = True
             if not self.module.check_mode:
                 res = self.cs.disableStaticNat(ipaddressid=ip_address['id'])
