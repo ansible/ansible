@@ -227,7 +227,7 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    res = self._poll_job(res, 'domain')
+                    res = self.poll_job(res, 'domain')
         return domain
 
 

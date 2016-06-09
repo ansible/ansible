@@ -163,7 +163,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    affinity_group = self._poll_job(res, 'affinitygroup')
+                    affinity_group = self.poll_job(res, 'affinitygroup')
         return affinity_group
 
     def remove_affinity_group(self):
@@ -185,7 +185,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    self._poll_job(res, 'affinitygroup')
+                    self.poll_job(res, 'affinitygroup')
         return affinity_group
 
 

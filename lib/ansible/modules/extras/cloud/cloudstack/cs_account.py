@@ -261,7 +261,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    account = self._poll_job(account, 'account')
+                    account = self.poll_job(account, 'account')
         return account
 
     def present_account(self):
@@ -311,7 +311,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    self._poll_job(res, 'account')
+                    self.poll_job(res, 'account')
         return account
 
     def get_result(self, account):

@@ -208,7 +208,7 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    snapshot = self._poll_job(res, 'vmsnapshot')
+                    snapshot = self.poll_job(res, 'vmsnapshot')
 
         return snapshot
 
@@ -225,7 +225,7 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self._poll_job(res, 'vmsnapshot')
+                    res = self.poll_job(res, 'vmsnapshot')
         return snapshot
 
 
@@ -242,7 +242,7 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self._poll_job(res, 'vmsnapshot')
+                    res = self.poll_job(res, 'vmsnapshot')
             return snapshot
 
         self.module.fail_json(msg="snapshot not found, could not revert VM")

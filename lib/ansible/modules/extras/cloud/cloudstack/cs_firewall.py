@@ -324,7 +324,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                     firewall_rule = self._poll_job(res, 'firewallrule')
+                     firewall_rule = self.poll_job(res, 'firewallrule')
         return firewall_rule
 
 
@@ -348,7 +348,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                     res = self._poll_job(res, 'firewallrule')
+                     res = self.poll_job(res, 'firewallrule')
         return firewall_rule
 
 
