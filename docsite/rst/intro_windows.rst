@@ -205,9 +205,9 @@ Since 2.0, the following custom inventory variables are also supported for addit
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable PowerShell remoting configured.
+In order for Ansible to manage your windows machines, you will have to enable and configure PowerShell remoting.
 
-To automate setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
+To automate the setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
 
 The example script accepts a few arguments which Admins may choose to use to modify the default setup slightly, which might be appropriate in some cases.
 
@@ -258,7 +258,7 @@ In particular, the "script" module can be used to run arbitrary PowerShell scrip
       tasks:
         - script: foo.ps1 --argument --other-argument
 
-Note there are a few other Ansible modules that don't start with "win" that also function, including "fetch", "slurp", "raw", and "setup" (which is how fact gathering works).
+Note:: There are a few other Ansible modules that don't start with "win" that also function with Windows, including "fetch", "slurp", "raw", and "setup" (which is how fact gathering works).
 
 .. _developers_developers_developers:
 
@@ -339,7 +339,7 @@ Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on
          - name: Move file on remote Windows Server from one location to another
            raw: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-You may wind up with a more readable playbook by using powershell equivalents of DOS commands.  For example to achieve the same effect as the example above you could use::
+You may wind up with a more readable playbook by using the PowerShell equivalents of DOS commands.  For example, to achieve the same effect as the example above, you could use::
 
     - name: another raw module example demonstrating powershell one liner
       hosts: windows
@@ -347,9 +347,9 @@ You may wind up with a more readable playbook by using powershell equivalents of
          - name: Move file on remote Windows Server from one location to another
            raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
 
-Bear in mind that using C(raw) will allways report changed and it is your responsiblity to ensure powershell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using C(raw) will allways report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
-And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
+Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
