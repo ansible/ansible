@@ -9,7 +9,7 @@
     vars_var: 123
 
   gather_facts: True
-  roles: 
+  roles:
     - { role: test_ping, tags: test_ping }
     - { role: test_var_blending, parameterized_beats_default: 1234, tags: test_var_blending }
     - { role: test_special_vars, tags: test_special_vars }
@@ -41,4 +41,3 @@
     - { role: test_embedded_module, tags: test_embedded_module }
     - { role: test_add_host, tags: test_add_host }
     - { role: test_binary, tags: test_binary }
-

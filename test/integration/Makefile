@@ -83,8 +83,13 @@ test_gathering_facts: setup
 environment: setup
 	ansible-playbook test_environment.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
 
-non_destructive: setup
-	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+non_destructive: non_destructive_1 non_destructive_2
+
+non_destructive_1: setup
+	ansible-playbook non_destructive_1.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+non_destructive_2: setup
+	ansible-playbook non_destructive_2.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 # For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
 # Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
@@ -113,8 +118,13 @@ test_connection_winrm: setup
 	$(call TEST_CONNECTION_WINRM_CMD)
 	$(call TEST_CONNECTION_WINRM_CMD, LC_ALL=C LANG=C)
 
-destructive: setup
-	ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+destructive: destructive_1 destructive_2
+
+destructive_1: setup
+	ansible-playbook destructive_1.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+destructive_2: setup
+	ansible-playbook destructive_2.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 check_mode: setup
 	ansible-playbook check_mode.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v --check $(TEST_FLAGS)
