@@ -160,35 +160,6 @@ class AnsibleCloudStackStaticNat(AnsibleCloudStack):
             'ipaddress':                    'ip_address',
             'vmipaddress':                  'vm_guest_ip',
         }
-        self.vm_default_nic = None
-
-
-# TODO: move it to cloudstack utils, also used in cs_portforward
-    def get_vm_guest_ip(self):
-        vm_guest_ip = self.module.params.get('vm_guest_ip')
-        default_nic = self.get_vm_default_nic()
-
-        if not vm_guest_ip:
-            return default_nic['ipaddress']
-
-        for secondary_ip in default_nic['secondaryip']:
-            if vm_guest_ip == secondary_ip['ipaddress']:
-                return vm_guest_ip
-        self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
-
-
-# TODO: move it to cloudstack utils, also used in cs_portforward
-    def get_vm_default_nic(self):
-        if self.vm_default_nic:
-            return self.vm_default_nic
-
-        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
-        if nics:
-            for n in nics['nic']:
-                if n['isdefault']:
-                    self.vm_default_nic = n
-                    return self.vm_default_nic
-        self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
 
     def create_static_nat(self, ip_address):
