@@ -58,7 +58,7 @@ class ShellBase(object):
         return path.endswith('/')
 
     def check_interp(self, interp):
-        return 'command -v "%s" || echo NOTFOUND' % interp
+        return 'command -v "%s" %s echo NOTFOUND' % (interp, self._SHELL_OR)
 
     def chmod(self, mode, path, recursive=True):
         path = pipes.quote(path)
