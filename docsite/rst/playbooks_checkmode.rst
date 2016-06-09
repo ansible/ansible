@@ -30,7 +30,7 @@ be added to tasks.
 
 If the playbook is run with checkmode on the command line, you can force tasks to still run, by specifying `check_mode: no`.
 On the other hand you can setup a test section which, independetly of the command line arguments, always runs a tasks in check mode with `check_mode: yes`.
-note:: Prior to version 2.2 only the ability to turn this on per-task existed.  The notation for that was `always_run: yes`.
+.. note:: Prior to version 2.2 only the ability to turn this on per-task existed.  The notation for that was `always_run: yes`.
 
 Instead of `yes`/`no` you can use a Jinja2 expression, just like the `when` clause.
 
