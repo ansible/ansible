@@ -404,12 +404,15 @@ actions:
 
 HAS_COMPOSE = True
 HAS_COMPOSE_EXC = None
+MINIMUM_COMPOSE_VERSION = '1.7.0'
 
 import yaml
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import *
 
 try:
+    from compose import __version__ as compose_version
     from compose.cli.command import project_from_options
     from compose.service import ConvergenceStrategy
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
@@ -473,6 +476,11 @@ class ContainerManager(DockerBaseClass):
 
         if self.files:
             self.options[u'--file'] = self.files
+
+        if LooseVersion(compose_version) < LooseVersion(MINIMUM_COMPOSE_VERSION):
+            self.client.fail("Found docker-compose version %s. Minimum required version is %s. "
+                             "Upgrade docker-compose to a min version of %s." %
+                             (compose_version, MINIMUM_COMPOSE_VERSION, MINIMUM_COMPOSE_VERSION))
 
         if not HAS_COMPOSE:
             self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
