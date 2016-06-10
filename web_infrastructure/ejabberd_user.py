@@ -122,7 +122,7 @@ class EjabberdUser(object):
     def log(self, entry):
         """ This method will log information to the local syslog facility """
         if self.logging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.openlog('ansible-%s' % self.module._name)
             syslog.syslog(syslog.LOG_NOTICE, entry)
 
     def run_command(self, cmd, options):
