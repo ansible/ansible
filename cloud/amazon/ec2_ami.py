@@ -122,7 +122,7 @@ EXAMPLES = '''
   register: instance
 
 # AMI Creation, with a custom root-device size and another EBS attached
-- ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
@@ -139,7 +139,7 @@ EXAMPLES = '''
   register: instance
 
 # AMI Creation, excluding a volume attached at /dev/sdb
-- ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
