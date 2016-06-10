@@ -680,17 +680,19 @@ class Ec2Inventory(object):
         if instance.state not in self.ec2_instance_states:
             return
 
+        def get_attr_or_tag(instance, tag, default):
+            dest = getattr(instance, tag, default)
+            if dest is None:
+                dest = getattr(instance, 'tags').get(tag, default)
+            return dest
+
         # Select the best destination address
         if self.destination_format and self.destination_format_tags:
-            dest = self.destination_format.format(*[ getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags ])
+            dest = self.destination_format.format(*[ get_attr_or_tag(instance, tag, '') for tag in self.destination_format_tags ])
         elif instance.subnet_id:
-            dest = getattr(instance, self.vpc_destination_variable, None)
-            if dest is None:
-                dest = getattr(instance, 'tags').get(self.vpc_destination_variable, None)
+            dest = get_attr_or_tag(instance, self.vpc_destination_variable, None)
         else:
-            dest = getattr(instance, self.destination_variable, None)
-            if dest is None:
-                dest = getattr(instance, 'tags').get(self.destination_variable, None)
+            dest = get_attr_or_tag(instance, self.destination_variable, None)
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
