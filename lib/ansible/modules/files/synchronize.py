@@ -72,7 +72,7 @@ options:
     version_added: "1.5"
   delete:
     description:
-      - Delete files that don't exist (after transfer, not before) in the C(src) path. This option requires C(recursive=yes).
+      - Delete files in C(dest) that don't exist (after transfer, not before) in the C(src) path. This option requires C(recursive=yes).
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -234,7 +234,7 @@ synchronize:
 delegate_to: "{{ inventory_hostname }}"
 
 # Synchronize and delete files in dest on the remote host that are not found in src of localhost.
-synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
+synchronize: src=some/relative/path dest=/some/absolute/path delete=yes recursive=yes
 
 # Synchronize using an alternate rsync command
 # This specific command is granted su privileges on the destination
