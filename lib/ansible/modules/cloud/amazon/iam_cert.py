@@ -27,7 +27,7 @@ version_added: "2.0"
 options:
   name:
     description:
-      - Name of certificate to add, update or remove.
+      - Name of certificate to add, update, remove or ping.
     required: true
     aliases: []
   new_name:
@@ -42,10 +42,10 @@ options:
     aliases: []
   state:
     description:
-      - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified.
+      - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified. The ping state permit to retrieve informations about the certificate name.
     required: true
     default: null
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "ping"]
     aliases: []
   path:
     description:
@@ -215,12 +215,20 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
         else:
             changed=False
             module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
+    elif state == 'ping':
+        try:
+            opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
+            module.exit_json(changed=False, name=name, cert_path=opath, cert_body=ocert,
+                upload_date=upload_date, expiration_date=exp, arn=arn)
+        except Exception as err:
+            module.exit_json(changed=False, name=name, message=err.error_message)
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(
-            default=None, required=True, choices=['present', 'absent']),
+            default=None, required=True, choices=['present', 'absent', 'ping']),
         name=dict(default=None, required=False),
         cert=dict(default=None, required=False, type='path'),
         key=dict(default=None, required=False, type='path'),
