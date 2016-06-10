@@ -31,6 +31,293 @@ from ansible.module_utils.univention_umc import (
 import socket
 
 
+DOCUMENTATION = '''
+---
+module: udm_share
+version_added: "2.2"
+author: "Tobias Rueetschi (@2-B)"
+short_description: Manage samba shares on a univention corporate server
+description:
+    - "This module allows to manage samba shares on a univention corporate
+       server (UCS).
+       It uses the python API of the UCS to create a new object or edit it."
+requirements:
+    - Python >= 2.6
+options:
+    state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
+        description:
+            - Whether the share is present or not.
+    name:
+        required: true
+        description:
+            - Name
+    host:
+        required: false
+        default: None
+        description:
+            - Host. Required if C(state=present).
+    ou:
+        required: true
+        description:
+            - Organisational unit, inside the LDAP Base DN.
+    owner:
+        required: false
+        default: 0
+        description:
+            - Directory owner of the share's root directory.
+    group:
+        required: false
+        default: '0'
+        description:
+            - Directory owner group of the share's root directory.
+    path:
+        required: false
+        default: None
+        description:
+            - Directory. Required if C(state=present).
+    directorymode:
+        required: false
+        default: '00755'
+        description:
+            - Permissions for the share's root directory.
+    root_squash:
+        required: false
+        default: '1'
+        description:
+            - Modify user ID for root user (root squashing).
+    subtree_checking:
+        required: false
+        default: '1'
+        description:
+            - Subtree checking.
+    sync:
+        required: false
+        default: 'sync'
+        description:
+            - NFS synchronisation.
+    writeable:
+        required: false
+        default: '1'
+        description:
+            - NFS write access.
+    sambaBlockSize:
+        required: false
+        default: None
+        description:
+            - Blocking size.
+    sambaBlockingLocks:
+        required: false
+        default: '1'
+        description:
+            - Blocking locks.
+    sambaBrowseable:
+        required: false
+        default: '1'
+        description:
+            - Show in Windows network environment.
+    sambaCreateMode:
+        required: false
+        default: '0744'
+        description:
+            - File mode.
+    sambaCscPolicy:
+        required: false
+        default: 'manual'
+        description:
+            - Client-side caching policy.
+    sambaCustomSettings:
+        required: false
+        default: []
+        description:
+            - Option name in smb.conf and its value.
+    sambaDirectoryMode:
+        required: false
+        default: '0755'
+        description:
+            - Directory mode.
+    sambaDirectorySecurityMode:
+        required: false
+        default: '0777'
+        description:
+            - Directory security mode.
+    sambaDosFilemode:
+        required: false
+        default: '0'
+        description:
+            - Users with write access may modify permissions.
+    sambaFakeOplocks:
+        required: false
+        default: '0'
+        description:
+            - Fake oplocks.
+    sambaForceCreateMode:
+        required: false
+        default: '0'
+        description:
+            - Force file mode.
+    sambaForceDirectoryMode:
+        required: false
+        default: '0'
+        description:
+            - Force directory mode.
+    sambaForceDirectorySecurityMode:
+        required: false
+        default: '0'
+        description:
+            - Force directory security mode.
+    sambaForceGroup:
+        required: false
+        default: None
+        description:
+            - Force group.
+    sambaForceSecurityMode:
+        required: false
+        default: '0'
+        description:
+            - Force security mode.
+    sambaForceUser:
+        required: false
+        default: None
+        description:
+            - Force user.
+    sambaHideFiles:
+        required: false
+        default: None
+        description:
+            - Hide files.
+    sambaHideUnreadable:
+        required: false
+        default: '0'
+        description:
+            - Hide unreadable files/directories.
+    sambaHostsAllow:
+        required: false
+        default: []
+        description:
+            - Allowed host/network.
+    sambaHostsDeny:
+        required: false
+        default: []
+        description:
+            - Denied host/network.
+    sambaInheritAcls:
+        required: false
+        default: '1'
+        description:
+            - Inherit ACLs.
+    sambaInheritOwner:
+        required: false
+        default: '0'
+        description:
+            - Create files/directories with the owner of the parent directory.
+    sambaInheritPermissions:
+        required: false
+        default: '0'
+        description:
+            - Create files/directories with permissions of the parent directory.
+    sambaInvalidUsers:
+        required: false
+        default: None
+        description:
+            - Invalid users or groups.
+    sambaLevel2Oplocks:
+        required: false
+        default: '1'
+        description:
+            - Level 2 oplocks.
+    sambaLocking:
+        required: false
+        default: '1'
+        description:
+            - Locking.
+    sambaMSDFSRoot:
+        required: false
+        default: '0'
+        description:
+            - MSDFS root.
+    sambaName:
+        required: false
+        default: None
+        description:
+            - Windows name. Required if C(state=present).
+    sambaNtAclSupport:
+        required: false
+        default: '1'
+        description:
+            - NT ACL support.
+    sambaOplocks:
+        required: false
+        default: '1'
+        description:
+            - Oplocks.
+    sambaPostexec:
+        required: false
+        default: None
+        description:
+            - Postexec script.
+    sambaPreexec:
+        required: false
+        default: None
+        description:
+            - Preexec script.
+    sambaPublic:
+        required: false
+        default: '0'
+        description:
+            - Allow anonymous read-only access with a guest user.
+    sambaSecurityMode:
+        required: false
+        default: '0777'
+        description:
+            - Security mode.
+    sambaStrictLocking:
+        required: false
+        default: 'Auto'
+        description:
+            - Strict locking.
+    sambaVFSObjects:
+        required: false
+        default: None
+        description:
+            - VFS objects.
+    sambaValidUsers:
+        required: false
+        default: None
+        description:
+            - Valid users or groups.
+    sambaWriteList:
+        required: false
+        default: None
+        description:
+            - Restrict write access to these users/groups.
+    sambaWriteable:
+        required: false
+        default: '1'
+        description:
+            - Samba write access.
+    nfs_hosts:
+        required: false
+        default: []
+        description:
+            - Only allow access for this host, IP address or network.
+    nfsCustomSettings:
+        required: false
+        default: []
+        description:
+            - Option name in exports file.
+'''
+
+
+EXAMPLES = '''
+'''
+
+
+RETURN = '''# '''
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
