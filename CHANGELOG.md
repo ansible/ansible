@@ -7,6 +7,7 @@ Ansible Changes By Release
 
 * If the user is not using paramiko or vault, allow Ansible to run if pycrypto is not installed.
 * Fixed a bug in pkg_util module that caused "update_catalog must be one of" error if 'update_catalog' arg was used.
+* Fixed a bug where psuedo-connection vars (eg, ansible_winrm_transport) defined in group_vars or host_vars were not getting passed to the connection.
 
 ## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
