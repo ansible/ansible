@@ -527,7 +527,24 @@ class Ec2Inventory(object):
             instance_ids = []
             for reservation in reservations:
                 instance_ids.extend([instance.id for instance in reservation.instances])
-            tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids})
+
+            # AWS doesn't allow more than 200 filters
+            # We have to split the request in this case
+            tags = []
+            if len(instance_ids) < 200:
+                instances_tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids})
+                tags.extend(instances_tags)
+            else:
+                tags = []
+                res_instances_num = len(instance_ids)
+                list_pos = 0
+                # Step is 199 because 1 filter is added
+                step = 199
+                while list_pos < res_instances_num:
+                    instances_tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[list_pos:step]})
+                    tags.extend(instances_tags)
+                    list_pos = list_pos + step
+
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
                 tags_by_instance_id[tag.res_id][tag.name] = tag.value
