@@ -312,13 +312,16 @@ class ZipArchive(object):
         for line in old_out.splitlines():
             change = False
 
-            pcs = line.split()
-            if len(pcs) != 8: continue
+            pcs = line.split(None, 7)
+
+            # Check first and seventh field in order to skip header/footer
+            if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
+            if len(pcs[6]) != 15: continue
 
             ztype = pcs[0][0]
             permstr = pcs[0][1:10]
-            version = pcs[0][1]
-            ostype = pcs[0][2]
+            version = pcs[1]
+            ostype = pcs[2]
             size = int(pcs[3])
             path = pcs[7]
 
