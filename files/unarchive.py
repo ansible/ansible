@@ -132,6 +132,7 @@ import subprocess
 OWNER_DIFF_RE = re.compile(r': Uid differs$')
 GROUP_DIFF_RE = re.compile(r': Gid differs$')
 MODE_DIFF_RE = re.compile(r': Mode differs$')
+MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
 #NEWER_DIFF_RE = re.compile(r' is newer or same age.$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][stx-]){3}')
@@ -597,6 +598,8 @@ class TgzArchive(object):
             if run_uid == 0 and not self.file_args['group'] and GROUP_DIFF_RE.search(line):
                 out += line + '\n'
             if not self.file_args['mode'] and MODE_DIFF_RE.search(line):
+                out += line + '\n'
+            if MOD_TIME_DIFF_RE.search(line):
                 out += line + '\n'
             if MISSING_FILE_RE.search(line):
                 out += line + '\n'
