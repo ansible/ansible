@@ -123,7 +123,10 @@ def main():
                                    choices=['present', 'absent'],
                                    type='str')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if = ([
+            ('state', 'present', ['path', 'host', 'sambaName'])
+        ])
     )
     name    = module.params['name']
     state   = module.params['state']
