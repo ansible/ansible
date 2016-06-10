@@ -69,9 +69,14 @@ If ( $do_comparison -eq $True ) {
   {
      # Something is different, actually do reg merge
      $reg_import_args = @("IMPORT", "$path")
-     & reg.exe $reg_import_args
-     Set-Attr $result "changed" $True 
-     Set-Attr $result "difference_count" $comparison_result.count
+     $ret = & reg.exe $reg_import_args 2>&1
+     If ($LASTEXITCODE -eq 0) {
+         Set-Attr $result "changed" $True
+         Set-Attr $result "difference_count" $comparison_result.count
+     } Else {
+         Set-Attr $result "rc" $LASTEXITCODE
+         Fail-Json $result "$ret"
+     }
   } Else {
       Set-Attr $result "difference_count" 0
   }
@@ -82,9 +87,14 @@ If ( $do_comparison -eq $True ) {
 } Else {
      # not comparing, merge and report changed
      $reg_import_args = @("IMPORT", "$path")
-     & reg.exe $reg_import_args
-     Set-Attr $result "changed" $True
-     Set-Attr $result "compared" $False
+     $ret = & reg.exe $reg_import_args 2>&1
+     If ( $LASTEXITCODE -eq 0 ) {
+         Set-Attr $result "changed" $True
+         Set-Attr $result "compared" $False
+     } Else {
+         Set-Attr $result "rc" $LASTEXITCODE
+         Fail-Json $result "$ret"
+     }
 }
 
 Exit-Json $result
