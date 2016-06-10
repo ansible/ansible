@@ -105,8 +105,6 @@ from threading import Thread, Lock
 # we must import this here at the top so we can use get_module_path()
 from ansible.module_utils.basic import *
 
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-
 # the chunk size to read and send, assuming mtu 1500 and 
 # leaving room for base64 (+33%) encoding and header (100 bytes)
 # 4 * (975/3) + 100 = 1400 
@@ -666,6 +664,8 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    syslog.openlog('ansible-%s' % module._name)
 
     password  = base64.b64decode(module.params['password'])
     port      = int(module.params['port'])
