@@ -78,16 +78,14 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_host_overrides(self, host):
+    def set_host_overrides(self, host, hostvars=None):
         '''
         Override WinRM-specific options from host variables.
         '''
-        host_vars = combine_vars(host.get_group_vars(), host.get_vars())
-
         self._winrm_host = self._play_context.remote_addr
         self._winrm_port = int(self._play_context.port or 5986)
-        self._winrm_scheme = host_vars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
-        self._winrm_path = host_vars.get('ansible_winrm_path', '/wsman')
+        self._winrm_scheme = hostvars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
+        self._winrm_path = hostvars.get('ansible_winrm_path', '/wsman')
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
 
@@ -104,7 +102,7 @@ class Connection(ConnectionBase):
             self._winrm_transport = 'kerberos,%s' % transport_selector
         else:
             self._winrm_transport = transport_selector
-        self._winrm_transport = host_vars.get('ansible_winrm_transport', self._winrm_transport)
+        self._winrm_transport = hostvars.get('ansible_winrm_transport', self._winrm_transport)
         if isinstance(self._winrm_transport, basestring):
             self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
 
@@ -116,7 +114,7 @@ class Connection(ConnectionBase):
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
         argspec = inspect.getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
-        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in host_vars if v.startswith('ansible_winrm_')])
+        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in hostvars if v.startswith('ansible_winrm_')])
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
@@ -128,7 +126,7 @@ class Connection(ConnectionBase):
 
         # pass through matching kwargs, excluding the list we want to treat specially
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
-            self._winrm_kwargs[arg] = host_vars['ansible_winrm_%s' % arg]
+            self._winrm_kwargs[arg] = hostvars['ansible_winrm_%s' % arg]
 
     def _winrm_connect(self):
         '''
