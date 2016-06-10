@@ -574,6 +574,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # give the module information about the ansible version
         module_args['_ansible_version'] = __version__
 
+        # give the module information about its name
+        module_args['_ansible_module_name'] = module_name
+
         # set the syslog facility to be used in the module
         module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
 
