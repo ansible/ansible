@@ -52,7 +52,8 @@ options:
   name:
     description:
       - Description of a crontab entry or, if env is set, the name of environment variable.
-        Required if state=absent
+        Required if state=absent. Note that if name is not set and state=present, then a
+        new crontab entry will always be created, regardless of existing ones.
     default: null
     required: false
   user:
