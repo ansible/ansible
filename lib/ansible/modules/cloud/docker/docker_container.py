@@ -1616,7 +1616,8 @@ class ContainerManager(DockerBaseClass):
                     self.diff['image_different'] = True
                 self.log("differences")
                 self.log(differences, pretty_print=True)
-                self.container_stop(container.Id)
+                if container.running:
+                    self.container_stop(container.Id)
                 self.container_remove(container.Id)
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
