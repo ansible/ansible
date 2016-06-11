@@ -97,7 +97,7 @@ options:
         required: false
     profile:
         description:
-            - the profile this rule applies to
+            - the profile this rule applies to, e.g. Domain,Private,Public
         default: null
         required: false
     force:
