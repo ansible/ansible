@@ -153,6 +153,7 @@ requirements:
     - "python >= 2.6"
     - "docker-compose >= 1.7.0"
     - "Docker API >= 1.20"
+    - "PyYAML >= 3.11"
 '''
 
 EXAMPLES = '''
@@ -402,13 +403,19 @@ actions:
                           type: string
 '''
 
+HAS_YAML = True
+HAS_YAML_EXC = None
 HAS_COMPOSE = True
 HAS_COMPOSE_EXC = None
 MINIMUM_COMPOSE_VERSION = '1.7.0'
 
-import yaml
-from distutils.version import LooseVersion
+try:
+    import yaml
+except ImportError as exc:
+    HAS_YAML = False
+    HAS_YAML_EXC = str(exc)
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import *
 
 try:
@@ -489,6 +496,9 @@ class ContainerManager(DockerBaseClass):
         self.log(self.options, pretty_print=True)
 
         if self.definition:
+            if not HAS_YAML:
+                self.client.fail("Unable to load yaml. Try `pip install PyYAML`. Error: %s" % HAS_YAML_EXC)
+
             if not self.project_name:
                 self.client.fail("Parameter error - project_name required when providing definition.")
 
