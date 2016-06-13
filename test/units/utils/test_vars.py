@@ -46,6 +46,19 @@ class TestVariableUtils(unittest.TestCase):
                 result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
             ),
         )
+    test_merge_nominated_lists_data = (
+        dict(
+            a=dict(
+                a=dict(a=[1, 2, 3], b=[4, 5, 6]),
+                b=dict(a=[1, 2, 3], b=[4, 5, 6])),
+            b=dict(
+                a=dict(a=[3, 4, 5], b=[7, 8, 9]),
+                b=dict(a=[3, 4, 5], b=[7, 8, 9])),
+            result=dict(
+                a=dict(a=[1, 2, 3, 4, 5], b=[4, 5, 6, 7, 8, 9]),
+                b=dict(a=[3, 4, 5], b=[7, 8, 9])),
+        ),
+    )
     test_replace_data = (
             dict(
                 a=dict(a=1),
@@ -94,5 +107,6 @@ class TestVariableUtils(unittest.TestCase):
 
     def test_combine_vars_merge(self):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
-            for test in self.test_merge_data:
-                self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+            with mock.patch('ansible.constants.DEFAULT_MERGED_LISTS', ['a.a', 'a.b']):
+                for test in self.test_merge_data:
+                    self.assertEqual(combine_vars(test['a'], test['b']), test['result'])

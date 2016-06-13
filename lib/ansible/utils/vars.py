@@ -68,7 +68,7 @@ def combine_vars(a, b):
         result.update(b)
         return result
 
-def merge_hash(a, b):
+def merge_hash(a, b, key_name_root=''):
     """
     Recursively merges hash b into a so that keys from b take precedence over keys from a
     """
@@ -84,11 +84,22 @@ def merge_hash(a, b):
 
     # next, iterate over b keys and values
     for k, v in iteritems(b):
+        # keep track of the var.name style path
+        if key_name_root == '':
+            key_name = k
+        else:
+            key_name = key_name_root + '.' + k
+
         # if there's already such key in a
         # and that key contains a MutableMapping
         if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
-            result[k] = merge_hash(result[k], v)
+            result[k] = merge_hash(result[k], v, key_name)
+        elif k in result and isinstance(result[k], list) and key_name in C.DEFAULT_MERGED_LISTS:
+            # we should be merging these lists, so append
+            for merge_v in v:
+                if merge_v not in result[k]:
+                    result[k].append(merge_v)
         else:
             # otherwise, just copy the value from b to a
             result[k] = v
