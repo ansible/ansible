@@ -74,7 +74,8 @@ options:
         default: jar
     repository_url:
         description:
-            - The URL of the Maven Repository to download from. Use s3://... if the repository is hosted on Amazon S3
+            - The URL of the Maven Repository to download from.
+            - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
         required: false
         default: http://repo1.maven.org/maven2
     username:
