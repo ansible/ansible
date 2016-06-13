@@ -511,10 +511,17 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+    '''is the given path executable?
+
+    Limitations:
+    * Does not account for FSACLs.
+    * Most times we really want to know "Can the current user execute this
+      file"  This function does not tell us that, only if an execute bit is set.
+    '''
+    # These are all bitfields so first bitwise-or all the permissions we're
+    # looking for, then bitwise-and with the file's mode to determine if any
+    # execute bits are set.
+    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
 def _load_params():
     ''' read the modules parameters and store them globally.
