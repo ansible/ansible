@@ -1,0 +1,6 @@
+- hosts: testhost
+  gather_facts: True
+  roles:
+    - { role: test_postgresql, tags: test_postgresql}
+    - { role: test_mysql_user, tags: test_mysql_user}
+    - { role: test_uri, tags: test_uri }

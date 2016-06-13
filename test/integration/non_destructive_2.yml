@@ -1,0 +1,15 @@
+- hosts: testhost
+
+  # these variables are defined here for variable blending tests only.
+  # in general, define test variables in the role/rolenamevars/main.yml
+
+  vars_files:
+    - vars_file.yml
+  vars:
+    vars_var: 123
+
+  gather_facts: True
+  roles:
+    - { role: test_file, tags: test_file }
+    - { role: test_git, tags: test_git }
+    - { role: test_unarchive, tags: test_unarchive }
