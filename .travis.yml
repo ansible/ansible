@@ -12,8 +12,7 @@ addons:
       - python3.5
 env:
   global:
-    - PY3_EXCLUDE_LIST="cloud/amazon/aws_mfa_devices.py
-      cloud/amazon/cloudtrail.py
+    - PY3_EXCLUDE_LIST="cloud/amazon/cloudtrail.py
       cloud/amazon/dynamodb_table.py
       cloud/amazon/ec2_ami_copy.py
       cloud/amazon/ec2_customer_gateway.py
