@@ -226,14 +226,9 @@ pod:
   sample: pod01
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
+
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
 
@@ -251,28 +246,26 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         }
         self.cluster = None
 
-
     def _get_common_cluster_args(self):
-        args = {}
-        args['clustername'] = self.module.params.get('name')
-        args['hypervisor'] = self.module.params.get('hypervisor')
-        args['clustertype'] = self.module.params.get('cluster_type')
-
+        args = {
+            'clustername': self.module.params.get('name'),
+            'hypervisor': self.module.params.get('hypervisor'),
+            'clustertype': self.module.params.get('cluster_type'),
+        }
         state = self.module.params.get('state')
-        if state in [ 'enabled', 'disabled']:
+        if state in ['enabled', 'disabled']:
             args['allocationstate'] = state.capitalize()
         return args
 
-
     def get_pod(self, key=None):
-        args = {}
-        args['name'] = self.module.params.get('pod')
-        args['zoneid'] = self.get_zone(key='id')
+        args = {
+            'name': self.module.params.get('pod'),
+            'zoneid': self.get_zone(key='id'),
+        }
         pods = self.cs.listPods(**args)
         if pods:
             return self._get_by_key(key, pods['pod'][0])
         self.module.fail_json(msg="Pod %s not found in zone %s." % (self.module.params.get('pod'), self.get_zone(key='name')))
-
 
     def get_cluster(self):
         if not self.cluster:
@@ -295,7 +288,6 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 self.cluster['clustername'] = self.cluster['name']
         return self.cluster
 
-
     def present_cluster(self):
         cluster = self.get_cluster()
         if cluster:
@@ -303,7 +295,6 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         else:
             cluster = self._create_cluster()
         return cluster
-
 
     def _create_cluster(self):
         required_params = [
@@ -343,7 +334,6 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 cluster = res['cluster']
         return cluster
 
-
     def _update_cluster(self):
         cluster = self.get_cluster()
 
@@ -360,15 +350,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
                 cluster = res['cluster']
         return cluster
 
-
     def absent_cluster(self):
         cluster = self.get_cluster()
         if cluster:
             self.result['changed'] = True
 
-            args = {}
-            args['id'] = cluster['id']
-
+            args = {
+                'id': cluster['id'],
+            }
             if not self.module.check_mode:
                 res = self.cs.deleteCluster(**args)
                 if 'errortext' in res:
@@ -379,25 +368,25 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        zone = dict(default=None),
-        pod = dict(default=None),
-        cluster_type = dict(choices=['CloudManaged', 'ExternalManaged'], default=None),
-        hypervisor = dict(choices=CS_HYPERVISORS, default=None),
-        state = dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
-        url = dict(default=None),
-        username = dict(default=None),
-        password = dict(default=None, no_log=True),
-        guest_vswitch_name = dict(default=None),
-        guest_vswitch_type = dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        public_vswitch_name = dict(default=None),
-        public_vswitch_type = dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
-        vms_ip_address = dict(default=None),
-        vms_username = dict(default=None),
-        vms_password = dict(default=None, no_log=True),
-        ovm3_cluster = dict(default=None),
-        ovm3_pool = dict(default=None),
-        ovm3_vip = dict(default=None),
+        name=dict(required=True),
+        zone=dict(default=None),
+        pod=dict(default=None),
+        cluster_type=dict(choices=['CloudManaged', 'ExternalManaged'], default=None),
+        hypervisor=dict(choices=CS_HYPERVISORS, default=None),
+        state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
+        url=dict(default=None),
+        username=dict(default=None),
+        password=dict(default=None, no_log=True),
+        guest_vswitch_name=dict(default=None),
+        guest_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
+        public_vswitch_name=dict(default=None),
+        public_vswitch_type=dict(choices=['vmwaresvs', 'vmwaredvs'], default=None),
+        vms_ip_address=dict(default=None),
+        vms_username=dict(default=None),
+        vms_password=dict(default=None, no_log=True),
+        ovm3_cluster=dict(default=None),
+        ovm3_pool=dict(default=None),
+        ovm3_vip=dict(default=None),
     ))
 
     module = AnsibleModule(
@@ -405,9 +394,6 @@ def main():
         required_together=cs_required_together(),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_cluster = AnsibleCloudStackCluster(module)

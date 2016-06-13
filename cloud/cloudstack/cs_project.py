@@ -53,6 +53,13 @@ options:
       - Account the project is related to.
     required: false
     default: null
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    version_added: "2.2"
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -66,6 +73,9 @@ EXAMPLES = '''
 - local_action:
     module: cs_project
     name: web
+    tags:
+      - { key: admin, value: john }
+      - { key: foo,   value: bar }
 
 # Rename a project
 - local_action:
@@ -131,12 +141,6 @@ tags:
   sample: '[ { "key": "foo", "value": "bar" } ]'
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -167,6 +171,10 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             project = self.create_project(project)
         else:
             project = self.update_project(project)
+        if project:
+            project = self.ensure_tags(resource=project, resource_type='project')
+            # refresh resource
+            self.project = project
         return project
 
 
@@ -175,7 +183,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
         args['id']          = project['id']
         args['displaytext'] = self.get_or_fallback('display_text', 'name')
 
-        if self._has_changed(args, project):
+        if self.has_changed(args, project):
             self.result['changed'] = True
             if not self.module.check_mode:
                 project = self.cs.updateProject(**args)
@@ -185,7 +193,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if project and poll_async:
-                    project = self._poll_job(project, 'project')
+                    project = self.poll_job(project, 'project')
         return project
 
 
@@ -206,15 +214,12 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if project and poll_async:
-                project = self._poll_job(project, 'project')
+                project = self.poll_job(project, 'project')
         return project
 
 
-    def state_project(self, state=None):
-        project = self.get_project()
-
-        if not project:
-            self.module.fail_json(msg="No project named '%s' found." % self.module.params('name'))
+    def state_project(self, state='active'):
+        project = self.present_project()
 
         if project['state'].lower() != state:
             self.result['changed'] = True
@@ -233,7 +238,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if project and poll_async:
-                    project = self._poll_job(project, 'project')
+                    project = self.poll_job(project, 'project')
         return project
 
 
@@ -253,7 +258,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
-                    res = self._poll_job(res, 'project')
+                    res = self.poll_job(res, 'project')
             return project
 
 
@@ -267,6 +272,7 @@ def main():
         domain = dict(default=None),
         account = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(
@@ -274,9 +280,6 @@ def main():
         required_together=cs_required_together(),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_project = AnsibleCloudStackProject(module)

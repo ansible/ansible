@@ -375,12 +375,6 @@ project:
   sample: Production
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -482,7 +476,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    template = self._poll_job(template, 'template')
+                    template = self.poll_job(template, 'template')
         return template
 
 
@@ -570,7 +564,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                template = self._poll_job(template, 'template')
+                template = self.poll_job(template, 'template')
         return template
 
 
@@ -593,7 +587,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    res = self._poll_job(res, 'template')
+                    res = self.poll_job(res, 'template')
         return template
 
 
@@ -642,9 +636,6 @@ def main():
         ),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_tpl = AnsibleCloudStackTemplate(module)

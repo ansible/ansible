@@ -181,12 +181,6 @@ end_port:
   sample: 80
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -329,7 +323,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
-            security_group = self._poll_job(res, 'securitygroup')
+            security_group = self.poll_job(res, 'securitygroup')
             key = sg_type + "rule" # ingressrule / egressrule
             if key in security_group:
                 rule = security_group[key][0]
@@ -360,7 +354,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
-            res = self._poll_job(res, 'securitygroup')
+            res = self.poll_job(res, 'securitygroup')
         return rule
 
 
@@ -404,9 +398,6 @@ def main():
         ),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_sg_rule = AnsibleCloudStackSecurityGroupRule(module)

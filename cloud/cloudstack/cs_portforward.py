@@ -203,12 +203,6 @@ vm_guest_ip:
   sample: 10.101.65.152
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -233,33 +227,6 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             'privateendport':   'private_end_port',
         }
         self.portforwarding_rule = None
-        self.vm_default_nic = None
-
-
-    def get_vm_guest_ip(self):
-        vm_guest_ip = self.module.params.get('vm_guest_ip')
-        default_nic = self.get_vm_default_nic()
-
-        if not vm_guest_ip:
-            return default_nic['ipaddress']
-
-        for secondary_ip in default_nic['secondaryip']:
-            if vm_guest_ip == secondary_ip['ipaddress']:
-                return vm_guest_ip
-        self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
-
-
-    def get_vm_default_nic(self):
-        if self.vm_default_nic:
-            return self.vm_default_nic
-
-        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
-        if nics:
-            for n in nics['nic']:
-                if n['isdefault']:
-                    self.vm_default_nic = n
-                    return self.vm_default_nic
-        self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
 
     def get_portforwarding_rule(self):
@@ -311,7 +278,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             portforwarding_rule = self.cs.createPortForwardingRule(**args)
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                portforwarding_rule = self._poll_job(portforwarding_rule, 'portforwardingrule')
+                portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
 
 
@@ -326,7 +293,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['ipaddressid']         = self.get_ip_address(key='id')
         args['virtualmachineid']    = self.get_vm(key='id')
 
-        if self._has_changed(args, portforwarding_rule):
+        if self.has_changed(args, portforwarding_rule):
             self.result['changed'] = True
             if not self.module.check_mode:
                 # API broken in 4.2.1?, workaround using remove/create instead of update
@@ -335,7 +302,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
                 portforwarding_rule = self.cs.createPortForwardingRule(**args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    portforwarding_rule = self._poll_job(portforwarding_rule, 'portforwardingrule')
+                    portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
 
 
@@ -351,7 +318,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
                 res = self.cs.deletePortForwardingRule(**args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    self._poll_job(res, 'portforwardingrule')
+                    self.poll_job(res, 'portforwardingrule')
         return portforwarding_rule
 
 
@@ -390,9 +357,6 @@ def main():
         required_together=cs_required_together(),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_pf = AnsibleCloudStackPortforwarding(module)

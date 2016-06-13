@@ -160,12 +160,6 @@ account:
   sample: admin
 '''
 
-try:
-    from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
-except ImportError:
-    has_lib_cs = False
-
 # import cloudstack common
 from ansible.module_utils.cloudstack import *
 
@@ -233,7 +227,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def stop_router(self):
@@ -254,7 +248,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def reboot_router(self):
@@ -274,7 +268,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    router = self._poll_job(res, 'router')
+                    router = self.poll_job(res, 'router')
         return router
 
     def absent_router(self):
@@ -293,7 +287,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    self._poll_job(res, 'router')
+                    self.poll_job(res, 'router')
             return router
 
 
@@ -357,9 +351,6 @@ def main():
         required_together=cs_required_together(),
         supports_check_mode=True
     )
-
-    if not has_lib_cs:
-        module.fail_json(msg="python library cs required: pip install cs")
 
     try:
         acs_router = AnsibleCloudStackRouter(module)
