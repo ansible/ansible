@@ -161,6 +161,8 @@ options:
     required: false
 # informational: requirements for nodes
 requirements: [ ]
+extends_documentation_fragment:
+    - files
 author: "Jan-Piet Mens (@jpmens)"
 '''
 
