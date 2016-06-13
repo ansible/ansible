@@ -83,6 +83,21 @@ def get_instance_info(instance):
     except AttributeError:
         source_dest_check = None
 
+    # Get block device mapping
+    try:
+        bdm_dict = []
+        bdm = getattr(instance, 'block_device_mapping')
+        for device_name in bdm.keys():
+            bdm_dict.append({
+                'device_name': device_name,
+                'status': bdm[device_name].status,
+                'volume_id': bdm[device_name].volume_id,
+                'delete_on_termination': bdm[device_name].delete_on_termination,
+                'attach_time': bdm[device_name].attach_time
+            })
+    except AttributeError:
+        pass
+
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
                     'instance_profile': instance.instance_profile,
@@ -115,6 +130,7 @@ def get_instance_info(instance):
                     'private_ip_address': instance.private_ip_address,
                     'state': instance._state.name,
                     'vpc_id': instance.vpc_id,
+                    'block_device_mapping': bdm_dict,
                   }
 
     return instance_info
