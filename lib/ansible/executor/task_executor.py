@@ -330,7 +330,6 @@ class TaskExecutor:
             # Restore the name parameter
             if name is not None:
                 self._task.args['name'] = name
-            pass
         return items
 
     def _execute(self, variables=None):
