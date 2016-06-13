@@ -100,6 +100,14 @@ options:
         required: false
         default: True
         version_added: "2.1"
+    behavior:
+        description:
+          - the optional behavior that can be attached to the session when it
+            is created. This can be set to either ‘release’ or ‘delete’. This
+            controls the behavior when a session is invalidated.
+        default: release
+        required: false
+        version_added: "2.2"
 """
 
 EXAMPLES = '''
@@ -188,6 +196,7 @@ def update_session(module):
     checks = module.params.get('checks')
     datacenter = module.params.get('datacenter')
     node = module.params.get('node')
+    behavior = module.params.get('behavior')
 
     consul_client = get_consul_api(module)
 
@@ -195,6 +204,7 @@ def update_session(module):
         
         session = consul_client.session.create(
             name=name,
+            behavior=behavior,
             node=node,
             lock_delay=validate_duration('delay', delay),
             dc=datacenter,
@@ -203,6 +213,7 @@ def update_session(module):
         module.exit_json(changed=True,
                          session_id=session,
                          name=name,
+                         behavior=behavior,
                          delay=delay,
                          checks=checks,
                          node=node)
@@ -249,6 +260,8 @@ def main():
     argument_spec = dict(
         checks=dict(default=None, required=False, type='list'),
         delay=dict(required=False,type='str', default='15s'),
+        behavior=dict(required=False,type='str', default='release',
+                      choices=['release', 'delete']),
         host=dict(default='localhost'),
         port=dict(default=8500, type='int'),
         scheme=dict(required=False, default='http'),
