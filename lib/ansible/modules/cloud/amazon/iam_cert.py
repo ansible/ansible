@@ -162,10 +162,13 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                 except NameError:
                     continue
                 else:
-                    if orig_cert_bodies[c_index] == cert:
+                    # NOTE: remove the carriage return to strictly compare the cert bodies.
+                    slug_cert = cert.replace('\r', '')
+                    slug_orig_cert_bodies = orig_cert_bodies[c_index].replace('\r', '')
+                    if slug_orig_cert_bodies == slug_cert:
                         update=True
                         break
-                    elif orig_cert_bodies[c_index] != cert:
+                    elif slug_orig_cert_bodies != slug_cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                                            ' has a different certificate body associated'
                                                            ' with it. Certificates cannot have the same name' % i_name)
