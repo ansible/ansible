@@ -229,7 +229,7 @@ def invoke_with_throttling_retries(function_ref, *argv):
         try:
             retval=function_ref(*argv)
             return retval
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             if e.code != IGNORE_CODE or retries==MAX_RETRIES:
                 raise e
         time.sleep(5 * (2**retries))
@@ -303,7 +303,7 @@ def main():
 
     try:
         cfn = connect_to_aws(boto.cloudformation, region, **aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
     update = False
     result = {}
@@ -322,7 +322,7 @@ def main():
                              capabilities=['CAPABILITY_IAM'],
                              **kwargs)
             operation = 'CREATE'
-        except Exception, err:
+        except Exception as err:
             error_msg = boto_exception(err)
             if 'AlreadyExistsException' in error_msg or 'already exists' in error_msg:
                 update = True
@@ -344,7 +344,7 @@ def main():
                              template_url=template_url,
                              capabilities=['CAPABILITY_IAM'])
             operation = 'UPDATE'
-        except Exception, err:
+        except Exception as err:
             error_msg = boto_exception(err)
             if 'No updates are to be performed.' in error_msg:
                 result = dict(changed=False, output='Stack is already up-to-date.')
@@ -381,7 +381,7 @@ def main():
         try:
             invoke_with_throttling_retries(cfn.describe_stacks,stack_name)
             operation = 'DELETE'
-        except Exception, err:
+        except Exception as err:
             error_msg = boto_exception(err)
             if 'Stack:%s does not exist' % stack_name in error_msg:
                 result = dict(changed=False, output='Stack not found.')
