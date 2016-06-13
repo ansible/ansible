@@ -50,12 +50,21 @@ def to_list(val):
 def connect(module):
     try:
         if not module.connected:
-            module.connect()
+            module.connection.connect(module.params)
             if module.params['authorize']:
-                module.authorize()
+                module.connection.authorize(module.params)
     except NetworkError:
         exc = get_exception()
         module.fail_json(msg=exc.message)
+
+def disconnect(module):
+    try:
+        if module.connected:
+            module.connection.disconnect()
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
+
 
 class Command(object):
 
@@ -101,7 +110,7 @@ class Config(object):
     def __init__(self, connection):
         self.connection = connection
 
-    def invoke(self, method, raise_exc=False, *args, **kwargs):
+    def invoke(self, method, *args, **kwargs):
         try:
             return method(*args, **kwargs)
         except AttributeError:
@@ -115,25 +124,25 @@ class Config(object):
         except NotImplementedError:
             raise NetworkError('method not supported "%s"' % method.__name__)
 
-    def __call__(self, commands, raise_exc=False):
+    def __call__(self, commands):
         lines = to_list(commands)
-        return self.invoke(self.connection.configure, raise_exc, lines)
+        return self.invoke(self.connection.configure, commands)
 
-    def load_config(self, commands, raise_exc=False):
+    def load_config(self, commands, **kwargs):
         commands = to_list(commands)
-        return self.invoke(self.connection.load_config, commands, raise_exc)
+        return self.invoke(self.connection.load_config, commands, **kwargs)
 
-    def get_config(self):
-        return self.invoke(self.connection.get_config)
+    def get_config(self, **kwargs):
+        return self.invoke(self.connection.get_config, **kwargs)
 
-    def commit_config(self, raise_exc=False):
-        return self.invoke(self.connection.commit_config, raise_exc)
+    def commit_config(self, **kwargs):
+        return self.invoke(self.connection.commit_config, **kwargs)
 
-    def replace_config(self, raise_exc=False):
-        return self.invoke(self.connection.replace_config, raise_exc)
+    def abort_config(self, **kwargs):
+        return self.invoke(self.connection.abort_config, **kwargs)
 
-    def abort_config(self, raise_exc=False):
-        return self.invoke(self.connection.abort_config, raise_exc)
+    def save_config(self):
+        return self.invoke(self.connection.save_config)
 
 
 class NetworkError(Exception):
@@ -182,39 +191,10 @@ class NetworkModule(AnsibleModule):
                     if self.params.get(key) is None and value is not None:
                         self.params[key] = value
 
-    def connect(self, **kwargs):
-        try:
-            if not self.connected:
-                self.connection.connect(self.params)
-                if self.params['authorize']:
-                    self.authorize()
-        except NetworkError:
-            if kwargs.get('raise_exception'):
-                raise
-            else:
-                exc = get_exception()
-                self.fail_json(msg=exc.message, **exc.kwargs)
-
-
-    def disconnect(self):
-        if self.connected:
-            try:
-                self.connection.disconnect()
-            except NetworkError:
-                exc = get_exception()
-                self.fail_json(msg=exc.message)
-
-    def authorize(self):
-        try:
-            if self.connected:
-                self.connection.authorize(self.params)
-        except NetworkError:
-            exc = get_exception()
-            self.fail_json(msg=exc.message)
-
 
 class NetCli(object):
     """Basic paramiko-based ssh transport any NetworkModule can use."""
+
     def __init__(self):
         if not HAS_PARAMIKO:
             raise NetworkError(
@@ -224,6 +204,7 @@ class NetCli(object):
 
         self.shell = None
         self._connected = False
+        self.default_output = 'text'
 
     def connect(self, params, kickstart, **kwargs):
         host = params['host']
@@ -279,7 +260,7 @@ def get_module(connect_on_load=True, **kwargs):
         module.connection = cls()
     except KeyError:
         module.fail_json(msg='Unknown transport or no default transport specified')
-    except TypeError:
+    except (TypeError, NetworkError):
         exc = get_exception()
         module.fail_json(msg=exc.message)
 
