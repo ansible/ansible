@@ -270,18 +270,33 @@ if __name__ == '__main__':
         # remote_tmpdir and this module executing under async.  So we cannot
         # store this in remote_tmpdir (use system tempdir instead)
         temp_path = tempfile.mkdtemp(prefix='ansible_')
+
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
         modlib = open(zipped_mod, 'wb')
         modlib.write(base64.b64decode(ZIPDATA))
         modlib.close()
+
         if len(sys.argv) == 2:
             exitcode = debug(sys.argv[1], zipped_mod, ZIPLOADER_PARAMS)
         else:
-            z = zipfile.ZipFile(zipped_mod)
+            z = zipfile.ZipFile(zipped_mod, mode='r')
             module = os.path.join(temp_path, 'ansible_module_%(ansible_module)s.py')
             f = open(module, 'wb')
             f.write(z.read('ansible_module_%(ansible_module)s.py'))
             f.close()
+
+            # When installed via setuptools (including python setup.py install),
+            # ansible may be installed with an easy-install.pth file.  That file
+            # may load the system-wide install of ansible rather than the one in
+            # the module.  sitecustomize is the only way to override that setting.
+            z = zipfile.ZipFile(zipped_mod, mode='a')
+            # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
+            z = zipfile.ZipFile(zipped_mod, mode='a')
+            sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
+            sitecustomize = sitecustomize.encode('utf-8')
+            z.writestr('sitecustomize.py', sitecustomize)
+            z.close()
+
             exitcode = invoke_module(module, zipped_mod, ZIPLOADER_PARAMS)
     finally:
         try:
