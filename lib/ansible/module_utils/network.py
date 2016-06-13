@@ -117,7 +117,7 @@ class Config(object):
 
     def __call__(self, commands, raise_exc=False):
         lines = to_list(commands)
-        return self.invoke(self.connection.configure, raise_exc, commands)
+        return self.invoke(self.connection.configure, raise_exc, lines)
 
     def load_config(self, commands, raise_exc=False):
         commands = to_list(commands)
@@ -182,7 +182,7 @@ class NetworkModule(AnsibleModule):
                     if self.params.get(key) is None and value is not None:
                         self.params[key] = value
 
-    def connect(self):
+    def connect(self, **kwargs):
         try:
             if not self.connected:
                 self.connection.connect(self.params)
@@ -210,10 +210,7 @@ class NetworkModule(AnsibleModule):
                 self.connection.authorize(self.params)
         except NetworkError:
             exc = get_exception()
-            module.fail_json(msg=exc.message)
-
-
-def get_module(connect_on_load=True, **kwargs):
+            self.fail_json(msg=exc.message)
 
 
 class NetCli(object):
@@ -226,6 +223,7 @@ class NetCli(object):
             )
 
         self.shell = None
+        self._connected = False
 
     def connect(self, params, kickstart, **kwargs):
         host = params['host']
@@ -253,56 +251,10 @@ class NetCli(object):
             )
 
     def disconnect(self, **kwargs):
+        self._connected = False
         self.shell.close()
 
-    def run_commands(self, commands, **kwargs):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(exc.message, commands=commands)
-
-
-class NetCli(object):
-    """Basic paramiko-based ssh transport any NetworkModule can use."""
-    def __init__(self):
-        if not HAS_PARAMIKO:
-            raise NetworkError(
-                msg='paramiko is required but does not appear to be installed.  '
-                'It can be installed using  `pip install paramiko`'
-            )
-
-        self.shell = None
-
-    def connect(self, params, kickstart, **kwargs):
-        host = params['host']
-        port = params.get('port') or 22
-
-        username = params['username']
-        password = params.get('password')
-        key_file = params.get('ssh_keyfile')
-        timeout = params['timeout']
-
-        try:
-            self.shell = Shell(
-                kickstart=kickstart,
-                prompts_re=self.CLI_PROMPTS_RE,
-                errors_re=self.CLI_ERRORS_RE,
-            )
-            self.shell.open(
-                host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
-            )
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
-            )
-
-    def disconnect(self, **kwargs):
-        self.shell.close()
-
-    def run_commands(self, commands, **kwargs):
+    def execute(self, commands, **kwargs):
         try:
             return self.shell.send(commands)
         except ShellError:
