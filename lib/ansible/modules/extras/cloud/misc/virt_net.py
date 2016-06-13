@@ -47,10 +47,11 @@ options:
         required: false
         choices: [ "define", "create", "start", "stop", "destroy",
                    "undefine", "get_xml", "list_nets", "facts",
-                   "info", "status"]
+                   "info", "status", "modify"]
         description:
             - in addition to state management, various non-idempotent commands are available.
               See examples.
+              Modify was added in version 2.1
     autostart:
         required: false
         choices: ["yes", "no"]
@@ -134,7 +135,8 @@ else:
 
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop',
-                  'undefine', 'destroy', 'get_xml', 'define']
+                  'undefine', 'destroy', 'get_xml', 'define',
+                  'modify' ]
 HOST_COMMANDS = [ 'list_nets', 'facts', 'info' ]
 ALL_COMMANDS.extend(ENTRY_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
@@ -205,6 +207,48 @@ class LibvirtConnection(object):
                 return self.module.exit_json(changed=True)
             if not state:
                 return self.module.exit_json(changed=True)
+
+    def modify(self, entryid, xml):
+        network = self.find_entry(entryid)
+        # identify what type of entry is given in the xml
+        new_data = etree.fromstring(xml)
+        old_data = etree.fromstring(network.XMLDesc(0))
+        if new_data.tag == 'host':
+            mac_addr = new_data.get('mac')
+            hosts = old_data.xpath('/network/ip/dhcp/host')
+            # find the one mac we're looking for
+            host = None
+            for h in hosts:
+                if h.get('mac') == mac_addr:
+                    host = h
+                    break
+            if host is None:
+                # add the host
+                if not self.module.check_mode:
+                    res = network.update (libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                        libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                        -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                else:
+                    # pretend there was a change
+                    res = 0
+                if res == 0: 
+                    return True
+            else:
+                # change the host
+                if host.get('name') == new_data.get('name') and host.get('ip') == new_data.get('ip'):
+                    return False
+                else:
+                    if not self.module.check_mode:
+                        res = network.update (libvirt.VIR_NETWORK_UPDATE_COMMAND_MODIFY,
+                            libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                            -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                    else:
+                        # pretend there was a change
+                        res = 0
+                    if res == 0:
+                        return True
+            #  command, section, parentIndex, xml, flags=0
+            self.module.fail_json(msg='updating this is not supported yet '+unicode(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -344,6 +388,9 @@ class VirtNetwork(object):
 
     def create(self, entryid):
         return self.conn.create(entryid)
+    
+    def modify(self, entryid, xml):
+        return self.conn.modify(entryid, xml)
 
     def start(self, entryid):
         return self.conn.create(entryid)
@@ -460,14 +507,18 @@ def core(module):
         if command in ENTRY_COMMANDS:
             if not name:
                 module.fail_json(msg = "%s requires 1 argument: name" % command)
-            if command == 'define':
+            if command in ('define', 'modify'):
                 if not xml:
-                    module.fail_json(msg = "define requires xml argument")
+                    module.fail_json(msg = command+" requires xml argument")
                 try:
                     v.get_net(name)
                 except EntryNotFound:
                     v.define(name, xml)
                     res = {'changed': True, 'created': name}
+                else:
+                    if command == 'modify':
+                        mod = v.modify(name, xml)
+                        res = {'changed': mod, 'modified': name}
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
             if type(res) != dict:
