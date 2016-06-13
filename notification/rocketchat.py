@@ -33,7 +33,6 @@ options:
       - The domain for your environment without protocol. (i.e.
         C(subdomain.domain.com or chat.domain.tld))
     required: true
-    default: None
   token:
     description:
       - Rocket Chat Incoming Webhook integration token.  This provides
@@ -66,8 +65,9 @@ options:
     default: "Ansible"
   icon_url:
     description:
-      - URL for the message sender's icon (default C(http://www.ansible.com/favicon.ico))
+      - URL for the message sender's icon.
     required: false
+    default: "http://www.ansible.com/favicon.ico"
   icon_emoji:
     description:
       - Emoji for the message sender. The representation for the available emojis can be
