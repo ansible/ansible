@@ -205,3 +205,9 @@
     that:
       - "result.changed == true"
       - "stat_result.stat.mode == '0070'"
+
+#https://github.com/ansible/ansible/issues/16191
+- name: Test url split with no filename
+  get_url: 
+    url: http://www.google.com 
+    dest: "{{ output_dir }}"
