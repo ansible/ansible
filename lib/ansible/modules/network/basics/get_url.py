@@ -159,13 +159,6 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
-  mode:
-    description:
-      - mode the destination file should be. For those used to /usr/bin/chmod remember that modes are actually
-        octal numbers (like 0644). Leaving off the leading zero will likely have unexpected results.
-        As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
-    required: false
-    version_added: '2.2'
 # informational: requirements for nodes
 requirements: [ ]
 author: "Jan-Piet Mens (@jpmens)"
