@@ -109,7 +109,6 @@ class AnsibleCloudStack(object):
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
-        self.tags = None
 
 
     def _connect(self):
@@ -391,19 +390,9 @@ class AnsibleCloudStack(object):
 
 
     def get_tags(self, resource=None):
-        if not self.tags:
-            args = {}
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['resourceid'] = resource['id']
-            response = self.cs.listTags(**args)
-            self.tags = response.get('tag', [])
-
         existing_tags = []
-        if self.tags:
-            for tag in self.tags:
-                existing_tags.append({'key': tag['key'], 'value': tag['value']})
+        for tag in resource.get('tags',[]):
+            existing_tags.append({'key': tag['key'], 'value': tag['value']})
         return existing_tags
 
 
@@ -441,8 +430,7 @@ class AnsibleCloudStack(object):
             if tags is not None:
                 self._process_tags(resource, resource_type, self._tags_that_should_not_exist(resource, tags), operation="delete")
                 self._process_tags(resource, resource_type, self._tags_that_should_exist_or_be_updated(resource, tags))
-                self.tags = None
-                resource['tags'] = self.get_tags(resource)
+                resource['tags'] = tags
         return resource
 
 
