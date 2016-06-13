@@ -73,6 +73,13 @@ options:
         description:
             - Whether to use an SSL connection when connecting to the database
         default: False
+    ssl_cert_reqs:
+        version_added: "2.2"
+        description:
+            - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
+        required: false
+        default: "CERT_REQUIRED"
+        choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     roles:
         version_added: "1.3"
         description:
@@ -138,6 +145,7 @@ EXAMPLES = '''
 
 '''
 
+import ssl as ssl_lib
 import ConfigParser
 from distutils.version import LooseVersion
 try:
@@ -272,6 +280,7 @@ def main():
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
+            ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
         ),
         supports_check_mode=True
     )
@@ -290,15 +299,19 @@ def main():
     user = module.params['name']
     password = module.params['password']
     ssl = module.params['ssl']
+    ssl_cert_reqs = getattr(ssl_lib, module.params['ssl_cert_reqs'])
     roles = module.params['roles']
     state = module.params['state']
     update_password = module.params['update_password']
 
     try:
         if replica_set:
-            client = MongoClient(login_host, int(login_port), replicaset=replica_set, ssl=ssl)
+            client = MongoClient(login_host, int(login_port),
+                                 replicaset=replica_set, ssl=ssl,
+                                 ssl_cert_reqs=ssl_cert_reqs)
         else:
-            client = MongoClient(login_host, int(login_port), ssl=ssl)
+            client = MongoClient(login_host, int(login_port), ssl=ssl,
+                                 ssl_cert_reqs=ssl_cert_reqs)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
