@@ -1776,10 +1776,10 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
 
-    def container_remove(self, container_id, v=False, link=False, force=False):
-        volume_state = (True if self.parameters.keep_volumes else False)
-        self.log("remove container container:%s v:%s link:%s force%s" % (container_id, v, link, force))
-        self.results['actions'].append(dict(removed=container_id, volume_state=volume_state))
+    def container_remove(self, container_id, link=False, force=False):
+        volume_state = (not self.parameters.keep_volumes)  
+        self.log("remove container container:%s v:%s link:%s force%s" % (container_id, volume_state, link, force))
+        self.results['actions'].append(dict(removed=container_id, volume_state=volume_state, link=link, force=force))
         self.results['changed'] = True
         response = None
         if not self.check_mode:
