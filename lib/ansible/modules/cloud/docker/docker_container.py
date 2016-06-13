@@ -1645,8 +1645,8 @@ class ContainerManager(DockerBaseClass):
                 self.container_stop(container.Id)
             self.container_remove(container.Id)
 
-    def fail(self, msg):
-        self.client.module.fail_json(msg=msg)
+    def fail(self, msg, **kwargs):
+        self.client.module.fail_json(msg=msg, **kwargs)
 
     def _get_container(self, container):
         '''
@@ -1774,6 +1774,13 @@ class ContainerManager(DockerBaseClass):
                 self.client.start(container=container_id)
             except Exception as exc:
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
+
+            if not self.parameters.detach:
+                status = self.client.wait(container_id)
+                if status != 0:
+                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    self.fail(output, status=status)
+
         return self._get_container(container_id)
 
     def container_remove(self, container_id, link=False, force=False):
