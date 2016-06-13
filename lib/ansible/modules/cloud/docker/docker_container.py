@@ -802,7 +802,6 @@ class TaskParameters(DockerBaseClass):
             tty='tty',
             ports='ports',
             environment='env',
-            dns='dns_servers',
             name='name',
             entrypoint='entrypoint',
             cpu_shares='cpu_shares',
