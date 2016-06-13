@@ -21,9 +21,8 @@ import collections
 import re
 
 from ansible.module_utils.basic import json
-from ansible.module_utils.network import NetCli, NetworkError, get_module
+from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
 from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.shell import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
@@ -35,9 +34,169 @@ add_argument('validate_certs', dict(default=True, type='bool'))
 
 ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
 
+def argument_spec():
+    return dict(
+        # config options
+        running_config=dict(aliases=['config']),
+        config_session=dict(default='ansible_session'),
+        save_config=dict(default=False, aliases=['save'])
+    )
+eos_argument_spec = argument_spec()
+
+def get_config(module):
+    config = module.params['running_config']
+    if not config:
+        config = module.config.get_config(include_defaults=True)
+    return NetworkConfig(indent=3, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    session = module.params['config_session']
+    save_config = module.params['save_config']
+
+    result = dict(changed=False)
+
+    if commands:
+        if module._diff:
+            diff = module.config.load_config(commands, session_name=session)
+            if diff:
+                result['diff'] = dict(prepared=diff)
+
+            if not module.check_mode:
+                module.config.commit_config(session)
+                if save_config:
+                    module.config.save_config()
+            else:
+                module.config.abort_config(session_name=session)
+
+        else:
+            module.config(commands)
+            if save_config:
+                module.config.save_config()
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+
+def expand_intf_range(interfaces):
+    match = INTF_NAME_RE.match(interfaces)
+    if not match:
+        raise ValueError('could not parse interface range')
+
+    name = match.group(1)
+    values = match.group(2).split(',')
+
+    indicies = list()
+
+    for val in values:
+        tokens = val.split('-')
+
+        # single index value to handle
+        if len(tokens) == 1:
+            indicies.append(tokens[0])
+
+        elif len(tokens) == 2:
+            pairs = list()
+            mod = 0
+
+            for token in tokens:
+                parts = token.split('/')
+
+                if len(parts) == 1:
+                    port = parts[0]
+                    if port == '$':
+                        port = last_port
+                    pairs.append((mod, int(port)))
+
+                elif len(parts) == 2:
+                    mod = int(parts[0])
+                    port = parts[1]
+                    if port == '$':
+                        port = last_port
+                    pairs.append((mod, int(port)))
+
+                else:
+                    raise ValueError('unable to parse interface')
+
+            if pairs[0][0] == pairs[1][0]:
+                # same module
+                mod = pairs[0][0]
+                start = pairs[0][1]
+                end = pairs[1][1] + 1
+
+                for i in range(start, end):
+                    if mod == 0:
+                        indicies.append(i)
+                    else:
+                        indicies.append('%s/%s' % (mod, i))
+            else:
+                # span modules
+                start_mod, start_port = pairs[0]
+                end_mod, end_port = pairs[1]
+                end_port += 1
+
+                for i in range(start_port, last_port+1):
+                    indicies.append('%s/%s' % (start_mod, i))
+
+                for i in range(first_port, end_port):
+                    indicies.append('%s/%s' % (end_mod, i))
+
+    return ['%s%s' % (name, index) for index in indicies]
+
+class EosConfigMixin(object):
+
+    def configure(self, commands, **kwargs):
+        commands = prepare_config(commands)
+        responses = self.execute(commands)
+        responses.pop(0)
+        return responses
+
+    def get_config(self, **kwargs):
+        cmd = 'show running-config'
+        if kwargs.get('include_defaults') is True:
+            cmd += ' all'
+        return self.execute([cmd])[0]
+
+    def load_config(self, commands, session_name='ansible_temp_session', **kwargs):
+        commands = to_list(commands)
+        commands.insert(0, 'configure session %s' % session_name)
+        commands.append('show session-config diffs')
+        commands.append('end')
+        responses = self.execute(commands)
+        return responses[-2]
+
+    def replace_config(self, contents, params, **kwargs):
+        remote_user = params['username']
+        remote_path = '/home/%s/ansible-config' % remote_user
+
+        commands = [
+            'bash echo "%s" > %s' % (contents, remote_path),
+            'diff running-config file:/%s' % remote_path,
+            'config replace file:/%s' % remote_path,
+        ]
+
+        responses = self.run_commands(commands)
+        return responses[-2]
+
+    def commit_config(self, session_name):
+        session = 'configure session %s' % session_name
+        commands = [session, 'commit', 'no %s' % session]
+        self.execute(commands)
+
+    def abort_config(self, session_name):
+        command = 'no configure session %s' % session_name
+        self.execute([command])
+
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
 
 @register_transport('eapi')
-class Eapi(object):
+class Eapi(EosConfigMixin):
 
     def __init__(self):
         self.url = None
@@ -93,6 +252,9 @@ class Eapi(object):
         else:
             self.enable = 'enable'
 
+
+    ### implementation of network.Cli ###
+
     def run_commands(self, commands):
         output = None
         cmds = list()
@@ -128,15 +290,25 @@ class Eapi(object):
 
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response, headers = fetch_url(self.url_args, self.url, data=data, headers=headers, method='POST')
+        response, headers = fetch_url(
+            self.url_args, self.url, data=data, headers=headers,
+            method='POST'
+        )
 
         if headers['status'] != 200:
             raise NetworkError(**headers)
 
-        response = json.loads(response.read())
+        try:
+            response = json.loads(response.read())
+        except ValueError:
+            raise NetworkError('unable to load response from device')
+
         if 'error' in response:
             err = response['error']
-            raise NetworkError(msg='json-rpc error', commands=commands, **err)
+            raise NetworkError(
+                msg=err['message'], code=err['code'], data=err['data'],
+                commands=commands
+            )
 
         if self.enable:
             response['result'].pop(0)
@@ -168,7 +340,6 @@ class Cli(NetCli, EosConfigMixin):
 
     def __init__(self):
         super(Cli, self).__init__()
-        self.default_output = 'text'
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=True, **kwargs)
@@ -179,14 +350,22 @@ class Cli(NetCli, EosConfigMixin):
         passwd = params['auth_pass']
         self.execute(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
+
+    ### implementation of network.Cli ###
+
     def run_commands(self, commands):
         cmds = list(prepare_commands(commands))
         responses = self.execute(cmds)
         for index, cmd in enumerate(commands):
             if cmd.output == 'json':
-                responses[index] = json.loads(responses[index])
+                try:
+                    responses[index] = json.loads(responses[index])
+                except ValueError:
+                    raise NetworkError(
+                        msg='unable to load response from device',
+                        response=response[index]
+                    )
         return responses
-
 
 def prepare_config(commands):
     commands = to_list(commands)
