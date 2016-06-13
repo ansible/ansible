@@ -18,12 +18,12 @@ Ansible Changes By Release
 - letsencrypt
 - netconf_config
 - openstack
-  * os_keystone_service.py
+  * os_keystone_service
+- rocketchat
 - sensu_subscription
 - smartos
   * smartos_image_facts
 - systemd
-
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 
