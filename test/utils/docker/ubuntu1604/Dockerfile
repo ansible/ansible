@@ -53,6 +53,7 @@ RUN apt-get install -y \
     python-pip \
     python-setuptools \
     python-virtualenv \
+    python-wheel \
     virtualenv \
     python-yaml
 
@@ -68,4 +69,5 @@ RUN mkdir /etc/ansible/
 RUN /bin/echo -e "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts
 
 VOLUME /sys/fs/cgroup /run/lock /run /tmp
+RUN pip install junit-xml
 CMD ["/sbin/init"]

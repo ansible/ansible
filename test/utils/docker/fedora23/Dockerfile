@@ -58,5 +58,6 @@ RUN ssh-keygen -q -t dsa -N '' -f /etc/ssh/ssh_host_dsa_key && \
     ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
+RUN pip install junit-xml
 ENV container=docker
 CMD ["/usr/sbin/init"]
