@@ -79,7 +79,7 @@ def main():
     data = file(log_path).read()
     try:
         data = json.loads(data)
-    except Exception, e:
+    except Exception:
         if data == '':
             # file not written yet?  That means it is running
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
