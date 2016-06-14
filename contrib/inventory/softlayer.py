@@ -81,7 +81,7 @@ class SoftLayerInventory(object):
 
         if self.args.list:
             self.get_all_servers()
-            print self.json_format_dict(self.inventory, True)
+            print(self.json_format_dict(self.inventory, True))
         elif self.args.host:
             self.get_all_servers()
             print self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True)
