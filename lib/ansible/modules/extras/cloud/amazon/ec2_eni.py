@@ -71,6 +71,7 @@ options:
         instance_id is given, attachment status won't change
     required: false
     default: yes
+    version_added: 2.2
   force_detach:
     description:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id to None or when deleting an interface with state=absent.
