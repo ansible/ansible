@@ -25,6 +25,11 @@ For human readable output, you can use::
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
 
+It's also possible to change the indentation of both::
+
+    {{ some_variable | to_nice_json(indent=2) }}
+    {{ some_variable | to_nice_yaml(indent=8) }}
+
 Alternatively, you may be reading in some already formatted data::
 
     {{ some_variable | from_json }}
