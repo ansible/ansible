@@ -56,15 +56,21 @@ options:
     default: null
   state:
     description:
-      - Create, delete or detach ENI from its instance.
+      - Create or delete ENI
     required: false
     default: present
-    choices: [ 'present', 'absent', 'detached' ]
+    choices: [ 'present', 'absent' ]
   device_index:
     description:
       - The index of the device for the network interface attachment on the instance.
     required: false
     default: 0
+  attached:
+    description:
+      - Specifies if network interface should be attached or detached from instance. If attached=yes and no \
+        instance_id is given, attachment status won't change
+    required: false
+    default: yes
   force_detach:
     description:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id to None or when deleting an interface with state=absent.
@@ -283,6 +289,7 @@ def wait_for_eni(eni, status):
 def create_eni(connection, vpc_id, module):
 
     instance_id = module.params.get("instance_id")
+    attached = module.params.get("attached")
     if instance_id == 'None':
         instance_id = None
     device_index = module.params.get("device_index")
@@ -298,7 +305,7 @@ def create_eni(connection, vpc_id, module):
         eni = find_eni(connection, module)
         if eni is None:
             eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-            if instance_id is not None:
+            if attached and instance_id is not None:
                 try:
                     eni.attach(instance_id, device_index)
                 except BotoServerError:
@@ -333,6 +340,7 @@ def create_eni(connection, vpc_id, module):
 def modify_eni(connection, vpc_id, module, eni):
 
     instance_id = module.params.get("instance_id")
+    attached = module.params.get("attached")
     do_detach = module.params.get('state') == 'detached'
     device_index = module.params.get("device_index")
     description = module.params.get('description')
@@ -380,10 +388,13 @@ def modify_eni(connection, vpc_id, module, eni):
                 secondary_addresses_to_remove_count = current_secondary_address_count - secondary_private_ip_address_count
                 connection.unassign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=current_secondary_addresses[:secondary_addresses_to_remove_count], dry_run=False)
 
-        if instance_id is not None:
-            eni.attach(instance_id, device_index)
-            wait_for_eni(eni, "attached")
-            changed = True
+        if attached:
+            if instance_id is not None:
+                eni.attach(instance_id, device_index)
+                wait_for_eni(eni, "attached")
+                changed = True
+        else:
+            detach_eni(eni, module)
 
     except BotoServerError as e:
         module.fail_json(msg=e.message)
@@ -422,9 +433,9 @@ def delete_eni(connection, module):
             module.fail_json(msg=e.message)
 
 
-def detach_eni(connection, module):
+def detach_eni(eni, module):
 
-    eni = find_eni(connection, module)
+    force_detach = module.params.get("force_detach")
     if eni.attachment is not None:
         eni.detach(force_detach)
         wait_for_eni(eni, "detached")
@@ -488,12 +499,13 @@ def main():
             description=dict(type='str'),
             security_groups=dict(default=[], type='list'),
             device_index=dict(default=0, type='int'),
-            state=dict(default='present', choices=['present', 'absent', 'detached']),
+            state=dict(default='present', choices=['present', 'absent']),
             force_detach=dict(default='no', type='bool'),
             source_dest_check=dict(default=None, type='bool'),
             delete_on_termination=dict(default=None, type='bool'),
             secondary_private_ip_addresses=dict(default=None, type='list'),
-            secondary_private_ip_address_count=dict(default=None, type='int')
+            secondary_private_ip_address_count=dict(default=None, type='int'),
+            attached=dict(default=True, type='bool')
         )
     )
 
@@ -503,8 +515,7 @@ def main():
                             ],
                            required_if=([
                                ('state', 'present', ['subnet_id']),
-                               ('state', 'absent', ['eni_id']),
-                               ('state', 'detached', ['eni_id']),
+                               ('state', 'absent', ['eni_id'])
                             ])
                            )
 
@@ -538,9 +549,6 @@ def main():
 
     elif state == 'absent':
         delete_eni(connection, module)
-
-    elif state == 'detached':
-        detach_eni(connection, module)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
