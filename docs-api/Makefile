@@ -8,7 +8,7 @@ PAPER         =
 BUILDDIR      = _build
 RSTDIR        = rst
 MODULES_PATH  = ../lib
-EXCLUDE_PATHS = ../lib/ansible/modules ../lib/ansible/utils/module_docs_fragments
+EXCLUDE_PATHS = ../lib/ansible/modules ../lib/ansible/utils/module_docs_fragments ../lib/ansible/compat/six
 DOC_PROJECTS  = "Ansible API"
 
 # User-friendly check for sphinx-build
