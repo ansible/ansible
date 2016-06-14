@@ -53,6 +53,33 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+try:
+    import boto3
+    from botocore.exceptions import ClientError, NoCredentialsError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
+
+def list_ec2_snapshots_boto3(connection, module):
+
+    if module.params.get("filters") is None:
+        filters = []
+    else:
+        filters = ansible_dict_to_boto3_filter_list(module.params.get("filters"))
+
+    try:
+        network_interfaces_result = connection.describe_network_interfaces(Filters=filters)
+    except (ClientError, NoCredentialsError) as e:
+        module.fail_json(msg=e.message)
+
+    # Turn the boto3 result in to ansible_friendly_snaked_names
+    snaked_network_interfaces_result = camel_dict_to_snake_dict(network_interfaces_result)
+    for network_interfaces in snaked_network_interfaces_result['network_interfaces']:
+        network_interfaces['tag_set'] = boto3_tag_list_to_ansible_dict(network_interfaces['tag_set'])
+
+    module.exit_json(**snaked_network_interfaces_result)
+
 
 def get_error_message(xml_string):
     
@@ -124,18 +151,28 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
     
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
-    if region:
-        try:
-            connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    if HAS_BOTO3:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    list_eni(connection, module)
-        
+        if region:
+            connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+        else:
+            module.fail_json(msg="region must be specified")
+
+        list_ec2_snapshots_boto3(connection, module)
+    else:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+
+        if region:
+            try:
+                connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
+            except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+                module.fail_json(msg=str(e))
+        else:
+            module.fail_json(msg="region must be specified")
+
+        list_eni(connection, module)
+
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
