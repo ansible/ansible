@@ -78,8 +78,10 @@ Target: September 2016
   - Unify NetworkModules (module_utils/network.py) as much as possible 
   - Add support for config diff and replace on supported platforms (2 weeks)
   - Network facts modules 
-  - OpenVSwitch modules
+  - Support for VyOS network operating system
+  - Add support for NetConf / RestConf for IOS/XE
   - Quagga modules 
+  - Bird modules (stretch)
   - GoBGP modules (stretch)
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
