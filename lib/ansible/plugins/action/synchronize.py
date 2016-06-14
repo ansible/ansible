@@ -85,7 +85,8 @@ class ActionModule(ActionBase):
             alternative ssh port to a vagrant host.)
         """
         transport = self._connection.transport
-        if host not in C.LOCALHOST or transport != "local":
+        if host not in C.LOCALHOST or transport != "local" or \
+                (host in C.LOCALHOST and not port_matches_localhost_port):
             if port_matches_localhost_port and host in C.LOCALHOST:
                 self._task.args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
