@@ -191,8 +191,8 @@ def main():
         else:
             commands = str(candidate).split('\n')
 
+    commands = filter_exit(commands)
     if commands:
-        commands = filter_exit(commands)
         if not module.check_mode:
             commands = [str(c).strip() for c in commands]
             response = module.configure(commands, replace=replace)
