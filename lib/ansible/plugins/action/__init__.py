@@ -367,7 +367,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
                     else:
-                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user. For information on working around this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user (rc: {0}, err: {1}). For information on working around this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], res['stderr']))
         elif execute:
             # Can't depend on the file being transferred with execute
             # permissions.  Only need user perms because no become was
