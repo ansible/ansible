@@ -24,6 +24,10 @@ Ansible Changes By Release
 - smartos
   * smartos_image_facts
 - systemd
+- telegram
+- vmware
+  * vmware_vmotion
+
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 
