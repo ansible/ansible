@@ -627,7 +627,6 @@ class Distribution(object):
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
-        {'path': '/etc/release', 'name': 'Solaris'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
         {'path': '/etc/os-release', 'name': 'SuSE'},
         {'path': '/etc/SuSE-release', 'name': 'SuSE'},
@@ -675,7 +674,7 @@ class Distribution(object):
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
 
-        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'OpenBSD', 'SunOS')
 
         self.facts['distribution'] = self.system
 
@@ -801,8 +800,8 @@ class Distribution(object):
         self.facts['distribution'] = 'Alpine'
         self.facts['distribution_version'] = data
 
-    def get_distribution_Solaris(self, name, data, path):
-        data = data.split('\n')[0]
+    def get_distribution_SunOS(self):
+        data = get_file_content('/etc/release').split('\n')[0]
         if 'Solaris' in data:
             ora_prefix = ''
             if 'Oracle Solaris' in data:
@@ -813,7 +812,7 @@ class Distribution(object):
             self.facts['distribution_release'] = ora_prefix + data
             return
 
-        uname_rc, uname_out, uname_err = self.module.run_command(['uname', '-v'])
+        uname_v = get_uname_version(self.module)
         distribution_version = None
         if 'SmartOS' in data:
             self.facts['distribution'] = 'SmartOS'
@@ -826,7 +825,7 @@ class Distribution(object):
         elif 'OmniOS' in data:
             self.facts['distribution'] = 'OmniOS'
             distribution_version = data.split()[-1]
-        elif uname_rc == 0 and 'NexentaOS_' in uname_out:
+        elif uname_v is not None and 'NexentaOS_' in uname_v:
             self.facts['distribution'] = 'Nexenta'
             distribution_version = data.split()[-1].lstrip('v')
 
@@ -834,8 +833,8 @@ class Distribution(object):
             self.facts['distribution_release'] = data.strip()
             if distribution_version is not None:
                 self.facts['distribution_version'] = distribution_version
-            elif uname_rc == 0:
-                self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
+            elif uname_v is not None:
+                self.facts['distribution_version'] = uname_v.split('\n')[0].strip()
             return
 
         return False  # TODO: remove if tested without this
@@ -3177,6 +3176,12 @@ def get_file_content(path, default=None, strip=True):
             # done in 2 blocks for 2.4 compat
             pass
     return data
+
+def get_uname_version(module):
+    rc, out, err = module.run_command(['uname', '-v'])
+    if rc == 0:
+        return out
+    return None
 
 def get_file_lines(path):
     '''get list of lines from file'''
