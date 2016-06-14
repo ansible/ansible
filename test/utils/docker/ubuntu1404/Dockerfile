@@ -7,6 +7,7 @@ RUN apt-get update -y && \
     asciidoc \
     bzip2 \
     cdbs \
+    curl \
     debhelper \
     debianutils \
     devscripts \
