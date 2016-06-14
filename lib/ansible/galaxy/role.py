@@ -53,8 +53,6 @@ class GalaxyRole(object):
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None, full_path=None):
 
-        display.vvvvv("GalaxyRole __init__ galaxy=%s name=%s src=%s version=%s scm=%s path=%s full_path=%s" %
-                      (galaxy, name, src, version, scm, path, full_path))
         self._metadata = None
         self._install_info = None
         self._validate_certs = not galaxy.options.ignore_certs
@@ -74,7 +72,6 @@ class GalaxyRole(object):
         self.full_path = None
 
         self.installed = None
-    #    display.vvvvv('%s' % self)
 
     def __eq__(self, other):
         return self.name == other.name
@@ -84,7 +81,6 @@ class GalaxyRole(object):
             (self.galaxy, self.name, self.src, self.version, self.scm, self.path, self.full_path)
 
     def __str__(self):
-        print('self.path=%s' % self.path)
         text = [u"", u"Role: %s" % to_unicode(self.name)]
         text.append(u"\tdescription: %s" % self.metadata.get('description', ''))
 
@@ -119,7 +115,7 @@ class GalaxyRole(object):
 
     @classmethod
     def from_name_and_path(cls, galaxy, name, path):
-        role = cls(galaxy, name)
+        role = cls.from_name(galaxy, name)
         role.path = path
         return role
 
@@ -132,7 +128,7 @@ class GalaxyRole(object):
 
     @property
     def installable_from_galaxy(self):
-        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+        if '.' not in self.name and '.' not in self.src and self.scm is None:
             # we know we can skip this, as it's not going to
             # be found on galaxy.ansible.com
             return False
@@ -143,7 +139,6 @@ class GalaxyRole(object):
         """
         Returns role metadata
         """
-        print('self_metadata=%s' % self._metadata)
         if self._metadata is None:
             self._metadata = {}
             if not self.path:
@@ -154,14 +149,11 @@ class GalaxyRole(object):
                     f = open(meta_path, 'r')
                     self._metadata = yaml.safe_load(f)
                 except Exception as e:
-                    print('fffffffffffffffffffffff')
                     display.vvv('Exception: %s' % e)
                     display.vvvvv("Unable to load metadata for %s" % self.name)
                 finally:
-                    print('close')
                     f.close()
 
-        print('self_metadata=%s' % self._metadata)
         return self._metadata
 
     @property

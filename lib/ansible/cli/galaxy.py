@@ -65,7 +65,6 @@ class GalaxyCLI(CLI):
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-
         self.set_action()
 
         # common
@@ -109,7 +108,7 @@ class GalaxyCLI(CLI):
 
         # options that apply to more than one action
         if self.action in ['init', 'info']:
-            self.parser.add_option( '--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
+            self.parser.add_option('--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
 
         if not self.action in ("delete","import","init","login","setup"):
             # NOTE: while the option type=str, the default is a list, and the
@@ -120,7 +119,7 @@ class GalaxyCLI(CLI):
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        self.options, self.args =self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args()
         display.verbosity = self.options.verbosity
         self.galaxy = Galaxy(self.options)
         return True
@@ -275,14 +274,11 @@ class GalaxyCLI(CLI):
         roles_to_show_info = []
         if len(self.args) == 0:
             roles_to_show_info.extend(self.find_roles_to_list_from_paths(roles_paths))
-            import pprint
-            pprint.pprint(roles_to_show_info)
         else:
             roles_to_show_info.extend(self.find_roles_to_list_from_names(self.args))
 
         data = ''
         for gr in roles_to_show_info:
-            display.vvvvv('%s' % gr)
             if gr.install_info:
                 if 'version' in gr.install_info:
                     gr.install_info['installed_version'] = gr.install_info['version']
@@ -335,7 +331,7 @@ class GalaxyCLI(CLI):
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     try:
-                        required_roles =  yaml.safe_load(f.read())
+                        required_roles = yaml.safe_load(f.read())
                     except Exception as e:
                         raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
 
@@ -395,7 +391,7 @@ class GalaxyCLI(CLI):
                         # we know we can skip this, as it's not going to
                         # be found on galaxy.ansible.com
                         continue
-                    # if role isn't installed 
+                    # if role isn't installed
                     if dep_role.install_info is None or force:
                         if dep_role not in roles_left:
                             display.display('- adding dependency: %s' % dep_role.name)
@@ -509,7 +505,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
         elif not os.path.isdir(roles_path):
             raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
-    
+
     def execute_search(self):
         page_size = 1000
         search = None
@@ -517,7 +513,7 @@ class GalaxyCLI(CLI):
         if len(self.args):
             terms = []
             for i in range(len(self.args)):
-               terms.append(self.args.pop())
+                terms.append(self.args.pop())
             search = '+'.join(terms[::-1])
 
         if not search and not self.options.platforms and not self.options.tags and not self.options.author:
