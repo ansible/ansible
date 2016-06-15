@@ -1894,7 +1894,7 @@ def main():
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=0),
         shm_size=dict(type='str'),
-        security_opts=dict(type=list),
+        security_opts=dict(type='list'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
