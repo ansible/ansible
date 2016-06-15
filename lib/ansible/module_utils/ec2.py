@@ -306,18 +306,23 @@ def camel_dict_to_snake_dict(camel_dict):
 
 
 def ansible_dict_to_boto3_filter_list(filters_dict):
+    """Convert :filters_dict: (an Ansible dict of filters) to a list of dicts that :boto3: can use.
 
-    """ Convert an Ansible dict of filters to list of dicts that boto3 can use
     Args:
         filters_dict (dict): Dict of AWS filters.
-    Basic Usage:
+
+    Basic Usage::
+
         >>> filters = {'some-aws-id', 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
         }
+
     Returns:
         List: List of AWS filters and their values
+        ::
+
         [
             {
                 'Name': 'some-aws-id',
@@ -326,6 +331,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
                 ]
             }
         ]
+
     """
 
     filters_list = []

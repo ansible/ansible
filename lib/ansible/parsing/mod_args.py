@@ -41,48 +41,48 @@ RAW_PARAM_MODULES = ([
 ])
 
 class ModuleArgsParser:
+    """Base module argument parsing class.
 
-    """
-    There are several ways a module and argument set can be expressed:
+    There are several ways a module and argument set can be expressed::
 
-    # legacy form (for a shell command)
-    - action: shell echo hi
+        # legacy form (for a shell command)
+        - action: shell echo hi
 
-    # common shorthand for local actions vs delegate_to
-    - local_action: shell echo hi
+        # common shorthand for local actions vs delegate_to
+        - local_action: shell echo hi
 
-    # most commonly:
-    - copy: src=a dest=b
+        # most commonly:
+        - copy: src=a dest=b
 
-    # legacy form
-    - action: copy src=a dest=b
+        # legacy form
+        - action: copy src=a dest=b
 
-    # complex args form, for passing structured data
-    - copy:
-        src: a
-        dest: b
+        # complex args form, for passing structured data
+        - copy:
+            src: a
+            dest: b
 
-    # gross, but technically legal
-    - action:
-        module: copy
+        # gross, but technically legal
+        - action:
+            module: copy
+            args:
+            src: a
+            dest: b
+
+        # extra gross, but also legal. in this case, the args specified
+        # will act as 'defaults' and will be overridden by any args specified
+        # in one of the other formats (complex args under the action, or
+        # parsed from the k=v string
+        - command: 'pwd'
         args:
-          src: a
-          dest: b
-
-    # extra gross, but also legal. in this case, the args specified
-    # will act as 'defaults' and will be overridden by any args specified
-    # in one of the other formats (complex args under the action, or
-    # parsed from the k=v string
-    - command: 'pwd'
-      args:
-        chdir: '/tmp'
+            chdir: '/tmp'
 
 
-    This class has some of the logic to canonicalize these into the form
+    This class has some of the logic to canonicalize these into the form::
 
-    - module: <module_name>
-      delegate_to: <optional>
-      args: <args>
+        - module: <module_name>
+        delegate_to: <optional>
+        args: <args>
 
     Args may also be munged for certain shell command parameters.
     """

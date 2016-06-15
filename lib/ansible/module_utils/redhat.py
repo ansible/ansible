@@ -127,16 +127,15 @@ class Rhsm(RegistrationBase):
         for k,v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_','.'), v))
-        
+
         self.module.run_command(args, check_rc=True)
 
     @property
     def is_registered(self):
-        '''
-            Determine whether the current system
-            Returns:
-              * Boolean - whether the current system is currently registered to
-                          RHN.
+        '''Determine whether the current system is registered to :RHSM:.
+
+           Returns:
+              Boolean - whether the current system is currently registered to RHSM.
         '''
         # Quick version...
         if False:
@@ -151,10 +150,10 @@ class Rhsm(RegistrationBase):
             return False
 
     def register(self, username, password, autosubscribe, activationkey):
-        '''
-            Register the current system to the provided RHN server
-            Raises:
-              * Exception - if error occurs while running command
+        '''Register the current system to the configured :RHSM: server.
+
+           Raises:
+               Exception - if error occurs while running command :command:`subscription-manager register`
         '''
         args = ['subscription-manager', 'register']
 

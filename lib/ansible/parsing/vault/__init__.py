@@ -227,17 +227,18 @@ class VaultEditor:
         self.vault = VaultLib(password)
 
     def _shred_file_custom(self, tmp_path):
-        """"Destroy a file, when shred (core-utils) is not available
+        """"Destroy a file, when shred (core-utils) is not available.
+        ::
 
-        Unix `shred' destroys files "so that they can be recovered only with great difficulty with
-        specialised hardware, if at all". It is based on the method from the paper
-        "Secure Deletion of Data from Magnetic and Solid-State Memory",
-        Proceedings of the Sixth USENIX Security Symposium (San Jose, California, July 22-25, 1996).
+            Unix 'shred' destroys files "so that they can be recovered only with great difficulty with
+            specialised hardware, if at all". It is based on the method from the paper
+            "Secure Deletion of Data from Magnetic and Solid-State Memory",
+            Proceedings of the Sixth USENIX Security Symposium (San Jose, California, July 22-25, 1996).
 
-        We do not go to that length to re-implement shred in Python; instead, overwriting with a block
-        of random data should suffice.
+            We do not go to that length to re-implement shred in Python; instead, overwriting with a block
+            of random data should suffice.
 
-        See https://github.com/ansible/ansible/pull/13700 .
+        See https://github.com/ansible/ansible/pull/13700
         """
 
         file_len = os.path.getsize(tmp_path)

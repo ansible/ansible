@@ -146,12 +146,14 @@ class ShellBase(object):
         return cmd
 
     def expand_user(self, user_home_path):
-        ''' Return a command to expand tildes in a path
+        '''Return a command to expand tildes in a path.
 
         It can be either "~" or "~username".  We use the POSIX definition of
-        a username:
+        a username::
+
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
+
         '''
 
         # Check that the user_path to expand is safe

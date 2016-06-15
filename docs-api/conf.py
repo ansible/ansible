@@ -32,14 +32,18 @@ import sphinx_rtd_theme
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.graphviz',
     'sphinx.ext.inheritance_diagram'
 ]
 
-autodoc_default_flags = ['members', 'show-inheritance', 'inherited-members', 'undoc-members', 'private-members']
+#autodoc_default_flags = ['members', 'show-inheritance', 'inherited-members', 'undoc-members',]
+autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members',]
 autoclass_content = ['both']
+autodoc_member_order = 'bysource'
+autodoc_mock_imports = ['xmltodict', 'winrm', 'redis', 'StricRedis']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

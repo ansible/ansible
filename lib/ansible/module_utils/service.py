@@ -35,12 +35,15 @@ import subprocess
 import json
 
 class Service(object):
-    """
-    This is the generic Service manipulation class that is subclassed based on system.
+    """This is the generic Service manipulation class that is subclassed based on system.
+
     A subclass should override the following methods:
       - action
+
       - enable
+
       - status
+
     """
 
     def __init__(self, module):

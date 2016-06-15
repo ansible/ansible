@@ -2,13 +2,19 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+LOGFILE       = sphinx.log
+FULL_TRACEBACKS = -T
+CPUS          ?= 4
+VERBOSITY     ?= -v
+FORCE_REBUILD = -a -E
+NITPICK		 ?=
+SPHINXOPTS    = -j $(CPUS) -w $(LOGFILE) $(FULL_TRACEBACKS) $(FORCE_REBUILD) $(NITPICK) $(VERBOSITY)
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 RSTDIR        = rst
 MODULES_PATH  = ../lib
-EXCLUDE_PATHS = ../lib/ansible/modules ../lib/ansible/utils/module_docs_fragments ../lib/ansible/compat/six
+EXCLUDE_PATHS = ../lib/ansible/modules ../lib/ansible/utils/module_docs_fragments ../lib/ansible/compat/six ../lib/ansible/module_utils/six.py
 DOC_PROJECTS  = "Ansible API"
 
 # User-friendly check for sphinx-build

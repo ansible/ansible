@@ -401,11 +401,12 @@ class AzureRMModuleBase(object):
         return serializer.body(obj, class_name)
 
     def get_poller_result(self, poller, wait=5):
-        '''
-        Consistent method of waiting on and retrieving results from Azure's long poller
+        '''Consistent method of waiting on and retrieving results from Azure's long poller.
 
-        :param poller Azure poller object
-        :return object resulting from the original request
+        :param poller: Azure poller object
+        :param wait: How long to wait.
+        :type wait: integer
+        :return: object resulting from the original request
         '''
         try:
             delay = wait
@@ -418,13 +419,15 @@ class AzureRMModuleBase(object):
             raise
 
     def check_provisioning_state(self, azure_object, requested_state='present'):
-        '''
-        Check an Azure object's provisioning state. If something did not complete the provisioning
+        '''Check an Azure object's provisioning state.
+
+        If something did not complete the provisioning
         process, then we cannot operate on it.
 
-        :param azure_object An object such as a subnet, storageaccount, etc. Must have provisioning_state
-                            and name attributes.
+        :param azure_object: An object such as a subnet, storageaccount, etc. Must have provisioning_state
+                             and name attributes.
         :return None
+
         '''
 
         if hasattr(azure_object, 'properties') and hasattr(azure_object.properties, 'provisioning_state') and \
@@ -509,18 +512,23 @@ class AzureRMModuleBase(object):
         return self.get_poller_result(poller)
 
     def create_default_securitygroup(self, resource_group, location, name, os_type, open_ports):
-        '''
-        Create a default security group <name>01 to associate with a network interface. If a security group matching
-        <name>01 exists, return it. Otherwise, create one.
+        '''Create a default security group :name: to associate with a network interface.
+
+        If a security group matching :name: exists, return it. Otherwise, create one.
 
         :param resource_group: Resource group name
         :param location: azure location name
         :param name: base name to use for the security group
         :param os_type: one of 'Windows' or 'Linux'. Determins any default rules added to the security group.
-        :param ssh_port: for os_type 'Linux' port used in rule allowing SSH access.
-        :param rdp_port: for os_type 'Windows' port used in rule allowing RDP access.
+        :param open_ports: list of network ports to open
+        :type open_ports: list of integers
         :return: security_group object
         '''
+
+        # FIXME: previous doc strings, still valid?
+        # FIXME: :param ssh_port: for os_type 'Linux' port used in rule allowing SSH access.
+        # FIXME: :param rdp_port: for os_type 'Windows' port used in rule allowing RDP access.
+
         security_group_name = name + '01'
         group = None
 

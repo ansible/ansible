@@ -499,16 +499,16 @@ class PlayIterator:
         return self._check_failed_state(s)
 
     def get_original_task(self, host, task):
-        '''
-        Finds the task in the task list which matches the UUID of the given task.
+        '''Finds the task in the task list which matches the UUID of the given task.
+
         The executor engine serializes/deserializes objects as they are passed through
         the different processes, and not all data structures are preserved. This method
         allows us to find the original task passed into the executor engine.
         '''
         def _search_block(block):
-            '''
-            helper method to check a block's task lists (block/rescue/always)
-            for a given task uuid. If a Block is encountered in the place of a
+            '''Helper method to check a block's task lists (block/rescue/always) for a given task uuid.
+
+            If a Block is encountered in the place of a
             task, it will be recursively searched (this happens when a task
             include inserts one or more blocks into a task list).
             '''
@@ -582,4 +582,3 @@ class PlayIterator:
 
     def add_tasks(self, host, task_list):
         self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)
-
