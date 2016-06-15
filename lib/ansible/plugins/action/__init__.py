@@ -301,17 +301,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         information.  We achieve this in one of these ways:
 
         * If no sudo is performed or the remote_user is sudo'ing to
-          themselves, we don't have to change permisions.
+          themselves, we don't have to change permissions.
         * If the remote_user sudo's to a privileged user (for instance, root),
           we don't have to change permissions
-        * If the remote_user is a privileged user and sudo's to an
-          unprivileged user then we change the owner of the file to the
-          unprivileged user so they can read it.
-        * If the remote_user is an unprivieged user and we're sudo'ing to
-          a second unprivileged user then we attempt to grant the second
-          unprivileged user access via file system acls.
-        * If granting file system acls fails we can set the file to be world
-          readable so that the second unprivileged user can read the file.
+        * If the remote_user sudo's to an unprivileged user then we attempt to
+          grant the unprivileged user access via file system acls.
+        * If granting file system acls fails we try to change the owner of the
+          file with chown which only works in case the remote_user is
+          privileged or the remote systems allows chown calls by unprivileged
+          users (e.g. HP-UX)
+        * If the chown fails we can set the file to be world readable so that
+          the second unprivileged user can read the file.
           Since this could allow other users to get access to private
           information we only do this ansible is configured with
           "allow_world_readable_tmpfiles" in the ansible.cfg
@@ -333,35 +333,31 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
-            # Try chown'ing the file. This will only work if our SSH user has
-            # root privileges, but since we can't reliably determine that from
-            # the username (think "toor" on FreeBSD), let's just try first and
-            # apologize later:
-            res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
-            if res['rc'] == 0:
-                # root can read things that don't have read bit but can't
-                # execute them without the execute bit, so we might need to
-                # set that even if we're root. We just ran chown successfully,
-                # so apparently we are root.
+            # Try to use file system acls to make the files readable for sudo'd
+            # user
+            if execute:
+                mode = 'rx'
+            else:
+                mode = 'rX'
+
+            res = self._remote_set_user_facl(remote_path, self._play_context.become_user, mode, recursive=recursive, sudoable=False)
+            if res['rc'] != 0:
+                # File system acls failed; let's try to use chown next
+                # Set executable bit first as on some systems an
+                # unprivileged user can use chown
                 if execute:
                     res = self._remote_chmod('u+x', remote_path, recursive=recursive)
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
 
-            elif remote_user == 'root':
-                raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.  Unprivileged become user would be unable to read the file.')
-            else:
-                # Chown'ing failed. We're probably lacking root privileges; let's try something else.
-                if execute:
-                    mode = 'rx'
-                else:
-                    mode = 'rX'
-                # Try to use fs acls to solve this problem
-                res = self._remote_set_user_facl(remote_path, self._play_context.become_user, mode, recursive=recursive, sudoable=False)
-                if res['rc'] != 0:
+                res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+                if res['rc'] != 0 and remote_user == 'root':
+                    # chown failed even if remove_user is root
+                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.  Unprivileged become user would be unable to read the file.')
+                elif res['rc'] != 0:
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
-                        # fs acls failed -- do things this insecure way only
-                        # if the user opted in in the config file
+                        # chown and fs acls failed -- do things this insecure
+                        # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
                         if res['rc'] != 0:
