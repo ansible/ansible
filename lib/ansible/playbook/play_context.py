@@ -447,7 +447,7 @@ class PlayContext(Base):
 
         if self.become:
 
-            if executable is None:
+            if not executable:
                 executable = self.executable
 
             becomecmd   = None
