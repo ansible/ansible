@@ -266,6 +266,10 @@ class ActionModule(ActionBase):
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
+        if src is None or dest is None:
+            return dict(failed=True,
+                    msg="synchronize requires both src and dest parameters are set")
+
         if not dest_is_local:
             # Private key handling
             if use_delegate:
