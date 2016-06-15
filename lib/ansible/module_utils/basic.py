@@ -2038,6 +2038,8 @@ class AnsibleModule(object):
                         if not x.endswith('/ansible_modlib.zip') \
                         and not x.endswith('/debug_dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
+            if not os.environ['PYTHONPATH']:
+                del os.environ['PYTHONPATH']
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
