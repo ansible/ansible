@@ -28,6 +28,8 @@ options:
   executable:
     description:
       - change the shell used to execute the command. Should be an absolute path to the executable.
+      - when using privilege escalation (C(become)), a default shell will be assigned if one is not provided
+        as privilege escalation requires a shell.
     required: false
     version_added: "1.0"
 description:
@@ -48,10 +50,10 @@ notes:
       using C(gather_facts: no) if you're using C(raw) to bootstrap python
       onto the machine."
     - If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless M(shell) is
-      explicitly required. When running ad-hoc commands, use your best
-      judgement.
+      better to use the M(command) or M(shell) modules instead.
+    - the C(environment) keyword does not work with raw normally, it requires a shell
+      which means it only works if C(executable) is set or using the module
+      with privilege escalation (C(become)).
 author:
     - Ansible Core Team
     - Michael DeHaan
