@@ -373,8 +373,8 @@ or environment variables (DO_API_TOKEN)''')
 
             self.inventory['all']['hosts'].append(dest)
 
-            self.inventory[droplet['id']] = dest
-            self.inventory[droplet['name']] = dest
+            self.inventory[droplet['id']] = [dest]
+            self.inventory[droplet['name']] = [dest]
 
             # groups that are always present
             for group in [
