@@ -23,41 +23,34 @@
 
 $params = Parse-Args $args;
 
-# Name parameter
-$name = Get-Attr $params "name" $FALSE;
-If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
-}
-
-# State parameter
-$state = Get-Attr $params "state" $FALSE;
-$valid_states = ($FALSE, 'present', 'absent');
-If ($state -NotIn $valid_states) {
-  Fail-Json $result "state is '$state'; must be $($valid_states)"
-}
+$name = Get-AnsibleParam $params -name "name" -failifempty $true
+$state = Get-AnsibleParam $params "state" -default "present" -validateSet "present","absent"
+$host_header = Get-AnsibleParam $params -name "host_header"
+$protocol = Get-AnsibleParam $params -name "protocol"
+$port = Get-AnsibleParam $params -name "port"
+$ip = Get-AnsibleParam $params -name "ip"
+$certificatehash = Get-AnsibleParam $params -name "certificate_hash" -default $false
+$certificateStoreName = Get-AnsibleParam $params -name "certificate_store_name" -default "MY"
 
 $binding_parameters = New-Object psobject @{
   Name = $name
 };
 
-If ($params.host_header) {
-  $binding_parameters.HostHeader = $params.host_header
+If ($host_header) {
+  $binding_parameters.HostHeader = $host_header
 }
 
-If ($params.protocol) {
-  $binding_parameters.Protocol = $params.protocol
+If ($protocol) {
+  $binding_parameters.Protocol = $protocol
 }
 
-If ($params.port) {
-  $binding_parameters.Port = $params.port
+If ($port) {
+  $binding_parameters.Port = $port
 }
 
-If ($params.ip) {
-  $binding_parameters.IPAddress = $params.ip
+If ($ip) {
+  $binding_parameters.IPAddress = $ip
 }
-
-$certificateHash = Get-Attr $params "certificate_hash" $FALSE;
-$certificateStoreName = Get-Attr $params "certificate_store_name" "MY";
 
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null){
@@ -98,12 +91,12 @@ try {
     # Select certificat
     if($certificateHash -ne $FALSE) {
 
-      $ip = $binding_parameters.IPAddress
+      $ip = $binding_parameters["IPAddress"]
       if((!$ip) -or ($ip -eq "*")) {
         $ip = "0.0.0.0"
       }
 
-      $port = $binding_parameters.Port
+      $port = $binding_parameters["Port"]
       if(!$port) {
         $port = 443
       }

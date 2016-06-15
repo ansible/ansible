@@ -25,14 +25,7 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.name)
-{
-    $package = $params.name
-}
-Else
-{
-    Fail-Json $result "missing required argument: name"
-}
+$package = Get-AnsibleParam $params -name "name" -failifempty $true
 
 Function Find-Command
 {
