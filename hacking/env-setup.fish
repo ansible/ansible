@@ -39,7 +39,7 @@ end
 # Set MANPATH
 if not contains $PREFIX_MANPATH $MANPATH
     if not set -q MANPATH
-        set -gx MANPATH $PREFIX_MANPATH
+        set -gx MANPATH $PREFIX_MANPATH:
     else
         set -gx MANPATH $PREFIX_MANPATH $MANPATH
     end
