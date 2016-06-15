@@ -24,29 +24,27 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args;
 
-$days_of_week = Get-Attr $params "days_of_week" $null;
-$enabled = Get-Attr $params "enabled" $true | ConvertTo-Bool;
-$description = Get-Attr $params "description" " ";
-$path = Get-Attr $params "path" $null;
-$argument = Get-Attr $params "argument" $null;
+$days_of_week = Get-AnsibleParam $params -anem "days_of_week"
+$enabled = Get-AnsibleParam $params -name "enabled" -default $true
+$enabled = $enabled | ConvertTo-Bool
+$description = Get-AnsibleParam $params -name "description" -default " "
+$path = Get-AnsibleParam $params -name "path"
+$argument = Get-AnsibleParam $params -name "argument"
 
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
 #Required vars
-$name = Get-Attr -obj $params -name name -failifempty $true -resultobj $result
-$state = Get-Attr -obj $params -name state -failifempty $true -resultobj $result
-if( ($state -ne "present") -and ($state -ne "absent") ) {
-    Fail-Json $result "state must be present or absent"
-}
+$name = Get-AnsibleParam -obj $params -name name -failifempty $true -resultobj $result
+$state = Get-AnsibleParam -obj $params -name state -failifempty $true -resultobj $result -validateSet "present","absent"
 
 #Vars conditionally required
-if($state -eq "present") {
-    $execute = Get-Attr -obj $params -name execute -failifempty $true -resultobj $result
-    $frequency = Get-Attr -obj $params -name frequency -failifempty $true -resultobj $result
-    $time = Get-Attr -obj $params -name time -failifempty $true -resultobj $result
-    $user = Get-Attr -obj $params -name user -failifempty $true -resultobj $result
-}
+$present_args_required = $state -eq "present"
+$execute = Get-AnsibleParam -obj $params -name execute -failifempty $present_args_required  -resultobj $result
+$frequency = Get-AnsibleParam -obj $params -name frequency -failifempty $present_args_required -resultobj $result
+$time = Get-AnsibleParam -obj $params -name time -failifempty $present_args_required -resultobj $result
+$user = Get-AnsibleParam -obj $params -name user -failifempty $present_args_required -resultobj $result
+
 
 # Mandatory Vars
 if ($frequency -eq "weekly")
@@ -59,7 +57,7 @@ if ($frequency -eq "weekly")
 
 if ($path)
 {
-  $path = "\{0}\" -f $params.path
+  $path = "\{0}\" -f $path
 }
 else
 {
@@ -70,7 +68,7 @@ try {
     $task = Get-ScheduledTask -TaskPath "$path" | Where-Object {$_.TaskName -eq "$name"}
 
     # Correlate task state to enable variable, used to calculate if state needs to be changed
-    $taskState = $task.State
+    $taskState = if ($task) { $task.State } else { $null }
     if ($taskState -eq "Ready"){
         $taskState = $true
     }
