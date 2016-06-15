@@ -32,11 +32,15 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, recursive=False, tmp=None):
         ''' assemble a file from a directory of fragments '''
 
-        tmpfd, temp_path = tempfile.mkstemp()
-        tmp = os.fdopen(tmpfd,'w')
+        toplevel = False
+        if tmp == None:
+            tmpfd, temp_path = tempfile.mkstemp()
+            tmp = os.fdopen(tmpfd,'w')
+            toplevel = True
+
         delimit_me = False
         add_newline = False
 
@@ -45,6 +49,8 @@ class ActionModule(ActionBase):
                 continue
             fragment = "%s/%s" % (src_path, f)
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
+                if recursive and os.path.isdir(fragment):
+                    _assemble_from_fragments(fragment, delimiter, compiled_regexp, ignore_hidden, recursive, tmp)
                 continue
             fragment_content = file(fragment).read()
 
@@ -70,8 +76,9 @@ class ActionModule(ActionBase):
             else:
                 add_newline = True
 
-        tmp.close()
-        return temp_path
+        if toplevel:
+            tmp.close()
+            return temp_path
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -88,6 +95,7 @@ class ActionModule(ActionBase):
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
+        recursive  = self._task.args.get('recursive', False)
         regexp     = self._task.args.get('regexp', None)
         follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
@@ -121,7 +129,7 @@ class ActionModule(ActionBase):
             return result
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, recursive)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
