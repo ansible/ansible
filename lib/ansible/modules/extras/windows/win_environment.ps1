@@ -20,37 +20,18 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
-$state = Get-Attr $params "state" $null;
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$state = Get-AnsibleParam -obj $params -name "state" -default "present" -validateSet "present","absent"
+$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
+$level = Get-AnsibleParam -obj $params -name "level" -validateSet "machine","process","user" -failifempty $true
+$value = Get-AnsibleParam -obj $params -name "value"
 
-If ($state) {
-    $state = $state.ToString().ToLower()
-    If (($state -ne 'present') -and ($state -ne 'absent') ) {
-        Fail-Json $result "state is '$state'; must be 'present', or 'absent'"
-    }
-} else {
-    $state = 'present'
-}
-
-If ($params.name)
-{
-    $name = $params.name
-} else {
-    Fail-Json $result "missing required argument: name"
-}
-
-$value = $params.value
-
-If ($params.level) {
-    $level = $params.level.ToString().ToLower()
-    If (( $level -ne 'machine') -and ( $level -ne 'user' ) -and ( $level -ne 'process')) {
-        Fail-Json $result "level is '$level'; must be 'machine', 'user', or 'process'"
-    }
+If ($level) {
+    $level = $level.ToString().ToLower()
 }
 
 $before_value = [Environment]::GetEnvironmentVariable($name, $level)
 
+$state = $state.ToString().ToLower()
 if ($state -eq "present" ) {
    [Environment]::SetEnvironmentVariable($name, $value, $level)
 } Elseif ($state -eq "absent") {
@@ -59,6 +40,8 @@ if ($state -eq "present" ) {
 
 $after_value = [Environment]::GetEnvironmentVariable($name, $level)
 
+$result = New-Object PSObject;
+Set-Attr $result "changed" $false;
 Set-Attr $result "name" $name;
 Set-Attr $result "before_value" $before_value;
 Set-Attr $result "value" $after_value;
