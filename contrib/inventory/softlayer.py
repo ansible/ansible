@@ -9,7 +9,7 @@ environment variables (SL_USERNAME and SL_API_KEY). You can also write INI file 
 - https://softlayer-python.readthedocs.org/en/latest/config_file.html
 
 The SoftLayer Python client has a built in command for saving this configuration file
-via the command `sl config setup`. 
+via the command `sl config setup`.
 """
 
 # Copyright (C) 2014  AJ Bourg <aj@ajbourg.com>
