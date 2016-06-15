@@ -18,8 +18,9 @@ DOCUMENTATION = '''
 module: ec2_eni
 short_description: Create and optionally attach an Elastic Network Interface (ENI) to an instance
 description:
-    - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID is provided, \
-    an attempt is made to update the existing ENI. By passing state=detached, an ENI can be detached from its instance.
+    - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID or private_ip is \
+      provided, the existing ENI (if any) will be modified. The 'attached' parameter controls the attachment status \
+      of the network interface.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
@@ -30,8 +31,8 @@ options:
     default: null
   instance_id:
     description:
-      - Instance ID that you wish to attach ENI to, if None the new ENI will be created in detached state, existing \
-      ENI will keep current attachment state.
+      - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or \
+      detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
     required: false
     default: null
   private_ip_address:
@@ -67,8 +68,8 @@ options:
     default: 0
   attached:
     description:
-      - Specifies if network interface should be attached or detached from instance. If attached=yes and no \
-        instance_id is given, attachment status won't change
+      - Specifies if network interface should be attached or detached from instance. If ommited, attachment status \
+      won't change
     required: false
     default: yes
     version_added: 2.2
@@ -306,7 +307,7 @@ def create_eni(connection, vpc_id, module):
         eni = find_eni(connection, module)
         if eni is None:
             eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-            if attached and instance_id is not None:
+            if attached == True and instance_id is not None:
                 try:
                     eni.attach(instance_id, device_index)
                 except BotoServerError:
@@ -389,12 +390,11 @@ def modify_eni(connection, vpc_id, module, eni):
                 secondary_addresses_to_remove_count = current_secondary_address_count - secondary_private_ip_address_count
                 connection.unassign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=current_secondary_addresses[:secondary_addresses_to_remove_count], dry_run=False)
 
-        if attached:
-            if instance_id is not None:
+        if attached == True and instance_id is not None:
                 eni.attach(instance_id, device_index)
                 wait_for_eni(eni, "attached")
                 changed = True
-        else:
+        elif attached == False:
             detach_eni(eni, module)
 
     except BotoServerError as e:
@@ -506,7 +506,7 @@ def main():
             delete_on_termination=dict(default=None, type='bool'),
             secondary_private_ip_addresses=dict(default=None, type='list'),
             secondary_private_ip_address_count=dict(default=None, type='int'),
-            attached=dict(default=True, type='bool')
+            attached=dict(default=None, type='bool')
         )
     )
 
@@ -516,7 +516,8 @@ def main():
                             ],
                            required_if=([
                                ('state', 'present', ['subnet_id']),
-                               ('state', 'absent', ['eni_id'])
+                               ('state', 'absent', ['eni_id']),
+                               ('attached', True, ['instance_id'])
                             ])
                            )
 
