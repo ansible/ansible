@@ -26,33 +26,24 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If ($params.url) {
-    $url = $params.url
-}
-Else {
-    Fail-Json $result "missing required argument: url"
-}
+$url = Get-AnsibleParam $params -name "url" -failifempty $true
+$dest = Get-AnsibleParam $params -name "dest" -failifempty $true
 
-If ($params.dest) {
-    $dest = $params.dest
-}
-Else {
-    Fail-Json $result "missing required argument: dest"
-}
+$skip_certificate_validation = Get-AnsibleParam $params -name "skip_certificate_validation" -default $false
+$skip_certificate_validation = $skip_certificate_validation | ConvertTo-Bool
+$username = Get-AnsibleParam $params "username"
+$password = Get-AnsibleParam $params "password"
 
-$skip_certificate_validation = Get-Attr $params "skip_certificate_validation" $false | ConvertTo-Bool
-$username = Get-Attr $params "username"
-$password = Get-Attr $params "password"
-
-$proxy_url = Get-Attr $params "proxy_url"
-$proxy_username = Get-Attr $params "proxy_username"
-$proxy_password = Get-Attr $params "proxy_password"
+$proxy_url = Get-AnsibleParam $params "proxy_url"
+$proxy_username = Get-AnsibleParam $params "proxy_username"
+$proxy_password = Get-AnsibleParam $params "proxy_password"
 
 if($skip_certificate_validation){
   [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 }
 
-$force = Get-Attr -obj $params -name "force" "yes" | ConvertTo-Bool
+$force = Get-AnsibleParam -obj $params -name "force" -default $true
+$force = $force | ConvertTo-Bool
 
 Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $proxy_username, $proxy_password) {
     $webClient = New-Object System.Net.WebClient
