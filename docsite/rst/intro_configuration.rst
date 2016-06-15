@@ -501,12 +501,13 @@ module_set_locale
 =================
 
 This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
-via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
-being set when the module is executed on the given remote system.
+via the :ref:`module_lang` configuration option). If enabled, it results in the LANG, LC_MESSAGES, and LC_ALL
+being set when the module is executed on the given remote system.  By default this is disabled.
 
 .. note::
 
-    The module_set_locale option was added in Ansible 2.1.
+    The module_set_locale option was added in Ansible-2.1 and defaulted to
+    True.  The default was changed to False in Ansible-2.2
 
 .. _module_lang:
 
