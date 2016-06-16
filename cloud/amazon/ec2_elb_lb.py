@@ -313,7 +313,7 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
+      - protocol: http
       - load_balancer_port: 80
       - instance_port: 80
 
@@ -327,7 +327,7 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
+      - protocol: http
       - load_balancer_port: 80
       - instance_port: 80
     stickiness:
@@ -345,7 +345,7 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
+      - protocol: http
       - load_balancer_port: 80
       - instance_port: 80
     stickiness:
@@ -363,7 +363,7 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
+      - protocol: http
       - load_balancer_port: 80
       - instance_port: 80
     tags:
@@ -381,7 +381,7 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
+      - protocol: http
       - load_balancer_port: 80
       - instance_port: 80
     tags: {}
