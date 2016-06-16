@@ -301,33 +301,34 @@ def main():
 
     backup_file = None
     if checksum_src != checksum_dest or os.path.islink(dest):
-        try:
-            if backup:
-                if os.path.exists(dest):
-                    backup_file = module.backup_local(dest)
-            # allow for conversion from symlink.
-            if os.path.islink(dest):
-                os.unlink(dest)
-                open(dest, 'w').close()
-            if validate:
-                # if we have a mode, make sure we set it on the temporary
-                # file source as some validations may require it
-                # FIXME: should we do the same for owner/group here too?
-                if mode is not None:
-                    module.set_mode_if_different(src, mode, False)
-                if "%s" not in validate:
-                    module.fail_json(msg="validate must contain %%s: %s" % (validate))
-                (rc,out,err) = module.run_command(validate % src)
-                if rc != 0:
-                    module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
-            if remote_src:
-                _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
-                shutil.copy2(src, tmpdest)
-                module.atomic_move(tmpdest, dest)
-            else:
-                module.atomic_move(src, dest)
-        except IOError:
-            module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
+        if not module.check_mode:
+            try:
+                if backup:
+                    if os.path.exists(dest):
+                        backup_file = module.backup_local(dest)
+                # allow for conversion from symlink.
+                if os.path.islink(dest):
+                    os.unlink(dest)
+                    open(dest, 'w').close()
+                if validate:
+                    # if we have a mode, make sure we set it on the temporary
+                    # file source as some validations may require it
+                    # FIXME: should we do the same for owner/group here too?
+                    if mode is not None:
+                        module.set_mode_if_different(src, mode, False)
+                    if "%s" not in validate:
+                        module.fail_json(msg="validate must contain %%s: %s" % (validate))
+                    (rc,out,err) = module.run_command(validate % src)
+                    if rc != 0:
+                        module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
+                if remote_src:
+                    _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
+                    shutil.copy2(src, tmpdest)
+                    module.atomic_move(tmpdest, dest)
+                else:
+                    module.atomic_move(src, dest)
+            except IOError:
+                module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
     else:
         changed = False
