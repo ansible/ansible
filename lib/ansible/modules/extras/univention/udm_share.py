@@ -58,7 +58,18 @@ options:
         required: false
         default: None
         description:
-            - Host. Required if C(state=present).
+            - Host FQDN (server which provides the share), e.g. C({{
+              ansible_fqdn }}). Required if C(state=present).
+    path:
+        required: false
+        default: None
+        description:
+            - Directory on the providing server, e.g. C(/home). Required if C(state=present).
+    sambaName:
+        required: false
+        default: None
+        description:
+            - Windows name. Required if C(state=present).
     ou:
         required: true
         description:
@@ -73,11 +84,6 @@ options:
         default: '0'
         description:
             - Directory owner group of the share's root directory.
-    path:
-        required: false
-        default: None
-        description:
-            - Directory. Required if C(state=present).
     directorymode:
         required: false
         default: '00755'
@@ -238,11 +244,6 @@ options:
         default: '0'
         description:
             - MSDFS root.
-    sambaName:
-        required: false
-        default: None
-        description:
-            - Windows name. Required if C(state=present).
     sambaNtAclSupport:
         required: false
         default: '1'
