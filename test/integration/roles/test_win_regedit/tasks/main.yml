@@ -18,6 +18,22 @@
 
 # clear the area of the registry we are using for tests
 
+# test mangled registry key gets caught following https://github.com/ansible/ansible-modules-extras/issues/2412
+
+- name: test mangled registry key is caught (avoids bizare error message from powershell)
+  win_regedit:
+    key: HKCU\Software
+    value: invalid_key
+    data: invalid_key
+    datatype: string
+  register: check00_result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "check00_result.failed == true"
+      - "check00_result.msg == 'key: HKCU\\Software is not a valid powershell path, see module documentation for examples.'"
+
 - name: remove setting
   win_regedit:
     key: 'HKCU:\SOFTWARE\Cow Corp'
@@ -372,6 +388,33 @@
 - assert:
     that:
       - "check62_result.changed == false"
+
+# test dword
+
+- name: check basic set dword works
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello_dword
+    data: 00000000
+    datatype: dword
+  register: check71_result
+
+- assert:
+    that:
+      - "check71_result.changed == true"
+
+- name: check that setting the same dword again is not changed
+  win_regedit:
+    key: HKCU:\Software\Cow Corp
+    value: hello_dword
+    data: 00000000
+    datatype: dword
+  register: check72_result
+
+- assert:
+    that:
+      - "check72_result.changed == false"
+
 # tear down
 
 - name: remove registry key used for testing
