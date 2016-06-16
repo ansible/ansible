@@ -169,7 +169,7 @@ class DataLoader():
             with open(b_file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
-                    data = self._vault.decrypt(data)
+                    data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
             data = to_unicode(data, errors='strict')
@@ -339,7 +339,7 @@ class DataLoader():
                     if not self._vault_password:
                         raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
-                    data = self._vault.decrypt(data)
+                    data = self._vault.decrypt(data, filename=real_path)
                     # Make a temp file
                     real_path = self._create_content_tempfile(data)
                     self._tempfiles.add(real_path)
