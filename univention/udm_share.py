@@ -335,6 +335,11 @@ options:
 
 
 EXAMPLES = '''
+# Create a share named home on the server ucs.example.com with the path /home.
+- udm_sahre: name=home
+             path=/home
+             host=ucs.example.com
+             sambaName=Home
 '''
 
 
