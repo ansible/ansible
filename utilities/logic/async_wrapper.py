@@ -32,6 +32,8 @@ import signal
 import time
 import syslog
 
+# Backwards compat.  There were present in basic.py before
+from ansible.module_utils.pycompat24 import get_exception
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
@@ -200,6 +202,7 @@ if __name__ == '__main__':
     except SystemExit:
         # On python2.4, SystemExit is a subclass of Exception.
         # This block makes python2.4 behave the same as python2.5+
+        raise
 
     except Exception:
         e = sys.exc_info()[1]
