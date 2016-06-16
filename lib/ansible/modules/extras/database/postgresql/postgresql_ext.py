@@ -164,23 +164,22 @@ def main():
 
     try:
         if module.check_mode:
-            if state == "absent":
+            if state == "present":
                 changed = not ext_exists(cursor, ext)
-            elif state == "present":
+            elif state == "absent":
                 changed = ext_exists(cursor, ext)
-            module.exit_json(changed=changed,ext=ext)
-
-        if state == "absent":
-            changed = ext_delete(cursor, ext)
-
-        elif state == "present":
-            changed = ext_create(cursor, ext)
+        else:
+            if state == "absent":
+                changed = ext_delete(cursor, ext)
+    
+            elif state == "present":
+                changed = ext_create(cursor, ext)
     except NotSupportedError, e:
         module.fail_json(msg=str(e))
     except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
-    module.exit_json(changed=changed, db=db)
+    module.exit_json(changed=changed, db=db, ext=ext)
 
 # import module snippets
 from ansible.module_utils.basic import *
