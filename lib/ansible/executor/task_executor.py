@@ -589,7 +589,7 @@ class TaskExecutor:
             time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
-            return dict(failed=True, msg="async task did not complete within the requested time")
+            return dict(failed=True, msg="async task did not complete within the requested (%s) time" % self._task.async)
         else:
             return async_result
 
