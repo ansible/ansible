@@ -126,6 +126,12 @@ EXAMPLES = '''
     key: HKCU:\Software\MyCompany
     value: hello
     state: absent
+
+  # Ensure registry paths containing spaces are quoted.
+  # Creates Registry Key called 'My Company'.
+  win_regedit:
+    key: 'HKCU:\Software\My Company'
+
 '''
 RETURN = '''
 data_changed:
