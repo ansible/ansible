@@ -48,8 +48,7 @@ def daemonize_self():
             sys.exit(0)
     except OSError:
         e         = get_exception()
-        sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-        sys.exit(1)
+        sys.exit("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
 
     # decouple from parent environment
     os.chdir("/")
@@ -64,8 +63,7 @@ def daemonize_self():
             sys.exit(0)
     except OSError:
         e = get_exception()
-        sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-        sys.exit(1)
+        sys.exit("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
 
     dev_null = file('/dev/null','rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
@@ -202,8 +200,6 @@ if __name__ == '__main__':
     except SystemExit:
         # On python2.4, SystemExit is a subclass of Exception.
         # This block makes python2.4 behave the same as python2.5+
-        e = sys.exc_info()[1]
-        sys.exit(e.code)
 
     except Exception:
         e = sys.exc_info()[1]
