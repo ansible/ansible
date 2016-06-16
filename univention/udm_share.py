@@ -92,11 +92,13 @@ options:
     root_squash:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Modify user ID for root user (root squashing).
     subtree_checking:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Subtree checking.
     sync:
@@ -107,6 +109,7 @@ options:
     writeable:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - NFS write access.
     sambaBlockSize:
@@ -117,11 +120,13 @@ options:
     sambaBlockingLocks:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Blocking locks.
     sambaBrowseable:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Show in Windows network environment.
     sambaCreateMode:
@@ -152,26 +157,31 @@ options:
     sambaDosFilemode:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Users with write access may modify permissions.
     sambaFakeOplocks:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Fake oplocks.
     sambaForceCreateMode:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Force file mode.
     sambaForceDirectoryMode:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Force directory mode.
     sambaForceDirectorySecurityMode:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Force directory security mode.
     sambaForceGroup:
@@ -182,6 +192,7 @@ options:
     sambaForceSecurityMode:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Force security mode.
     sambaForceUser:
@@ -197,6 +208,7 @@ options:
     sambaHideUnreadable:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Hide unreadable files/directories.
     sambaHostsAllow:
@@ -212,16 +224,19 @@ options:
     sambaInheritAcls:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Inherit ACLs.
     sambaInheritOwner:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Create files/directories with the owner of the parent directory.
     sambaInheritPermissions:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Create files/directories with permissions of the parent directory.
     sambaInvalidUsers:
@@ -232,26 +247,31 @@ options:
     sambaLevel2Oplocks:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Level 2 oplocks.
     sambaLocking:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Locking.
     sambaMSDFSRoot:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - MSDFS root.
     sambaNtAclSupport:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - NT ACL support.
     sambaOplocks:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Oplocks.
     sambaPostexec:
@@ -267,6 +287,7 @@ options:
     sambaPublic:
         required: false
         default: '0'
+        choices: [ '0', '1' ]
         description:
             - Allow anonymous read-only access with a guest user.
     sambaSecurityMode:
@@ -297,6 +318,7 @@ options:
     sambaWriteable:
         required: false
         default: '1'
+        choices: [ '0', '1' ]
         description:
             - Samba write access.
     nfs_hosts:
@@ -336,20 +358,20 @@ def main():
                                                    default='00755'),
             host                            = dict(type='str',
                                                    default=None),
-            root_squash                     = dict(type='str',
-                                                   default='1'),
-            subtree_checking                = dict(type='str',
-                                                   default='1'),
+            root_squash                     = dict(type='bool',
+                                                   default=True),
+            subtree_checking                = dict(type='bool',
+                                                   default=True),
             sync                            = dict(type='str',
                                                    default='sync'),
-            writeable                       = dict(type='str',
-                                                   default='1'),
+            writeable                       = dict(type='bool',
+                                                   default=True),
             sambaBlockSize                  = dict(type='str',
                                                    default=None),
-            sambaBlockingLocks              = dict(type='str',
-                                                   default='1'),
-            sambaBrowseable                 = dict(type='str',
-                                                   default='1'),
+            sambaBlockingLocks              = dict(type='bool',
+                                                   default=True),
+            sambaBrowseable                 = dict(type='bool',
+                                                   default=True),
             sambaCreateMode                 = dict(type='str',
                                                    default='0744'),
             sambaCscPolicy                  = dict(type='str',
@@ -360,56 +382,56 @@ def main():
                                                    default='0755'),
             sambaDirectorySecurityMode      = dict(type='str',
                                                    default='0777'),
-            sambaDosFilemode                = dict(type='str',
-                                                   default='0'),
-            sambaFakeOplocks                = dict(type='str',
-                                                   default='0'),
-            sambaForceCreateMode            = dict(type='str',
-                                                   default='0'),
-            sambaForceDirectoryMode         = dict(type='str',
-                                                   default='0'),
-            sambaForceDirectorySecurityMode = dict(type='str',
-                                                   default='0'),
+            sambaDosFilemode                = dict(type='bool',
+                                                   default=False),
+            sambaFakeOplocks                = dict(type='bool',
+                                                   default=False),
+            sambaForceCreateMode            = dict(type='bool',
+                                                   default=False),
+            sambaForceDirectoryMode         = dict(type='bool',
+                                                   default=False),
+            sambaForceDirectorySecurityMode = dict(type='bool',
+                                                   default=False),
             sambaForceGroup                 = dict(type='str',
                                                    default=None),
-            sambaForceSecurityMode          = dict(type='str',
-                                                   default='0'),
+            sambaForceSecurityMode          = dict(type='bool',
+                                                   default=False),
             sambaForceUser                  = dict(type='str',
                                                    default=None),
             sambaHideFiles                  = dict(type='str',
                                                    default=None),
-            sambaHideUnreadable             = dict(type='str',
-                                                   default='0'),
+            sambaHideUnreadable             = dict(type='bool',
+                                                   default=False),
             sambaHostsAllow                 = dict(type='list',
                                                    default=[]),
             sambaHostsDeny                  = dict(type='list',
                                                    default=[]),
-            sambaInheritAcls                = dict(type='str',
-                                                   default='1'),
-            sambaInheritOwner               = dict(type='str',
-                                                   default='0'),
-            sambaInheritPermissions         = dict(type='str',
-                                                   default='0'),
+            sambaInheritAcls                = dict(type='bool',
+                                                   default=True),
+            sambaInheritOwner               = dict(type='bool',
+                                                   default=False),
+            sambaInheritPermissions         = dict(type='bool',
+                                                   default=False),
             sambaInvalidUsers               = dict(type='str',
                                                    default=None),
-            sambaLevel2Oplocks              = dict(type='str',
-                                                   default='1'),
-            sambaLocking                    = dict(type='str',
-                                                   default='1'),
-            sambaMSDFSRoot                  = dict(type='str',
-                                                   default='0'),
+            sambaLevel2Oplocks              = dict(type='bool',
+                                                   default=True),
+            sambaLocking                    = dict(type='bool',
+                                                   default=True),
+            sambaMSDFSRoot                  = dict(type='bool',
+                                                   default=False),
             sambaName                       = dict(type='str',
                                                    default=None),
-            sambaNtAclSupport               = dict(type='str',
-                                                   default='1'),
-            sambaOplocks                    = dict(type='str',
-                                                   default='1'),
+            sambaNtAclSupport               = dict(type='bool',
+                                                   default=True),
+            sambaOplocks                    = dict(type='bool',
+                                                   default=True),
             sambaPostexec                   = dict(type='str',
                                                    default=None),
             sambaPreexec                    = dict(type='str',
                                                    default=None),
-            sambaPublic                     = dict(type='str',
-                                                   default='0'),
+            sambaPublic                     = dict(type='bool',
+                                                   default=False),
             sambaSecurityMode               = dict(type='str',
                                                    default='0777'),
             sambaStrictLocking              = dict(type='str',
@@ -420,8 +442,8 @@ def main():
                                                    default=None),
             sambaWriteList                  = dict(type='str',
                                                    default=None),
-            sambaWriteable                  = dict(type='str',
-                                                   default='1'),
+            sambaWriteable                  = dict(type='bool',
+                                                   default=True),
             nfs_hosts                       = dict(type='list',
                                                    default=[]),
             nfsCustomSettings               = dict(type='list',
@@ -457,6 +479,10 @@ def main():
 
             module.params['printablename'] = '{} ({})'.format(name, module.params['host'])
             for k in obj.keys():
+                if module.params[k] == True:
+                    module.params[k] = '1'
+                elif module.params[k] == False:
+                    module.params[k] = '0'
                 obj[k] = module.params[k]
 
             diff = obj.diff()
