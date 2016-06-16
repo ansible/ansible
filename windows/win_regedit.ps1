@@ -42,6 +42,13 @@ If ($state -eq "present" -and $registryData -eq $null -and $registryValue -ne $n
     Fail-Json $result "missing required argument: data"
 }
 
+# check the registry key is in powershell ps-drive format: HKLM, HKCU, HKU, HKCR, HCCC
+If (-not ($registryKey -match "^H[KC][CLU][MURC]{0,1}:\\"))
+{
+    Fail-Json $result "key: $registryKey is not a valid powershell path, see module documentation for examples."
+}
+
+
 Function Test-RegistryValueData {
     Param (
         [parameter(Mandatory=$true)]
@@ -58,8 +65,8 @@ Function Test-RegistryValueData {
     }
 }
 
-# Returns rue if registry data matches.
-# Handles binary and string registry data
+# Returns true if registry data matches.
+# Handles binary, integer(dword) and string registry data
 Function Compare-RegistryData {
     Param (
         [parameter(Mandatory=$true)]
@@ -67,15 +74,14 @@ Function Compare-RegistryData {
         [parameter(Mandatory=$true)]
         [AllowEmptyString()]$DifferenceData
         )
-        $refType = $ReferenceData.GetType().Name
 
-        if ($refType -eq "String" ) {
+        if ($ReferenceData -is [String] -or $ReferenceData -is [int]) {
             if ($ReferenceData -eq $DifferenceData) {
                 return $true
             } else {
                 return $false
             }
-        } elseif ($refType -eq "Object[]") {
+        } elseif ($ReferenceData -is [Object[]]) {
             if (@(Compare-Object $ReferenceData $DifferenceData -SyncWindow 0).Length -eq 0) {
                 return $true
             } else {
@@ -118,7 +124,7 @@ else
 
 }
 
-if($registryDataType -eq "binary" -and $registryData -ne $null -and $registryData.GetType().Name -eq 'String') {
+if($registryDataType -eq "binary" -and $registryData -ne $null -and $registryData -is [String]) {
       $registryData = Convert-RegExportHexStringToByteArray($registryData)
 }
 
