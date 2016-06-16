@@ -32,9 +32,6 @@ import signal
 import time
 import syslog
 
-# Backwards compat.  There were present in basic.py before
-from ansible.module_utils.pycompat24 import get_exception
-
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
 
@@ -49,7 +46,7 @@ def daemonize_self():
             # exit first parent
             sys.exit(0)
     except OSError:
-        e         = get_exception()
+        e = sys.exc_info()[1]
         sys.exit("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
 
     # decouple from parent environment
@@ -64,7 +61,7 @@ def daemonize_self():
             # print "Daemon PID %d" % pid
             sys.exit(0)
     except OSError:
-        e = get_exception()
+        e = sys.exc_info()[1]
         sys.exit("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
 
     dev_null = file('/dev/null','rw')
@@ -90,7 +87,7 @@ def _run_module(wrapped_cmd, jid, job_path):
         result = json.loads(outdata)
 
     except (OSError, IOError):
-        e = get_exception()
+        e = sys.exc_info()[1]
         result = {
             "failed": 1,
             "cmd" : wrapped_cmd,
