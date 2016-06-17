@@ -37,7 +37,7 @@ Python API 2.0
 In 2.0 things get a bit more complicated to start, but you end up with much more discrete and readable classes::
 
 
-    #!/usr/bin/python2
+    #!/usr/bin/env python
 
     from collections import namedtuple
     from ansible.parsing.dataloader import DataLoader
@@ -45,6 +45,7 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     from ansible.inventory import Inventory
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
+    from ansible.plugins import callback_loader
 
     Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
     # initialize needed objects
@@ -52,6 +53,8 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     loader = DataLoader()
     options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
     passwords = dict(vault_pass='secret')
+    # Use the JSON callback plugin to store results
+    results_callback = callback_loader.get('json')
 
     # create inventory and pass to var manager
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
@@ -78,12 +81,15 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
                   loader=loader,
                   options=options,
                   passwords=passwords,
-                  stdout_callback='default',
+                  stdout_callback=results_callback,  # Use JSON callback plugin
               )
         result = tqm.run(play)
     finally:
         if tqm is not None:
             tqm.cleanup()
+
+    # Print stdout from the first play, first task, of localhost
+    print(results_callback.results[0]['tasks'][0]['hosts']['localhost']['stdout'])
 
 
 .. _python_api_old:
