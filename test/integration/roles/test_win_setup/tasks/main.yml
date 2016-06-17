@@ -53,5 +53,5 @@
 - name: check setup result only when using https
   assert: 
     that:
-      - "setup_result.ansible_facts.ansible_winrm_certificate_expires"
+      - "setup_result.ansible_facts.ansible_win_rm_certificate_expires"
   when: ansible_ssh_port|default(5986) != 5985
