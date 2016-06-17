@@ -138,18 +138,22 @@ Ways to resolve this include:
   the remote python interpreter's stdin.  Pipelining does not work for
   non-python modules.
 
-* (Available in Ansible 2.1) Install filesystem acl support on the managed
-  host.  If the temporary directory on the remote host is mounted with
-  filesystem acls enabled and the :command:`setfacl` tool is in the remote
-  ``PATH`` then Ansible will use filesystem acls to share the module file with
-  the second unprivileged instead of having to make the file readable by
-  everyone.
+* (Available in Ansible 2.1) Install POSIX.1e filesystem acl support on the
+  managed host.  If the temporary directory on the remote host is mounted with
+  POSIX acls enabled and the :command:`setfacl` tool is in the remote ``PATH``
+  then Ansible will use POSIX acls to share the module file with the second
+  unprivileged user instead of having to make the file readable by everyone.
 
 * Don't perform an action on the remote machine by becoming an unprivileged
   user.  Temporary files are protected by UNIX file permissions when you
   ``become`` root or do not use ``become``.  In Ansible 2.1 and above, UNIX
   file permissions are also secure if you make the connection to the managed
   machine as root and then use ``become`` to an unprivileged account.
+
+.. warn:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
+    are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
+    cannot use these ACLs to manage its temp file permissions so you may have
+    to resort to ``allow_world_readable_tmpfiles`` if the remote machines use ZFS.
 
 .. versionchanged:: 2.1
 
