@@ -23,6 +23,7 @@ import re
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
 from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
@@ -39,20 +40,25 @@ def argument_spec():
         # config options
         running_config=dict(aliases=['config']),
         config_session=dict(default='ansible_session'),
-        save_config=dict(default=False, aliases=['save'])
+        save_config=dict(default=False, aliases=['save']),
+        force=dict(type='bool', default=False)
     )
 eos_argument_spec = argument_spec()
 
 def get_config(module):
     config = module.params['running_config']
     if not config:
-        config = module.config.get_config(include_defaults=True)
+        config = module.config.get_config(include_defaults=False)
     return NetworkConfig(indent=3, contents=config)
 
 def load_config(module, candidate):
-    config = get_config(module)
 
-    commands = candidate.difference(config)
+    if not module.params['force']:
+        config = get_config(module)
+        commands = candidate.difference(config)
+    else:
+        commands = str(candidate)
+
     commands = [str(c).strip() for c in commands]
 
     session = module.params['config_session']
@@ -73,7 +79,7 @@ def load_config(module, candidate):
             else:
                 module.config.abort_config(session_name=session)
 
-        else:
+        if not module.check_mode:
             module.config(commands)
             if save_config:
                 module.config.save_config()
@@ -84,7 +90,7 @@ def load_config(module, candidate):
     return result
 
 def expand_intf_range(interfaces):
-    match = INTF_NAME_RE.match(interfaces)
+    match = re.match(r'([a-zA-Z]+)(.+)', interfaces)
     if not match:
         raise ValueError('could not parse interface range')
 
