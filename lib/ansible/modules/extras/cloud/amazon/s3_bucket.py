@@ -113,6 +113,9 @@ EXAMPLES = '''
 import xml.etree.ElementTree as ET
 import urlparse
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
 try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location
@@ -444,10 +447,6 @@ def main():
         create_bucket(connection, module, location, flavour=flavour)
     elif state == 'absent':
         destroy_bucket(connection, module, flavour=flavour)
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-import urlparse
 
 if __name__ == '__main__':
     main()
