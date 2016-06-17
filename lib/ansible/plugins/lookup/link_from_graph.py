@@ -73,16 +73,16 @@ class LookupModule(LookupBase):
                 # Boilerplate :(
                 if paramvals['hostname'].lower() == str(edge.get_source()).lower().strip('"'):
                     if paramvals['link'].lower().strip() == src_link.lower().strip():
-                        display.v("found: " + paramvals['hostname'])
-                        display.v("link: " + paramvals['link'])
-                        display.v("edge_id: " + edge.get('id'))
+                        display.vvv("found: " + paramvals['hostname'])
+                        display.vvv("link: " + paramvals['link'])
+                        display.vvv("edge_id: " + edge.get('id'))
                         addr = edge.get('id').strip('"')
                         break
-                elif paramvals['hostname'].lower() == str(edge.get_destination()).lower().strip('"'):
+                if paramvals['hostname'].lower() == str(edge.get_destination()).lower().strip('"'):
                     if paramvals['link'].lower().strip() == dst_link.lower().strip():
-                        display.v("found: " + paramvals['hostname'])
-                        display.v("link: " + paramvals['link'])
-                        display.v("edge_id: " + edge.get('id'))
+                        display.vvv("found: " + paramvals['hostname'])
+                        display.vvv("link: " + paramvals['link'])
+                        display.vvv("edge_id: " + edge.get('id'))
                         addr = edge.get('id').strip('"')
                         break
             if addr is None:
