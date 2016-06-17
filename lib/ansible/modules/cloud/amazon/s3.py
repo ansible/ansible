@@ -138,6 +138,7 @@ options:
     description:
       - Enable Ceph RGW S3 support
     default: false
+    version_added: "2.2"
   src:
     description:
       - The source file path when performing a PUT operation.
