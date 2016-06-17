@@ -155,11 +155,11 @@ def _create_bucket(connection, module, location):
     
     try:
         bucket = connection.get_bucket(name)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError, e:
+        except S3CreateError as e:
             module.fail_json(msg=e.message)
     
     # Versioning
@@ -169,7 +169,7 @@ def _create_bucket(connection, module, location):
             bucket.configure_versioning(versioning)
             changed = True
             versioning_status = bucket.get_versioning_status()
-        except S3ResponseError, e:
+        except S3ResponseError as e:
             module.fail_json(msg=e.message)
     elif not versioning_status and not versioning:
         # do nothing
@@ -199,7 +199,7 @@ def _create_bucket(connection, module, location):
     # Policy        
     try:
         current_policy = bucket.get_policy()
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code == "NoSuchBucketPolicy":
             current_policy = None
         else:
@@ -214,7 +214,7 @@ def _create_bucket(connection, module, location):
                 bucket.set_policy(policy)
                 changed = True
                 current_policy = bucket.get_policy()
-            except S3ResponseError, e:
+            except S3ResponseError as e:
                 module.fail_json(msg=e.message)
 
     elif current_policy is None and policy is not None:
@@ -224,7 +224,7 @@ def _create_bucket(connection, module, location):
             bucket.set_policy(policy)
             changed = True
             current_policy = bucket.get_policy()
-        except S3ResponseError, e:
+        except S3ResponseError as e:
             module.fail_json(msg=e.message)
     
     elif current_policy is not None and policy is None:
@@ -232,7 +232,7 @@ def _create_bucket(connection, module, location):
             bucket.delete_policy()
             changed = True
             current_policy = bucket.get_policy()
-        except S3ResponseError, e:
+        except S3ResponseError as e:
             if e.error_code == "NoSuchBucketPolicy":
                 current_policy = None
             else:
@@ -246,7 +246,7 @@ def _create_bucket(connection, module, location):
     try:
         current_tags = bucket.get_tags()
         tag_set = TagSet()
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code == "NoSuchTagSet":
             current_tags = None
         else:
@@ -267,7 +267,7 @@ def _create_bucket(connection, module, location):
                     bucket.delete_tags()
                 current_tags_dict = tags
                 changed = True
-            except S3ResponseError, e:
+            except S3ResponseError as e:
                 module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed, name=bucket.name, versioning=versioning_status, requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict)
@@ -280,7 +280,7 @@ def _destroy_bucket(connection, module):
     
     try:
         bucket = connection.get_bucket(name)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code != "NoSuchBucket":
             module.fail_json(msg=e.message)
         else:
@@ -293,13 +293,13 @@ def _destroy_bucket(connection, module):
             for key in bucket.list():
                 key.delete()
                 
-        except BotoServerError, e:
+        except BotoServerError as e:
             module.fail_json(msg=e.message)
     
     try:
         bucket = connection.delete_bucket(name)
         changed = True
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         module.fail_json(msg=e.message)
         
     module.exit_json(changed=changed)
@@ -312,11 +312,11 @@ def _create_bucket_ceph(connection, module, location):
 
     try:
         bucket = connection.get_bucket(name)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         try:
             bucket = connection.create_bucket(name, location=location)
             changed = True
-        except S3CreateError, e:
+        except S3CreateError as e:
             module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed)
@@ -430,9 +430,9 @@ def main():
             if connection is None:
                 connection = boto.connect_s3(**aws_connect_params)
 
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg='No Authentication Handler found: %s ' % str(e))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='Failed to connect to S3: %s' % str(e))
 
     if connection is None: # this should never happen
