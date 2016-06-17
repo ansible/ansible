@@ -22,8 +22,10 @@ import time
 import collections
 import itertools
 import shlex
+import itertools
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.network import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 
@@ -34,6 +36,13 @@ class ConfigLine(object):
         self.children = list()
         self.parents = list()
         self.raw = None
+
+    @property
+    def line(self):
+        line = ['set']
+        line.extend([p.text for p in self.parents])
+        line.append(self.text)
+        return ' '.join(line)
 
     def __str__(self):
         return self.raw
@@ -50,16 +59,23 @@ def ignore_line(text, tokens=None):
         if text.startswith(item):
             return True
 
+def get_next(iterable):
+    item, next_item = itertools.tee(iterable, 2)
+    next_item = itertools.islice(next_item, 1, None)
+    return itertools.izip_longest(item, next_item)
+
 def parse(lines, indent, comment_tokens=None):
     toplevel = re.compile(r'\S')
     childline = re.compile(r'^\s*(.+)$')
     repl = r'([{|}|;])'
 
+    lines = re.sub(r'([{};])', '', lines)
+
     ancestors = list()
     config = list()
 
     for line in str(lines).split('\n'):
-        text = str(re.sub(repl, '', line)).strip()
+        text = str(line).strip()
 
         cfg = ConfigLine(text)
         cfg.raw = line
@@ -108,6 +124,16 @@ class NetworkConfig(object):
     @property
     def items(self):
         return self._config
+
+    @property
+    def lines(self):
+        lines = list()
+        for item, next_item in get_next(self.items):
+            if next_item is None:
+                lines.append(item.line)
+            elif not next_item.line.startswith(item.line):
+                lines.append(item.line)
+        return lines
 
     def __str__(self):
         text = ''
@@ -170,10 +196,24 @@ class NetworkConfig(object):
             if c.raw not in current_level:
                 current_level[c.raw] = collections.OrderedDict()
 
+    def to_lines(self, iterable):
+        lines = list()
+        for entry in block[1:]:
+            line = ['set']
+            line.extend([p.text for p in entry.parents])
+            line.append(entry.text)
+            lines.append(' '.join(line))
+        return lines
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
     def get_section(self, path):
         try:
             section = self.get_section_objects(path)
-            return '\n'.join([item.raw for item in section])
+            if self._device_os == 'junos':
+                return self.to_lines(section)
+            return to_block(section)
         except ValueError:
             return list()
 
@@ -265,35 +305,83 @@ class NetworkConfig(object):
 
         return self.flatten(diffs)
 
-    def _build_children(self, children, parents=None, offset=0):
-        for item in children:
-            line = ConfigLine(item)
-            line.raw = item.rjust(len(item) + offset)
-            if parents:
-                line.parents = parents
-                parents[-1].children.append(line)
-            yield line
+    def replace(self, replace, text=None, regex=None, parents=None,
+            add_if_missing=False, ignore_whitespace=False):
+        match = None
+
+        parents = parents or list()
+        if text is None and regex is None:
+            raise ValueError('missing required arguments')
+
+        if not regex:
+            regex = ['^%s$' % text]
+
+        patterns = [re.compile(r, re.I) for r in to_list(regex)]
+
+        for item in self.items:
+            for regexp in patterns:
+                string = item.text if ignore_whitespace is True else item.raw
+                if regexp.search(item.text):
+                    if item.text != replace:
+                        if parents == [p.text for p in item.parents]:
+                            match = item
+                            break
+
+        if match:
+            match.text = replace
+            indent = len(match.raw) - len(match.raw.lstrip())
+            match.raw = replace.rjust(len(replace) + indent)
+
+        elif add_if_missing:
+            self.add(replace, parents=parents)
+
 
     def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
         offset = 0
+        obj = None
 
-        config = list()
-        parent = None
-        parents = parents or list()
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
 
-        for item in parents:
-            line = ConfigLine(item)
-            line.raw = item.rjust(len(item) + offset)
-            config.append(line)
-            if parent:
-                parent.children.append(line)
-                if parent.parents:
-                    line.parents.append(*parent.parents)
-                line.parents.append(parent)
-            parent = line
-            offset += self.indent
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
 
-        self._config.extend(config)
-        self._config.extend(list(self._build_children(lines, config, offset)))
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
 
 
