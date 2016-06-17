@@ -539,6 +539,17 @@ class PlayContext(Base):
 
                 becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'pmrun':
+                #TODO: Add support for prompt
+                exe = self.become_exe or 'pmrun'
+
+                prompt = 'Password:'
+
+                if self.become_user:
+                    flags += ' -u %s ' % self.become_user
+
+                becomecmd = '%s %s %s' % (exe, flags, cmd)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
