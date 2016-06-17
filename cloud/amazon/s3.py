@@ -136,7 +136,7 @@ options:
     aliases: [ S3_URL ]
   rgw:
     description:
-      - Enable Ceph RGW S3 support
+      - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
     default: false
     version_added: "2.2"
   src:
