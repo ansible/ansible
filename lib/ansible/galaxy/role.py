@@ -30,11 +30,11 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -48,9 +48,10 @@ class GalaxyRole(object):
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
+    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related",
+                      "summary_fields", "average_aw_composite", "average_aw_score", "url" )
 
-
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None, full_path=None):
 
         self._metadata = None
         self._install_info = None
@@ -65,23 +66,73 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.path = path
+        # 'path' can be a dir from roles_path, while full_path is the
+        # path to the role itself (ie, /etc/ansible/roles/someuser.somerole/)
+        self.full_path = None
 
-        if path is not None:
-            if self.name not in path:
-                path = os.path.join(path, self.name)
-            self.path = path
-        else:
-            for role_path_dir in galaxy.roles_paths:
-                role_path = os.path.join(role_path_dir, self.name)
-                if os.path.exists(role_path):
-                    self.path = role_path
-                    break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
+        self.installed = None
 
     def __eq__(self, other):
         return self.name == other.name
+
+    def __repr__(self):
+        return "GalaxyRole(galaxy=%s, name=%s, src=%s, version=%s, scm=%s, path=%s, full_path=%s" % \
+            (self.galaxy, self.name, self.src, self.version, self.scm, self.path, self.full_path)
+
+    def __str__(self):
+        text = [u"", u"Role: %s" % to_unicode(self.name)]
+        text.append(u"\tdescription: %s" % self.metadata.get('description', ''))
+
+        for key, value in sorted(self.metadata.items()):
+            if key in self.SKIP_INFO_KEYS:
+                continue
+
+            if isinstance(value, dict):
+                text.append(u"\t%s:" % (key))
+                for value_key in sorted(value.keys()):
+                    if value_key in self.SKIP_INFO_KEYS:
+                        continue
+                    text.append(u"\t\t%s: %s" % (value_key, value[value_key]))
+            else:
+                text.append(u"\t%s: %s" % (key, value))
+
+        return u'\n'.join(text)
+
+    @classmethod
+    def from_name(cls, galaxy, name):
+        for role_path_dir in galaxy.roles_paths:
+            role_path = os.path.join(role_path_dir, name)
+            if os.path.exists(role_path):
+                break
+            else:
+                # use the first path by default
+                # if the role doesn't exist locally
+                role_path = os.path.join(galaxy.roles_paths[0], name)
+
+        role = cls(galaxy, name, path=role_path)
+        return role
+
+    @classmethod
+    def from_name_and_path(cls, galaxy, name, path):
+        role = cls.from_name(galaxy, name)
+        role.path = path
+        return role
+
+    @classmethod
+    def from_requirement(cls, galaxy, requirement):
+        if 'name' not in requirement and 'scm' not in requirement:
+            raise AnsibleError("Must specify name or src for role")
+        role = cls(galaxy, **requirement)
+        return role
+
+    @property
+    def installable_from_galaxy(self):
+        if '.' not in self.name and '.' not in self.src and self.scm is None:
+            # we know we can skip this, as it's not going to
+            # be found on galaxy.ansible.com
+            return False
+        return True
 
     @property
     def metadata(self):
@@ -89,19 +140,21 @@ class GalaxyRole(object):
         Returns role metadata
         """
         if self._metadata is None:
+            self._metadata = {}
+            if not self.path:
+                return self._metadata
             meta_path = os.path.join(self.path, self.META_MAIN)
             if os.path.isfile(meta_path):
                 try:
                     f = open(meta_path, 'r')
                     self._metadata = yaml.safe_load(f)
-                except:
+                except Exception as e:
+                    display.vvv('Exception: %s' % e)
                     display.vvvvv("Unable to load metadata for %s" % self.name)
-                    return False
                 finally:
                     f.close()
 
         return self._metadata
-
 
     @property
     def install_info(self):
@@ -109,6 +162,8 @@ class GalaxyRole(object):
         Returns role install info
         """
         if self._install_info is None:
+            if self.path is None:
+                return None
 
             info_path = os.path.join(self.path, self.META_INSTALL)
             if os.path.isfile(info_path):
@@ -193,7 +248,7 @@ class GalaxyRole(object):
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(**self.spec)
         elif self.src:
-            if  os.path.isfile(self.src):
+            if os.path.isfile(self.src):
                 # installing a local tar.gz
                 tmp_file = self.src
             elif '://' in self.src:
@@ -218,7 +273,7 @@ class GalaxyRole(object):
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
-                        self.version = 'master' 
+                        self.version = 'master'
                 elif self.version != 'master':
                     if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
@@ -226,11 +281,9 @@ class GalaxyRole(object):
                 tmp_file = self.fetch(role_data)
 
         else:
-           raise AnsibleError("No valid role data found")
-
+            raise AnsibleError("No valid role data found")
 
         if tmp_file:
-
             display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
@@ -290,7 +343,7 @@ class GalaxyRole(object):
                     # write out the install info file for later use
                     self._write_galaxy_install_info()
                 except OSError as e:
-                   raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
+                    raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)
