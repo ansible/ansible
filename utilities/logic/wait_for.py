@@ -337,7 +337,7 @@ def _create_connection(host, port, connect_timeout):
         Socket object
     """
     if sys.version_info < (2, 6):
-        (family, _) = _convert_host_to_ip(host)
+        (family, _) = (_convert_host_to_ip(host))[0]
         connect_socket = socket.socket(family, socket.SOCK_STREAM)
         connect_socket.settimeout(connect_timeout)
         connect_socket.connect( (host, port) )
