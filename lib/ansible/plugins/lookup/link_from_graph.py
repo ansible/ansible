@@ -54,7 +54,6 @@ class LookupModule(LookupBase):
             g = graph_from_dot_file(path)
             edges = g.get_edges()
             addr = None
-            l2_members = []
             display.v("Looking for :%s %s" % (paramvals['hostname'], paramvals['link']))
             for edge in edges:
                 edge_attrib = json.loads(edge.get('label').strip('"').replace("'", "\""))
