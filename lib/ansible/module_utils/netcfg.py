@@ -67,15 +67,12 @@ def get_next(iterable):
 def parse(lines, indent, comment_tokens=None):
     toplevel = re.compile(r'\S')
     childline = re.compile(r'^\s*(.+)$')
-    repl = r'([{|}|;])'
-
-    lines = re.sub(r'([{};])', '', lines)
 
     ancestors = list()
     config = list()
 
     for line in str(lines).split('\n'):
-        text = str(line).strip()
+        text = str(re.sub(r'([{};])', '', line)).strip()
 
         cfg = ConfigLine(text)
         cfg.raw = line
@@ -196,9 +193,9 @@ class NetworkConfig(object):
             if c.raw not in current_level:
                 current_level[c.raw] = collections.OrderedDict()
 
-    def to_lines(self, iterable):
+    def to_lines(self, section):
         lines = list()
-        for entry in block[1:]:
+        for entry in section[1:]:
             line = ['set']
             line.extend([p.text for p in entry.parents])
             line.append(entry.text)
@@ -213,7 +210,7 @@ class NetworkConfig(object):
             section = self.get_section_objects(path)
             if self._device_os == 'junos':
                 return self.to_lines(section)
-            return to_block(section)
+            return self.to_block(section)
         except ValueError:
             return list()
 
