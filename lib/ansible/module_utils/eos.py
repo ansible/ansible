@@ -195,7 +195,6 @@ class EosConfigMixin(object):
     def save_config(self):
         self.execute(['copy running-config startup-config'])
 
-@register_transport('eapi')
 class Eapi(EosConfigMixin):
 
     def __init__(self):
@@ -317,9 +316,9 @@ class Eapi(EosConfigMixin):
 
     def get_config(self, **kwargs):
         return self.run_commands(['show running-config'], format='text')[0]
+Eapi = register_transport('eapi')(Eapi)
 
 
-@register_transport('cli', default=True)
 class Cli(NetCli, EosConfigMixin):
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -366,6 +365,7 @@ class Cli(NetCli, EosConfigMixin):
                         response=response[index]
                     )
         return responses
+Cli = register_transport('cli', default=True)(Cli)
 
 def prepare_config(commands):
     commands = to_list(commands)
