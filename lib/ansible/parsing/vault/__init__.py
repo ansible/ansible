@@ -144,7 +144,7 @@ class VaultLib:
         b_tmp_data = self._format_output(b_enc_data)
         return b_tmp_data
 
-    def decrypt(self, data):
+    def decrypt(self, data, filename=None):
         """Decrypt a piece of vault encrypted data.
 
         :arg data: a string to decrypt.  Since vault encrypted data is an
@@ -157,7 +157,10 @@ class VaultLib:
             raise AnsibleError("A vault password must be specified to decrypt data")
 
         if not self.is_encrypted(b_data):
-            raise AnsibleError("input is not encrypted")
+            msg = "input is not encrypted"
+            if filename:
+                msg += "%s is not encrypted" % filename
+            raise AnsibleError(msg)
 
         # clean out header
         b_data = self._split_header(b_data)
@@ -173,7 +176,10 @@ class VaultLib:
         # try to unencrypt data
         b_data = this_cipher.decrypt(b_data, self.b_password)
         if b_data is None:
-            raise AnsibleError("Decryption failed")
+            msg = "Decryption failed"
+            if filename:
+                msg += " on %s" % filename
+            raise AnsibleError(msg)
 
         return b_data
 
