@@ -114,7 +114,11 @@ options:
   mode:
     version_added: "2.2"
     description:
-      - network mode supporting subnets introduced into Google Cloud
+      - network mode for Google Cloud
+        "legacy" indicates a network with an IP address range
+        "auto" automatically generates subnetworks in different regions
+        "custom" uses networks to group subnets of user specified IP address ranges
+        https://cloud.google.com/compute/docs/networking#network_types
     required: false
     default: "legacy"
     choices: ["legacy", "auto", "custom"]
@@ -161,6 +165,21 @@ EXAMPLES = '''
     fwname: all-web-webproxy
     allowed: tcp:80,8080
     src_tags: ["web", "proxy"]
+
+# Simple example of creating a new auto network
+- local_action:
+    module: gce_net
+    name: privatenet
+    mode: auto
+
+# Simple example of creating a new custom subnet
+- local_action:
+    module: gce_net
+    name: privatenet
+    mode: custom
+    subnet_name: subnet_example
+    subnet_region: us-central1
+    ipv4_range: 10.0.0.0/16
 
 '''
 
