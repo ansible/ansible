@@ -228,6 +228,9 @@ def _bool_hwaddr_query(v):
     if v:
         return True
 
+def _int_hwaddr_query(v):
+    return int(v)
+
 def _cisco_query(v):
     v.dialect = netaddr.mac_cisco
     return str(v)
@@ -637,6 +640,7 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
             '': _empty_hwaddr_query,
             'bare': _bare_query,
             'bool': _bool_hwaddr_query,
+            'int': _int_hwaddr_query,
             'cisco': _cisco_query,
             'eui48': _win_query,
             'linux': _linux_query,
