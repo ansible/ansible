@@ -608,7 +608,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
                 for k,v in iteritems(module_args):
-                    args_data += '%s="%s" ' % (k, pipes.quote(text_type(v)))
+                    args_data += '%s=%s ' % (k, pipes.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
