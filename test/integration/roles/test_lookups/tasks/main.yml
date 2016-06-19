@@ -124,6 +124,17 @@
         - "' salt=' in cat_pass_salt.stdout"
         - "' salt=' not in newpass"
 
+
+- name: fetch unencrypted password (using empty encrypt parameter)
+  set_fact:
+    newpass2: "{{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=') }}"
+
+- name: verify lookup password behavior
+  assert:
+    that:
+        - "newpass == newpass2"
+
+
 # ENV LOOKUP
 
 - name: get first environment var name
