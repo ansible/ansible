@@ -35,8 +35,8 @@
 
 # PASSWORD LOOKUP
 
-- name: remove previous password files
-  file: dest={{output_dir}}/lookup/password state=absent
+- name: remove previous password files and directory
+  file: dest={{item}} state=absent
   with_items:
   - "{{output_dir}}/lookup/password"
   - "{{output_dir}}/lookup"
