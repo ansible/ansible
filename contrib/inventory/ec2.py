@@ -130,7 +130,13 @@ from boto import rds
 from boto import elasticache
 from boto import route53
 import six
-import boto3
+
+HAS_BOTO3 = False
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    pass
 
 from six.moves import configparser
 from collections import defaultdict
@@ -584,7 +590,10 @@ class Ec2Inventory(object):
             self.fail_with_error(error, 'getting RDS instances')
 
     def include_rds_clusters_by_region(self, region):
-        client = boto3.client('rds', region_name=region)
+        if not HAS_BOTO3:
+            module.fail_json(message="This module requires boto3 be installed - please install boto3 and try again")
+        
+        client = self.connect_to_aws(rds, region)
         clusters = client.describe_db_clusters()["DBClusters"]
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
