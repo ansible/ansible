@@ -27,7 +27,8 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
-from ansible.utils.unicode import to_unicode
+from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_unicode, to_str
 
 try:
     from __main__ import display
@@ -184,8 +185,10 @@ class PlaybookExecutor:
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
-                            else:
+                            elif playbook_path:
                                 basedir = os.path.dirname(playbook_path)
+                            else:
+                                basedir = '~/'
 
                             (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
                             filename = os.path.join(basedir, "%s.retry" % retry_name)
@@ -257,13 +260,13 @@ class PlaybookExecutor:
         re-running on ONLY the failed hosts.  This may duplicate some variable
         information in group_vars/host_vars but that is ok, and expected.
         '''
-
         try:
+            makedirs_safe(os.path.dirname(retry_path))
             with open(retry_path, 'w') as fd:
                 for x in replay_hosts:
                     fd.write("%s\n" % x)
         except Exception as e:
-            display.error("Could not create retry file '%s'. The error was: %s" % (retry_path, e))
+            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_str(e)))
             return False
 
         return True

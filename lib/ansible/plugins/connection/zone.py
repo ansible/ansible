@@ -31,7 +31,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.utils import to_bytes
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display

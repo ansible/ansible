@@ -330,7 +330,6 @@ class TaskExecutor:
             # Restore the name parameter
             if name is not None:
                 self._task.args['name'] = name
-            pass
         return items
 
     def _execute(self, variables=None):
@@ -409,7 +408,7 @@ class TaskExecutor:
         # get the connection and the handler for this execution
         if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
             self._connection = self._get_connection(variables=variables, templar=templar)
-            self._connection.set_host_overrides(host=self._host)
+            self._connection.set_host_overrides(host=self._host, hostvars=variables.get('hostvars', {}).get(self._host.name, {}))
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed

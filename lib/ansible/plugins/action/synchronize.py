@@ -85,7 +85,15 @@ class ActionModule(ActionBase):
             alternative ssh port to a vagrant host.)
         """
         transport = self._connection.transport
-        if host not in C.LOCALHOST or transport != "local":
+        # If we're connecting to a remote host or we're delegating to another
+        # host or we're connecting to a different ssh instance on the
+        # localhost then we have to format the path as a remote rsync path
+        if host not in C.LOCALHOST or transport != "local" or \
+                (host in C.LOCALHOST and not port_matches_localhost_port):
+            # If we're delegating to non-localhost and but the
+            # inventory_hostname host is localhost then we need the module to
+            # fix up the rsync path to use the controller's public DNS/IP
+            # instead of "localhost"
             if port_matches_localhost_port and host in C.LOCALHOST:
                 self._task.args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
@@ -258,6 +266,10 @@ class ActionModule(ActionBase):
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
+        if src is None or dest is None:
+            return dict(failed=True,
+                    msg="synchronize requires both src and dest parameters are set")
+
         if not dest_is_local:
             # Private key handling
             if use_delegate:

@@ -19,7 +19,6 @@ __metaclass__ = type
 
 import os
 
-from ansible import constants as C
 from ansible.plugins.action import ActionBase
 
 
@@ -79,7 +78,6 @@ class ActionModule(ActionBase):
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._transfer_file(source, tmp_src)
 
-        sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
         self._fixup_perms(tmp, remote_user, execute=True, recursive=True)
 

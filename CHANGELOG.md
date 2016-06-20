@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 ###Major Changes:
 
+* Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 
@@ -18,11 +19,15 @@ Ansible Changes By Release
 - letsencrypt
 - netconf_config
 - openstack
-  * os_keystone_service.py
+  * os_keystone_service
+- rocketchat
 - sensu_subscription
 - smartos
   * smartos_image_facts
 - systemd
+- telegram
+- vmware
+  * vmware_vmotion
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.

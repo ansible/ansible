@@ -60,6 +60,7 @@ function cleanup
 }
 
 trap cleanup EXIT INT TERM
+docker images ansible/ansible
 show_environment
 
 if [ "${controller_shared_dir}" ]; then
@@ -78,8 +79,6 @@ container_id=$(docker run -d \
     "${test_image}")
 
 show_environment
-
-docker exec "${container_id}" pip install junit-xml
 
 if [ "${copy_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"

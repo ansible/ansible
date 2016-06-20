@@ -93,6 +93,7 @@ class TaskQueueManager:
 
         # this dictionary is used to keep track of notified handlers
         self._notified_handlers = dict()
+        self._listening_handlers = dict()
 
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts      = dict()
@@ -114,17 +115,21 @@ class TaskQueueManager:
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
 
-    def _initialize_notified_handlers(self, handlers):
+    def _initialize_notified_handlers(self, play):
         '''
         Clears and initializes the shared notified handlers dict with entries
         for each handler in the play, which is an empty array that will contain
         inventory hostnames for those hosts triggering the handler.
         '''
 
+        handlers = play.handlers
+        for role in play.roles:
+            handlers.extend(role._handler_blocks)
+
         # Zero the dictionary first by removing any entries there.
         # Proxied dicts don't support iteritems, so we have to use keys()
-        for key in self._notified_handlers.keys():
-            del self._notified_handlers[key]
+        self._notified_handlers.clear()
+        self._listening_handlers.clear()
 
         def _process_block(b):
             temp_list = []
@@ -139,9 +144,14 @@ class TaskQueueManager:
         for handler_block in handlers:
             handler_list.extend(_process_block(handler_block))
 
-        # then initialize it with the handler names from the handler list
+        # then initialize it with the given handler list
         for handler in handler_list:
-            self._notified_handlers[handler.get_name()] = []
+            if handler not in self._notified_handlers:
+                self._notified_handlers[handler] = []
+            if handler.listen:
+                if handler.listen not in self._listening_handlers:
+                    self._listening_handlers[handler.listen] = []
+                self._listening_handlers[handler.listen].append(handler.get_name())
 
     def load_callbacks(self):
         '''
@@ -226,7 +236,7 @@ class TaskQueueManager:
         self.send_callback('v2_playbook_on_play_start', new_play)
 
         # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(new_play.handlers)
+        self._initialize_notified_handlers(new_play)
 
         # load the specified strategy (or the default linear one)
         strategy = strategy_loader.get(new_play.strategy, self)
@@ -298,9 +308,6 @@ class TaskQueueManager:
 
     def get_loader(self):
         return self._loader
-
-    def get_notified_handlers(self):
-        return self._notified_handlers
 
     def get_workers(self):
         return self._workers[:]

@@ -45,12 +45,16 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = MagicMock()
         mock_tqm._options = MagicMock()
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
         strategy_base = StrategyBase(tqm=mock_tqm)
 
     def test_strategy_base_run(self):
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = MagicMock()
         mock_tqm._stats = MagicMock()
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
         mock_tqm.send_callback.return_value = None
 
         mock_iterator  = MagicMock()
@@ -62,6 +66,8 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
         mock_tqm._options = MagicMock()
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
         strategy_base = StrategyBase(tqm=mock_tqm)
 
         mock_host = MagicMock()
@@ -89,6 +95,8 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm = MagicMock()
         mock_tqm._final_q = MagicMock()
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
         mock_tqm.get_inventory.return_value = mock_inventory
 
         mock_play = MagicMock()
@@ -153,6 +161,8 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
         mock_tqm.send_callback.return_value = None
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
 
         queue_items = []
         def _queue_empty(*args, **kwargs):
@@ -171,7 +181,10 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._stats = MagicMock()
         mock_tqm._stats.increment.return_value = None
         
+        mock_play = MagicMock()
+
         mock_iterator = MagicMock()
+        mock_iterator._play = mock_play
         mock_iterator.mark_host_failed.return_value = None
         mock_iterator.get_next_task_for_host.return_value = (None, None)
 
@@ -183,6 +196,18 @@ class TestStrategyBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task._role = None
         mock_task.ignore_errors = False
+
+        mock_handler_task = MagicMock(Handler)
+        mock_handler_task.action = 'foo'
+        mock_handler_task.get_name.return_value = "test handler"
+        mock_handler_task.has_triggered.return_value = False
+
+        mock_handler_block = MagicMock()
+        mock_handler_block.block = [mock_handler_task]
+        mock_play.handlers = [mock_handler_block]
+
+        mock_tqm._notified_handlers = {mock_handler_task: []}
+        mock_tqm._listening_handlers = {}
 
         mock_group = MagicMock()
         mock_group.add_host.return_value = None
@@ -211,7 +236,6 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._inventory = mock_inventory
         strategy_base._variable_manager = mock_var_mgr
         strategy_base._blocked_hosts = dict()
-        strategy_base._notified_handlers = dict()
 
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
@@ -281,8 +305,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(len(results), 0)
         self.assertEqual(strategy_base._pending_results, 1)
         self.assertIn('test01', strategy_base._blocked_hosts)
-        self.assertIn('test handler', strategy_base._notified_handlers)
-        self.assertIn(mock_host, strategy_base._notified_handlers['test handler'])
+        self.assertIn(mock_handler_task, strategy_base._notified_handlers)
+        self.assertIn(mock_host, strategy_base._notified_handlers[mock_handler_task])
 
         queue_items.append(('set_host_var', mock_host, mock_task, None, 'foo', 'bar'))
         results = strategy_base._process_pending_results(iterator=mock_iterator)
@@ -308,6 +332,8 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm = MagicMock()
         mock_tqm._final_q = MagicMock()
+        mock_tqm._notified_handlers = {}
+        mock_tqm._listening_handlers = {}
 
         strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._loader = fake_loader
@@ -379,13 +405,14 @@ class TestStrategyBase(unittest.TestCase):
             passwords=None,
         )
         tqm._initialize_processes(3)
+        tqm._initialize_notified_handlers(mock_play)
         tqm.hostvars = dict()
 
         try:
             strategy_base = StrategyBase(tqm=tqm)
 
             strategy_base._inventory = mock_inventory
-            strategy_base._notified_handlers = {"test handler": [mock_host]}
+            strategy_base._notified_handlers = {mock_handler_task: [mock_host]}
 
             task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
             tqm._final_q.put(('host_task_ok', task_result))

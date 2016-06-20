@@ -511,10 +511,17 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+    '''is the given path executable?
+
+    Limitations:
+    * Does not account for FSACLs.
+    * Most times we really want to know "Can the current user execute this
+      file"  This function does not tell us that, only if an execute bit is set.
+    '''
+    # These are all bitfields so first bitwise-or all the permissions we're
+    # looking for, then bitwise-and with the file's mode to determine if any
+    # execute bits are set.
+    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
 def _load_params():
     ''' read the modules parameters and store them globally.
@@ -608,7 +615,7 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1229,8 +1236,6 @@ class AnsibleModule(object):
         for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
-                if not self.supports_check_mode:
-                    self.exit_json(skipped=True, msg="remote module does not support check mode")
                 self.check_mode = True
 
             elif k == '_ansible_no_log':
@@ -1254,12 +1259,18 @@ class AnsibleModule(object):
             elif k == '_ansible_version':
                 self.ansible_version = v
 
+            elif k == '_ansible_module_name':
+                self._name = v
+
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
             #clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
+
+        if self.check_mode and not self.supports_check_mode:
+                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check):
         count = 0
@@ -1537,7 +1548,7 @@ class AnsibleModule(object):
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
-            module = 'ansible-%s' % os.path.basename(__file__)
+            module = 'ansible-%s' % self._name
             facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
             syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
@@ -1553,7 +1564,7 @@ class AnsibleModule(object):
             if log_args is None:
                 log_args = dict()
 
-            module = 'ansible-%s' % os.path.basename(__file__)
+            module = 'ansible-%s' % self._name
             if isinstance(module, bytes):
                 module = module.decode('utf-8', 'replace')
 
@@ -2027,6 +2038,8 @@ class AnsibleModule(object):
                         if not x.endswith('/ansible_modlib.zip') \
                         and not x.endswith('/debug_dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
+            if not os.environ['PYTHONPATH']:
+                del os.environ['PYTHONPATH']
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like

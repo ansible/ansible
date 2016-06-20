@@ -141,8 +141,6 @@ class Connection(ConnectionBase):
                 self._add_args('disable batch mode for sshpass', ['-o', 'BatchMode=no'])
             self._command += ['-b', '-']
 
-        self._command += ['-C']
-
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
         elif binary == 'ssh':
