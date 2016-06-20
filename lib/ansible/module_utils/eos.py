@@ -355,7 +355,6 @@ class Cli(NetCli, EosConfigMixin):
         passwd = params['auth_pass']
         self.execute(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
-
     ### implementation of network.Cli ###
 
     def run_commands(self, commands):
@@ -368,7 +367,7 @@ class Cli(NetCli, EosConfigMixin):
                 except ValueError:
                     raise NetworkError(
                         msg='unable to load response from device',
-                        response=response[index]
+                        response=responses[index]
                     )
         return responses
 Cli = register_transport('cli', default=True)(Cli)
