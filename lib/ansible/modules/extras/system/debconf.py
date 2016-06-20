@@ -51,11 +51,11 @@ options:
     aliases: ['setting', 'selection']
   vtype:
     description:
-      - The type of the value supplied
+      - The type of the value supplied.
+      - C(seen) was added in 2.2.
     required: false
     default: null
-    choices: [string, password, boolean, select, multiselect, note, error, title, text]
-    aliases: []
+    choices: [string, password, boolean, select, multiselect, note, error, title, text, seen]
   value:
     description:
       -  Value to set the configuration to
@@ -67,8 +67,7 @@ options:
       - Do not set 'seen' flag when pre-seeding
     required: false
     default: False
-    aliases: []
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 
 '''
 
@@ -119,7 +118,7 @@ def main():
         argument_spec = dict(
            name = dict(required=True, aliases=['pkg'], type='str'),
            question = dict(required=False, aliases=['setting', 'selection'], type='str'),
-           vtype = dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title', 'text']),
+           vtype = dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title', 'text', 'seen']),
            value= dict(required=False, type='str'),
            unseen = dict(required=False, type='bool'),
         ),
