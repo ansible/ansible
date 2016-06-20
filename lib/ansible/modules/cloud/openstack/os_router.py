@@ -19,6 +19,8 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from distutils.version import StrictVersion
+
 
 DOCUMENTATION = '''
 ---
@@ -58,6 +60,13 @@ options:
      type: string
      required: false
      default: None
+   project:
+     description:
+        - Unique name or ID of the project.
+     type: string
+     required: false
+     default: None
+     version_added: "2.2"
    external_fixed_ips:
      description:
         - The IP address parameters for the external gateway network. Each
@@ -80,6 +89,13 @@ EXAMPLES = '''
     cloud: mycloud
     state: present
     name: simple_router
+
+# Create a simple router, not attached to a gateway or subnets for a given project.
+- os_router:
+    cloud: mycloud
+    state: present
+    name: simple_router
+    project: myproj
 
 # Creates a router attached to ext_network1 on an IPv4 subnet and one
 # internal subnet interface.
@@ -209,6 +225,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids):
 
     return False
 
+
 def _system_state_change(cloud, module, router, network, internal_ids):
     """Check if the system state would be changed."""
     state = module.params['state']
@@ -219,6 +236,7 @@ def _system_state_change(cloud, module, router, network, internal_ids):
             return True
         return _needs_update(cloud, module, router, network, internal_ids)
     return False
+
 
 def _build_kwargs(cloud, module, router, network):
     kwargs = {
@@ -246,6 +264,7 @@ def _build_kwargs(cloud, module, router, network):
 
     return kwargs
 
+
 def _validate_subnets(module, cloud):
     external_subnet_ids = []
     internal_subnet_ids = []
@@ -263,7 +282,8 @@ def _validate_subnets(module, cloud):
                 module.fail_json(msg='subnet %s not found' % iface)
             internal_subnet_ids.append(subnet['id'])
 
-    return (external_subnet_ids, internal_subnet_ids)
+    return external_subnet_ids, internal_subnet_ids
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -274,6 +294,7 @@ def main():
         network=dict(default=None),
         interfaces=dict(type='list', default=None),
         external_fixed_ips=dict(type='list', default=None),
+        project=dict(default=None)
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -284,17 +305,32 @@ def main():
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
+    if (module.params['project'] and
+            StrictVersion(shade.__version__) <= StrictVersion('1.9.0')):
+        module.fail_json(msg="To utilize project, the installed version of"
+                             "the shade library MUST be > 1.9.0")
+
     state = module.params['state']
     name = module.params['name']
     network = module.params['network']
+    project = module.params['project']
 
     if module.params['external_fixed_ips'] and not network:
         module.fail_json(msg='network is required when supplying external_fixed_ips')
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        router = cloud.get_router(name)
+        if project is not None:
+            proj = cloud.get_project(project)
+            if proj is None:
+                module.fail_json(msg='Project %s could not be found' % project)
+            project_id = proj['id']
+            filters = {'tenant_id': project_id}
+        else:
+            project_id = None
+            filters = None
 
+        router = cloud.get_router(name, filters=filters)
         net = None
         if network:
             net = cloud.get_network(network)
@@ -315,6 +351,8 @@ def main():
 
             if not router:
                 kwargs = _build_kwargs(cloud, module, router, net)
+                if project_id:
+                    kwargs['project_id'] = project_id
                 router = cloud.create_router(**kwargs)
                 for internal_subnet_id in internal_ids:
                     cloud.add_router_interface(router, subnet_id=internal_subnet_id)
@@ -346,9 +384,10 @@ def main():
                 # We need to detach all internal interfaces on a router before
                 # we will be allowed to delete it.
                 ports = cloud.list_router_interfaces(router, 'internal')
+                router_id = router['id']
                 for port in ports:
                     cloud.remove_router_interface(router, port_id=port['id'])
-                cloud.delete_router(name)
+                cloud.delete_router(router_id)
                 module.exit_json(changed=True)
 
     except shade.OpenStackCloudException as e:
