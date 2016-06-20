@@ -20,9 +20,6 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-# temporarily disable strictmode, for this module only
-Set-StrictMode -Off
-
 function getFirewallRule ($fwsettings) {
     try {
 
@@ -205,80 +202,54 @@ $fwsettings=@{}
 # Variabelise the arguments
 $params=Parse-Args $args;
 
-$enable=Get-Attr $params "enable" $null;
-$state=Get-Attr $params "state" "present";
-$name=Get-Attr $params "name" "";
-$direction=Get-Attr $params "direction" "";
-$force=Get-Attr $params "force" $false;
-$action=Get-Attr $params "action" "";
+$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
+$direction = Get-AnsibleParam -obj $params -name "direction" -failifempty $true -validateSet "in","out"
+$action = Get-AnsibleParam -obj $params -name "action" -failifempty $true -validateSet "allow","block","bypass"
+$program = Get-AnsibleParam -obj $params -name "program"
+$service = Get-AnsibleParam -obj $params -name "service" -default "any"
+$description = Get-AnsibleParam -obj $params -name "description"
+$enable = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "enable" -default "true")
+$winprofile = Get-AnsibleParam -obj $params -name "profile" -default "any"
+$localip = Get-AnsibleParam -obj $params -name "localip" -default "any"
+$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -default "any"
+$localport = Get-AnsibleParam -obj $params -name "localport" -default "any"
+$remoteport = Get-AnsibleParam -obj $params -name "remoteport" -default "any"
+$protocol = Get-AnsibleParam -obj $params -name "protocol" -default "any"
 
-$misArg = ''
+$state = Get-AnsibleParam -obj $params -name "state" -failifempty $true -validateSet "present","absent"
+$force = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "force" -default "false")
+
 # Check the arguments
-if ($enable -ne $null) {
-    $enable=ConvertTo-Bool $enable;
-    if ($enable -eq $true) {
-        $fwsettings.Add("Enabled", "yes");
-    } elseif ($enable -eq $false) {
-        $fwsettings.Add("Enabled", "no");
-    } else {
-        $misArg+="enable";
-        $msg+=@("for the enable parameter only yes and no is allowed");
-    };
+If ($enable -eq $true) {
+    $fwsettings.Add("Enabled", "yes");
+} Else {
+    $fwsettings.Add("Enabled", "no");
 };
 
-if (($state -ne "present") -And ($state -ne "absent")){
-    $misArg+="state";
-    $msg+=@("for the state parameter only present and absent is allowed");
-};
+$fwsettings.Add("Rule Name", $name)
+#$fwsettings.Add("displayname", $name)
 
-if ($name -eq ""){
-    $misArg+="Name";
-    $msg+=@("name is a required argument");
-} else {
-    $fwsettings.Add("Rule Name", $name)
-    #$fwsettings.Add("displayname", $name)
-};
-if ((($direction.ToLower() -ne "In") -And ($direction.ToLower() -ne "Out")) -And ($state -eq "present")){
-    $misArg+="Direction";
-    $msg+=@("for the Direction parameter only the values 'In' and 'Out' are allowed");
-} else {
+$state = $state.ToString().ToLower()
+If ($state -eq "present")){
     $fwsettings.Add("Direction", $direction)
-};
-if ((($action.ToLower() -ne "allow") -And ($action.ToLower() -ne "block")) -And ($state -eq "present")){
-    $misArg+="Action";
-    $msg+=@("for the Action parameter only the values 'allow' and 'block' are allowed");
-} else {
     $fwsettings.Add("Action", $action)
 };
-$args=@(
-    "Description",
-    "LocalIP",
-    "RemoteIP",
-    "LocalPort",
-    "RemotePort",
-    "Program",
-    "Service",
-    "Protocol"
-)
 
-foreach ($arg in $args){
-    New-Variable -Name $arg -Value $(Get-Attr $params $arg "");
-    if ((Get-Variable -Name $arg -ValueOnly) -ne ""){
-        $fwsettings.Add($arg, $(Get-Variable -Name $arg -ValueOnly));
-    };
-};
+If ($description) {
+    $fwsettings.Add("Description", $description);
+}
 
-$winprofile=Get-Attr $params "profile" "current";
+If ($program) {
+    $fwsettings.Add("Program", $program);
+}
+
+$fwsettings.Add("LocalIP", $localip);
+$fwsettings.Add("RemoteIP", $remoteip);
+$fwsettings.Add("LocalPort", $localport);
+$fwsettings.Add("RemotePort", $remoteport);
+$fwsettings.Add("Service", $service);
+$fwsettings.Add("Protocol", $protocol);
 $fwsettings.Add("Profiles", $winprofile)
-
-if ($misArg){
-    $result=New-Object psobject @{
-        changed=$false
-        failed=$true
-        msg=$msg
-    };
-    Exit-Json($result);
-};
 
 $output=@()
 $capture=getFirewallRule ($fwsettings);
@@ -299,7 +270,7 @@ if ($capture.failed -eq $true) {
 }
 
 
-switch ($state.ToLower()){
+switch ($state){
     "present" {
         if ($capture.exists -eq $false) {
             $capture=createFireWallRule($fwsettings);
