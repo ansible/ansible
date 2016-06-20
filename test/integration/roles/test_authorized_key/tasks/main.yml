@@ -242,3 +242,31 @@
     that:
     - 'result.changed == False'
 
+# -------------------------------------------------------------
+# basic ssh-dss key with mutliple permit-open options
+# https://github.com/ansible/ansible-modules-core/issues/1715
+
+- name: add basic ssh-dss key with multi-opts
+  authorized_key: 
+    user: root 
+    key: "{{ dss_key_basic }}" 
+    key_options: 'no-agent-forwarding,no-X11-forwarding,permitopen="10.9.8.1:8080",permitopen="10.9.8.1:9001"'
+    state: present 
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: assert that the key with multi-opts was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == dss_key_basic'
+    - 'result.key_options == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\""'
+
+- name: get the file content
+  shell: cat "{{output_dir|expanduser}}/authorized_keys" | fgrep DATA_BASIC
+  register: content
+
+- name: validate content
+  assert:
+    that:
+        - 'content.stdout == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\" ssh-dss DATA_BASIC root@testing"'
