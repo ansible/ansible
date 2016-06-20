@@ -156,7 +156,7 @@ class AnsibleDockerClient(Client):
                                                                                            MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode
+        self.check_mode = self.module.check_mode  
         self._connect_params = self._get_connect_params()
 
         try:
@@ -398,9 +398,9 @@ class AnsibleDockerClient(Client):
         images = self._image_lookup(name, tag)
         if len(images) == 0:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
-            registry, repo_name = auth.resolve_repository_name(name)
+            registry, repo_name = auth.resolve_repository_name(name) 
             if registry == 'docker.io':
-                # the name does not contain a registry, so let's see if docker.io works
+                # the name does not contain a registry, so let's see if docker.io works 
                 lookup = "docker.io/%s" % name
                 self.log("Check for docker.io image: %s" % lookup)
                 images = self._image_lookup(lookup, tag)
@@ -424,7 +424,7 @@ class AnsibleDockerClient(Client):
         work consistently. Instead, get the result set for name and manually check if the tag
         exists.
         '''
-        images = list()
+        images = []
         try:
             response = self.images(name=name)
         except Exception as exc:
