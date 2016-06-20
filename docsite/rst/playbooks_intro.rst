@@ -378,15 +378,31 @@ Here's an example handlers section::
         - name: restart apache
           service: name=apache state=restarted
 
-Handlers are best used to restart services and trigger reboots.  You probably
-won't need them for much else.
+As of Ansible 2.1, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
+
+    handlers:
+        - name: restart memcached
+          service: name=memcached state=restarted
+          listen: "restart web services"
+        - name: restart apache
+          service: name=apache state=restarted
+          listen: "restart web services"
+
+    tasks:
+        - name: restart everything
+          command: echo "this task will restart the web services"
+          notify: "restart web services"
+
+This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names,
+making it easier to share handlers among playbooks and roles (especially when using 3rd party roles from
+a shared source like Galaxy).
 
 .. note::
-   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement.
-   * Handler names live in a global namespace.
+   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
+   * Handler names and `listen` topics live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
-   * You cannot notify a handler that is defined inside of an include
+   * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
 Roles are described later on, but it's worthwhile to point out that:
 
