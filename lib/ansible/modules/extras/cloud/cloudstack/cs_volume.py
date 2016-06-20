@@ -341,27 +341,28 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
     def attached_volume(self):
         volume = self.present_volume()
 
-        if volume.get('virtualmachineid') != self.get_vm(key='id'):
-            self.result['changed'] = True
+        if volume:
+            if volume.get('virtualmachineid') != self.get_vm(key='id'):
+                self.result['changed'] = True
 
-            if not self.module.check_mode:
-                volume = self.detached_volume()
+                if not self.module.check_mode:
+                    volume = self.detached_volume()
 
-        if 'attached' not in volume:
-            self.result['changed'] = True
+            if 'attached' not in volume:
+                self.result['changed'] = True
 
-            args = {}
-            args['id'] = volume['id']
-            args['virtualmachineid'] = self.get_vm(key='id')
-            args['deviceid'] = self.module.params.get('device_id')
+                args = {}
+                args['id'] = volume['id']
+                args['virtualmachineid'] = self.get_vm(key='id')
+                args['deviceid'] = self.module.params.get('device_id')
 
-            if not self.module.check_mode:
-                res = self.cs.attachVolume(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-                poll_async = self.module.params.get('poll_async')
-                if poll_async:
-                    volume = self.poll_job(res, 'volume')
+                if not self.module.check_mode:
+                    res = self.cs.attachVolume(**args)
+                    if 'errortext' in res:
+                        self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                    poll_async = self.module.params.get('poll_async')
+                    if poll_async:
+                        volume = self.poll_job(res, 'volume')
         return volume
 
 
