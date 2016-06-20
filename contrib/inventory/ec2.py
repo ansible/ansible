@@ -723,6 +723,9 @@ class Ec2Inventory(object):
         if self.pattern_exclude and self.pattern_exclude.match(hostname):
             return
 
+        if hostname in self.index:
+            hostname = hostname + '(%s)' % instance.id
+
         # Add to index
         self.index[hostname] = [region, instance.id]
 
@@ -854,6 +857,9 @@ class Ec2Inventory(object):
             hostname = dest
 
         hostname = self.to_safe(hostname).lower()
+
+        if hostname in self.index:
+            hostname = hostname + '(%s)' % instance.id
 
         # Add to index
         self.index[hostname] = [region, instance.id]
