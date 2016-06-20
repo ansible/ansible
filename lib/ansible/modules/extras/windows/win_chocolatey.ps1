@@ -39,6 +39,10 @@ $installargs = Get-Attr -obj $params -name install_args -default $null
 $packageparams = Get-Attr -obj $params -name params -default $null
 $ignoredependencies = Get-Attr -obj $params -name ignore_dependencies -default "false" | ConvertTo-Bool
 
+# as of chocolatey 0.9.10, nonzero success exit codes can be returned
+# see https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
+$successexitcodes = (0,1605,1614,1641,3010)
+
 if ("present","absent" -notcontains $state)
 {
     Fail-Json $result "state is $state; must be present or absent"
@@ -159,7 +163,7 @@ Function Choco-Upgrade
 
     $results = invoke-expression $cmd
 
-    if ($LastExitCode -ne 0)
+    if ($LastExitCode -notin $successexitcodes)
     {
         Set-Attr $result "choco_error_cmd" $cmd
         Set-Attr $result "choco_error_log" "$results"
@@ -244,7 +248,7 @@ Function Choco-Install
 
     $results = invoke-expression $cmd
 
-    if ($LastExitCode -ne 0)
+    if ($LastExitCode -notin $successexitcodes)
     {
         Set-Attr $result "choco_error_cmd" $cmd
         Set-Attr $result "choco_error_log" "$results"
@@ -286,7 +290,7 @@ Function Choco-Uninstall
 
     $results = invoke-expression $cmd
 
-    if ($LastExitCode -ne 0)
+    if ($LastExitCode -notin $successexitcodes)
     {
         Set-Attr $result "choco_error_cmd" $cmd
         Set-Attr $result "choco_error_log" "$results"
