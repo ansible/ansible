@@ -159,6 +159,19 @@ class GceInventory(object):
             config.add_section('inventory')
 
         config.read(gce_ini_path)
+
+        #########
+        # Section added for processing ini settings
+        #########
+
+        # Set the instance_states filter based on config file options
+        self.instance_states = []
+        if config.has_option('gce', 'instance_states'):
+            states = config.get('gce', 'instance_states')
+            # Ignore if instance_states is an empty string.
+            if states:
+                self.instance_states = states.split(',')
+
         return config
 
     def get_inventory_options(self):
@@ -283,6 +296,17 @@ class GceInventory(object):
         meta["hostvars"] = {}
 
         for node in self.driver.list_nodes():
+
+            # This check filters on the desired instance states defined in the
+            # config file with the instance_states config option.
+            #
+            # If the instance_states list is _empty_ then _ALL_ states are returned.
+            #
+            # If the instance_states list is _populated_ then check the current
+            # state against the instance_states list
+            if self.instance_states and not node.extra['status'] in self.instance_states:
+                continue
+
             name = node.name
 
             meta["hostvars"][name] = self.node_to_dict(node)
