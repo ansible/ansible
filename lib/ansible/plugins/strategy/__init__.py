@@ -376,7 +376,6 @@ class StrategyBase:
                                 self._notified_handlers[target_handler].append(original_host)
                                 # FIXME: should this be a callback?
                                 display.vv("NOTIFIED HANDLER %s" % (handler_name,))
-                        else:
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
