@@ -378,7 +378,7 @@ Here's an example handlers section::
         - name: restart apache
           service: name=apache state=restarted
 
-As of Ansible 2.1, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
+As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
         - name: restart memcached
