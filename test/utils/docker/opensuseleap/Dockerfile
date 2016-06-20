@@ -38,6 +38,7 @@ RUN zypper --non-interactive install --auto-agree-with-licenses \
     python-mock \
     python-nose \
     python-paramiko \
+    python-passlib \
     python-pip \
     python-setuptools \
     python-virtualenv
