@@ -319,7 +319,8 @@ def create_maintenance(auth_headers, url, statuspage, host_ids,
 
         if data["status"]["error"] == "yes":
             return 1, None, data["status"]["message"]
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         return 1, None, str(e)
     return 0, None, None
 
@@ -337,7 +338,8 @@ def delete_maintenance(auth_headers, url, statuspage, maintenance_id):
         data = json.loads(response.read())
         if data["status"]["error"] == "yes":
             return 1, None, "Invalid maintenance_id"
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         return 1, None, str(e)
     return 0, None, None
 
