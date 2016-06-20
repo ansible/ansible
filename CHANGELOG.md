@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 ###Major Changes:
 
+* Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 
