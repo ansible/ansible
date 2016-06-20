@@ -156,7 +156,7 @@ class AnsibleDockerClient(Client):
                                                                                            MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode  
+        self.check_mode = self.module.check_mode   
         self._connect_params = self._get_connect_params()
 
         try:
