@@ -107,7 +107,13 @@ def get_eni_info(interface):
                       'groups': dict((group.id, group.name) for group in interface.groups),
                       'private_ip_addresses': private_addresses
                       }
-    
+
+    if hasattr(interface, 'publicDnsName'):
+        interface_info['association'] = {'public_ip_address': interface.publicIp,
+                                         'public_dns_name': interface.publicDnsName,
+                                         'ip_owner_id': interface.ipOwnerId
+                                         }
+
     if interface.attachment is not None:
         interface_info['attachment'] = {'attachment_id': interface.attachment.id,
                                         'instance_id': interface.attachment.instance_id,
