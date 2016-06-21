@@ -484,13 +484,13 @@ class ContainerManager(DockerBaseClass):
         if self.files:
             self.options[u'--file'] = self.files
 
+        if not HAS_COMPOSE:
+            self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
+
         if LooseVersion(compose_version) < LooseVersion(MINIMUM_COMPOSE_VERSION):
             self.client.fail("Found docker-compose version %s. Minimum required version is %s. "
                              "Upgrade docker-compose to a min version of %s." %
                              (compose_version, MINIMUM_COMPOSE_VERSION, MINIMUM_COMPOSE_VERSION))
-
-        if not HAS_COMPOSE:
-            self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" % HAS_COMPOSE_EXC)
 
         self.log("options: ")
         self.log(self.options, pretty_print=True)
