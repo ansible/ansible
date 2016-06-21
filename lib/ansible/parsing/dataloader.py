@@ -287,25 +287,30 @@ class DataLoader():
                 candidate = source
         else:
             search = []
-            paths.append(self.get_basedir())
             for path in paths:
                 upath = unfrackpath(path)
                 mydir = os.path.dirname(upath)
-
-                # don't add dirname if user already is using it in source
-                if not source.startswith(dirname):
-                    search.append(os.path.join(upath, dirname, source))
 
                 # if path is in role and 'tasks' not there already, add it into the search
                 if upath.endswith('tasks') and os.path.exists(to_bytes(os.path.join(upath,'main.yml'), errors='strict')) \
                     or os.path.exists(to_bytes(os.path.join(upath,'tasks/main.yml'), errors='strict')) \
                     or os.path.exists(to_bytes(os.path.join(os.path.dirname(upath),'tasks/main.yml'), errors='strict')):
-                    if not path.endswith('tasks'):
+                    if mydir.endswith('tasks'):
+                        search.append(os.path.join(os.path.dirname(mydir), dirname, source))
+                        search.append(os.path.join(mydir, source))
+                    else:
+                        search.append(os.path.join(upath, dirname, source))
                         search.append(os.path.join(upath, 'tasks', source))
+                elif dirname not in source.split('/'):
+                    # don't add dirname if user already is using it in source
+                    search.append(os.path.join(upath, dirname, source))
+                    search.append(os.path.join(upath, source))
 
-                # append relative path
-                search.append(os.path.join(upath, source))
+            # always append basedir as last resort
+            search.append(os.path.join(self.get_basedir(), dirname, source))
+            search.append(os.path.join(self.get_basedir(), source))
 
+            display.debug('search_path:\n\t' + '\n\t'.join(search))
             for candidate in search:
                 display.vvvvv('looking for "%s" at "%s"' % (source, candidate))
                 if os.path.exists(to_bytes(candidate, errors='strict')):
