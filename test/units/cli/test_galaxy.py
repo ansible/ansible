@@ -55,8 +55,8 @@ class TestGalaxy(unittest.TestCase):
         role_info = {'name': 'some_role_name',
                      'galaxy_info': galaxy_info}
         display_result = gc._display_role_info(role_info)
-        if display_result.find('\t\tgalaxy_tags:') > -1:
-            self.fail('Expected galaxy_tags to be indented twice')
+        if display_result.find('\n\tgalaxy_info:') == -1:
+            self.fail('Expected galaxy_info to be indented once')
 
     @patch.object(GalaxyToken, "__init__", return_value=None)  # mocks file being opened/created
     def test_parse(self, mocked_token):
@@ -68,19 +68,19 @@ class TestGalaxy(unittest.TestCase):
                 if arg in gc.VALID_ACTIONS:
                     first_arg = arg  # used for testing after a parser is created
                     break  # stop after a valid action is identified
-        if first_arg == False:  # checking right error is raised
-            with patch('sys.argv', ["-c"]):
-                self.assertRaises(AnsibleOptionsError, gc.parse)
-        else:
-            with patch('sys.argv', ["-c"]):
-                created_parser = gc.parse()
-            self.assertTrue(created_parser)
-            self.assertTrue(isinstance(gc.parser, ansible.cli.SortedOptParser))
-            self.assertTrue(isinstance(gc.galaxy, ansible.galaxy.Galaxy))
-            self.assertTrue(gc.action)
-            self.assertTrue(gc.options.roles_path == ['/etc/ansible/roles'])
-            self.assertTrue(gc.action == first_arg)
-            self.assertNotIn(first_arg, arguments)
+            if first_arg == False:  # checking right error is raised
+                with patch('sys.argv', ["-c"]):
+                    self.assertRaises(AnsibleOptionsError, gc.parse)
+            else:
+                with patch('sys.argv', ["-c"]):
+                    created_parser = gc.parse()
+                self.assertTrue(created_parser)
+                self.assertTrue(isinstance(gc.parser, ansible.cli.SortedOptParser))
+                self.assertTrue(isinstance(gc.galaxy, ansible.galaxy.Galaxy))
+                self.assertTrue(gc.action)
+                self.assertTrue(gc.options.roles_path == ['/etc/ansible/roles'])
+                self.assertTrue(gc.action == first_arg)
+                self.assertNotIn(first_arg, arguments)
 
     @patch.object(GalaxyToken, "__init__", return_value=None)  # mocks file being opened/created
     def test_run(self, mocked_token):
