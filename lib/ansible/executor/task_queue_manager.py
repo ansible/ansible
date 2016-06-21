@@ -149,9 +149,13 @@ class TaskQueueManager:
             if handler not in self._notified_handlers:
                 self._notified_handlers[handler] = []
             if handler.listen:
-                if handler.listen not in self._listening_handlers:
-                    self._listening_handlers[handler.listen] = []
-                self._listening_handlers[handler.listen].append(handler.get_name())
+                listeners = handler.listen
+                if not isinstance(listeners, list):
+                    listeners = [ listeners ]
+                for listener in listeners:
+                    if listener not in self._listening_handlers:
+                        self._listening_handlers[listener] = []
+                    self._listening_handlers[listener].append(handler.get_name())
 
     def load_callbacks(self):
         '''
