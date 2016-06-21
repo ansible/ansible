@@ -819,6 +819,8 @@ def main():
             if local_mods:
                 module.exit_json(changed=True, before=before, after=remote_head,
                     msg="Local modifications exist")
+            elif version == 'HEAD':
+                repo_updated = False
             elif is_remote_tag(git_path, module, dest, repo, version):
                 # if the remote is a tag and we have the tag locally, exit early
                 if version in get_tags(git_path, module, dest):
