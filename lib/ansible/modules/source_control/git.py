@@ -812,6 +812,7 @@ def main():
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
+
         # exit if already at desired sha version
         set_remote_url(git_path, module, repo, dest, remote)
         remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
@@ -820,6 +821,8 @@ def main():
                 module.exit_json(changed=True, before=before, after=remote_head,
                     msg="Local modifications exist")
             elif version == 'HEAD':
+                # If the remote and local match and we're using the default of
+                # HEAD (It's not a real tag) then exit early
                 repo_updated = False
             elif is_remote_tag(git_path, module, dest, repo, version):
                 # if the remote is a tag and we have the tag locally, exit early
@@ -829,6 +832,7 @@ def main():
                 # if the remote is a branch and we have the branch locally, exit early
                 if version in get_branches(git_path, module, dest):
                     repo_updated = False
+
         if repo_updated is None:
             if module.check_mode:
                 module.exit_json(changed=True, before=before, after=remote_head)
