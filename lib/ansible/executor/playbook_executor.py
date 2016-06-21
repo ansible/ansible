@@ -129,6 +129,9 @@ class PlaybookExecutor:
                     else:
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
+                        previously_failed = len(self._tqm._failed_hosts)
+                        previously_unreachable = len(self._tqm._unreachable_hosts)
+
                         break_play = False
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
@@ -151,7 +154,8 @@ class PlaybookExecutor:
                             # failure percentage allowed, or if any errors are fatal. If either of those
                             # conditions are met, we break out, otherwise we only break out if the entire
                             # batch failed
-                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
+                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
+                                                 (previously_failed + previously_unreachable)
                             if new_play.max_fail_percentage is not None and \
                                int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
                                 break_play = True
