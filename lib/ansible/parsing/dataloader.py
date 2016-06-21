@@ -283,8 +283,9 @@ class DataLoader():
         result = None
         if source.startswith('~') or source.startswith(os.path.sep):
             # path is absolute, no relative needed, check existence and return source
-            if os.path.exists(to_bytes(unfrackpath(source), errors='strict')):
-                candidate = source
+            test_path = to_bytes(unfrackpath(source),errors='strict')
+            if os.path.exists(test_path):
+                result = test_path
         else:
             search = []
             for path in paths:

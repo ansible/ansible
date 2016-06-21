@@ -827,12 +827,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _find_needle(self, dirname, needle):
         ''' find a needle in haystack of paths, optionally using 'dirname' as a subdir '''
 
-        info = {}
         path_stack = []
 
+        dep_chain =  self._task._block.get_dep_chain()
         # inside role: add the dependency chain
-        if self._task._block._dep_chain:
-            path_stack.extend(reversed([x._role_path for x in self._task._block.get_dep_chain()]))
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain]))
+
 
         task_dir = os.path.dirname(self._task.get_path())
         # include from diff directory: add it to file path
@@ -842,8 +843,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
 
         if result is None:
-            info['failed'] = True
-            info['msg'] = "Unable to find '%s' in expected paths." % needle
+            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
 
-        return result, info
+        return result
 

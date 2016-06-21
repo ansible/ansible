@@ -22,7 +22,8 @@ import os
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
-
+from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_str
 
 class ActionModule(ActionBase):
 
@@ -66,10 +67,13 @@ class ActionModule(ActionBase):
         source = os.path.expanduser(source)
 
         if copy:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+            try:
+                source = self._find_needle('files', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_str(e)
+                self._remove_tmp_path(tmp)
+                return result
 
         remote_checksum = self._remote_checksum(dest, all_vars=task_vars, follow=True)
         if remote_checksum == '4':
