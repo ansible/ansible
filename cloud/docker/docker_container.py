@@ -1029,7 +1029,7 @@ class TaskParameters(DockerBaseClass):
             if len(pieces) >= 2:
                 limits['name'] = pieces[0]
                 limits['soft'] = int(pieces[1])
-                limits['hard'] = int(pieces[2])
+                limits['hard'] = int(pieces[1])
             if len(pieces) == 3:
                 limits['hard'] = int(pieces[2])
             try:
