@@ -1017,7 +1017,7 @@ class TaskParameters(DockerBaseClass):
 
     def _parse_ulimits(self):
         '''
-        Turn ulimits into a dictionary
+        Turn ulimits into an array of Ulimit objects
         '''
         if self.ulimits is None:
             return None
@@ -1029,6 +1029,7 @@ class TaskParameters(DockerBaseClass):
             if len(pieces) >= 2:
                 limits['name'] = pieces[0]
                 limits['soft'] = int(pieces[1])
+                limits['hard'] = int(pieces[2])
             if len(pieces) == 3:
                 limits['hard'] = int(pieces[2])
             try:
@@ -1147,7 +1148,6 @@ class Container(DockerBaseClass):
         restart_policy = host_config.get('RestartPolicy', dict())
         config = self.container['Config']
         network = self.container['NetworkSettings']
-        host_config['Ulimits'] = self._get_expected_ulimits(host_config['Ulimits'])
 
         # The previous version of the docker module ignored the detach state by
         # assuming if the container was running, it must have been detached.
@@ -1530,20 +1530,13 @@ class Container(DockerBaseClass):
         self.log('_get_expected_ulimits')
         if config_ulimits is None:
             return None
-
         results = []
-        if isinstance(config_ulimits[0], Ulimit):
-            for limit in config_ulimits:
-                if limit.hard:
-                    results.append("%s:%s" % (limit.name, limit.soft, limit.hard))
-                else:
-                    results.append("%s:%s" % (limit.name, limit.soft))
-        else:
-            for limit in config_ulimits:
-                if limit.get('hard'):
-                    results.append("%s:%s" % (limit.get('name'), limit.get('hard')))
-                else:
-                    results.append("%s:%s" % (limit.get('name'), limit.get('soft')))
+        for limit in config_ulimits:
+            results.append(dict(
+                Name=limit.name,
+                Soft=limit.soft,
+                Hard=limit.hard
+            ))
         return results
 
     def _get_expected_cmd(self):
