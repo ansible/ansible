@@ -38,7 +38,11 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             try:
-                val = credstash.getSecret(term, **kwargs)
+                version = kwargs.pop('version', '')
+                region = kwargs.pop('region', None)
+                table = kwargs.pop('table', 'credential-store')
+                val = credstash.getSecret(term, version, region, table,
+                                          context=kwargs)
             except credstash.ItemNotFound:
                 raise AnsibleError('Key {0} not found'.format(term))
             except Exception as e:
