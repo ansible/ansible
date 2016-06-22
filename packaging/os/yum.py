@@ -600,7 +600,6 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 module.fail_json(**res)
 
             pkg_name = local_name(module, spec)
-            pkg_nevra = local_nvra(module, spec)
 
             # look for them in the rpmdb
             if is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos):
