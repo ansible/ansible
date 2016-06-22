@@ -551,7 +551,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     else:
         m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
 
-def remove(m, pkgspec, cache, purge=False,
+def remove(m, pkgspec, cache, purge=False, force=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -565,6 +565,11 @@ def remove(m, pkgspec, cache, purge=False,
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
+        if force:
+            force_yes = '--force-yes'
+        else:
+            force_yes = ''
+
         if purge:
             purge = '--purge'
         else:
@@ -580,7 +585,7 @@ def remove(m, pkgspec, cache, purge=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, autoremove, check_arg, packages)
+        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes ,autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
         if m._diff:
@@ -828,7 +833,7 @@ def main():
             else:
                 module.fail_json(**retvals)
         elif p['state'] == 'absent':
-            remove(module, packages, cache, p['purge'], dpkg_options, autoremove)
+            remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
