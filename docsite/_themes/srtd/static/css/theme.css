@@ -4737,10 +4737,6 @@ span[id*='MathJax-Span'] {
     max-width: 100%;
 }
 
-td {
-    word-break: break-word;
-}
-
 th, td {
     min-width: 100px;
 }
