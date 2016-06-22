@@ -29,6 +29,8 @@ from ansible.cli import CLI
 from mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleOptionsError
 import ansible
+import os
+import shutil
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -102,4 +104,63 @@ class TestGalaxy(unittest.TestCase):
             galaxy_parser = gc.parse()
         with patch.object(CLI, "run", return_value=None) as mock_obj:  # to eliminate config or default file used message
             self.assertRaises(AnsibleError, gc.run)
+
+    def test_execute_init(self):
+        ''' verifies that execute_init created a skeleton framework of a role that complies with the galaxy metadata format '''
+        # testing that an error is raised if no role name is given
+        gc = GalaxyCLI(args=self.default_args)
+        self.assertRaises(AnsibleError, gc.execute_init)
+
+        # following tests use the role name 'delete_me'
+        # testing for cases when the directory doesn't already exist
+        gc = GalaxyCLI(args=["init"])
+        if os.path.exists('./delete_me'):
+            shutil.rmtree('./delete_me')
+        with patch('sys.argv', ["-c", "-v", "delete_me"]):
+            galaxy_parser = gc.parse()
+            with patch.object(CLI, "run", return_value=None): # to eliminate config or default file used message
+                with patch.object(ansible.utils.display.Display, "display"):  # eliminates display message for user
+                    gc.run()
+        
+        # verifying that the expected framework was created
+        self.assertTrue(os.path.exists('./delete_me'))
+        self.assertTrue(os.path.isfile('./delete_me/README.md'))
+        self.assertTrue(os.path.isdir('./delete_me/files'))
+        self.assertTrue(os.path.isdir('./delete_me/templates'))
+        self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
+        self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+        
+        # testing for case when the directory and files are in existence already
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "-v", "delete_me"]):
+            galaxy_parser = gc.parse()
+            with patch.object(CLI, "run", return_value=None):
+                self.assertRaises(AnsibleError, gc.run)
+        
+        # testing for case when the directory and files are in existence already while using the option: --force
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "-v", "delete_me", "--force"]):
+            galaxy_parser = gc.parse()
+            with patch.object(CLI, "run", return_value=None):  # to eliminate config or default file used message
+                with patch.object(ansible.utils.display.Display, "display"):  # eliminates display message for user
+                    gc.run()
+
+        # verifying that the files expected were created
+        self.assertTrue(os.path.exists('./delete_me'))
+        self.assertTrue(os.path.isfile('./delete_me/README.md'))
+        self.assertTrue(os.path.isdir('./delete_me/files'))
+        self.assertTrue(os.path.isdir('./delete_me/templates'))
+        self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
+        self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
+        self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+
+        # removing the files we created
+        shutil.rmtree('./delete_me') 
 
