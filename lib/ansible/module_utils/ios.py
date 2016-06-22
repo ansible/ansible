@@ -17,18 +17,45 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
+import urlparse
 import re
 
-from ansible.module_utils.network import NetCli, NetworkError, get_module
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import Command
+from ansible.module_utils.basic import json, get_exception
+from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
+from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+add_argument('use_ssl', dict(default=True, type='bool'))
+add_argument('validate_certs', dict(default=True, type='bool'))
 
-ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
+class ModuleStub(object):
+    def __init__(self, argument_spec, fail_json):
+        self.params = dict()
+        for key, value in argument_spec.items():
+            self.params[key] = value.get('default')
+        self.fail_json = fail_json
+
+
+def get_config(module, include_defaults=False):
+    config = module.params['running_config']
+    if not config and not include_defaults:
+        config = module.config.get_config()
+    else:
+        config = module.cli('show running-config all')[0]
+    return NetworkConfig(indent=1, contents=config)
+
+def argument_spec():
+    return dict(
+        running_config=dict(aliases=['config']),
+        save_config=dict(default=False, aliases=['save']),
+        force=dict(type='bool', default=False)
+    )
+ios_argument_spec = argument_spec()
 
 class Cli(NetCli):
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -48,10 +75,24 @@ class Cli(NetCli):
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
+        self._connected = True
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
-        self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
+        self.run_commands(
+            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        )
+
+    def disconnect(self):
+        self._connected = False
+
+    ### Cli methods ###
+
+    def run_commands(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.execute([str(c) for c in commands])
+
+    ### Config methods ###
 
     def get_config(self, params, **kwargs):
         cmd = 'show running-config'
@@ -60,13 +101,7 @@ class Cli(NetCli):
         return self.run_commands(cmd)[0]
 
     def load_config(self, commands, commit=False, **kwargs):
-        commands = ['configure']
-        commands.extend(to_list(commands))
-        # Show config diff?
-
-        responses = self.run_commands(commands)
-        if commit:
-            self.commit_config()
+        raise NotImplementedError
 
     def replace_config(self, commands, **kwargs):
         raise NotImplementedError
@@ -76,4 +111,142 @@ class Cli(NetCli):
 
     def abort_config(self, **kwargs):
         raise NotImplementedError
+
+    def save_config(self):
+        self.execte(['copy running-config startup-config'])
+
 Cli = register_transport('cli', default=True)(Cli)
+
+
+class Restconf(object):
+
+    DEFAULT_HEADERS = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    def __init__(self):
+        self.url = None
+
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
+
+        self.token = None
+        self.link = None
+
+        self._connected = False
+        self.default_output = 'text'
+
+    def _error(self, msg):
+        raise NetworkError(msg, url=self.url)
+
+    def connect(self, params, **kwargs):
+        host = params['host']
+        port = params['port'] or 55443
+
+        self.url_args.params['url_username'] = params['username']
+        self.url_args.params['url_password'] = params['password']
+        self.url_args.params['validate_certs'] = params['validate_certs']
+
+        self.url = 'https://%s:%s/api/v1/' % (host, port)
+
+        response = self.post('auth/token-services')
+
+        self.token = response['token-id']
+        self.link = response['link']
+        self._connected = True
+
+    def disconnect(self):
+        self.delete(self.link)
+        self._connected = False
+
+    def authorize(self):
+        pass
+
+
+    ### REST methods ###
+
+    def request(self, method, path, data=None, headers=None):
+
+        headers = headers or self.DEFAULT_HEADERS
+
+        if self.token:
+            headers['X-Auth-Token'] = self.token
+
+        if path.startswith('/'):
+            path = path[1:]
+
+        url = urlparse.urljoin(self.url, path)
+
+        if data:
+            data = json.dumps(data)
+
+        response, headers = fetch_url(self.url_args, url, data=data,
+                headers=headers, method=method)
+
+        if not 200 <= headers['status'] <= 299:
+            raise NetworkError(response=response, **headers)
+
+        if int(headers['content-length']) > 0:
+            if headers['content-type'].startswith('application/json'):
+                response = json.load(response)
+            elif headers['content-type'].startswith('text/plain'):
+                response = str(response.read())
+
+        return response
+
+    def get(self, path, data=None, headers=None):
+        return self.request('GET', path, data, headers)
+
+    def put(self, path, data=None, headers=None):
+        return self.request('PUT', path, data, headers)
+
+    def post(self, path, data=None, headers=None):
+        return self.request('POST', path, data, headers)
+
+    def delete(self, path, data=None, headers=None):
+        return self.request('DELETE', path, data, headers)
+
+
+    ### implementation of Cli ###
+
+    def run_commands(self, commands):
+        responses = list()
+        for cmd in to_list(commands):
+            if str(cmd).startswith('show '):
+                cmd = str(cmd)[4:]
+            responses.append(self.execute(str(cmd)))
+        return responses
+
+    def execute(self, command):
+        data = dict(show=command)
+        response = self.put('global/cli', data=data)
+        return response['results']
+
+
+    ### implementation of Config ###
+
+    def configure(self, commands):
+        config = list()
+        for c in commands:
+            config.append(str(c))
+        data = dict(config='\n'.join(config))
+        self.put('global/cli', data=data)
+
+    def load_config(self, commands, **kwargs):
+        raise NotImplementedError
+
+    def get_config(self, **kwargs):
+        hdrs = {'Content-type': 'text/plain', 'Accept': 'text/plain'}
+        return self.get('global/running-config', headers=hdrs)
+
+    def commit_config(self, **kwargs):
+        raise NotImplementedError
+
+    def abort_config(self, **kwargs):
+        raise NotImplementedError
+
+    def save_config(self):
+        self.put('/api/v1/global/save-config')
+
+Restconf = register_transport('restconf')(Restconf)
+
