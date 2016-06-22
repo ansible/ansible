@@ -34,6 +34,7 @@ RUN dnf clean all && \
     python-mock \
     python-nose \
     python-paramiko \
+    python-passlib \
     python-pip \
     python-setuptools \
     python-virtualenv \
