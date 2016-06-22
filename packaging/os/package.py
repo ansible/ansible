@@ -57,5 +57,5 @@ EXAMPLES = '''
 
 # This uses a variable as this changes per distribution.
 - name: remove the apache package
-  package : name={{apache}} state=absent
+  package: name={{apache}} state=absent
 '''
