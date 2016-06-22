@@ -171,7 +171,14 @@ def import_key(module, keyring, keyserver, key_id):
         cmd = "apt-key --keyring %s adv --keyserver %s --recv %s" % (keyring, keyserver, key_id)
     else:
         cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    for retry in xrange(5):
+        (rc, out, err) = module.run_command(cmd)
+        if rc == 0:
+            break
+    else:
+        # Out of retries
+        module.fail_json(cmd=cmd, msg="error fetching key from keyserver: %s" % keyserver,
+                         rc=rc, stdout=out, stderr=err)
     return True
 
 def add_key(module, keyfile, keyring, data=None):
