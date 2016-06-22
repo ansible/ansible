@@ -28,10 +28,10 @@ class Group:
 
         self.depth = 0
         self.name = name
-        self.hosts = []
+        self.hosts = set()
         self.vars = {}
-        self.child_groups = []
-        self.parent_groups = []
+        self.child_groups = set()
+        self.parent_groups = set()
         self._hosts_cache = None
         self.priority = 1
 
@@ -49,9 +49,9 @@ class Group:
         return self.deserialize(data)
 
     def serialize(self):
-        parent_groups = []
+        parent_groups = set()
         for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
+            parent_groups.add(parent.serialize())
 
         result = dict(
             name=self.name,
@@ -68,11 +68,11 @@ class Group:
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
 
-        parent_groups = data.get('parent_groups', [])
+        parent_groups = data.get('parent_groups', set())
         for parent_data in parent_groups:
             g = Group()
             g.deserialize(parent_data)
-            self.parent_groups.append(g)
+            self.parent_groups.add(g)
 
     def get_name(self):
         return self.name
@@ -84,7 +84,7 @@ class Group:
 
         # don't add if it's already there
         if not group in self.child_groups:
-            self.child_groups.append(group)
+            self.child_groups.add(group)
 
             # update the depth of the child
             group.depth = max([self.depth+1, group.depth])
@@ -95,7 +95,7 @@ class Group:
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
             if not self.name in [g.name for g in group.parent_groups]:
-                group.parent_groups.append(self)
+                group.parent_groups.add(self)
 
             self.clear_hosts_cache()
 
@@ -110,7 +110,7 @@ class Group:
 
     def add_host(self, host):
 
-        self.hosts.append(host)
+        self.hosts.add(host)
         host.add_group(self)
         self.clear_hosts_cache()
 
@@ -133,7 +133,7 @@ class Group:
 
     def _get_hosts(self):
 
-        hosts = []
+        hosts = set()
         seen = {}
         for kid in self.child_groups:
             kid_hosts = kid.get_hosts()
@@ -142,13 +142,13 @@ class Group:
                     seen[kk] = 1
                     if self.name == 'all' and kk.implicit:
                         continue
-                    hosts.append(kk)
+                    hosts.add(kk)
         for mine in self.hosts:
             if mine not in seen:
                 seen[mine] = 1
                 if self.name == 'all' and mine.implicit:
                     continue
-                hosts.append(mine)
+                hosts.add(mine)
         return hosts
 
     def get_vars(self):
