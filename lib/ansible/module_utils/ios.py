@@ -17,13 +17,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import urlparse
 import re
 
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import Command, ModuleStub, NetCli, NetworkError
 from ansible.module_utils.network import add_argument, get_module, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
+<<<<<<< 4881b81e08c76c23aba9c2ca1ed4ac0d47a98340
 from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
+=======
+from ansible.module_utils.urls import fetch_url, url_argument_spec
+>>>>>>> add new features to ios shared module
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
@@ -37,12 +42,113 @@ def argument_spec():
 ios_argument_spec = argument_spec()
 
 def get_config(module, include_defaults=False):
-    config = module.params['running_config']
-    if not config and not include_defaults:
-        config = module.config.get_config()
+    contents = module.params['running_config']
+    if not contents:
+        if not include_defaults:
+            contents = module.config.get_config()
+        else:
+            contents = module.cli('show running-config all')[0]
+        module.params['running_config'] = contents
+    return NetworkConfig(indent=1, contents=contents)
+
+def load_candidate(module, candidate, nodiff=False):
+    if nodiff:
+        updates = str(candidate)
     else:
-        config = module.cli('show running-config all')[0]
-    return NetworkConfig(indent=1, contents=config)
+        config = get_config(module)
+        updates = candidate.difference(config)
+
+    result = dict(changed=False, saved=False)
+
+    if updates:
+        if not module.check_mode:
+            module.config(updates)
+        result['changed'] = True
+
+    if not module.check_mode and module.params['save_config'] is True:
+        module.config.save_config()
+        result['saved'] = True
+
+    result['updates'] = updates
+    return result
+
+def load_config(module, commands, nodiff=False):
+    contents = '\n'.join(to_list(commands))
+    candidate = NetworkConfig(contents=contents, indent=1)
+    return load_candidate(module, candidate, nodiff)
+
+
+class Cli(NetCli):
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
+
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.shell.send('terminal length 0')
+        self._connected = True
+
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.run_commands(
+            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        )
+
+    def disconnect(self):
+        self._connected = False
+
+    ### Cli methods ###
+
+    def run_commands(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.execute([str(c) for c in commands])
+
+    ### Config methods ###
+
+    def configure(self, commands, **kwargs):
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        cmds.append('end')
+        responses = self.execute(cmds)
+        responses.pop(0)
+        return responses
+
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if include_defaults:
+            cmd += ' all'
+        return self.run_commands(cmd)[0]
+
+    def load_config(self, commands, commit=False, **kwargs):
+        raise NotImplementedError
+
+    def replace_config(self, commands, **kwargs):
+        raise NotImplementedError
+
+    def commit_config(self, **kwargs):
+        raise NotImplementedError
+
+    def abort_config(self, **kwargs):
+        raise NotImplementedError
+
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
+
+Cli = register_transport('cli', default=True)(Cli)
 
 
 class Restconf(object):
@@ -88,6 +194,7 @@ class Restconf(object):
 
     def authorize(self):
         pass
+
 
     ### REST methods ###
 
@@ -173,64 +280,6 @@ class Restconf(object):
 
     def save_config(self):
         self.put('/api/v1/global/save-config')
+
 Restconf = register_transport('restconf')(Restconf)
 
-
-class Cli(NetCli):
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
-
-    ### implementation of network.Cli ###
-
-    def configure(self, commands, **kwargs):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        cmds.append('end')
-
-        responses = self.execute(cmds)
-        return responses[1:-1]
-
-    def get_config(self, params, **kwargs):
-        cmd = 'show running-config'
-        if params.get('include_defaults'):
-            cmd += ' all'
-        return self.execute(cmd)[0]
-
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
-
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-    def run_commands(self, commands):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        return responses
-Cli = register_transport('cli', default=True)(Cli)
