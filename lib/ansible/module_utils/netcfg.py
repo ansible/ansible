@@ -317,7 +317,9 @@ class NetworkConfig(object):
 
         for item in self.items:
             for regexp in patterns:
-                string = ignore_whitespace is True and item.text or item.raw
+                string = item.raw
+                if ignore_whitespace is True:
+                    string = item.text
                 if regexp.search(item.text):
                     if item.text != replace:
                         if parents == [p.text for p in item.parents]:
