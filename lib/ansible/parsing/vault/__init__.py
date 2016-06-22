@@ -110,7 +110,7 @@ class VaultLib:
         :returns: True if it is recognized.  Otherwise, False.
         """
 
-        if isinstance(data, file):
+        if hasattr(data, 'read'):
             current_position = data.tell()
             header_part = data.read(len(b_HEADER))
             data.seek(current_position)
