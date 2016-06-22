@@ -63,7 +63,7 @@ If ($state -eq "present") {
         $InstallParams.add("IncludeManagementTools",$includemanagementtools)
     }
     
-    if ($source -ne $null)
+    if ($source)
     {
         $InstallParams.add("Source",$source)
     }
@@ -77,7 +77,7 @@ If ($state -eq "present") {
         ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
             if ($IncludeManagementTools)
             {
-                $Params.Remove("IncludeManagementTools")
+                $InstallParams.Remove("IncludeManagementTools")
             }
             $featureresult = Add-WindowsFeature @InstallParams
         }
