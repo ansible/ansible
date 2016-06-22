@@ -119,7 +119,7 @@ def main():
            name = dict(required=True, aliases=['pkg'], type='str'),
            question = dict(required=False, aliases=['setting', 'selection'], type='str'),
            vtype = dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title', 'text', 'seen']),
-           value= dict(required=False, type='str'),
+           value = dict(required=False, type='str', aliases=['answer']),
            unseen = dict(required=False, type='bool'),
         ),
         required_together = ( ['question','vtype', 'value'],),
