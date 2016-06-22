@@ -144,7 +144,7 @@ class GalaxyCLI(CLI):
 
         text = [u"", u"Role: %s" % to_unicode(role_info['name'])]
         text.append(u"\tdescription: %s" % role_info.get('description', ''))
-
+        
         for k in sorted(role_info.keys()):
 
             if k in self.SKIP_INFO_KEYS:
@@ -158,7 +158,7 @@ class GalaxyCLI(CLI):
                     text.append(u"\t\t%s: %s" % (key, role_info[k][key]))
             else:
                 text.append(u"\t%s: %s" % (k, role_info[k]))
-
+        
         return u'\n'.join(text)
 
 ############################
@@ -174,7 +174,7 @@ class GalaxyCLI(CLI):
         init_path  = self.get_opt('init_path', './')
         force      = self.get_opt('force', False)
         offline    = self.get_opt('offline', False)
-
+        
         role_name = self.args.pop(0).strip() if self.args else None
         if not role_name:
             raise AnsibleOptionsError("- no role name specified for init")
@@ -305,9 +305,9 @@ class GalaxyCLI(CLI):
                 role_info.update(role_spec)
 
             data = self._display_role_info(role_info)
-            ### FIXME: This is broken in both 1.9 and 2.0 as
-            # _display_role_info() always returns something
-            if not data:
+            
+            role_location = os.path.join(roles_path[0], role)
+            if (os.path.exists(role_location) == False):
                 data = u"\n- the role %s was not found" % role
 
         self.pager(data)
