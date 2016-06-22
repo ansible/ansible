@@ -86,7 +86,7 @@ class AnsibleDockerMachine(Machine):
                 required_if=required_if)
 
         if not HAS_DOCKER_MACHINE_PY:
-            self.fail("Failed to import docker-py - {}. Try `pip install docker-machine-py`"
+            self.fail("Failed to import docker-machine-py - {}. Try `pip install docker-machine-py`"
                       .format(HAS_DOCKER_MACHINE_ERROR))
 
         self.check_mode = self.module.check_mode
