@@ -93,7 +93,7 @@ class ShellBase(object):
 
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         if recursive:
-            cmd = ['find', path, '-exec'] + cmd + ["'{}'", "';'"]
+            cmd = ['find', path, '-exec'] + cmd + ["'{}'", "'+'"]
         else:
             cmd.append(path)
 
