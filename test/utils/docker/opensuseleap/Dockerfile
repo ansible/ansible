@@ -26,6 +26,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     python-MySQL-python \
     python-nose \
     python-paramiko \
+    python-passlib \
     python-pip \
     python-PyYAML \
     python-setuptools \
