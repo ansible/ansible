@@ -219,6 +219,25 @@ def ensure_yum_utils(module):
 
     return repoquerybin
 
+def fetch_rpm_from_url(spec, module=None):
+    # download package so that we can query it
+    tempdir = tempfile.mkdtemp()
+    package = os.path.join(tempdir, str(spec.rsplit('/', 1)[1]))
+    try:
+        rsp, info = fetch_url(module, spec)
+        f = open(package, 'w')
+        data = rsp.read(BUFSIZE)
+        while data:
+            f.write(data)
+            data = rsp.read(BUFSIZE)
+        f.close()
+    except Exception:
+        e = get_exception()
+        shutil.rmtree(tempdir)
+        if module:
+            module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
+    return package
+
 def po_to_nevra(po):
 
     if hasattr(po, 'ui_nevra'):
@@ -383,6 +402,13 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
         en_repos = []
     if dis_repos is None:
         dis_repos = []
+
+    if req_spec.endswith('.rpm') and '://' not in req_spec:
+        return req_spec
+
+    elif '://' in req_spec:
+        local_path = fetch_rpm_from_url(req_spec, module=module)
+        return local_path
 
     if not repoq:
 
@@ -574,6 +600,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 module.fail_json(**res)
 
             pkg_name = local_name(module, spec)
+            pkg_nevra = local_nvra(module, spec)
+
             # look for them in the rpmdb
             if is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                 # if they are there, skip it
@@ -583,20 +611,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # URL
         elif '://' in spec:
             # download package so that we can check if it's already installed
-            package = os.path.join(tempdir, str(spec.rsplit('/', 1)[1]))
-            try:
-                rsp, info = fetch_url(module, spec)
-                f = open(package, 'w')
-                data = rsp.read(BUFSIZE)
-                while data:
-                    f.write(data)
-                    data = rsp.read(BUFSIZE)
-                f.close()
-            except Exception:
-                e = get_exception()
-                shutil.rmtree(tempdir)
-                module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
-
+            package = fetch_rpm_from_url(spec, module=module)
             pkg_name = local_name(module, package)
             if is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                 # if it's there, skip it
