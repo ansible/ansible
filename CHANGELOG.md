@@ -13,6 +13,7 @@ Ansible Changes By Release
 - aws
   * ec2_customer_gateway
   * ec2_vpc_nacl_facts
+  * ec2_vpc_vgw
 - cloudstack
   * cs_router
   * cs_snapshot_policy
