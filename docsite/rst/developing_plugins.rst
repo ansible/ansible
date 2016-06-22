@@ -112,6 +112,9 @@ to /usr/share/ansible/plugins, in a subfolder for each plugin type::
     * connection
     * filter
     * strategy
+    * cache
+    * test
+    * shell
 
 To change this path, edit the ansible configuration file.
 
