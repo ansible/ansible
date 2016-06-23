@@ -25,7 +25,9 @@ short_description: "Manages F5 BIG-IP LTM virtual servers"
 description:
     - "Manages F5 BIG-IP LTM virtual servers via iControl SOAP API"
 version_added: "2.1"
-author: Etienne Carriere (@Etienne-Carriere)
+author:
+    - Etienne Carriere (@Etienne-Carriere)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -37,6 +39,12 @@ options:
         description:
             - BIG-IP host
         required: true
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -151,7 +159,7 @@ EXAMPLES = '''
         name: myvirtualserver
         port: 8080
 
-  - name: Delete pool
+  - name: Delete virtual server
     local_action:
         module: bigip_virtual_server
         server: lb.mydomain.net
@@ -423,6 +431,7 @@ def main():
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
@@ -443,7 +452,7 @@ def main():
         module.fail_json(msg="valid ports must be in range 1 - 65535")
   
     try:
-        api = bigip_api(server, user, password, validate_certs)
+        api = bigip_api(server, user, password, validate_certs, port=server_port)
         result = {'changed': False}  # default
 
         if state == 'absent':

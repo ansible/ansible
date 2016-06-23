@@ -25,7 +25,9 @@ short_description: "Manages F5 BIG-IP LTM pool members"
 description:
     - "Manages F5 BIG-IP LTM pool members via iControl SOAP API"
 version_added: "1.4"
-author: "Matt Hite (@mhite)"
+author:
+    - Matt Hite (@mhite)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -39,6 +41,12 @@ options:
         description:
             - BIG-IP host
         required: true
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -343,6 +351,7 @@ def main():
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
@@ -371,7 +380,7 @@ def main():
         module.fail_json(msg="valid ports must be in range 0 - 65535")
 
     try:
-        api = bigip_api(server, user, password, validate_certs)
+        api = bigip_api(server, user, password, validate_certs, port=server_port)
         if not pool_exists(api, pool):
             module.fail_json(msg="pool %s does not exist" % pool)
         result = {'changed': False}  # default

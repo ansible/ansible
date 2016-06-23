@@ -25,7 +25,9 @@ short_description: "Collect facts from F5 BIG-IP devices"
 description:
     - "Collect facts from F5 BIG-IP devices via iControl SOAP API"
 version_added: "1.6"
-author: "Matt Hite (@mhite)" 
+author:
+    - Matt Hite (@mhite)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11.4"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -42,6 +44,12 @@ options:
         default: null
         choices: []
         aliases: []
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -137,8 +145,8 @@ class F5(object):
         api: iControl API instance.
     """
 
-    def __init__(self, host, user, password, session=False, validate_certs=True):
-        self.api = bigip_api(host, user, password, validate_certs)
+    def __init__(self, host, user, password, session=False, validate_certs=True, port=443):
+        self.api = bigip_api(host, user, password, validate_certs, port)
         if session:
             self.start_session()
 
@@ -1593,6 +1601,7 @@ def main():
         module.fail_json(msg="the python suds and bigsuds modules are required")
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     validate_certs = module.params['validate_certs']
@@ -1622,7 +1631,7 @@ def main():
         facts = {}
 
         if len(include) > 0:
-            f5 = F5(server, user, password, session, validate_certs)
+            f5 = F5(server, user, password, session, validate_certs, server_port)
             saved_active_folder = f5.get_active_folder()
             saved_recursive_query_state = f5.get_recursive_query_state()
             if saved_active_folder != "/":
