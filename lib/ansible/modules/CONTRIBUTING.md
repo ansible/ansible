@@ -18,7 +18,7 @@ Please see [this web page](http://docs.ansible.com/community.html) for informati
 If you'd like to file a bug
 ===========================
 
-I'd also read the community page above, but in particular, make sure you copy [this issue template](https://github.com/ansible/ansible-modules-core/blob/devel/ISSUE_TEMPLATE.md) into your ticket description.  We have a friendly neighborhood bot that will remind you if you forget :)  This template helps us organize tickets faster and prevents asking some repeated questions, so it's very helpful to us and we appreciate your help with it.
+I'd also read the community page above, but in particular, make sure you copy [this issue template](https://github.com/ansible/ansible-modules-core/blob/devel/.github/ISSUE_TEMPLATE.md) into your ticket description.  We have a friendly neighborhood bot that will remind you if you forget :)  This template helps us organize tickets faster and prevents asking some repeated questions, so it's very helpful to us and we appreciate your help with it.
 
 Also please make sure you are testing on the latest released version of Ansible or the development branch.
 
