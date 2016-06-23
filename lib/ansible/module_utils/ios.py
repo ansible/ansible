@@ -20,15 +20,11 @@
 import collections
 import re
 
-from ansible.module_utils.network import NetCli, NetworkError, get_module
+from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
 from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import Command
-
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
 
-@register_transport('cli', default=True)
 class Cli(NetCli):
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -45,28 +41,30 @@ class Cli(NetCli):
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
 
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.run_commands(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
+    ### implementation of network.Cli ###
+
+    def configure(self, commands, **kwargs):
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        cmds.append('end')
+
+        responses = self.execute(cmds)
+        return responses[1:-1]
 
     def get_config(self, params, **kwargs):
         cmd = 'show running-config'
         if params.get('include_defaults'):
             cmd += ' all'
-        return self.run_commands(cmd)[0]
+        return self.execute(cmd)[0]
 
     def load_config(self, commands, commit=False, **kwargs):
-        commands = ['configure']
-        commands.extend(to_list(commands))
-        # Show config diff?
-
-        responses = self.run_commands(commands)
-        if commit:
-            self.commit_config()
+        raise NotImplementedError
 
     def replace_config(self, commands, **kwargs):
         raise NotImplementedError
@@ -76,3 +74,9 @@ class Cli(NetCli):
 
     def abort_config(self, **kwargs):
         raise NotImplementedError
+
+    def run_commands(self, commands):
+        cmds = to_list(commands)
+        responses = self.execute(cmds)
+        return responses
+Cli = register_transport('cli', default=True)(Cli)
