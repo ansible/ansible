@@ -18,7 +18,7 @@ DOCKER_MACHINE_COMMON_CLIENT_ARGS = dict(
     tls_client_cert=dict(type='str'),
     tls_client_key=dict(type='str'),
     github_api_token=dict(type='str'),
-    native_ssh=dict(type='str'),
+    native_ssh=dict(type='bool'),
     bugsnag_api_token=dict(type='str')
 )
 
@@ -151,14 +151,14 @@ class MachineManager(object):
         :return None
         """
         if self.machine.exists():
-            if self.machine.runningish():
-                self.machine_stop()
+            # # This might be cleaner but stopping/starting is not reliable
+            # self.stop_if_running()
             self.machine_remove()
 
     def present(self, state):
         """
         Handles state = 'present', which creates a machine if it doesn't already exist or moves if the driver changes
-
+        :param state
         :returns None
         """
         if not self.machine.exists():
@@ -170,10 +170,11 @@ class MachineManager(object):
                 self.fail("You must manually resolve issues with the existing machine %s as it is in an error state : %s" % (self.machine.name, str(exc)))
 
             if self.has_different_configuration():
-                self.results['machine']['state'] = 'Recreated'
-                self.machine_stop()
+                # # This might be cleaner but stopping/starting is not reliable
+                # self.stop_if_running()
                 self.machine_remove()
                 self.machine_create()
+                self.results['machine']['state'] = 'Recreated'
 
         if self.machine.exists():
             if state == 'started' and self.machine.stoppedish():
@@ -186,8 +187,16 @@ class MachineManager(object):
         self.facts = self.machine.inspect()
 
     def has_different_configuration(self):
-        # TODO: implement diff
+        driver_params = self.machine.inspect()['driver']
+        params = self._get_driver_params()
+        for k, v in params.items():
+            if driver_params[k] != params[k]:
+                return True
         return False
+
+    def stop_if_running(self):
+        if self.machine.runningish():
+            self.machine_stop()
 
     def machine_create(self):
         self.results['actions'].append("Created %s machine %s " % (self.driver, self.machine.name))
@@ -201,10 +210,9 @@ class MachineManager(object):
             except Exception as exc:
                 self.fail("Error creating machine %s: %s" % (self.machine.name, str(exc)))
 
-    def get_create_params(self):
+    def _get_driver_params(self):
         params = self.machine.module.params
         c = params.copy()
-        c['driver'] = self.driver
 
         for k in get_common_keys():
             c.pop(k, None)
@@ -214,6 +222,11 @@ class MachineManager(object):
         c.pop('name', None)
         return {k: v for k, v in c.items() if v}
 
+    def get_create_params(self):
+        params = self._get_driver_params()
+        params['driver'] = self.driver
+        return params
+
     def machine_start(self):
         self.results['actions'].append("Started %s machine %s " % (self.driver, self.machine.name))
         self.results['changed'] = True
@@ -221,7 +234,7 @@ class MachineManager(object):
 
         if not self.check_mode:
             try:
-                self.start()
+                self.machine.start()
             except Exception as exc:
                 self.fail("Error starting machine %s: %s" % (self.machine.name, str(exc)))
 
@@ -243,11 +256,7 @@ class MachineManager(object):
 
         if not self.check_mode:
             try:
-                # TODO: At least with digitalocean, stopping machines doesn't not seem to work as expected. Max retries
-                # error and then the machine is in timeout status
-                # self.machine.stop()
-                # Note that for now, not actually stopping the machine here might cause problems with restart option
-                pass
+                self.machine.stop()
             except Exception as exc:
                 self.fail("Error stopping machine %s: %s" % (self.machine.name, str(exc)))
 
