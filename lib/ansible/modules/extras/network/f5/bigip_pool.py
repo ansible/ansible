@@ -25,7 +25,9 @@ short_description: "Manages F5 BIG-IP LTM pools"
 description:
     - "Manages F5 BIG-IP LTM pools via iControl SOAP API"
 version_added: "1.2"
-author: "Matt Hite (@mhite)"
+author:
+    - Matt Hite (@mhite)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -40,6 +42,12 @@ options:
         default: null
         choices: []
         aliases: []
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -95,7 +103,7 @@ options:
                   'least_connection_node_address', 'fastest_node_address',
                   'observed_node_address', 'predictive_node_address',
                   'dynamic_ratio', 'fastest_app_response', 'least_sessions',
-                  'dynamic_ratio_member', 'l3_addr', 'unknown',
+                  'dynamic_ratio_member', 'l3_addr',
                   'weighted_least_connection_member',
                   'weighted_least_connection_node_address',
                   'ratio_session', 'ratio_least_connection_member',
@@ -353,7 +361,7 @@ def main():
                          'fastest_node_address', 'observed_node_address',
                          'predictive_node_address', 'dynamic_ratio',
                          'fastest_app_response', 'least_sessions',
-                         'dynamic_ratio_member', 'l3_addr', 'unknown',
+                         'dynamic_ratio_member', 'l3_addr',
                          'weighted_least_connection_member',
                          'weighted_least_connection_node_address',
                          'ratio_session', 'ratio_least_connection_member',
@@ -392,6 +400,7 @@ def main():
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
@@ -449,7 +458,7 @@ def main():
         module.fail_json(msg="quorum requires monitors parameter")
 
     try:
-        api = bigip_api(server, user, password, validate_certs)
+        api = bigip_api(server, user, password, validate_certs, port=server_port)
         result = {'changed': False}  # default
 
         if state == 'absent':
