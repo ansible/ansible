@@ -25,8 +25,6 @@ from ansible.module_utils.network import add_argument, register_transport, to_li
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
 EAPI_FORMATS = ['json', 'text']
 
 add_argument('use_ssl', dict(default=True, type='bool'))
@@ -341,13 +339,11 @@ class Cli(NetCli, EosConfigMixin):
         re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
     ]
 
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=True, **kwargs)
         self.shell.send('terminal length 0')
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
     ### implementation of network.Cli ###
 
