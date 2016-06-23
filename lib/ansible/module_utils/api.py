@@ -17,25 +17,30 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This module adds shared support for generic api modules
+This module adds shared support for generic api modules.
 
 In order to use this module, include it as part of a custom
 module as shown below.
 
 ** Note: The order of the import statements does matter. **
+::
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.api import *
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.api import *
 
 The 'api' module provides the following common argument specs:
 
-    * rate limit spec
-        - rate: number of requests per time unit (int)
-        - rate_limit: time window in which the limit is applied in seconds
+* rate limit spec
 
-    * retry spec
-        - retries: number of attempts
-        - retry_pause: delay between attempts in seconds
+    - rate: number of requests per time unit (int)
+
+    - rate_limit: time window in which the limit is applied in seconds
+
+* retry spec
+
+    - retries: number of attempts
+
+    - retry_pause: delay between attempts in seconds
 
 """
 import time

@@ -159,7 +159,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Run a command on the remote host.
 
-        :arg cmd: byte string containing the command
+        :param cmd: byte string containing the command
+        :type cmd: bytestring
         :kwarg in_data: If set, this data is passed to the command's stdin.
             This is used to implement pipelining.  Currently not all
             connection plugins implement pipelining.
@@ -174,6 +175,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         there.  It looks approximately like this::
 
             [LocalShell] ConnectionCommand [UsersLoginShell (*)] ANSIBLE_SHELL_EXECUTABLE [(BecomeCommand ANSIBLE_SHELL_EXECUTABLE)] Command
+
         :LocalShell: Is optional.  It is run locally to invoke the
             ``Connection Command``.  In most instances, the
             ``ConnectionCommand`` can be invoked directly instead.  The ssh
@@ -213,12 +215,13 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         :BecomeComand ANSIBLE_SHELL_EXECUTABLE: Is the command that performs
             privilege escalation.  Setting this up is performed by the action
             plugin prior to running ``exec_command``. So we just get passed
-            :param:`cmd` which has the BecomeCommand already added.
+            :param `cmd` which has the BecomeCommand already added.
             (Examples: sudo, su)  If we have a BecomeCommand then we will
             invoke a ANSIBLE_SHELL_EXECUTABLE shell inside of it so that we
             have a consistent view of quoting.
         :Command: Is the command we're actually trying to run remotely.
             (Examples: mkdir -p $HOME/.ansible, python $HOME/.ansible/tmp-script-file)
+
         """
         pass
 

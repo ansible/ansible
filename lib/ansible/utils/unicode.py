@@ -28,8 +28,8 @@ from ansible.compat.six import string_types, text_type, binary_type, PY3
 # (simply removing the deprecated features)
 
 #: Aliases for the utf-8 codec
-_UTF8_ALIASES = frozenset(('utf-8', 'UTF-8', 'utf8', 'UTF8', 'utf_8', 'UTF_8',
-    'utf', 'UTF', 'u8', 'U8'))
+_UTF8_ALIASES = frozenset(('utf-8', 'UTF-8', 'utf8', 'UTF8', 'utf_8', 'UTF_8', 'utf', 'UTF', 'u8', 'U8'))
+
 #: Aliases for the latin-1 codec
 _LATIN1_ALIASES = frozenset(('latin-1', 'LATIN-1', 'latin1', 'LATIN1',
     'latin', 'LATIN', 'l1', 'L1', 'cp819', 'CP819', '8859', 'iso8859-1',
@@ -41,7 +41,7 @@ if PY3:
     basestring = (str, bytes)
 
 def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
-    '''Convert an object into a :class:`unicode` string
+    '''Convert an object (:obj:) into a :unicode: string.
 
     :arg obj: Object to convert to a :class:`unicode` string.  This should
         normally be a byte :class:`str`
