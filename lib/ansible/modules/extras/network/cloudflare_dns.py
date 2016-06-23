@@ -349,11 +349,17 @@ class CloudflareAPI(object):
         result = None
         try:
             content = resp.read()
-            result = json.loads(content)
         except AttributeError:
-            error_msg += "; The API response was empty"
-        except json.JSONDecodeError:
-            error_msg += "; Failed to parse API response: {0}".format(content)
+            if info['body']:
+                content = info['body']
+            else:
+                error_msg += "; The API response was empty"
+
+        if content:
+            try:
+                result = json.loads(content)
+            except json.JSONDecodeError:
+                error_msg += "; Failed to parse API response: {0}".format(content)
 
         # received an error status but no data with details on what failed
         if  (info['status'] not in [200,304]) and (result is None):
