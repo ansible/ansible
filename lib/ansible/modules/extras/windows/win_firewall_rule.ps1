@@ -230,7 +230,7 @@ $fwsettings.Add("Rule Name", $name)
 #$fwsettings.Add("displayname", $name)
 
 $state = $state.ToString().ToLower()
-If ($state -eq "present")){
+If ($state -eq "present"){
     $fwsettings.Add("Direction", $direction)
     $fwsettings.Add("Action", $action)
 };
