@@ -49,12 +49,9 @@ __all__ = ['TaskExecutor']
 
 
 class TaskExecutor:
+    '''Base worker class for the executor pipeline for loading an action plugin to dispatch the task to a given host.
 
-    '''
-    This is the main worker class for the executor pipeline, which
-    handles loading an action plugin to actually dispatch the task to
-    a given host. This class roughly corresponds to the old Runner()
-    class.
+    This class roughly corresponds to the old Runner() class.
     '''
 
     # Modules that we optimize by squashing loop items into a single call to
@@ -73,11 +70,15 @@ class TaskExecutor:
         self._rslt_q            = rslt_q
 
     def run(self):
-        '''
-        The main executor entrypoint, where we determine if the specified
-        task requires looping and either runs the task with self._run_loop()
-        or self._execute(). After that, the returned results are parsed and
-        returned as a dict.
+        '''Executor entrypoint for a task responsible for a single execute or a loop of executes.
+
+        Determine if the task requires looping.
+
+        If so, :TaskExecutor: runs the task with self._run_loop().
+
+        For the case of a single task, :self._execute:() is called.
+
+        The collected task results are parsed andreturned as a dict.
         '''
 
         display.debug("in run()")
@@ -158,10 +159,7 @@ class TaskExecutor:
                 display.debug(u"error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
-        '''
-        Loads a lookup plugin to handle the with_* portion of a task (if specified),
-        and returns the items result.
-        '''
+        '''Find and query a lookup plugin to handle the with_* (the item) portion of a task and return the items result.'''
 
         # save the play context variables to a temporary dictionary,
         # so that we can modify the job vars without doing a full copy
@@ -179,7 +177,7 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_
+                # TODO: remove convert_bare true and deprecate this in with_
                 if self._task.loop == 'first_found':
                     # first_found loops are special.  If the item is undefined
                     # then we want to fall through to the next value rather
@@ -213,22 +211,24 @@ class TaskExecutor:
         return items
 
     def _run_loop(self, items):
-        '''
-        Runs the task with the loop items specified and collates the result
-        into an array named 'results' which is inserted into the final result
-        along with the item for which the loop ran.
+        '''Runs the task with :items: and collect the results.
+
+        Returns:
+            An 'results' array. The results from each result collected is inserted into the final result
+            along with the item for which the loop ran.
+
         '''
 
         results = []
 
         # make copies of the job vars and task so we can add the item to
         # the variables and re-validate the task with the item variable
-        #task_vars = self._job_vars.copy()
+        # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
         loop_var = 'item'
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item' 
+            # the value may be 'None', so we still need to default it back to 'item'
             loop_var = self._task.loop_control.loop_var or 'item'
 
         if loop_var in task_vars:
@@ -264,9 +264,10 @@ class TaskExecutor:
 
         return results
 
+    # FIXME: Does this actual return comma seperated strings? The returns seem to be either a [final_items]
+    #        Or the original passed in 'items'
     def _squash_items(self, items, loop_var, variables):
-        '''
-        Squash items down to a comma-separated list for certain modules which support it
+        '''Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
         '''
         name = None
@@ -333,10 +334,9 @@ class TaskExecutor:
         return items
 
     def _execute(self, variables=None):
-        '''
-        The primary workhorse of the executor system, this runs the task
-        on the specified host (which may be the delegated_to host) and handles
-        the retry/until and block rescue/always execution
+        '''Core of the task executor: Run the task on a host and handles 'retry','until', and block 'rescue'/'always'.
+
+        The host may be the delegated_to host.
         '''
 
         if variables is None:
@@ -551,8 +551,7 @@ class TaskExecutor:
         return result
 
     def _poll_async_result(self, result, templar):
-        '''
-        Polls for the specified JID to be complete
+        '''Poll for the specified job id to be complete.
         '''
 
         async_jid = result.get('ansible_job_id')
@@ -675,8 +674,7 @@ class TaskExecutor:
         return connection
 
     def _get_action_handler(self, connection, templar):
-        '''
-        Returns the correct action plugin to handle the requestion task action
+        '''Find and return the correct action plugin to handle the requested task action.
         '''
 
         if self._task.action in self._shared_loader_obj.action_loader:

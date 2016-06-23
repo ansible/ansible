@@ -99,20 +99,25 @@ def make_rdata_dict(rdata):
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
+        '''Terms contains a string with things to :command:`dig` for.
 
-        '''
-        terms contains a string with things to `dig' for. We support the
-        following formats:
+        The following formats are supported:
+
+            ==============================================  ======
+            Example                                         Note
+            ==============================================  ======
             example.com                                     # A record
-            example.com  qtype=A                            # same
+            example.com qtype=A                             # same
             example.com/TXT                                 # specific qtype
-            example.com  qtype=txt                          # same
+            example.com qtype=txt                           # same
             192.168.1.2/PTR                                 # reverse PTR
-              ^^ shortcut for 2.1.168.192.in-addr.arpa/PTR
-            example.net/AAAA  @nameserver                   # query specified server
-                               ^^^ can be comma-sep list of names/addresses
+                                                              shortcut for 2.1.168.192.in-addr.arpa/PTR
+            example.net/AAAA @nameserver                    # query specified server
+                                                              can be comma-sep list of names/addresses
 
             ... flat=0                                      # returns a dict; default is 1 == string
+            ==============================================  ======
+
         '''
 
         if HAVE_DNS == False:

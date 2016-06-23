@@ -265,11 +265,24 @@ DEFAULT_PERM = int('0666', 8)    # default file permission bits
 
 
 def get_platform():
-    ''' what's the platform?  example: Linux is a platform. '''
+    '''Get the systems platform or OS name.
+
+    For example: 'Linux', 'Windows' or 'Java'.
+
+    Returns:
+        The name of the platform as a string. An empty string is returned if the value cannot be determined.
+    '''
     return platform.system()
 
 def get_distribution():
-    ''' return the distribution name '''
+    '''Get the systems distribution name if applicable.
+
+    Possible results include: 'Amazon', 'SuSE', 'UnitedLinux', 'arch', 'centos', 'debian', 'fedora', 'gentoo', 'mandrake', 'mandriva', 'redhat', 'rocks', 'slackware', 'turbolinux', 'yellowdog', 'OtherLinux'
+
+    Returns:
+        The name of the distribution as a string. If system is linux, but no known distribution is detected 'OtherLinux' is returned.
+    '''
+
     if platform.system() == 'Linux':
         try:
             supported_dists = platform._supported_dists + ('arch',)
@@ -288,7 +301,12 @@ def get_distribution():
     return distribution
 
 def get_distribution_version():
-    ''' return the distribution version '''
+    '''Get the linux distribution version, if applicable.
+
+    Returns:
+        A string or None. If the system is linux, the distribution version number is returned as a string.
+        If system is not linux, None is returned.
+    '''
     if platform.system() == 'Linux':
         try:
             distribution_version = platform.linux_distribution()[1]
@@ -302,9 +320,13 @@ def get_distribution_version():
     return distribution_version
 
 def get_all_subclasses(cls):
-    '''
-    used by modules like Hardware or Network fact classes to retrieve all subclasses of a given class.
-    __subclasses__ return only direct sub classes. This one go down into the class tree.
+    '''Get a list of all class objects that subclass :cls:.
+
+    Used by modules like :Hardware: or :Network: fact classes to retrieve all subclasses of a given class.
+    __subclasses__() only returns direct subclasses. get_all_subclasses() goes down into the class tree.
+
+    Returns:
+        list of class objects.
     '''
     # Retrieve direct subclasses
     subclasses = cls.__subclasses__()
@@ -511,12 +533,14 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 def is_executable(path):
-    '''is the given path executable?
+    '''Determine if the given :path: is executable.
 
-    Limitations:
-    * Does not account for FSACLs.
-    * Most times we really want to know "Can the current user execute this
-      file"  This function does not tell us that, only if an execute bit is set.
+    Limitations::
+
+        * Does not account for FSACLs.
+        * Most times we really want to know "Can the current user execute this
+          file"  This function does not tell us that, only if an execute bit is set.
+
     '''
     # These are all bitfields so first bitwise-or all the permissions we're
     # looking for, then bitwise-and with the file's mode to determine if any
@@ -1658,12 +1682,15 @@ class AnsibleModule(object):
         return None
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
-        '''
-        find system executable in PATH.
-        Optional arguments:
-           - required:  if executable is not found and required is true, fail_json
-           - opt_dirs:  optional list of directories to search in addition to PATH
-        if found return full path; otherwise return None
+        '''Find system executable in :envvar:`PATH`.
+
+        Arg:
+            required (bool): if executable is not found and required is true, :fail_json:
+            opt_dirs (list): optional list of directories to search in addition to :envvar:`PATH`
+
+        Returns:
+            if :arg: is found return full path; otherwise return None.
+
         '''
         sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
         paths = []

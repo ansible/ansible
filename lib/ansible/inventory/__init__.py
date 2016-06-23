@@ -684,9 +684,14 @@ class Inventory(object):
         return self._playbook_basedir
 
     def set_playbook_basedir(self, dir_name):
-        """
-        sets the base directory of the playbook so inventory can use it as a
-        basedir for host_ and group_vars, and other things.
+        """Sets the base directory of the playbook so inventory can use it as basedir for host_vars and group_vars and more.
+
+        Args:
+            dir_name (str): A path to the directory to use as basedir.
+
+        .. note::
+
+            This invalidates :py:attr:`self._vars_per_host`.
         """
         # Only update things if dir is a different playbook basedir
         if dir_name != self._playbook_basedir:

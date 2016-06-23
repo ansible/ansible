@@ -304,13 +304,16 @@ class GalaxyRole(object):
 
     @property
     def spec(self):
-        """
-        Returns role spec info
-        {
-           'scm': 'git',
-           'src': 'http://git.example.com/repos/repo.git',
-           'version': 'v1.0',
-           'name': 'repo'
-        }
+        """Returns role spec info.
+
+        In the format::
+
+            {
+            'scm': 'git',
+            'src': 'http://git.example.com/repos/repo.git',
+            'version': 'v1.0',
+            'name': 'repo'
+            }
+
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)

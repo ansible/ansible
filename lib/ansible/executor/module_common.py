@@ -716,30 +716,30 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 # ******************************************************************************
 
 def modify_module(module_name, module_path, module_args, task_vars=dict(), module_compression='ZIP_STORED'):
-    """
-    Used to insert chunks of code into modules before transfer rather than
-    doing regular python imports.  This allows for more efficient transfer in
-    a non-bootstrapping scenario by not moving extra files over the wire and
-    also takes care of embedding arguments in the transferred modules.
+    """Used to insert chunks of code into modules before transfer rather than doing regular python imports.
+
+    This allows for more efficient transfer in a non-bootstrapping scenario by not
+    moving extra files over the wire and also takes care of embedding arguments in
+    the transferred modules.
 
     This version is done in such a way that local imports can still be
     used in the module code, so IDEs don't have to be aware of what is going on.
 
-    Example:
+    Example::
 
-    from ansible.module_utils.basic import *
+        from ansible.module_utils.basic import *
 
-       ... will result in the insertion of basic.py into the module
-       from the module_utils/ directory in the source tree.
+        ... will result in the insertion of basic.py into the module
+        from the module_utils/ directory in the source tree.
 
     All modules are required to import at least basic, though there will also
     be other snippets.
 
-    For powershell, there's equivalent conventions like this:
+    For powershell, there's equivalent conventions like this::
 
-    # POWERSHELL_COMMON
+        # POWERSHELL_COMMON
 
-    which results in the inclusion of the common code from powershell.ps1
+    Which results in the inclusion of the common code from powershell.ps1
 
     """
     with open(module_path, 'rb') as f:

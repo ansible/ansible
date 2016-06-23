@@ -87,11 +87,10 @@ def _parse_parameters(term):
 class LookupModule(LookupBase):
 
     def random_password(self, length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
-        '''
-        Return a random password string of length containing only chars.
-        NOTE: this was moved from the old ansible utils code, as nothing
-              else appeared to use it.
-        '''
+        '''Return a random password string of length containing only chars.'''
+
+        # NOTE: this was moved from the old ansible utils code, as nothing
+        #       else appeared to use it.
 
         password = []
         while len(password) < length:
