@@ -342,7 +342,7 @@ Function RunAsScheduledJob {
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
   # NB: output from scheduled jobs is delayed after completion (including the sub-objects after the primary Output object is available)
-  While (($job.Output -eq $null -or -not ($job.Output | Get-Member -Name Keys) -or -not $job.Output.Keys.Contains('job_output')) -and $sw.ElapsedMilliseconds -lt 15000) {
+  While (($job.Output -eq $null -or -not ($job.Output | Get-Member -Name Keys -ErrorAction Ignore) -or -not $job.Output.Keys.Contains('job_output')) -and $sw.ElapsedMilliseconds -lt 15000) {
     Write-DebugLog "Waiting for job output to populate..."
     Start-Sleep -Milliseconds 500
   }
@@ -377,6 +377,7 @@ Function Log-Forensics {
     Write-DebugLog "Arguments: $job_args | out-string"
     Write-DebugLog "OS Version: $([environment]::OSVersion.Version | out-string)"
     Write-DebugLog "Running as user: $([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+    Write-DebugLog "Powershell version: $($PSVersionTable | out-string)"
     # FUTURE: log auth method (kerb, password, etc)
 }
 
