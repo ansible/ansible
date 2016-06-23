@@ -72,19 +72,23 @@ def daemonize_self():
 
 def _run_module(wrapped_cmd, jid, job_path):
 
-    jobfile = open(job_path, "w")
+    tmp_job_path = job_path + ".tmp"
+    jobfile = open(tmp_job_path, "w")
     jobfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
     jobfile.close()
-    jobfile = open(job_path, "w")
+    os.rename(tmp_job_path, job_path)
+    jobfile = open(tmp_job_path, "w")
     result = {}
 
     outdata = ''
     try:
         cmd = shlex.split(wrapped_cmd)
-        script = subprocess.Popen(cmd, shell=False, stdin=None, stdout=jobfile, stderr=jobfile)
-        script.communicate()
-        outdata = file(job_path).read()
+        script = subprocess.Popen(cmd, shell=False, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (outdata, stderr) = script.communicate()
         result = json.loads(outdata)
+        if stderr:
+            result['stderr'] = stderr
+        jobfile.write(json.dumps(result))
 
     except (OSError, IOError):
         e = sys.exc_info()[1]
@@ -95,6 +99,7 @@ def _run_module(wrapped_cmd, jid, job_path):
         }
         result['ansible_job_id'] = jid
         jobfile.write(json.dumps(result))
+
     except:
         result = {
             "failed" : 1,
@@ -104,7 +109,9 @@ def _run_module(wrapped_cmd, jid, job_path):
         }
         result['ansible_job_id'] = jid
         jobfile.write(json.dumps(result))
+
     jobfile.close()
+    os.rename(tmp_job_path, job_path)
 
 
 ####################
