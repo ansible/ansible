@@ -157,7 +157,8 @@ def wait_for_status(client, module, vpn_gateway_id, status):
                 break
             else:
                 time.sleep(polling_increment_secs)
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     result = response
@@ -170,7 +171,8 @@ def attach_vgw(client, module, vpn_gateway_id):
 
     try:
         response = client.attach_vpn_gateway(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     status_achieved, vgw = wait_for_status(client, module, [vpn_gateway_id], 'attached')
@@ -188,12 +190,14 @@ def detach_vgw(client, module, vpn_gateway_id, vpc_id=None):
     if vpc_id:
         try:
             response = client.detach_vpn_gateway(VpnGatewayId=vpn_gateway_id, VpcId=vpc_id)
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
     else:
         try:
             response = client.detach_vpn_gateway(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     status_achieved, vgw = wait_for_status(client, module, [vpn_gateway_id], 'detached')
@@ -210,7 +214,8 @@ def create_vgw(client, module):
 
     try:
         response = client.create_vpn_gateway(Type=params['Type'])
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     result = response
@@ -221,7 +226,8 @@ def delete_vgw(client, module, vpn_gateway_id):
 
     try:
         response = client.delete_vpn_gateway(VpnGatewayId=vpn_gateway_id)
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     #return the deleted VpnGatewayId as this is not included in the above response
@@ -234,7 +240,8 @@ def create_tags(client, module, vpn_gateway_id):
 
     try:
         response = client.create_tags(Resources=[vpn_gateway_id],Tags=load_tags(module))
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     result = response
@@ -247,12 +254,14 @@ def delete_tags(client, module, vpn_gateway_id, tags_to_delete=None):
     if tags_to_delete:
         try:
             response = client.delete_tags(Resources=[vpn_gateway_id], Tags=tags_to_delete)
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
     else:
         try:
             response = client.delete_tags(Resources=[vpn_gateway_id])
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     result = response
@@ -278,7 +287,8 @@ def find_tags(client, module, resource_id=None):
             response = client.describe_tags(Filters=[
                 {'Name': 'resource-id', 'Values': [resource_id]}
                 ])
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     result = response
@@ -325,7 +335,8 @@ def find_vpc(client, module):
     if params['vpc_id']:
         try:
             response = client.describe_vpcs(VpcIds=[params['vpc_id']])
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     result = response
@@ -344,14 +355,16 @@ def find_vgw(client, module, vpn_gateway_id=None):
                 {'Name': 'type', 'Values': [params['Type']]},
                 {'Name': 'tag:Name', 'Values': [params['Name']]}
                 ])
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     else:
         if vpn_gateway_id:
             try:
                 response = client.describe_vpn_gateways(VpnGatewayIds=vpn_gateway_id)
-            except botocore.exceptions.ClientError as e:
+            except botocore.exceptions.ClientError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
 
         else:
@@ -360,7 +373,8 @@ def find_vgw(client, module, vpn_gateway_id=None):
                     {'Name': 'type', 'Values': [params['Type']]},
                     {'Name': 'tag:Name', 'Values': [params['Name']]}
                     ])
-            except botocore.exceptions.ClientError as e:
+            except botocore.exceptions.ClientError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
 
     result = response['VpnGateways']
@@ -564,7 +578,8 @@ def main():
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError:
+        e = get_exception()
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
     if state == 'present':
