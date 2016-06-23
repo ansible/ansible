@@ -163,6 +163,14 @@ URL of the playbook repository to checkout.
 
 Vault password file.
 
+*--clean*::
+
+Modified files in the working repository will be discarded.
+
+*--track-subs*::
+
+Submodules will track the latest changes.
+
 *-v*, *--verbose*::
 
 Pass -vvv to ansible-playbook.
