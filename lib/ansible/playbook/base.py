@@ -129,7 +129,7 @@ class Base:
             value = None
             value_found = False
 
-        if (value is None or not value_found) and hasattr(self, '_get_parent_attribute'):
+        if not value_found and hasattr(self, '_get_parent_attribute'):
             value = self._get_parent_attribute(prop_name)
             value_found = True
 
