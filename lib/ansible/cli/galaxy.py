@@ -306,7 +306,10 @@ class GalaxyCLI(CLI):
 
             data = self._display_role_info(role_info)
             
-            role_location = os.path.join(roles_path[0], role)
+            for path in roles_path:
+                role_location = os.path.join(path, role)
+                if (os.path.exists(role_location == True):
+                    break  # if it exists, stop looking
             if (os.path.exists(role_location) == False):
                 data = u"\n- the role %s was not found" % role
 
