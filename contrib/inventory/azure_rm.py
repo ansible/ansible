@@ -657,7 +657,7 @@ class AzureInventory(object):
                 self._inventory[safe_key].append(host_name)
                 self._inventory[safe_value].append(host_name)
 
-    def _json_format_dict(self, pretty=True):
+    def _json_format_dict(self, pretty=False):
         # convert inventory to json
         if pretty:
             return json.dumps(self._inventory, sort_keys=True, indent=2)
