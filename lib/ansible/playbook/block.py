@@ -269,9 +269,6 @@ class Block(Base, Become, Conditional, Taggable):
         if self._parent_block is not None:
             if not self._parent_block.evaluate_conditional(templar, all_vars):
                 return False
-        elif self._role is not None:
-            if not self._role.evaluate_conditional(templar, all_vars):
-                return False
         return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):

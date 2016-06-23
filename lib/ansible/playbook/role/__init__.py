@@ -118,16 +118,6 @@ class Role(Base, Become, Conditional, Taggable):
             if role_include.role not in play.ROLE_CACHE:
                 play.ROLE_CACHE[role_include.role] = dict()
 
-            if parent_role:
-                if parent_role.when:
-                    new_when = parent_role.when[:]
-                    new_when.extend(r.when or [])
-                    r.when = new_when
-                if parent_role.tags:
-                    new_tags = parent_role.tags[:]
-                    new_tags.extend(r.tags or [])
-                    r.tags = new_tags
-
             play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
