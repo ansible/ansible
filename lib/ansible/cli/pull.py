@@ -91,6 +91,11 @@ class PullCLI(CLI):
         self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
             help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
                  ' This needs the corresponding VCS module to support such an operation')
+        self.parser.add_option('--clean', dest='clean', default=False, action='store_true',
+            help='modified files in the working repository will be discarded')
+        self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
+            help='submodules will track the latest changes'
+                 ' This is equivalent to specifying the --remote flag to git submodule update')
 
         # for pull we don't wan't a default
         self.parser.set_defaults(inventory=None)
@@ -159,6 +164,12 @@ class PullCLI(CLI):
 
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
+
+            if self.options.clean:
+                repo_opts += ' force=yes'
+
+            if self.options.tracksubs:
+                repo_opts += ' track_submodules=yes'
 
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
