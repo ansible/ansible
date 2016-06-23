@@ -25,7 +25,9 @@ short_description: "Manages F5 BIG-IP LTM nodes"
 description:
     - "Manages F5 BIG-IP LTM nodes via iControl SOAP API"
 version_added: "1.4"
-author: "Matt Hite (@mhite)"
+author:
+    - Matt Hite (@mhite)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -40,6 +42,12 @@ options:
         default: null
         choices: []
         aliases: []
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -313,7 +321,8 @@ def set_monitors(api, name, monitor_type, quorum, monitor_templates):
 def main():
     monitor_type_choices = ['and_list', 'm_of_n']
 
-    argument_spec=f5_argument_spec()
+    argument_spec = f5_argument_spec()
+
     argument_spec.update(dict(
             session_state = dict(type='str', choices=['enabled', 'disabled']),
             monitor_state = dict(type='str', choices=['enabled', 'disabled']),
@@ -340,6 +349,7 @@ def main():
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
@@ -387,7 +397,7 @@ def main():
         module.fail_json(msg="quorum requires monitors parameter")
 
     try:
-        api = bigip_api(server, user, password, validate_certs)
+        api = bigip_api(server, user, password, validate_certs, port=server_port)
         result = {'changed': False}  # default
 
         if state == 'absent':

@@ -27,7 +27,9 @@ short_description: "Manages F5 BIG-IP LTM http monitors"
 description:
     - "Manages F5 BIG-IP LTM monitors via iControl SOAP API"
 version_added: "1.4"
-author: "Serge van Ginderachter (@srvg)"
+author:
+    - Serge van Ginderachter (@srvg)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -41,6 +43,12 @@ options:
             - BIG-IP host
         required: true
         default: null
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
+        version_added: "2.2"
     user:
         description:
             - BIG-IP username
@@ -326,6 +334,7 @@ def main():
             module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
 
     server = module.params['server']
+    server_port = module.params['server_port']
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
@@ -347,7 +356,7 @@ def main():
 
     # end monitor specific stuff
 
-    api = bigip_api(server, user, password, validate_certs)
+    api = bigip_api(server, user, password, validate_certs, port=server_port)
     monitor_exists = check_monitor_exists(module, api, monitor, parent)
 
 

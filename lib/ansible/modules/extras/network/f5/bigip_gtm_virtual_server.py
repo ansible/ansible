@@ -25,7 +25,9 @@ short_description: "Manages F5 BIG-IP GTM virtual servers"
 description:
     - "Manages F5 BIG-IP GTM virtual servers"
 version_added: "2.2"
-author: 'Michael Perzel'
+author:
+    - Michael Perzel (@perzizzle)
+    - Tim Rupp (@caphrim007)
 notes:
     - "Requires BIG-IP software version >= 11.4"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -39,6 +41,11 @@ options:
         description:
             - BIG-IP host
         required: true
+    server_port:
+        description:
+            - BIG-IP server port
+        required: false
+        default: 443
     user:
         description:
             - BIG-IP username
@@ -94,11 +101,6 @@ except ImportError:
     bigsuds_found = False
 else:
     bigsuds_found = True
-
-
-def bigip_api(server, user, password):
-    api = bigsuds.BIGIP(hostname=server, username=user, password=password)
-    return api
 
 
 def server_exists(api, server):
@@ -157,17 +159,19 @@ def set_virtual_server_state(api, name, server, state):
 
 
 def main():
+    argument_spec = f5_argument_spec()
+
+    meta_args = dict(
+        state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        host=dict(type='str', default=None, aliases=['address']),
+        port=dict(type='int', default=None),
+        virtual_server_name=dict(type='str', required=True),
+        virtual_server_server=dict(type='str', required=True)
+    )
+    argument_spec.update(meta_args)
+
     module = AnsibleModule(
-        argument_spec=dict(
-            server=dict(type='str', required=True),
-            user=dict(type='str', required=True),
-            password=dict(type='str', required=True, no_log=True),
-            state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
-            host=dict(type='str', default=None, aliases=['address']),
-            port=dict(type='int', default=None),
-            virtual_server_name=dict(type='str', required=True),
-            virtual_server_server=dict(type='str', required=True)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
@@ -175,6 +179,8 @@ def main():
         module.fail_json(msg="the python bigsuds module is required")
 
     server = module.params['server']
+    server_port = module.params['server_port']
+    validate_certs = module.params['validate_certs']
     user = module.params['user']
     password = module.params['password']
     virtual_server_name = module.params['virtual_server_name']
@@ -186,7 +192,7 @@ def main():
     result = {'changed': False}  # default
 
     try:
-        api = bigip_api(server, user, password)
+        api = bigip_api(server, user, password, validate_certs, port=server_port)
 
         if state == 'absent':
             if virtual_server_exists(api, virtual_server_name, virtual_server_server):
@@ -239,6 +245,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 
 if __name__ == '__main__':
     main()
