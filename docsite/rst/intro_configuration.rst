@@ -149,7 +149,7 @@ Callbacks are pieces of code in ansible that get called on specific events, perm
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
