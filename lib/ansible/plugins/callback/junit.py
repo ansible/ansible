@@ -21,7 +21,6 @@ __metaclass__ = type
 import os
 import time
 
-from collections import OrderedDict
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.unicode import to_bytes
 
@@ -31,6 +30,15 @@ try:
 except ImportError:
     HAS_JUNIT_XML = False
 
+try:
+    from collections import OrderedDict
+    HAS_ORDERED_DICT = True
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+        HAS_ORDERED_DICT = True
+    except ImportError:
+        HAS_ORDERED_DICT = False
 
 class CallbackModule(CallbackBase):
     """
@@ -64,13 +72,20 @@ class CallbackModule(CallbackBase):
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
-        self._task_data = OrderedDict()
+        self._task_data = None
 
         self.disabled = False
 
         if not HAS_JUNIT_XML:
             self.disabled = True
             self._display.warning('The `junit_xml` python module is not installed. '
+                                  'Disabling the `junit` callback plugin.')
+
+        if HAS_ORDERED_DICT:
+            self._task_data = OrderedDict()
+        else:
+            self.disabled = True
+            self._display.warning('The `ordereddict` python module is not installed. '
                                   'Disabling the `junit` callback plugin.')
 
         if not os.path.exists(self._output_dir):
