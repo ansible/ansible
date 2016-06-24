@@ -189,16 +189,14 @@ class Ec2Inventory(object):
 
         # Data to print
         if self.args.host:
-            data_to_print = self.get_host_info()
+            self.data_to_print = self.get_host_info()
 
         elif self.args.list:
             # Display list of instances for inventory
             if self.inventory == self._empty_inventory():
-                data_to_print = self.get_inventory_from_cache()
+                self.data_to_print = self.get_inventory_from_cache()
             else:
-                data_to_print = self.json_format_dict(self.inventory, True)
-
-        print(data_to_print)
+                self.data_to_print = self.json_format_dict(self.inventory, True)
 
 
     def is_cache_valid(self):
@@ -1508,4 +1506,4 @@ class Ec2Inventory(object):
 
 if __name__ == '__main__':
     # Run the script
-    Ec2Inventory()
+    print(Ec2Inventory().data_to_print)
