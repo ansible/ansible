@@ -296,13 +296,13 @@ class Block(Base, Become, Conditional, Taggable):
             value = self._attributes[attr]
 
             if self._parent_block and (value is None or extend):
-                parent_value = getattr(self._parent_block, attr)
+                parent_value = getattr(self._parent_block, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
             if self._task_include and (value is None or extend):
-                parent_value = getattr(self._task_include, attr)
+                parent_value = getattr(self._task_include, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
