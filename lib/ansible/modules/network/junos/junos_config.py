@@ -132,8 +132,8 @@ def diff_config(candidate, config):
 
         elif action == 'delete':
             for cfg in config:
-                if cfg.startswith(cfgline):
-                    updates.add(cfgline)
+                if cfg[4:].startswith(cfgline):
+                    updates.add(line)
 
     return list(updates)
 
