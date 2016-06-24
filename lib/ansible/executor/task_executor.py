@@ -585,7 +585,7 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             async_result = normal_handler.run()
-            if int(async_result.get('finished', 0)) == 1 or 'failed' in async_result or 'skipped' in async_result:
+            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('parsed', True)) or 'skipped' in async_result:
                 break
 
             time_left -= self._task.poll
