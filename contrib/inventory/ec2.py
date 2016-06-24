@@ -588,7 +588,7 @@ class Ec2Inventory(object):
         if not HAS_BOTO3:
             module.fail_json(message="This module requires boto3 be installed - please install boto3 and try again")
         
-        client = boto3.client('rds', region_name=region)
+        client = self.connect_to_aws(rds, region)
         clusters = client.describe_db_clusters()["DBClusters"]
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
