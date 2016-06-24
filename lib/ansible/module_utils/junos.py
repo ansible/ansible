@@ -120,7 +120,7 @@ class Cli(object):
         commands.insert(0, 'configure')
 
         if kwargs.get('comment'):
-            commands.append('commit and-quit comment "%s"' % kwargs.get('comment'))
+            commands.append('commit comment "%s"' % kwargs.get('comment'))
         else:
             commands.append('commit and-quit')
 
@@ -215,27 +215,30 @@ class Netconf(object):
             self._fail(msg=msg)
 
     def load_config(self, candidate, action='replace', comment=None,
-            confirm=None, format='text', commit=True):
+            confirm=None, format='text', commit=True, mode=None):
 
         merge = action == 'merge'
         overwrite = action == 'overwrite'
 
-        self.lock_config()
-
         try:
-            self.config.load(candidate, format=format, merge=merge,
-                    overwrite=overwrite)
-        except ConfigLoadError:
+            with Config(self.device, mode) as self.config:
+
+                try:
+                    self.config.load(candidate, format=format, merge=merge,
+                            overwrite=overwrite)
+                except ConfigLoadError:
+                    exc = get_exception()
+                    msg = 'Unable to load config: {0}'.format(str(exc))
+                    self._fail(msg=msg)
+
+                diff = self.config.diff()
+                self.check_config()
+                if commit and diff:
+                    self.commit_config(comment=comment, confirm=confirm)
+
+        except (ValueError, RpcError):
             exc = get_exception()
-            msg = 'Unable to load config: {0}'.format(str(exc))
-            self._fail(msg=msg)
-
-        diff = self.config.diff()
-        self.check_config()
-        if commit and diff:
-            self.commit_config(comment=comment, confirm=confirm)
-
-        self.unlock_config()
+            self._fail('Unable to get cli output: %s' % str(exc))
 
         return diff
 
