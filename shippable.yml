@@ -56,10 +56,8 @@ integrations:
   notifications:
     - integrationName: email
       type: email
-      recipients:
-        --last_committer
-      on_success: change
-      on_failure: always
+      on_success: never
+      on_failure: never
       on_start: never
       on_pull_request: never
     - integrationName: irc
