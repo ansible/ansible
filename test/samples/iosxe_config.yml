@@ -1,0 +1,32 @@
+---
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+
+  - name: Configure ACLs
+    iosxe_config:
+      provider: "{{ provider }}"
+      lines:
+        - 10 permit ip host 1.1.1.1 any log
+        - 20 permit ip host 2.2.2.2 any log
+        - 30 permit ip host 3.3.3.3 any log
+        - 40 permit ip host 4.4.4.4 any log
+        - 50 permit ip host 5.5.5.5 any log
+      parents: ['ip access-list extended test']
+      before: ['no ip access-list extended test']
+      match: exact
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines

@@ -1,0 +1,44 @@
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+        port: 830
+
+  - name: Configure interfaces
+    iosxe_netconf_yml:
+      provider: "{{ provider }}"
+      commands:
+       interface:
+         TenGigabitEthernet:
+           name: "1/0/1"
+           description: My description
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
+  - name: Configure STP etc.,
+    iosxe_netconf_yml:
+      provider: "{{ provider }}"
+      commands:
+        "spanning-tree":
+          backbonefast: ""
+          mode: mst
+        udld:
+          message:
+            time: 11
+        vtp:
+          domain: test
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
