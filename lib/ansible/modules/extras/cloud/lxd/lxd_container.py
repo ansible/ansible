@@ -89,8 +89,6 @@ options:
           - The unix domain socket path for the LXD server.
         required: false
         default: /var/lib/lxd/unix.socket
-requirements:
-  - 'requests_unixsocket'
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
@@ -198,15 +196,43 @@ lxd_container:
       sample: ["create", "start"]
 """
 
-from ansible.compat.six.moves.urllib.parse import quote
-
 try:
-    import requests_unixsocket
-    from requests.exceptions import ConnectionError
+    import json
 except ImportError:
-    HAS_REQUETS_UNIXSOCKET = False
-else:
-    HAS_REQUETS_UNIXSOCKET = True
+    import simplejson as json
+
+# httplib/http.client connection using unix domain socket
+import socket
+try:
+    import httplib
+
+    class UnixHTTPConnection(httplib.HTTPConnection):
+        def __init__(self, path, host='localhost', port=None, strict=None,
+                     timeout=None):
+            httplib.HTTPConnection.__init__(self, host, port=port, strict=strict,
+                                            timeout=timeout)
+            self.path = path
+
+        def connect(self):
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(self.path)
+            self.sock = sock
+except ImportError:
+    # Python 3
+    import http.client
+
+    class UnixHTTPConnection(http.client.HTTPConnection):
+        def __init__(self, path, host='localhost', port=None,
+                     timeout=None):
+            http.client.HTTPConnection.__init__(self, host, port=port,
+                                                timeout=timeout)
+            self.path = path
+
+        def connect(self):
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(self.path)
+            self.sock = sock
+
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -253,22 +279,19 @@ class LxdContainerManagement(object):
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
         self.unix_socket_path = self.module.params['unix_socket_path']
-        self.base_url = 'http+unix://{0}'.format(quote(self.unix_socket_path, safe=''))
-        self.session = requests_unixsocket.Session()
+        self.connection = UnixHTTPConnection(self.unix_socket_path, timeout=self.timeout)
         self.logs = []
         self.actions = []
 
-    def _path_to_url(self, path):
-        return self.base_url + path
-
-    def _send_request(self, method, path, json=None, ok_error_codes=None):
+    def _send_request(self, method, url, body_json=None, ok_error_codes=None):
         try:
-            url = self._path_to_url(path)
-            resp = self.session.request(method, url, json=json, timeout=self.timeout)
-            resp_json = resp.json()
+	    body = json.dumps(body_json)
+            self.connection.request(method, url, body=body)
+	    resp = self.connection.getresponse()
+            resp_json = json.loads(resp.read())
             self.logs.append({
                 'type': 'sent request',
-                'request': {'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                'request': {'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
                 'response': {'json': resp_json}
             })
             resp_type = resp_json.get('type', None)
@@ -277,16 +300,16 @@ class LxdContainerManagement(object):
                     return resp_json
                 self.module.fail_json(
                     msg='error response',
-                    request={'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                    request={'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
                     response={'json': resp_json},
                     logs=self.logs
                 )
             return resp_json
-        except ConnectionError:
+        except socket.error:
             self.module.fail_json(msg='cannot connect to the LXD server', unix_socket_path=self.unix_socket_path)
 
-    def _operate_and_wait(self, method, path, json=None):
-        resp_json = self._send_request(method, path, json=json)
+    def _operate_and_wait(self, method, path, body_json=None):
+        resp_json = self._send_request(method, path, body_json=body_json)
         if resp_json['type'] == 'async':
             path = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
             resp_json = self._send_request('GET', path)
@@ -294,7 +317,7 @@ class LxdContainerManagement(object):
                 url = self._path_to_url(path)
                 self.module.fail_json(
                     msg='error response for waiting opearation',
-                    request={'method': method, 'url': url, 'json': json, 'timeout': self.timeout},
+                    request={'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
                     response={'json': resp_json},
                     logs=self.logs
                 )
@@ -319,10 +342,10 @@ class LxdContainerManagement(object):
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
 
     def _change_state(self, action, force_stop=False):
-        json={'action': action, 'timeout': self.timeout}
+        body_json={'action': action, 'timeout': self.timeout}
         if force_stop:
-            json['force'] = True
-        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.container_name), json)
+            body_json['force'] = True
+        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.container_name), body_json=body_json)
 
     def _create_container(self):
         config = self.config.copy()
@@ -464,24 +487,24 @@ class LxdContainerManagement(object):
 
     def _apply_configs(self):
         old_metadata = self.old_container_json['metadata']
-        json = {
+        body_json = {
             'architecture': old_metadata['architecture'],
             'config': old_metadata['config'],
             'devices': old_metadata['devices'],
             'profiles': old_metadata['profiles']
         }
         if self._needs_to_change_config('architecture'):
-            json['architecture'] = self.config['architecture']
+            body_json['architecture'] = self.config['architecture']
         if self._needs_to_change_config('config'):
             for k, v in self.config['config'].items():
-                json['config'][k] = v
+                body_json['config'][k] = v
         if self._needs_to_change_config('ephemeral'):
-            json['ephemeral'] = self.config['ephemeral']
+            body_json['ephemeral'] = self.config['ephemeral']
         if self._needs_to_change_config('devices'):
-            json['devices'] = self.config['devices']
+            body_json['devices'] = self.config['devices']
         if self._needs_to_change_config('profiles'):
-            json['profiles'] = self.config['profiles']
-        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.container_name), json)
+            body_json['profiles'] = self.config['profiles']
+        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.container_name), body_json=body_json)
         self.actions.append('apply_configs')
 
     def run(self):
@@ -540,11 +563,6 @@ def main():
         ),
         supports_check_mode=False,
     )
-
-    if not HAS_REQUETS_UNIXSOCKET:
-        module.fail_json(
-            msg='The `requests_unixsocket` module is not importable. Check the requirements.'
-        )
 
     lxd_manage = LxdContainerManagement(module=module)
     lxd_manage.run()
