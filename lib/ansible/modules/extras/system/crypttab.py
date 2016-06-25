@@ -73,7 +73,7 @@ author: "Steve (@groks)"
 '''
 
 EXAMPLES = '''
-- name: Set the options explicitly a deivce which must already exist
+- name: Set the options explicitly a device which must already exist
   crypttab: name=luks-home state=present opts=discard,cipher=aes-cbc-essiv:sha256
 
 - name: Add the 'discard' option to any existing options for all devices
