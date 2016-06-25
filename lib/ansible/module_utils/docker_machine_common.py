@@ -167,14 +167,12 @@ class MachineManager(object):
         else:
             # Existing machine
             if self.machine.errorish():
-                self.fail("You must manually resolve issues with the existing machine %s as it is in an error state : %s" % (self.machine.name, str(exc)))
+                self.fail("You must manually resolve issues with the existing machine %s as it is in an error state." % self.machine.name)
 
             if self.has_different_configuration():
                 # # This might be cleaner but stopping/starting is not reliable
                 # self.stop_if_running()
-                self.machine_remove()
-                self.machine_create()
-                self.results['machine']['state'] = 'Recreated'
+                self.machine_recreate()
 
         if self.machine.exists():
             if state == 'started' and self.machine.stoppedish():
@@ -263,6 +261,11 @@ class MachineManager(object):
     def machine_restart(self):
         self.machine_stop()
         self.machine_start()
+
+    def machine_recreate(self):
+        self.machine_remove()
+        self.machine_create()
+        self.results['machine']['state'] = 'Recreated'
 
     def fail(self, msg):
         self.machine.fail(msg)
