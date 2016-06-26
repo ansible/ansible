@@ -284,9 +284,9 @@ class LxdContainerManagement(object):
 
     def _send_request(self, method, url, body_json=None, ok_error_codes=None):
         try:
-	    body = json.dumps(body_json)
+            body = json.dumps(body_json)
             self.connection.request(method, url, body=body)
-	    resp = self.connection.getresponse()
+            resp = self.connection.getresponse()
             resp_json = json.loads(resp.read())
             self.logs.append({
                 'type': 'sent request',
