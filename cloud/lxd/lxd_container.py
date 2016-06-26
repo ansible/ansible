@@ -566,7 +566,6 @@ def main():
     lxd_manage = LxdContainerManagement(module=module)
     lxd_manage.run()
 
-
 # import module bits
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
