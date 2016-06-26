@@ -1308,6 +1308,17 @@ class LinuxHardware(Hardware):
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    part['holders'] = []
+                    if os.path.isdir(part_sysdir + "/holders"):
+                        for folder in os.listdir(part_sysdir + "/holders"):
+                            if not folder.startswith("dm-"):
+                                continue
+                            name = get_file_content(part_sysdir + "/holders/" + folder + "/dm/name")
+                            if name:
+                                part['holders'].append(name)
+                            else:
+                                part['holders'].append(folder)
+        
                     d['partitions'][partname] = part
 
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
