@@ -102,7 +102,7 @@ Set-Attr $result.ansible_facts "ansible_processor_threads_per_core" ($win32_cpu.
 Set-Attr $result.ansible_facts "ansible_processor_vcpus" ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
 Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model.Trim()
 Set-Attr $result.ansible_facts "ansible_product_serial" $win32_bios.SerialNumber
-Set-Attr $result.ansible_facts "ansible_product_version" ([string] $win32_cs.SystemFamily)
+#Set-Attr $result.ansible_facts "ansible_product_version" ([string] $win32_cs.SystemFamily)
 Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
 Set-Attr $result.ansible_facts "ansible_system_description" ([string] $win32_os.Description)
 Set-Attr $result.ansible_facts "ansible_system_vendor" $win32_cs.Manufacturer
