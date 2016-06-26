@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 ###Major Changes:
 
+* Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 
@@ -12,11 +13,22 @@ Ansible Changes By Release
 - aws
   * ec2_customer_gateway
   * ec2_vpc_nacl_facts
+  * ec2_vpc_vgw
 - cloudstack
   * cs_router
+  * cs_snapshot_policy
+- letsencrypt
+- netconf_config
+- openstack
+  * os_keystone_service
+- rocketchat
+- sensu_subscription
 - smartos
   * smartos_image_facts
 - systemd
+- telegram
+- vmware
+  * vmware_vmotion
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
@@ -188,7 +200,7 @@ Ansible Changes By Release
 
 ###Minor Changes:
 
-* Added support for pipelining mode to more connection plugins, which helps prevent 
+* Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
 * Added a new '!unsafe' YAML decorator, which can be used in playbooks to ensure a
   string is not templated. For example: `foo: !unsafe "Don't template {{me}}"`.

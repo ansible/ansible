@@ -35,7 +35,8 @@ NET_COMMON_ARGS = dict(
     transport=dict(default='cli', choices=['cli', 'nxapi']),
     use_ssl=dict(default=False, type='bool'),
     validate_certs=dict(default=True, type='bool'),
-    provider=dict(type='dict')
+    provider=dict(type='dict'),
+    timeout=dict(default=10, type='int')
 )
 
 NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
@@ -168,11 +169,17 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        timeout = self.module.params['timeout']
         key_filename = self.module.params['ssh_keyfile']
 
+        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
+
         try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
+                    errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username,
+                    password=password, key_filename=key_filename,
+                    allow_agent=allow_agent, timeout=timeout)
         except ShellError:
             e = get_exception()
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))

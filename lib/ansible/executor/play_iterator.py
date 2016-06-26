@@ -212,14 +212,14 @@ class PlayIterator:
             # plays won't try to advance)
             play_context.start_at_task = None
 
-        # Extend the play handlers list to include the handlers defined in roles
-        self._play.handlers.extend(play.compile_roles_handlers())
-
     def get_host_state(self, host):
-        try:
-            return self._host_states[host.name].copy()
-        except KeyError:
-            raise AnsibleError("invalid host (%s) specified for playbook iteration" % host)
+        # Since we're using the PlayIterator to carry forward failed hosts,
+        # in the event that a previous host was not in the current inventory
+        # we create a stub state for it now
+        if host.name not in self._host_states:
+            self._host_states[host.name] = HostState(blocks=[])
+
+        return self._host_states[host.name].copy()
 
     def get_next_task_for_host(self, host, peek=False):
 

@@ -599,6 +599,8 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
+When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbook_loops` section on using register with a loop.
+
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
 .. _accessing_complex_variable_data:
@@ -671,6 +673,8 @@ period, without the rest of the domain.
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
+
+``playbook_dir`` contains the playbook base directory.
 
 We then have ``role_path`` which will return the current role's pathname (since 1.8). This will only work inside a role.
 
@@ -801,11 +805,11 @@ In 2.x, we have made the order of precedence more specific (with the last listed
   * playbook group_vars
   * playbook host_vars
   * host facts
-  * registered vars
-  * set_facts
   * play vars
   * play vars_prompt
   * play vars_files
+  * registered vars
+  * set_facts
   * role and include vars
   * block vars (only for tasks in block)
   * task vars (only for the task)

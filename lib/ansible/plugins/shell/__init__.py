@@ -91,10 +91,11 @@ class ShellBase(object):
         mode = pipes.quote(mode)
         user = pipes.quote(user)
 
-        cmd = ['setfacl']
+        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         if recursive:
-            cmd.append('-R')
-        cmd.extend(('-m', 'u:%s:%s %s' % (user, mode, path)))
+            cmd = ['find', path, '-exec'] + cmd + ["'{}'", "'+'"]
+        else:
+            cmd.append(path)
 
         return ' '.join(cmd)
 

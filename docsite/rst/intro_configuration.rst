@@ -149,7 +149,7 @@ Callbacks are pieces of code in ansible that get called on specific events, perm
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -501,12 +501,13 @@ module_set_locale
 =================
 
 This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
-via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
-being set when the module is executed on the given remote system.
+via the :ref:`module_lang` configuration option). If enabled, it results in the LANG, LC_MESSAGES, and LC_ALL
+being set when the module is executed on the given remote system.  By default this is disabled.
 
 .. note::
 
-    The module_set_locale option was added in Ansible 2.1.
+    The module_set_locale option was added in Ansible-2.1 and defaulted to
+    True.  The default was changed to False in Ansible-2.2
 
 .. _module_lang:
 
@@ -844,7 +845,7 @@ Paramiko Specific Settings
 --------------------------
 
 Paramiko is the default SSH connection implementation on Enterprise Linux 6 or earlier, and is not used by default on other
-platforms.  Settings live under the [paramiko] header.
+platforms.  Settings live under the [paramiko_connection] header.
 
 .. _record_host_keys:
 

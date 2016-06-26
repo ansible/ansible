@@ -15,7 +15,7 @@
     - name: set block tasks run flag
       set_fact:
         block_tasks_run: true
-    - name: fail in tasks
+    - name: EXPECTED FAILURE fail in tasks
       fail:
     - name: tasks flag should not be set after failure
       set_fact:
@@ -24,7 +24,7 @@
     - name: set block rescue run flag
       set_fact:
         block_rescue_run: true
-    - name: fail in rescue
+    - name: EXPECTED FAILURE fail in rescue
       fail:
     - name: tasks flag should not be set after failure in rescue
       set_fact:

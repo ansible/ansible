@@ -4737,8 +4737,14 @@ span[id*='MathJax-Span'] {
     max-width: 100%;
 }
 
-td {
-	word-break: break-all;
+th, td {
+    min-width: 100px;
+}
+
+table {
+       overflow-x: scroll;
+       display: block;
+       max-width: 100%;
 }
 
 @media print {

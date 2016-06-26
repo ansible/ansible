@@ -105,7 +105,7 @@ class Task(Base, Conditional, Taggable, Become):
     def get_name(self):
         ''' return the name of the task '''
 
-        if self._role and self.name:
+        if self._role and self.name and ("%s : " % self._role._role_name) not in self.name:
             return "%s : %s" % (self._role.get_name(), self.name)
         elif self.name:
             return self.name
@@ -244,13 +244,6 @@ class Task(Base, Conditional, Taggable, Become):
             self._task_include.post_validate(templar)
 
         super(Task, self).post_validate(templar)
-
-    def _post_validate_register(self, attr, value, templar):
-        '''
-        Override post validation for the register args field, which is not
-        supposed to be templated
-        '''
-        return value
 
     def _post_validate_loop_args(self, attr, value, templar):
         '''
@@ -422,13 +415,13 @@ class Task(Base, Conditional, Taggable, Become):
             value = self._attributes[attr]
 
             if self._block and (value is None or extend):
-                parent_value = getattr(self._block, attr)
+                parent_value = getattr(self._block, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
             if self._task_include and (value is None or extend):
-                parent_value = getattr(self._task_include, attr)
+                parent_value = getattr(self._task_include, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
@@ -454,3 +447,5 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         return self._get_parent_attribute('any_errors_fatal')
 
+    def _get_attr_loop(self):
+        return self._attributes['loop']

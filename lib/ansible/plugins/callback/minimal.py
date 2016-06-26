@@ -55,9 +55,6 @@ class CallbackModule(CallbackBase):
 
             self._display.display(msg, color=C.COLOR_ERROR)
 
-            # finally, remove the exception from the result so it's not shown every time
-            del result._result['exception']
-
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
         else:

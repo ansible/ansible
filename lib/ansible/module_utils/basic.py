@@ -148,6 +148,8 @@ except ImportError:
         print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
 
+from ansible.module_utils.six import PY2, PY3, b, binary_type, text_type, string_types
+
 HAVE_SELINUX=False
 try:
     import selinux
@@ -509,10 +511,17 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+    '''is the given path executable?
+
+    Limitations:
+    * Does not account for FSACLs.
+    * Most times we really want to know "Can the current user execute this
+      file"  This function does not tell us that, only if an execute bit is set.
+    '''
+    # These are all bitfields so first bitwise-or all the permissions we're
+    # looking for, then bitwise-and with the file's mode to determine if any
+    # execute bits are set.
+    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
 def _load_params():
     ''' read the modules parameters and store them globally.
@@ -540,11 +549,11 @@ def _load_params():
                 fd.close()
             else:
                 buffer = sys.argv[1]
-                if sys.version_info >= (3,):
+                if PY3:
                     buffer = buffer.encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
-            if sys.version_info < (3,):
+            if PY2:
                 buffer = sys.stdin.read()
             else:
                 buffer = sys.stdin.buffer.read()
@@ -557,7 +566,7 @@ def _load_params():
         print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
         sys.exit(1)
 
-    if sys.version_info < (3,):
+    if PY2:
         params = json_dict_unicode_to_bytes(params)
 
     try:
@@ -606,7 +615,7 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -809,7 +818,7 @@ class AnsibleModule(object):
         return (uid, gid)
 
     def find_mount_point(self, path):
-        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        path = os.path.realpath(os.path.expanduser(os.path.expandvars(path)))
         while not os.path.ismount(path):
             path = os.path.dirname(path)
         return path
@@ -1227,8 +1236,6 @@ class AnsibleModule(object):
         for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
-                if not self.supports_check_mode:
-                    self.exit_json(skipped=True, msg="remote module does not support check mode")
                 self.check_mode = True
 
             elif k == '_ansible_no_log':
@@ -1252,12 +1259,18 @@ class AnsibleModule(object):
             elif k == '_ansible_version':
                 self.ansible_version = v
 
+            elif k == '_ansible_module_name':
+                self._name = v
+
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
             #clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
+
+        if self.check_mode and not self.supports_check_mode:
+                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check):
         count = 0
@@ -1535,7 +1548,7 @@ class AnsibleModule(object):
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
-            module = 'ansible-%s' % os.path.basename(__file__)
+            module = 'ansible-%s' % self._name
             facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
             syslog.openlog(str(module), 0, facility)
             syslog.syslog(syslog.LOG_INFO, msg)
@@ -1551,7 +1564,7 @@ class AnsibleModule(object):
             if log_args is None:
                 log_args = dict()
 
-            module = 'ansible-%s' % os.path.basename(__file__)
+            module = 'ansible-%s' % self._name
             if isinstance(module, bytes):
                 module = module.decode('utf-8', 'replace')
 
@@ -1567,7 +1580,7 @@ class AnsibleModule(object):
                 # TODO: surrogateescape is a danger here on Py3
                 journal_msg = remove_values(msg, self.no_log_values)
 
-            if sys.version_info >= (3,):
+            if PY3:
                 syslog_msg = journal_msg
             else:
                 syslog_msg = journal_msg.encode('utf-8', 'replace')
@@ -1967,9 +1980,13 @@ class AnsibleModule(object):
                 shell = True
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
-        elif isinstance(args, basestring):
-            if isinstance(args, unicode):
+        elif isinstance(args, string_types):
+            # On python2.6 and below, shlex has problems with text type
+            # On python3, shlex needs a text type.
+            if PY2 and isinstance(args, text_type):
                 args = args.encode('utf-8')
+            elif PY3 and isinstance(args, binary_type):
+                args = args.decode('utf-8', errors='surrogateescape')
             args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
@@ -1977,6 +1994,11 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
+            if isinstance(prompt_regex, text_type):
+                if PY3:
+                    prompt_regex = prompt_regex.encode('utf-8', errors='surrogateescape')
+                elif PY2:
+                    prompt_regex = prompt_regex.encode('utf-8')
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -2016,19 +2038,21 @@ class AnsibleModule(object):
                         if not x.endswith('/ansible_modlib.zip') \
                         and not x.endswith('/debug_dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
+            if not os.environ['PYTHONPATH']:
+                del os.environ['PYTHONPATH']
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
-        if isinstance(args, basestring):
-            if isinstance(args, unicode):
-                b_args = args.encode('utf-8')
-            else:
-                b_args = args
-            to_clean_args = shlex.split(b_args)
-            del b_args
+        to_clean_args = args
+        if PY2:
+            if isinstance(args, text_type):
+                to_clean_args = args.encode('utf-8')
         else:
-            to_clean_args = args
+            if isinstance(args, binary_type):
+                to_clean_args = args.decode('utf-8', errors='replace')
+        if isinstance(args, (text_type, binary_type)):
+            to_clean_args = shlex.split(to_clean_args)
 
         clean_args = []
         is_passwd = False
@@ -2087,13 +2111,19 @@ class AnsibleModule(object):
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py
 
-            stdout = ''
-            stderr = ''
+            stdout = b('')
+            stderr = b('')
             rpipes = [cmd.stdout, cmd.stderr]
 
             if data:
                 if not binary_data:
                     data += '\n'
+                if isinstance(data, text_type):
+                    if PY3:
+                        errors = 'surrogateescape'
+                    else:
+                        errors = 'strict'
+                    data = data.encode('utf-8', errors=errors)
                 cmd.stdin.write(data)
                 cmd.stdin.close()
 
@@ -2102,12 +2132,12 @@ class AnsibleModule(object):
                 if cmd.stdout in rfd:
                     dat = os.read(cmd.stdout.fileno(), 9000)
                     stdout += dat
-                    if dat == '':
+                    if dat == b(''):
                         rpipes.remove(cmd.stdout)
                 if cmd.stderr in rfd:
                     dat = os.read(cmd.stderr.fileno(), 9000)
                     stderr += dat
-                    if dat == '':
+                    if dat == b(''):
                         rpipes.remove(cmd.stderr)
                 # if we're checking for prompts, do it now
                 if prompt_re:

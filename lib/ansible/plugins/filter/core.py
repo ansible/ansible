@@ -68,23 +68,23 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if isinstance(o, HostVars):
             return dict(o)
         else:
-            return o
+            return json.JSONEncoder.default(o)
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
     transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
     return to_unicode(transformed)
 
-def to_nice_yaml(a, *args, **kw):
+def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=4, allow_unicode=True, default_flow_style=False, **kw)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
     return to_unicode(transformed)
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
-def to_nice_json(a, *args, **kw):
+def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
     # python-2.6's json encoder is buggy (can't encode hostvars)
     if sys.version_info < (2, 7):
@@ -99,9 +99,10 @@ def to_nice_json(a, *args, **kw):
                 pass
             else:
                 if major >= 2:
-                    return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
+                    return simplejson.dumps(a, indent=indent, sort_keys=True, *args, **kw)
+
     try:
-        return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+        return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
     except:
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)

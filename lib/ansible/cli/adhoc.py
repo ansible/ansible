@@ -74,8 +74,10 @@ class AdHocCLI(CLI):
 
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
-        if len(self.args) != 1:
+        if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
+        elif len(self.args) > 1:
+            raise AnsibleOptionsError("Extranous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
@@ -130,7 +132,7 @@ class AdHocCLI(CLI):
         variable_manager.set_inventory(inventory)
 
         no_hosts = False
-        if len(inventory.list_hosts(pattern)) == 0:
+        if len(inventory.list_hosts()) == 0:
             # Empty inventory
             display.warning("provided hosts list is empty, only localhost is available")
             no_hosts = True
@@ -139,7 +141,7 @@ class AdHocCLI(CLI):
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0 and no_hosts is False:
             # Invalid limit
-            raise AnsibleError("Specified --limit does not match any hosts")
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))

@@ -93,9 +93,12 @@ class Cli(object):
         password = self.module.params['password']
         key_filename = self.module.params['ssh_keyfile']
 
+        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
+
         try:
             self.shell = Shell()
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, allow_agent=True)
+            self.shell.open(host, port=port, username=username, password=password,
+                    key_filename=key_filename, allow_agent=allow_agent)
         except ShellError:
             e = get_exception()
             msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
@@ -152,9 +155,10 @@ class Netconf(object):
 
             user = self.module.params['username']
             passwd = self.module.params['password']
+            key_filename = self.module.params['ssh_keyfile']
 
             self.device = Device(host, user=user, passwd=passwd, port=port,
-                    gather_facts=False).open()
+                    gather_facts=False, ssh_private_key_file=key_filename).open()
 
             self.config = Config(self.device)
 

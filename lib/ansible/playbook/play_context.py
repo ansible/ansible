@@ -29,11 +29,9 @@ import string
 from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
@@ -356,7 +354,7 @@ class PlayContext(Base):
 
             # and likewise for the remote user
             for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
-                if user_var in delegated_vars:
+                if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
                 delegated_vars['ansible_user'] = task.remote_user or self.remote_user
@@ -447,15 +445,20 @@ class PlayContext(Base):
         success_key = None
         self.prompt = None
 
-        if executable is None:
-            executable = self.executable
-
         if self.become:
+
+            if not executable:
+                executable = self.executable
 
             becomecmd   = None
             randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+
+            if executable:
+                command = '%s -c %s' % (executable, success_cmd)
+            else:
+                command = success_cmd
 
             # set executable to use for the privilege escalation method, with various overrides
             exe = self.become_exe or \
@@ -485,9 +488,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -p "%s" -u %s %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, command)
                 else:
-                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
 
             elif self.become_method == 'su':
@@ -498,7 +501,7 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
                 prompt = detect_su_prompt
 
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote('%s -c %s' % (executable, success_cmd)))
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote(command))
 
             elif self.become_method == 'pbrun':
 
@@ -534,7 +537,7 @@ class PlayContext(Base):
 
                 exe = self.become_exe or 'dzdo'
 
-                becomecmd = '%s -u %s %s -c %s' % (exe, self.become_user, executable, success_cmd)
+                becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

@@ -270,18 +270,33 @@ if __name__ == '__main__':
         # remote_tmpdir and this module executing under async.  So we cannot
         # store this in remote_tmpdir (use system tempdir instead)
         temp_path = tempfile.mkdtemp(prefix='ansible_')
+
         zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
         modlib = open(zipped_mod, 'wb')
         modlib.write(base64.b64decode(ZIPDATA))
         modlib.close()
+
         if len(sys.argv) == 2:
             exitcode = debug(sys.argv[1], zipped_mod, ZIPLOADER_PARAMS)
         else:
-            z = zipfile.ZipFile(zipped_mod)
+            z = zipfile.ZipFile(zipped_mod, mode='r')
             module = os.path.join(temp_path, 'ansible_module_%(ansible_module)s.py')
             f = open(module, 'wb')
             f.write(z.read('ansible_module_%(ansible_module)s.py'))
             f.close()
+
+            # When installed via setuptools (including python setup.py install),
+            # ansible may be installed with an easy-install.pth file.  That file
+            # may load the system-wide install of ansible rather than the one in
+            # the module.  sitecustomize is the only way to override that setting.
+            z = zipfile.ZipFile(zipped_mod, mode='a')
+            # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
+            z = zipfile.ZipFile(zipped_mod, mode='a')
+            sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
+            sitecustomize = sitecustomize.encode('utf-8')
+            z.writestr('sitecustomize.py', sitecustomize)
+            z.close()
+
             exitcode = invoke_module(module, zipped_mod, ZIPLOADER_PARAMS)
     finally:
         try:
@@ -339,7 +354,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         # import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
         for alias in (a for a in node.names if a.name.startswith('ansible.module_utils.')):
             py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
-            self.submodules.add((py_mod,))
+            py_mod = tuple(py_mod.split('.'))
+            self.submodules.add(py_mod)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -409,17 +425,25 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     # (Have to exclude them a second time once the paths are processed)
     for py_module_name in finder.submodules.difference(py_module_names):
         module_info = None
-        # Check whether either the last or the second to last identifier is
-        # a module name
-        for idx in (1, 2):
-            if len(py_module_name) < idx:
-                break
-            try:
-                module_info = imp.find_module(py_module_name[-idx],
-                        [os.path.join(_SNIPPET_PATH, *py_module_name[:-idx])])
-                break
-            except ImportError:
-                continue
+
+        if py_module_name[0] == 'six':
+            # Special case the python six library because it messes up the
+            # import process in an incompatible way
+            module_info = imp.find_module('six', [_SNIPPET_PATH])
+            py_module_name = ('six',)
+            idx = 0
+        else:
+            # Check whether either the last or the second to last identifier is
+            # a module name
+            for idx in (1, 2):
+                if len(py_module_name) < idx:
+                    break
+                try:
+                    module_info = imp.find_module(py_module_name[-idx],
+                            [os.path.join(_SNIPPET_PATH, *py_module_name[:-idx])])
+                    break
+                except ImportError:
+                    continue
 
         # Could not find the module.  Construct a helpful error message.
         if module_info is None:
@@ -534,7 +558,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        python_repred_params = to_bytes(repr(json.dumps(params)), errors='strict')
+        python_repred_params = repr(json.dumps(params))
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -592,7 +616,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                         # be a better place to run this
                         os.mkdir(lookup_path)
                     display.debug('ZIPLOADER: Writing module')
-                    with open(cached_module_filename + '-part', 'w') as f:
+                    with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
 
                     # Rename the file into its final position in the cache so
@@ -613,6 +637,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
                 # Fool the check later... I think we should just remove the check
                 py_module_names.add(('basic',))
+        zipdata = to_unicode(zipdata, errors='strict')
 
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
@@ -725,7 +750,7 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     (module_data, module_style, shebang) = _find_snippet_imports(module_name, module_data, module_path, module_args, task_vars, module_compression)
 
     if module_style == 'binary':
-        return (module_data, module_style, shebang)
+        return (module_data, module_style, to_unicode(shebang, nonstring='passthru'))
     elif shebang is None:
         lines = module_data.split(b"\n", 1)
         if lines[0].startswith(b"#!"):
@@ -748,4 +773,4 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
     else:
         shebang = to_bytes(shebang, errors='strict')
 
-    return (module_data, module_style, shebang)
+    return (module_data, module_style, to_unicode(shebang, nonstring='passthru'))

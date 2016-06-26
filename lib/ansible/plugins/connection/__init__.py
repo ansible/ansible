@@ -112,7 +112,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
 
-    def set_host_overrides(self, host):
+    def set_host_overrides(self, host, hostvars=None):
         '''
         An optional method, which can be used to set connection plugin parameters
         from variables set on the host (or groups to which the host belongs)

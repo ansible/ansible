@@ -31,7 +31,7 @@ from ansible.compat.six import iteritems, string_types
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.utils.boolean import boolean
@@ -110,11 +110,15 @@ class Base:
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
         if hasattr(self, method):
-            return getattr(self, method)()
+            value = getattr(self, method)()
+        else:
+            try:
+                value = self._attributes[prop_name]
+                if value is None and hasattr(self, '_get_parent_attribute'):
+                    value = self._get_parent_attribute(prop_name)
+            except KeyError:
+                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
-        value = self._attributes[prop_name]
-        if value is None and hasattr(self, '_get_parent_attribute'):
-            value = self._get_parent_attribute(prop_name)
         return value
 
     @staticmethod
@@ -386,7 +390,7 @@ class Base:
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                         " Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
-            except UndefinedError as e:
+            except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
                             " The error was: %s" % (name,e), obj=self.get_ds())

@@ -19,6 +19,8 @@
 import re
 import socket
 
+from ansible.module_utils.basic import get_exception
+
 # py2 vs py3; replace with six via ziploader
 try:
     from StringIO import StringIO
@@ -27,6 +29,7 @@ except ImportError:
 
 try:
     import paramiko
+    from paramiko.ssh_exception import AuthenticationException
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
@@ -111,6 +114,8 @@ class Shell(object):
             self.shell.settimeout(timeout)
         except socket.gaierror:
             raise ShellError("unable to resolve host name")
+        except AuthenticationException:
+            raise ShellError('Unable to authenticate to remote device')
 
         if self.kickstart:
             self.shell.sendall("\n")
@@ -153,6 +158,9 @@ class Shell(object):
                 responses.append(self.receive(command))
         except socket.timeout:
             raise ShellError("timeout trying to send command", cmd)
+        except socket.error:
+            exc = get_exception()
+            raise ShellError("problem sending command to host: %s" % exc.message)
         return responses
 
     def close(self):

@@ -15,17 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+from ansible.errors import AnsibleError
+#from ansible.inventory.host import Host
+from ansible.playbook.task_include import TaskInclude
+from ansible.playbook.handler import Handler
 
-from ansible import constants as C
-from . import InventoryParser
+class HandlerTaskInclude(Handler, TaskInclude):
 
-class InventoryScriptParser(InventoryParser):
+    @staticmethod
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        t = HandlerTaskInclude(block=block, role=role, task_include=task_include)
+        return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    CONDITION="is_file(%s) and is_executable(%s)"

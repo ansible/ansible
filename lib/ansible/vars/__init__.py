@@ -53,6 +53,11 @@ except ImportError:
 VARIABLE_CACHE = dict()
 HOSTVARS_CACHE = dict()
 
+class AnsibleInventoryVarsData(dict):
+    def __init__(self, *args, **kwargs):
+        super(AnsibleInventoryVarsData, self).__init__(*args, **kwargs)
+        self.path = None
+
 def preprocess_vars(a):
     '''
     Ensures that vars contained in the parameter passed in are
@@ -318,26 +323,37 @@ class VariableManager:
                         display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                         continue
 
+            # By default, we now merge in all vars from all roles in the play,
+            # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
+        # next, we merge in the vars from the role, which will specifically
+        # follow the role dependency chain, and then we merge in the tasks
+        # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
                 all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
             all_vars = combine_vars(all_vars, task.get_vars())
 
+        # next, we merge in the vars cache (include vars) and nonpersistent
+        # facts cache (set_fact/register), in that order
         if host:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
             all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
-        # special case for include tasks, where the include params
-        # may be specified in the vars field for the task, which should
-        # have higher precedence than the vars/np facts above
+        # next, we merge in role params and task include params
         if task:
+            if task._role:
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
+
+            # special case for include tasks, where the include params
+            # may be specified in the vars field for the task, which should
+            # have higher precedence than the vars/np facts above
             all_vars = combine_vars(all_vars, task.get_include_params())
 
+        # finally, we merge in extra vars and the magic variables
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
 
@@ -532,7 +548,7 @@ class VariableManager:
             # do not parse hidden files or dirs, e.g. .svn/
             paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
             for p in paths:
-                _found, results = self._load_inventory_file(path=p, loader=loader)
+                results = self._load_inventory_file(path=p, loader=loader)
                 if results is not None:
                     data = combine_vars(data, results)
 
@@ -549,8 +565,11 @@ class VariableManager:
                 if loader.path_exists(path):
                     data = loader.load_from_file(path)
 
-        name = self._get_inventory_basename(path)
-        return (name, data)
+        rval = AnsibleInventoryVarsData()
+        rval.path = path
+        if data is not None:
+            rval.update(data)
+        return rval
 
     def add_host_vars_file(self, path, loader):
         '''
@@ -559,14 +578,21 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path, loader)
-        if data:
-            if name not in self._host_vars_files:
-                self._host_vars_files[name] = []
-            self._host_vars_files[name].append(data)
-            return data
+        name = self._get_inventory_basename(path)
+        if name not in self._host_vars_files:
+            self._host_vars_files[name] = []
+
+        for entry in self._host_vars_files[name]:
+            if entry.path == path:
+                data = entry
+                break
         else:
-            return dict()
+            data = self._load_inventory_file(path, loader)
+            if data:
+                self._host_vars_files[name].append(data)
+
+        return data
+
 
     def add_group_vars_file(self, path, loader):
         '''
@@ -575,14 +601,20 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path, loader)
-        if data:
-            if name not in self._group_vars_files:
-                self._group_vars_files[name] = []
-            self._group_vars_files[name].append(data)
-            return data
+        name = self._get_inventory_basename(path)
+        if name not in self._group_vars_files:
+            self._group_vars_files[name] = []
+
+        for entry in self._group_vars_files[name]:
+            if entry.path == path:
+                data = entry
+                break
         else:
-            return dict()
+            data = self._load_inventory_file(path, loader)
+            if data:
+                self._group_vars_files[name].append(data)
+
+        return data
 
     def clear_facts(self, hostname):
         '''

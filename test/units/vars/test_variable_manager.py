@@ -29,6 +29,7 @@ from ansible.playbook.play import Play
 from ansible.vars import VariableManager
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
 
 class TestVariableManager(unittest.TestCase):
 
@@ -181,6 +182,7 @@ class TestVariableManager(unittest.TestCase):
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
     @patch.object(Inventory, 'basedir')
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self, mock_basedir):
         '''
         Tests complex variations and combinations of get_vars() with different
@@ -272,16 +274,26 @@ class TestVariableManager(unittest.TestCase):
         fake_loader.push("/etc/ansible/host_vars/host1", """
         host_var: host_var_from_host_vars_host1
         """)
+        fake_loader.push("group_vars/group1", """
+        playbook_group_var: playbook_group_var
+        """)
+        fake_loader.push("host_vars/host1", """
+        playbook_host_var: playbook_host_var
+        """)
 
         v.add_group_vars_file("/etc/ansible/group_vars/all", loader=fake_loader)
         v.add_group_vars_file("/etc/ansible/group_vars/group1", loader=fake_loader)
         v.add_group_vars_file("/etc/ansible/group_vars/group2", loader=fake_loader)
+        v.add_group_vars_file("group_vars/group1", loader=fake_loader)
         v.add_host_vars_file("/etc/ansible/host_vars/host1", loader=fake_loader)
+        v.add_host_vars_file("host_vars/host1", loader=fake_loader)
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
         self.assertEqual(res['group_var'], 'group_var_from_group_vars_group1')
         self.assertEqual(res['group_var_all'], 'group_var_all_from_group_vars_all')
+        self.assertEqual(res['playbook_group_var'], 'playbook_group_var')
         self.assertEqual(res['host_var'], 'host_var_from_host_vars_host1')
+        self.assertEqual(res['playbook_host_var'], 'playbook_host_var')
 
         # add in the fact cache
         v._fact_cache['host1'] = dict(fact_cache_var="fact_cache_var_from_fact_cache")

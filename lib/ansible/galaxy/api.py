@@ -33,6 +33,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.galaxy.token import GalaxyToken
+from ansible.utils.unicode import to_str
 
 try:
     from __main__ import display
@@ -65,15 +66,12 @@ class GalaxyAPI(object):
         self.galaxy = galaxy
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
-        self._validate_certs = not C.GALAXY_IGNORE_CERTS
+        self._validate_certs = not galaxy.options.ignore_certs
         self.baseurl = None
         self.version = None
         self.initialized = False
 
-        # set validate_certs
-        if galaxy.options.ignore_certs:
-            self._validate_certs = False
-        display.vvv('Validate TLS certificates: %s' % self._validate_certs)
+        display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
         if galaxy.options.api_server != C.GALAXY_SERVER:
@@ -112,12 +110,21 @@ class GalaxyAPI(object):
         Fetches the Galaxy API current version to ensure
         the API server is up and reachable.
         """
+        url = '%s/api/' % self._api_server
         try:
-            url = '%s/api/' % self._api_server
-            data = json.load(open_url(url, validate_certs=self._validate_certs))
-            return data['current_version']
+            return_data =open_url(url, validate_certs=self._validate_certs)
         except Exception as e:
-            raise AnsibleError("The API server (%s) is not responding, please try again later" % url)
+            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_str(e)))
+
+        try:
+            data = json.load(return_data)
+        except Exception as e:
+            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_str(e)))
+
+        if not 'current_version' in data:
+            raise AnsibleError("missing required 'current_version' from server response (%s)" % url)
+
+        return data['current_version']
 
     @g_connect
     def authenticate(self, github_token):

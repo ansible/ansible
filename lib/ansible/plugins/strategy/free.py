@@ -26,6 +26,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
+from ansible.compat.six import text_type
 
 try:
     from __main__ import display
@@ -106,6 +107,15 @@ class StrategyModule(StrategyBase):
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
+
+                        try:
+                            task.name = text_type(templar.template(task.name, fail_on_undefined=False))
+                            display.debug("done templating")
+                        except:
+                            # just ignore any errors during task name templating,
+                            # we don't care if it just shows the raw name
+                            display.debug("templating failed for some reason")
+                            pass
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:

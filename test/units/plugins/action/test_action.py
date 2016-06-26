@@ -219,7 +219,7 @@ class TestActionBase(unittest.TestCase):
                 mock_connection.module_implementation_preferences = ('',)
                 (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args)
                 self.assertEqual(style, "new")
-                self.assertEqual(shebang, b"#!/usr/bin/python")
+                self.assertEqual(shebang, u"#!/usr/bin/python")
 
                 # test module not found
                 self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)

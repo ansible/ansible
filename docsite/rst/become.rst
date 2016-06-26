@@ -31,6 +31,20 @@ become_user
 become_method
     at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'
 
+For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
+
+    - name: Ensure the httpd service is running
+      service:
+        name: httpd
+        state: started
+      become: true
+
+To run a command as the ``apache`` user::
+
+    - name: Run a command as the apache uesr
+      command: somecommand
+      become: true
+      become_user: apache
 
 Connection variables
 --------------------
@@ -48,6 +62,9 @@ ansible_become_user
 ansible_become_pass
     allows you to set the privilege escalation password
 
+For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
+
+    webserver ansible_user=manager ansible_become=true
 
 New command line options
 ------------------------
@@ -121,18 +138,22 @@ Ways to resolve this include:
   the remote python interpreter's stdin.  Pipelining does not work for
   non-python modules.
 
-* (Available in Ansible 2.1) Install filesystem acl support on the managed
-  host.  If the temporary directory on the remote host is mounted with
-  filesystem acls enabled and the :command:`setfacl` tool is in the remote
-  ``PATH`` then Ansible will use filesystem acls to share the module file with
-  the second unprivileged instead of having to make the file readable by
-  everyone.
+* (Available in Ansible 2.1) Install POSIX.1e filesystem acl support on the
+  managed host.  If the temporary directory on the remote host is mounted with
+  POSIX acls enabled and the :command:`setfacl` tool is in the remote ``PATH``
+  then Ansible will use POSIX acls to share the module file with the second
+  unprivileged user instead of having to make the file readable by everyone.
 
 * Don't perform an action on the remote machine by becoming an unprivileged
   user.  Temporary files are protected by UNIX file permissions when you
   ``become`` root or do not use ``become``.  In Ansible 2.1 and above, UNIX
   file permissions are also secure if you make the connection to the managed
   machine as root and then use ``become`` to an unprivileged account.
+
+.. warn:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
+    are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
+    cannot use these ACLs to manage its temp file permissions so you may have
+    to resort to ``allow_world_readable_tmpfiles`` if the remote machines use ZFS.
 
 .. versionchanged:: 2.1
 

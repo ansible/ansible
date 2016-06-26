@@ -151,11 +151,13 @@ def get_aws_connection_info(module, boto3=False):
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
                 region = botocore.session.get_session().get_config_variable('region')
             else:
-                module.fail_json("Boto3 is required for this module. Please install boto3 and try again")
+                module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
     if not security_token:
         if 'AWS_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['AWS_SECURITY_TOKEN']
+        elif 'AWS_SESSION_TOKEN' in os.environ:
+            security_token = os.environ['AWS_SESSION_TOKEN']
         elif 'EC2_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['EC2_SECURITY_TOKEN']
         else:

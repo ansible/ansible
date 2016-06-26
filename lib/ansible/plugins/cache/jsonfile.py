@@ -101,7 +101,10 @@ class CacheModule(BaseCacheModule):
         else:
             f.write(jsonify(value))
         finally:
-            f.close()
+            try:
+                f.close()
+            except UnboundLocalError:
+                pass
 
     def has_expired(self, key):
 
