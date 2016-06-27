@@ -8,6 +8,11 @@ Ansible Changes By Release
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
+* Several Windows facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
+  - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
+  - ansible_date_time.iso8601 (changed to UTC instead of local time)
+  - ansible_distribution (now uses OS caption string, e.g.: "Microsoft Windows Server 2012 R2 Standard", version is still available on ansible_distribution_version)
+  - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
 
 ####New Modules:
 - aws
