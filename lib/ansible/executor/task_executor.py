@@ -596,7 +596,11 @@ class TaskExecutor:
             time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
-            return dict(failed=True, msg="async task did not complete within the requested time")
+            if async_result.get('parsed'):
+                return dict(failed=True, msg="async task did not complete within the requested time")
+            else:
+                return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
+            else:
         else:
             return async_result
 
