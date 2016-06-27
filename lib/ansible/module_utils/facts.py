@@ -1249,6 +1249,18 @@ class LinuxHardware(Hardware):
                          'uuid': uuid,
                          })
 
+    def get_holders(self, block_dev_dict, sysdir):
+        block_dev_dict['holders'] = []
+        if os.path.isdir(sysdir + "/holders"):
+            for folder in os.listdir(sysdir + "/holders"):
+                if not folder.startswith("dm-"):
+                    continue
+                name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    block_dev_dict['holders'].append(name)
+                else:
+                    block_dev_dict['holders'].append(folder)
+
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
@@ -1308,16 +1320,7 @@ class LinuxHardware(Hardware):
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
-                    part['holders'] = []
-                    if os.path.isdir(part_sysdir + "/holders"):
-                        for folder in os.listdir(part_sysdir + "/holders"):
-                            if not folder.startswith("dm-"):
-                                continue
-                            name = get_file_content(part_sysdir + "/holders/" + folder + "/dm/name")
-                            if name:
-                                part['holders'].append(name)
-                            else:
-                                part['holders'].append(folder)
+                    self.get_holders(part, part_sysdir)
         
                     d['partitions'][partname] = part
 
@@ -1348,16 +1351,7 @@ class LinuxHardware(Hardware):
                 if m:
                     d['host'] = m.group(1)
 
-            d['holders'] = []
-            if os.path.isdir(sysdir + "/holders"):
-                for folder in os.listdir(sysdir + "/holders"):
-                    if not folder.startswith("dm-"):
-                        continue
-                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
-                    if name:
-                        d['holders'].append(name)
-                    else:
-                        d['holders'].append(folder)
+            self.get_holders(d, sysdir)
 
             self.facts['devices'][diskname] = d
 
