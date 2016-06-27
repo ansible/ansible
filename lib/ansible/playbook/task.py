@@ -196,7 +196,7 @@ class Task(Base, Conditional, Taggable, Become):
         if 'vars' in ds:
             # _load_vars is defined in Base, and is used to load a dictionary
             # or list of dictionaries in a standard way
-            new_ds['vars'] = self._load_vars(None, ds.pop('vars'))
+            new_ds['vars'] = self._load_vars(None, ds.get('vars'))
         else:
             new_ds['vars'] = dict()
 
