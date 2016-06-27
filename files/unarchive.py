@@ -314,13 +314,19 @@ class ZipArchive(object):
             change = False
 
             pcs = line.split(None, 7)
+            if len(pcs) != 8:
+                # Too few fields... probably a piece of the header or footer
+                continue
 
             # Check first and seventh field in order to skip header/footer
             if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
             if len(pcs[6]) != 15: continue
 
+            if pcs[0][0] not in 'dl-?' or not frozenset(pcs[0][1:]).issubset('rwxst-'):
+                continue
+
             ztype = pcs[0][0]
-            permstr = pcs[0][1:10]
+            permstr = pcs[0][1:]
             version = pcs[1]
             ostype = pcs[2]
             size = int(pcs[3])
@@ -394,6 +400,9 @@ class ZipArchive(object):
 
             itemized = list('.%s.......??' % ftype)
 
+            # Note: this timestamp calculation has a rounding error
+            # somewhere... unzip and this timestamp can be one second off
+            # When that happens, we report a change and re-unzip the file
             dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
             timestamp = time.mktime(dt_object.timetuple())
 
