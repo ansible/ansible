@@ -1,0 +1,4 @@
+tox
+pyyaml
+jinja2
+setuptools

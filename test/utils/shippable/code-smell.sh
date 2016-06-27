@@ -7,7 +7,8 @@ install_deps="${INSTALL_DEPS:-}"
 cd "${source_root}"
 
 if [ "${install_deps}" != "" ]; then
-    pip install yamllint
+    pip install -r "${source_root}/test/utils/shippable/code-smell-requirements.txt" --upgrade
+    pip list
 fi
 
 yamllint .
