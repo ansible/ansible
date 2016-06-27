@@ -203,34 +203,20 @@ except ImportError:
 # httplib/http.client connection using unix domain socket
 import socket
 try:
-    import httplib
-
-    class UnixHTTPConnection(httplib.HTTPConnection):
-        def __init__(self, path, host='localhost', port=None, strict=None,
-                     timeout=None):
-            httplib.HTTPConnection.__init__(self, host, port=port, strict=strict,
-                                            timeout=timeout)
-            self.path = path
-
-        def connect(self):
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(self.path)
-            self.sock = sock
+    from httplib import HTTPConnection
 except ImportError:
     # Python 3
-    import http.client
+    from http.client import HTTPConnection
 
-    class UnixHTTPConnection(http.client.HTTPConnection):
-        def __init__(self, path, host='localhost', port=None,
-                     timeout=None):
-            http.client.HTTPConnection.__init__(self, host, port=port,
-                                                timeout=timeout)
-            self.path = path
+class UnixHTTPConnection(HTTPConnection):
+    def __init__(self, path, timeout=None):
+        super(UnixHTTPConnection, self).__init__('localhost', timeout=timeout)
+        self.path = path
 
-        def connect(self):
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(self.path)
-            self.sock = sock
+    def connect(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self.path)
+        self.sock = sock
 
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
