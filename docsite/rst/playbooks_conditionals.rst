@@ -20,13 +20,15 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see :doc:`playbooks_variables`).
+This is easy to do in Ansible with the `when` clause, which contains a raw Jinja2 expression without double curly braces (see :doc:`playbooks_variables`).
 It's actually pretty simple::
 
     tasks:
       - name: "shutdown Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
+        # note that Ansible facts and vars like ansible_os_family can be used
+        # directly in conditionals without double curly braces
 
 You can also use parentheses to group conditions::
 
