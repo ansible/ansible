@@ -18,7 +18,6 @@
 #
 
 import re
-import collections
 import itertools
 import shlex
 
@@ -109,10 +108,9 @@ class NetworkConfig(object):
         return self._config
 
     def __str__(self):
-        config = collections.OrderedDict()
-        for item in self._config:
-            self.expand(item, config)
-        return '\n'.join(self.flatten(config))
+        if self._device_os == 'junos':
+            return self.to_lines(self.expand(self.items))
+        return self.to_block(self.expand(self.items))
 
     def load(self, contents):
         self._config = parse(contents, indent=self.indent)
@@ -154,26 +152,29 @@ class NetworkConfig(object):
         regexp = r'%s' % regexp
         return re.findall(regexp, str(self))
 
-    def expand(self, obj, items):
-        block = [item.raw for item in obj.parents]
-        block.append(obj.raw)
+    def to_lines(self, section):
+        lines = list()
+        for entry in section[1:]:
+            line = ['set']
+            line.extend([p.text for p in entry.parents])
+            line.append(entry.text)
+            lines.append(' '.join(line))
+        return lines
 
-        current_level = items
-        for b in block:
-            if b not in current_level:
-                current_level[b] = collections.OrderedDict()
-            current_level = current_level[b]
-        for c in obj.children:
-            if c.raw not in current_level:
-                current_level[c.raw] = collections.OrderedDict()
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
 
-    def flatten(self, data, obj=None):
-        if obj is None:
-            obj = list()
-        for k, v in data.items():
-            obj.append(k)
-            self.flatten(v, obj)
-        return obj
+    def expand(self, objs):
+        visited = set()
+        expanded = list()
+        for o in objs:
+            for p in o.parents:
+                if p not in visited:
+                    visited.add(p)
+                    expanded.append(p)
+            expanded.append(o)
+            visited.add(o)
+        return expanded
 
     def get_object(self, path):
         for item in self.items:
@@ -226,16 +227,12 @@ class NetworkConfig(object):
                         updates.extend(config)
                         break
 
+        updates = self.expand(updates)
+
         if self._device_os == 'junos':
             return updates
 
-        diffs = collections.OrderedDict()
-        for update in updates:
-            if replace == 'block' and update.parents:
-                update = update.parents[-1]
-            self.expand(update, diffs)
-
-        return self.flatten(diffs)
+        return [item.text for item in self.expand(updates)]
 
     def _build_children(self, children, parents=None, offset=0):
         for item in children:
