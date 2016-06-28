@@ -237,7 +237,11 @@ class TaskData:
 
     def add_host(self, host):
         if host.uuid in self.host_data:
-            raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
+            if host.status == 'included':
+                # concatenate task include output from multiple items
+                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+            else:
+                raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
 
         self.host_data[host.uuid] = host
 
