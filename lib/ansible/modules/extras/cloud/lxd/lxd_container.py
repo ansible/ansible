@@ -210,7 +210,7 @@ except ImportError:
 
 class UnixHTTPConnection(HTTPConnection):
     def __init__(self, path, timeout=None):
-        super(UnixHTTPConnection, self).__init__('localhost', timeout=timeout)
+        HTTPConnection.__init__(self, 'localhost', timeout=timeout)
         self.path = path
 
     def connect(self):
