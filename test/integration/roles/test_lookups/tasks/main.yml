@@ -247,7 +247,7 @@
 
 - assert:
     that:
-      - "'{{ badssl_host }}' in web_data"
+      - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
   debug: var={{item}}
