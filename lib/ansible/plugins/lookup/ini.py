@@ -19,8 +19,14 @@ __metaclass__ = type
 
 from io import StringIO
 import os
-import ConfigParser
 import re
+
+try:
+    # python2
+    import ConfigParser as configparser
+except ImportError:
+    # python3
+    import configparser
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -69,7 +75,7 @@ class LookupModule(LookupBase):
         # Retrieve a single value
         try:
             value = self.cp.get(section, key)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             return dflt
         return value
 
@@ -77,7 +83,7 @@ class LookupModule(LookupBase):
 
         basedir = self.get_basedir(variables)
         self.basedir = basedir
-        self.cp      = ConfigParser.ConfigParser()
+        self.cp      = configparser.ConfigParser()
 
         ret = []
         for term in terms:
