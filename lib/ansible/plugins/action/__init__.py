@@ -823,3 +823,31 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff
+
+    def _find_needle(self, dirname, needle):
+        '''
+            find a needle in haystack of paths, optionally using 'dirname' as a subdir.
+            This will build the ordered list of paths to search and pass them to dwim
+            to get back the first existing file found.
+        '''
+
+        path_stack = []
+
+        dep_chain =  self._task._block.get_dep_chain()
+        # inside role: add the dependency chain
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain]))
+
+
+        task_dir = os.path.dirname(self._task.get_path())
+        # include from diff directory: add it to file path
+        if not task_dir.endswith('tasks') and task_dir != self._loader.get_basedir():
+            path_stack.append(task_dir)
+
+        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
+
+        if result is None:
+            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
+
+        return result
+

@@ -23,9 +23,11 @@ import os.path
 import tempfile
 import re
 
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
+from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
@@ -106,19 +108,22 @@ class ActionModule(ActionBase):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
             self._remove_tmp_path(tmp)
             return result
-        elif self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
-
-        _re = None
-        if regexp is not None:
-            _re = re.compile(regexp)
+            try:
+                src = self._find_needle('files', src)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_str(e)
+                return result
 
         if not os.path.isdir(src):
             result['failed'] = True
             result['msg'] = "Source (%s) is not a directory" % src
             return result
+
+        _re = None
+        if regexp is not None:
+            _re = re.compile(regexp)
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)

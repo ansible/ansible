@@ -38,6 +38,12 @@ from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
 from ansible.utils.unicode import to_unicode, to_bytes
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class DataLoader():
 
     '''
@@ -233,12 +239,11 @@ class DataLoader():
         isrole = False
 
         # I have full path, nothing else needs to be looked at
-        if source.startswith('~') or source.startswith('/'):
+        if source.startswith('~') or source.startswith(os.path.sep):
             search.append(self.path_dwim(source))
         else:
             # base role/play path + templates/files/vars + relative filename
             search.append(os.path.join(path, dirname, source))
-
             basedir = unfrackpath(path)
 
             # is it a role and if so make sure you get correct base path
@@ -270,6 +275,50 @@ class DataLoader():
                 break
 
         return candidate
+
+    def path_dwim_relative_stack(self, paths, dirname, source):
+        '''
+        find one file in first path in stack taking roles into account and adding play basedir as fallback
+        '''
+        result = None
+        if source.startswith('~') or source.startswith(os.path.sep):
+            # path is absolute, no relative needed, check existence and return source
+            test_path = to_bytes(unfrackpath(source),errors='strict')
+            if os.path.exists(test_path):
+                result = test_path
+        else:
+            search = []
+            for path in paths:
+                upath = unfrackpath(path)
+                mydir = os.path.dirname(upath)
+
+                # if path is in role and 'tasks' not there already, add it into the search
+                if upath.endswith('tasks') and os.path.exists(to_bytes(os.path.join(upath,'main.yml'), errors='strict')) \
+                    or os.path.exists(to_bytes(os.path.join(upath,'tasks/main.yml'), errors='strict')) \
+                    or os.path.exists(to_bytes(os.path.join(os.path.dirname(upath),'tasks/main.yml'), errors='strict')):
+                    if mydir.endswith('tasks'):
+                        search.append(os.path.join(os.path.dirname(mydir), dirname, source))
+                        search.append(os.path.join(mydir, source))
+                    else:
+                        search.append(os.path.join(upath, dirname, source))
+                        search.append(os.path.join(upath, 'tasks', source))
+                elif dirname not in source.split('/'):
+                    # don't add dirname if user already is using it in source
+                    search.append(os.path.join(upath, dirname, source))
+                    search.append(os.path.join(upath, source))
+
+            # always append basedir as last resort
+            search.append(os.path.join(self.get_basedir(), dirname, source))
+            search.append(os.path.join(self.get_basedir(), source))
+
+            display.debug('search_path:\n\t' + '\n\t'.join(search))
+            for candidate in search:
+                display.vvvvv('looking for "%s" at "%s"' % (source, candidate))
+                if os.path.exists(to_bytes(candidate, errors='strict')):
+                    result = candidate
+                    break
+
+        return result
 
     def read_vault_password_file(self, vault_password_file):
         """
