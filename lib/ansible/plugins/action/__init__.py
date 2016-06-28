@@ -825,7 +825,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         return diff
 
     def _find_needle(self, dirname, needle):
-        ''' find a needle in haystack of paths, optionally using 'dirname' as a subdir '''
+        '''
+            find a needle in haystack of paths, optionally using 'dirname' as a subdir.
+            This will build the ordered list of paths to search and pass them to dwim
+            to get back the first existing file found.
+        '''
 
         path_stack = []
 
