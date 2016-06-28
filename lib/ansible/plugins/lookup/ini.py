@@ -25,6 +25,42 @@ import re
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+"""
+def _parse_term(term):
+    '''Safely split parameter term to preserve spaces'''
+    params = []
+    for phrase in term.split():
+        if '=' in phrase or len(params) == 0:
+            params.append(phrase)
+        else:
+            params[-1] += ' ' + phrase
+    return params
+"""
+
+
+def _parse_params(term):
+    '''Safely split parameter term to preserve spaces'''
+    # lookup('ini', 'db_password section=db_creds file={{ playbook_dir }}/db_local.ini')
+
+    keys = ['key', 'section', 'file', 're']
+    params = {}
+    for k in keys:
+        params[k] = ''
+
+    phase = 'key'
+    for idp,phrase in enumerate(term.split()):
+        for k in keys:
+            if ('%s=' % k) in phrase:
+                phase = k
+        if idp == 0 or not params[phase]:
+            params[phase] = phrase
+        elif params[phase]:
+            params[phase] += ' ' + phrase
+
+    rparams = [params[x] for x in keys if params[x]]
+    return rparams
+
+
 class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
@@ -58,7 +94,7 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            params = term.split()
+            params = _parse_params(term)
             key = params[0]
 
             paramvals = {
