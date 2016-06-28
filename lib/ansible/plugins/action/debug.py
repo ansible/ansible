@@ -73,6 +73,7 @@ class ActionModule(ActionBase):
             # force flag to make debug output module always verbose
             result['_ansible_verbose_always'] = True
         else:
+            result['skipped_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
 
         return result
