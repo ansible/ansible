@@ -25,22 +25,9 @@ import re
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
-"""
-def _parse_term(term):
-    '''Safely split parameter term to preserve spaces'''
-    params = []
-    for phrase in term.split():
-        if '=' in phrase or len(params) == 0:
-            params.append(phrase)
-        else:
-            params[-1] += ' ' + phrase
-    return params
-"""
-
 
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
-    # lookup('ini', 'db_password section=db_creds file={{ playbook_dir }}/db_local.ini')
 
     keys = ['key', 'section', 'file', 're']
     params = {}
