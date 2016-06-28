@@ -48,7 +48,7 @@ options:
         Whether the hardware clock is in UTC or in local timezone.
         Default is to keep current setting.
         Note that this option is recommended not to change and may fail
-        to configure, especially on virtual envoironments such as AWS.
+        to configure, especially on virtual environments such as AWS.
     required: false
     aliases: ['rtc']
 author: "Shinichi TAMURA @tmshn"
@@ -79,7 +79,7 @@ class Timezone(object):
 
     A subclass may wish to override the following action methods:
         - get(key, phase)   ... get the value from the system at `phase`
-        - set(key, value)   ... set the value to the curren system
+        - set(key, value)   ... set the value to the current system
     """
 
     def __new__(cls, module):
@@ -139,7 +139,7 @@ class Timezone(object):
 
         Args:
             *commands: The command to execute.
-                It will be concatinated with single space.
+                It will be concatenated with single space.
             **kwargs:  Only 'log' key is checked.
                 If kwargs['log'] is true, record the command to self.msg.
 
@@ -276,7 +276,7 @@ class NosystemdTimezone(Timezone):
 
     For timezone setting, it edits the following file and reflect changes:
         - /etc/sysconfig/clock  ... RHEL/CentOS
-        - /etc/timezone         ... Debian/Ubnutu
+        - /etc/timezone         ... Debian/Ubuntu
     For hwclock setting, it executes `hwclock --systohc` command with the
     '--utc' or '--localtime' option.
     """
