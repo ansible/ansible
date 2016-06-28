@@ -23,7 +23,6 @@ matrix:
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
-
 build:
   ci:
     - test/utils/shippable/ci.sh
@@ -34,5 +33,21 @@ integrations:
       type: email
       on_success: never
       on_failure: never
+      on_start: never
+      on_pull_request: never
+    - integrationName: irc
+      type: irc
+      recipients:
+      - "chat.freenode.net#ansible-notices"
+      on_success: change
+      on_failure: always
+      on_start: never
+      on_pull_request: always
+    - integrationName: slack
+      type: slack
+      recipients:
+      - "#shippable"
+      on_success: change
+      on_failure: always
       on_start: never
       on_pull_request: never
