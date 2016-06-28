@@ -31,13 +31,13 @@ def unfrackpath(path):
     example:
     '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(to_bytes(path, errors='strict')))))
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
 
     rpath = unfrackpath(path)
-    if not os.path.exists(to_bytes(rpath, errors='strict')):
+    if not os.path.exists(rpath):
         try:
             if mode:
                 os.makedirs(rpath, mode)
