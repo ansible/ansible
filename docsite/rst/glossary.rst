@@ -70,7 +70,7 @@ when a term comes up on the mailing list.
     Diff Mode
         A ``--diff`` flag can be passed to Ansible to show what changed on
         modules that support it. You can combine it with ``--check`` to get a
-        good 'dry run'.  File diffs are normally iin unified diff format.
+        good 'dry run'.  File diffs are normally in unified diff format.
 
     Executor
         A core software component of Ansible that is the power behind
