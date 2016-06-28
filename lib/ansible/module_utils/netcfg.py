@@ -28,23 +28,13 @@
 
 import itertools
 import re
-import shlex
-import time
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import zip_longest
+from ansible.module_utils.six.moves import zip, zip_longest
+from ansible.module_utils.network import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
 
 class Config(object):
 
@@ -299,7 +289,7 @@ class NetworkConfig(object):
         if len(other.items) != len(self.items):
             diff.extend(self.items)
         else:
-            for ours, theirs in itertools.izip(self.items, other.items):
+            for ours, theirs in zip(self.items, other.items):
                 if ours != theirs:
                     diff.extend(self.items)
                     break
@@ -358,7 +348,6 @@ class NetworkConfig(object):
         elif add_if_missing:
             self.add(repl, parents=parents)
 
-
     def add(self, lines, parents=None):
         """Adds one or lines of configuration
         """
@@ -406,5 +395,3 @@ class NetworkConfig(object):
                     item.parents = ancestors
                     ancestors[-1].children.append(item)
                     self.items.append(item)
-
-
