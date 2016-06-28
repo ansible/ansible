@@ -26,11 +26,12 @@ from nose.plugins.skip import SkipTest
 
 from ansible.galaxy.token import GalaxyToken
 from ansible.cli import CLI
-from mock import patch, MagicMock
+from mock import patch, MagicMock, call
 from ansible.errors import AnsibleError, AnsibleOptionsError
 import ansible
 import os
 import shutil
+import tarfile
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -164,3 +165,105 @@ class TestGalaxy(unittest.TestCase):
         # removing the files we created
         shutil.rmtree('./delete_me') 
 
+    
+    def make_tarfile(self, output_file, source_dir):
+        # adding directory into a tar file
+        with tarfile.open(output_file, "w:gz") as tar:
+            tar.add(source_dir, arcname=os.path.basename(source_dir))
+    
+
+    def create_role(self):
+        ''' writes a "role" tar.gz directory and a requirements file '''
+        if os.path.exists('./delete_me'):
+            shutil.rmtree('./delete_me')
+
+        # making the directory for the role
+        #os.makedirs('./delete_role')
+        os.makedirs('./delete_me')
+        os.makedirs('./delete_me/meta')
+        
+        # making main.yml for meta folder
+        fd = open("./delete_me/meta/main.yml", "w")
+        fd.write("---\ngalaxy_info:\n  author: 'shertel'\n  company: Ansible\ndependencies: []")
+        fd.close()
+        
+        # making the directory into a tar file
+        self.make_tarfile('./delete_me.tar.gz', './delete_me')
+
+        # removing directory
+        shutil.rmtree('./delete_me')
+        
+        # creating requirements.yml for installing the role
+        fd = open("./delete_requirements.yml", "w")
+        #fd.write("- src: ./delete_me.tar.gz\n  name: delete_me\n  path: /etc/ansible/roles")
+        fd.write("- 'src': './delete_me.tar.gz'\n  'name': 'delete_me'\n  'path': '/etc/ansible/roles'")
+        fd.close()
+
+
+    def test_execute_info(self):
+
+        ### testing cases when no role name is given ###
+        gc = GalaxyCLI(args=["info"])
+        with patch('sys.argv', ["-c", "-v"]):
+            galaxy_parser = gc.parse()
+            with patch.object(ansible.cli.CLI, "run"):  # eliminate config file message
+                self.assertRaises(AnsibleError, gc.run)                
+
+        ### testing case when valid role name is given ###
+
+            # creating a tar.gz file for a fake role
+        self.create_role()
+        
+            # installing role (also, removes tar.gz file)
+        gc = GalaxyCLI(args=["install"])
+        with patch('sys.argv', ["--offline", "-r", "delete_requirements.yml"]):
+            galaxy_parser = gc.parse()
+            with patch.object(ansible.utils.display.Display, "display") as mock_obj:
+                gc.run()
+
+                # testing correct installation
+                calls = [call('- extracting delete_me to /etc/ansible/roles/delete_me'), call('- delete_me was installed successfully')]
+                mock_obj.assert_has_calls(calls)
+
+            # data used for testing
+            gr = ansible.galaxy.role.GalaxyRole(gc.galaxy, "delete_me")
+            install_date = gr.install_info['install_date']
+
+            # testing role for info
+        gc.args = ["info"]
+        with patch('sys.argv', ["-c", "--offline", "delete_me"]):
+            galaxy_parser = gc.parse()
+            with patch.object(CLI, "pager") as mock_obj:
+                gc.run()
+                mock_obj.assert_called_once_with(u"\nRole: delete_me\n\tdescription: \n\tdependencies: []\n\tgalaxy_info:\n\t\tauthor: shertel\n\t\tcompany: Ansible\n\tinstall_date: %s\n\tintalled_version: \n\tpath: [\'/etc/ansible/roles\']\n\tscm: None\n\tsrc: delete_me\n\tversion: " % install_date)                
+
+            # deleting role
+        gc.args = ["remove"]
+        with patch('sys.argv', ["-c", "delete_me"]):
+            galaxy_parser = gc.parse()
+            with patch.object(ansible.utils.display.Display, "display") as mock_obj:
+                gc.run()
+                
+                # testing clean up worked
+                mock_obj.assert_called_once_with("- successfully removed delete_me")
+
+            # cleaning up requirements file
+            if os.path.isfile("delete_requirements.yml"):
+                os.remove("delete_requirements.yml")
+
+        ### testing case when an uninstalled role name is given ###
+        
+            # the role "delete_me" is not installed
+        gc = GalaxyCLI(args=["info"])
+        with patch('sys.argv', ["-c", "--offline", "delete_me"]):
+            galaxy_parser = gc.parse()
+        
+            # this won't work until GalaxyCLI.execute_info's FIXME is fixed
+        with patch.object(CLI, "pager") as mock_obj:
+            gc.run()
+            #mock_obj.assert_called_once_with(u'\n- the role delete_me was not found')
+        
+
+    def test_execute_install(self):
+        pass
+        
