@@ -34,15 +34,15 @@ def _parse_params(term):
     for k in keys:
         params[k] = ''
 
-    phase = 'key'
+    thiskey = 'key'
     for idp,phrase in enumerate(term.split()):
         for k in keys:
             if ('%s=' % k) in phrase:
-                phase = k
-        if idp == 0 or not params[phase]:
-            params[phase] = phrase
-        elif params[phase]:
-            params[phase] += ' ' + phrase
+                thiskey = k
+        if idp == 0 or not params[thiskey]:
+            params[thiskey] = phrase
+        else:
+            params[thiskey] += ' ' + phrase
 
     rparams = [params[x] for x in keys if params[x]]
     return rparams
