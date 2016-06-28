@@ -23,11 +23,11 @@ import json
 import os
 import tempfile
 
-from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_str
 
 
 class ActionModule(ActionBase):
@@ -81,27 +81,23 @@ class ActionModule(ActionBase):
                 source = content_tempfile
             except Exception as err:
                 result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % err
+                result['msg'] = "could not write content temp file: %s" % to_str(err)
                 return result
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
-                return result
-
         elif remote_src:
             result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
             return result
-
-        else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        else: # find in expected paths
+            try:
+                source = self._find_needle('files', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_str(e)
+                return result
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []

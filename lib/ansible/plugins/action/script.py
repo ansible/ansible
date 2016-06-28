@@ -20,6 +20,8 @@ __metaclass__ = type
 import os
 
 from ansible.plugins.action import ActionBase
+from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
@@ -69,10 +71,10 @@ class ActionModule(ActionBase):
         source = parts[0]
         args   = ' '.join(parts[1:])
 
-        if self._task._role is not None:
-            source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-        else:
-            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        try:
+            source = self._find_needle('files', source)
+        except AnsibleError as e:
+            return dict(failed=True, msg=to_str(e))
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))

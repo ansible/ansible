@@ -22,6 +22,8 @@ import os
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
+from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
@@ -46,10 +48,12 @@ class ActionModule(ActionBase):
             result.update(self._execute_module(task_vars=task_vars))
             return result
 
-        if self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
-        else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
+        try:
+            src = self._find_needle('files', src)
+        except AnsibleError as e:
+            result['failed'] = True
+            result['msg'] = to_str(e)
+            return result
 
         # create the remote tmp dir if needed, and put the source file there
         if tmp is None or "-tmp-" not in tmp:

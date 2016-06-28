@@ -17,11 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-
+from ansible.utils.unicode import to_str
 
 class ActionModule(ActionBase):
 
@@ -33,25 +31,22 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        source = self._task.args.get('_raw_params')
+        try:
+            source = self._find_needle('vars', self._task.args.get('_raw_params'))
+        except AnsibleError as e:
+            result['failed'] = True
+            result['message'] = to_str(e)
+            return result
 
-        if self._task._role:
-            source = self._loader.path_dwim_relative(self._task._role._role_path, 'vars', source)
+        (data, show_content) = self._loader._get_file_contents(source)
+        data = self._loader.load(data, show_content)
+        if data is None:
+            data = {}
+        if not isinstance(data, dict):
+            result['failed'] = True
+            result['message'] = "%s must be stored as a dictionary/hash" % source
         else:
-            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'vars', source)
-
-        if os.path.exists(source):
-            (data, show_content) = self._loader._get_file_contents(source)
-            data = self._loader.load(data, show_content)
-            if data is None:
-                data = {}
-            if not isinstance(data, dict):
-                raise AnsibleError("%s must be stored as a dictionary/hash" % source)
             result['ansible_facts'] = data
             result['_ansible_no_log'] = not show_content
-        else:
-            result['failed'] = True
-            result['msg'] = "Source file not found."
-            result['file'] = source
 
         return result
