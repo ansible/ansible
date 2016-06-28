@@ -39,7 +39,8 @@ options:
         required: false
     config:
         description:
-          - The config for the container (e.g. '{"limits.cpu": "2"}').
+          - >
+            The config for the container (e.g. {"limits.cpu": "2"}).
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
           - If the container already exists and its "config" value in metadata
             obtained from
@@ -52,8 +53,9 @@ options:
         required: false
     devices:
         description:
-          - The devices for the container
-            (e.g. '{ "rootfs": { "path": "/dev/kvm", "type": "unix-char" }').
+          - >
+            The devices for the container
+            (e.g. { "rootfs": { "path": "/dev/kvm", "type": "unix-char" }).
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
         required: false
     ephemeral:
@@ -63,10 +65,13 @@ options:
         required: false
     source:
         description:
-          - The source for the container
-            (e.g. '{ "type": "image", "mode": "pull",
-            "server": "https://images.linuxcontainers.org", "protocol": "lxd",
-            "alias": "ubuntu/xenial/amd64" }').
+          - >
+            The source for the container
+            (e.g. { "type": "image",
+                    "mode": "pull",
+                    "server": "https://images.linuxcontainers.org",
+                    "protocol": "lxd",
+                    "alias": "ubuntu/xenial/amd64" }).
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
         required: false
     state:
