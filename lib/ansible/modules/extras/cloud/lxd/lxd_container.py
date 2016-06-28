@@ -32,25 +32,42 @@ options:
         description:
           - Name of a container.
         required: true
+    architecture:
+        description:
+          - The archiecture for the container (e.g. "x86_64" or "i686").
+            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+        required: false
     config:
         description:
-          - A config dictionary for creating a container.
+          - The config for the container (e.g. '{"limits.cpu": "2"}').
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
-          - Required when the container is not created yet and the state is
-            not absent.
-          - If the container already exists and its metadata obtained from
+          - If the container already exists and its "config" value in metadata
+            obtained from
             GET /1.0/containers/<name>
             https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10containersname
             are different, they this module tries to apply the configurations.
-            The following keys in config will be compared and applied.
-              - architecture
-              - config
-                  - The key starts with 'volatile.' are ignored for comparison.
-              - devices
-              - ephemeral
-              - profiles
+          - The key starts with 'volatile.' are ignored for this comparison.
           - Not all config values are supported to apply the existing container.
             Maybe you need to delete and recreate a container.
+        required: false
+    devices:
+        description:
+          - The devices for the container
+            (e.g. '{ "rootfs": { "path": "/dev/kvm", "type": "unix-char" }').
+            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+        required: false
+    ephemeral:
+        description:
+          - Whether or not the container is ephemeral (e.g. true or false).
+            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+        required: false
+    source:
+        description:
+          - The source for the container
+            (e.g. '{ "type": "image", "mode": "pull",
+            "server": "https://images.linuxcontainers.org", "protocol": "lxd",
+            "alias": "ubuntu/xenial/amd64" }').
+            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
         required: false
     state:
         choices:
@@ -113,14 +130,13 @@ EXAMPLES = """
       lxd_container:
         name: mycontainer
         state: started
-        config:
-          source:
-            type: image
-            mode: pull
-            server: https://images.linuxcontainers.org
-            protocol: lxd
-            alias: "ubuntu/xenial/amd64"
-          profiles: ["default"]
+        source:
+          type: image
+          mode: pull
+          server: https://images.linuxcontainers.org
+          protocol: lxd
+          alias: "ubuntu/xenial/amd64"
+        profiles: ["default"]
     - name: Install python in the created container "mycontainer"
       command: lxc exec mycontainer -- apt install -y python
     - name: Copy /etc/hosts in the created container "mycontainer" to localhost with name "mycontainer-hosts"
@@ -144,14 +160,13 @@ EXAMPLES = """
       lxd_container:
         name: mycontainer
         state: stopped
-        config:
-          source:
-            type: image
-            mode: pull
-            server: https://images.linuxcontainers.org
-            protocol: lxd
-            alias: "ubuntu/xenial/amd64"
-          profiles: ["default"]
+        source:
+          type: image
+          mode: pull
+          server: https://images.linuxcontainers.org
+          protocol: lxd
+          alias: "ubuntu/xenial/amd64"
+        profiles: ["default"]
 
 - hosts: localhost
   connection: local
@@ -160,14 +175,13 @@ EXAMPLES = """
       lxd_container:
         name: mycontainer
         state: restarted
-        config:
-          source:
-            type: image
-            mode: pull
-            server: https://images.linuxcontainers.org
-            protocol: lxd
-            alias: "ubuntu/xenial/amd64"
-          profiles: ["default"]
+        source:
+          type: image
+          mode: pull
+          server: https://images.linuxcontainers.org
+          protocol: lxd
+          alias: "ubuntu/xenial/amd64"
+        profiles: ["default"]
 """
 
 RETURN="""
@@ -257,7 +271,13 @@ class LxdContainerManagement(object):
         """
         self.module = module
         self.container_name = self.module.params['name']
-        self.config = self.module.params.get('config', None)
+
+        self.container_config = {}
+        for attr in ['architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source']:
+            param_val = self.module.params.get(attr, None)
+            if param_val is not None:
+                self.container_config[attr] = param_val
+
         self.state = self.module.params['state']
         self.timeout = self.module.params['timeout']
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
@@ -296,13 +316,12 @@ class LxdContainerManagement(object):
     def _operate_and_wait(self, method, path, body_json=None):
         resp_json = self._send_request(method, path, body_json=body_json)
         if resp_json['type'] == 'async':
-            path = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
-            resp_json = self._send_request('GET', path)
+            url = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
+            resp_json = self._send_request('GET', url)
             if resp_json['metadata']['status'] != 'Success':
-                url = self._path_to_url(path)
                 self.module.fail_json(
                     msg='error response for waiting opearation',
-                    request={'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
+                    request={'method': method, 'url': url, 'timeout': self.timeout},
                     response={'json': resp_json},
                     logs=self.logs
                 )
@@ -333,10 +352,10 @@ class LxdContainerManagement(object):
         return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.container_name), body_json=body_json)
 
     def _create_container(self):
-        config = self.config.copy()
+        config = self.container_config.copy()
         config['name'] = self.container_name
         self._operate_and_wait('POST', '/1.0/containers', config)
-        self.actions.append('creat')
+        self.actions.append('create')
 
     def _start_container(self):
         self._change_state('start')
@@ -453,13 +472,13 @@ class LxdContainerManagement(object):
             self._freeze_container()
 
     def _needs_to_change_config(self, key):
-        if key not in self.config:
+        if key not in self.container_config:
             return False
         if key == 'config':
             old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if not k.startswith('volatile.'))
         else:
             old_configs = self.old_container_json['metadata'][key]
-        return self.config[key] != old_configs
+        return self.container_config[key] != old_configs
 
     def _needs_to_apply_configs(self):
         return (
@@ -479,16 +498,16 @@ class LxdContainerManagement(object):
             'profiles': old_metadata['profiles']
         }
         if self._needs_to_change_config('architecture'):
-            body_json['architecture'] = self.config['architecture']
+            body_json['architecture'] = self.container_config['architecture']
         if self._needs_to_change_config('config'):
-            for k, v in self.config['config'].items():
+            for k, v in self.container_config['config'].items():
                 body_json['config'][k] = v
         if self._needs_to_change_config('ephemeral'):
-            body_json['ephemeral'] = self.config['ephemeral']
+            body_json['ephemeral'] = self.container_config['ephemeral']
         if self._needs_to_change_config('devices'):
-            body_json['devices'] = self.config['devices']
+            body_json['devices'] = self.container_config['devices']
         if self._needs_to_change_config('profiles'):
-            body_json['profiles'] = self.config['profiles']
+            body_json['profiles'] = self.container_config['profiles']
         self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.container_name), body_json=body_json)
         self.actions.append('apply_configs')
 
@@ -522,7 +541,22 @@ def main():
                 type='str',
                 required=True
             ),
+            architecture=dict(
+                type='str',
+            ),
             config=dict(
+                type='dict',
+            ),
+            devices=dict(
+                type='dict',
+            ),
+            ephemeral=dict(
+                type='bool',
+            ),
+            profiles=dict(
+                type='list',
+            ),
+            source=dict(
                 type='dict',
             ),
             state=dict(
