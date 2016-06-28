@@ -32,6 +32,14 @@ options:
         description:
           - Name of a container.
         required: true
+    type:
+        choices:
+          - container
+          - profile
+        description:
+          - The resource type.
+        required: false
+        default: container
     architecture:
         description:
           - The archiecture for the container (e.g. "x86_64" or "i686").
@@ -74,15 +82,24 @@ options:
                     "alias": "ubuntu/xenial/amd64" }).
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
         required: false
+    new_name:
+        description:
+          - A new name of a profile.
+          - If this parameter is specified a profile will be renamed to this name.
+        required: false
     state:
         choices:
+          - present
           - started
           - stopped
           - restarted
           - absent
           - frozen
         description:
-          - Define the state of a container.
+          - Define the state of a container or profile.
+          - Valid choices for type=container are started, stopped, restarted,
+            absent, or frozen.
+          - Valid choices for type=profile are present or absent.
         required: false
         default: started
     timeout:
@@ -187,6 +204,22 @@ EXAMPLES = """
           protocol: lxd
           alias: "ubuntu/xenial/amd64"
         profiles: ["default"]
+
+- hosts: localhost
+  connection: local
+  tasks:
+  - name: create macvlan profile
+    lxd_container:
+      type: profile
+      name: macvlan
+      state: present
+      config: {}
+      description: 'my macvlan profile'
+      devices:
+        eth0:
+          nictype: macvlan
+          parent: br0
+          type: nic
 """
 
 RETURN="""
@@ -241,6 +274,7 @@ class UnixHTTPConnection(HTTPConnection):
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
 LXD_ANSIBLE_STATES = {
+    'present': '', # TODO: Separate state for profile
     'started': '_started',
     'stopped': '_stopped',
     'restarted': '_restarted',
@@ -254,6 +288,12 @@ ANSIBLE_LXD_STATES = {
     'Running': 'started',
     'Stopped': 'stopped',
     'Frozen': 'frozen',
+}
+
+# CONFIG_PARAMS is a map from a resource type to config attribute names.
+CONFIG_PARAMS = {
+    'container': ['architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'],
+    'profile': ['config', 'description', 'devices']
 }
 
 try:
@@ -275,15 +315,12 @@ class LxdContainerManagement(object):
         :type module: ``object``
         """
         self.module = module
-        self.container_name = self.module.params['name']
-
-        self.container_config = {}
-        for attr in ['architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source']:
-            param_val = self.module.params.get(attr, None)
-            if param_val is not None:
-                self.container_config[attr] = param_val
-
+        self.name = self.module.params['name']
+        self.type = self.module.params['type']
+        self._build_config()
+        # TODO: check state value according to type
         self.state = self.module.params['state']
+        self.new_name = self.module.params.get('new_name', None)
         self.timeout = self.module.params['timeout']
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
         self.force_stop = self.module.params['force_stop']
@@ -292,6 +329,13 @@ class LxdContainerManagement(object):
         self.connection = UnixHTTPConnection(self.unix_socket_path, timeout=self.timeout)
         self.logs = []
         self.actions = []
+
+    def _build_config(self):
+        self.config = {}
+        for attr in CONFIG_PARAMS[self.type]:
+            param_val = self.module.params.get(attr, None)
+            if param_val is not None:
+                self.config[attr] = param_val
 
     def _send_request(self, method, url, body_json=None, ok_error_codes=None):
         try:
@@ -334,13 +378,13 @@ class LxdContainerManagement(object):
 
     def _get_container_json(self):
         return self._send_request(
-            'GET', '/1.0/containers/{0}'.format(self.container_name),
+            'GET', '/1.0/containers/{0}'.format(self.name),
             ok_error_codes=[404]
         )
 
     def _get_container_state_json(self):
         return self._send_request(
-            'GET', '/1.0/containers/{0}/state'.format(self.container_name),
+            'GET', '/1.0/containers/{0}/state'.format(self.name),
             ok_error_codes=[404]
         )
 
@@ -354,11 +398,11 @@ class LxdContainerManagement(object):
         body_json={'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
-        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.container_name), body_json=body_json)
+        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
 
     def _create_container(self):
-        config = self.container_config.copy()
-        config['name'] = self.container_name
+        config = self.config.copy()
+        config['name'] = self.name
         self._operate_and_wait('POST', '/1.0/containers', config)
         self.actions.append('create')
 
@@ -375,7 +419,7 @@ class LxdContainerManagement(object):
         self.actions.append('restart')
 
     def _delete_container(self):
-        return self._operate_and_wait('DELETE', '/1.0/containers/{0}'.format(self.container_name))
+        return self._operate_and_wait('DELETE', '/1.0/containers/{0}'.format(self.name))
         self.actions.append('delete')
 
     def _freeze_container(self):
@@ -423,8 +467,8 @@ class LxdContainerManagement(object):
                 self._unfreeze_container()
             elif self.old_state == 'stopped':
                 self._start_container()
-            if self._needs_to_apply_configs():
-                self._apply_configs()
+            if self._needs_to_apply_container_configs():
+                self._apply_container_configs()
         if self.wait_for_ipv4_addresses:
             self._get_addresses()
 
@@ -433,15 +477,15 @@ class LxdContainerManagement(object):
             self._create_container()
         else:
             if self.old_state == 'stopped':
-                if self._needs_to_apply_configs():
+                if self._needs_to_apply_container_configs():
                     self._start_container()
-                    self._apply_configs()
+                    self._apply_container_configs()
                     self._stop_container()
             else:
                 if self.old_state == 'frozen':
                     self._unfreeze_container()
-                if self._needs_to_apply_configs():
-                    self._apply_configs()
+                if self._needs_to_apply_container_configs():
+                    self._apply_container_configs()
                 self._stop_container()
 
     def _restarted(self):
@@ -451,8 +495,8 @@ class LxdContainerManagement(object):
         else:
             if self.old_state == 'frozen':
                 self._unfreeze_container()
-            if self._needs_to_apply_configs():
-                self._apply_configs()
+            if self._needs_to_apply_container_configs():
+                self._apply_container_configs()
             self._restart_container()
         if self.wait_for_ipv4_addresses:
             self._get_addresses()
@@ -472,29 +516,29 @@ class LxdContainerManagement(object):
         else:
             if self.old_state == 'stopped':
                 self._start_container()
-            if self._needs_to_apply_configs():
-                self._apply_configs()
+            if self._needs_to_apply_container_configs():
+                self._apply_container_configs()
             self._freeze_container()
 
-    def _needs_to_change_config(self, key):
-        if key not in self.container_config:
+    def _needs_to_change_container_config(self, key):
+        if key not in self.config:
             return False
         if key == 'config':
             old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if not k.startswith('volatile.'))
         else:
             old_configs = self.old_container_json['metadata'][key]
-        return self.container_config[key] != old_configs
+        return self.config[key] != old_configs
 
-    def _needs_to_apply_configs(self):
+    def _needs_to_apply_container_configs(self):
         return (
-            self._needs_to_change_config('architecture') or
-            self._needs_to_change_config('config') or
-            self._needs_to_change_config('ephemeral') or
-            self._needs_to_change_config('devices') or
-            self._needs_to_change_config('profiles')
+            self._needs_to_change_container_config('architecture') or
+            self._needs_to_change_container_config('config') or
+            self._needs_to_change_container_config('ephemeral') or
+            self._needs_to_change_container_config('devices') or
+            self._needs_to_change_container_config('profiles')
         )
 
-    def _apply_configs(self):
+    def _apply_container_configs(self):
         old_metadata = self.old_container_json['metadata']
         body_json = {
             'architecture': old_metadata['architecture'],
@@ -503,27 +547,104 @@ class LxdContainerManagement(object):
             'profiles': old_metadata['profiles']
         }
         if self._needs_to_change_config('architecture'):
-            body_json['architecture'] = self.container_config['architecture']
+            body_json['architecture'] = self.config['architecture']
         if self._needs_to_change_config('config'):
-            for k, v in self.container_config['config'].items():
+            for k, v in self.config['config'].items():
                 body_json['config'][k] = v
         if self._needs_to_change_config('ephemeral'):
-            body_json['ephemeral'] = self.container_config['ephemeral']
+            body_json['ephemeral'] = self.config['ephemeral']
         if self._needs_to_change_config('devices'):
-            body_json['devices'] = self.container_config['devices']
+            body_json['devices'] = self.config['devices']
         if self._needs_to_change_config('profiles'):
-            body_json['profiles'] = self.container_config['profiles']
-        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.container_name), body_json=body_json)
-        self.actions.append('apply_configs')
+            body_json['profiles'] = self.config['profiles']
+        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.name), body_json=body_json)
+        self.actions.append('apply_container_configs')
+
+    def _get_profile_json(self):
+        return self._send_request(
+            'GET', '/1.0/profiles/{0}'.format(self.name),
+            ok_error_codes=[404]
+        )
+
+    @staticmethod
+    def _profile_json_to_module_state(resp_json):
+        if resp_json['type'] == 'error':
+            return 'absent'
+        return 'present'
+
+    def _update_profile(self):
+        if self.state == 'present':
+            if self.old_state == 'absent':
+                if self.new_name is None:
+                    self._create_profile()
+                else:
+                    self.module.fail_json(
+                        failed=True,
+                        msg='new_name must not be set when the profile does not exist and the specified state is present',
+                        changed=False)
+            else:
+                if self.new_name is not None and self.new_name != self.name:
+                    self._rename_profile()
+                if self._needs_to_apply_profile_configs():
+                    self._apply_profile_configs()
+        elif self.state == 'absent':
+            if self.old_state == 'present':
+                if self.new_name is None:
+                    self._delete_profile()
+                else:
+                    self.module.fail_json(
+                        failed=True,
+                        msg='new_name must not be set when the profile exists and the specified state is absent',
+                        changed=False)
+
+    def _create_profile(self):
+        config = self.config.copy()
+        config['name'] = self.name
+        self._send_request('POST', '/1.0/profiles', config)
+        self.actions.append('create')
+
+    def _rename_profile(self):
+        config = { 'name': self.new_name }
+        self._send_request('POST', '/1.0/profiles/{}'.format(self.name), config)
+        self.actions.append('rename')
+        self.name = self.new_name
+
+    def _needs_to_change_profile_config(self, key):
+        if key not in self.config:
+            return False
+        old_configs = self.old_profile_json['metadata'].get(key, None)
+        return self.config[key] != old_configs
+
+    def _needs_to_apply_profile_configs(self):
+        return (
+            self._needs_to_change_profile_config('config') or
+            self._needs_to_change_profile_config('description') or
+            self._needs_to_change_profile_config('devices')
+        )
+
+    def _apply_profile_configs(self):
+        config = self.old_profile_json.copy()
+        for k, v in self.config.iteritems():
+            config[k] = v
+        self._send_request('PUT', '/1.0/profiles/{}'.format(self.name), config)
+        self.actions.append('apply_profile_configs')
+
+    def _delete_profile(self):
+        self._send_request('DELETE', '/1.0/profiles/{}'.format(self.name))
+        self.actions.append('delete')
 
     def run(self):
         """Run the main method."""
 
-        self.old_container_json = self._get_container_json()
-        self.old_state = self._container_json_to_module_state(self.old_container_json)
-
-        action = getattr(self, LXD_ANSIBLE_STATES[self.state])
-        action()
+        if self.type == 'container':
+            self.old_container_json = self._get_container_json()
+            self.old_state = self._container_json_to_module_state(self.old_container_json)
+            action = getattr(self, LXD_ANSIBLE_STATES[self.state])
+            action()
+        elif self.type == 'profile':
+            self.old_profile_json = self._get_profile_json()
+            self.old_state = self._profile_json_to_module_state(self.old_profile_json)
+            self._update_profile()
 
         state_changed = len(self.actions) > 0
         result_json = {
@@ -546,11 +667,22 @@ def main():
                 type='str',
                 required=True
             ),
+            new_name=dict(
+                type='str',
+            ),
+            type=dict(
+                type='str',
+                choices=CONFIG_PARAMS.keys(),
+                default='container'
+            ),
             architecture=dict(
                 type='str',
             ),
             config=dict(
                 type='dict',
+            ),
+            description=dict(
+                type='str',
             ),
             devices=dict(
                 type='dict',
