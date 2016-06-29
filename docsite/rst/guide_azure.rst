@@ -13,7 +13,7 @@ SDK is via pip:
 
 .. code-block:: bash
 
-    $ pip install azure>=2.0.0rc4
+    $ pip install "azure>=2.0.0rc4"
 
 
 Authenticating with Azure
