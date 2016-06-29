@@ -26,6 +26,7 @@ import os
 import hashlib
 import sys
 import posixpath
+import urlparse
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 try:
@@ -231,9 +232,9 @@ class MavenDownloader:
 
     def _request(self, url, failmsg, f):
         url_to_use = url
-        parsed_url = urlparse.urlparse(url)
+        parsed_url = urlparse(url)
         if parsed_url.scheme=='s3':
-                parsed_url = urlparse.urlparse(url)
+                parsed_url = urlparse(url)
                 bucket_name = parsed_url.netloc[:parsed_url.netloc.find('.')]
                 key_name = parsed_url.path[1:]
                 client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
@@ -332,8 +333,10 @@ def main():
         )
     )
 
-
-    parsed_url = urlparse.urlparse(module.params["repository_url"])
+    try:
+        parsed_url = urlparse(module.params["repository_url"])
+    except AttributeError as e:
+        module.fail_json(msg='url parsing went wrong %s' % e)
 
     if parsed_url.scheme=='s3' and not HAS_BOTO:
         module.fail_json(msg='boto3 required for this module, when using s3:// repository URLs')
