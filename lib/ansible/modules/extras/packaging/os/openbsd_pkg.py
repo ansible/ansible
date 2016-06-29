@@ -114,7 +114,7 @@ def get_package_state(name, pkg_spec, module):
     if stdout:
         # If the requested package name is just a stem, like "python", we may
         # find multiple packages with that name.
-        pkg_spec['installed_names'] = [line.rstrip() for line in stdout.splitlines()]
+        pkg_spec['installed_names'] = [name for name in stdout.splitlines()]
         module.debug("get_package_state(): installed_names = %s" % pkg_spec['installed_names'])
         return True
     else:
