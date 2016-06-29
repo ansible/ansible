@@ -317,13 +317,17 @@ except ImportError:
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
 LXD_ANSIBLE_STATES = {
-    'present': '', # TODO: Separate state for profile
     'started': '_started',
     'stopped': '_stopped',
     'restarted': '_restarted',
     'absent': '_destroyed',
     'frozen': '_frozen'
 }
+
+# PROFILE_STATES is a list for states supported for type=profiles
+PROFILES_STATES = [
+    'present', 'absent'
+]
 
 # ANSIBLE_LXD_STATES is a map of states of lxd containers to the Ansible
 # lxc_container module state parameter value.
@@ -361,8 +365,13 @@ class LxdContainerManagement(object):
         self.name = self.module.params['name']
         self.type = self.module.params['type']
         self._build_config()
-        # TODO: check state value according to type
+
         self.state = self.module.params['state']
+        if self.type == 'container':
+            self._check_argument_choices('state', self.state, LXD_ANSIBLE_STATES.keys())
+        elif self.type == 'profile':
+            self._check_argument_choices('state', self.state, PROFILES_STATES)
+
         self.new_name = self.module.params.get('new_name', None)
         self.timeout = self.module.params['timeout']
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
@@ -382,6 +391,12 @@ class LxdContainerManagement(object):
             self.connection = HTTPSConnection(parts.get('netloc'), context=ctx, timeout=self.timeout)
         self.logs = []
         self.actions = []
+
+    def _check_argument_choices(self, name, value, choices):
+        if value not in choices:
+            choices_str=",".join([str(c) for c in choices])
+            msg="value of %s must be one of: %s, got: %s" % (name, choices_str, value)
+            self.module.fail_json(msg=msg)
 
     def _build_config(self):
         self.config = {}
@@ -767,7 +782,7 @@ def main():
                 type='dict',
             ),
             state=dict(
-                choices=LXD_ANSIBLE_STATES.keys(),
+                choices=list(set(LXD_ANSIBLE_STATES.keys()) | set(PROFILES_STATES)),
                 default='started'
             ),
             timeout=dict(
