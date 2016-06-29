@@ -128,6 +128,34 @@ options:
           - The unix domain socket path for the LXD server.
         required: false
         default: /var/lib/lxd/unix.socket
+    url:
+        description:
+          - The https URL for the LXD server.
+          - If url is set, this module connects to the LXD server via https.
+            If url it not set, this module connects to the LXD server via
+            unix domain socket specified with unix_socket_path.
+    key_file:
+        description:
+          - The client certificate key file path.
+        required: false
+        default: >
+          '{}/.config/lxc/client.key'.format(os.environ['HOME'])
+    cert_file:
+        description:
+          - The client certificate file path.
+        required: false
+        default: >
+          '{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+    trust_password:
+        description:
+          - The client trusted password.
+          - You need to set this password on the LXD server before
+            running this module using the following command.
+            lxc config set core.trust_password <some random password>
+            See https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/
+          - If trust_password is set, this module send a request for
+            authentication before sending any requests.
+        required: false
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
@@ -205,11 +233,17 @@ EXAMPLES = """
           alias: "ubuntu/xenial/amd64"
         profiles: ["default"]
 
+# An example for connecting to the LXD server using https
 - hosts: localhost
   connection: local
   tasks:
   - name: create macvlan profile
     lxd_container:
+      url: https://127.0.0.1:8443
+      # These cert_file and key_file values are equal to the default values.
+      #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
+      #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
+      trust_password: mypassword
       type: profile
       name: macvlan
       state: present
@@ -247,6 +281,8 @@ lxd_container:
       sample: ["create", "start"]
 """
 
+import os
+
 try:
     import json
 except ImportError:
@@ -254,11 +290,12 @@ except ImportError:
 
 # httplib/http.client connection using unix domain socket
 import socket
+import ssl
 try:
-    from httplib import HTTPConnection
+    from httplib import HTTPConnection, HTTPSConnection
 except ImportError:
     # Python 3
-    from http.client import HTTPConnection
+    from http.client import HTTPConnection, HTTPSConnection
 
 class UnixHTTPConnection(HTTPConnection):
     def __init__(self, path, timeout=None):
@@ -270,6 +307,12 @@ class UnixHTTPConnection(HTTPConnection):
         sock.connect(self.path)
         self.sock = sock
 
+from ansible.module_utils.urls import generic_urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    # Python 3
+    from url.parse import urlparse
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -326,7 +369,17 @@ class LxdContainerManagement(object):
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
         self.unix_socket_path = self.module.params['unix_socket_path']
-        self.connection = UnixHTTPConnection(self.unix_socket_path, timeout=self.timeout)
+        self.url = self.module.params.get('url', None)
+        self.key_file = self.module.params.get('key_file', None)
+        self.cert_file = self.module.params.get('cert_file', None)
+        self.trust_password = self.module.params.get('trust_password', None)
+        if self.url is None:
+            self.connection = UnixHTTPConnection(self.unix_socket_path, timeout=self.timeout)
+        else:
+            parts = generic_urlparse(urlparse(self.url))
+            ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ctx.load_cert_chain(self.cert_file, keyfile=self.key_file)
+            self.connection = HTTPSConnection(parts.get('netloc'), context=ctx, timeout=self.timeout)
         self.logs = []
         self.actions = []
 
@@ -336,6 +389,10 @@ class LxdContainerManagement(object):
             param_val = self.module.params.get(attr, None)
             if param_val is not None:
                 self.config[attr] = param_val
+
+    def _authenticate(self):
+        body_json = {'type': 'client', 'password': self.trust_password}
+        self._send_request('POST', '/1.0/certificates', body_json=body_json)
 
     def _send_request(self, method, url, body_json=None, ok_error_codes=None):
         try:
@@ -359,8 +416,18 @@ class LxdContainerManagement(object):
                     logs=self.logs
                 )
             return resp_json
-        except socket.error:
-            self.module.fail_json(msg='cannot connect to the LXD server', unix_socket_path=self.unix_socket_path)
+        except socket.error as e:
+            if self.url is None:
+                self.module.fail_json(
+                    msg='cannot connect to the LXD server',
+                    unix_socket_path=self.unix_socket_path, error=e
+                )
+            else:
+                self.module.fail_json(
+                    msg='cannot connect to the LXD server',
+                    url=self.url, key_file=self.key_file, cert_file=self.cert_file,
+                    error=e
+                )
 
     def _operate_and_wait(self, method, path, body_json=None):
         resp_json = self._send_request(method, path, body_json=body_json)
@@ -604,7 +671,7 @@ class LxdContainerManagement(object):
         self.actions.append('create')
 
     def _rename_profile(self):
-        config = { 'name': self.new_name }
+        config = {'name': self.new_name}
         self._send_request('POST', '/1.0/profiles/{}'.format(self.name), config)
         self.actions.append('rename')
         self.name = self.new_name
@@ -635,6 +702,9 @@ class LxdContainerManagement(object):
 
     def run(self):
         """Run the main method."""
+
+        if self.trust_password is not None:
+            self._authenticate()
 
         if self.type == 'container':
             self.old_container_json = self._get_container_json()
@@ -715,6 +785,20 @@ def main():
             unix_socket_path=dict(
                 type='str',
                 default='/var/lib/lxd/unix.socket'
+            ),
+            url=dict(
+                type='str',
+            ),
+            key_file=dict(
+                type='str',
+                default='{}/.config/lxc/client.key'.format(os.environ['HOME'])
+            ),
+            cert_file=dict(
+                type='str',
+                default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+            ),
+            trust_password=dict(
+                type='str',
             )
         ),
         supports_check_mode=False,
