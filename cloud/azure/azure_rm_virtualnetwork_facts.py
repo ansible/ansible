@@ -72,16 +72,11 @@ EXAMPLES = '''
           - testing
 '''
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: False
-objects:
-    description: List containing a set of facts for each selected object.
+azure_virtualnetworks:
+    description: List of virtual network dicts.
     returned: always
     type: list
-    sample: [{
+    example: [{
         "etag": 'W/"532ba1be-ae71-40f2-9232-3b1d9cf5e37e"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet2001",
         "location": "eastus2",
@@ -126,7 +121,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            objects=[]
+            ansible_facts=dict(azure_virtualnetworks=[])
         )
 
         self.name = None
@@ -143,9 +138,9 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['objects'] = self.get_item()
+            self.results['ansible_facts']['azure_virtualnetworks'] = self.get_item()
         else:
-            self.results['objects'] = self.list_items()
+            self.results['ansible_facts']['azure_virtualnetworks'] = self.list_items()
 
         return self.results
 
