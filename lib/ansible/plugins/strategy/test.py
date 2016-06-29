@@ -36,11 +36,7 @@ class StrategyModule(linear.StrategyModule):
     This makes running test plays a little more similar to running tests - don't
     stop running tests on the first failure, but run the entire test suite.
 
-    This strategy is best used with the assert_su
-
-
-
-    mmary callback plugin, so that once
+    This strategy is best used with the assert_summary callback plugin, so that once
     the test play has completed running it'll generate a detailed report of the
     tests run in the play.
 
