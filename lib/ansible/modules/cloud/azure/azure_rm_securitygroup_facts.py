@@ -68,16 +68,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: False
-objects:
-    description: List containing a set of facts for each selected object.
+azure_securitygroups:
+    description: List containing security group dicts.
     returned: always
     type: list
-    sample: [{
+    example: [{
         "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
         "location": "eastus2",
@@ -229,7 +224,7 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            objects=[]
+            ansible_facts=dict(azure_securitygroups=[])
         )
 
         self.name = None
@@ -245,9 +240,9 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['objects'] = self.get_item()
+            self.results['ansible_facts']['azure_securitygroups'] = self.get_item()
         else:
-            self.results['objects'] = self.list_items()
+            self.results['ansible_facts']['azure_securitygroups'] = self.list_items()
 
         return self.results
 
@@ -262,7 +257,9 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            grp = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+            grp['name'] = item.name
+            result = [grp]
 
         return result
 
@@ -276,7 +273,9 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                grp = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                grp['name'] = item.name
+                results.append(grp)
         return results
 
 

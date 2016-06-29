@@ -167,6 +167,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                 changed = True
             elif self.state == 'present':
                 update_tags, results['tags'] = self.update_tags(results['tags'])
+                self.log("update tags %s" % update_tags)
+                self.log("new tags: %s" % str(results['tags']))
                 if update_tags:
                     changed = True
 

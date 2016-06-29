@@ -53,9 +53,9 @@ options:
         default: resource_group location
     account_type:
         description:
-            - "Type of storage account. Required when creating a storage account. NOTE: StandardZRS and PremiumLRS
+            - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
               accounts cannot be changed to other account types, and other account types cannot be changed to
-              StandardZRS or PremiumLRS."
+              Standard_ZRS or Premium_LRS."
         required: false
         default: null
         choices:
@@ -74,6 +74,15 @@ options:
             - Can be added to an existing storage account. Will be ignored during storage account creation.
         required: false
         default: null
+    kind:
+        description:
+            - The 'kind' of storage.
+        required: false
+        default: 'Storage'
+        choices:
+            - Storage
+            - StorageBlob
+        version_added: "2.2"
 
 extends_documentation_fragment:
     - azure
@@ -143,10 +152,9 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.mgmt.storage.models import AccountType,\
-                                          ProvisioningState, \
-                                          StorageAccountUpdateParameters,\
-                                          CustomDomain, StorageAccountCreateParameters
+    from azure.mgmt.storage.models.storage_management_client_enums import ProvisioningState, SkuName, SkuTier, Kind
+    from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
+                                          StorageAccountCreateParameters, Sku
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -168,9 +176,10 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
+            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage'])
         )
 
-        for key in AccountType:
+        for key in SkuName:
             self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
@@ -187,6 +196,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         self.custom_domain = None
         self.tags = None
         self.force = None
+        self.kind = None
 
         super(AzureRMStorageAccount, self).__init__(self.module_arg_spec,
                                                     supports_check_mode=True)
@@ -270,7 +280,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             location=account_obj.location,
             resource_group=self.resource_group,
             type=account_obj.type,
-            account_type=account_obj.account_type.value,
+            sku_tier=account_obj.sku.tier.value,
+            sku_name=account_obj.sku.name.value,
             provisioning_state=account_obj.provisioning_state.value,
             secondary_location=account_obj.secondary_location,
             status_of_primary=(account_obj.status_of_primary.value
@@ -308,22 +319,26 @@ class AzureRMStorageAccount(AzureRMModuleBase):
     def update_account(self):
         self.log('Update storage account {0}'.format(self.name))
         if self.account_type:
-            if self.account_type != self.account_dict['account_type']:
+            if self.account_type != self.account_dict['sku_name']:
                 # change the account type
-                if self.account_dict['account_type'] in [AccountType.premium_lrs, AccountType.standard_zrs]:
+                if self.account_dict['sku_name'] in [SkuName.premium_lrs, SkuName.standard_zrs]:
                     self.fail("Storage accounts of type {0} and {1} cannot be changed.".format(
-                        AccountType.premium_lrs, AccountType.standard_zrs))
-                if self.account_type in [AccountType.premium_lrs, AccountType.standard_zrs]:
+                        SkuName.premium_lrs, SkuName.standard_zrs))
+                if self.account_type in [SkuName.premium_lrs, SkuName.standard_zrs]:
                     self.fail("Storage account of type {0} cannot be changed to a type of {1} or {2}.".format(
-                        self.account_dict['account_type'], AccountType.premium_lrs, AccountType.standard_zrs))
+                        self.account_dict['sku_name'], SkuName.premium_lrs, SkuName.standard_zrs))
 
                 self.results['changed'] = True
-                self.account_dict['account_type'] = self.account_type
+                self.account_dict['sku_name'] = self.account_type
 
                 if self.results['changed'] and not self.check_mode:
                     # Perform the update. The API only allows changing one attribute per call.
                     try:
-                        parameters = StorageAccountUpdateParameters(account_type=self.account_dict['account_type'])
+                        self.log("sku_name: %s" % self.account_dict['sku_name'])
+                        self.log("sku_tier: %s" % self.account_dict['sku_tier'])
+                        sku = Sku(SkuName(self.account_dict['sku_name']))
+                        sku.tier = SkuTier(self.account_dict['sku_tier'])
+                        parameters = StorageAccountUpdateParameters(sku=sku)
                         self.storage_client.storage_accounts.update(self.resource_group,
                                                                     self.name,
                                                                     parameters)
@@ -378,8 +393,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             if self.tags:
                 account_dict['tags'] = self.tags
             return account_dict
-        parameters = StorageAccountCreateParameters(account_type=self.account_type, location=self.location,
-                                                    tags=self.tags)
+        sku = Sku(SkuName(self.account_type))
+        sku.tier = SkuTier.standard if 'Standard' in self.account_type else SkuTier['Pemium']
+        parameters = StorageAccountCreateParameters(sku, self.kind, self.location, tags=self.tags)
         self.log(str(parameters))
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
@@ -412,22 +428,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         not be deleted.
         '''
         self.log('Checking for existing blob containers')
-        keys = dict()
+        blob_service = self.get_blob_client(self.resource_group, self.name)
         try:
-            # Get keys from the storage account
-            account_keys = self.storage_client.storage_accounts.list_keys(self.resource_group, self.name)
-            keys['key1'] = account_keys.key1
-            keys['key2'] = account_keys.key2
-        except AzureHttpError as e:
-            self.fail("check_for_container:Failed to get account keys: {0}".format(e))
-
-        try:
-            cloud_storage = CloudStorageAccount(self.name, keys['key1']).create_page_blob_service()
-        except Exception as e:
-            self.fail("check_for_container:Error creating blob service: {0}".format(e))
-
-        try:
-            response = cloud_storage.list_containers()
+            response = blob_service.list_containers()
         except AzureMissingResourceHttpError:
             # No blob storage available?
             return False

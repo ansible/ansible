@@ -68,16 +68,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: False
-objects:
-    description: List containing a set of facts for each selected object.
+azure_publicipaddresses:
+    description: List of public IP address dicts.
     returned: always
     type: list
-    sample: [{
+    example: [{
         "etag": 'W/"a31a6d7d-cb18-40a5-b16d-9f4a36c1b18a"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/pip2001",
         "location": "eastus2",
@@ -112,13 +107,13 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             name=dict(type='str'),
-            resource_group=dict(required=True, type='str'),
+            resource_group=dict(type='str'),
             tags=dict(type='list')
         )
 
         self.results = dict(
             changed=False,
-            objects=[]
+            ansible_facts=dict(azure_publicipaddresses=[])
         )
 
         self.name = None
@@ -138,11 +133,11 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
 
         if self.name:
-            self.results['objects'] = self.get_item()
+            self.results['ansible_facts']['azure_publicipaddresses'] = self.get_item()
         elif self.resource_group:
-            self.results['objects'] = self.list_resource_group()
+            self.results['ansible_facts']['azure_publicipaddresses'] = self.list_resource_group()
         else:
-            self.results['objects'] = self.list_all()
+            self.results['ansible_facts']['azure_publicipaddresses'] = self.list_all()
 
         return self.results
 
@@ -157,7 +152,10 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+            pip['name'] = item.name
+            pip['type'] = item.type
+            result = [pip]
 
         return result
 
@@ -171,7 +169,10 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                pip['name'] = item.name
+                pip['type'] = item.type
+                results.append(pip)
         return results
 
     def list_all(self):
@@ -184,7 +185,10 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                pip['name'] = item.name
+                pip['type'] = item.type
+                results.append(pip)
         return results
 
 
