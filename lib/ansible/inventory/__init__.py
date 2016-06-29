@@ -479,7 +479,12 @@ class Inventory(object):
         new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
         if "ansible_python_interpreter" not in new_host.vars:
-            new_host.set_variable("ansible_python_interpreter", sys.executable)
+            py_interp = sys.executable
+            if not py_interp:
+                # sys.executable is not set in some cornercases.  #13585
+                display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. You can correct this by setting ansible_python_interpreter for localhost')
+                py_interp = '/usr/bin/python'
+            new_host.set_variable("ansible_python_interpreter", py_interp)
         self.get_group("ungrouped").add_host(new_host)
         return new_host
 
