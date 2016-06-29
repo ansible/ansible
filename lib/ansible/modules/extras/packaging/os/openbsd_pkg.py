@@ -365,9 +365,14 @@ def get_package_source_path(name, pkg_spec, module):
         return 'databases/sqlports'
     else:
         # try for an exact match first
-        conn = sqlite3.connect('/usr/local/share/sqlports')
+        sqlports_db_file = '/usr/local/share/sqlports'
+        if not os.path.isfile(sqlports_db_file):
+            module.fail_json(msg="sqlports file '%s' is missing" % sqlports_db_file)
+
+        conn = sqlite3.connect(sqlports_db_file)
         first_part_of_query = 'SELECT fullpkgpath, fullpkgname FROM ports WHERE fullpkgname'
         query = first_part_of_query + ' = ?'
+        module.debug("package_package_source_path(): query: %s" % query)
         cursor = conn.execute(query, (name,))
         results = cursor.fetchall()
 
@@ -377,11 +382,14 @@ def get_package_source_path(name, pkg_spec, module):
             query = first_part_of_query + ' LIKE ?'
             if pkg_spec['flavor']:
                 looking_for += pkg_spec['flavor_separator'] + pkg_spec['flavor']
+                module.debug("package_package_source_path(): flavor query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             elif pkg_spec['style'] == 'versionless':
                 query += ' AND fullpkgname NOT LIKE ?'
+                module.debug("package_package_source_path(): versionless query: %s" % query)
                 cursor = conn.execute(query, (looking_for, "%s-%%" % looking_for,))
             else:
+                module.debug("package_package_source_path(): query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             results = cursor.fetchall()
 
@@ -465,8 +473,9 @@ def main():
         # build sqlports if its not installed yet
         pkg_spec = {}
         parse_package_name('sqlports', pkg_spec, module)
-        installed_state = get_package_state(name, pkg_spec, module)
+        installed_state = get_package_state('sqlports', pkg_spec, module)
         if not installed_state:
+            module.debug("main(): installing sqlports")
             package_present('sqlports', installed_state, pkg_spec, module)
 
     if name == '*':
