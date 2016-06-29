@@ -22,6 +22,7 @@ from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
 from ansible.module_utils.splitter import split_args, unquote
+from ansible.utils.unicode import to_bytes
 import ansible.constants as C
 import pipes
 import shlex
@@ -603,7 +604,7 @@ class Play(object):
                     continue
 
             if 'include' in x:
-                tokens = split_args(str(x['include']))
+                tokens = split_args(to_bytes(x['include'], nonstring='simplerepr'))
                 included_additional_conditions = list(additional_conditions)
                 include_vars = {}
                 for k in x:
