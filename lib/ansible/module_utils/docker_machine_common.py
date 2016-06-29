@@ -58,7 +58,7 @@ if not HAS_DOCKER_MACHINE_PY:
 class AnsibleDockerMachine(Machine):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None):
+                 required_together=None, required_if=None, required_one_of=None):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_MACHINE_COMMON_ARGS)
@@ -83,7 +83,8 @@ class AnsibleDockerMachine(Machine):
                 supports_check_mode=supports_check_mode,
                 mutually_exclusive=mutually_exclusive_params,
                 required_together=required_together_params,
-                required_if=required_if)
+                required_if=required_if,
+                required_one_of=required_one_of)
 
         if not HAS_DOCKER_MACHINE_PY:
             self.fail("Failed to import docker-machine-py - {}. Try `pip install docker-machine-py`"
