@@ -80,6 +80,9 @@ java_certs: cert_url=google.com keystore_path=/usr/lib/jvm/jre7/lib/security/cac
 
 # Import SSL certificate from google.com to a keystore, create it if it doesn't exist
 java_certs: cert_url=google.com keystore_path=/tmp/cacerts keystore_pass=changeit keystore_create=yes state=present
+
+# Import SSL certificate from local cert file
+java_certs: cert_path=/tmp/google.com.pem cert_alias=google.com keystore_path=/tmp/cacerts keystore_pass=changeit keystore_create=yes state=present
 '''
 
 RETURN = '''
@@ -136,9 +139,8 @@ def import_cert_url(module, url, port, keystore_path, keystore_pass, alias):
     else:
         return module.fail_json(msg=import_out, rc=rc, cmd=import_cmd)
 
-
-def import_cert_path(module, path, keystore_path, keystore_pass):
-    import_cmd = "keytool -importcert -noprompt -keystore '%s' -storepass '%s' -file '%s'" % (keystore_path, keystore_pass, path)
+def import_cert_path(module, path, keystore_path, keystore_pass, alias):
+    import_cmd = "keytool -importcert -noprompt -keystore '%s' -storepass '%s' -file '%s' -alias '%s'" % (keystore_path, keystore_pass, path, alias)
 
     # Use local certificate from local path and import it to a java keystore
     (rc, import_out, import_err) = module.run_command(import_cmd, check_rc=False)
@@ -147,7 +149,6 @@ def import_cert_path(module, path, keystore_path, keystore_pass):
             rc=rc, cmd=import_cmd, stdout_lines=import_out)
     else:
         return module.fail_json(msg=import_out, rc=rc, cmd=import_cmd)
-
 
 def delete_cert(module, keystore_path, keystore_pass, alias):
     del_cmd = "keytool -delete -keystore '%s' -storepass '%s' -alias '%s'" % (keystore_path, keystore_pass, alias)
@@ -175,12 +176,12 @@ def test_keystore(module, keystore_path):
 
 def main():
     argument_spec = dict(
-            cert_url = dict(required=False),
-            cert_path = dict(required=False),
-            cert_alias = dict(required=False),
+            cert_url = dict(required=False, type='str'),
+            cert_path = dict(required=False, type='str'),
+            cert_alias = dict(required=False, type='str'),
             cert_port = dict(required=False, default='443'),
-            keystore_path = dict(required=False),
-            keystore_pass = dict(required=False, default='changeit'),
+            keystore_path = dict(required=False, type='str'),
+            keystore_pass = dict(required=False, default='changeit', type='str'),
             keystore_create = dict(required=False, default=False, type='bool'),
             state = dict(required=False, default='present', choices=['present', 'absent'])
     )
@@ -203,6 +204,9 @@ def main():
     keystore_create = module.params.get('keystore_create')
     state = module.params.get('state')
 
+    if path and not cert_alias:
+      module.fail_json(changed=False, msg="Using local path import from %s requires alias argument."%(keystore_path))
+
     test_keytool(module)
 
     if not keystore_create:
@@ -218,7 +222,7 @@ def main():
         module.exit_json(changed=False)
     else:
         if path:
-            import_cert_path(module, path, keystore_path, keystore_pass)
+            import_cert_path(module, path, keystore_path, keystore_pass, cert_alias)
 
         if url:
             import_cert_url(module, url, port, keystore_path, keystore_pass, cert_alias)
