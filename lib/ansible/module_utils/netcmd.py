@@ -19,7 +19,6 @@
 
 import re
 import time
-import collections
 import itertools
 import shlex
 
@@ -153,25 +152,16 @@ class FailedConditionsError(Exception):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
 
-class CommandRunner(collections.Mapping):
+class CommandRunner(object):
 
     def __init__(self, module):
         self.module = module
 
-        self.items = dict()
+        self.items = list()
         self.conditionals = set()
 
         self.retries = 10
         self.interval = 1
-
-    def __getitem__(self, key):
-        return self.items[key]
-
-    def __len__(self):
-        return len(self.items)
-
-    def __iter__(self):
-        return iter(self.items)
 
     def add_command(self, command, output=None):
         self.module.cli.add_commands(command, output=output)
@@ -181,14 +171,14 @@ class CommandRunner(collections.Mapping):
 
     def run_commands(self):
         responses = self.module.cli.run_commands()
-        for cmd, resp in itertools.izip(self.module.cli.commands, responses):
-            self.items[str(cmd)] = resp
+        self.items = responses
 
     def run(self):
         while self.retries > 0:
             self.run_commands()
+
             for item in list(self.conditionals):
-                if item(self.items.values()):
+                if item(self.items):
                     self.conditionals.remove(item)
 
             if not self.conditionals:
