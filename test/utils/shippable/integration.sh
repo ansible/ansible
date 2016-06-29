@@ -22,7 +22,7 @@ else
 fi
 
 if [ "${copy_source}" ]; then
-    test_shared_dir="/tmp/shared-dir"
+    test_shared_dir="/shared"
 else
     test_shared_dir="${test_ansible_dir}"
 fi
