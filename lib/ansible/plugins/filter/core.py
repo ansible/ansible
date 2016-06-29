@@ -186,7 +186,7 @@ def ternary(value, true_val, false_val):
         return false_val
 
 
-def version_compare(value, version, operator='eq', strict=False):
+def version_compare(value, operator='eq', version='0.0', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
         '==': 'eq', '=':  'eq', 'eq': 'eq',
