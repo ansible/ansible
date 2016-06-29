@@ -546,16 +546,16 @@ class LxdContainerManagement(object):
             'devices': old_metadata['devices'],
             'profiles': old_metadata['profiles']
         }
-        if self._needs_to_change_config('architecture'):
+        if self._needs_to_change_container_config('architecture'):
             body_json['architecture'] = self.config['architecture']
-        if self._needs_to_change_config('config'):
+        if self._needs_to_change_container_config('config'):
             for k, v in self.config['config'].items():
                 body_json['config'][k] = v
-        if self._needs_to_change_config('ephemeral'):
+        if self._needs_to_change_container_config('ephemeral'):
             body_json['ephemeral'] = self.config['ephemeral']
-        if self._needs_to_change_config('devices'):
+        if self._needs_to_change_container_config('devices'):
             body_json['devices'] = self.config['devices']
-        if self._needs_to_change_config('profiles'):
+        if self._needs_to_change_container_config('profiles'):
             body_json['profiles'] = self.config['profiles']
         self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.name), body_json=body_json)
         self.actions.append('apply_container_configs')
