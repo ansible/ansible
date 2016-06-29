@@ -134,7 +134,7 @@ def pip_to_dict(pip):
         type=pip.type,
         location=pip.location,
         tags=pip.tags,
-        public_ip_allocation_method=pip.public_ip_allocation_method.value,
+        public_ip_allocation_method=pip.public_ip_allocation_method,
         dns_settings=dict(),
         ip_address=pip.ip_address,
         idle_timeout_in_minutes=pip.idle_timeout_in_minutes,

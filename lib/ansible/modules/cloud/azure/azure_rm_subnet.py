@@ -95,18 +95,36 @@ EXAMPLES = '''
 RETURN = '''
 state:
     description: Current state of the subnet.
-    returned: always
-    type: dict
-    sample: {
-        "address_prefix": "10.1.0.0/16",
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/My_Virtual_Network/subnets/foobar",
-        "name": "foobar",
-        "network_security_group": {
-            "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo",
-            "name": "secgroupfoo"
-        },
-        "provisioning_state": "Succeeded"
-    }
+    returned: success
+    type: complex
+    contains:
+        address_prefix:
+          description: IP address CIDR.
+          type: str
+          example: "10.1.0.0/16"
+        id:
+          description: Subnet resource path.
+          type: str
+          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/My_Virtual_Network/subnets/foobar"
+        name:
+          description: Subnet name.
+          type: str
+          example: "foobar"
+        network_security_group:
+          type: complex
+          contains:
+            id:
+              description: Security group resource identifier.
+              type: str
+              example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
+            name:
+              description: Name of the security group.
+              type: str
+              example: "secgroupfoo"
+        provisioning_state:
+          description: Success or failure of the provisioning event.
+          type: str
+          example: "Succeeded"
 '''
 
 
@@ -235,7 +253,6 @@ class AzureRMSubnet(AzureRMModuleBase):
                     )
                     if nsg:
                         subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             name=nsg.name,
                                                                              location=nsg.location,
                                                                              resource_guid=nsg.resource_guid)
 
@@ -248,7 +265,6 @@ class AzureRMSubnet(AzureRMModuleBase):
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
                         subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             name=nsg.name,
                                                                              location=nsg.location,
                                                                              resource_guid=nsg.resource_guid)
 
@@ -280,7 +296,7 @@ class AzureRMSubnet(AzureRMModuleBase):
             poller = self.network_client.subnets.delete(self.resource_group,
                                                         self.virtual_network_name,
                                                         self.name)
-            result = self.get_poller_results(poller)
+            result = self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting subnet {0} - {1}".format(self.name, str(exc)))
 

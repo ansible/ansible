@@ -100,16 +100,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: Whether or not the object was changed.
-    returned: always
-    type: bool
-    sample: False
-objects:
-    description: List containing a set of facts for each selected object.
+azure_vmimages:
+    description: List of image dicts.
     returned: always
     type: list
-    sample: []
+    example: []
 '''
 
 from ansible.module_utils.basic import *
@@ -122,6 +117,7 @@ except:
     # This is handled in azure_rm_common
     pass
 
+AZURE_ENUM_MODULES = ['azure.mgmt.compute.models.compute_management_client_enums']
 
 class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
@@ -137,7 +133,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            results=[]
+            ansible_facts=dict(azure_vmimages=[])
         )
 
         self.location = None
@@ -154,13 +150,13 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.location and self.publisher and self.offer and self.sku and self.version:
-            self.results['objects'] = self.get_item()
+            self.results['ansible_facts']['azure_vmimages'] = self.get_item()
         elif self.location and self.publisher and self.offer and self.sku:
-            self.results['objects'] = self.list_images()
+            self.results['ansible_facts']['azure_vmimages'] = self.list_images()
         elif self.location and self.publisher:
-            self.results['objects'] = self.list_offers()
+            self.results['ansible_facts']['azure_vmimages'] = self.list_offers()
         elif self.location:
-            self.results['objects'] = self.list_publishers()
+            self.results['ansible_facts']['azure_vmimages'] = self.list_publishers()
 
         return self.results
 
@@ -178,7 +174,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
             pass
 
         if item:
-            result = [self.serialize_obj(item, 'VirtualMachineImage')]
+            result = [self.serialize_obj(item, 'VirtualMachineImage', enum_modules=AZURE_ENUM_MODULES)]
 
         return result
 
@@ -197,7 +193,8 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
         if response:
             for item in response:
-                results.append(self.serialize_obj(item, 'VirtualMachineImageResource'))
+                results.append(self.serialize_obj(item, 'VirtualMachineImageResource',
+                                                  enum_modules=AZURE_ENUM_MODULES))
         return results
 
     def list_offers(self):
@@ -213,7 +210,8 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
         if response:
             for item in response:
-                results.append(self.serialize_obj(item, 'VirtualMachineImageResource'))
+                results.append(self.serialize_obj(item, 'VirtualMachineImageResource',
+                                                  enum_modules=AZURE_ENUM_MODULES))
         return results
 
     def list_publishers(self):
@@ -228,7 +226,8 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
         if response:
             for item in response:
-                results.append(self.serialize_obj(item, 'VirtualMachineImageResource'))
+                results.append(self.serialize_obj(item, 'VirtualMachineImageResource',
+                                                  enum_modules=AZURE_ENUM_MODULES))
         return results
 
 
