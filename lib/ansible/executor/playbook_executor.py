@@ -44,7 +44,7 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords,callback):
+    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords, callback=None):
         self._playbooks        = playbooks
         self._inventory        = inventory
         self._variable_manager = variable_manager
