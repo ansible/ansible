@@ -17,10 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import re
 
-from ansible.module_utils.basic import json
+from ansible.module_utils.basic import json, get_exception, AnsibleModule
 from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
@@ -33,7 +32,7 @@ EAPI_FORMATS = ['json', 'text']
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
-ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
+ModuleStub = AnsibleModule
 
 def argument_spec():
     return dict(
@@ -205,7 +204,8 @@ class Eapi(EosConfigMixin):
 
     def __init__(self):
         self.url = None
-        self.url_args = ModuleStub(url_argument_spec(), self._error)
+        self.url_args = ModuleStub(url_argument_spec())
+        self.url_args.fail_json = self._error
         self.enable = None
         self.default_output = 'json'
         self._connected = False
