@@ -363,7 +363,7 @@ def main():
             try:
                 url = target_endpoint + KIND_URL[kind]
             except KeyError:
-                module.fail_json("invalid resource kind specified in the data: '%s'" % kind)
+                module.fail_json(msg="invalid resource kind specified in the data: '%s'" % kind)
             url = url.replace("{namespace}", namespace)
         else:
             url = target_endpoint
