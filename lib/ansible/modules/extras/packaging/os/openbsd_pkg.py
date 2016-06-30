@@ -374,7 +374,7 @@ def get_package_source_path(name, pkg_spec, module):
         conn = sqlite3.connect(sqlports_db_file)
         first_part_of_query = 'SELECT fullpkgpath, fullpkgname FROM ports WHERE fullpkgname'
         query = first_part_of_query + ' = ?'
-        module.debug("package_package_source_path(): query: %s" % query)
+        module.debug("package_package_source_path(): exact query: %s" % query)
         cursor = conn.execute(query, (name,))
         results = cursor.fetchall()
 
@@ -384,14 +384,14 @@ def get_package_source_path(name, pkg_spec, module):
             query = first_part_of_query + ' LIKE ?'
             if pkg_spec['flavor']:
                 looking_for += pkg_spec['flavor_separator'] + pkg_spec['flavor']
-                module.debug("package_package_source_path(): flavor query: %s" % query)
+                module.debug("package_package_source_path(): fuzzy flavor query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             elif pkg_spec['style'] == 'versionless':
                 query += ' AND fullpkgname NOT LIKE ?'
-                module.debug("package_package_source_path(): versionless query: %s" % query)
+                module.debug("package_package_source_path(): fuzzy versionless query: %s" % query)
                 cursor = conn.execute(query, (looking_for, "%s-%%" % looking_for,))
             else:
-                module.debug("package_package_source_path(): query: %s" % query)
+                module.debug("package_package_source_path(): fuzzy query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             results = cursor.fetchall()
 
