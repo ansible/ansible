@@ -123,17 +123,11 @@ options:
             when it stops or restarts the container.
         required: false
         default: false
-    unix_socket_path:
-        description:
-          - The unix domain socket path for the LXD server.
-        required: false
-        default: /var/lib/lxd/unix.socket
     url:
         description:
-          - The https URL for the LXD server.
-          - If url is set, this module connects to the LXD server via https.
-            If url it not set, this module connects to the LXD server via
-            unix domain socket specified with unix_socket_path.
+          - The unix domain socket path or the https URL for the LXD server.
+        required: false
+        default: unix:/var/lib/lxd/unix.socket
     key_file:
         description:
           - The client certificate key file path.
@@ -383,19 +377,21 @@ class LxdContainerManagement(object):
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
-        self.unix_socket_path = self.module.params['unix_socket_path']
-        self.url = self.module.params.get('url', None)
+        self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
         self.trust_password = self.module.params.get('trust_password', None)
         self.debug = self.module.params['debug']
-        if self.url is None:
-            self.connection = UnixHTTPConnection(self.unix_socket_path)
-        else:
+        if self.url.startswith('https:'):
             parts = generic_urlparse(urlparse(self.url))
             ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ctx.load_cert_chain(self.cert_file, keyfile=self.key_file)
             self.connection = HTTPSConnection(parts.get('netloc'), context=ctx)
+        elif self.url.startswith('unix:'):
+            unix_socket_path = self.url[len('unix:'):]
+            self.connection = UnixHTTPConnection(unix_socket_path)
+        else:
+            self.module.fail_json(msg='URL scheme must be unix: or https:')
         self.logs = []
         self.actions = []
 
@@ -814,12 +810,9 @@ def main():
                 type='bool',
                 default=False
             ),
-            unix_socket_path=dict(
-                type='str',
-                default='/var/lib/lxd/unix.socket'
-            ),
             url=dict(
                 type='str',
+                default='unix:/var/lib/lxd/unix.socket'
             ),
             key_file=dict(
                 type='str',
