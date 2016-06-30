@@ -278,9 +278,8 @@ lxd_container:
       returned: when state is started or restarted
       sample: "stopped"
     logs:
-      descriptions: The logs of requests and responses. This key exists only when you set the
-                    debug paramter to true or this module failed.
-      returned: when requests are sent
+      descriptions: The logs of requests and responses.
+      returned: when the debug parameter is true and any requests were sent.
     actions:
       description: List of actions performed for the container.
       returned: success
@@ -432,12 +431,12 @@ class LxdContainerManagement(object):
             if resp_type == 'error':
                 if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
                     return resp_json
-                self.module.fail_json(
-                    msg='error response',
-                    request={'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
-                    response={'json': resp_json},
-                    logs=self.logs
-                )
+                fail_params = {
+                    'msg': self._get_err_from_resp_json(resp_json),
+                }
+                if self.debug:
+                    fail_params['logs'] = self.logs
+                self.module.fail_json(**fail_params)
             return resp_json
         except socket.error as e:
             if self.url is None:
@@ -452,18 +451,27 @@ class LxdContainerManagement(object):
                     error=e
                 )
 
+    @staticmethod
+    def _get_err_from_resp_json(resp_json):
+        metadata = resp_json.get('metadata', None)
+        if metadata is not None:
+            err = metadata.get('err', None)
+        if err is None:
+            err = resp_json.get('error', None)
+        return err
+
     def _operate_and_wait(self, method, path, body_json=None):
         resp_json = self._send_request(method, path, body_json=body_json)
         if resp_json['type'] == 'async':
             url = '{0}/wait'.format(resp_json['operation'])
             resp_json = self._send_request('GET', url)
             if resp_json['metadata']['status'] != 'Success':
-                self.module.fail_json(
-                    msg='error response for waiting opearation',
-                    request={'method': method, 'url': url},
-                    response={'json': resp_json},
-                    logs=self.logs
-                )
+                fail_params = {
+                    'msg': self._get_err_from_resp_json(resp_json),
+                }
+                if self.debug:
+                    fail_params['logs'] = self.logs
+                self.module.fail_json(**fail_params)
         return resp_json
 
     def _get_container_json(self):
@@ -541,12 +549,14 @@ class LxdContainerManagement(object):
                 return
 
         state_changed = len(self.actions) > 0
-        self.module.fail_json(
-            failed=True,
-            msg='timeout for getting IPv4 addresses',
-            changed=state_changed,
-            actions=self.actions,
-            logs=self.logs)
+        fail_params = {
+            'msg': 'timeout for getting IPv4 addresses',
+            'changed': state_changed,
+            'actions': self.actions
+        }
+        if self.debug:
+            fail_params['logs'] = self.logs
+        self.module.fail_json(**fail_params)
 
     def _started(self):
         if self.old_state == 'absent':
@@ -669,7 +679,6 @@ class LxdContainerManagement(object):
                     self._create_profile()
                 else:
                     self.module.fail_json(
-                        failed=True,
                         msg='new_name must not be set when the profile does not exist and the specified state is present',
                         changed=False)
             else:
@@ -683,7 +692,6 @@ class LxdContainerManagement(object):
                     self._delete_profile()
                 else:
                     self.module.fail_json(
-                        failed=True,
                         msg='new_name must not be set when the profile exists and the specified state is absent',
                         changed=False)
 
