@@ -282,37 +282,7 @@ lxd_container:
 """
 
 import os
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-# httplib/http.client connection using unix domain socket
-import socket
-import ssl
-try:
-    from httplib import HTTPConnection, HTTPSConnection
-except ImportError:
-    # Python 3
-    from http.client import HTTPConnection, HTTPSConnection
-
-class UnixHTTPConnection(HTTPConnection):
-    def __init__(self, path, timeout=None):
-        HTTPConnection.__init__(self, 'localhost', timeout=timeout)
-        self.path = path
-
-    def connect(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self.path)
-        self.sock = sock
-
-from ansible.module_utils.urls import generic_urlparse
-try:
-    from urlparse import urlparse
-except ImportError:
-    # Python 3
-    from url.parse import urlparse
+from ansible.modules.extras.cloud.lxd import LXDClient, LXDClientException
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
@@ -377,22 +347,19 @@ class LxdContainerManagement(object):
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
+
         self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
-        self.trust_password = self.module.params.get('trust_password', None)
         self.debug = self.module.params['debug']
-        if self.url.startswith('https:'):
-            parts = generic_urlparse(urlparse(self.url))
-            ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ctx.load_cert_chain(self.cert_file, keyfile=self.key_file)
-            self.connection = HTTPSConnection(parts.get('netloc'), context=ctx)
-        elif self.url.startswith('unix:'):
-            unix_socket_path = self.url[len('unix:'):]
-            self.connection = UnixHTTPConnection(unix_socket_path)
-        else:
-            self.module.fail_json(msg='URL scheme must be unix: or https:')
-        self.logs = []
+        try:
+            self.client = LXDClient(
+                self.url, key_file=self.key_file, cert_file=self.cert_file,
+                debug=self.debug
+            )
+        except LXDClientException as e:
+            self.module.fail_json(msg=e.msg)
+        self.trust_password = self.module.params.get('trust_password', None)
         self.actions = []
 
     def _check_argument_choices(self, name, value, choices):
@@ -408,76 +375,14 @@ class LxdContainerManagement(object):
             if param_val is not None:
                 self.config[attr] = param_val
 
-    def _authenticate(self):
-        body_json = {'type': 'client', 'password': self.trust_password}
-        self._send_request('POST', '/1.0/certificates', body_json=body_json)
-
-    def _send_request(self, method, url, body_json=None, ok_error_codes=None):
-        try:
-            body = json.dumps(body_json)
-            self.connection.request(method, url, body=body)
-            resp = self.connection.getresponse()
-            resp_json = json.loads(resp.read())
-            self.logs.append({
-                'type': 'sent request',
-                'request': {'method': method, 'url': url, 'json': body_json, 'timeout': self.timeout},
-                'response': {'json': resp_json}
-            })
-            resp_type = resp_json.get('type', None)
-            if resp_type == 'error':
-                if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
-                    return resp_json
-                fail_params = {
-                    'msg': self._get_err_from_resp_json(resp_json),
-                }
-                if self.debug:
-                    fail_params['logs'] = self.logs
-                self.module.fail_json(**fail_params)
-            return resp_json
-        except socket.error as e:
-            if self.url is None:
-                self.module.fail_json(
-                    msg='cannot connect to the LXD server',
-                    unix_socket_path=self.unix_socket_path, error=e
-                )
-            else:
-                self.module.fail_json(
-                    msg='cannot connect to the LXD server',
-                    url=self.url, key_file=self.key_file, cert_file=self.cert_file,
-                    error=e
-                )
-
-    @staticmethod
-    def _get_err_from_resp_json(resp_json):
-        metadata = resp_json.get('metadata', None)
-        if metadata is not None:
-            err = metadata.get('err', None)
-        if err is None:
-            err = resp_json.get('error', None)
-        return err
-
-    def _operate_and_wait(self, method, path, body_json=None):
-        resp_json = self._send_request(method, path, body_json=body_json)
-        if resp_json['type'] == 'async':
-            url = '{0}/wait'.format(resp_json['operation'])
-            resp_json = self._send_request('GET', url)
-            if resp_json['metadata']['status'] != 'Success':
-                fail_params = {
-                    'msg': self._get_err_from_resp_json(resp_json),
-                }
-                if self.debug:
-                    fail_params['logs'] = self.logs
-                self.module.fail_json(**fail_params)
-        return resp_json
-
     def _get_container_json(self):
-        return self._send_request(
+        return self.client.do(
             'GET', '/1.0/containers/{0}'.format(self.name),
             ok_error_codes=[404]
         )
 
     def _get_container_state_json(self):
-        return self._send_request(
+        return self.client.do(
             'GET', '/1.0/containers/{0}/state'.format(self.name),
             ok_error_codes=[404]
         )
@@ -492,12 +397,12 @@ class LxdContainerManagement(object):
         body_json={'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
-        return self._operate_and_wait('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
+        return self.client.do('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
 
     def _create_container(self):
         config = self.config.copy()
         config['name'] = self.name
-        self._operate_and_wait('POST', '/1.0/containers', config)
+        self.client.do('POST', '/1.0/containers', config)
         self.actions.append('create')
 
     def _start_container(self):
@@ -536,23 +441,17 @@ class LxdContainerManagement(object):
         return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
 
     def _get_addresses(self):
-        due = datetime.datetime.now() + datetime.timedelta(seconds=self.timeout)
-        while datetime.datetime.now() < due:
-            time.sleep(1)
-            addresses = self._container_ipv4_addresses()
-            if self._has_all_ipv4_addresses(addresses):
-                self.addresses = addresses
-                return
-
-        state_changed = len(self.actions) > 0
-        fail_params = {
-            'msg': 'timeout for getting IPv4 addresses',
-            'changed': state_changed,
-            'actions': self.actions
-        }
-        if self.debug:
-            fail_params['logs'] = self.logs
-        self.module.fail_json(**fail_params)
+        try:
+            due = datetime.datetime.now() + datetime.timedelta(seconds=self.timeout)
+            while datetime.datetime.now() < due:
+                time.sleep(1)
+                addresses = self._container_ipv4_addresses()
+                if self._has_all_ipv4_addresses(addresses):
+                    self.addresses = addresses
+                    return
+        except LXDClientException as e:
+            e.msg = 'timeout for getting IPv4 addresses'
+            raise
 
     def _started(self):
         if self.old_state == 'absent':
@@ -657,7 +556,7 @@ class LxdContainerManagement(object):
         self.actions.append('apply_container_configs')
 
     def _get_profile_json(self):
-        return self._send_request(
+        return self.client.do(
             'GET', '/1.0/profiles/{0}'.format(self.name),
             ok_error_codes=[404]
         )
@@ -694,12 +593,12 @@ class LxdContainerManagement(object):
     def _create_profile(self):
         config = self.config.copy()
         config['name'] = self.name
-        self._send_request('POST', '/1.0/profiles', config)
+        self.client.do('POST', '/1.0/profiles', config)
         self.actions.append('create')
 
     def _rename_profile(self):
         config = {'name': self.new_name}
-        self._send_request('POST', '/1.0/profiles/{}'.format(self.name), config)
+        self.client.do('POST', '/1.0/profiles/{}'.format(self.name), config)
         self.actions.append('rename')
         self.name = self.new_name
 
@@ -720,40 +619,51 @@ class LxdContainerManagement(object):
         config = self.old_profile_json.copy()
         for k, v in self.config.iteritems():
             config[k] = v
-        self._send_request('PUT', '/1.0/profiles/{}'.format(self.name), config)
+        self.client.do('PUT', '/1.0/profiles/{}'.format(self.name), config)
         self.actions.append('apply_profile_configs')
 
     def _delete_profile(self):
-        self._send_request('DELETE', '/1.0/profiles/{}'.format(self.name))
+        self.client.do('DELETE', '/1.0/profiles/{}'.format(self.name))
         self.actions.append('delete')
 
     def run(self):
         """Run the main method."""
 
-        if self.trust_password is not None:
-            self._authenticate()
+        try:
+            if self.trust_password is not None:
+                self.client.authenticate(self.trust_password)
 
-        if self.type == 'container':
-            self.old_container_json = self._get_container_json()
-            self.old_state = self._container_json_to_module_state(self.old_container_json)
-            action = getattr(self, LXD_ANSIBLE_STATES[self.state])
-            action()
-        elif self.type == 'profile':
-            self.old_profile_json = self._get_profile_json()
-            self.old_state = self._profile_json_to_module_state(self.old_profile_json)
-            self._update_profile()
+            if self.type == 'container':
+                self.old_container_json = self._get_container_json()
+                self.old_state = self._container_json_to_module_state(self.old_container_json)
+                action = getattr(self, LXD_ANSIBLE_STATES[self.state])
+                action()
+            elif self.type == 'profile':
+                self.old_profile_json = self._get_profile_json()
+                self.old_state = self._profile_json_to_module_state(self.old_profile_json)
+                self._update_profile()
 
-        state_changed = len(self.actions) > 0
-        result_json = {
-            'changed': state_changed,
-            'old_state': self.old_state,
-            'actions': self.actions
-        }
-        if self.debug:
-            result_json['logs'] = self.logs
-        if self.addresses is not None:
-            result_json['addresses'] = self.addresses
-        self.module.exit_json(**result_json)
+            state_changed = len(self.actions) > 0
+            result_json = {
+                'changed': state_changed,
+                'old_state': self.old_state,
+                'actions': self.actions
+            }
+            if self.client.debug:
+                result_json['logs'] = self.client.logs
+            if self.addresses is not None:
+                result_json['addresses'] = self.addresses
+            self.module.exit_json(**result_json)
+        except LXDClientException as e:
+            state_changed = len(self.actions) > 0
+            fail_params = {
+                'msg': e.msg,
+                'changed': state_changed,
+                'actions': self.actions
+            }
+            if self.client.debug:
+                fail_params['logs'] = e.kwargs['logs']
+            self.module.fail_json(**fail_params)
 
 
 def main():
