@@ -104,7 +104,7 @@ options:
         default: started
     timeout:
         description:
-          - A timeout of one LXC REST API call.
+          - A timeout for changing the state of the container.
           - This is also used as a timeout for waiting until IPv4 addresses
             are set to the all network interfaces in the container after
             starting or restarting.
@@ -383,12 +383,12 @@ class LxdContainerManagement(object):
         self.cert_file = self.module.params.get('cert_file', None)
         self.trust_password = self.module.params.get('trust_password', None)
         if self.url is None:
-            self.connection = UnixHTTPConnection(self.unix_socket_path, timeout=self.timeout)
+            self.connection = UnixHTTPConnection(self.unix_socket_path)
         else:
             parts = generic_urlparse(urlparse(self.url))
             ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ctx.load_cert_chain(self.cert_file, keyfile=self.key_file)
-            self.connection = HTTPSConnection(parts.get('netloc'), context=ctx, timeout=self.timeout)
+            self.connection = HTTPSConnection(parts.get('netloc'), context=ctx)
         self.logs = []
         self.actions = []
 
@@ -447,12 +447,12 @@ class LxdContainerManagement(object):
     def _operate_and_wait(self, method, path, body_json=None):
         resp_json = self._send_request(method, path, body_json=body_json)
         if resp_json['type'] == 'async':
-            url = '{0}/wait?timeout={1}'.format(resp_json['operation'], self.timeout)
+            url = '{0}/wait'.format(resp_json['operation'])
             resp_json = self._send_request('GET', url)
             if resp_json['metadata']['status'] != 'Success':
                 self.module.fail_json(
                     msg='error response for waiting opearation',
-                    request={'method': method, 'url': url, 'timeout': self.timeout},
+                    request={'method': method, 'url': url},
                     response={'json': resp_json},
                     logs=self.logs
                 )
