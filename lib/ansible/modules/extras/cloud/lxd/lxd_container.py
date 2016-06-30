@@ -156,6 +156,12 @@ options:
           - If trust_password is set, this module send a request for
             authentication before sending any requests.
         required: false
+    debug:
+        description:
+          - If this flag is true, the logs key are added to the result object
+            which keeps all the requests and responses for calling APIs.
+        required: false
+        default: false
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
@@ -263,19 +269,20 @@ lxd_container:
   type: object
   contains:
     addresses:
-      description: mapping from the network device name to a list of IPv4 addresses in the container
+      description: Mapping from the network device name to a list of IPv4 addresses in the container
       returned: when state is started or restarted
       type: object
       sample: {"eth0": ["10.155.92.191"]}
     old_state:
-      description: the old state of the container
+      description: The old state of the container
       returned: when state is started or restarted
       sample: "stopped"
     logs:
-      descriptions: the logs of requests and responses
+      descriptions: The logs of requests and responses. This key exists only when you set the
+                    debug paramter to true or this module failed.
       returned: when requests are sent
     actions:
-      description: list of actions performed for the container
+      description: List of actions performed for the container.
       returned: success
       type: list
       sample: ["create", "start"]
@@ -382,6 +389,7 @@ class LxdContainerManagement(object):
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
         self.trust_password = self.module.params.get('trust_password', None)
+        self.debug = self.module.params['debug']
         if self.url is None:
             self.connection = UnixHTTPConnection(self.unix_socket_path)
         else:
@@ -735,9 +743,10 @@ class LxdContainerManagement(object):
         result_json = {
             'changed': state_changed,
             'old_state': self.old_state,
-            'logs': self.logs,
             'actions': self.actions
         }
+        if self.debug:
+            result_json['logs'] = self.logs
         if self.addresses is not None:
             result_json['addresses'] = self.addresses
         self.module.exit_json(**result_json)
@@ -814,6 +823,10 @@ def main():
             ),
             trust_password=dict(
                 type='str',
+            ),
+            debug=dict(
+                type='bool',
+                default=False
             )
         ),
         supports_check_mode=False,
