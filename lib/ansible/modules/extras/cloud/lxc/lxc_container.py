@@ -603,6 +603,7 @@ class LxcContainerManagement(object):
         self.state = self.module.params.get('state', None)
         self.state_change = False
         self.lxc_vg = None
+        self.lxc_path = self.module.params.get('lxc_path', None)
         self.container_name = self.module.params['name']
         self.container = self.get_container_bind()
         self.archive_info = None
@@ -627,7 +628,7 @@ class LxcContainerManagement(object):
         return num
 
     @staticmethod
-    def _container_exists(container_name):
+    def _container_exists(container_name, lxc_path=None):
         """Check if a container exists.
 
         :param container_name: Name of the container.
@@ -635,7 +636,7 @@ class LxcContainerManagement(object):
         :returns: True or False if the container is found.
         :rtype: ``bol``
         """
-        if [i for i in lxc.list_containers() if i == container_name]:
+        if [i for i in lxc.list_containers(config_path=lxc_path) if i == container_name]:
             return True
         else:
             return False
@@ -944,7 +945,7 @@ class LxcContainerManagement(object):
         :rtype: ``str``
         """
 
-        if self._container_exists(container_name=self.container_name):
+        if self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
             return str(self.container.state).lower()
         else:
             return str('absent')
@@ -1009,7 +1010,7 @@ class LxcContainerManagement(object):
 
         clone_name = self.module.params.get('clone_name')
         if clone_name:
-            if not self._container_exists(container_name=clone_name):
+            if not self._container_exists(container_name=clone_name, lxc_path=self.lxc_path):
                 self.clone_info = {
                     'cloned': self._container_create_clone()
                 }
@@ -1026,7 +1027,7 @@ class LxcContainerManagement(object):
         """
 
         for _ in xrange(timeout):
-            if not self._container_exists(container_name=self.container_name):
+            if not self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
                 break
 
             # Check if the container needs to have an archive created.
@@ -1065,7 +1066,7 @@ class LxcContainerManagement(object):
         """
 
         self.check_count(count=count, method='frozen')
-        if self._container_exists(container_name=self.container_name):
+        if self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
             self._execute_command()
 
             # Perform any configuration updates
@@ -1102,7 +1103,7 @@ class LxcContainerManagement(object):
         """
 
         self.check_count(count=count, method='restart')
-        if self._container_exists(container_name=self.container_name):
+        if self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
             self._execute_command()
 
             # Perform any configuration updates
@@ -1135,7 +1136,7 @@ class LxcContainerManagement(object):
         """
 
         self.check_count(count=count, method='stop')
-        if self._container_exists(container_name=self.container_name):
+        if self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
             self._execute_command()
 
             # Perform any configuration updates
@@ -1165,7 +1166,7 @@ class LxcContainerManagement(object):
         """
 
         self.check_count(count=count, method='start')
-        if self._container_exists(container_name=self.container_name):
+        if self._container_exists(container_name=self.container_name, lxc_path=self.lxc_path):
             container_state = self._get_state()
             if container_state == 'running':
                 pass
