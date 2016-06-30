@@ -76,10 +76,16 @@ author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 
 EXAMPLES = '''
 # Set vm.swappiness to 5 in /etc/sysctl.conf
-- sysctl: name=vm.swappiness value=5 state=present
+- sysctl: 
+    name: vm.swappiness 
+    value: 5
+    state: present
 
 # Remove kernel.panic entry from /etc/sysctl.conf
-- sysctl: name=kernel.panic state=absent sysctl_file=/etc/sysctl.conf
+- sysctl:
+    name: kernel.panic
+    state: absent 
+    sysctl_file: /etc/sysctl.conf
 
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf reload=no
