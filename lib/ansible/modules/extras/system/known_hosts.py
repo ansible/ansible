@@ -124,7 +124,7 @@ def enforce_state(module, params):
         try:
             inf=open(path,"r")
         except IOError:
-            e = get_exception
+            e = get_exception()
             if e.errno == errno.ENOENT:
                 inf=None
             else:
