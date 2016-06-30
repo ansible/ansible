@@ -299,7 +299,7 @@ def parse_package_name(name, pkg_spec, module):
     # Stop if someone is giving us a name that both has a version and is
     # version-less at the same time.
     if version_match and versionless_match:
-        module.fail_json(msg="Package name both has a version and is version-less: " + name)
+        module.fail_json(msg="package name both has a version and is version-less: " + name)
 
     # If name includes a version.
     if version_match:
@@ -312,7 +312,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = match.group('flavor')
             pkg_spec['style']             = 'version'
         else:
-            module.fail_json(msg="Unable to parse package name at version_match: " + name)
+            module.fail_json(msg="unable to parse package name at version_match: " + name)
 
     # If name includes no version but is version-less ("--").
     elif versionless_match:
@@ -325,7 +325,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = match.group('flavor')
             pkg_spec['style']             = 'versionless'
         else:
-            module.fail_json(msg="Unable to parse package name at versionless_match: " + name)
+            module.fail_json(msg="unable to parse package name at versionless_match: " + name)
 
     # If name includes no version, and is not version-less, it is all a stem.
     else:
@@ -338,7 +338,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = None
             pkg_spec['style']             = 'stem'
         else:
-            module.fail_json(msg="Unable to parse package name at else: " + name)
+            module.fail_json(msg="unable to parse package name at else: " + name)
 
     # If the stem contains an "%" then it needs special treatment.
     branch_match = re.search("%", pkg_spec['stem'])
@@ -347,9 +347,9 @@ def parse_package_name(name, pkg_spec, module):
         branch_release = "6.0"
 
         if version_match or versionless_match:
-            module.fail_json(msg="Package name using 'branch' syntax also has a version or is version-less: " + name)
+            module.fail_json(msg="package name using 'branch' syntax also has a version or is version-less: " + name)
         if StrictVersion(platform.release()) < StrictVersion(branch_release):
-            module.fail_json(msg="Package name using 'branch' syntax requires at least OpenBSD %s: %s" % (branch_release, name))
+            module.fail_json(msg="package name using 'branch' syntax requires at least OpenBSD %s: %s" % (branch_release, name))
 
         pkg_spec['style'] = 'branch'
 
@@ -358,7 +358,7 @@ def parse_package_name(name, pkg_spec, module):
     if pkg_spec['flavor']:
         match = re.search("-$", pkg_spec['flavor'])
         if match:
-            module.fail_json(msg="Trailing dash in flavor: " + pkg_spec['flavor'])
+            module.fail_json(msg="trailing dash in flavor: " + pkg_spec['flavor'])
 
 # Function used for figuring out the port path.
 def get_package_source_path(name, pkg_spec, module):
