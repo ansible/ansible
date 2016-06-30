@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import fcntl
 import os
 import pipes
@@ -346,7 +347,12 @@ class Connection(ConnectionBase):
 
         if self._play_context.password:
             os.close(self.sshpass_pipe[0])
-            os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
+            try:
+                os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
+            except OSError as e:
+                # Ignore broken pipe errors if the sshpass process has exited.
+                if e.errno != errno.EPIPE or p.poll() is None:
+                    raise
             os.close(self.sshpass_pipe[1])
 
         ## SSH state machine
