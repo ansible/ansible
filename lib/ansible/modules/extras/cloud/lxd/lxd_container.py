@@ -32,14 +32,6 @@ options:
         description:
           - Name of a container.
         required: true
-    type:
-        choices:
-          - container
-          - profile
-        description:
-          - The resource type.
-        required: false
-        default: container
     architecture:
         description:
           - The archiecture for the container (e.g. "x86_64" or "i686").
@@ -82,24 +74,15 @@ options:
                     "alias": "ubuntu/xenial/amd64" }).
             See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
         required: false
-    new_name:
-        description:
-          - A new name of a profile.
-          - If this parameter is specified a profile will be renamed to this name.
-        required: false
     state:
         choices:
-          - present
           - started
           - stopped
           - restarted
           - absent
           - frozen
         description:
-          - Define the state of a container or profile.
-          - Valid choices for type=container are started, stopped, restarted,
-            absent, or frozen.
-          - Valid choices for type=profile are present or absent.
+          - Define the state of a container.
         required: false
         default: started
     timeout:
@@ -173,6 +156,7 @@ notes:
 """
 
 EXAMPLES = """
+# An example for creating a Ubuntu container and install python
 - hosts: localhost
   connection: local
   tasks:
@@ -185,13 +169,54 @@ EXAMPLES = """
           mode: pull
           server: https://images.linuxcontainers.org
           protocol: lxd
-          alias: "ubuntu/xenial/amd64"
+          alias: ubuntu/xenial/amd64
         profiles: ["default"]
-    - name: Install python in the created container "mycontainer"
-      command: lxc exec mycontainer -- apt install -y python
-    - name: Copy /etc/hosts in the created container "mycontainer" to localhost with name "mycontainer-hosts"
-      command: lxc file pull mycontainer/etc/hosts mycontainer-hosts
+        wait_for_ipv4_addresses: true
+        timeout: 600
 
+    - name: check python is installed in container
+      delegate_to: mycontainer
+      raw: dpkg-query -W -f='${Status}' python
+      register: python_install_check
+      failed_when: python_install_check.rc not in [0, 1]
+      changed_when: false
+
+    - name: install python in container
+      delegate_to: mycontainer
+      raw: apt-get install -y python
+      when: python_install_check.rc == 1
+
+# An example for deleting a container
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Restart a container
+      lxd_container:
+        name: mycontainer
+        state: restarted
+
+# An example for restarting a container
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Restart a container
+      lxd_container:
+        name: mycontainer
+        state: restarted
+
+# An example for restarting a container using https to connect to the LXD server
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Restart a container
+      lxd_container:
+        url: https://127.0.0.1:8443
+        # These cert_file and key_file values are equal to the default values.
+        #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
+        #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
+        trust_password: mypassword
+        name: mycontainer
+        state: restarted
 
 # Note your container must be in the inventory for the below example.
 #
@@ -201,59 +226,11 @@ EXAMPLES = """
 - hosts:
     - mycontainer
   tasks:
-    - template: src=foo.j2 dest=/etc/bar
-
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: Create a stopped container
-      lxd_container:
-        name: mycontainer
-        state: stopped
-        source:
-          type: image
-          mode: pull
-          server: https://images.linuxcontainers.org
-          protocol: lxd
-          alias: "ubuntu/xenial/amd64"
-        profiles: ["default"]
-
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: Restart a container
-      lxd_container:
-        name: mycontainer
-        state: restarted
-        source:
-          type: image
-          mode: pull
-          server: https://images.linuxcontainers.org
-          protocol: lxd
-          alias: "ubuntu/xenial/amd64"
-        profiles: ["default"]
-
-# An example for connecting to the LXD server using https
-- hosts: localhost
-  connection: local
-  tasks:
-  - name: create macvlan profile
-    lxd_container:
-      url: https://127.0.0.1:8443
-      # These cert_file and key_file values are equal to the default values.
-      #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
-      #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
-      trust_password: mypassword
-      type: profile
-      name: macvlan
-      state: present
-      config: {}
-      description: 'my macvlan profile'
-      devices:
-        eth0:
-          nictype: macvlan
-          parent: br0
-          type: nic
+    - name: copy /etc/hosts in the created container to localhost with name "mycontainer-hosts"
+      fetch:
+        src: /etc/hosts
+        dest: /tmp/mycontainer-hosts
+        flat: true
 """
 
 RETURN="""
@@ -294,11 +271,6 @@ LXD_ANSIBLE_STATES = {
     'frozen': '_frozen'
 }
 
-# PROFILE_STATES is a list for states supported for type=profiles
-PROFILES_STATES = [
-    'present', 'absent'
-]
-
 # ANSIBLE_LXD_STATES is a map of states of lxd containers to the Ansible
 # lxc_container module state parameter value.
 ANSIBLE_LXD_STATES = {
@@ -307,11 +279,10 @@ ANSIBLE_LXD_STATES = {
     'Frozen': 'frozen',
 }
 
-# CONFIG_PARAMS is a map from a resource type to config attribute names.
-CONFIG_PARAMS = {
-    'container': ['architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'],
-    'profile': ['config', 'description', 'devices']
-}
+# CONFIG_PARAMS is a list of config attribute names.
+CONFIG_PARAMS = [
+    'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'
+]
 
 try:
     callable(all)
@@ -324,7 +295,7 @@ except NameError:
                 return False
         return True
 
-class LxdContainerManagement(object):
+class LXDContainerManagement(object):
     def __init__(self, module):
         """Management of LXC containers via Ansible.
 
@@ -333,16 +304,10 @@ class LxdContainerManagement(object):
         """
         self.module = module
         self.name = self.module.params['name']
-        self.type = self.module.params['type']
         self._build_config()
 
         self.state = self.module.params['state']
-        if self.type == 'container':
-            self._check_argument_choices('state', self.state, LXD_ANSIBLE_STATES.keys())
-        elif self.type == 'profile':
-            self._check_argument_choices('state', self.state, PROFILES_STATES)
 
-        self.new_name = self.module.params.get('new_name', None)
         self.timeout = self.module.params['timeout']
         self.wait_for_ipv4_addresses = self.module.params['wait_for_ipv4_addresses']
         self.force_stop = self.module.params['force_stop']
@@ -362,15 +327,9 @@ class LxdContainerManagement(object):
         self.trust_password = self.module.params.get('trust_password', None)
         self.actions = []
 
-    def _check_argument_choices(self, name, value, choices):
-        if value not in choices:
-            choices_str=",".join([str(c) for c in choices])
-            msg="value of %s must be one of: %s, got: %s" % (name, choices_str, value)
-            self.module.fail_json(msg=msg)
-
     def _build_config(self):
         self.config = {}
-        for attr in CONFIG_PARAMS[self.type]:
+        for attr in CONFIG_PARAMS:
             param_val = self.module.params.get(attr, None)
             if param_val is not None:
                 self.config[attr] = param_val
@@ -555,77 +514,6 @@ class LxdContainerManagement(object):
         self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.name), body_json=body_json)
         self.actions.append('apply_container_configs')
 
-    def _get_profile_json(self):
-        return self.client.do(
-            'GET', '/1.0/profiles/{0}'.format(self.name),
-            ok_error_codes=[404]
-        )
-
-    @staticmethod
-    def _profile_json_to_module_state(resp_json):
-        if resp_json['type'] == 'error':
-            return 'absent'
-        return 'present'
-
-    def _update_profile(self):
-        if self.state == 'present':
-            if self.old_state == 'absent':
-                if self.new_name is None:
-                    self._create_profile()
-                else:
-                    self.module.fail_json(
-                        msg='new_name must not be set when the profile does not exist and the specified state is present',
-                        changed=False)
-            else:
-                if self.new_name is not None and self.new_name != self.name:
-                    self._rename_profile()
-                if self._needs_to_apply_profile_configs():
-                    self._apply_profile_configs()
-        elif self.state == 'absent':
-            if self.old_state == 'present':
-                if self.new_name is None:
-                    self._delete_profile()
-                else:
-                    self.module.fail_json(
-                        msg='new_name must not be set when the profile exists and the specified state is absent',
-                        changed=False)
-
-    def _create_profile(self):
-        config = self.config.copy()
-        config['name'] = self.name
-        self.client.do('POST', '/1.0/profiles', config)
-        self.actions.append('create')
-
-    def _rename_profile(self):
-        config = {'name': self.new_name}
-        self.client.do('POST', '/1.0/profiles/{}'.format(self.name), config)
-        self.actions.append('rename')
-        self.name = self.new_name
-
-    def _needs_to_change_profile_config(self, key):
-        if key not in self.config:
-            return False
-        old_configs = self.old_profile_json['metadata'].get(key, None)
-        return self.config[key] != old_configs
-
-    def _needs_to_apply_profile_configs(self):
-        return (
-            self._needs_to_change_profile_config('config') or
-            self._needs_to_change_profile_config('description') or
-            self._needs_to_change_profile_config('devices')
-        )
-
-    def _apply_profile_configs(self):
-        config = self.old_profile_json.copy()
-        for k, v in self.config.iteritems():
-            config[k] = v
-        self.client.do('PUT', '/1.0/profiles/{}'.format(self.name), config)
-        self.actions.append('apply_profile_configs')
-
-    def _delete_profile(self):
-        self.client.do('DELETE', '/1.0/profiles/{}'.format(self.name))
-        self.actions.append('delete')
-
     def run(self):
         """Run the main method."""
 
@@ -633,15 +521,10 @@ class LxdContainerManagement(object):
             if self.trust_password is not None:
                 self.client.authenticate(self.trust_password)
 
-            if self.type == 'container':
-                self.old_container_json = self._get_container_json()
-                self.old_state = self._container_json_to_module_state(self.old_container_json)
-                action = getattr(self, LXD_ANSIBLE_STATES[self.state])
-                action()
-            elif self.type == 'profile':
-                self.old_profile_json = self._get_profile_json()
-                self.old_state = self._profile_json_to_module_state(self.old_profile_json)
-                self._update_profile()
+            self.old_container_json = self._get_container_json()
+            self.old_state = self._container_json_to_module_state(self.old_container_json)
+            action = getattr(self, LXD_ANSIBLE_STATES[self.state])
+            action()
 
             state_changed = len(self.actions) > 0
             result_json = {
@@ -665,7 +548,6 @@ class LxdContainerManagement(object):
                 fail_params['logs'] = e.kwargs['logs']
             self.module.fail_json(**fail_params)
 
-
 def main():
     """Ansible Main module."""
 
@@ -674,14 +556,6 @@ def main():
             name=dict(
                 type='str',
                 required=True
-            ),
-            new_name=dict(
-                type='str',
-            ),
-            type=dict(
-                type='str',
-                choices=CONFIG_PARAMS.keys(),
-                default='container'
             ),
             architecture=dict(
                 type='str',
@@ -705,7 +579,7 @@ def main():
                 type='dict',
             ),
             state=dict(
-                choices=list(set(LXD_ANSIBLE_STATES.keys()) | set(PROFILES_STATES)),
+                choices=LXD_ANSIBLE_STATES.keys(),
                 default='started'
             ),
             timeout=dict(
@@ -743,7 +617,7 @@ def main():
         supports_check_mode=False,
     )
 
-    lxd_manage = LxdContainerManagement(module=module)
+    lxd_manage = LXDContainerManagement(module=module)
     lxd_manage.run()
 
 # import module bits
