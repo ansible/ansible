@@ -28,6 +28,7 @@ import os
 import time
 
 from ansible.plugins.callback import CallbackBase
+from ansible.utils import to_bytes, to_unicode
 
 # define start time
 t0 = tn = time.time()
@@ -134,7 +135,7 @@ class CallbackModule(CallbackBase):
         # Print the timings
         for uuid, result in results:
             msg = ''
-            msg="{0:-<70}{1:->9}".format('{0} '.format(result['name']),' {0:.02f}s'.format(result['time']))
+            msg="{0:-<70}{1:->9}".format('{0} '.format(to_bytes(result['name'])),' {0:.02f}s'.format(result['time']))
             if 'path' in result:
-                msg += "\n{0:-<79}".format( '{0} '.format(result['path']))
-            self._display.display(msg)
+                msg += "\n{0:-<79}".format('{0} '.format(to_bytes(result['path'])))
+            self._display.display(to_unicode(msg))
