@@ -58,6 +58,21 @@ EXAMPLES = '''
     filters:
       vpc-id: vpc-abcdef00
 
+# Gather facts about a set of VPC subnets, publicA, publicB and publicC within a
+# VPC with ID vpc-abcdef00 and then use the jinja map function to return the
+# subnet_ids as a list.
+
+- ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: vpc-abcdef00
+      "tag:Name": "{{ item }}"
+  with_items:
+    - publicA
+    - publicB
+    - publicC
+
+- set_fact:
+    subnet_ids: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
 '''
 
 try:
