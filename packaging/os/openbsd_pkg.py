@@ -229,7 +229,7 @@ def package_latest(name, installed_state, pkg_spec, module):
             module.debug("package_latest(): checking for pre-upgrade package name: %s" % installed_name)
             match = re.search("\W%s->.+: ok\W" % installed_name, stdout)
             if match:
-                module.debug("package_latest(): package name match: %s" % installed_name)
+                module.debug("package_latest(): pre-upgrade package name match: %s" % installed_name)
                 if module.check_mode:
                     module.exit_json(changed=True)
 
