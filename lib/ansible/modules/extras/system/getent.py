@@ -114,7 +114,7 @@ def main():
     try:
         rc, out, err = module.run_command(cmd)
     except Exception:
-        e = get_exception
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     msg = "Unexpected failure!"
