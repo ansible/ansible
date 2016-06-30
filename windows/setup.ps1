@@ -56,6 +56,9 @@ $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
 $win32_bios = Get-CimInstance Win32_Bios
 $win32_cpu = Get-CimInstance Win32_Processor
+If ($win32_cpu -is [array]) { # multi-socket, pick first
+    $win32_cpu = $win32_cpu[0]
+}
 
 $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
 $osversion = [Environment]::OSVersion
@@ -122,7 +125,7 @@ Set-Attr $result.ansible_facts "ansible_owner_name" ([string] $win32_cs.PrimaryO
 Set-Attr $result.ansible_facts "ansible_owner_contact" ([string] $win32_cs.PrimaryOwnerContact)
 
 Set-Attr $result.ansible_facts "ansible_user_dir" $env:userprofile
-Set-Attr $result.ansible_facts "ansible_user_gecos" ([string] $user.Label)
+Set-Attr $result.ansible_facts "ansible_user_gecos" "" # Win32_UserAccount.FullName is probably the right thing here, but it can be expensive to get on large domains
 Set-Attr $result.ansible_facts "ansible_user_id" $env:username
 Set-Attr $result.ansible_facts "ansible_user_uid" ([int] $user.User.Value.Substring(42))
 Set-Attr $result.ansible_facts "ansible_user_sid" $user.User.Value
