@@ -130,7 +130,7 @@ def main():
         crypttab = Crypttab(path)
         existing_line = crypttab.match(name)
     except Exception:
-        e = get_exception
+        e = get_exception()
         module.fail_json(msg="failed to open and parse crypttab file: %s" % e,
                          **module.params)
 
