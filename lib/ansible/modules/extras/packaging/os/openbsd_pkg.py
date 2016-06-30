@@ -229,10 +229,12 @@ def package_latest(name, installed_state, pkg_spec, module):
             module.debug("package_latest(): checking for pre-upgrade package name: %s" % installed_name)
             match = re.search("\W%s->.+: ok\W" % installed_name, stdout)
             if match:
+                module.debug("package_latest(): package name match: %s" % installed_name)
                 if module.check_mode:
                     module.exit_json(changed=True)
 
                 changed = True
+                break
 
         # FIXME: This part is problematic. Based on the issues mentioned (and
         # handled) in package_present() it is not safe to blindly trust stderr
