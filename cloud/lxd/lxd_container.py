@@ -377,7 +377,7 @@ class LXDContainerManagement(object):
         self.actions.append('restart')
 
     def _delete_container(self):
-        return self._operate_and_wait('DELETE', '/1.0/containers/{0}'.format(self.name))
+        return self.client.do('DELETE', '/1.0/containers/{0}'.format(self.name))
         self.actions.append('delete')
 
     def _freeze_container(self):
@@ -511,7 +511,7 @@ class LXDContainerManagement(object):
             body_json['devices'] = self.config['devices']
         if self._needs_to_change_container_config('profiles'):
             body_json['profiles'] = self.config['profiles']
-        self._operate_and_wait('PUT', '/1.0/containers/{0}'.format(self.name), body_json=body_json)
+        self.client.do('PUT', '/1.0/containers/{0}'.format(self.name), body_json=body_json)
         self.actions.append('apply_container_configs')
 
     def run(self):
