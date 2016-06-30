@@ -150,7 +150,7 @@ def run_gluster(gargs, **kwargs):
         if rc != 0:
             module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
     except Exception:
-        e = get_exception
+        e = get_exception()
         module.fail_json(msg='error running gluster (%s) command: %s' % (' '.join(args), str(e)))
     return out
 

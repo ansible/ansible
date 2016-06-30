@@ -150,7 +150,7 @@ class CronVar(object):
                 self.lines = f.read().splitlines()
                 f.close()
             except IOError:
-                e = get_exception
+                e = get_exception()
                 # cron file does not exist
                 return
             except:
@@ -207,7 +207,7 @@ class CronVar(object):
             os.unlink(self.cron_file)
             return True
         except OSError:
-            e = get_exception
+            e = get_exception()
             # cron file does not exist
             return False
         except:
