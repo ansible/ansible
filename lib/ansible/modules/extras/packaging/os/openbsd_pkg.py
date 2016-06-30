@@ -491,6 +491,11 @@ def main():
         pkg_spec = {}
         parse_package_name(name, pkg_spec, module)
 
+        # Not sure how the branch syntax is supposed to play together
+        # with build mode. Disable it for now.
+        if pkg_spec['style'] == 'branch' and module.params['build'] is True:
+            module.fail_json(msg="the combination of 'branch' syntax and build=%s is not supported: %s" % (module.params['build'], name))
+
         # Get package state.
         installed_state = get_package_state(name, pkg_spec, module)
 
