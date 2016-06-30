@@ -21,6 +21,7 @@ import os
 #sys.path.insert(0, os.path.abspath('../bin'))
 sys.path.insert(0, os.path.abspath('../lib/ansible'))
 import sphinx_rtd_theme
+import alabaster
 
 # -- General configuration ------------------------------------------------
 
@@ -36,12 +37,13 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.graphviz',
-    'sphinx.ext.inheritance_diagram'
+    'sphinx.ext.inheritance_diagram',
+    'alabaster',
 ]
 
 #autodoc_default_flags = ['members', 'show-inheritance', 'inherited-members', 'undoc-members',]
 autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members',]
-autoclass_content = ['both']
+autoclass_content = 'both'
 autodoc_member_order = 'bysource'
 autodoc_mock_imports = ['xmltodict', 'winrm', 'redis', 'StricRedis']
 
@@ -127,8 +129,12 @@ todo_include_todos = True
 #html_theme = 'srtd'
 html_short_title = 'Ansible Documentation'
 
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#html_theme = "sphinx_rtd_theme"
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+html_theme_path = [alabaster.get_path()]
+html_theme = 'alabaster'
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
