@@ -99,4 +99,11 @@ class ActionModule(ActionBase):
 
         result['changed'] = True
 
+        if 'skipped' in result and result['skipped'] or 'failed' in result and result['failed']:
+            return result
+
+        # the async_wrapper module returns dumped JSON via its stdout
+        # response, so we parse it here and replace the result
+        result = self._parse_returned_data(result)
+
         return result
