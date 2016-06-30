@@ -50,7 +50,7 @@ decide to do something conditionally based on success or failure::
       - command: /bin/something
         when: result|failed
 
-      # In older versions of ansible use |success, now both are valid but succedded uses the correct tense.
+      # In older versions of ansible use |success, now both are valid but succeeded uses the correct tense.
       - command: /bin/something_else
         when: result|succeeded
 
