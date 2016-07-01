@@ -108,6 +108,7 @@ except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
+DEFAULT_SOURCES_PERM = int('0644', 8)
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
@@ -280,7 +281,7 @@ class SourcesList(object):
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
-                    this_mode = self.module.params['mode']
+                    this_mode = self.module.params.get('mode', DEFAULT_SOURCES_PERM)
                     self.module.set_mode_if_different(filename, this_mode, False)
             else:
                 del self.files[filename]
@@ -452,7 +453,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
-            mode=dict(required=False, default=int('0644',8)),
+            mode=dict(required=False, type='raw'),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
             filename=dict(required=False, default=None),
             # this should not be needed, but exists as a failsafe
@@ -466,6 +467,8 @@ def main():
     repo = module.params['repo']
     state = module.params['state']
     update_cache = module.params['update_cache']
+    # Note: mode is referenced in SourcesList class via the passed in module (self here)
+
     sourceslist = None
 
     if not HAVE_PYTHON_APT:
