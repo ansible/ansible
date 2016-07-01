@@ -23,7 +23,7 @@ VAULT_PASSWORD_FILE = vault-password
 CONSUL_RUNNING := $(shell python consul_running.py)
 EUID := $(shell id -u -r)
 
-all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts
+all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_async
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -284,3 +284,10 @@ test_lookup_paths: setup
 no_log: setup
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
 	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
+
+test_async:
+	# Verify that extra data before module JSON output during async call is ignored.
+	LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS)
+	# Verify that the warning exists by examining debug output.
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) \
+	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'
