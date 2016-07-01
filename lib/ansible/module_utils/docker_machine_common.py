@@ -1,3 +1,4 @@
+import sys
 from ansible.module_utils.basic import *
 
 HAS_DOCKER_MACHINE_PY = True
@@ -7,8 +8,9 @@ try:
     from docker.machine.cli.machine import Machine
     from docker.machine.cli.client import Client
     from docker.machine.errors import CLIError
-except ImportError as exc:
-    HAS_DOCKER_MACHINE_ERROR = str(exc)
+except ImportError:
+    t, e = sys.exc_info()[:2]
+    HAS_DOCKER_MACHINE_ERROR = str(e)
     HAS_DOCKER_MACHINE_PY = False
 
 DOCKER_MACHINE_COMMON_CLIENT_ARGS = dict(
@@ -219,7 +221,13 @@ class MachineManager(object):
         for k in get_client_keys():
             c.pop(k, None)
         c.pop('name', None)
-        return {k: v for k, v in c.items() if v}
+
+        driver_params = {}
+        for k, v in c.items():
+            if v:
+                driver_params[k] = v
+
+        return driver_params
 
     def get_create_params(self):
         params = self._get_driver_params()
