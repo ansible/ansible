@@ -93,12 +93,6 @@ options:
           - If trust_password is set, this module send a request for
             authentication before sending any requests.
         required: false
-    debug:
-        description:
-          - If this flag is true, the logs key are added to the result object
-            which keeps all the requests and responses for calling APIs.
-        required: false
-        default: false
 notes:
   - Profiles must have a unique name. If you attempt to create a profile
     with a name that already existed in the users namespace the module will
@@ -174,7 +168,7 @@ lxd_profile:
       sample: "absent"
     logs:
       descriptions: The logs of requests and responses.
-      returned: when the debug parameter is true and any requests were sent.
+      returned: when ansible-playbook is invoked with -vvvv.
     actions:
       description: List of actions performed for the profile.
       returned: success
@@ -211,7 +205,7 @@ class LXDProfileManagement(object):
         self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
-        self.debug = self.module.params['debug']
+        self.debug = self.module._verbosity >= 4
         try:
             self.client = LXDClient(
                 self.url, key_file=self.key_file, cert_file=self.cert_file,
@@ -371,10 +365,6 @@ def main():
             ),
             trust_password=dict(
                 type='str',
-            ),
-            debug=dict(
-                type='bool',
-                default=False
             )
         ),
         supports_check_mode=False,
