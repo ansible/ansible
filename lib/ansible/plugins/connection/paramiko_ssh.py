@@ -442,7 +442,7 @@ class Connection(ConnectionBase):
                 # we can ensure the new file has the correct mode/owner
 
                 key_dir  = os.path.dirname(self.keyfile)
-                if os.path.isfile(self.keyfile):
+                if os.path.exists(self.keyfile):
                     key_stat = os.stat(self.keyfile)
                     mode = key_stat.st_mode
                     uid = key_stat.st_uid
