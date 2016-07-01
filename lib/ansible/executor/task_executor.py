@@ -600,7 +600,6 @@ class TaskExecutor:
                 return dict(failed=True, msg="async task did not complete within the requested time")
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
-            else:
         else:
             return async_result
 
