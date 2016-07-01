@@ -304,4 +304,8 @@ test_binary_modules:
 	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
 
 test_async:
+	# Verify that extra data before module JSON output during async call is ignored.
 	LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS)
+	# Verify that the warning exists by examining debug output.
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) \
+	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'
