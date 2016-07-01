@@ -36,6 +36,7 @@ options:
   name:
     description:
       - The name of a Python library to install or the url of the remote package.
+      - As of 2.2 you can supply a list of names.
     required: false
     default: null
   version:
@@ -270,19 +271,19 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present', choices=state_map.keys()),
-            name=dict(default=None, required=False),
-            version=dict(default=None, required=False, type='str'),
-            requirements=dict(default=None, required=False),
-            virtualenv=dict(default=None, required=False),
-            virtualenv_site_packages=dict(default='no', type='bool'),
-            virtualenv_command=dict(default='virtualenv', required=False),
-            virtualenv_python=dict(default=None, required=False, type='str'),
-            use_mirrors=dict(default='yes', type='bool'),
-            extra_args=dict(default=None, required=False),
-            editable=dict(default='yes', type='bool', required=False),
-            chdir=dict(default=None, required=False, type='path'),
-            executable=dict(default=None, required=False),
-            umask=dict(required=False,default=None),
+            name=dict(type='list'),
+            version=dict(type='str'),
+            requirements=dict(),
+            virtualenv=dict(),
+            virtualenv_site_packages=dict(default=False, type='bool'),
+            virtualenv_command=dict(default='virtualenv'),
+            virtualenv_python=dict(type='str'),
+            use_mirrors=dict(default=True, type='bool'),
+            extra_args=dict(),
+            editable=dict(default=True, type='bool'),
+            chdir=dict(type='path'),
+            executable=dict(),
+            umask=dict(),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
@@ -366,7 +367,12 @@ def main():
 
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+
-        has_vcs = bool(name and re.match(r'(svn|git|hg|bzr)\+', name))
+        has_vcs = False
+        for pkg in name:
+            if bool(pkg and re.match(r'(svn|git|hg|bzr)\+', pkg)):
+                has_vcs = True
+                break
+
         if has_vcs and module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
@@ -378,10 +384,12 @@ def main():
 
         if extra_args:
             cmd += ' %s' % extra_args
-        if name:
-            cmd += ' %s' % _get_full_name(name, version)
-        elif requirements:
-            cmd += ' -r %s' % requirements
+
+        for pkg in name:
+            cmd += ' %s' % _get_full_name(pkg, version)
+        else:
+            if requirements:
+                cmd += ' -r %s' % requirements
 
 
         if module.check_mode:
@@ -400,9 +408,11 @@ def main():
             out += out_pip
             err += err_pip
 
-            is_present = _is_present(name, version, out.split())
-
-            changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
+            for pkg in name:
+                is_present = _is_present(pkg, version, out.split())
+                if (state == 'present' and not is_present) or (state == 'absent' and is_present):
+                    changed = True
+                    break
             module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
         if requirements or has_vcs:
