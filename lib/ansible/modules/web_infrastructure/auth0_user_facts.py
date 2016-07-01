@@ -25,6 +25,7 @@ description:
     - Auth0 user managing module. It can search for a given user and
       return it's payload, create/delete user and update application
       metadata.
+requirements: [ python requests ]
 version_added: "2.2"
 options:
   query:
@@ -104,7 +105,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
