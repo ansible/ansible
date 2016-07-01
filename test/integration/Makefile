@@ -27,7 +27,7 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: setup other non_destructive destructive
 
-other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules test_async
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -302,3 +302,10 @@ test_binary_modules:
 	cd ..; \
 	rm -rf $$mytmpdir; \
 	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+
+test_async:
+	# Verify that extra data before module JSON output during async call is ignored.
+	LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS)
+	# Verify that the warning exists by examining debug output.
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) \
+	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'

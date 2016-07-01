@@ -1,0 +1,10 @@
+- hosts: testhost3
+  gather_facts: false
+  tasks:
+  # make sure non-JSON data before module output is ignored
+  - name: async ping with invalid locale via ssh
+    ping:
+    async: 3
+    poll: 1
+    register: result
+  - debug: var=result
