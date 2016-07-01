@@ -18,9 +18,9 @@
 DOCUMENTATION = '''
 ---
 module: redhat_subscription
-short_description: Manage Red Hat Network registration and subscriptions using the C(subscription-manager) command
+short_description: Manage registration and subscriptions to RHSM using the C(subscription-manager) command
 description:
-    - Manage registration and subscription to the Red Hat Network entitlement platform.
+    - Manage registration and subscription to the Red Hat Subscription Management entitlement platform using the C(subscription-manager) command
 version_added: "1.2"
 author: "Barnaby Court (@barnabycourt)"
 notes:
@@ -36,17 +36,17 @@ options:
         default: "present"
     username:
         description:
-            - Red Hat Network username
+            - access.redhat.com or Sat6  username
         required: False
         default: null
     password:
         description:
-            - Red Hat Network password
+            - access.redhat.com or Sat6 password
         required: False
         default: null
     server_hostname:
         description:
-            - Specify an alternative Red Hat Network server
+            - Specify an alternative Red Hat Subscription Management or Sat6 server
         required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
@@ -217,7 +217,7 @@ class Rhsm(RegistrationBase):
 
     def configure(self, **kwargs):
         '''
-            Configure the system as directed for registration with RHN
+            Configure the system as directed for registration with RHSM
             Raises:
               * Exception - if error occurs while running command
         '''
@@ -238,7 +238,7 @@ class Rhsm(RegistrationBase):
             Determine whether the current system
             Returns:
               * Boolean - whether the current system is currently registered to
-                          RHN.
+                          RHSM.
         '''
         # Quick version...
         if False:
@@ -255,7 +255,7 @@ class Rhsm(RegistrationBase):
     def register(self, username, password, autosubscribe, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register):
         '''
-            Register the current system to the provided RHN server
+            Register the current system to the provided RHSM or Sat6 server
             Raises:
               * Exception - if error occurs while running command
         '''
@@ -434,16 +434,16 @@ class RhsmPools(object):
 def main():
 
     # Load RHSM configuration from file
-    rhn = Rhsm(None)
+    rhsm = Rhsm(None)
 
     module = AnsibleModule(
                 argument_spec = dict(
                     state = dict(default='present', choices=['present', 'absent']),
                     username = dict(default=None, required=False),
                     password = dict(default=None, required=False, no_log=True),
-                    server_hostname = dict(default=rhn.config.get_option('server.hostname'), required=False),
-                    server_insecure = dict(default=rhn.config.get_option('server.insecure'), required=False),
-                    rhsm_baseurl = dict(default=rhn.config.get_option('rhsm.baseurl'), required=False),
+                    server_hostname = dict(default=rhsm.config.get_option('server.hostname'), required=False),
+                    server_insecure = dict(default=rhsm.config.get_option('server.insecure'), required=False),
+                    rhsm_baseurl = dict(default=rhsm.config.get_option('rhsm.baseurl'), required=False),
                     autosubscribe = dict(default=False, type='bool'),
                     activationkey = dict(default=None, required=False),
                     org_id = dict(default=None, required=False),
@@ -455,7 +455,7 @@ def main():
                 )
             )
 
-    rhn.module = module
+    rhsm.module = module
     state = module.params['state']
     username = module.params['username']
     password = module.params['password']
@@ -481,10 +481,10 @@ def main():
             module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
 
         # Register system
-        if rhn.is_registered and not force_register:
+        if rhsm.is_registered and not force_register:
             if pool != '^$':
                 try:
-                    result = rhn.update_subscriptions(pool)
+                    result = rhsm.update_subscriptions(pool)
                 except Exception:
                     e = get_exception()
                     module.fail_json(msg="Failed to update subscriptions for '%s': %s" % (server_hostname, e))
@@ -494,11 +494,11 @@ def main():
                 module.exit_json(changed=False, msg="System already registered.")
         else:
             try:
-                rhn.enable()
-                rhn.configure(**module.params)
-                rhn.register(username, password, autosubscribe, activationkey, org_id,
+                rhsm.enable()
+                rhsm.configure(**module.params)
+                rhsm.register(username, password, autosubscribe, activationkey, org_id,
                              consumer_type, consumer_name, consumer_id, force_register)
-                subscribed_pool_ids = rhn.subscribe(pool)
+                subscribed_pool_ids = rhsm.subscribe(pool)
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
@@ -508,12 +508,12 @@ def main():
                                  subscribed_pool_ids=subscribed_pool_ids)
     # Ensure system is *not* registered
     if state == 'absent':
-        if not rhn.is_registered:
+        if not rhsm.is_registered:
             module.exit_json(changed=False, msg="System already unregistered.")
         else:
             try:
-                rhn.unsubscribe()
-                rhn.unregister()
+                rhsm.unsubscribe()
+                rhsm.unregister()
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Failed to unregister: %s" % e)
