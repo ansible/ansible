@@ -73,6 +73,39 @@ EXAMPLES = '''
 
 '''
 
+RETURN='''
+comment:
+    description: optional hosted zone comment
+    returned: when hosted zone exists
+    type: string
+    sample: "Private zone"
+name:
+    description: hosted zone name
+    returned: when hosted zone exists
+    type: string
+    sample: "private.local."
+private_zone:
+    description: whether hosted zone is private or public
+    returned: when hosted zone exists
+    type: bool
+    sample: true
+vpc_id:
+    description: id of vpc attached to private hosted zone
+    returned: for private hosted zone
+    type: string
+    sample: "vpc-1d36c84f"
+vpc_region:
+    description: region of vpc attached to private hosted zone
+    returned: for private hosted zone
+    type: string
+    sample: "eu-west-1"
+zone_id:
+    description: hosted zone id
+    returned: when hosted zone exists
+    type: string
+    sample: "Z6JQG9820BEFMW"
+'''
+
 import time
 
 try:
