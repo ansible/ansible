@@ -144,7 +144,7 @@ def ldap_dn_tree_parent(dn, count=1):
 
 def ldap_search(filter, base=None, attr=None):
     """Replaces uldaps search and uses a generator.
-   !! Arguments are not the same."""
+    !! Arguments are not the same."""
 
     if base is None:
         base = base_dn()
