@@ -98,6 +98,12 @@ options:
         required: False
         default: null
         version_added: "2.1"
+    force_register:
+        description:
+            -  Register the system even if it is already registered
+        required: False
+        default: False
+        version_added: "2.2"
 '''
 
 EXAMPLES = '''
@@ -247,7 +253,7 @@ class Rhsm(RegistrationBase):
             return False
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
-                 consumer_type, consumer_name, consumer_id):
+                 consumer_type, consumer_name, consumer_id, force_register):
         '''
             Register the current system to the provided RHN server
             Raises:
@@ -273,6 +279,8 @@ class Rhsm(RegistrationBase):
                 args.extend(['--name', consumer_name])
             if consumer_id:
                 args.extend(['--consumerid', consumer_id])
+            if force_register:
+                args.extend(['--force'])
 
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
@@ -443,6 +451,7 @@ def main():
                     consumer_type = dict(default=None, required=False),
                     consumer_name = dict(default=None, required=False),
                     consumer_id = dict(default=None, required=False),
+                    force_register = dict(default=False, type='bool'),
                 )
             )
 
@@ -460,6 +469,7 @@ def main():
     consumer_type = module.params["consumer_type"]
     consumer_name = module.params["consumer_name"]
     consumer_id = module.params["consumer_id"]
+    force_register = module.params["force_register"]
 
     # Ensure system is registered
     if state == 'present':
@@ -471,7 +481,7 @@ def main():
             module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
 
         # Register system
-        if rhn.is_registered:
+        if rhn.is_registered and not force_register:
             if pool != '^$':
                 try:
                     result = rhn.update_subscriptions(pool)
@@ -487,7 +497,7 @@ def main():
                 rhn.enable()
                 rhn.configure(**module.params)
                 rhn.register(username, password, autosubscribe, activationkey, org_id,
-                             consumer_type, consumer_name, consumer_id)
+                             consumer_type, consumer_name, consumer_id, force_register)
                 subscribed_pool_ids = rhn.subscribe(pool)
             except Exception:
                 e = get_exception()
