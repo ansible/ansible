@@ -9,8 +9,8 @@ try:
     from docker.machine.cli.client import Client
     from docker.machine.errors import CLIError
 except ImportError:
-    t, e = sys.exc_info()[:2]
-    HAS_DOCKER_MACHINE_ERROR = str(e)
+    t, exc = sys.exc_info()[:2]
+    HAS_DOCKER_MACHINE_ERROR = str(exc)
     HAS_DOCKER_MACHINE_PY = False
 
 DOCKER_MACHINE_COMMON_CLIENT_ARGS = dict(
@@ -97,9 +97,11 @@ class AnsibleDockerMachine(Machine):
 
         try:
             super(AnsibleDockerMachine, self).__init__(**self._params)
-        except CLIError as exc:
+        except CLIError:
+            t, exc = sys.exc_info()[:2]
             self.fail("Docker Machine CLI error: %s" % exc)
-        except Exception as exc:
+        except Exception:
+            t, exc = sys.exc_info()[:2]
             self.fail("Error connecting: %s" % exc)
 
     def _get_params(self):
@@ -208,7 +210,8 @@ class MachineManager(object):
             c = self.get_create_params()
             try:
                 self.machine.create(**c)
-            except Exception as exc:
+            except Exception:
+                t, exc = sys.exc_info()[:2]
                 self.fail("Error creating machine %s: %s" % (self.machine.name, str(exc)))
 
     def _get_driver_params(self):
@@ -242,7 +245,8 @@ class MachineManager(object):
         if not self.check_mode:
             try:
                 self.machine.start()
-            except Exception as exc:
+            except Exception:
+                t, exc = sys.exc_info()[:2]
                 self.fail("Error starting machine %s: %s" % (self.machine.name, str(exc)))
 
     def machine_remove(self, force=False):
@@ -253,7 +257,8 @@ class MachineManager(object):
         if not self.check_mode:
             try:
                 self.machine.rm(force=force)
-            except Exception as exc:
+            except Exception:
+                t, exc = sys.exc_info()[:2]
                 self.fail("Error removing machine %s: %s" % (self.machine.name, str(exc)))
 
     def machine_stop(self):
@@ -264,7 +269,8 @@ class MachineManager(object):
         if not self.check_mode:
             try:
                 self.machine.stop()
-            except Exception as exc:
+            except Exception:
+                t, exc = sys.exc_info()[:2]
                 self.fail("Error stopping machine %s: %s" % (self.machine.name, str(exc)))
 
     def machine_restart(self):
