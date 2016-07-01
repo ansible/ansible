@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import action_loader, lookup_loader
+from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
 
@@ -375,6 +376,7 @@ class TestTaskExecutor(unittest.TestCase):
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async = 1
+        mock_task.poll = 0
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
@@ -408,11 +410,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
 
-        mock_task.changed_when = "1 == 1"
+        mock_task.changed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.changed_when = None
-        mock_task.failed_when = "1 == 1"
+        mock_task.failed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.failed_when = None
