@@ -375,6 +375,7 @@ class TestTaskExecutor(unittest.TestCase):
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async = 1
+        mock_task.poll = 0
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
