@@ -173,7 +173,7 @@ class ResultProcess(multiprocessing.Process):
                             # if this task is registering facts, do that now
                             loop_var = 'item'
                             if result._task.loop_control:
-                                loop_var = result._task.loop_control.get('loop_var') or 'item'
+                                loop_var = result._task.loop_control.loop_var or 'item'
                             item = result_item.get(loop_var, None)
                             if result._task.action == 'include_vars':
                                 for (key, value) in iteritems(result_item['ansible_facts']):
