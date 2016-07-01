@@ -515,7 +515,8 @@ being set when the module is executed on the given remote system.  By default th
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
 
     module_lang = en_US.UTF-8
 
