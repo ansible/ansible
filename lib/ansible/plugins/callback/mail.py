@@ -94,7 +94,7 @@ class CallbackModule(CallbackBase):
             subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
         if 'stderr' in res._result.keys() and res._result['stderr']:
-            subject = res['stderr'].strip('\r\n').split('\n')[-1]
+            subject = res._result['stderr'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
         if 'msg' in res._result.keys() and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
