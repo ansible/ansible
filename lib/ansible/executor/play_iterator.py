@@ -156,10 +156,14 @@ class PlayIterator:
 
         # Default options to gather
         gather_subset = C.DEFAULT_GATHER_SUBSET
+        gather_timeout = C.DEFAULT_GATHER_TIMEOUT
 
         # Retrieve subset to gather
         if self._play.gather_subset is not None:
             gather_subset = self._play.gather_subset
+        # Retrieve timeout for gather
+        if self._play.gather_timeout is not None:
+            gather_timeout = self._play.gather_timeout
 
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
@@ -168,6 +172,8 @@ class PlayIterator:
         setup_task.args   = {
           'gather_subset': gather_subset,
         }
+        if gather_timeout:
+            setup_task.args['gather_timeout'] = gather_timeout
         setup_task.set_loader(self._play._loader)
         setup_block.block = [setup_task]
 
