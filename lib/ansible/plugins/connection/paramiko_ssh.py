@@ -442,15 +442,23 @@ class Connection(ConnectionBase):
                 # we can ensure the new file has the correct mode/owner
 
                 key_dir  = os.path.dirname(self.keyfile)
-                key_stat = os.stat(self.keyfile)
+                if os.path.exists(self.keyfile):
+                    key_stat = os.stat(self.keyfile)
+                    mode = key_stat.st_mode
+                    uid = key_stat.st_uid
+                    gid = key_stat.st_gid
+                else:
+                    mode = 33188
+                    uid = os.getuid()
+                    gid = os.getgid()
 
                 # Save the new keys to a temporary file and move it into place
                 # rather than rewriting the file. We set delete=False because
                 # the file will be moved into place rather than cleaned up.
 
                 tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
-                os.chmod(tmp_keyfile.name, key_stat.st_mode & 0o7777)
-                os.chown(tmp_keyfile.name, key_stat.st_uid, key_stat.st_gid)
+                os.chmod(tmp_keyfile.name, mode & 0o7777)
+                os.chown(tmp_keyfile.name, uid, gid)
 
                 self._save_ssh_host_keys(tmp_keyfile.name)
                 tmp_keyfile.close()
