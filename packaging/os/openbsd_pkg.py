@@ -477,7 +477,7 @@ def main():
         parse_package_name('sqlports', pkg_spec, module)
         installed_state = get_package_state('sqlports', pkg_spec, module)
         if not installed_state:
-            module.debug("main(): installing sqlports")
+            module.debug("main(): installing 'sqlports' because build=%s" % module.params['build'])
             package_present('sqlports', installed_state, pkg_spec, module)
 
     if name == '*':
