@@ -120,7 +120,7 @@ class Cli(object):
         commands.insert(0, 'configure')
 
         if kwargs.get('comment'):
-            commands.append('commit comment "%s"' % kwargs.get('comment'))
+            commands.append('commit and-quit comment "%s"' % kwargs.get('comment'))
         else:
             commands.append('commit and-quit')
 
