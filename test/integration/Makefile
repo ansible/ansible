@@ -27,7 +27,7 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: setup other non_destructive destructive
 
-other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules test_async
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection test_async_conditional includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -85,6 +85,14 @@ environment: setup
 
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+# For our Docker images, which identify themselves with "ENV container=docker", automatically run the test_async target.
+# Otherwise, skip it, since we don't know if local ssh is available. You can always run the test_async target manually.
+ifeq ($(container),docker)
+test_async_conditional: test_async
+else
+test_async_conditional:
+endif
 
 # For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
 # Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
@@ -305,7 +313,7 @@ test_binary_modules:
 
 test_async:
 	# Verify that extra data before module JSON output during async call is ignored.
-	LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS)
+	ANSIBLE_DEBUG=0 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS)
 	# Verify that the warning exists by examining debug output.
-	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) \
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS) \
 	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'

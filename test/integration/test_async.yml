@@ -1,4 +1,4 @@
-- hosts: testhost3
+- hosts: localhost
   gather_facts: false
   tasks:
   # make sure non-JSON data before module output is ignored
