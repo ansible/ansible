@@ -97,15 +97,15 @@ def axapi_authenticate_v3(module, base_url, username, password):
     signature = result['authresponse']['signature']
     return signature
 
-def axapi_call_v3(module, url, post=None, signature=''):
+def axapi_call_v3(module, url, method=None, body=None, signature=None):
     '''
     Returns a datastructure based on the result of the API call
     '''
     if signature:
-        headers = {'content-type': 'application/json', 'signature': signature}
+        headers = {'content-type': 'application/json', 'Authorization': 'A10 %s' % signature}
     else:
         headers = {'content-type': 'application/json'}
-    rsp, info = fetch_url(module, url, method='POST', data=json.dumps(post), headers=headers)
+    rsp, info = fetch_url(module, url, method=method, data=json.dumps(body), headers=headers)
     if not rsp or info['status'] >= 400:
         module.fail_json(msg="failed to connect (status code %s), error was %s" % (info['status'], info.get('msg', 'no error given')))
     try:
