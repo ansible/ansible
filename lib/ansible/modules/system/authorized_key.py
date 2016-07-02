@@ -91,6 +91,14 @@ options:
     default: "yes"
     choices: ["yes", "no"]
     version_added: "2.1"
+  comment:
+    description:
+      - Change the comment on the public key. Rewriting the comment is useful in
+        cases such as fetching it from Github or Gitlab.
+      - If no comment is specified, the existing comment will be kept.
+    required: false
+    default: null
+    version_added: "2.2"
 author: "Ansible Core Team"
 '''
 
@@ -458,6 +466,7 @@ def enforce_state(module, params):
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
     exclusive   = params.get("exclusive", False)
+    comment     = params.get("comment", None)
     error_msg   = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
@@ -498,6 +507,9 @@ def enforce_state(module, params):
             parsed_options = parseoptions(module, key_options)
             # rank here is the rank in the provided new keys, which may be unrelated to rank in existing_keys
             parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3], parsed_new_key[4])
+
+        if comment is not None:
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], comment)
 
         matched = False
         non_matching_keys = []
@@ -566,6 +578,7 @@ def main():
            key_options = dict(required=False, type='str'),
            unique      = dict(default=False, type='bool'),
            exclusive   = dict(default=False, type='bool'),
+           comment     = dict(required=False, default=None, type='str'),
            validate_certs = dict(default=True, type='bool'),
         ),
         supports_check_mode=True
