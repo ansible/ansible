@@ -1,10 +1,10 @@
 ---
 
 - set_fact:
-    test_ppa_name: 'ppa:menulibre-dev/devel'
-    test_ppa_filename: 'menulibre-dev'
-    test_ppa_spec: 'deb http://ppa.launchpad.net/menulibre-dev/devel/ubuntu {{ansible_distribution_release}} main'
-    test_ppa_key: 'A7AD98A1' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
+    test_ppa_name: 'ppa:git-core/ppa'
+    test_ppa_filename: 'git-core'
+    test_ppa_spec: 'deb http://ppa.launchpad.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
+    test_ppa_key: 'E1DF1F24' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
 
 # UNINSTALL 'python-apt'
 #  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
