@@ -44,6 +44,14 @@ options:
         description:
             - VLAN ID to assign to portgroup
         required: True
+    network_policy:
+        description:
+            - Network policy specifies layer 2 security settings for a
+              portgroup such as promiscuous mode, where guest adapter listens
+              to all the packets, MAC address changes and forged transmits.
+              Settings are promiscuous_mode, forged_transmits, mac_changes
+        required: False
+        version_added: "2.2"
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -59,6 +67,17 @@ Example from Ansible playbook
         switch_name: vswitch_name
         portgroup_name: portgroup_name
         vlan_id: vlan_id
+
+    - name: Add Portgroup with Promiscuous Mode Enabled
+      local_action:
+        module: vmware_portgroup
+        hostname: esxi_hostname
+        username: esxi_username
+        password: esxi_password
+        switch_name: vswitch_name
+        portgroup_name: portgroup_name
+        network_policy:
+            promiscuous_mode: True
 '''
 
 try:
@@ -68,7 +87,20 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
-def create_port_group(host_system, portgroup_name, vlan_id, vswitch_name):
+def create_network_policy(promiscuous_mode, forged_transmits, mac_changes):
+
+    security_policy = vim.host.NetworkPolicy.SecurityPolicy()
+    if promiscuous_mode:
+        security_policy.allowPromiscuous = promiscuous_mode
+    if forged_transmits:
+        security_policy.forgedTransmits = forged_transmits
+    if mac_changes:
+        security_policy.macChanges = mac_changes
+    network_policy = vim.host.NetworkPolicy(security=security_policy)
+    return network_policy
+
+
+def create_port_group(host_system, portgroup_name, vlan_id, vswitch_name, network_policy):
 
     config = vim.host.NetworkConfig()
     config.portgroup = [vim.host.PortGroup.Config()]
@@ -77,7 +109,7 @@ def create_port_group(host_system, portgroup_name, vlan_id, vswitch_name):
     config.portgroup[0].spec.name = portgroup_name
     config.portgroup[0].spec.vlanId = vlan_id
     config.portgroup[0].spec.vswitchName = vswitch_name
-    config.portgroup[0].spec.policy = vim.host.NetworkPolicy()
+    config.portgroup[0].spec.policy = network_policy
 
     host_network_config_result = host_system.configManager.networkSystem.UpdateNetworkConfig(config, "modify")
     return True
@@ -88,7 +120,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(portgroup_name=dict(required=True, type='str'),
                          switch_name=dict(required=True, type='str'),
-                         vlan_id=dict(required=True, type='int')))
+                         vlan_id=dict(required=True, type='int'),
+                         network_policy=dict(required=False, type='dict', default={})))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
@@ -98,6 +131,9 @@ def main():
     portgroup_name = module.params['portgroup_name']
     switch_name = module.params['switch_name']
     vlan_id = module.params['vlan_id']
+    promiscuous_mode = module.params['network_policy'].get('promiscuous_mode', None)
+    forged_transmits = module.params['network_policy'].get('forged_transmits', None)
+    mac_changes = module.params['network_policy'].get('mac_changes', None)
 
     try:
         content = connect_to_api(module)
@@ -109,7 +145,8 @@ def main():
         if find_host_portgroup_by_name(host_system, portgroup_name):
             module.exit_json(changed=False)
 
-        changed = create_port_group(host_system, portgroup_name, vlan_id, switch_name)
+        network_policy = create_network_policy(promiscuous_mode, forged_transmits, mac_changes)
+        changed = create_port_group(host_system, portgroup_name, vlan_id, switch_name, network_policy)
 
         module.exit_json(changed=changed)
     except vmodl.RuntimeFault as runtime_fault:
