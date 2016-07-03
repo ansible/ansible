@@ -248,7 +248,7 @@ def nic_to_dict(nic):
         ip_configuration=dict(
             name=nic.ip_configurations[0].name,
             private_ip_address=nic.ip_configurations[0].private_ip_address,
-            private_ip_allocation_method=nic.ip_configurations[0].private_ip_allocation_method.value,
+            private_ip_allocation_method=nic.ip_configurations[0].private_ip_allocation_method,
             subnet=dict(),
             public_ip_address=dict(),
         ),
@@ -460,18 +460,17 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                     nic = NetworkInterface(
                         location=self.location,
-                        name=self.name,
                         tags=self.tags,
                         ip_configurations=[
                             NetworkInterfaceIPConfiguration(
-                                name='default',
                                 private_ip_allocation_method=self.private_ip_allocation_method,
                             )
                         ]
                     )
+                    #nic.name = self.name
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
+                    nic.ip_configurations[0].name = 'default'
                     nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                      name=nsg.name,
                                                                       location=nsg.location,
                                                                       resource_guid=nsg.resource_guid)
                     if self.private_ip_address:
@@ -480,26 +479,26 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     if pip:
                         nic.ip_configurations[0].public_ip_address = PublicIPAddress(
                             id=pip.id,
-                            name=pip.name,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
                 else:
                     self.log("Updating network interface {0}.".format(self.name))
                     nic = NetworkInterface(
+                        id=results['id'],
                         location=results['location'],
-                        name=results['name'],
                         tags=results['tags'],
                         ip_configurations=[
                             NetworkInterfaceIPConfiguration(
-                                name=results['ip_configuration']['name'],
                                 private_ip_allocation_method=
-                                results['ip_configuration']['private_ip_allocation_method'],
+                                results['ip_configuration']['private_ip_allocation_method']
                             )
-                        ],
+                        ]
                     )
                     subnet = self.get_subnet(results['ip_configuration']['subnet']['virtual_network_name'],
                                              results['ip_configuration']['subnet']['name'])
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
+                    nic.ip_configurations[0].name = results['ip_configuration']['name']
+                    #nic.name = name=results['name'],
 
                     if results['ip_configuration'].get('private_ip_address'):
                         nic.ip_configurations[0].private_ip_address = results['ip_configuration']['private_ip_address']
@@ -509,14 +508,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             self.get_public_ip_address(results['ip_configuration']['public_ip_address']['name'])
                         nic.ip_configurations[0].public_ip_address = PublicIPAddress(
                             id=pip.id,
-                            name=pip.name,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
+                     #name=pip.name,
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
                         nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                          name=nsg.name,
                                                                           location=nsg.location,
                                                                           resource_guid=nsg.resource_guid)
 
@@ -538,15 +536,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             new_nic = self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error creating or updating network interface {0} - {1}".format(self.name, str(exc)))
-
-        self.log("new_nic:")
-        self.log(new_nic)
-        self.log(new_nic.network_security_group)
-
-        if len(new_nic.ip_configurations) > 0:
-            for config in new_nic.ip_configurations:
-                self.log("ip configurations")
-                self.log(config)
 
         return nic_to_dict(new_nic)
 

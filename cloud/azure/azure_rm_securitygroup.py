@@ -461,14 +461,14 @@ def create_rule_dict_from_obj(rule):
         id=rule.id,
         name=rule.name,
         description=rule.description,
-        protocol=rule.protocol.value,
+        protocol=rule.protocol,
         source_port_range=rule.source_port_range,
         destination_port_range=rule.destination_port_range,
         source_address_prefix=rule.source_address_prefix,
         destination_address_prefix=rule.destination_address_prefix,
-        access=rule.access.value,
+        access=rule.access,
         priority=rule.priority,
-        direction=rule.direction.value,
+        direction=rule.direction,
         provisioning_state=rule.provisioning_state,
         etag=rule.etag
     )
