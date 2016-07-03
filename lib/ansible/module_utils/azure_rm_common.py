@@ -312,21 +312,21 @@ class AzureRMModuleBase(object):
             except:
                 pass
 
-        if credentials.get('client_id') is not None or credentials.get('ad_user') is not None:
+        if credentials.get('subscription_id'):
             return credentials
 
         return None
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
-        if env_credentials['profile'] is not None:
+        if env_credentials['profile']:
             credentials = self._get_profile(env_credentials['profile'])
             return credentials
 
-        if env_credentials['client_id'] is not None:
+        if env_credentials.get('subscription_id') is not None:
             return env_credentials
 
         return None
@@ -338,7 +338,7 @@ class AzureRMModuleBase(object):
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
             arg_credentials[attribute] = params.get(attribute, None)
 
         # try module params
@@ -347,7 +347,7 @@ class AzureRMModuleBase(object):
             credentials = self._get_profile(arg_credentials['profile'])
             return credentials
         
-        if arg_credentials['client_id'] is not None:
+        if arg_credentials['subscription_id']:
             self.log('Received credentials from parameters.')
             return arg_credentials
         
