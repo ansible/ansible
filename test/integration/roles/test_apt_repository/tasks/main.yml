@@ -17,5 +17,5 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - include: 'apt.yml'
-  when: ansible_distribution in ('Ubuntu') and ansible_distribution_version|version_compare('16.04', '<')
+  when: ansible_distribution in ('Ubuntu')
 
