@@ -308,6 +308,24 @@ BUG_REPORT_URL="http://bugs.debian.org/"
                    'distribution_version': u'7.9'}
     },
     {
+        "platform.dist": [
+            "Ubuntu",
+            "16.04",
+            "xenial"
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"16.04 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 16.04 LTS\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\nSUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\nUBUNTU_CODENAME=xenial\n",
+            "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"Ubuntu 16.04 LTS\"\n"
+        },
+        "name": "Ubuntu 16.04",
+        "result": {
+            "distribution_release": "xenial",
+            "distribution": "Ubuntu",
+            "distribution_major_version": "16",
+            "distribution_version": "16.04"
+        }
+    },
+    {
         'name': "Ubuntu 14.04",
         'input': {'/etc/lsb-release': """DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=14.04
@@ -523,7 +541,84 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "/etc/release": "                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 18 October 2011\n"
         },
         "platform.system": "SunOS"
+    },
+
+{
+    "name": "Solaris 11.3",
+    "platform.dist": [
+        "",
+        "",
+        ""
+    ],
+    "input": {
+        "/etc/release": "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 06 October 2015\n"
+    },
+    "platform.system": "SunOS",
+    "result": {
+        "distribution_release": "Oracle Solaris 11.3 X86",
+        "distribution": "Solaris",
+        "distribution_version": "11.3"
     }
+},
+
+{
+    "name": "Solaris 10",
+    "platform.dist": [
+        "",
+        "",
+        ""
+    ],
+    "input": {
+        "/etc/release": "                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. All rights reserved.\n                            Assembled 17 January 2013\n"
+    },
+    "platform.system": "SunOS",
+    "result": {
+        "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
+        "distribution": "Solaris",
+        "distribution_version": "10"
+    }
+},
+
+{
+    "name": "Fedora 22",
+    "platform.dist": [
+        "fedora",
+        "22",
+        "Twenty Two"
+    ],
+    "input": {
+        "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
+        "/etc/os-release": "NAME=Fedora\nVERSION=\"22 (Twenty Two)\"\nID=fedora\nVERSION_ID=22\nPRETTY_NAME=\"Fedora 22 (Twenty Two)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:22\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=22\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=22\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n",
+        "/etc/system-release": "Fedora release 22 (Twenty Two)\n"
+    },
+    "result": {
+        "distribution_release": "Twenty Two",
+        "distribution": "Fedora",
+        "distribution_major_version": "22",
+        "distribution_version": "22"
+    }
+},
+{
+    "platform.dist": [
+        "fedora",
+        "25",
+        "Rawhide"
+    ],
+    "input": {
+        "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
+        "/etc/os-release": "NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\nPRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
+        "/etc/system-release": "Fedora release 25 (Rawhide)\n"
+    },
+    "name": "Fedora 25",
+    "result": {
+        "distribution_release": "Rawhide",
+        "distribution": "Fedora",
+        "distribution_major_version": "25",
+        "distribution_version": "25"
+    }
+},
+
+
 ]
 
 @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
