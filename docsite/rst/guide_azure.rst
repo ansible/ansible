@@ -8,12 +8,12 @@ Requirements
 ------------
 
 Using the Azure Resource Manager modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
-installed on the host running Ansible. You will need to have >= v2.0.0RC4 installed. The simplest way to install the
+installed on the host running Ansible. You will need to have == v2.0.0RC5 installed. The simplest way to install the
 SDK is via pip:
 
 .. code-block:: bash
 
-    $ pip install "azure>=2.0.0rc4"
+    $ pip install "azure==2.0.0rc5"
 
 
 Authenticating with Azure
