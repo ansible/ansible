@@ -124,6 +124,7 @@ class LXDClient(object):
 
     @staticmethod
     def _get_err_from_resp_json(resp_json):
+        err = None
         metadata = resp_json.get('metadata', None)
         if metadata is not None:
             err = metadata.get('err', None)
