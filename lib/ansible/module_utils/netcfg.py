@@ -19,7 +19,6 @@
 
 import re
 import time
-import collections
 import itertools
 import shlex
 import itertools
@@ -133,12 +132,9 @@ class NetworkConfig(object):
         return lines
 
     def __str__(self):
-        text = ''
-        for item in self.items:
-            if not item.parents:
-                expand = self.get_section(item.text)
-                text += '%s\n' % self.get_section(item.text)
-        return str(text).strip()
+        if self._device_os == 'junos':
+            return self.to_lines(self.expand(self.items))
+        return self.to_block(self.expand(self.items))
 
     def load(self, contents):
         self._config = parse(contents, indent=self.indent)
@@ -180,18 +176,17 @@ class NetworkConfig(object):
         regexp = r'%s' % regexp
         return re.findall(regexp, str(self))
 
-    def expand(self, obj, items):
-        block = [item.raw for item in obj.parents]
-        block.append(obj.raw)
-
-        current_level = items
-        for b in block:
-            if b not in current_level:
-                current_level[b] = collections.OrderedDict()
-            current_level = current_level[b]
-        for c in obj.children:
-            if c.raw not in current_level:
-                current_level[c.raw] = collections.OrderedDict()
+    def expand(self, objs):
+        visited = set()
+        expanded = list()
+        for o in objs:
+            for p in o.parents:
+                if p not in visited:
+                    visited.add(p)
+                    expanded.append(p)
+            expanded.append(o)
+            visited.add(o)
+        return expanded
 
     def to_lines(self, section):
         lines = list()
@@ -231,14 +226,6 @@ class NetworkConfig(object):
                 continue
             self.expand_section(child, S)
         return S
-
-    def flatten(self, data, obj=None):
-        if obj is None:
-            obj = list()
-        for k, v in data.items():
-            obj.append(k)
-            self.flatten(v, obj)
-        return obj
 
     def get_object(self, path):
         for item in self.items:
@@ -294,43 +281,47 @@ class NetworkConfig(object):
         if self._device_os == 'junos':
             return updates
 
-        diffs = collections.OrderedDict()
+        changes = list()
         for update in updates:
-            if replace == 'block' and update.parents:
-                update = update.parents[-1]
-            self.expand(update, diffs)
+            if replace == 'block':
+                if update.parents:
+                    changes.append(update.parents[-1])
+                    for child in update.parents[-1].children:
+                        changes.append(child)
+                else:
+                    changes.append(update)
+            else:
+                changes.append(update)
+        updates = self.expand(changes)
 
-        return self.flatten(diffs)
+        return [item.text for item in updates]
 
-    def replace(self, replace, text=None, regex=None, parents=None,
-            add_if_missing=False, ignore_whitespace=False):
+    def replace(self, patterns, repl, parents=None, add_if_missing=False,
+                ignore_whitespace=True):
+
         match = None
 
-        parents = parents or list()
-        if text is None and regex is None:
-            raise ValueError('missing required arguments')
-
-        if not regex:
-            regex = ['^%s$' % text]
-
-        patterns = [re.compile(r, re.I) for r in to_list(regex)]
+        parents = to_list(parents) or list()
+        patterns = [re.compile(r, re.I) for r in to_list(patterns)]
 
         for item in self.items:
             for regexp in patterns:
-                string = ignore_whitespace is True and item.text or item.raw
-                if regexp.search(item.text):
-                    if item.text != replace:
+                text = item.text
+                if not ignore_whitespace:
+                    text = item.raw
+                if regexp.search(text):
+                    if item.text != repl:
                         if parents == [p.text for p in item.parents]:
                             match = item
                             break
 
         if match:
-            match.text = replace
+            match.text = repl
             indent = len(match.raw) - len(match.raw.lstrip())
-            match.raw = replace.rjust(len(replace) + indent)
+            match.raw = repl.rjust(len(repl) + indent)
 
         elif add_if_missing:
-            self.add(replace, parents=parents)
+            self.add(repl, parents=parents)
 
 
     def add(self, lines, parents=None):
