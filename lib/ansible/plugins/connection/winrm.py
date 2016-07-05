@@ -111,18 +111,19 @@ class Connection(ConnectionBase):
         if unsupported_transports:
             raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
 
+        # arg names we're going passing directly
+        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path'])
+
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
         argspec = inspect.getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
+        supported_winrm_args.update(internal_kwarg_mask)
         passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in hostvars if v.startswith('ansible_winrm_')])
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
         for arg in unsupported_args:
             display.warning("ansible_winrm_{0} unsupported by pywinrm (is an up-to-date version of pywinrm installed?)".format(arg))
-
-        # arg names we're going passing directly
-        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password'])
 
         # pass through matching kwargs, excluding the list we want to treat specially
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
