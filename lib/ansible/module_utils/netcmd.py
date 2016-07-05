@@ -163,8 +163,22 @@ class CommandRunner(object):
         self.retries = 10
         self.interval = 1
 
+        self._cache = dict()
+
     def add_command(self, command, output=None):
         self.module.cli.add_commands(command, output=output)
+
+    def get_command(self, command):
+        try:
+            cmdobj = self._cache[command]
+            return cmdobj.response
+        except KeyError:
+            for cmd in self.module.cli.commands:
+                if str(cmd) == command:
+                    self._cache[command] = cmd
+                    return cmd.response
+        raise ValueError("command '%s' not found" % command)
+
 
     def add_conditional(self, condition):
         self.conditionals.add(Conditional(condition))
