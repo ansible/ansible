@@ -368,7 +368,7 @@ def main():
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+
         has_vcs = False
-        if pkg:
+        if name:
             for pkg in name:
                 if bool(pkg and re.match(r'(svn|git|hg|bzr)\+', pkg)):
                     has_vcs = True
@@ -386,7 +386,7 @@ def main():
         if extra_args:
             cmd += ' %s' % extra_args
 
-        if pkg:
+        if name:
             for pkg in name:
                 cmd += ' %s' % _get_full_name(pkg, version)
         else:
@@ -410,7 +410,7 @@ def main():
             out += out_pip
             err += err_pip
 
-            if pkg:
+            if name:
                 for pkg in name:
                     is_present = _is_present(pkg, version, out.split())
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
