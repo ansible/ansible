@@ -451,3 +451,6 @@ class Task(Base, Conditional, Taggable, Become):
 
     def _get_attr_loop(self):
         return self._attributes['loop']
+
+    def _get_attr_loop_control(self):
+        return self._attributes['loop_control']
