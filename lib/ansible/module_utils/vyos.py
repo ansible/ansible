@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import re
 
 from ansible.module_utils.network import NetworkError, get_module, get_exception
@@ -34,7 +35,12 @@ def argument_spec():
     )
 vyos_argument_spec = argument_spec()
 
-get_config = lambda x: x.params['config'] or x.config.get_config()
+def get_config(module):
+    if module.params['config']:
+        return module.params['config']
+    config = module.config.get_config()
+    module.params['config'] = config
+    return config
 
 def diff_config(candidate, config):
     updates = set()
@@ -112,8 +118,7 @@ class Cli(NetCli):
 
     def run_commands(self, commands, **kwargs):
         commands = to_list(commands)
-        response = self.execute([str(c) for c in commands])
-        return response
+        return self.execute([str(c) for c in commands])
 
     ### Config methods ###
 
