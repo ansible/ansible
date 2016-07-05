@@ -241,6 +241,12 @@ def main():
         'status': {},
     }
 
+    # Run daemon-reload first, if requested
+    if module.params['daemon_reload']:
+        (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+
     #TODO: check if service exists
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
     if rc != 0:
@@ -269,17 +275,10 @@ def main():
                     multival.append(line)
 
 
-
     if 'LoadState' in result['status'] and result['status']['LoadState'] == 'not-found':
         module.fail_json(msg='Could not find the requested service "%r": %s' % (unit, err))
     elif 'LoadError' in result['status']:
         module.fail_json(msg="Failed to get the service status '%s': %s" % (unit, result['status']['LoadError']))
-
-    # Run daemon-reload first, if requested
-    if module.params['daemon_reload']:
-        (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
-        if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # mask/unmask the service, if requested
     if module.params['masked'] is not None:
