@@ -19,6 +19,7 @@
 - name: set role facts
   set_fact:
     checkout_dir: '{{ output_dir }}/git'
+    repo_dir: '{{ output_dir }}/local_repos'
     repo_format1: 'https://github.com/jimi-c/test_role'
     repo_format2: 'git@github.com:jimi-c/test_role.git'
     repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
@@ -33,6 +34,7 @@
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
+    git_version_supporting_depth: 1.9.1
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
@@ -40,10 +42,15 @@
 - name: verify that git is installed so this test can continue
   shell: which git
 
-- name: get git version, only newer than 1.8.2 has fixed git depth
+- name: get git version, only newer than {{git_version_supporting_depth}} has fixed git depth
   shell: git --version | grep 'git version' | sed 's/git version //'
   register: git_version
 
+- name: set dummy git config
+  shell: git config --global user.email "noreply@example.com"; git config --global user.name "Ansible Test Runner"
+
+- name: create repo_dir
+  file: path={{repo_dir}} state=directory
 
 #
 # Test repo=https://github.com/...
@@ -259,7 +266,7 @@
     that: 
       - checkout_shallow.rc == 1
       - checkout_shallow|failed
-  when: git_version.stdout | version_compare("1.8.2", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
@@ -476,7 +483,7 @@
 - name: make sure the old commit was not fetched
   assert:
     that: checkout_early.rc == 1
-  when: git_version.stdout | version_compare("1.8.2", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
 - name: fetch repo again with depth=1
@@ -488,7 +495,7 @@
 
 - assert:
     that: "not checkout2|changed"
-  when: git_version.stdout | version_compare("1.8.2", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: again try to access earlier commit
   shell: git checkout 79624b4
@@ -500,7 +507,7 @@
 - name: again make sure the old commit was not fetched
   assert:
     that: checkout_early.rc == 1
-  when: git_version.stdout | version_compare("1.8.2", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
     
 # make sure we are still able to fetch other versions
 - name: Clone same repo with older version
@@ -607,6 +614,45 @@
 - name: ensure the fetch succeeded
   assert:
     that: git_fetch|success
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+# test for https://github.com/ansible/ansible-modules-core/issues/3782
+# make sure shallow fetch works when no version is specified
+
+- name: prepare old git repo
+  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{repo_dir}}"
+
+- name: checkout old repo
+  git:
+    repo: '{{ repo_dir }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+
+- name: "update repo"
+  shell: echo "2" > a; git commit -a -m "2"
+  args:
+    chdir: "{{repo_dir}}"
+
+- name: fetch updated repo
+  git:
+    repo: '{{ repo_dir }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+  register: git_fetch
+  ignore_errors: yes
+
+- name: read file
+  shell: cat {{ checkout_dir }}/a
+
+- name: check update arrived
+  assert:
+    that:
+      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
+      - git_fetch|changed
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
