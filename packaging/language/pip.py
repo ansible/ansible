@@ -385,8 +385,9 @@ def main():
         if extra_args:
             cmd += ' %s' % extra_args
 
-        for pkg in name:
-            cmd += ' %s' % _get_full_name(pkg, version)
+        if pkg:
+            for pkg in name:
+                cmd += ' %s' % _get_full_name(pkg, version)
         else:
             if requirements:
                 cmd += ' -r %s' % requirements
