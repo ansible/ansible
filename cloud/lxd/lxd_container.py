@@ -170,7 +170,7 @@ EXAMPLES = """
 
     - name: check python is installed in container
       delegate_to: mycontainer
-      raw: dpkg-query -W -f='${Status}' python
+      raw: dpkg -s python
       register: python_install_check
       failed_when: python_install_check.rc not in [0, 1]
       changed_when: false
