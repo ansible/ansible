@@ -410,11 +410,12 @@ def main():
             out += out_pip
             err += err_pip
 
-            for pkg in name:
-                is_present = _is_present(pkg, version, out.split())
-                if (state == 'present' and not is_present) or (state == 'absent' and is_present):
-                    changed = True
-                    break
+            if pkg:
+                for pkg in name:
+                    is_present = _is_present(pkg, version, out.split())
+                    if (state == 'present' and not is_present) or (state == 'absent' and is_present):
+                        changed = True
+                        break
             module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
         if requirements or has_vcs:
