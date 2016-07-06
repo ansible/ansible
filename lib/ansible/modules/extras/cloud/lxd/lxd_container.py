@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: lxd_container
 short_description: Manage LXD Containers
@@ -35,17 +35,16 @@ options:
     architecture:
         description:
           - The archiecture for the container (e.g. "x86_64" or "i686").
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     config:
         description:
-          - >
-            The config for the container (e.g. {"limits.cpu": "2"}).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+          - 'The config for the container (e.g. {"limits.cpu": "2"}).
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
           - If the container already exists and its "config" value in metadata
             obtained from
             GET /1.0/containers/<name>
-            https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10containersname
+            U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10containersname)
             are different, they this module tries to apply the configurations.
           - The key starts with 'volatile.' are ignored for this comparison.
           - Not all config values are supported to apply the existing container.
@@ -53,26 +52,24 @@ options:
         required: false
     devices:
         description:
-          - >
-            The devices for the container
+          - 'The devices for the container
             (e.g. { "rootfs": { "path": "/dev/kvm", "type": "unix-char" }).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
         required: false
     ephemeral:
         description:
           - Whether or not the container is ephemeral (e.g. true or false).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     source:
         description:
-          - >
-            The source for the container
+          - 'The source for the container
             (e.g. { "type": "image",
                     "mode": "pull",
                     "server": "https://images.linuxcontainers.org",
                     "protocol": "lxd",
                     "alias": "ubuntu/xenial/amd64" }).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
         required: false
     state:
         choices:
@@ -95,14 +92,14 @@ options:
         default: 30
     wait_for_ipv4_addresses:
         description:
-          - If this is true, the lxd_module waits until IPv4 addresses
+          - If this is true, the M(lxd_container) waits until IPv4 addresses
             are set to the all network interfaces in the container after
             starting or restarting.
         required: false
         default: false
     force_stop:
         description:
-          - If this is true, the lxd_module forces to stop the container
+          - If this is true, the M(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
@@ -115,21 +112,19 @@ options:
         description:
           - The client certificate key file path.
         required: false
-        default: >
-          '{}/.config/lxc/client.key'.format(os.environ['HOME'])
+        default: '"{}/.config/lxc/client.key" .format(os.environ["HOME"])'
     cert_file:
         description:
           - The client certificate file path.
         required: false
-        default: >
-          '{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+        default: '"{}/.config/lxc/client.crt" .format(os.environ["HOME"])'
     trust_password:
         description:
           - The client trusted password.
           - You need to set this password on the LXD server before
             running this module using the following command.
             lxc config set core.trust_password <some random password>
-            See https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/
+            See U(https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/)
           - If trust_password is set, this module send a request for
             authentication before sending any requests.
         required: false
@@ -142,14 +137,14 @@ notes:
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
   - You can copy a file from the host to the container
-    with the Ansible `copy` and `template` module and the `lxd` connection plugin.
+    with the Ansible M(copy) and M(templater) module and the `lxd` connection plugin.
     See the example below.
   - You can copy a file in the creatd container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
     See the first example below.
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 # An example for creating a Ubuntu container and install python
 - hosts: localhost
   connection: local
@@ -225,32 +220,30 @@ EXAMPLES = """
         src: /etc/hosts
         dest: /tmp/mycontainer-hosts
         flat: true
-"""
+'''
 
-RETURN="""
-lxd_container:
-  description: container information
-  returned: success
+RETURN='''
+addresses:
+  description: Mapping from the network device name to a list of IPv4 addresses in the container
+  returned: when state is started or restarted
   type: object
-  contains:
-    addresses:
-      description: Mapping from the network device name to a list of IPv4 addresses in the container
-      returned: when state is started or restarted
-      type: object
-      sample: {"eth0": ["10.155.92.191"]}
-    old_state:
-      description: The old state of the container
-      returned: when state is started or restarted
-      sample: "stopped"
-    logs:
-      descriptions: The logs of requests and responses.
-      returned: when ansible-playbook is invoked with -vvvv.
-    actions:
-      description: List of actions performed for the container.
-      returned: success
-      type: list
-      sample: ["create", "start"]
-"""
+  sample: {"eth0": ["10.155.92.191"]}
+old_state:
+  description: The old state of the container
+  returned: when state is started or restarted
+  type: string
+  sample: "stopped"
+logs:
+  description: The logs of requests and responses.
+  returned: when ansible-playbook is invoked with -vvvv.
+  type: list
+  sample: "(too long to be placed here)"
+actions:
+  description: List of actions performed for the container.
+  returned: success
+  type: list
+  sample: '["create", "start"]'
+'''
 
 import os
 from ansible.modules.extras.cloud.lxd import LXDClient, LXDClientException
