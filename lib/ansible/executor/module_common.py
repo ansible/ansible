@@ -574,8 +574,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         if os.path.exists(cached_module_filename):
             display.debug('ZIPLOADER: using cached module: %s' % cached_module_filename)
             zipdata = open(cached_module_filename, 'rb').read()
-            # Fool the check later... I think we should just remove the check
-            py_module_names.add(('basic',))
         else:
             if module_name in strategy.action_write_locks:
                 display.debug('ZIPLOADER: Using lock for %s' % module_name)
@@ -635,8 +633,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     zipdata = open(cached_module_filename, 'rb').read()
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
-                # Fool the check later... I think we should just remove the check
-                py_module_names.add(('basic',))
         zipdata = to_unicode(zipdata, errors='strict')
 
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
@@ -662,13 +658,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             coding=ENCODING_STRING,
             )))
         module_data = output.getvalue()
-
-        # Sanity check from 1.x days.  Maybe too strict.  Some custom python
-        # modules that use ziploader may implement their own helpers and not
-        # need basic.py.  All the constants that we substituted into basic.py
-        # for module_replacer are now available in other, better ways.
-        if ('basic',) not in py_module_names:
-            raise AnsibleError("missing required import in %s: Did not import ansible.module_utils.basic for boilerplate helper code" % module_path)
 
     elif module_substyle == 'powershell':
         # Module replacer for jsonargs and windows
@@ -731,9 +720,6 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
        ... will result in the insertion of basic.py into the module
        from the module_utils/ directory in the source tree.
-
-    All modules are required to import at least basic, though there will also
-    be other snippets.
 
     For powershell, there's equivalent conventions like this:
 
