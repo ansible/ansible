@@ -290,8 +290,8 @@ if __name__ == '__main__':
             # may load the system-wide install of ansible rather than the one in
             # the module.  sitecustomize is the only way to override that setting.
             z = zipfile.ZipFile(zipped_mod, mode='a')
+
             # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
-            z = zipfile.ZipFile(zipped_mod, mode='a')
             sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
             sitecustomize = sitecustomize.encode('utf-8')
             z.writestr('sitecustomize.py', sitecustomize)
