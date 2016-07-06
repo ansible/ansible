@@ -124,7 +124,7 @@ class TaskQueueManager:
 
         handlers = play.handlers
         for role in play.roles:
-            handlers.extend(role._handler_blocks)
+            handlers.extend(role.get_handler_blocks())
 
         # Zero the dictionary first by removing any entries there.
         # Proxied dicts don't support iteritems, so we have to use keys()
