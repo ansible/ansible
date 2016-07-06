@@ -23,6 +23,7 @@ import re
 from ansible.module_utils.network import NetworkError, get_module, get_exception
 from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.network import Command, NetCli
+from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -36,17 +37,18 @@ def argument_spec():
 vyos_argument_spec = argument_spec()
 
 def get_config(module):
-    if module.params['config']:
-        return module.params['config']
-    config = module.config.get_config()
-    module.params['config'] = config
-    return config
+    contents = module.params['config']
+    if not contents:
+        contents = str(module.config.get_config()).split('\n')
+        module.params['config'] = contents
+    contents = '\n'.join(contents)
+    return NetworkConfig(contents=contents, device_os='junos')
 
 def diff_config(candidate, config):
     updates = set()
-    config = [str(c).replace("'", '') for c in config]
+    config = [str(c).replace("'", '') for c in str(config).split('\n')]
 
-    for line in candidate:
+    for line in str(candidate).split('\n'):
         item = str(line).replace("'", '')
 
         if not item.startswith('set') and not item.startswith('delete'):
@@ -66,8 +68,9 @@ def diff_config(candidate, config):
 
     return list(updates)
 
-def load_config(module, candidate):
-    config = get_config(module).split('\n')
+def load_candidate(module, candidate):
+    config = get_config(module)
+
     updates = diff_config(candidate, config)
 
     comment = module.params['comment']
@@ -81,7 +84,6 @@ def load_config(module, candidate):
             result['diff'] = dict(prepared=diff)
 
         result['changed'] = True
-        result['updates'] = updates
 
         if not module.check_mode:
             module.config.commit_config(comment=comment)
@@ -93,7 +95,13 @@ def load_config(module, candidate):
         # exit from config mode
         module.cli('exit')
 
+    result['updates'] = updates
     return result
+
+def load_config(module, commands):
+    contents = '\n'.join(commands)
+    candidate = NetworkConfig(contents=contents, device_os='junos')
+    return load_candidate(module, candidate)
 
 
 class Cli(NetCli):
