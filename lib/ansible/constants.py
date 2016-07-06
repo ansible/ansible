@@ -76,7 +76,8 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
             value = shell_expand(value)
             if not os.path.exists(value):
                 os.makedirs(value, 0o700)
-            value = tempfile.mkdtemp(prefix='ansible-local-tmp', dir=value)
+            prefix = 'ansible-local-%s' % os.getpid()
+            value = tempfile.mkdtemp(prefix=prefix, dir=value)
         elif ispathlist:
             if isinstance(value, string_types):
                 value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
