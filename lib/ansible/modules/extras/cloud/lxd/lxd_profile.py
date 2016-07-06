@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: lxd_profile
 short_description: Manage LXD profiles
@@ -34,29 +34,27 @@ options:
         required: true
     config:
         description:
-          - >
-            The config for the container (e.g. {"limits.memory": "4GB"}).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3
+          - 'The config for the container (e.g. {"limits.memory": "4GB"}).
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3)'
           - If the profile already exists and its "config" value in metadata
             obtained from
             GET /1.0/profiles/<name>
-            https://github.com/lxc/lxd/blob/master/doc/rest-api.md#get-19
+            U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#get-19)
             are different, they this module tries to apply the configurations.
           - Not all config values are supported to apply the existing profile.
             Maybe you need to delete and recreate a profile.
         required: false
     devices:
         description:
-          - >
-            The devices for the profile
+          - 'The devices for the profile
             (e.g. {"rootfs": {"path": "/dev/kvm", "type": "unix-char"}).
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3)'
         required: false
     new_name:
         description:
           - A new name of a profile.
           - If this parameter is specified a profile will be renamed to this name.
-            See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-11
+            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-11)
         required: false
     state:
         choices:
@@ -75,21 +73,19 @@ options:
         description:
           - The client certificate key file path.
         required: false
-        default: >
-          '{}/.config/lxc/client.key'.format(os.environ['HOME'])
+        default: '"{}/.config/lxc/client.key" .format(os.environ["HOME"])'
     cert_file:
         description:
           - The client certificate file path.
         required: false
-        default: >
-          '{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+        default: '"{}/.config/lxc/client.crt" .format(os.environ["HOME"])'
     trust_password:
         description:
           - The client trusted password.
           - You need to set this password on the LXD server before
             running this module using the following command.
             lxc config set core.trust_password <some random password>
-            See https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/
+            See U(https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/)
           - If trust_password is set, this module send a request for
             authentication before sending any requests.
         required: false
@@ -97,9 +93,9 @@ notes:
   - Profiles must have a unique name. If you attempt to create a profile
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 # An example for creating a profile
 - hosts: localhost
   connection: local
@@ -155,26 +151,25 @@ EXAMPLES = """
         name: macvlan
         new_name: macvlan2
         state: present
-"""
+'''
 
-RETURN="""
-lxd_profile:
-  description: profile information
+RETURN='''
+old_state:
+  description: The old state of the profile
   returned: success
-  type: object
-  contains:
-    old_state:
-      description: The old state of the profile
-      sample: "absent"
-    logs:
-      descriptions: The logs of requests and responses.
-      returned: when ansible-playbook is invoked with -vvvv.
-    actions:
-      description: List of actions performed for the profile.
-      returned: success
-      type: list
-      sample: ["create"]
-"""
+  type: string
+  sample: "absent"
+logs:
+  description: The logs of requests and responses.
+  returned: when ansible-playbook is invoked with -vvvv.
+  type: list
+  sample: "(too long to be placed here)"
+actions:
+  description: List of actions performed for the profile.
+  returned: success
+  type: list
+  sample: '["create"]'
+'''
 
 import os
 from ansible.modules.extras.cloud.lxd import LXDClient, LXDClientException
