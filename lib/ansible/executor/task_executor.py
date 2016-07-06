@@ -576,13 +576,21 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             async_result = normal_handler.run()
-            if int(async_result.get('finished', 0)) == 1 or 'failed' in async_result or 'skipped' in async_result:
+            # We do not bail out of the loop in cases where the failure
+            # is associated with a parsing error. The async_runner can
+            # have issues which result in a half-written/unparseable result
+            # file on disk, which manifests to the user as a timeout happening
+            # before it's time to timeout.
+            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('parsed', True)) or 'skipped' in async_result:
                 break
 
             time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
-            return dict(failed=True, msg="async task did not complete within the requested time")
+            if async_result.get('parsed'):
+                return dict(failed=True, msg="async task did not complete within the requested time")
+            else:
+                return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
             return async_result
 
