@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import itertools
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
@@ -68,12 +69,15 @@ def disconnect(module):
 
 class Command(object):
 
-    def __init__(self, command, output=None, prompt=None, response=None):
+    def __init__(self, command, output=None, prompt=None, response=None,
+                 is_reboot=False, delay=0):
+
         self.command = command
         self.output = output
         self.prompt = prompt
         self.response = response
-        self.conditions = set()
+        self.is_reboot = is_reboot
+        self.delay = delay
 
     def __str__(self):
         return self.command
@@ -103,7 +107,10 @@ class Cli(object):
         self.commands.extend(commands)
 
     def run_commands(self):
-        return self.connection.run_commands(self.commands)
+        responses = self.connection.run_commands(self.commands)
+        for resp, cmd in itertools.izip(responses, self.commands):
+            cmd.response = resp
+        return responses
 
 class Config(object):
 
