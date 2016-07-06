@@ -137,6 +137,7 @@ class GalaxyAPI(object):
         data = json.load(resp)
         return data
 
+    @g_connect
     def create_import_task(self, github_user, github_repo, reference=None):
         """
         Post an import request
@@ -152,7 +153,7 @@ class GalaxyAPI(object):
             return data['results']
         return data
 
-    @g_connect
+    @g_connect   # Added this to fix a bug. Without this, self.baseurl == None.
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
         """
         Check the status of an import task.
