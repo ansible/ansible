@@ -35,10 +35,13 @@ options:
     required: true
     default: null
 version_added: "1.2"
+notes:
+    - "The `var=value` notation can only create strings or booleans.
+      If you want to create lists/arrays or dictionary/hashes use `var: [val1, val2]`"
 '''
 
 EXAMPLES = '''
-# Example setting host facts using key=value pairs
+# Example setting host facts using key=value pairs, note that this always creates strings or booleans
 - set_fact: one_fact="something" other_fact="{{ local_var }}"
 
 # Example setting host facts using complex arguments
