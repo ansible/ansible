@@ -37,12 +37,12 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(waitfor) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retires as expired.
+        the number of retries has expired.
     required: true
   wait_for:
     description:
       - List of conditions to evaluate against the output of the
-        command. The task will wait for a each condition to be true
+        command. The task will wait for each condition to be true
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
@@ -55,7 +55,7 @@ options:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        waitfor conditions.
+        I(waitfor) conditions.
     required: false
     default: 10
   interval:
@@ -78,7 +78,7 @@ vars:
     password: cisco
     transport: cli
 
-- name: run show verion on remote devices
+- name: run show version on remote devices
   ios_command:
     commands: show version
     provider "{{ cli }}"
@@ -96,7 +96,7 @@ vars:
       - show interfaces
     provider "{{ cli }}"
 
-- name: run multiple commands and evalute the output
+- name: run multiple commands and evaluate the output
   ios_command:
     commands:
       - show version
@@ -122,7 +122,7 @@ stdout_lines:
 
 failed_conditions:
   description: The list of conditionals that have failed
-  retured: failed
+  returned: failed
   type: list
   sample: ['...', '...']
 
