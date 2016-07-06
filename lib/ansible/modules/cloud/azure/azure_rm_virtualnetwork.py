@@ -145,8 +145,6 @@ except ImportError:
     pass
 
 
-NAME_PATTERN = re.compile(r"^[a-zA-Z0-9]+[a-zA-Z0-9\._-]+[a-zA-Z0-9_]+$")
-
 
 def virtual_network_to_dict(vnet):
     '''
@@ -227,10 +225,6 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must begin with a letter or number, end with a letter, number "
-                      "or underscore and may contain only letters, numbers, periods, underscores or hyphens.")
 
         if self.state == 'present' and self.purge_address_prefixes:
             for prefix in self.address_prefixes_cidr:
