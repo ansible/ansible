@@ -23,9 +23,9 @@ author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco IOS device configurations over SSH
 description:
   - Manages Cisco IOS network device configurations over SSH.  This module
-    allows implementors to work with the device running-config.  It
+    allows implementers to work with the device running-config.  It
     provides a way to push a set of commands onto a network device
-    by evaluting the current running-config and only pushing configuration
+    by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 extends_documentation_fragment: ios
@@ -50,7 +50,7 @@ options:
   include_defaults:
     description:
       - The module, by default, will collect the current device
-        running-config to use as a base for comparision to the commands
+        running-config to use as a base for comparison to the commands
         in I(src).  Setting this value to true will cause the command
         issued to add any necessary flags to collect all defaults as
         well as the device configuration.  If the destination device
@@ -74,8 +74,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task.  The I(config) argument allows the implementer to
-        pass in the configuruation to use as the base config for
-        comparision.
+        pass in the configuration to use as the base config for
+        comparison.
     required: false
     default: null
 """
@@ -111,7 +111,7 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 """
