@@ -197,6 +197,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_play.handlers = [mock_handler_block]
 
         mock_tqm._notified_handlers = {mock_handler_task: []}
+        mock_tqm.get_notified_handlers.return_value = mock_tqm._notified_handlers
 
         mock_group = MagicMock()
         mock_group.add_host.return_value = None
@@ -225,7 +226,6 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._inventory = mock_inventory
         strategy_base._variable_manager = mock_var_mgr
         strategy_base._blocked_hosts = dict()
-        strategy_base._notified_handlers = dict()
 
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
