@@ -255,7 +255,7 @@ class ModuleValidator(Validator):
         if not linenos:
             self.errors.append('Did not find a module_utils import')
         elif not found_basic:
-            self.errors.append('Did not find "ansible.module_utils.basic" '
+            self.warnings.append('Did not find "ansible.module_utils.basic" '
                                'import')
 
         return linenos
