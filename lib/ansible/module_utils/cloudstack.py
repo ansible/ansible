@@ -93,6 +93,9 @@ class AnsibleCloudStack(object):
         # these keys will be compared case sensitive in self.has_changed()
         self.case_sensitive_keys = [
             'id',
+            'displaytext',
+            'displayname',
+            'description',
         ]
 
         self.module = module
@@ -155,12 +158,17 @@ class AnsibleCloudStack(object):
                 continue
 
             if key in current_dict:
-                if self.case_sensitive_keys and key in self.case_sensitive_keys:
-                    if str(value) != str(current_dict[key]):
+                if isinstance(current_dict[key], (int, long, float, complex)):
+                    if value != current_dict[key]:
                         return True
-                # Test for diff in case insensitive way
-                elif str(value).lower() != str(current_dict[key]).lower():
-                    return True
+                else:
+                    if self.case_sensitive_keys and key in self.case_sensitive_keys:
+                        if value != current_dict[key].encode('utf-8'):
+                            return True
+
+                    # Test for diff in case insensitive way
+                    elif value.lower() != current_dict[key].encode('utf-8').lower():
+                        return True
             else:
                 return True
         return False
