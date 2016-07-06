@@ -348,22 +348,17 @@ class StrategyBase:
                     # dependency chain of the current task (if it's from a role), otherwise
                     # we just look through the list of handlers in the current play/all
                     # roles and use the first one that matches the notify name
-                    target_handler = None
-                    if original_task._role:
-                        target_handler = search_handler_blocks(original_task._role.get_handler_blocks())
-                    if target_handler is None:
-                        target_handler = search_handler_blocks(iterator._play.handlers)
+                    target_handler = search_handler_blocks(iterator._play.handlers)
                     if target_handler is None:
                         raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
 
-                    # FIXME: this should be an error now in 2.1+
-                    if target_handler not in self._notified_handlers:
-                        self._notified_handlers[target_handler] = []
-
-                    if original_host not in self._notified_handlers[target_handler]:
-                        self._notified_handlers[target_handler].append(original_host)
-                        # FIXME: should this be a callback?
-                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                    if target_handler in self._notified_handlers:
+                        if original_host not in self._notified_handlers[target_handler]:
+                            self._notified_handlers[target_handler].append(original_host)
+                            # FIXME: should this be a callback?
+                            display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                    else:
+                        raise AnsibleError("The requested handler '%s' was not found in the main handlers list" % handler_name)
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
