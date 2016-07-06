@@ -441,16 +441,24 @@ class ZipArchive(object):
 
             # Do not handle permissions of symlinks
             if ftype != 'L':
+
+                # Use the new mode provided with the action, if there is one
+                if self.file_args['mode']:
+                    if isinstance(self.file_args['mode'], int):
+                        mode = self.file_args['mode']
+                    else:
+                        try:
+                            mode = int(self.file_args['mode'], 8)
+                        except Exception:
+                            e = get_exception()
+                            self.module.fail_json(path=path, msg="mode %(mode)s must be in octal form" % self.file_args, details=str(e))
                 # Only special files require no umask-handling
-                if ztype == '?':
+                elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)
                 else:
                     mode = self._permstr_to_octal(permstr, umask)
-                if self.file_args['mode'] and  self.file_args['mode'] != stat.S_IMODE(st.st_mode):
-                    change = True
-                    err += 'Path %s differs in permissions (%o vs %o)\n' % (path, self.file_args['mode'], stat.S_IMODE(st.st_mode))
-                    itemized[5] = 'p'
-                elif mode != stat.S_IMODE(st.st_mode):
+
+                if mode != stat.S_IMODE(st.st_mode):
                     change = True
                     itemized[5] = 'p'
                     err += 'Path %s differs in permissions (%o vs %o)\n' % (path, mode, stat.S_IMODE(st.st_mode))
@@ -700,6 +708,7 @@ def main():
             validate_certs    = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args = True,
+        # check-mode only works for zip files
 #        supports_check_mode = True,
     )
 
