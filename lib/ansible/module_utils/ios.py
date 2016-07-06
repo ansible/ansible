@@ -17,13 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import re
 
 from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
 from ansible.module_utils.network import register_transport, to_list
-
-ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
 
 class Cli(NetCli):
     CLI_PROMPTS_RE = [
