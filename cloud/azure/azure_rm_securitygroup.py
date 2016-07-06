@@ -338,8 +338,6 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-NAME_PATTERN = re.compile(r"^[a-zA-Z0-9._-]+$")
-
 
 def validate_rule(rule, rule_type=None):
     '''
@@ -352,8 +350,6 @@ def validate_rule(rule, rule_type=None):
 
     if not rule.get('name'):
         raise Exception("Rule name value is required.")
-    if not NAME_PATTERN.match(rule.get('name')):
-        raise Exception("Rule name must contain only word characters plus '.','-','_'")
 
     priority = rule.get('priority', None)
     if not priority:
@@ -550,9 +546,6 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must contain only word characters and '.','-','_'")
 
         if self.rules:
             for rule in self.rules:

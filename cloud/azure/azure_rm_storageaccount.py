@@ -160,8 +160,6 @@ except ImportError:
     pass
 
 
-NAME_PATTERN = re.compile(r"^[a-z0-9]+$")
-
 
 class AzureRMStorageAccount(AzureRMModuleBase):
 
@@ -210,9 +208,6 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must contain numbers and lowercase letters only.")
 
         if len(self.name) < 3 or len(self.name) > 24:
             self.fail("Parameter error: name length must be between 3 and 24 characters.")

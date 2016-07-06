@@ -210,9 +210,6 @@ except ImportError:
     pass
 
 
-NAME_PATTERN = re.compile(r"^(?!-)(?!.*--)[a-z0-9\-]+$")
-
-
 class AzureRMStorageBlob(AzureRMModuleBase):
 
     def __init__(self):
@@ -269,11 +266,6 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
-
-        if not NAME_PATTERN.match(self.container):
-            self.fail("Parameter error: container_name must consist of lowercase letters, "
-                      "numbers and hyphens. It must begin with a letter or number. It may "
-                      "not contain two consecutive hyphens.")
 
         # add file path validation
 
