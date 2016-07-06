@@ -118,7 +118,10 @@ def is_plugin_present(plugin_dir, working_dir):
 
 def parse_error(string):
     reason = "reason: "
-    return string[string.index(reason) + len(reason):].strip()
+    try:
+        return string[string.index(reason) + len(reason):].strip()
+    except ValueError:
+        return string
 
 
 def main():
