@@ -83,12 +83,8 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
-            # lookup plugins need to know if this task is executing from
-            # a role, so that it can properly find files/templates/etc.
-            roledir = None
-            if self._task._role:
-                roledir = self._task._role._role_path
-            self._job_vars['roledir'] = roledir
+            # get search path for this task to pass to lookup plugins
+            self._job_vars['ansible_search_path'] = self._task.get_search_path()
 
             items = self._get_loop_items()
             if items is not None:

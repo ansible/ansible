@@ -119,8 +119,6 @@ __metaclass__ = type
 #    ignore_errors: true
 
 
-import os
-
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
@@ -131,7 +129,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        result = None
         anydict = False
         skip = False
 
@@ -173,22 +170,21 @@ class LookupModule(LookupBase):
         else:
             total_search = self._flatten(terms)
 
-        roledir = variables.get('roledir')
         for fn in total_search:
             try:
                 fn = self._templar.template(fn)
-            except (AnsibleUndefinedVariable, UndefinedError) as e:
+            except (AnsibleUndefinedVariable, UndefinedError):
                 continue
 
             if os.path.isabs(fn) and os.path.exists(fn):
                 return [fn]
             else:
-                if roledir is not None:
-                    # check the templates and vars directories too,if they exist
-                    for subdir in ('templates', 'vars', 'files'):
-                        path = self._loader.path_dwim_relative(roledir, subdir, fn)
-                        if os.path.exists(path):
-                            return [path]
+                # check the templates and vars directories too,if they exist
+                #TODO: This should match 'task module' (include_vars/vars, template/templates, etc)
+                for subdir in ('templates', 'vars', 'files'):
+                    path = self.find_needle(variables, subdir, fn)
+                    if path:
+                        return [path]
 
                 # if none of the above were found, just check the
                 # current filename against the current dir

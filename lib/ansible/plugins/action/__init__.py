@@ -831,18 +831,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             to get back the first existing file found.
         '''
 
-        path_stack = []
-
-        dep_chain =  self._task._block.get_dep_chain()
-        # inside role: add the dependency chain
-        if dep_chain:
-            path_stack.extend(reversed([x._role_path for x in dep_chain]))
-
-
-        task_dir = os.path.dirname(self._task.get_path())
-        # include from diff directory: add it to file path
-        if not task_dir.endswith('tasks') and task_dir != self._loader.get_basedir():
-            path_stack.append(task_dir)
+        path_stack = self._task.get_search_path()
 
         result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
 

@@ -19,7 +19,6 @@ __metaclass__ = type
 
 import os
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.unicode import to_unicode
@@ -36,26 +35,25 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         convert_data_p = kwargs.get('convert_data', True)
-        basedir = self.get_basedir(variables)
-
         ret = []
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
-            lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
+            lookupfile = self.find_needle(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
-            if lookupfile and os.path.exists(lookupfile):
+            if lookupfile:
                 with open(lookupfile, 'r') as f:
                     template_data = to_unicode(f.read())
 
-                    searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
-                    if 'role_path' in variables:
-                        if C.DEFAULT_ROLES_PATH:
-                            searchpath[:0] = C.DEFAULT_ROLES_PATH
-                        searchpath.insert(1, variables['role_path'])
-
+                    # set jinja2 internal search path for includes
+                    if 'ansible_search_path' in variables:
+                        searchpath = variables['ansible_search_path']
+                    else:
+                        searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     self._templar.environment.loader.searchpath = searchpath
+
+                    # do the emplating
                     res = self._templar.template(template_data, preserve_trailing_newlines=True,convert_data=convert_data_p)
                     ret.append(res)
             else:

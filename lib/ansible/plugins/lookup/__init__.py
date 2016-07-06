@@ -22,6 +22,7 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 
 from ansible.compat.six import with_metaclass
+from ansible.errors import AnsibleError
 
 try:
     from __main__ import display
@@ -101,3 +102,19 @@ class LookupBase(with_metaclass(ABCMeta, object)):
             result_string = to_unicode(result_string)
         """
         pass
+
+    def find_needle(self, myvars, subdir, needle):
+        '''
+        Return a file (needle) in the task's expected search path.
+        '''
+
+        if 'ansible_search_path' in myvars:
+            paths = myvars['ansible_search_path']
+        else:
+            paths = self.get_basedir(myvars)
+
+        result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
+        if result is None:
+            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
+
+        return result
