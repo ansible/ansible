@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import errno
 import fcntl
 import os
@@ -74,7 +75,7 @@ class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
         self.ssh_cmd = ssh_cmd
         self.ssh_stderr = ssh_stderr
 
-        self.message = '%s\nSTDERR: %s' % (self.message, self.ssh_stderr)
+        self.message = '%s\nSTDERR: %s' % (self.message, codecs.escape_decode(self.ssh_stderr))
 
 
 # Example errors
@@ -431,9 +432,13 @@ class Connection(ConnectionBase):
         display.v('ssh stderr: %s' % stderr)
         display.v('ssh error state: %s' % state)
         error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
-        for error in error_mapper.matched_errors.values():
-            suppress_output = False
+        for error in error_mapper.errors:
+            # FIXME: pass in useful stuff to the exception constructor
+            raise AnsibleSshConnectionFailure(error)
 
+        for warning in error_mapper.warnings:
+            display.v(msg='ssh warning: %s' % warning)
+            raise AnsibleSshConnectionFailure(warning)
 
 
     def _run(self, cmd, in_data, sudoable=True):
@@ -765,8 +770,17 @@ class Connection(ConnectionBase):
         if return_code != 255:
             return False
 
+        display.v('ssh stderr: %s' % stderr)
+        error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
+        for error in error_mapper.errors:
+            # FIXME: pass in useful stuff to the exception constructor
+            raise AnsibleSshConnectionFailure(error)
 
-        raise AnsibleSshConnectionFailure("Failed to connect to the host via ssh.")
+        for warning in error_mapper.warnings:
+            display.v(msg='ssh warning: %s' % warning)
+            raise AnsibleSshConnectionFailure(warning)
+
+        return False
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
