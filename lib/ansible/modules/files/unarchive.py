@@ -5,7 +5,6 @@
 # (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 # (c) 2016, Dag Wieers <dag@wieers.com>
-# (c) 2016, Virgil Dupras <hsoft@hardcoded.net>
 #
 # This file is part of Ansible
 #
@@ -123,9 +122,8 @@ import grp
 import datetime
 import time
 import binascii
+import codecs
 from zipfile import ZipFile, BadZipfile
-import tarfile
-import subprocess
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -552,23 +550,25 @@ class TgzArchive(object):
         self.compress_mode = 'gz'
         self._files_in_archive = []
 
-    def _get_tar_fileobj(self):
-        """Returns a file object that can be read by ``tarfile.open()``."""
-        return open(self.src, 'rb')
-
     @property
     def files_in_archive(self, force_refresh=False):
         if self._files_in_archive and not force_refresh:
             return self._files_in_archive
 
-        # The use of Python's tarfile module here allows us to easily avoid tricky file encoding
-        # problems. Ref #11348
-        try:
-            tf = tarfile.open(fileobj=self._get_tar_fileobj(), mode='r:%s' % self.compress_mode)
-        except Exception:
+        cmd = '%s -t%s' % (self.cmd_path, self.zipflag)
+        if self.opts:
+            cmd += ' ' + ' '.join(self.opts)
+        if self.excludes:
+            cmd += ' --exclude="' + '" --exclude="'.join(self.excludes) + '"'
+        cmd += ' -f "%s"' % self.src
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
-        for filename in tf.getnames():
+        for filename in out.splitlines():
+            # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
+#            filename = filename.decode('string_escape')
+            filename = codecs.escape_decode(filename)[0]
             if filename and filename not in self.excludes:
                 self._files_in_archive.append(filename)
         return self._files_in_archive
@@ -672,19 +672,6 @@ class TarXzArchive(TgzArchive):
         super(TarXzArchive, self).__init__(src, dest, file_args, module)
         self.zipflag = 'J'
         self.compress_mode = ''
-
-    def _get_tar_fileobj(self):
-        # Python's tarfile module doesn't support xz compression so we have to manually uncompress
-        # it first.
-        xz_bin_path = self.module.get_bin_path('xz')
-        xz_stdout = tempfile.TemporaryFile()
-        # we don't use self.module.run_command() to avoid loading the whole archive in memory.
-        cmd = subprocess.Popen([xz_bin_path, '-dc', self.src], stdout=xz_stdout)
-        rc = cmd.wait()
-        if rc != 0:
-            raise UnarchiveError("Could not uncompress with xz")
-        xz_stdout.seek(0)
-        return xz_stdout
 
 
 # try handlers in order and return the one that works or bail if none work
