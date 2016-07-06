@@ -75,7 +75,8 @@ class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
         self.ssh_cmd = ssh_cmd
         self.ssh_stderr = ssh_stderr
 
-        self.message = '%s\nSTDERR: %s' % (self.message, codecs.escape_decode(self.ssh_stderr))
+        #self.message = '%s\nSTDERR: %s' % (self.message, codecs.escape_decode(self.ssh_stderr))
+        self.message = '%s\n' % (self.message)
 
 
 # Example errors
@@ -95,7 +96,8 @@ class OpenSshStderrErrorMapper():
     # more useful ansible error messages
 
     # FIXME: The names on the rhs are just placeholders for now, to be replaced with exceptions
-    warning_regexes = {r"""Permissions (.*) for '(.*)' are too open.""": 'too_open',
+    warning_regexes = {r"""Permissions (.*) for '(.*)' are too open.""":
+                       'too_open',
                      r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
                      r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',}
     error_regexes = {r"""connect to host (.*) port (.*): No route to host""": 'no_route_to_host',
@@ -111,17 +113,17 @@ class OpenSshStderrErrorMapper():
     def _matcher(self, regex_map, error_string):
         # TODO: could be a module or staticmethod if returns a dict
         matches = defaultdict(list)
-        for error_regex in regex_map:
-            # print(error_regex)
-            # print(self.stderr)
-            match = re.search(error_regex, error_string)
-            # print(match)
-            if not match:
-                continue
+        for line in error_string.splitlines():
+            for error_regex in regex_map:
+                match = re.search(error_regex, line)
+                # print(match)
+                if not match:
+                    continue
 
-            for match_group in match.groups():
-                # print('error_match %s' % match_group)
-                matches[regex_map[error_regex]].append(match_group)
+                matches[regex_map[error_regex]].append(line)
+    #            for match_group in match.groups():
+    #                # print('error_match %s' % match_group)
+    #                matches[regex_map[error_regex]].append(match_group)
         return matches
 
     def _match_errors(self):
@@ -415,31 +417,6 @@ class Connection(ConnectionBase):
             output = output[:-1]
 
         return ''.join(output), remainder
-
-    def _examine_stderr_output(self, state, stderr):
-        '''
-        Takes a string of the cmds stderr, extracts complete lines from it, tests to see if they
-        are a prompt, error message, etc., and raises approriate AnsibleSshConnectionFailure exception.
-        Prompt and success lines are removed.
-
-        Returns the processed (i.e. possibly-edited) output and the unprocessed
-        remainder (to be processed with the next chunk) as strings.
-
-        Raises AnsibleConnectionFailure subclasses.
-        '''
-
-        output = []
-        display.v('ssh stderr: %s' % stderr)
-        display.v('ssh error state: %s' % state)
-        error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
-        for error in error_mapper.errors:
-            # FIXME: pass in useful stuff to the exception constructor
-            raise AnsibleSshConnectionFailure(error)
-
-        for warning in error_mapper.warnings:
-            display.v(msg='ssh warning: %s' % warning)
-            raise AnsibleSshConnectionFailure(warning)
-
 
     def _run(self, cmd, in_data, sudoable=True):
         '''
@@ -772,13 +749,14 @@ class Connection(ConnectionBase):
 
         display.v('ssh stderr: %s' % stderr)
         error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
-        for error in error_mapper.errors:
+        for error, matches in error_mapper.errors.items():
+            msg = '\n'.join(matches)
             # FIXME: pass in useful stuff to the exception constructor
-            raise AnsibleSshConnectionFailure(error)
+            raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
 
-        for warning in error_mapper.warnings:
-            display.v(msg='ssh warning: %s' % warning)
-            raise AnsibleSshConnectionFailure(warning)
+        for warning, matches in error_mapper.warnings.items():
+            msg = '\n'.join(matches)
+            raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
 
         return False
 
