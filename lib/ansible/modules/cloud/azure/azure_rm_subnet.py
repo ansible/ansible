@@ -139,8 +139,6 @@ except ImportError:
     pass
 
 
-NAME_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.-_]+[a-zA-Z0-9_]$")
-
 
 def subnet_to_dict(subnet):
     result = dict(
@@ -197,10 +195,6 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must begin with a letter or number, end with a letter, number "
-                      "or underscore and may contain only letters, numbers, periods, underscores or hyphens.")
 
         if self.state == 'present' and not CIDR_PATTERN.match(self.address_prefix_cidr):
             self.fail("Invalid address_prefix_cidr value {0}".format(self.address_prefix_cidr))

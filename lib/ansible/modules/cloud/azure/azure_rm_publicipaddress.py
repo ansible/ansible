@@ -125,8 +125,6 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]{1,61}[a-z0-9]$")
-
 
 def pip_to_dict(pip):
     result = dict(
@@ -190,10 +188,6 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must begin with a letter or number, end with a letter or number "
-                      "and contain at least one number.")
 
         try:
             self.log("Fetch public ip {0}".format(self.name))

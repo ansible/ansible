@@ -234,8 +234,6 @@ except ImportError:
     pass
 
 
-NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]{1,61}[a-z0-9]$")
-
 
 def nic_to_dict(nic):
     result = dict(
@@ -348,10 +346,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
-
-        if not NAME_PATTERN.match(self.name):
-            self.fail("Parameter error: name must begin with a letter or number, end with a letter or number "
-                      "and contain at least one number.")
 
         if self.state == 'present':
             if self.virtual_network_name and not self.subnet_name:
