@@ -95,7 +95,8 @@ class OpenSshErrorParser():
 
     error_regexes = {r"""Permissions (.*) for '(.*)' are too open.""": 'too_open',
                      r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
-                     r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file'}
+                     r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',
+                     r"""ssh: Could not resolve hostname (.*): No address associated with hostname""": 'could_not_resolve'}
 
     def __init__(self, stderr=None):
         self.stderr = stderr
@@ -104,16 +105,15 @@ class OpenSshErrorParser():
 
     def _match_errors(self):
         for error_regex in self.error_regexes:
-            print(error_regex)
-            #print(self.stderr)
+            # print(error_regex)
+            # print(self.stderr)
             match = re.search(error_regex, self.stderr)
-            print(match)
+            # print(match)
             if not match:
                 continue
 
-
             for match_group in match.groups():
-                print('error_match %s' % match_group)
+                # print('error_match %s' % match_group)
                 self._matches[self.error_regexes[error_regex]].append(match_group)
 
     def __str__(self):

@@ -44,12 +44,21 @@ Load key "/home/adrian/.ssh/id_rsa": bad permissions
 Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 """
 
+ssh_stderr_could_not_resolve = """
+ssh: Could not resolve hostname noname.g.a: No address associated with hostname
+"""
+
 class TestOpenSshErrorParser(unittest.TestCase):
     def test_private_key_too_open(self):
 
         error_parser = ssh.OpenSshErrorParser(stderr=ssh_stderr_key_too_open)
-
+        self.assertTrue('too_open' in error_parser._matches)
         print(error_parser)
+
+    def test_could_not_resolve(self):
+        error_parser = ssh.OpenSshErrorParser(stderr=ssh_stderr_could_not_resolve)
+        self.assertTrue('could_not_resolve' in error_parser._matches)
+
 
 class TestConnectionBaseClass(unittest.TestCase):
 
