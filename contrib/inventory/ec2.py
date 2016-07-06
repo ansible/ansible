@@ -131,6 +131,8 @@ from boto import elasticache
 from boto import route53
 import six
 
+from ansible.module_utils import ec2 as ec2_utils
+
 HAS_BOTO3 = False
 try:
     import boto3
@@ -591,9 +593,10 @@ class Ec2Inventory(object):
 
     def include_rds_clusters_by_region(self, region):
         if not HAS_BOTO3:
-            module.fail_json(message="This module requires boto3 be installed - please install boto3 and try again")
-        
-        client = self.connect_to_aws(rds, region)
+            self.fail_with_error("Working with RDS clusters requires boto3 - please install boto3 and try again",
+                                 "getting RDS clusters")
+
+        client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
         clusters = client.describe_db_clusters()["DBClusters"]
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
