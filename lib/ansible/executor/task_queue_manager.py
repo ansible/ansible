@@ -122,10 +122,6 @@ class TaskQueueManager:
         inventory hostnames for those hosts triggering the handler.
         '''
 
-        handlers = play.handlers
-        for role in play.roles:
-            handlers.extend(role.get_handler_blocks())
-
         # Zero the dictionary first by removing any entries there.
         # Proxied dicts don't support iteritems, so we have to use keys()
         self._notified_handlers.clear()
@@ -141,7 +137,7 @@ class TaskQueueManager:
             return temp_list
 
         handler_list = []
-        for handler_block in handlers:
+        for handler_block in play.handlers:
             handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the given handler list
@@ -220,6 +216,7 @@ class TaskQueueManager:
 
         new_play = play.copy()
         new_play.post_validate(templar)
+        new_play.handlers = new_play.compile_roles_handlers() + new_play.handlers
 
         self.hostvars = HostVars(
             inventory=self._inventory,
