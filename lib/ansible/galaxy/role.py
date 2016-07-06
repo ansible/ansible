@@ -188,6 +188,7 @@ class GalaxyRole(object):
     def install(self):
         # the file is a tar, so open it that way and extract it
         # to the specified (or default) roles directory
+        local_file = False
 
         if self.scm:
             # create tar file from scm url
@@ -195,6 +196,7 @@ class GalaxyRole(object):
         elif self.src:
             if  os.path.isfile(self.src):
                 # installing a local tar.gz
+                local_file = True
                 tmp_file = self.src
             elif '://' in self.src:
                 role_data = self.src
@@ -294,10 +296,11 @@ class GalaxyRole(object):
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)
-                try:
-                    os.unlink(tmp_file)
-                except (OSError,IOError) as e:
-                    display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
+                if not local_file:
+                    try:
+                        os.unlink(tmp_file)
+                    except (OSError,IOError) as e:
+                        display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
                 return True
 
         return False
