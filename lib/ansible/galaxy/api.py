@@ -153,7 +153,7 @@ class GalaxyAPI(object):
             return data['results']
         return data
 
-    @g_connect   # Added this to fix a bug. Without this, self.baseurl == None.
+    @g_connect
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
         """
         Check the status of an import task.
