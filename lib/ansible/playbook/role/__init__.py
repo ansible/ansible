@@ -301,12 +301,24 @@ class Role(Base, Become, Conditional, Taggable):
     def get_task_blocks(self):
         return self._task_blocks[:]
 
-    def get_handler_blocks(self):
+    def get_handler_blocks(self, play, dep_chain=None):
         block_list = []
+
+        # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
+        new_dep_chain = dep_chain + [self]
+
         for dep in self.get_direct_dependencies():
-            dep_blocks = dep.get_handler_blocks()
+            dep_blocks = dep.get_handler_blocks(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
-        block_list.extend(self._handler_blocks)
+
+        for task_block in self._handler_blocks:
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
+
         return block_list
 
     def has_run(self, host):
