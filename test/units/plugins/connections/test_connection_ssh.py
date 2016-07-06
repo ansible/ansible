@@ -48,16 +48,24 @@ ssh_stderr_could_not_resolve = """
 ssh: Could not resolve hostname noname.g.a: No address associated with hostname
 """
 
-class TestOpenSshErrorParser(unittest.TestCase):
+ssh_stderr_no_route_to_host = """
+ssh: connect to host 192.168.1.253 port 22: No route to host
+"""
+
+class TestOpenSshStderrErrorMapper(unittest.TestCase):
     def test_private_key_too_open(self):
 
-        error_parser = ssh.OpenSshErrorParser(stderr=ssh_stderr_key_too_open)
-        self.assertTrue('too_open' in error_parser._matches)
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_key_too_open)
+        self.assertTrue('too_open' in error_parser.warnings)
         print(error_parser)
 
     def test_could_not_resolve(self):
-        error_parser = ssh.OpenSshErrorParser(stderr=ssh_stderr_could_not_resolve)
-        self.assertTrue('could_not_resolve' in error_parser._matches)
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_could_not_resolve)
+        self.assertTrue('could_not_resolve' in error_parser.errors)
+
+    def test_no_route_to_host(self):
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_no_route_to_host)
+        self.assertTrue('no_route_to_host' in error_parser.errors)
 
 
 class TestConnectionBaseClass(unittest.TestCase):

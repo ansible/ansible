@@ -89,38 +89,65 @@ Load key "/home/adrian/.ssh/id_rsa": bad permissions
 Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 """
 
-class OpenSshErrorParser():
+class OpenSshStderrErrorMapper():
     # Attempt to make sense of openssh errors and warnings in hopes of generating
     # more useful ansible error messages
 
-    error_regexes = {r"""Permissions (.*) for '(.*)' are too open.""": 'too_open',
+    # FIXME: The names on the rhs are just placeholders for now, to be replaced with exceptions
+    warning_regexes = {r"""Permissions (.*) for '(.*)' are too open.""": 'too_open',
                      r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
-                     r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',
+                     r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',}
+    error_regexes = {r"""connect to host (.*) port (.*): No route to host""": 'no_route_to_host',
                      r"""ssh: Could not resolve hostname (.*): No address associated with hostname""": 'could_not_resolve'}
 
     def __init__(self, stderr=None):
         self.stderr = stderr
-        self._matches = defaultdict(list)
+        self._errors = defaultdict(list)
+        self._warnings = defaultdict(list)
         self._match_errors()
+        self._match_warnings()
 
-    def _match_errors(self):
-        for error_regex in self.error_regexes:
+    def _matcher(self, regex_map, error_string):
+        # TODO: could be a module or staticmethod if returns a dict
+        matches = defaultdict(list)
+        for error_regex in regex_map:
             # print(error_regex)
             # print(self.stderr)
-            match = re.search(error_regex, self.stderr)
+            match = re.search(error_regex, error_string)
             # print(match)
             if not match:
                 continue
 
             for match_group in match.groups():
                 # print('error_match %s' % match_group)
-                self._matches[self.error_regexes[error_regex]].append(match_group)
+                matches[regex_map[error_regex]].append(match_group)
+        return matches
+
+    def _match_errors(self):
+        matches = self._matcher(regex_map=self.error_regexes, error_string=self.stderr)
+        self._errors.update(matches)
+
+    def _match_warnings(self):
+        matches = self._matcher(regex_map=self.warning_regexes, error_string=self.stderr)
+        self._warnings.update(matches)
 
     def __str__(self):
         lines = []
-        for i in self._matches:
+        for i in self.errors:
+            lines.append('%s' % i)
+        for i in self.warnings:
             lines.append('%s' % i)
         return '\n'.join(lines)
+
+    @property
+    def errors(self):
+        return self._errors
+
+    @property
+    def warnings(self):
+        "Any not fatal errors that may help toubleshoot failures."
+        return self._warnings
+
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -222,6 +249,8 @@ class Connection(ConnectionBase):
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
+        # FIXME/TODO/AKL: determine if the '-q' is crucial or not, it originates from the
+        #                 pipeline by default branches.
 #        elif binary == 'ssh':
 #            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
 #            self._command += ['-q']
@@ -401,7 +430,8 @@ class Connection(ConnectionBase):
         output = []
         display.v('ssh stderr: %s' % stderr)
         display.v('ssh error state: %s' % state)
-        for l in stderr.splitlines(True):
+        error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
+        for error in error_mapper.matched_errors.values():
             suppress_output = False
 
 
