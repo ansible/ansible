@@ -23,8 +23,8 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco IOS configuration sections
 description:
-  - Cisco IOS configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - Cisco IOS configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
 extends_documentation_fragment: ios
@@ -59,7 +59,7 @@ options:
     version_added: "2.2"
   dest:
     description:
-      - Configures a destination file write the source template or config
+      - Configures a destination file to write the source template or config
         updates to.  The path to the destination file can either be a full
         path on the Ansible control host or a relative path from the
         playbook or role root dir.  This will, by default, overwrite any
@@ -74,7 +74,7 @@ options:
   append:
     description:
       - Changes the default behavior when writing the configuration out
-        to a remote file on disk.  By defaul if O(dest) is specified, the
+        to a remote file on disk.  By default if O(dest) is specified, the
         file is overridden.  By setting this argument to true, the remote
         file (if it exists) is appended to.
     required: false
@@ -93,7 +93,7 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a changed needs to be made.  Just like with I(before) this
+        stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
     required: false
@@ -188,7 +188,7 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 """

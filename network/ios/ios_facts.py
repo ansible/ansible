@@ -32,7 +32,7 @@ options:
   gather_subset:
     description:
       - When supplied, this argument will restrict the facts collected
-        to a given subset.  Possible values for this argument inlcude
+        to a given subset.  Possible values for this argument include
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial M(!) to specify that a specific subset should
@@ -54,7 +54,7 @@ EXAMPLES = """
 # Do not collect hardware facts
 - ios_facts:
     gather_subset:
-      - "!interfaces"
+      - "!hardware"
 """
 
 RETURN = """
@@ -75,7 +75,7 @@ ansible_net_hostname:
   returned: always
   type: str
 ansible_net_image:
-  desription: The image the system booted from
+  description: The image the system booted from
   returned: always
   type: str
 ansible_net_module:
