@@ -133,7 +133,8 @@ class NetworkConfig(object):
 
     def __str__(self):
         if self._device_os == 'junos':
-            return self.to_lines(self.expand(self.items))
+            lines = self.to_lines(self.expand(self.items))
+            return '\n'.join(lines)
         return self.to_block(self.expand(self.items))
 
     def load(self, contents):
@@ -188,12 +189,12 @@ class NetworkConfig(object):
             visited.add(o)
         return expanded
 
-    def to_lines(self, section):
+    def to_lines(self, objects):
         lines = list()
-        for entry in section[1:]:
-            line = ['set']
-            line.extend([p.text for p in entry.parents])
-            line.append(entry.text)
+        for obj in objects:
+            line = list()
+            line.extend([p.text for p in obj.parents])
+            line.append(obj.text)
             lines.append(' '.join(line))
         return lines
 
