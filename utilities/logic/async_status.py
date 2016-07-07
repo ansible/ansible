@@ -79,7 +79,6 @@ def main():
     data = None
     try:
         data = file(log_path).read()
-        import q; q(data)
         data = json.loads(data)
     except Exception:
         if not data:
