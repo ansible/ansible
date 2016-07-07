@@ -19,6 +19,7 @@
 
 import re
 
+<<<<<<< 802ed0a6d766317cecd76be20d3bbccf0a80ea35
 <<<<<<< 95dea04b248f1199ee2fd5d572732abab59797af
 from ansible.module_utils.basic import json, get_exception, AnsibleModule
 from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
@@ -29,6 +30,11 @@ from ansible.module_utils.basic import json, AnsibleModule
 from ansible.module_utils.network import NetCli, NetworkError, NetworkModule, Command
 >>>>>>> Refactor network and eos module_utils to use a subclass instead of factory function to create the NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
+=======
+from ansible.module_utils.basic import json, get_exception
+from ansible.module_utils.network import Command, ModuleStub, NetCli, NetworkError
+from ansible.module_utils.network import add_argument, get_module, register_transport, to_list
+>>>>>>> EOS new ModuleStub
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -207,8 +213,7 @@ class Eapi(EosConfigMixin):
 
     def __init__(self):
         self.url = None
-        self.url_args = AnsibleModule(url_argument_spec())
-        self.url_args.fail_json = self._error
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
         self.enable = None
         self.default_output = 'json'
         self._connected = False
