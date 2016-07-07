@@ -118,6 +118,7 @@ __metaclass__ = type
 #     - ../files/baz
 #    ignore_errors: true
 
+import os
 
 from jinja2.exceptions import UndefinedError
 
