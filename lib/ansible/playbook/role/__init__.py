@@ -188,7 +188,7 @@ class Role(Base, Become, Conditional, Taggable):
         if self._default_vars is None:
             self._default_vars = dict()
         elif not isinstance(self._default_vars, dict):
-            raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
+            raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
