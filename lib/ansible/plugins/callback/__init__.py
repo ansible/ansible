@@ -107,6 +107,9 @@ class CallbackBase:
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
+        #if self._display_verbosity < 3:
+        #    del abridged_result['_connection_failure_exception_tb']
+
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):

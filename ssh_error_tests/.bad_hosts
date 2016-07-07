@@ -1,0 +1,30 @@
+# A non-localhost that ssh can connect to
+testhost ansible_host=192.168.1.120
+baduser ansible_host=192.168.1.120 ansible_user=kt
+noname ansible_host=noname.g.a ansible_user=adrian
+cantconnect ansible_host=192.168.1.253 ansible_user=adrian
+nokey ansible_host=192.168.1.120
+badkey ansible_host=192.168.1.120
+toomanykeys ansible_host=192.168.1.120
+privatekeytooopen ansible_host=192.168.1.120
+
+stricthostkey ansible_host=192.168.1.120
+viaproxy ansible_host=192.168.1.120
+gssapionly ansible_host=192.168.1.120
+nokey ansible_host=192.168.1.120
+emptykey ansible_host=192.168.1.120
+toopen ansible_host=192.168.1.120
+passwordonly ansible_host=192.168.1.120
+testhost ansible_host=192.168.1.120
+badalias ansible_host=192.168.1.120
+badcipher ansible_host=192.168.1.120
+badcontrolpath ansible_host=192.168.1.120
+quiethost ansible_host=192.168.1.120
+fatalhost ansible_host=192.168.1.120
+errorhost ansible_host=192.168.1.120
+infohost ansible_host=192.168.1.120
+verbosehost ansible_host=192.168.1.120
+debughost ansible_host=192.168.1.120
+debug2host ansible_host=192.168.1.120
+debug3host ansible_host=192.168.1.120
+

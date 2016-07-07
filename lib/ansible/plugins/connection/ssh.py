@@ -58,7 +58,6 @@ class AnsibleAttemptedSshConnectionFailure(AnsibleConnectionFailure):
     ''' the ssh connection plugin had a fatal error but may attempt to retry '''
     pass
 
-
 class AnsibleSshInitialWriteConnectionFailure(AnsibleSshConnectionFailure):
     ''' the ssh connection plugin had a fatal error during the initial data write '''
     pass
@@ -78,6 +77,8 @@ class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
         #self.message = '%s\nSTDERR: %s' % (self.message, codecs.escape_decode(self.ssh_stderr))
         self.message = '%s\n' % (self.message)
 
+class AnsibleSshCommandErrorPermissionDenied(AnsibleSshCommandErrorConnectionFailure):
+    pass
 
 # Example errors
 _example_ssh_errors = """
@@ -91,7 +92,13 @@ Load key "/home/adrian/.ssh/id_rsa": bad permissions
 Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 """
 
-class OpenSshStderrErrorMapper():
+# FIXME: better enum-like
+class SshErrors:
+    permission_denied = 'permission_denied'
+    no_route_to_host = 'no_route_to_host'
+    could_not_resolve = 'could_not_resolve'
+
+class OpenSshStderrErrorMapper:
     # Attempt to make sense of openssh errors and warnings in hopes of generating
     # more useful ansible error messages
 
@@ -100,8 +107,10 @@ class OpenSshStderrErrorMapper():
                        'too_open',
                      r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
                      r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',}
-    error_regexes = {r"""connect to host (.*) port (.*): No route to host""": 'no_route_to_host',
-                     r"""ssh: Could not resolve hostname (.*): No address associated with hostname""": 'could_not_resolve'}
+    error_regexes = {r"""connect to host (.*) port (.*): No route to host""": SshErrors.no_route_to_host,
+                     r"""Permission denied \((.*)\)""": SshErrors.permission_denied,
+                     r"""ssh: Could not resolve hostname (.*): No address associated with hostname""":
+                    SshErrors.could_not_resolve}
 
     def __init__(self, stderr=None):
         self.stderr = stderr
@@ -750,6 +759,10 @@ class Connection(ConnectionBase):
         display.v('ssh stderr: %s' % stderr)
         error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
         for error, matches in error_mapper.errors.items():
+            # TODO/FIXME: better exception mapper
+            if error == SshErrors.permission_denied:
+                raise AnsibleSshCommandErrorPermissionDenied(message='\n'.join(matches),
+                                                             ssh_stderr=stderr)
             msg = '\n'.join(matches)
             # FIXME: pass in useful stuff to the exception constructor
             raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
@@ -758,7 +771,8 @@ class Connection(ConnectionBase):
             msg = '\n'.join(matches)
             raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
 
-        return False
+        raise AnsibleSshCommandErrorConnectionFailure(message='ssh connection failed', ssh_stderr=stderr)
+
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

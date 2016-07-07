@@ -1,0 +1,29 @@
+192.168.1.120 testhost
+192.168.1.120 baduser
+192.168.1.120 noname
+192.168.1.253 cantconnect
+192.168.1.120 nokey
+192.168.1.120 badkey
+192.168.1.120 toomanykeys
+192.168.1.120 privatekeytooopen
+ 
+192.168.1.120 stricthostkey
+192.168.1.120 viaproxy
+192.168.1.120 gssapionly
+192.168.1.120 nokey
+192.168.1.120 emptykey
+192.168.1.120 toopen
+192.168.1.120 passwordonly
+192.168.1.120 testhost
+192.168.1.120 badalias
+192.168.1.120 badcipher
+192.168.1.120 badcontrolpath
+192.168.1.120 quiethost
+192.168.1.120 fatalhost
+192.168.1.120 errorhost
+192.168.1.120 infohost
+192.168.1.120 verbosehost
+192.168.1.120 debughost
+192.168.1.120 debug2host
+192.168.1.120 debug3host
+ 

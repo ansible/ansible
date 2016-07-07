@@ -1,0 +1,113 @@
+
+HOST stricthostkey
+    PreferredAuthentications publickey
+    StrictHostKeyChecking yes
+    IdentitiesOnly yes
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa
+
+HOST viaproxy
+   ProxyCommand ssh %r@sshproxyhost -W %h:%p
+
+HOST gssapionly
+    GSSAPIAuthentication yes
+    PreferredAuthentications gssapi-with-mic
+
+HOST nokey
+    IdentitiesOnly yes
+    IdentityFile ~/src/ansible/ssh_error_tests/this_key_doesnt_exist
+    PreferredAuthentications publickey
+
+HOST emptykey
+    IdentitiesOnly yes
+    IdentityFile ~/src/ansible/ssh_error_tests/this_key_is_empty
+    PreferredAuthentications publickey
+
+
+HOST tooopen
+    IdentitiesOnly yes
+    IdentityFile ~/src/ansible/ssh_error_tests/this_key_has_too_open_perms
+    PreferredAuthentications publickey
+
+HOST passwordonly
+    PreferredAuthentications keyboard-interactive,password
+
+HOST testhost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+
+HOST badalias
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    HostKeyAlias name_of_key_that_doesnt_exist
+
+HOST badcipher
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    HostKeyAlgorithms rot10,rot11
+
+HOST badcontrolpath
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    ControlPersist yes
+    ControlPath ~/a_directory_that_does_not_exist/a_path_that_does_not_exist_%h_%p%r
+
+HOST quiethost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel QUIET
+
+HOST fatalhost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel FATAL
+
+HOST errorhost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel ERROR
+
+HOST infohost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel INFO
+
+HOST verbosehost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel VERBOSE
+
+HOST debughost
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel DEBUG
+
+HOST debug2host
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel DEBUG2
+
+
+HOST debug3host
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking ask
+    LogLevel DEBUG3
+
+Host bastion
+    ForwardAgent yes
+
+
+HOST *
+    StrictHostKeyChecking yes
+
