@@ -237,6 +237,10 @@ class NetCli(object):
         self._connected = False
         self.shell.close()
 
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+
     def execute(self, commands, **kwargs):
         try:
             return self.shell.send(commands)
