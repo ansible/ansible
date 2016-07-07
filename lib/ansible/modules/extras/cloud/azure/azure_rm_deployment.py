@@ -473,8 +473,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         :return:
         """
 
-        deploy_parameter = DeploymentProperties()
-        deploy_parameter.mode = self.deployment_mode
+        deploy_parameter = DeploymentProperties(self.deployment_mode)
         if not self.parameters_link:
             deploy_parameter.parameters = self.parameters
         else:
