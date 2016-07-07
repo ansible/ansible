@@ -19,8 +19,10 @@
 
 import re
 
-from ansible.module_utils.basic import json, get_exception, AnsibleModule
-from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
+from ansible.module_utils.basic import json, AnsibleModule
+# We make NetworkModule available here for module code to use.  example:
+#     from ansible.module_utils.eos import NetworkModule
+from ansible.module_utils.network import NetCli, NetworkError, NetworkModule, Command
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
