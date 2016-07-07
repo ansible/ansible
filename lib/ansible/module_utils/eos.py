@@ -19,8 +19,15 @@
 
 import re
 
+<<<<<<< 95dea04b248f1199ee2fd5d572732abab59797af
 from ansible.module_utils.basic import json, get_exception, AnsibleModule
 from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
+=======
+from ansible.module_utils.basic import json, AnsibleModule
+# We make NetworkModule available here for module code to use.  example:
+#     from ansible.module_utils.eos import NetworkModule
+from ansible.module_utils.network import NetCli, NetworkError, NetworkModule, Command
+>>>>>>> Refactor network and eos module_utils to use a subclass instead of factory function to create the NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
