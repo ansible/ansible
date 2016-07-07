@@ -203,7 +203,6 @@ class GalaxyAPI(object):
             data = self.__call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
-            done = (data.get('next_link', None) is None)
             while not done:
                 url = '%s%s' % (self._api_server, data['next_link'])
                 data = self.__call_galaxy(url)
