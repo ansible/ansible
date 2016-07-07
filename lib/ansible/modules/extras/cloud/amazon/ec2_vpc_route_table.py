@@ -318,7 +318,8 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     # VGWs in place.
     routes_to_delete = [r for r in routes_to_match
                         if r.gateway_id != 'local'
-                        and r.gateway_id not in propagating_vgw_ids]
+                        and (propagating_vgw_ids is not None
+                             and r.gateway_id not in propagating_vgw_ids)]
 
     changed = routes_to_delete or route_specs_to_create
     if changed:
