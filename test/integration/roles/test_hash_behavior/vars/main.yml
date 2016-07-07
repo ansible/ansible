@@ -19,3 +19,4 @@
 ---
 test_hash:
   role_vars: "this is in role vars/main.yml"
+  merged_list: ["a", "list"]

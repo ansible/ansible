@@ -12,6 +12,7 @@
       extra_args: "this is an extra arg"
       group_vars_all: "this is in group_vars/all"
       host_vars_testhost: "this is in host_vars/testhost"
+      merged_list: ["this", "is", "merging", "in", "a", "list"]
       playbook_vars: "this is a playbook variable"
       role_argument: "this is a role argument variable"
       role_vars: "this is in role vars/main.yml"

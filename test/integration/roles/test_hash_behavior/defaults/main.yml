@@ -19,3 +19,4 @@
 ---
 test_hash:
   default_vars: "this is in role default/main.yml"
+  merged_list: ["this", "is"]

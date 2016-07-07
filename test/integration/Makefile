@@ -150,7 +150,7 @@ test_handlers:
 
 test_hash:
 	ANSIBLE_HASH_BEHAVIOUR=replace ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
-	ANSIBLE_HASH_BEHAVIOUR=merge ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
+	ANSIBLE_HASH_BEHAVIOUR=merge ANSIBLE_MERGED_LISTS=test_hash.merged_list ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) -e '{"test_hash":{"extra_args":"this is an extra arg", "merged_list": ["merging", "in"]}}'
 
 test_var_precedence: setup
 	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) $(TEST_FLAGS) -v -e outputdir=$(TEST_DIR) -e 'extra_var=extra_var' -e 'extra_var_override=extra_var_override'
