@@ -137,6 +137,7 @@ class GalaxyAPI(object):
         data = json.load(resp)
         return data
 
+    @g_connect
     def create_import_task(self, github_user, github_repo, reference=None):
         """
         Post an import request
@@ -201,6 +202,7 @@ class GalaxyAPI(object):
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
             data = self.__call_galaxy(url)
             results = data['results']
+            done = (data.get('next_link', None) is None)
             done = (data.get('next_link', None) is None)
             while not done:
                 url = '%s%s' % (self._api_server, data['next_link'])
