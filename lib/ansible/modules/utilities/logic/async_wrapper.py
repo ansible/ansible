@@ -74,7 +74,7 @@ def _run_module(wrapped_cmd, jid, job_path):
 
     tmp_job_path = job_path + ".tmp"
     jobfile = open(tmp_job_path, "w")
-    jobfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    jobfile.write(json.dumps({ "started" : 1, "finished" : 0, "ansible_job_id" : jid }))
     jobfile.close()
     os.rename(tmp_job_path, job_path)
     jobfile = open(tmp_job_path, "w")
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             # this probably could be done with some IPC later.  Modules should always read
             # the argsfile at the very first start of their execution anyway
             notice("Return async_wrapper task started.")
-            print(json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : job_path }))
+            print(json.dumps({ "started" : 1, "finished" : 0, "ansible_job_id" : jid, "results_file" : job_path }))
             sys.stdout.flush()
             time.sleep(1)
             sys.exit(0)
