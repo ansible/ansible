@@ -8,7 +8,14 @@ matrix:
   exclude:
     - env: TEST=none
   include:
-    - env: TEST=integration
+    - env: TEST=integration IMAGE=ansible/ansible:centos6
+    - env: TEST=integration IMAGE=ansible/ansible:centos7
+    - env: TEST=integration IMAGE=ansible/ansible:fedora-rawhide
+    - env: TEST=integration IMAGE=ansible/ansible:fedora23
+    - env: TEST=integration IMAGE=ansible/ansible:opensuseleap
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
 build:
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
