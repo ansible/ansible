@@ -67,6 +67,13 @@ def disconnect(module):
         module.fail_json(msg=exc.message)
 
 
+class ModuleStub(object):
+    def __init__(self, argument_spec, fail_json):
+        self.params = dict()
+        for key, value in argument_spec.items():
+            self.params[key] = value.get('default')
+        self.fail_json = fail_json
+
 class Command(object):
 
     def __init__(self, command, output=None, prompt=None, response=None,
