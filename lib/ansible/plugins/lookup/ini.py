@@ -107,7 +107,7 @@ class LookupModule(LookupBase):
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
-            path = self.find_needle(variables, 'files', paramvals['file'])
+            path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
             if paramvals['type'] == "properties":
                 var = self.read_properties(path, key, paramvals['default'], paramvals['re'])
             else:

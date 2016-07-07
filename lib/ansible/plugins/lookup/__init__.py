@@ -103,7 +103,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def find_needle(self, myvars, subdir, needle):
+    def find_file_in_search_path(self, myvars, subdir, needle):
         '''
         Return a file (needle) in the task's expected search path.
         '''

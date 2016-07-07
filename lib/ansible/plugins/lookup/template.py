@@ -40,7 +40,7 @@ class LookupModule(LookupBase):
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
-            lookupfile = self.find_needle(variables, 'templates', term)
+            lookupfile = self.find_file_in_search_path(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
                 with open(lookupfile, 'r') as f:
@@ -53,7 +53,7 @@ class LookupModule(LookupBase):
                         searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     self._templar.environment.loader.searchpath = searchpath
 
-                    # do the emplating
+                    # do the templating
                     res = self._templar.template(template_data, preserve_trailing_newlines=True,convert_data=convert_data_p)
                     ret.append(res)
             else:

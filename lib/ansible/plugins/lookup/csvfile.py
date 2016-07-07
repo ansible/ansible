@@ -98,7 +98,7 @@ class LookupModule(LookupBase):
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
 
-            lookupfile = self.find_needle(variables, 'files', paramvals['file'])
+            lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:

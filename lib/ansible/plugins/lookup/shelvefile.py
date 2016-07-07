@@ -58,7 +58,7 @@ class LookupModule(LookupBase):
             key = paramvals['key']
 
             # Search also in the role/files directory and in the playbook directory
-            shelvefile = self.find_needle(variables, 'files', paramvals['file'])
+            shelvefile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
 
             if shelvefile:
                 res = self.read_shelve(shelvefile, key)
