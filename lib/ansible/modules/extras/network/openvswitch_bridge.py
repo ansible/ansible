@@ -249,7 +249,7 @@ def main():
             'bridge': {'required': True},
             'state': {'default': 'present', 'choices': ['present', 'absent']},
             'timeout': {'default': 5, 'type': 'int'},
-            'external_ids': {'default': None},
+            'external_ids': {'default': None, 'type': 'dict'},
             'fail_mode': {'default': None},
         },
         supports_check_mode=True,
