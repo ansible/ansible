@@ -23,6 +23,11 @@ from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 
 from nose.plugins.skip import SkipTest
+import ansible
+
+from mock import patch
+
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -51,3 +56,24 @@ class TestGalaxy(unittest.TestCase):
         display_result = gc._display_role_info(role_info)
         if display_result.find('\t\tgalaxy_tags:') > -1:
             self.fail('Expected galaxy_tags to be indented twice')
+
+    def test_exit_without_ignore(self):
+        ''' tests that GalaxyCLI exits with the error specified unless the --ignore-errors flag is used '''
+        gc = GalaxyCLI(args=["install"])
+
+        # testing without --ignore-errors flag
+        with patch('sys.argv', ["-c", "fake_role_name"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
+            # testing that error expected is raised
+            self.assertRaises(AnsibleError, gc.run)
+            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+
+        # testing with --ignore-errors flag
+        with patch('sys.argv', ["-c", "fake_role_name", "--ignore-errors"]):
+            galalxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
+            # testing that error expected is not raised with --ignore-errors flag in use
+            gc.run()
+            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+
