@@ -19,17 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import PY3
-from ansible.compat.tests import unittest
-
-from nose.plugins.skip import SkipTest
-import ansible
 import os
 import shutil
 import tarfile
 import tempfile
 
 from mock import patch
+from nose.plugins.skip import SkipTest
+
+from ansible.compat.six import PY3
+from ansible.compat.tests import unittest
+
+import ansible
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -41,10 +43,10 @@ class TestGalaxy(unittest.TestCase):
     def setUpClass(cls):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
-        
+
         if os.path.exists("./delete_me"):
             shutil.rmtree("./delete_me")
-        
+
         # creating framework for a role
         gc = GalaxyCLI(args=["init"])
         with patch('sys.argv', ["-c", "--offline", "delete_me"]):
@@ -121,7 +123,7 @@ class TestGalaxy(unittest.TestCase):
         with patch('sys.argv', ["--offline", "-p", self.role_path, "-r", self.role_req]):
             galaxy_parser = gc.parse()
         gc.run()
-        
+
         # checking that installation worked
         role_file = os.path.join(self.role_path, self.role_name)
         self.assertTrue(os.path.exists(role_file))
@@ -137,3 +139,23 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    def test_exit_without_ignore(self):
+        ''' tests that GalaxyCLI exits with the error specified unless the --ignore-errors flag is used '''
+        gc = GalaxyCLI(args=["install"])
+
+        # testing without --ignore-errors flag
+        with patch('sys.argv', ["-c", "fake_role_name"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
+            # testing that error expected is raised
+            self.assertRaises(AnsibleError, gc.run)
+            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+
+        # testing with --ignore-errors flag
+        with patch('sys.argv', ["-c", "fake_role_name", "--ignore-errors"]):
+            galalxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
+            # testing that error expected is not raised with --ignore-errors flag in use
+            gc.run()
+            self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
