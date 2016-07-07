@@ -33,7 +33,7 @@
         - "'cmd' in async_result"
         - "'delta' in async_result"
         - "'end' in async_result"
-        - "'finished' in async_result"
+        - "'finished' in async_result or async_result.finished == 1"
         - "'rc' in async_result"
         - "'start' in async_result"
         - "'stderr' in async_result"
@@ -54,7 +54,7 @@
     that:
         - "'ansible_job_id' in async_result"
         - "'started' in async_result"
-        - "'finished' not in async_result"
+        - "'finished' not in async_result or async_result.finished == 0"
 
 - name: test skipped task handling
   command: /bin/true 
