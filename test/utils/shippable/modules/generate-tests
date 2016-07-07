@@ -47,18 +47,25 @@ def main():
     parser = ArgumentParser(description='Generate an integration test script for changed modules.')
     parser.add_argument('module_group', choices=['core', 'extras'], help='module group to test')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='write verbose output to stderr')
+    parser.add_argument('--image', dest='image', default=os.environ.get('IMAGE'),
+                        help='image to run tests with (default: auto-detect)')
+    parser.add_argument('--privileged', dest='privileged', action='store_true',
+                        default=os.environ.get('PRIVILEGED') == 'true',
+                        help='run container in privileged mode')
 
     args = parser.parse_args()
+    jobs = None if args.image is None else ['IMAGE=%s%s' % (args.image, ' PRIVILEGED=true' if args.privileged else '')]
 
-    generate_test_commands(args.module_group, targets, verbose=args.verbose)
+    generate_test_commands(args.module_group, targets, jobs=jobs, verbose=args.verbose)
 
 
-def generate_test_commands(module_group, targets, verbose=False):
+def generate_test_commands(module_group, targets, jobs=None, verbose=False):
     """Generate test commands for the given module group and test targets.
 
     Args:
         module_group: The module group (core, extras) to examine.
         targets: The test targets to examine.
+        jobs: The test jobs to execute, or None to auto-detect.
         verbose: True to write detailed output to stderr.
     """
 
@@ -110,7 +117,8 @@ def generate_test_commands(module_group, targets, verbose=False):
     if verbose:
         dump_stderr('use_tags', use_tags)
 
-    jobs = get_test_jobs(job_config_path)
+    if jobs is None:
+        jobs = get_test_jobs(job_config_path)
 
     target = ' '.join(targets)
     tags = ','.join(use_tags)
