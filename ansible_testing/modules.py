@@ -123,6 +123,7 @@ class Validator(object):
 class ModuleValidator(Validator):
     BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.txt')
     BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
+                                 'shippable.yml',
                                  '.gitattributes', '.gitmodules', 'COPYING',
                                  '__init__.py', 'VERSION', 'test-docs.sh'))
     BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
