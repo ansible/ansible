@@ -214,7 +214,10 @@ class StrategyModule(StrategyBase):
                             continue
 
                     if task.action == 'meta':
-                        self._execute_meta(task, play_context, iterator)
+                        # for the linear strategy, we run meta tasks just once and for
+                        # all hosts currently being iterated over rather than one host
+                        results.extend(self._execute_meta(task, play_context, iterator))
+                        run_once = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:
