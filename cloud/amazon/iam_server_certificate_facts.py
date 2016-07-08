@@ -26,11 +26,12 @@ requirements: [boto3, botocore]
 options:
   name:
     description:
-      - The name of the server certificate you are retrieveing attributes for.
+      - The name of the server certificate you are retrieving attributes for.
     required: true
 extends_documentation_fragment:
     - aws
     - ec2
+requirements: ['boto3']
 '''
 
 EXAMPLES = '''
@@ -83,6 +84,8 @@ upload_date:
     type: str
     sample: "2015-04-25T00:36:40+00:00"
 '''
+
+
 try:
     import boto3
     import botocore.exceptions
@@ -147,10 +150,11 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     try:
-       region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-       iam = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.ClientError, e:
-       module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        iam = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
+
     cert_name = module.params.get('name')
     results = get_server_cert(iam, cert_name)
     module.exit_json(results=results)
