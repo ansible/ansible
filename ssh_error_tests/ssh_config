@@ -1,4 +1,21 @@
 
+HOST cantconnect
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking no
+    # some port that doesn't have ssh listening
+    Port 26951
+    HostName not-a-real-name-asdfadf.example.com
+
+
+HOST namefailure
+    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    StrictHostKeyChecking no
+    HostName namefailure
+
 HOST stricthostkey
     PreferredAuthentications publickey
     PubkeyAuthentication yes
