@@ -125,6 +125,7 @@ Host bastion
 
 
 HOST *
+    HostName localhost
     StrictHostKeyChecking yes
     ConnectionAttempts 1
 

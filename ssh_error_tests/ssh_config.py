@@ -52,7 +52,6 @@ except ImportError:
 
 # SSH_CONF=/path/to/ssh_config ansible -i ./ssh_config.py
 SSH_CONF = os.environ.get('SSH_CONF', '~/.ssh/config')
-#SSH_CONF = '~/src/ansible/ssh_error_tests/ssh_config'
 
 _key = 'ssh_config'
 
@@ -61,7 +60,6 @@ _ssh_to_ansible = [('user', 'ansible_ssh_user'),
                   ('identityfile', 'ansible_ssh_private_key_file'),
                   ('port', 'ansible_ssh_port')]
 
-
 def get_config():
     if not os.path.isfile(os.path.expanduser(SSH_CONF)):
         return {}
@@ -69,21 +67,18 @@ def get_config():
         cfg = paramiko.SSHConfig()
         cfg.parse(f)
         ret_dict = {}
-        for d in cfg._config:
-            if type(d['host']) is list:
-                alias = d['host'][0]
-            else:
-                alias = d['host']
-            if ('?' in alias) or ('*' in alias):
+        hostnames = cfg.get_hostnames()
+        for hostname in hostnames:
+            if ('?' in hostname) or ('*' in hostname):
                 continue
-            _copy = dict(d)
-            del _copy['host']
-            if 'config' in _copy:
-                ret_dict[alias] = _copy['config']
-            else:
-                ret_dict[alias] = _copy
-        return ret_dict
+            options = cfg.lookup(hostname)
+            # We want the ssh config to point to the real hostname, but we dont want to
+            # set ansible_ssh_host to the real name, but the ssh_config alias
+            if options['hostname'] == 'localhost':
+                options['hostname'] = hostname
+            ret_dict[hostname] = options
 
+        return ret_dict
 
 def print_list():
     cfg = get_config()
