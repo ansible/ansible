@@ -10,10 +10,10 @@ HOST viaproxy
     StrictHostKeyChecking no
 
 HOST gssapionly
-    GSSAPIAuthentication yes
-    GSSAPIKeyExchange no
     PreferredAuthentications gssapi-with-mic
     StrictHostKeyChecking no
+    GSSAPIAuthentication yes
+    GSSAPIKeyExchange no
     PubkeyAuthentication no
     PasswordAuthentication no
     KbdInteractiveAuthentication no
@@ -41,6 +41,12 @@ HOST tooopen
 HOST passwordonly
     PreferredAuthentications keyboard-interactive,password
     StrictHostKeyChecking no
+    GSSAPIAuthentication no
+    GSSAPIKeyExchange no
+    PubkeyAuthentication no
+    PasswordAuthentication yes
+    KbdInteractiveAuthentication no
+    ChallengeResponseAuthentication no
 
 HOST testhost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
