@@ -80,23 +80,13 @@ class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
 class AnsibleSshCommandErrorPermissionDenied(AnsibleSshCommandErrorConnectionFailure):
     pass
 
-# Example errors
-_example_ssh_errors = """
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Permissions 0666 for '/home/adrian/.ssh/id_rsa' are too open.
-It is required that your private key files are NOT accessible by others.
-This private key will be ignored.
-Load key "/home/adrian/.ssh/id_rsa": bad permissions
-Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
-"""
 
 # FIXME: better enum-like
 class SshErrors:
     permission_denied = 'permission_denied'
     no_route_to_host = 'no_route_to_host'
     could_not_resolve = 'could_not_resolve'
+    connection_refused = 'connection_refused'
 
 class OpenSshStderrErrorMapper:
     # Attempt to make sense of openssh errors and warnings in hopes of generating
@@ -108,6 +98,7 @@ class OpenSshStderrErrorMapper:
                      r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
                      r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',}
     error_regexes = {r"""connect to host (.*) port (.*): No route to host""": SshErrors.no_route_to_host,
+                     r"""connect to address (.*) port (\d*): Connection refused""": SshErrors.connection_refused,
                      r"""Permission denied \((.*)\)""": SshErrors.permission_denied,
                      r"""ssh: Could not resolve hostname (.*): No address associated with hostname""":
                     SshErrors.could_not_resolve}
