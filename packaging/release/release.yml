@@ -58,7 +58,8 @@
 
   - name: Clone the official repo
     git:
-      repo: "git@github.com:ansible/ansible.git"
+      #repo: "git@github.com:ansible/ansible.git"
+      repo: "https://github.com/ansible/ansible.git"
       dest: "{{release_dir}}"
       version: "{{ansible_release_branch}}"
       recursive: yes
@@ -99,12 +100,10 @@
         regexp: "^ansible ({{ansible_release_version}})"
         line: "{{deb_changelog_line}}"
         insertafter: "-- Ansible, Inc. <support@ansible.com>  %DATE%"
-    #- name: Update RELEASES.txt
-    #  lineinfile:
-    #    dest: "{{release_dir}}/RELEASES.txt"
-    #    regexp: "^{{ansible_release_version}}"
-    #    line: '{{ansible_release_version}} "{{ansible_release_codename}}" {{release_date}}'
-    #    insertafter: ""
+    - name: Update RELEASES.txt
+      template:
+        dest: "{{release_dir}}/RELEASES.txt"
+        src: "templates/RELEASES.tmpl"
     when: is_final|bool
 
   - name: "Make sure modules are checked out to {{ansible_release_branch}}"
@@ -141,6 +140,15 @@
       _raw_params: "git tag -fa {{new_version}} -m 'New release {{new_version}}'"
       chdir: "{{release_dir}}/"
 
+  - name: update git config for the main repo
+    lineinfile:
+      dest: "{{release_dir}}/.git/config"
+      regexp: "upstream"
+      line: |
+        [remote "upstream"]
+                url = git@github.com:ansible/ansible.git
+                fetch = +refs/heads/*:refs/remotes/origin/*
+
   - name: update git config for submodules
     lineinfile:
       dest: "{{release_dir}}/.git/modules/lib/ansible/modules/{{item}}/config"
@@ -152,6 +160,16 @@
     with_items:
     - core
     - extras
+
+  - name: create the dist tar.gz
+    command:
+      _raw_params: make sdist
+      chdir: "{{release_dir}}/"
+    environment:
+      OFFICIAL: yes
+
+  - name: rename the dist tar.gz to include the full release
+    command: "mv {{release_dir}}/dist/ansible-{{ansible_release_version}}.tar.gz {{release_dir}}/dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz"
 
   - block:
     - pause:
@@ -167,6 +185,6 @@
 
     - name: Push the updates and/or tag
       shell:
-        _raw_params: "git push --tags origin {{ansible_release_branch}}"
+        _raw_params: "git push --tags upstream {{ansible_release_branch}}"
         chdir: "{{release_dir}}/lib/ansible/modules/{{item}}/"
     when: do_push|bool
