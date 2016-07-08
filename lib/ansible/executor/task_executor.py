@@ -452,7 +452,7 @@ class TaskExecutor:
                 failure_dict['_connection_failure_excection_message'] = to_unicode(e)
                 failure_dict['_connection_failure_exception_type'] = str(e_type)
                 failure_dict['_connection_failure_exception_value'] = str(e_value)
-                failure_dict['_connection_failure_exception_tb'] = ''.join(traceback.format_exc())
+                # failure_dict['_connection_failure_exception_tb'] = ''.join(traceback.format_exc())
                 return failure_dict
             display.debug("handler run complete")
 
