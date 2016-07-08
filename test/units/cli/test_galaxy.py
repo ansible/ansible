@@ -125,8 +125,8 @@ class TestGalaxy(unittest.TestCase):
             # removing the files we created
             shutil.rmtree('./delete_me')
 
-        except (SSLValidationError, AnsibleError) as e:
-            if "Failed to get data from the API server" or "Failed to validate the SSL certificate" in e.message:
-                raise SkipTest('this test requires an internet connection')
+        except AnsibleError as e:
+            if "Failed to get data from the API server" in e.message:
+                raise SkipTest('this test requires an internet connection and a valid CA certificate installed; this test is skipped when one or both of these requirements are not provided ')
             else:
                 raise
