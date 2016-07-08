@@ -1,0 +1,48 @@
+language: python
+
+env:
+  matrix:
+    - TEST=none
+
+matrix:
+  exclude:
+    - env: TEST=none
+  include:
+    - env: TEST=integration IMAGE=ansible/ansible:centos6
+    - env: TEST=integration IMAGE=ansible/ansible:centos7
+    - env: TEST=integration IMAGE=ansible/ansible:fedora-rawhide
+    - env: TEST=integration IMAGE=ansible/ansible:fedora23
+    - env: TEST=integration IMAGE=ansible/ansible:opensuseleap
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
+build:
+  pre_ci_boot:
+    options: "--privileged=false --net=bridge"
+  ci:
+    - test/utils/shippable/ci.sh
+
+integrations:
+  notifications:
+    - integrationName: email
+      type: email
+      on_success: never
+      on_failure: never
+      on_start: never
+      on_pull_request: never
+    - integrationName: irc
+      type: irc
+      recipients:
+      - "chat.freenode.net#ansible-notices"
+      on_success: change
+      on_failure: always
+      on_start: never
+      on_pull_request: always
+    - integrationName: slack
+      type: slack
+      recipients:
+      - "#shippable"
+      on_success: change
+      on_failure: always
+      on_start: never
+      on_pull_request: never
