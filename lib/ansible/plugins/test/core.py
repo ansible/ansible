@@ -84,15 +84,6 @@ def search(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'search')
 
-def undefined(a):
-    ''' Test if a variable is undefined '''
-    from jinja2.runtime import Undefined
-    return isinstance(a, Undefined)
-
-def defined(a):
-    ''' Test if a variable is defined '''
-    return not undefined(a)
-
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
@@ -117,7 +108,4 @@ class TestModule(object):
             'search': search,
             'regex': regex,
 
-            # variable testing
-            'undefined': undefined,
-            'defined': defined,
         }
