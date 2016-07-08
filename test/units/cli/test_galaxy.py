@@ -23,6 +23,14 @@ from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 
 from nose.plugins.skip import SkipTest
+import ansible
+import os
+import shutil
+
+from mock import patch
+
+from ansible.errors import AnsibleError
+from ansible.module_utils.urls import SSLValidationError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -51,3 +59,74 @@ class TestGalaxy(unittest.TestCase):
         display_result = gc._display_role_info(role_info)
         if display_result.find('\t\tgalaxy_tags:') > -1:
             self.fail('Expected galaxy_tags to be indented twice')
+
+    def test_execute_init(self):
+        ''' verifies that execute_init created a skeleton framework of a role that complies with the galaxy metadata format '''
+        # testing that an error is raised if no role name is given
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.execute_init)
+
+        # This test requires internet connection. Using try/except to ensure internet is working rather than fail tests requiring internet while offline.
+        try:
+            # following tests use the role name 'delete_me'
+            # testing for cases when the directory doesn't already exist
+            gc = GalaxyCLI(args=["init"])
+            if os.path.exists('./delete_me'):
+                shutil.rmtree('./delete_me')
+            with patch('sys.argv', ["-c", "-v", "delete_me"]):
+                galaxy_parser = gc.parse()
+            with patch.object(ansible.cli.CLI, "run", return_value=None): # to eliminate config or default file used message
+                with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+                    gc.run()
+                    self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+
+            # verifying that the expected framework was created
+            self.assertTrue(os.path.exists('./delete_me'))
+            self.assertTrue(os.path.isfile('./delete_me/README.md'))
+            self.assertTrue(os.path.isdir('./delete_me/files'))
+            self.assertTrue(os.path.isdir('./delete_me/templates'))
+            self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
+            self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+
+            # testing for case when the directory and files are in existence already
+            gc = GalaxyCLI(args=["init"])
+            with patch('sys.argv', ["-c", "-v", "delete_me"]):
+                galaxy_parser = gc.parse()
+            with patch.object(ansible.cli.CLI, "run", return_value=None):
+                self.assertRaises(AnsibleError, gc.run)
+
+            # testing for case when the directory and files are in existence already while using the option: --force
+            gc = GalaxyCLI(args=["init"])
+            with patch('sys.argv', ["-c", "-v", "delete_me", "--force"]):
+                galaxy_parser = gc.parse()
+            with patch.object(ansible.cli.CLI, "run", return_value=None):  # to eliminate config or default file used message
+                with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+                    gc.run()
+                    self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+
+            # verifying that the files expected were created
+            self.assertTrue(os.path.exists('./delete_me'))
+            self.assertTrue(os.path.isfile('./delete_me/README.md'))
+            self.assertTrue(os.path.isdir('./delete_me/files'))
+            self.assertTrue(os.path.isdir('./delete_me/templates'))
+            self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
+            self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
+            self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+
+            # removing the files we created
+            shutil.rmtree('./delete_me')
+
+        except (SSLValidationError, AnsibleError) as e:
+            if "Failed to get data from the API server" or "Failed to validate the SSL certificate" in e.message:
+                raise SkipTest('this test requires an internet connection')
+            else:
+                raise
