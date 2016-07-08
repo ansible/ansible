@@ -94,11 +94,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: A flag indicating if any change was made or not
-    returned: success
-    type: boolean
-    sample: True
 server_ids:
     description: The list of server ids that are changed
     returned: success

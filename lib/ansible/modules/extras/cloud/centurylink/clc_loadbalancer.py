@@ -174,11 +174,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: A flag indicating if any change was made or not
-    returned: success
-    type: boolean
-    sample: True
 loadbalancer:
     description: The load balancer result object from CLC
     returned: success

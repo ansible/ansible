@@ -132,11 +132,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: A flag indicating if any change was made or not
-    returned: success
-    type: boolean
-    sample: True
 policy:
     description: The alert policy information
     returned: success
