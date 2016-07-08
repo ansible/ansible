@@ -183,7 +183,7 @@ class LookupModule(LookupBase):
                 # check the templates and vars directories too,if they exist
                 #TODO: This should match 'task module' (include_vars/vars, template/templates, etc)
                 for subdir in ('templates', 'vars', 'files'):
-                    path = self.find_needle(variables, subdir, fn)
+                    path = self.find_file_in_search_path(variables, subdir, fn)
                     if path:
                         return [path]
 
