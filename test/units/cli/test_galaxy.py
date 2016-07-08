@@ -127,6 +127,6 @@ class TestGalaxy(unittest.TestCase):
 
         except AnsibleError as e:
             if "Failed to get data from the API server" in e.message:
-                raise SkipTest('this test requires an internet connection and a valid CA certificate installed; this test is skipped when one or both of these requirements are not provided ')
+                raise SkipTest(' there is a test case within this method that requires an internet connection and a valid CA cert    ificate installed; this part of the method is skipped when one or both of these requirements are not provided\n ... ok')
             else:
                 raise
