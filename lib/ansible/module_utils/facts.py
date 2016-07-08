@@ -113,15 +113,21 @@ if platform.system() != 'SunOS':
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
+GATHER_TIMEOUT=None
+
 class TimeoutError(Exception):
     pass
 
 def timeout(seconds=10, error_message="Timer expired"):
+
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
+            if 'GATHER_TIMEOUT' in globals():
+                if GATHER_TIMEOUT:
+                    seconds = GATHER_TIMEOUT
             signal.signal(signal.SIGALRM, _handle_timeout)
             signal.alarm(seconds)
             try:
@@ -3224,6 +3230,9 @@ def get_all_facts(module):
 
     # Retrieve module parameters
     gather_subset = module.params['gather_subset']
+
+    global GATHER_TIMEOUT
+    GATHER_TIMEOUT = module.params['gather_timeout']
 
     # Retrieve all facts elements
     additional_subsets = set()
