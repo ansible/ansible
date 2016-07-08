@@ -63,8 +63,13 @@ class TestGalaxy(unittest.TestCase):
     def make_tarfile(self, output_file, source_dir):
         ''' used for making a tarfile from an artificial role directory for testing installation with a local tar.gz file '''
         # adding directory into a tar file
-        with tarfile.open(output_file, "w:gz") as tar:
+        try:
+            tar = tarfile.open(output_file, "w:gz")
             tar.add(source_dir, arcname=os.path.basename(source_dir))
+        except AttributeError:  # tarfile obj. has no attribute __exit__ prior to python 2.7
+            pass
+        finally:  # ensuring closure of tarfile obj
+            tar.close()
 
     def create_role(self):
         ''' creates a "role" directory and a requirements file; used for testing installation '''
