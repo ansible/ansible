@@ -33,6 +33,7 @@ Ansible Changes By Release
 - systemd
 - telegram
 - vmware
+  * vmware_local_user_manager
   * vmware_vmotion
 
 ###Minor Changes:
