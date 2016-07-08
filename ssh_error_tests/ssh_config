@@ -1,13 +1,15 @@
 
 HOST stricthostkey
     PreferredAuthentications publickey
+    PubkeyAuthentication yes
     StrictHostKeyChecking yes
     IdentitiesOnly yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa
 
 HOST viaproxy
    ProxyCommand ssh %r@sshproxyhost -W %h:%p
-    StrictHostKeyChecking no
+   StrictHostKeyChecking no
+   PubkeyAuthentication yes
 
 HOST gssapionly
     PreferredAuthentications gssapi-with-mic
@@ -23,20 +25,30 @@ HOST nokey
     IdentitiesOnly yes
     IdentityFile ~/src/ansible/ssh_error_tests/this_key_doesnt_exist
     PreferredAuthentications publickey
+    PubkeyAuthentication yes
     StrictHostKeyChecking no
 
 HOST emptykey
     IdentitiesOnly yes
     IdentityFile ~/src/ansible/ssh_error_tests/this_key_is_empty
     PreferredAuthentications publickey
+    PubkeyAuthentication yes
     StrictHostKeyChecking no
 
 
-HOST tooopen
+host tooopen
     IdentitiesOnly yes
-    IdentityFile ~/src/ansible/ssh_error_tests/this_key_has_too_open_perms
-    PreferredAuthentications publickey
-    StrictHostKeyChecking no
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost_too_open
+    preferredauthentications publickey
+    pubkeyauthentication yes
+    stricthostkeychecking no
+
+host cantread
+    IdentitiesOnly yes
+    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost_can_not_read
+    preferredauthentications publickey
+    pubkeyauthentication yes
+    stricthostkeychecking no
 
 HOST passwordonly
     PreferredAuthentications keyboard-interactive,password
@@ -50,14 +62,17 @@ HOST passwordonly
 
 HOST testhost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     StrictHostKeyChecking no
 
 HOST badalias
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
-    IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
+    PubkeyAuthentication yes
+    #IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     HostKeyAlias name_of_key_that_doesnt_exist
     StrictHostKeyChecking no
+    AddKeysToAgent no
 
 #HOST badcipher
 #    PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
@@ -66,6 +81,7 @@ HOST badalias
 
 HOST badcontrolpath
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     ControlPersist yes
     ControlPath ~/a_directory_that_does_not_exist/a_path_that_does_not_exist_%h_%p%r
@@ -73,42 +89,49 @@ HOST badcontrolpath
 
 HOST quiethost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel QUIET
     StrictHostKeyChecking no
 
 HOST fatalhost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel FATAL
     StrictHostKeyChecking no
 
 HOST errorhost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel ERROR
     StrictHostKeyChecking no
 
 HOST infohost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel INFO
     StrictHostKeyChecking no
 
 HOST verbosehost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel VERBOSE
     StrictHostKeyChecking no
 
 HOST debughost
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel DEBUG
     StrictHostKeyChecking no
 
 HOST debug2host
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel DEBUG2
     StrictHostKeyChecking no
@@ -116,16 +139,25 @@ HOST debug2host
 
 HOST debug3host
     PreferredAuthentications publickey,gssapi-with-mic,keyboard-interactive,password
+    PubkeyAuthentication yes
     IdentityFile ~/src/ansible/ssh_error_tests/id_rsa_testhost
     LogLevel DEBUG3
     StrictHostKeyChecking no
 
 Host bastion
     ForwardAgent yes
+    PubkeyAuthentication yes
 
 
 HOST *
     HostName localhost
     StrictHostKeyChecking yes
+    IdentitiesOnly yes
     ConnectionAttempts 1
+    GSSAPIAuthentication no
+    GSSAPIKeyExchange no
+    PubkeyAuthentication no
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    ChallengeResponseAuthentication no
 
