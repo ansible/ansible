@@ -320,6 +320,10 @@ Select hosts for specific tag key by assigning a comma separated list of tag key
 
 * AZURE_TAGS=key1,key2,key3
 
+Select hosts for specific locations by assigning a comma separated list of locations to:
+
+* AZURE_LOCATIONS=eastus,eastus2,westus
+
 Or, select hosts for specific tag key:value pairs by assigning a comma separated list key:value pairs to:
 
 * AZURE_TAGS=key1:value1,key2:value2
@@ -340,6 +344,9 @@ file will contain the following:
 
     # Control which tags are included. Set tags to a comma separated list of keys or key:value pairs
     #tags=
+
+    # Control which locations are included. Set locations to a comma separated list of locations.
+    #locations=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
     # Valid values: yes, no, true, false, True, False, 0, 1.
