@@ -126,3 +126,4 @@ class TestGalaxy(unittest.TestCase):
         # cleaning up tar.gz file
         if os.path.isfile("./delete_me.tar.gz"):
             os.remove("./delete_me.tar.gz")
+
