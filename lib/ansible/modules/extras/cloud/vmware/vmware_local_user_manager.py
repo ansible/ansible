@@ -60,18 +60,12 @@ EXAMPLES = '''
   local_action:
       module: vmware_local_user_manager
       hostname: esxi_hostname
-      username: root 
+      username: root
       password: vmware
-      local_user_name: foo      
+      local_user_name: foo
 '''
 
-RETURN = '''
-changed:
-    description: A flag indicating if any change was made or not.
-    returned: success
-    type: boolean
-    sample: True
-'''
+RETURN = '''# '''
 
 try:
     from pyVmomi import vim, vmodl
@@ -181,12 +175,12 @@ def main():
                               local_user_password=dict(required=False, type='str', no_log=True),
                               local_user_description=dict(required=False, type='str'),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
-    
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
-        
+
     vmware_local_user_manager = VMwareLocalUserManager(module)
     vmware_local_user_manager.process_state()
 
