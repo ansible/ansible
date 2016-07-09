@@ -19,8 +19,9 @@
 
 import re
 
-from ansible.module_utils.basic import json, AnsibleModule, get_exception
-from ansible.module_utils.network import NetCli, NetworkError, NetworkModule, Command
+from ansible.module_utils.basic import json, get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import NetCli, Command, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -203,8 +204,7 @@ class Eapi(EosConfigMixin):
 
     def __init__(self):
         self.url = None
-        self.url_args = AnsibleModule(url_argument_spec())
-        self.url_args.fail_json = self._error
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
         self.enable = None
         self.default_output = 'json'
         self._connected = False
