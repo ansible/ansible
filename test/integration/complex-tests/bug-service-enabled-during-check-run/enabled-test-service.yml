@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: enable service first time
+      service: name=ansible_test enabled=yes
+      register: enabled_res_1
+
+    - name: assert that state changed
+      assert:
+        that:
+        - "enabled_res_1.changed == true"
+
+    - name: enable service second time
+      service: name=ansible_test enabled=yes
+      register: enabled_res_2
+
+    - name: assert that state changed again (in the check mode it should)
+      assert:
+        that:
+        - "enabled_res_2.changed == true"

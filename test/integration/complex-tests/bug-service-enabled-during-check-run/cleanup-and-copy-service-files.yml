@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+
+    - name: cleanup files from the previous run
+      file: path={{item}} state=absent
+      with_items:
+        - /usr/sbin/ansible_test_service
+        - /etc/init.d/ansible_test
+
+    - name: cleanup runlevel links from the previous run
+      command: find /etc -name '[SK]*ansible_test' -delete
+
+    - name: install the test daemon script
+      copy: src=../../roles/test_service/files/ansible_test_service dest=/usr/sbin/ansible_test_service mode=755
+      register: install_result
+
+    - name: install the sysV init file
+      copy: src=../../roles/test_service/files/ansible.sysv dest=/etc/init.d/ansible_test mode=0755
+      register: install_sysv_result
