@@ -24,4 +24,4 @@
       # On some Docker images there is error 'Could not find the requested service "ansible_test"'.
       # Skipping those images.
       # Also skipping all CentOS because the first attempt not market as "changed".  It's not clear why.
-      when: not ((ansible_distribution == 'CentOS') or (ansible_distribution == 'Fedora') or ((ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>='))))
+      when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version in ['12.04', '14.04']) or (ansible_distribution == 'Debian' and ansible_distribution_version in ['7'])
