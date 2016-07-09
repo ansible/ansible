@@ -245,7 +245,7 @@ populates the callback with them.  Here's a short snippet that shows you how::
 
         def v2_playbook_on_start(self, playbook):
             self.playbook = playbook
-            self.playbook_name = os.path.basename(self.playbook._filename)
+            self.playbook_name = os.path.basename(self.playbook._file_name)
 
         def v2_playbook_on_play_start(self, play):
             self.play = play
