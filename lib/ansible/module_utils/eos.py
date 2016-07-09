@@ -19,11 +19,14 @@
 
 import re
 
-from ansible.module_utils.basic import json, get_exception, AnsibleModule
-from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
+from ansible.module_utils.basic import json, AnsibleModule, get_exception
+from ansible.module_utils.network import NetCli, NetworkError, NetworkModule, Command
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+
+# temporary fix until modules are update.  to be removed before 2.2 final
+from ansible.module_utils.network import get_module
 
 EAPI_FORMATS = ['json', 'text']
 
