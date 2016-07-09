@@ -25,8 +25,7 @@ DOCUMENTATION = '''
 module: timezone
 short_description: Configure timezone setting
 description:
-  - |
-    This module configures the timezone setting, both of the system clock
+  - This module configures the timezone setting, both of the system clock
     and of the hardware clock. I(Currently only Linux platform is supported.)
     It is recommended to restart C(crond) after changing the timezone,
     otherwise the jobs may run at the wrong time.
@@ -38,14 +37,12 @@ version_added: "2.2.0"
 options:
   name:
     description:
-      - |
-        Name of the timezone for the system clock.
+      - Name of the timezone for the system clock.
         Default is to keep current setting.
     required: false
   hwclock:
     description:
-      - |
-        Whether the hardware clock is in UTC or in local timezone.
+      - Whether the hardware clock is in UTC or in local timezone.
         Default is to keep current setting.
         Note that this option is recommended not to change and may fail
         to configure, especially on virtual environments such as AWS.
