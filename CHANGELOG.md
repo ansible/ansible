@@ -23,6 +23,9 @@ Ansible Changes By Release
   * cs_router
   * cs_snapshot_policy
 - letsencrypt
+- lxd
+  * lxd_profile
+  * lxd_container
 - netconf_config
 - openstack
   * os_keystone_service
