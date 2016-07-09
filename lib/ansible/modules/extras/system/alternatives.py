@@ -51,6 +51,8 @@ options:
     description:
       - The priority of the alternative
     required: false
+    default: 50
+    version_added: "2.2"
 requirements: [ update-alternatives ]
 '''
 
