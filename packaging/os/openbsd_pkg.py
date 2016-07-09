@@ -19,9 +19,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import platform
 import re
 import shlex
 import sqlite3
+
+from distutils.version import StrictVersion
 
 DOCUMENTATION = '''
 ---
@@ -82,6 +85,9 @@ EXAMPLES = '''
 # Specify the default flavour to avoid ambiguity errors
 - openbsd_pkg: name=vim-- state=present
 
+# Specify a package branch (requires at least OpenBSD 6.0)
+- openbsd_pkg: name=python%3.5 state=present
+
 # Update all packages on the system
 - openbsd_pkg: name=* state=latest
 '''
@@ -94,47 +100,22 @@ def execute_command(cmd, module):
     cmd_args = shlex.split(cmd)
     return module.run_command(cmd_args)
 
-# Function used for getting the name of a currently installed package.
-def get_current_name(name, pkg_spec, module):
-    info_cmd = 'pkg_info'
-    (rc, stdout, stderr) = execute_command("%s" % (info_cmd), module)
-    if rc != 0:
-        return (rc, stdout, stderr)
-
-    if pkg_spec['version']:
-        pattern = "^%s" % name
-    elif pkg_spec['flavor']:
-        pattern = "^%s-.*-%s\s" % (pkg_spec['stem'], pkg_spec['flavor'])
-    else:
-        pattern = "^%s-" % pkg_spec['stem']
-
-    module.debug("get_current_name(): pattern = %s" % pattern)
-
-    for line in stdout.splitlines():
-        module.debug("get_current_name: line = %s" % line)
-        match = re.search(pattern, line)
-        if match:
-            current_name = line.split()[0]
-
-    return current_name
-
 # Function used to find out if a package is currently installed.
 def get_package_state(name, pkg_spec, module):
-    info_cmd = 'pkg_info -e'
+    info_cmd = 'pkg_info -Iq'
 
-    if pkg_spec['version']:
-        command = "%s %s" % (info_cmd, name)
-    elif pkg_spec['flavor']:
-        command = "%s %s-*-%s" % (info_cmd, pkg_spec['stem'], pkg_spec['flavor'])
-    else:
-        command = "%s %s-*" % (info_cmd, pkg_spec['stem'])
+    command = "%s inst:%s" % (info_cmd, name)
 
     rc, stdout, stderr = execute_command(command, module)
 
-    if (stderr):
+    if stderr:
         module.fail_json(msg="failed in get_package_state(): " + stderr)
 
-    if rc == 0:
+    if stdout:
+        # If the requested package name is just a stem, like "python", we may
+        # find multiple packages with that name.
+        pkg_spec['installed_names'] = [name for name in stdout.splitlines()]
+        module.debug("get_package_state(): installed_names = %s" % pkg_spec['installed_names'])
         return True
     else:
         return False
@@ -173,8 +154,14 @@ def package_present(name, installed_state, pkg_spec, module):
         # specific version is supplied or not.
         #
         # When a specific version is supplied the return code will be 0 when
-        # a package is found and 1 when it is not, if a version is not
-        # supplied the tool will exit 0 in both cases:
+        # a package is found and 1 when it is not. If a version is not
+        # supplied the tool will exit 0 in both cases.
+        #
+        # It is important to note that "version" relates to the
+        # packages-specs(7) notion of a version. If using the branch syntax
+        # (like "python%3.5") the version number is considered part of the
+        # stem, and the pkg_add behavior behaves the same as if the name did
+        # not contain a version (which it strictly speaking does not).
         if pkg_spec['version'] or build is True:
             # Depend on the return code.
             module.debug("package_present(): depending on return code")
@@ -231,25 +218,23 @@ def package_latest(name, installed_state, pkg_spec, module):
 
     if installed_state is True:
 
-        # Fetch name of currently installed package.
-        pre_upgrade_name = get_current_name(name, pkg_spec, module)
-
-        module.debug("package_latest(): pre_upgrade_name = %s" % pre_upgrade_name)
-
         # Attempt to upgrade the package.
         (rc, stdout, stderr) = execute_command("%s %s" % (upgrade_cmd, name), module)
 
         # Look for output looking something like "nmap-6.01->6.25: ok" to see if
         # something changed (or would have changed). Use \W to delimit the match
         # from progress meter output.
-        match = re.search("\W%s->.+: ok\W" % pre_upgrade_name, stdout)
-        if match:
-            if module.check_mode:
-                module.exit_json(changed=True)
+        changed = False
+        for installed_name in pkg_spec['installed_names']:
+            module.debug("package_latest(): checking for pre-upgrade package name: %s" % installed_name)
+            match = re.search("\W%s->.+: ok\W" % installed_name, stdout)
+            if match:
+                module.debug("package_latest(): pre-upgrade package name match: %s" % installed_name)
+                if module.check_mode:
+                    module.exit_json(changed=True)
 
-            changed = True
-        else:
-            changed = False
+                changed = True
+                break
 
         # FIXME: This part is problematic. Based on the issues mentioned (and
         # handled) in package_present() it is not safe to blindly trust stderr
@@ -301,7 +286,12 @@ def package_absent(name, installed_state, module):
 
 # Function used to parse the package name based on packages-specs(7).
 # The general name structure is "stem-version[-flavors]".
+#
+# Names containing "%" are a special variation not part of the
+# packages-specs(7) syntax. See pkg_add(1) on OpenBSD 6.0 or later for a
+# description.
 def parse_package_name(name, pkg_spec, module):
+    module.debug("parse_package_name(): parsing name: %s" % name)
     # Do some initial matches so we can base the more advanced regex on that.
     version_match = re.search("-[0-9]", name)
     versionless_match = re.search("--", name)
@@ -309,7 +299,7 @@ def parse_package_name(name, pkg_spec, module):
     # Stop if someone is giving us a name that both has a version and is
     # version-less at the same time.
     if version_match and versionless_match:
-        module.fail_json(msg="Package name both has a version and is version-less: " + name)
+        module.fail_json(msg="package name both has a version and is version-less: " + name)
 
     # If name includes a version.
     if version_match:
@@ -322,7 +312,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = match.group('flavor')
             pkg_spec['style']             = 'version'
         else:
-            module.fail_json(msg="Unable to parse package name at version_match: " + name)
+            module.fail_json(msg="unable to parse package name at version_match: " + name)
 
     # If name includes no version but is version-less ("--").
     elif versionless_match:
@@ -335,7 +325,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = match.group('flavor')
             pkg_spec['style']             = 'versionless'
         else:
-            module.fail_json(msg="Unable to parse package name at versionless_match: " + name)
+            module.fail_json(msg="unable to parse package name at versionless_match: " + name)
 
     # If name includes no version, and is not version-less, it is all a stem.
     else:
@@ -348,14 +338,27 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['flavor']            = None
             pkg_spec['style']             = 'stem'
         else:
-            module.fail_json(msg="Unable to parse package name at else: " + name)
+            module.fail_json(msg="unable to parse package name at else: " + name)
+
+    # If the stem contains an "%" then it needs special treatment.
+    branch_match = re.search("%", pkg_spec['stem'])
+    if branch_match:
+
+        branch_release = "6.0"
+
+        if version_match or versionless_match:
+            module.fail_json(msg="package name using 'branch' syntax also has a version or is version-less: " + name)
+        if StrictVersion(platform.release()) < StrictVersion(branch_release):
+            module.fail_json(msg="package name using 'branch' syntax requires at least OpenBSD %s: %s" % (branch_release, name))
+
+        pkg_spec['style'] = 'branch'
 
     # Sanity check that there are no trailing dashes in flavor.
     # Try to stop strange stuff early so we can be strict later.
     if pkg_spec['flavor']:
         match = re.search("-$", pkg_spec['flavor'])
         if match:
-            module.fail_json(msg="Trailing dash in flavor: " + pkg_spec['flavor'])
+            module.fail_json(msg="trailing dash in flavor: " + pkg_spec['flavor'])
 
 # Function used for figuring out the port path.
 def get_package_source_path(name, pkg_spec, module):
@@ -364,9 +367,14 @@ def get_package_source_path(name, pkg_spec, module):
         return 'databases/sqlports'
     else:
         # try for an exact match first
-        conn = sqlite3.connect('/usr/local/share/sqlports')
+        sqlports_db_file = '/usr/local/share/sqlports'
+        if not os.path.isfile(sqlports_db_file):
+            module.fail_json(msg="sqlports file '%s' is missing" % sqlports_db_file)
+
+        conn = sqlite3.connect(sqlports_db_file)
         first_part_of_query = 'SELECT fullpkgpath, fullpkgname FROM ports WHERE fullpkgname'
         query = first_part_of_query + ' = ?'
+        module.debug("package_package_source_path(): exact query: %s" % query)
         cursor = conn.execute(query, (name,))
         results = cursor.fetchall()
 
@@ -376,11 +384,14 @@ def get_package_source_path(name, pkg_spec, module):
             query = first_part_of_query + ' LIKE ?'
             if pkg_spec['flavor']:
                 looking_for += pkg_spec['flavor_separator'] + pkg_spec['flavor']
+                module.debug("package_package_source_path(): fuzzy flavor query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             elif pkg_spec['style'] == 'versionless':
                 query += ' AND fullpkgname NOT LIKE ?'
+                module.debug("package_package_source_path(): fuzzy versionless query: %s" % query)
                 cursor = conn.execute(query, (looking_for, "%s-%%" % looking_for,))
             else:
+                module.debug("package_package_source_path(): fuzzy query: %s" % query)
                 cursor = conn.execute(query, (looking_for,))
             results = cursor.fetchall()
 
@@ -464,8 +475,9 @@ def main():
         # build sqlports if its not installed yet
         pkg_spec = {}
         parse_package_name('sqlports', pkg_spec, module)
-        installed_state = get_package_state(name, pkg_spec, module)
+        installed_state = get_package_state('sqlports', pkg_spec, module)
         if not installed_state:
+            module.debug("main(): installing 'sqlports' because build=%s" % module.params['build'])
             package_present('sqlports', installed_state, pkg_spec, module)
 
     if name == '*':
@@ -478,6 +490,11 @@ def main():
         # Parse package name and put results in the pkg_spec dictionary.
         pkg_spec = {}
         parse_package_name(name, pkg_spec, module)
+
+        # Not sure how the branch syntax is supposed to play together
+        # with build mode. Disable it for now.
+        if pkg_spec['style'] == 'branch' and module.params['build'] is True:
+            module.fail_json(msg="the combination of 'branch' syntax and build=%s is not supported: %s" % (module.params['build'], name))
 
         # Get package state.
         installed_state = get_package_state(name, pkg_spec, module)
