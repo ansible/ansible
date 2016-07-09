@@ -157,13 +157,15 @@ def repo_exists(module, repodata, overwrite_multiple):
         # Found an existing repo, look for changes
         has_changes = _repo_changes(repos[0], repodata)
         return (True, has_changes, repos)
-    elif len(repos) == 2 and overwrite_multiple:
-        # Found two repos and want to overwrite_multiple
-        return (True, True, repos)
-    else:
-        # either more than 2 repos (shouldn't happen)
-        # or overwrite_multiple is not active
-        module.fail_json(msg='More than one repo matched "%s": "%s"' % (name, repos))
+    elif len(repos) >= 2:
+        if overwrite_multiple:
+            # Found two repos and want to overwrite_multiple
+            return (True, True, repos)
+        else:
+            errmsg = 'More than one repo matched "%s": "%s".' % (name, repos)
+            errmsg += ' Use overwrite_multiple to allow more than one repo to be overwritten'
+            module.fail_json(msg=errmsg)
+
 
 def modify_repo(module, repodata, old_repos):
     repo = repodata['url']
