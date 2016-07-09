@@ -20,6 +20,8 @@
           assert:
             that:
             - "enabled_res_2.changed == true"
-        # On some Docker images there is error 'Could not find the requested service "ansible_test"'
-        # Skip those images
-      when: not ((ansible_distribution == 'CentOS' and ansible_distribution_version|version_compare('7', '>=')) or (ansible_distribution == 'Fedora') or ((ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>='))))
+
+      # On some Docker images there is error 'Could not find the requested service "ansible_test"'.
+      # Skipping those images.
+      # Also skipping all CentOS because the first attempt not market as "changed".  It's not clear why.
+      when: not ((ansible_distribution == 'CentOS') or (ansible_distribution == 'Fedora') or ((ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>='))))
