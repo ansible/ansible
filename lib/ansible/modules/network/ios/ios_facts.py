@@ -119,7 +119,7 @@ import re
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcmd import CommandRunner
-from ansible.module_utils.ios import get_module
+from ansible.module_utils.ios import NetworkModule
 
 
 class FactsBase(object):
@@ -373,7 +373,7 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = get_module(argument_spec=spec, supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
