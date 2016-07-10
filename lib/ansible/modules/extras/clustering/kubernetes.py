@@ -61,16 +61,18 @@ options:
     required: true
     default: "present"
     choices: ["present", "absent", "update", "replace"]
-  password:
+  url_password:
     description:
       - The HTTP Basic Auth password for the API I(endpoint). This should be set
         unless using the C('insecure') option.
     default: null
-  username:
+    aliases: ["password"]
+  url_username:
     description:
       - The HTTP Basic Auth username for the API I(endpoint). This should be set
         unless using the C('insecure') option.
     default: "admin"
+    aliases: ["username"]
   insecure:
     description:
       - "Reverts the connection to using HTTP instead of HTTPS. This option should
@@ -92,8 +94,8 @@ EXAMPLES = '''
 - name: Create a kubernetes namespace
   kubernetes:
     api_endpoint: 123.45.67.89
-    username: admin
-    password: redacted
+    url_username: admin
+    url_password: redacted
     inline_data:
       kind: Namespace
       apiVersion: v1
@@ -111,8 +113,8 @@ EXAMPLES = '''
 - name: Create a kubernetes namespace
   kubernetes:
     api_endpoint: 123.45.67.89
-    username: admin
-    password: redacted
+    url_username: admin
+    url_password: redacted
     file_reference: /path/to/create_namespace.yaml
     state: present
 
@@ -306,8 +308,8 @@ def main():
         argument_spec=dict(
             http_agent=dict(default=USER_AGENT),
 
-            username=dict(default="admin"),
-            password=dict(default="", no_log=True),
+            url_username=dict(default="admin", aliases=["username"]),
+            url_password=dict(default="", no_log=True, aliases=["password"]),
             force_basic_auth=dict(default="yes"),
             validate_certs=dict(default=False, type='bool'),
             certificate_authority_data=dict(required=False),
@@ -317,7 +319,9 @@ def main():
             inline_data=dict(required=False),
             state=dict(default="present", choices=["present", "absent", "update", "replace"])
         ),
-        mutually_exclusive = (('file_reference', 'inline_data'), ('username', 'insecure'), ('password', 'insecure')),
+        mutually_exclusive = (('file_reference', 'inline_data'),
+                              ('url_username', 'insecure'),
+                              ('url_password', 'insecure')),
         required_one_of = (('file_reference', 'inline_data'),),
     )
 
