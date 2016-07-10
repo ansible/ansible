@@ -320,6 +320,7 @@ except ImportError:
     has_rds2 = False
 
 DEFAULT_PORTS= {
+    'aurora': 3306,
     'mariadb': 3306,
     'mysql': 3306,
     'oracle': 1521,
