@@ -37,14 +37,16 @@ options:
           - a management token is required to manipulate the acl lists
     state:
         description:
-          - whether the ACL pair should be present or absent, defaults to present
+          - whether the ACL pair should be present or absent
         required: false
         choices: ['present', 'absent']
-    type:
+        default: present
+    token_type:
         description:
           - the type of token that should be created, either management or
-            client, defaults to client
+            client
         choices: ['client', 'management']
+        default: client
     name:
         description:
           - the name that should be associated with the acl key, this is opaque
