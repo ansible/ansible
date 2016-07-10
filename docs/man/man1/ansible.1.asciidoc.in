@@ -42,7 +42,7 @@ The 'ARGUMENTS' to pass to the module.
 Use privilege escalation (specific one depends on become_method),
 this does not imply prompting for passwords.
 
-*K*, *--ask-become-pass*::
+*-K*, *--ask-become-pass*::
 
 Ask for privilege escalation password.
 
