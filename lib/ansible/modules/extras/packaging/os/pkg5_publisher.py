@@ -179,13 +179,14 @@ def get_publishers(module):
             publishers[name]['origin'] = []
             publishers[name]['mirror'] = []
 
-        publishers[name][values['type']].append(values['uri'])
+        if values['type'] is not None:
+            publishers[name][values['type']].append(values['uri'])
 
     return publishers
 
 
 def unstringify(val):
-    if val == "-":
+    if val == "-" or val == '':
         return None
     elif val == "true":
         return True
