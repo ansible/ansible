@@ -29,6 +29,7 @@ import shutil
 import tarfile
 
 from mock import patch
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
