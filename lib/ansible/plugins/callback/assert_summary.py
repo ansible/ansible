@@ -30,23 +30,32 @@ class CallbackModule(CallbackModule_default):
     The intent is for the output to look like nosetests output.
 
     The plugin reports on the outcome of assert tasks.
-    During task execution there'll be a brief report (task name, ok/failed)
+    During task execution there'll be a brief report (task name, ok/failed) for assert tasks only.
     At the end a summary will be printed:
         Total number of tests, number of passes/fails.
     Detailed report of failed asserts (test task outcome, assert conditions, assert outcome)
-    If verbosity is higher than zero - detailed report of successful asserts will be printed as well.
+    If verbosity is higher than zero - progress will be reported for every task, and a
+    detailed report of successful asserts will be printed as well.
 
     IMPORTANT:
     The plugin assumes that assert tasks appear directly after test tasks with no other task between them.
 
     Sample output:
 
-    Assert Summary *****************************************************************
-    testhost                   : Total=3    passed=2    failed=1
+    Assert Summary ***************************************************************
 
-    Tests failed:
-        assert setup task
-        Task:	{"changed": false, ... }
+      localhost                  : run=4    passed=2    failed=2
+
+    Failed task report
+    -------------------
+        task: failed task 2
+        task result:
+        {"changed": false, "cmd": "/bin/tru", "failed": true, "msg": "[Errno 2] No such file or directory", "rc": 2}
+        assert:
+        {u'that': [u'not result.failed']}
+        assert result:
+        {"assertion": "not result.failed", "changed": false, "evaluated_to": false, "failed": true}
+
     """
 
     CALLBACK_VERSION = 2.0
@@ -68,7 +77,8 @@ class CallbackModule(CallbackModule_default):
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         """
-        bypass printing task banner
+        bypass printing task banner for tasks other than assert.
+        If verbosity>0 don't bypass
         """
         # task name is printed by the result handler
         if task.action == "assert" or self._display.verbosity:
@@ -76,7 +86,7 @@ class CallbackModule(CallbackModule_default):
 
     def v2_runner_on_skipped(self, result):
         """
-        bypass printing on skipped tasks
+        bypass printing on skipped tasks unless verbosity>0
         """
         if self._display.verbosity:
             self.super_ref.v2_runner_on_skipped(result)
@@ -101,7 +111,7 @@ class CallbackModule(CallbackModule_default):
         Save the results of failed tasks (with ignore errors).
         For tasks without ignore errors - dump the results.
 
-        Asserts are save with the previous task result as well.
+        Asserts are saved with the previous task result as well.
         """
 
         if not ignore_errors:
@@ -123,7 +133,7 @@ class CallbackModule(CallbackModule_default):
         including the results of the tasks asserting against.
 
         By default will only display detailed report on failed assert tasks.
-        If verbosity is greater than 1, will report on successfull assert tasks
+        If verbosity is greater than 1, will report on successful assert tasks
         as well.
         """
 
@@ -185,8 +195,7 @@ class CallbackModule(CallbackModule_default):
     def _process_result(self, where_to, status, result, original_result):
         """
         Gather task name, host name and task args from result._task
-        Save into dictionaries for final report and display current status
-        to provide progress reporting during play execution
+        Save into dictionaries for final report
         """
 
         hostname = result._host.get_name().strip()
