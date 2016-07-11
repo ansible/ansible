@@ -19,7 +19,7 @@ DOCUMENTATION = """
 ---
 module: ios_template
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco IOS device configurations over SSH
 description:
   - Manages Cisco IOS network device configurations over SSH.  This module
@@ -115,11 +115,13 @@ responses:
   type: list
   sample: ['...', '...']
 """
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.ios import NetworkModule, NetworkError
 
 def get_config(module):
     config = module.params['config'] or dict()
     if not config and not module.params['force']:
-        config = module.config
+        config = module.config.get_config()
     return config
 
 def main():
@@ -136,9 +138,9 @@ def main():
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     result = dict(changed=False)
 
@@ -149,15 +151,16 @@ def main():
         config = NetworkConfig(contents=contents, indent=1)
         result['_backup'] = contents
 
+    commands = list()
     if not module.params['force']:
-        commands = candidate.difference(config)
+        commands = dumps(candidate.difference(config), 'commands')
     else:
-        commands = str(candidate).split('\n')
+        commands = str(candidate)
 
     if commands:
+        commands = commands.split('\n')
         if not module.check_mode:
-            commands = [str(c).strip() for c in commands]
-            response = module.configure(commands)
+            response = module.config(commands)
             result['responses'] = response
         result['changed'] = True
 
@@ -165,10 +168,6 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.ios import *
 if __name__ == '__main__':
     main()
 
