@@ -231,7 +231,7 @@ class TestActionBase(unittest.TestCase):
             mock_connection.module_implementation_preferences = ('.ps1',)
             (style, shebang, data) = action_base._configure_module('stat', mock_task.args)
             self.assertEqual(style, "new")
-            self.assertEqual(shebang, u'#!powershell')
+            self.assertEqual(shebang, None)
 
             # test module not found
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
