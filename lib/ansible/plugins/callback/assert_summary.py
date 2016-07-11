@@ -18,29 +18,26 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
-from ansible.plugins.callback import CallbackBase
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 from ansible import constants as C
 from ansible.utils.color import colorize, hostcolor
 import time
 
-HAS_PPRINT = True
-try:
-    import pprint
-except ImportError:
-    HAS_PPRINT = False
 
-
-class CallbackModule(CallbackBase):
+class CallbackModule(CallbackModule_default):
     """
     This callback plugin is intended to be used with integration test playbooks.
-    The plugin reports only on tasks of action type 'assert' and provides a report
-    similar to that of running make tests with nosetests.
+    The intent is for the output to look like nosetests output.
 
-    The assert_summary callback plugin is best used together with the 'test' strategy
-    plugin, as it makes sure to run all of the tasks in the play and provide a summary
-    report at the end, instead of the default ansible strategy which halts execution on
-    failed tasks.
+    The plugin reports on the outcome of assert tasks.
+    During task execution there'll be a brief report (task name, ok/failed)
+    At the end a summary will be printed:
+        Total number of tests, number of passes/fails.
+    Detailed report of failed asserts (test task outcome, assert conditions, assert outcome)
+    If verbosity is higher than zero - detailed report of successful asserts will be printed as well.
+
+    IMPORTANT:
+    The plugin assumes that assert tasks appear directly after test tasks with no other task between them.
 
     Sample output:
 
@@ -60,73 +57,65 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         self.assert_ok = dict()
         self.assert_failed = dict()
-        self.failed_msgs = dict()
+        self.stack = []
+        self.failures = False
 
         self.start_time = time.time()
         self.end_time = None
 
-        super(CallbackModule, self).__init__()
+        self.super_ref = super(CallbackModule, self)
+        self.super_ref.__init__()
 
-    def _process_result(self, where_to, status, result):
+    def v2_playbook_on_task_start(self, task, is_conditional):
         """
-        Gather task name, host name and task args from result._task
-        Save into dictionaries for final report and display current status
-        to provide progress reporting during play execution
+        bypass printing task banner
         """
+        # task name is printed by the result handler
+        if task.action == "assert" or self._display.verbosity:
+            self.super_ref.v2_playbook_on_task_start(task, is_conditional)
 
-        hostname = result._host.get_name().strip()
-        taskname = result._task.get_name().strip()
-
-        self._display.display("%s :\t%s ... %s" % (hostname, taskname, status))
-
-        the_dict = getattr(self, where_to)
-        task_data = dict(name=taskname, args=result._task.args, result=result._result)
-        if hostname in the_dict:
-            task_list = the_dict[hostname]
-            task_list.append(task_data)
-            the_dict[hostname] = task_list
-        else:
-            task_list = [task_data]
-            the_dict[hostname] = task_list
+    def v2_runner_on_skipped(self, result):
+        """
+        bypass printing on skipped tasks
+        """
+        if self._display.verbosity:
+            self.super_ref.v2_runner_on_skipped(result)
 
     def v2_runner_on_ok(self, result):
         """
-        Save the result of successfully completed assert tasks
+        Save the result of successfully completed tasks.
+        Asserts are saved with the previous task result as well.
         """
 
         if result._task.action == "assert":
-            self._process_result("assert_ok", "ok", result)
+            orig_result = self.stack.pop()
+            self._process_result("assert_ok", "ok", result, orig_result)
+            self.super_ref.v2_runner_on_ok(result)
+        else:
+            self.stack.append(result)
+            if self._display.verbosity:
+                self._display.display("done")
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         """
-        Save the result of failed assert tasks
+        Save the results of failed tasks (with ignore errors).
+        For tasks without ignore errors - dump the results.
+
+        Asserts are save with the previous task result as well.
         """
 
-        if result._task.action == "assert":
-            self._process_result("assert_failed", "failed", result)
-
-    def v2_playbook_on_start(self, playbook):
-        """
-        Display header explaining that the plugin has loaded
-        """
-
-        from os.path import basename
-        self._display.banner("PLAYBOOK: %s" % basename(playbook._file_name))
-
-        if self._display.verbosity:
-            self._display.display("")
-            self._display.display("Assert Summary Callback Plugin in use.")
-            self._display.display("")
-            self._display.display("\tNote: The plugin assumes the following:")
-            self._display.display("\t----------------------------------------")
-            self._display.display("\tEvery task is followed by an 'assert' task")
-            self._display.display("\tEvery task has ignore_error: yes")
-            self._display.display("\tEvery non assert task uses register: result")
-            self._display.display("\tEvery assert task has last: \"{{ result }}\" as an argument")
-
-        self._display.display("")
-        self._display.display("Running Tests:", C.COLOR_HIGHLIGHT)
-        self._display.display("")
+        if not ignore_errors:
+            self.failures = True
+            self.super_ref.v2_runner_on_failed(result, ignore_errors)
+        else:
+            if result._task.action == "assert":
+                orig_result = self.stack.pop()
+                self._process_result("assert_failed", "failed", result, orig_result)
+                self.super_ref.v2_runner_on_failed(result, ignore_errors)
+            else:
+                self.stack.append(result)
+                if self._display.verbosity:
+                    self._display.display("done")
 
     def v2_playbook_on_stats(self, stats):
         """
@@ -138,6 +127,11 @@ class CallbackModule(CallbackBase):
         as well.
         """
 
+        # if any of the regular tasks failed don't display the assert report
+        if self.failures:
+            self._display.banner("Failure detected, processing halted")
+            return
+
         self.end_time = time.time()
 
         self._display.banner("Assert Summary")
@@ -147,7 +141,6 @@ class CallbackModule(CallbackBase):
         total_tests = 0
 
         for h in hosts:
-
             count_ok = len(self.assert_ok.get(h,[]))
             count_failed = len(self.assert_failed.get(h,[]))
             count_total = count_ok + count_failed
@@ -189,6 +182,32 @@ class CallbackModule(CallbackBase):
             ))
         self._display.display("")
 
+    def _process_result(self, where_to, status, result, original_result):
+        """
+        Gather task name, host name and task args from result._task
+        Save into dictionaries for final report and display current status
+        to provide progress reporting during play execution
+        """
+
+        hostname = result._host.get_name().strip()
+        taskname = original_result._task.get_name().strip()
+
+        the_dict = getattr(self, where_to)
+        task_data = dict(
+            name=taskname,
+            assert_expr=result._task.args,
+            assert_result=result._result,
+            test_result=original_result._result
+        )
+
+        if hostname in the_dict:
+            task_list = the_dict[hostname]
+            task_list.append(task_data)
+            the_dict[hostname] = task_list
+        else:
+            task_list = [task_data]
+            the_dict[hostname] = task_list
+
     def _detailed_report(self, header, host, where_from):
         """
         print a detailed report per host grouped by status (failed / ok)
@@ -199,22 +218,16 @@ class CallbackModule(CallbackBase):
             self._display.display(header, C.COLOR_DEPRECATE)
             self._display.display("-" * (len(header)+1), C.COLOR_DEPRECATE)
             for task_data in the_dict[host]:
-                args_data = task_data.get('args')
-                result_data = self._dump_results(task_data.get('result'))
+                assert_expr = task_data.get('assert_expr')
+                test_result = self._dump_results(task_data.get('test_result'))
+                assert_result = self._dump_results(task_data.get('assert_result'))
 
-                self._display.display("\t%s" % task_data["name"], C.COLOR_DEPRECATE)
+                self._display.display("\ttask: %s" % task_data["name"], C.COLOR_DEPRECATE)
                 self._display.display("\ttask result:", C.COLOR_HIGHLIGHT)
-                self._display.display("\t%s" % _pretty_json(args_data['last']))
+                self._display.display("\t%s" % test_result.replace('\n',''))
                 self._display.display("\tassert:", C.COLOR_HIGHLIGHT)
-                self._display.display("\t%s" % _pretty_json(args_data['that']))
+                self._display.display("\t%s" % assert_expr)
                 self._display.display("\tassert result:", C.COLOR_HIGHLIGHT)
-                self._display.display("\t%s" % result_data)
+                self._display.display("\t%s" % assert_result)
 
                 self._display.display("")
-
-
-def _pretty_json(json):
-    if HAS_PPRINT:
-        pp = pprint.PrettyPrinter(indent=8, depth=4)
-        json = pp.pformat(json)
-    return json
