@@ -132,12 +132,9 @@ warnings:
   type: list
   sample: ['...', '...']
 """
+from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcmd import CommandRunner, FailedConditionsError
 from ansible.module_utils.ios import NetworkModule, NetworkError
-
-def check_args(module, warnings):
-    if module.params['save_config'] is True:
-        warnings.append('save_config argument will be ignored')
 
 def to_lines(stdout):
     for item in stdout:
@@ -148,7 +145,7 @@ def to_lines(stdout):
 def main():
     spec = dict(
         commands=dict(type='list', required=True),
-        wait_for=dict(type='list'),
+        wait_for=dict(type='list', aliases=['waitfor']),
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
@@ -161,7 +158,6 @@ def main():
     conditionals = module.params['wait_for'] or list()
 
     warnings = list()
-    check_args(module, warnings)
 
     runner = CommandRunner(module)
 
