@@ -4,14 +4,14 @@ Jinja2 tests
 .. contents:: Topics
 
 
-Test in Jinja2 are a way of evaluating template expressions and returning True or False.
+Tests in Jinja2 are a way of evaluating template expressions and returning True or False.
 Jinja2 ships with many of these. See `builtin tests`_ in the official Jinja2 template documentation.
 Tests are very similar to filters and are used mostly the same way, but they can also be used in list
-processing filters like C(map()) and C(select()) to choose items in the list.
+processing filters, like C(map()) and C(select()) to choose items in the list.
 
-Just like filters, tests always execute on the ansible controller, NOT on the target of a task, they test local data.
+Like filters, tests always execute on the Ansible controller, **not** on the target of a task, as they test local data.
 
-In addition to those, Ansible supplies a few more, also users can easily create their own.
+In addition to those Jinja2 tests, Ansible supplies a few more and users can easily create their own.
 
 .. _testing_strings:
 
@@ -33,7 +33,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
         - debug: "msg='matched pattern 3'"
           when: url | search("/users/")
 
-'match' will require a complete match in the string, while 'search' will require a match inside of the string.
+'match' requires a complete match in the string, while 'search' only requires matching a subset of the string.
 
 
 .. _testing_versions:
@@ -50,14 +50,14 @@ The ``version_compare`` filter can also be used to evaluate the ``ansible_distri
 
     {{ ansible_distribution_version | version_compare('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter returns True, otherwise False.
 
 The ``version_compare`` filter accepts the following operators::
 
     <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
 
 This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
-be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
+be used.  The default is ``False``, but this setting as ``True`` uses more strict version parsing::
 
     {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
@@ -67,7 +67,7 @@ be used.  The default is ``False``, and if set as ``True`` will use more strict 
 Group theory tests
 ------------------
 
-To see if a list includes or is included by another list you can use 'issubset' and 'issuperset'::
+To see if a list includes or is included by another list, you can use 'issubset' and 'issuperset'::
 
     vars:
         a: [1,2,3,4,5]
@@ -85,7 +85,7 @@ To see if a list includes or is included by another list you can use 'issubset' 
 Testing paths
 -------------
 
-These are tests that can give you information about a path on the controller::
+The following tests can provide information about a path on the controller::
 
     - debug: msg="path is a directory"
       when: mypath|isdir
@@ -137,7 +137,7 @@ The following tasks are illustrative of the tests meant to check the status of t
       - debug: msg="it was skipped"
         when: result|skipped
 
-.. note:: From 2.1 You can also use success, failure, change, skip so the grammer matches, for those that want to be strict about it.
+.. note:: From 2.1, you can also use success, failure, change, and skip so that the grammar matches, for those who need to be strict about it.
 
 
 
