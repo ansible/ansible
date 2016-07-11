@@ -180,7 +180,15 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-requirements: ["shade"]
+   delete_fip:
+     description:
+       - When I(state) is absent and this option is true, any floating IP
+         associated with the instance will be deleted along with the instance.
+     required: false
+     default: false
+requirements:
+    - "python >= 2.6"
+    - "shade"
 '''
 
 EXAMPLES = '''
@@ -411,7 +419,8 @@ def _delete_server(module, cloud):
     try:
         cloud.delete_server(
             module.params['name'], wait=module.params['wait'],
-            timeout=module.params['timeout'])
+            timeout=module.params['timeout'],
+            delete_ips=module.params['delete_fip'])
     except Exception as e:
         module.fail_json(msg="Error in deleting vm: %s" % e.message)
     module.exit_json(changed=True, result='deleted')
@@ -567,6 +576,7 @@ def main():
         volumes                         = dict(default=[], type='list'),
         scheduler_hints                 = dict(default=None, type='dict'),
         state                           = dict(default='present', choices=['absent', 'present']),
+        delete_fip                      = dict(default=False, type='bool'),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
