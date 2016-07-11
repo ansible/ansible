@@ -31,12 +31,13 @@ from mock import patch
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import SSLValidationError
-from urllib2 import HTTPError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
 
 from ansible.cli.galaxy import GalaxyCLI
+
+from urllib2 import HTTPError
 
 class TestGalaxy(unittest.TestCase):
     @classmethod
