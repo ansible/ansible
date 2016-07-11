@@ -29,6 +29,7 @@ Ansible Changes By Release
 - netconf_config
 - openstack
   * os_keystone_service
+  * os_stack
 - rocketchat
 - sensu_subscription
 - smartos
