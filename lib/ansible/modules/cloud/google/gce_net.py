@@ -34,6 +34,7 @@ options:
   allowed:
     description:
       - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
+        this parameter is mandatory when creating or updating a firewall rule
     required: false
     default: null
     aliases: []
@@ -246,12 +247,48 @@ def main():
 
             allowed_list = format_allowed(allowed)
 
+            # Fetch existing rule and if it exists, compare attributes
+            # update if attributes changed.  Create if doesn't exist.
             try:
-                gce.ex_create_firewall(fwname, allowed_list, network=name,
+                fw_changed = False
+                fw = gce.ex_get_firewall(fwname)
+
+                # If old and new attributes are different, we update the firewall rule.
+                # This implicitly let's us clear out attributes as well.
+                # allowed_list is required and must not be None for firewall rules.
+                if allowed_list and (allowed_list != fw.allowed):
+                    fw.allowed = allowed_list
+                    fw_changed = True
+
+                if src_range != fw.source_ranges:
+                    fw.source_ranges = src_range
+                    fw_changed = True
+
+                if src_tags != fw.source_tags:
+                    fw.source_tags = src_tags
+                    fw_changed = True
+
+                if src_tags != fw.target_tags:
+                    fw.target_tags = target_tags
+                    fw_changed = True
+
+                if fw_changed is True:
+                    try:
+                        gce.ex_update_firewall(fw)
+                        changed = True
+                    except Exception as e:
+                        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+
+            # Firewall rule not found so we try to create it.
+            except ResourceNotFoundError:
+                try:
+                    gce.ex_create_firewall(fwname, allowed_list, network=name,
                         source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
-                changed = True
-            except ResourceExistsError:
-                pass
+                    changed = True
+
+                except Exception as e:
+                    module.fail_json(msg=unexpected_error_msg(e), changed=False)
+
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
@@ -279,17 +316,13 @@ def main():
             network = None
             try:
                 network = gce.ex_get_network(name)
-#                json_output['d1'] = 'found network name %s' % name
+
             except ResourceNotFoundError:
-#                json_output['d2'] = 'not found network name %s' % name
                 pass
             except Exception as e:
-#                json_output['d3'] = 'error with %s' % name
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
-#                json_output['d4'] = 'deleting %s' % name
                 gce.ex_destroy_network(network)
-#                json_output['d5'] = 'deleted %s' % name
                 changed = True
 
     json_output['changed'] = changed
