@@ -23,6 +23,8 @@ from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 
 from nose.plugins.skip import SkipTest
+import os
+import getpass
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -30,6 +32,23 @@ if PY3:
 from ansible.cli.galaxy import GalaxyCLI
 
 class TestGalaxy(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Prompting the testing to provide credentials will not happen by default and is not required for most tests. This is simply an option to improve the thoroughness of testing.
+        if 'GALAXY_CREDS_PROMPT' in os.environ.keys():
+            try:
+                #authentication may be declined and tests inhibited will be avoided
+                cls.auth = True
+                # using getpass to ensure tester sees message (unlike raw_input)
+                cls.galaxy_username = getpass.getpass("\nPress ENTER to opt out of any of the authentication prompts.\nYour information will not be displayed.\nEnter your Ansible-Galaxy/Github username: ")
+                cls.galaxy_password = getpass.getpass("Enter your Ansible-Galaxy/Github password: ")
+                cls.github_token = getpass.getpass("Enter/Copy + paste Github Personal Access Token to login to Ansible-Galaxy: ")
+                cls.import_repo = getpass.getpass("To test importing a role please provide the name of a valid github repo (containing a role) belonging to the username provided above: ")
+            except getpass.GetPassWarning:
+                cls.auth = False
+        else:
+            cls.auth = False    
+    
     def setUp(self):
         self.default_args = []
 
