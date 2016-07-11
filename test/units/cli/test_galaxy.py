@@ -39,7 +39,7 @@ class TestGalaxy(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
-        # class data for easy viewing: role_dir, role_tar, role_name, role_req
+        # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
         
         if os.path.exists("./delete_me"):
             shutil.rmtree("./delete_me")
@@ -51,6 +51,7 @@ class TestGalaxy(unittest.TestCase):
         gc.run()
         cls.role_dir = "./delete_me"
         cls.role_name = "delete_me"
+        cls.role_path = "/etc/ansible/roles"
 
         # creating a tar file name for class data
         cls.role_tar = './delete_me.tar.gz'
@@ -59,7 +60,7 @@ class TestGalaxy(unittest.TestCase):
         # creating a temp file with installation requirements
         cls.role_req = './delete_me_requirements.yml'
         fd = open(cls.role_req, "w")
-        fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '/etc/ansible/roles'" % (cls.role_tar, cls.role_name))
+        fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
         fd.close()
 
     @classmethod
@@ -112,18 +113,20 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["install"])
         with patch('sys.argv', ["--offline", "-r", self.role_req]):
             galaxy_parser = gc.parse()
-        with patch.object(ansible.utils.display.Display, "display") as mock_obj:
-            gc.run()
-
-        ### testing removing the role ###
+        gc.run()
         
+        # checking that installation worked
+        role_file = os.path.join(self.role_path, self.role_name)
+        self.assertTrue(os.path.exists(role_file))
+
+        # removing role
         gc.args = ["remove"]
         with patch('sys.argv', ["-c", self.role_name]):
             galaxy_parser = gc.parse()
-        with patch.object(ansible.utils.display.Display, "display") as mock_obj:
-            super(GalaxyCLI, gc).run()
-            gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
-            completed_task = gc.execute_remove()
-            mock_obj.assert_called_once_with("- successfully removed %s" % self.role_name)
-            self.assertTrue(completed_task == 0)
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        completed_task = gc.execute_remove()
 
+        # testing role was removed
+        self.assertTrue(completed_task == 0)
+        self.assertTrue(not os.path.exists(role_file))
