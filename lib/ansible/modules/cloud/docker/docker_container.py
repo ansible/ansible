@@ -40,6 +40,12 @@ options:
       - List of capabilities to add to the container.
     default: null
     required: false
+  cleanup:
+    description:
+      - Use with I(detach) to remove the container after successful execution.
+    default: false
+    required: false
+    version_added: 2.2
   command:
     description:
       - Command or list of commands to execute in the container when it starts.
@@ -425,7 +431,7 @@ options:
     required: false
   volume_driver:
     description:
-      - The container's volume driver.
+      - The container volume driver.
     default: none
     required: false
   volumes_from:
@@ -586,7 +592,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_docker_container:
-    description: Facts representing the current state of the container. Note that facts are not part of registered vars but accessible directly.
+    description:
+      - Facts representing the current state of the container. Matches the docker inspection output.
+      - Note that facts are not part of registered vars but accessible directly.
+      - Empty if C(state) is I(absent)
+      - If detached is I(False), will include Output attribute containing any output from container run.
     returned: always
     type: dict
     sample: '{
@@ -655,6 +665,7 @@ class TaskParameters(DockerBaseClass):
 
         self.blkio_weight = None
         self.capabilities = None
+        self.cleanup = None
         self.command = None
         self.cpu_period = None
         self.cpu_quota = None
@@ -1772,10 +1783,17 @@ class ContainerManager(DockerBaseClass):
 
             if not self.parameters.detach:
                 status = self.client.wait(container_id)
+                output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
                 if status != 0:
-                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
                     self.fail(output, status=status)
-
+                if self.parameters.cleanup:
+                    self.container_remove(container_id, force=True)
+                insp = self._get_container(container_id)
+                if insp.raw:
+                    insp.raw['Output'] = output
+                else:
+                    insp.raw = dict(Output=output)
+                return insp
         return self._get_container(container_id)
 
     def container_remove(self, container_id, link=False, force=False):
@@ -1840,6 +1858,7 @@ def main():
     argument_spec = dict(
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
+        cleanup=dict(type='bool', default=False),
         command=dict(type='str'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
