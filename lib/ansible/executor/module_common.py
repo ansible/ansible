@@ -668,12 +668,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         module_args_json = to_bytes(json.dumps(module_args))
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
-        # Powershell/winrm don't actually make use of shebang so we can
-        # safely set this here.  If we let the fallback code handle this
-        # it can fail in the presence of the UTF8 BOM commonly added by
-        # Windows text editors
-        shebang = u'#!powershell'
-
         # Sanity check from 1.x days.  This is currently useless as we only
         # get here if we are going to substitute powershell.ps1 into the
         # module anyway.  Leaving it for when/if we add other powershell
