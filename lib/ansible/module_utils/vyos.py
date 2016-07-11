@@ -20,8 +20,8 @@
 import itertools
 import re
 
-from ansible.module_utils.network import NetworkError, get_module, get_exception
-from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import register_transport, to_list, get_exception
 from ansible.module_utils.network import Command, NetCli
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
@@ -30,14 +30,14 @@ DEFAULT_COMMENT = 'configured by vyos_config'
 
 def argument_spec():
     return dict(
-        config=dict(),
+        running_config=dict(aliases=['config']),
         comment=dict(default=DEFAULT_COMMENT),
-        save=dict(type='bool')
+        save_config=dict(type='bool', aliases=['save'])
     )
 vyos_argument_spec = argument_spec()
 
 def get_config(module):
-    contents = module.params['config']
+    contents = module.params['running_config']
     if not contents:
         contents = str(module.config.get_config()).split('\n')
         module.params['config'] = contents
@@ -74,7 +74,7 @@ def load_candidate(module, candidate):
     updates = diff_config(candidate, config)
 
     comment = module.params['comment']
-    save = module.params['save']
+    save = module.params['save_config']
 
     result = dict(changed=False)
 
