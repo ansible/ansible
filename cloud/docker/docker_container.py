@@ -1688,7 +1688,7 @@ class ContainerManager(DockerBaseClass):
             if self.diff.get('differences'):
                 self.diff['differences'].append(dict(network_differences=network_differences))
             else:
-                self.diff['differences'] = dict(network_differences=network_differences)
+                self.diff['differences'] = [dict(network_differences=network_differences)]
             self.results['changed'] = True
             updated_container = self._add_networks(container, network_differences)
 
@@ -1698,7 +1698,7 @@ class ContainerManager(DockerBaseClass):
                 if self.diff.get('differences'):
                     self.diff['differences'].append(dict(purge_networks=extra_networks))
                 else:
-                    self.diff['differences'] = dict(purge_networks=extra_networks)
+                    self.diff['differences'] = [dict(purge_networks=extra_networks)]
                 self.results['changed'] = True
                 updated_container = self._purge_networks(container, extra_networks)
         return updated_container
@@ -1734,7 +1734,7 @@ class ContainerManager(DockerBaseClass):
     def _purge_networks(self, container, networks):
         for network in networks:
             self.results['actions'].append(dict(removed_from_network=network['name']))
-            if not self.check_mode:
+            if not self.check_mode and network.get('id'):
                 try:
                     self.client.disconnect_container_from_network(container.Id, network['id'])
                 except Exception as exc:
