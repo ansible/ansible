@@ -780,24 +780,23 @@ class LinuxService(Service):
                     action = 'enable'
                     klinks = glob.glob('/etc/rc?.d/K??' + self.name)
                     if not klinks:
-                        (rc, out, err) = self.execute_command("%s %s defaults"  % (self.enable_cmd, self.name))
-                        if rc != 0:
-                            if err:
-                                self.module.fail_json(msg=err)
-                            else:
-                                self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
+                        if not self.module.check_mode:
+                            (rc, out, err) = self.execute_command("%s %s defaults"  % (self.enable_cmd, self.name))
+                            if rc != 0:
+                                if err:
+                                    self.module.fail_json(msg=err)
+                                else:
+                                    self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
                 else:
                     action = 'disable'
 
-                if self.module.check_mode:
-                    rc = 0
-                    return
-                (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
-                if rc != 0:
-                    if err:
-                        self.module.fail_json(msg=err)
-                    else:
-                        self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
+                if not self.module.check_mode:
+                    (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
+                    if rc != 0:
+                        if err:
+                            self.module.fail_json(msg=err)
+                        else:
+                            self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
             else:
                 self.changed = False
 
