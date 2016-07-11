@@ -360,18 +360,23 @@ def main():
             else:
                 if _needs_update(cloud, module, router, net, internal_ids):
                     kwargs = _build_kwargs(cloud, module, router, net)
-                    router = cloud.update_router(**kwargs)
+                    updated_router = cloud.update_router(**kwargs)
+
+                    # Protect against update_router() not actually
+                    # updating the router.
+                    if not updated_router:
+                        changed = False
 
                     # On a router update, if any internal interfaces were supplied,
                     # just detach all existing internal interfaces and attach the new.
-                    if internal_ids:
+                    elif internal_ids:
+                        router = updated_router
                         ports = cloud.list_router_interfaces(router, 'internal')
                         for port in ports:
                             cloud.remove_router_interface(router, port_id=port['id'])
                         for internal_subnet_id in internal_ids:
                             cloud.add_router_interface(router, subnet_id=internal_subnet_id)
-
-                    changed = True
+                        changed = True
 
             module.exit_json(changed=changed,
                              router=router,
