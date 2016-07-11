@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import subprocess
 import sys
 import re
 import itertools
@@ -36,6 +37,7 @@ from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader
+from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.vars import combine_vars
 
 try:
@@ -479,6 +481,7 @@ class Inventory(object):
             results.append(new_host)
         return results
 
+<<<<<<< 8c43750a3e0232afcc14781e1290bb39a7ab5cba
     def _create_implicit_localhost(self, pattern):
 
         if self.localhost:
@@ -489,6 +492,8 @@ class Inventory(object):
             new_host.implicit = True
             new_host.vars = self.get_host_vars(new_host)
             new_host.set_variable("ansible_connection", "local")
+            new_host.set_variable("ansible_controlpersist", 
+                                  check_for_controlpersist())
             if "ansible_python_interpreter" not in new_host.vars:
                 py_interp = sys.executable
                 if not py_interp:
