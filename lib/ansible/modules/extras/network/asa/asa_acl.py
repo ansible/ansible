@@ -1,0 +1,216 @@
+#!/usr/bin/python
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = """
+---
+module: asa_acl
+version_added: "2.2"
+author: "Patrick Ogenstad (@ogenstad)"
+short_description: Manage access-lists on a Cisco ASA
+description:
+  - This module allows you to work with access-lists on a Cisco ASA device.
+extends_documentation_fragment: asa
+options:
+  lines:
+    description:
+      - The ordered set of commands that should be configured in the
+        section.  The commands must be the exact same commands as found
+        in the device running-config.  Be sure to note the configuration
+        command syntanx as some commands are automatically modified by the
+        device config parser.
+    required: true
+  before:
+    description:
+      - The ordered set of commands to push on to the command stack if
+        a change needs to be made.  This allows the playbook designer
+        the opportunity to perform configuration commands prior to pushing
+        any changes without affecting how the set of commands are matched
+        against the system
+    required: false
+    default: null
+  after:
+    description:
+      - The ordered set of commands to append to the end of the command
+        stack if a changed needs to be made.  Just like with I(before) this
+        allows the playbook designer to append a set of commands to be
+        executed after the command set.
+    required: false
+    default: null
+  match:
+    description:
+      - Instructs the module on the way to perform the matching of
+        the set of commands against the current device config.  If
+        match is set to I(line), commands are matched line by line.  If
+        match is set to I(strict), command lines are matched with respect
+        to position.  Finally if match is set to I(exact), command lines
+        must be an equal match.
+    required: false
+    default: line
+    choices: ['line', 'strict', 'exact']
+  replace:
+    description:
+      - Instructs the module on the way to perform the configuration
+        on the device.  If the replace argument is set to I(line) then
+        the modified lines are pushed to the device in configuration
+        mode.  If the replace argument is set to I(block) then the entire
+        command block is pushed to the device in configuration mode if any
+        line is not correct
+    required: false
+    default: line
+    choices: ['line', 'block']
+  force:
+    description:
+      - The force argument instructs the module to not consider the
+        current devices running-config.  When set to true, this will
+        cause the module to push the contents of I(src) into the device
+        without first checking if already configured.
+    required: false
+    default: false
+    choices: ['yes', 'no']
+  config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source.  There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(config) argument allows the
+        implementer to pass in the configuruation to use as the base
+        config for comparision.
+    required: false
+    default: null
+"""
+
+EXAMPLES = """
+
+- asa_acl:
+    lines:
+      - access-list ACL-ANSIBLE extended permit tcp any any eq 82
+      - access-list ACL-ANSIBLE extended permit tcp any any eq www
+      - access-list ACL-ANSIBLE extended permit tcp any any eq 97
+      - access-list ACL-ANSIBLE extended permit tcp any any eq 98
+      - access-list ACL-ANSIBLE extended permit tcp any any eq 99
+    before: clear configure access-list ACL-ANSIBLE
+    match: strict
+    replace: block
+
+- asa_acl:
+    lines:
+      - access-list ACL-OUTSIDE extended permit tcp any any eq www
+      - access-list ACL-OUTSIDE extended permit tcp any any eq https
+     context: customer_a
+"""
+
+RETURN = """
+updates:
+  description: The set of commands that will be pushed to the remote device
+  returned: always
+  type: list
+  sample: ['...', '...']
+
+responses:
+  description: The set of responses from issuing the commands on the device
+  retured: when not check_mode
+  type: list
+  sample: ['...', '...']
+"""
+
+
+def get_config(module):
+    config = module.params['config'] or dict()
+    if not config and not module.params['force']:
+        config = module.config
+    return config
+
+
+def check_input_acl(lines, module):
+    first_line = True
+    for line in lines:
+        ace = line.split()
+        if ace[0] != 'access-list':
+            module.fail_json(msg='All lines/commands must begin with "access-list" %s is not permitted' % ace[0])
+        if len(ace) <= 1:
+            module.fail_json(msg='All lines/commainds must contain the name of the access-list')
+        if first_line:
+            acl_name = ace[1]
+        else:
+            if acl_name != ace[1]:
+                module.fail_json(msg='All lines/commands must use the same access-list %s is not %s' % (ace[1], acl_name))
+        first_line = False
+
+    return 'access-list %s' % acl_name
+
+def main():
+
+    argument_spec = dict(
+        lines=dict(aliases=['commands'], required=True, type='list'),
+        before=dict(type='list'),
+        after=dict(type='list'),
+        match=dict(default='line', choices=['line', 'strict', 'exact']),
+        replace=dict(default='line', choices=['line', 'block']),
+        force=dict(default=False, type='bool'),
+        config=dict()
+    )
+
+    module = get_module(argument_spec=argument_spec,
+                        supports_check_mode=True)
+
+    lines = module.params['lines']
+
+    before = module.params['before']
+    after = module.params['after']
+
+    match = module.params['match']
+    replace = module.params['replace']
+
+    module.filter = check_input_acl(lines, module)
+    if not module.params['force']:
+        contents = get_config(module)
+        config = NetworkConfig(contents=contents, indent=1)
+
+        candidate = NetworkConfig(indent=1)
+        candidate.add(lines)
+
+        commands = candidate.difference(config, match=match, replace=replace)
+    else:
+        commands = []
+        commands.extend(lines)
+
+    result = dict(changed=False)
+
+    if commands:
+        if before:
+            commands[:0] = before
+
+        if after:
+            commands.extend(after)
+
+        if not module.check_mode:
+            commands = [str(c).strip() for c in commands]
+            response = module.configure(commands)
+            result['responses'] = response
+        result['changed'] = True
+
+    result['updates'] = commands
+    module.exit_json(**result)
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.shell import *
+from ansible.module_utils.netcfg import *
+from ansible.module_utils.asa import *
+if __name__ == '__main__':
+    main()
