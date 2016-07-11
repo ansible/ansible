@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import subprocess
 import sys
 import re
 import itertools
@@ -36,6 +37,7 @@ from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
 from ansible.utils.unicode import to_unicode, to_bytes
 from ansible.utils.vars import combine_vars
+from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.parsing.utils.addresses import parse_address
 
 HOSTS_PATTERNS_CACHE = {}
@@ -478,6 +480,8 @@ class Inventory(object):
         new_host.implicit = True
         new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
+        new_host.set_variable("ansible_controlpersist", 
+                              check_for_controlpersist())
         if "ansible_python_interpreter" not in new_host.vars:
             py_interp = sys.executable
             if not py_interp:
