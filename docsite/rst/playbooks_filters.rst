@@ -7,6 +7,8 @@ Jinja2 filters
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
+Take into account that filters always execute on the Ansible controller, **not** on the task target, as they manipulate local data.
+
 In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
@@ -42,37 +44,6 @@ for example::
         register: result
 
       - set_fact: myvar="{{ result.stdout | from_json }}"
-
-.. _filters_used_with_conditionals:
-
-Filters Often Used With Conditionals
-------------------------------------
-
-The following tasks are illustrative of how filters can be used with conditionals::
-
-    tasks:
-
-      - shell: /usr/bin/foo
-        register: result
-        ignore_errors: True
-
-      - debug: msg="it failed"
-        when: result|failed
-
-      # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
-        when: result|changed
-
-      - debug: msg="it succeeded in Ansible >= 2.1"
-        when: result|succeeded
-
-      - debug: msg="it succeeded"
-        when: result|success
-
-      - debug: msg="it was skipped"
-        when: result|skipped
-
-.. note:: From 2.1 You can also use success, failure, change, skip so the grammer matches, for those that want to be strict about it.
 
 .. _forcing_variables_to_be_defined:
 
@@ -170,30 +141,6 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
-.. _version_comparison_filters:
-
-Version Comparison Filters
---------------------------
-
-.. versionadded:: 1.6
-
-To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
-
-The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
-
-    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
-
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
-
-The ``version_compare`` filter accepts the following operators::
-
-    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
-
-This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
-be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
-
-    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
 .. _random_filter:
 
@@ -244,10 +191,6 @@ Math
 --------------------
 .. versionadded:: 1.9
 
-
-To see if something is actually a number::
-
-    {{ myvar | isnan }}
 
 Get the logarithm (default is e)::
 
@@ -538,20 +481,6 @@ doesn't know it is a boolean value::
 
    - debug: msg=test
      when: some_string_value | bool
-
-To match strings against a regex, use the "match" or "search" filter::
-
-    vars:
-      url: "http://example.com/users/foo/resources/bar"
-
-    tasks:
-        - shell: "msg='matched pattern 1'"
-          when: url | match("http://example.com/users/.*/resources/.*")
-
-        - debug: "msg='matched pattern 2'"
-          when: url | search("/users/.*/resources/.*")
-
-'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
 .. versionadded:: 1.6
 
