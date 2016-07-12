@@ -18,11 +18,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import math
+
 def issubset(a, b):
     return set(a) <= set(b)
 
 def issuperset(a, b):
     return set(a) >= set(b)
+
+def isnotanumber(x):
+    try:
+        return math.isnan(x)
+    except TypeError:
+        return False
 
 class TestModule:
     ''' Ansible math jinja2 tests '''
@@ -32,4 +40,5 @@ class TestModule:
             # set theory
             'issubset': issubset,
             'issuperset': issuperset,
+            'isnan': isnotanumber,
         }

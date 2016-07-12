@@ -585,7 +585,6 @@ def nthhost(value, query=''):
         return False
 
     try:
-        vsize = ipaddr(v, 'size')
         nth = int(query)
         if value.size > nth:
           return value[nth]
