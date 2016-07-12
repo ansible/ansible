@@ -126,7 +126,7 @@ options:
     description:
       - List of additional container ports to expose for port mappings or links.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
-        need to be xposed again.
+        need to be exposed again.
     default: null
     required: false
     aliases:
@@ -738,15 +738,13 @@ class TaskParameters(DockerBaseClass):
                 except ValueError as exc:
                     self.fail("Failed to convert %s to bytes: %s" % (param_name, exc))
 
-        if 'all' in (port.lower() if isinstance(port, basestring) else port for port in self.published_ports):
+        self.publish_all_ports = False
+        self.published_ports = self._parse_publish_ports()
+        if self.published_ports == 'all':
             self.publish_all_ports = True
             self.published_ports = None
-            self.ports = None
-        else:
-            self.publish_all_ports = False
-            self.published_ports = self._parse_publish_ports()
-            self.ports = self._parse_exposed_ports(self.published_ports)
 
+        self.ports = self._parse_exposed_ports(self.published_ports)
         self.log("expose ports:")
         self.log(self.ports, pretty_print=True)
 
