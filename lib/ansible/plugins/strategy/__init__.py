@@ -455,12 +455,12 @@ class StrategyBase:
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
 
+            if self._tqm.has_dead_workers():
+                raise AnsibleError("A worker was found in a SIGKILL state")
+
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.005)
-
-            if self._tqm.has_dead_workers():
-                raise AnsibleError("A worker was found in a SIGKILL state")
 
         display.debug("no more pending results, returning what we have")
 
