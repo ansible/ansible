@@ -90,6 +90,8 @@ class TestGalaxy(unittest.TestCase):
             os.remove(cls.role_req)
         if os.path.exists(cls.role_tar):
             os.remove(cls.role_tar)
+        if os.path.isdir(cls.role_path):
+            shutil.rmtree(cls.role_path)
 
     def setUp(self):
         self.default_args = []
