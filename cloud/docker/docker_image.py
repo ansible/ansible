@@ -32,26 +32,26 @@ description:
 options:
   archive_path:
     description:
-      - Use with state 'present' to archive an image to a .tar file.
+      - Use with state C(presen) to archive an image to a .tar file.
     required: false
-    default: null
     version_added: "2.1"
   dockerfile:
     description:
-      - Use with state 'present' to provide an alternate name for the Dockerfile to use when building an image.
+      - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
     default: Dockerfile
+    required: false
     version_added: "2.0"
   force:
     description:
-      - Use with absent state to un-tag and remove all images matching the specified name. Use with states 'present'
-        and 'tagged' to take action even when an image already exists.
+      - Use with absent state to un-tag and remove all images matching the specified name. Use with states C(present)
+        and C(tagged) to take action even when an image already exists.
     default: false
+    required: false
     version_added: "2.1"
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
         seconds.
-    default: null
     required: false
     version_added: "2.1"
   name:
@@ -65,39 +65,47 @@ options:
         Dockerfile for building an image.
     aliases:
       - build_path
-    default: null
     required: false
   pull:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
     default: true
+    required: false
     version_added: "2.1"
+  push:
+    description:
+      - Push the image to the registry. Specify the registry as part of the I(name) or I(repository) parameter.
+    default: false
+    required: false
+    version_added: "2.2"
   rm:
     description:
       - Remove intermediate containers after build.
     default: true
+    required: false
     version_added: "2.1"
   nocache:
     description:
       - Do not use cache when building an image.
     default: false
+    required: false
   repository:
     description:
-      - Full path to a repository. Use with state 'present' to tag the image into the repository.
+      - Full path to a repository. Use with state C(present) to tag the image into the repository.
     required: false
-    default: null
     version_added: "2.1"
   state:
     description:
       - Make assertions about the state of an image.
-      - When 'absent' an image will be removed. Use the force option to un-tag and remove all images
+      - When C(absent) an image will be removed. Use the force option to un-tag and remove all images
         matching the provided name.
-      - When 'present' check if an image exists using the provided name and tag. If the image is not found or the
+      - When C(present) check if an image exists using the provided name and tag. If the image is not found or the
         force option is used, the image will either be pulled, built or loaded. By default the image will be pulled
         from Docker Hub. To build the image, provide a path value set to a directory containing a context and
         Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
         repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: 'build' is DEPRECATED. Specifying 'build' will behave the same as 'present'."
+      - "NOTE: C(build) is DEPRECATED. Specifying C(build) will behave the same as C(present)."
+    required: false
     default: present
     choices:
       - absent
@@ -106,13 +114,13 @@ options:
   tag:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
-       'latest' when pulling an image.
+       C(latest).
     default: latest
+    required: false
   container_limits:
     description:
       - A dictionary of limits applied to each container created by the build process.
     required: false
-    default: null
     version_added: "2.1"
     type: complex
     contains:
@@ -130,16 +138,16 @@ options:
         type: str
   use_tls:
     description:
-      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to 'no' when TLS will not be used. Set to
-        'encrypt' to use TLS. And set to 'verify' to use TLS and verify that the server's certificate is valid for the
+      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
+        C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that the server's certificate is valid for the
         server. NOTE: If you specify this option, it will set the value of the tls or tls_verify parameters."
     choices:
       - no
       - encrypt
       - verify
     default: no
+    required: false
     version_added: "2.0"
-
 
 extends_documentation_fragment:
     - docker
@@ -162,11 +170,19 @@ EXAMPLES = '''
   docker_image:
     name: pacur/centos-7
 
-- name: Tag to repository to a private registry and push it
+- name: Tag and push to docker hub
   docker_image:
     name: pacur/centos-7
-    repository: registry.ansible.com/chouseknecht/centos_images
+    repository: dcoppenhagan/myimage
     tag: 7.0
+    push: yes
+
+- name: Tag and push to local registry
+  docker_image:
+     name: centos
+     repository: localhost:5000/centos
+     tag: 7
+     push: yes
 
 - name: Remove image
   docker_image:
@@ -186,10 +202,11 @@ EXAMPLES = '''
     tag: v1
     archive_path: my_sinatra.tar
 
-- name: Load image from archive and push it to a private registry
+- name: Load image from archive and push to a private registry
   docker_image:
-    name: registry.ansible.com/chouseknecht/sinatra
+    name: localhost:5000/myimages/sinatra
     tag: v1
+    push: yes
     load_path: my_sinatra.tar
     push: True
 '''
@@ -205,8 +222,8 @@ image:
 from ansible.module_utils.docker_common import *
 
 try:
-    from docker import auth
-    from docker import utils
+    from docker.auth.auth import resolve_repository_name
+    from docker.utils.utils import parse_repository_tag
 except ImportError:
     # missing docker-py handled in docker_common
     pass
@@ -237,8 +254,7 @@ class ImageManager(DockerBaseClass):
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
         self.http_timeout = parameters.get('http_timeout')
-        self.debug = parameters.get('debug')
-        self.push = False
+        self.push = parameters.get('push')
 
         if self.state in ['present', 'build']:
             self.present()
@@ -295,7 +311,7 @@ class ImageManager(DockerBaseClass):
         if self.push and not self.repository:
             self.push_image(self.name, self.tag)
         elif self.repository:
-            self.tag_image(self.name, self.tag, self.repository, force=self.force)
+            self.tag_image(self.name, self.tag, self.repository, force=self.force, push=self.push)
 
     def absent(self):
         '''
@@ -366,18 +382,13 @@ class ImageManager(DockerBaseClass):
 
         repository = name
         if not tag:
-            repository, tag = utils.parse_repository_tag(name)
-        registry, repo_name = auth.resolve_repository_name(repository)
+            repository, tag = parse_repository_tag(name)
+        registry, repo_name = resolve_repository_name(repository)
 
-        if re.search('/', repository):
-            if registry:
-                config = auth.load_config()
-                if not auth.resolve_authconfig(config, registry):
-                    self.fail("Error: configuration for %s not found. Try logging into %s first." % (registry,
-                                                                                                     registry))
+        self.log("push %s to %s/%s:%s" % (self.name, registry, repo_name, tag))
 
-            self.log("pushing image %s" % repository)
-            self.results['actions'].append("Pushed image %s to %s:%s" % (self.name, self.repository, self.tag))
+        if registry:
+            self.results['actions'].append("Pushed image %s to %s/%s:%s" % (self.name, registry, repo_name, tag))
             self.results['changed'] = True
             if not self.check_mode:
                 status = None
@@ -390,14 +401,19 @@ class ImageManager(DockerBaseClass):
                         status = line.get('status')
                 except Exception as exc:
                     if re.search('unauthorized', str(exc)):
-                        self.fail("Error pushing image %s: %s. Does the repository exist?" % (repository, str(exc)))
+                        if re.search('authentication required', str(exc)):
+                            self.fail("Error pushing image %s/%s:%s - %s. Try logging into %s first." %
+                                      (registry, repo_name, tag, str(exc), registry))
+                        else:
+                            self.fail("Error pushing image %s/%s:%s - %s. Does the repository exist?" %
+                                      (registry, repo_name, tag, str(exc)))
                     self.fail("Error pushing image %s: %s" % (repository, str(exc)))
                 self.results['image'] = self.client.find_image(name=repository, tag=tag)
                 if not self.results['image']:
                     self.results['image'] = dict()
                 self.results['image']['push_status'] = status
 
-    def tag_image(self, name, tag, repository, force=False):
+    def tag_image(self, name, tag, repository, force=False, push=False):
         '''
         Tag an image into a repository.
 
@@ -408,7 +424,7 @@ class ImageManager(DockerBaseClass):
         :param push: bool. push the image once it's tagged.
         :return: None
         '''
-        repo, repo_tag = utils.parse_repository_tag(repository)
+        repo, repo_tag = parse_repository_tag(repository)
         image = self.client.find_image(name=repo, tag=repo_tag)
         found = 'found' if image else 'not found'
         self.log("image %s was %s" % (repo, found))
@@ -429,7 +445,8 @@ class ImageManager(DockerBaseClass):
                 except Exception as exc:
                     self.fail("Error: failed to tag image %s - %s" % (name, str(exc)))
                 self.results['image'] = self.client.find_image(name=repository, tag=tag)
-                self.push_image(repository, tag)
+                if push:
+                    self.push_image(repository, tag)
 
     def build_image(self):
         '''
@@ -504,6 +521,7 @@ def main():
         nocache=dict(type='str', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
+        push=dict(type='bool', default=False),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
