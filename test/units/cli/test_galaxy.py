@@ -46,7 +46,7 @@ class TestGalaxy(unittest.TestCase):
         
         # creating framework for a role
         gc = GalaxyCLI(args=["init"])
-        with patch('sys.argv', ["-c", "delete_me"]):
+        with patch('sys.argv', ["-c", "--offline", "delete_me"]):
             gc.parse()
         gc.run()
         cls.role_dir = "./delete_me"
