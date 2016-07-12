@@ -55,6 +55,7 @@ options:
             - Whether to disable GPG signature checking of
               all packages. Has an effect only if state is
               I(present).
+            - Needs zypper version >= 1.6.2.
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -68,6 +69,7 @@ options:
         description:
             - Set priority of repository. Packages will always be installed
               from the repository with the smallest priority number.
+            - Needs zypper version >= 1.12.25.
         required: false
         version_added: "2.1"
     overwrite_multiple:
@@ -94,6 +96,8 @@ EXAMPLES = '''
 '''
 
 REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
+
+from distutils.version import LooseVersion
 
 def _parse_repos(module):
     """parses the output of zypper -x lr and return a parse repo dictionary"""
@@ -167,22 +171,33 @@ def repo_exists(module, repodata, overwrite_multiple):
             module.fail_json(msg=errmsg)
 
 
-def modify_repo(module, repodata, old_repos):
+def modify_repo(module, repodata, old_repos, zypper_version, warnings):
     repo = repodata['url']
     cmd = ['/usr/bin/zypper', 'ar', '--check']
     if repodata['name']:
         cmd.extend(['--name', repodata['name']])
 
+    # priority on addrepo available since 1.12.25
+    # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L327-L336 
     if repodata['priority']:
-        cmd.extend(['--priority', str(repodata['priority'])])
+        if zypper_version >= LooseVersion('1.12.25'):
+            cmd.extend(['--priority', str(repodata['priority'])])
+        else:
+            warnings.append("Setting priority only available for zypper >= 1.12.25. Ignoring priority argument.")
 
     if repodata['enabled'] == '0':
         cmd.append('--disable')
 
-    if repodata['gpgcheck'] == '1':
-        cmd.append('--gpgcheck')
+    # gpgcheck available since 1.6.2
+    # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L2446-L2449
+    # the default changed in the past, so don't assume a default here and show warning for old zypper versions
+    if zypper_version >= LooseVersion('1.6.2'):
+        if repodata['gpgcheck'] == '1':
+            cmd.append('--gpgcheck')
+        else:
+            cmd.append('--no-gpgcheck')
     else:
-        cmd.append('--no-gpgcheck')
+        warnings.append("Enabling/disabling gpgcheck only available for zypper >= 1.6.2. Using zypper default value.")
 
     if repodata['autorefresh'] == '1':
         cmd.append('--refresh')
@@ -217,6 +232,13 @@ def remove_repo(module, repo):
     return changed
 
 
+def get_zypper_version(module):
+    rc, stdout, stderr = module.run_command(['/usr/bin/zypper', '--version'])
+    if rc != 0 or not stdout.startswith('zypper '):
+        return LooseVersion('1.0')
+    return LooseVersion(stdout.split()[1])
+
+
 def fail_if_rc_is_null(module, rc, stdout, stderr):
     if rc != 0:
         #module.fail_json(msg=stderr if stderr else stdout)
@@ -233,11 +255,11 @@ def main():
             repo=dict(required=False),
             state=dict(choices=['present', 'absent'], default='present'),
             description=dict(required=False),
-            disable_gpg_check = dict(required=False, default='no', type='bool'),
-            refresh = dict(required=False, default='yes', type='bool'),
+            disable_gpg_check = dict(required=False, default=False, type='bool'),
+            refresh = dict(required=False, default=True, type='bool'),
             priority = dict(required=False, type='int'),
-            enabled = dict(required=False, default='yes', type='bool'),
-            overwrite_multiple = dict(required=False, default='no', type='bool'),
+            enabled = dict(required=False, default=True, type='bool'),
+            overwrite_multiple = dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=False,
     )
@@ -246,6 +268,9 @@ def main():
     alias = module.params['name']
     state = module.params['state']
     overwrite_multiple = module.params['overwrite_multiple']
+
+    zypper_version = get_zypper_version(module)
+    warnings = []  # collect warning messages for final output
 
     repodata = {
         'url': repo,
@@ -288,7 +313,7 @@ def main():
     if state == 'present':
         if exists and not mod:
             exit_unchanged()
-        changed = modify_repo(module, repodata, old_repos)
+        changed = modify_repo(module, repodata, old_repos, zypper_version, warnings)
     elif state == 'absent':
         if not exists:
             exit_unchanged()
@@ -296,7 +321,7 @@ def main():
             repo=alias
         changed = remove_repo(module, repo)
 
-    module.exit_json(changed=changed, repodata=repodata, state=state)
+    module.exit_json(changed=changed, repodata=repodata, state=state, warnings=warnings)
 
 # import module snippets
 from ansible.module_utils.basic import *
