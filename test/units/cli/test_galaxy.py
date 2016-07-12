@@ -41,8 +41,14 @@ class TestGalaxy(unittest.TestCase):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
         
-        if os.path.exists("./delete_me"):
+        if os.path.isdir("./delete_me"):
             shutil.rmtree("./delete_me")
+            
+        # creating temporary role directory for safe installation
+        cls.role_path = "~/delete_me/tmp/roles"
+        if os.path.isdir(cls.role_path):
+            shutil.rmtree(cls.role_path)
+        os.makedirs(cls.role_path)
         
         # creating framework for a role
         gc = GalaxyCLI(args=["init"])
@@ -51,7 +57,6 @@ class TestGalaxy(unittest.TestCase):
         gc.run()
         cls.role_dir = "./delete_me"
         cls.role_name = "delete_me"
-        cls.role_path = "/etc/ansible/roles"
 
         # creating a tar file name for class data
         cls.role_tar = './delete_me.tar.gz'
@@ -85,6 +90,8 @@ class TestGalaxy(unittest.TestCase):
             os.remove(cls.role_req)
         if os.path.exists(cls.role_tar):
             os.remove(cls.role_tar)
+        if os.path.isdir(cls.role_path):
+            shutil.rmtree(cls.role_path)
 
     def setUp(self):
         self.default_args = []
