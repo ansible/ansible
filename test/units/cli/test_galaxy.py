@@ -29,6 +29,7 @@ import shutil
 import tarfile
 
 from mock import patch
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -130,3 +131,54 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    @patch('__builtin__.raw_input', return_value="username")  # patches so tester is not prompted for credentials
+    @patch('getpass.getpass', return_value="password")
+    def test_execute_login(self, mocked_username, mocked_password):
+        # testing when self.options.token is None:
+        gc = GalaxyCLI(args=["login"])
+        with patch('sys.argv', ["-c"]):
+            gc.parse()
+        # mocking out GalaxyLogin.create_github_token because it used internet + valid credentials
+        with patch.object(ansible.galaxy.login.GalaxyLogin, "create_github_token") as mocked_create_token:
+            # mocking out GalaxyLogin.remove_githubt_token because it uses internet + valid credentials
+            with patch.object(ansible.galaxy.login.GalaxyLogin, "remove_github_token") as mocked_remove_token:
+                # mocking out because there isn't a valid token to set
+                with patch.object(ansible.galaxy.token.GalaxyToken, "set") as mocked_set_token:
+                    # mocking out because authenticating requires valid credentials and internet
+                    with patch.object(ansible.galaxy.api.GalaxyAPI, "authenticate") as mocked_authenticate:
+                        super(GalaxyCLI, gc).run()
+                        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+                        completed = gc.execute_login()
+
+                        # tests
+                        self.assertTrue(completed == 0)
+                        self.assertEqual(mocked_create_token.call_count, 1)
+                        self.assertEqual(mocked_remove_token.call_count, 1)
+                        mocked_set_token.assert_called_with(mocked_authenticate().__getitem__())
+                        self.assertEqual(mocked_authenticate.call_count, 2)
+                       
+        # testing when self.options.token is not None
+        gc = GalaxyCLI(args=["login"])
+        with patch('sys.argv', ["-c", "--github-token", "token"]):
+            galaxy_parser = gc.parse()
+        # mocking out because there isn't a valid token to set
+        with patch.object(ansible.galaxy.token.GalaxyToken, "set") as mocked_set_token:
+            # mocking out because authenticating requires valid credentials and internet
+            with patch.object(ansible.galaxy.api.GalaxyAPI, "authenticate") as mocked_authenticate:
+                super(GalaxyCLI, gc).run()
+                gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+                completed = gc.execute_login()
+                
+                # tests
+                self.assertTrue(completed == 0)
+                mocked_set_token.assert_called_with(mocked_authenticate().__getitem__())
+                self.assertEqual(mocked_authenticate.call_count, 2)
+
+        # testing with insufficient credentials
+        gc = GalaxyCLI(args=["login"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        mocked_username.return_value = None
+        mocked_password.return_value = None
+        self.assertRaises(AnsibleError, gc.run)
