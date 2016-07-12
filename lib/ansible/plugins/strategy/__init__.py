@@ -453,7 +453,10 @@ class StrategyBase:
         ret_results = []
 
         display.debug("waiting for pending results...")
-        while self._pending_results > 0 and not self._tqm._terminated:
+        while self._pending_results > 0 \
+            and not self._tqm._terminated \
+            and not self._tqm.is_defunct():
+
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.005)

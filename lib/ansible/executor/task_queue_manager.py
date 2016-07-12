@@ -273,6 +273,13 @@ class TaskQueueManager:
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
 
+        '''
+        # check for any sigkills
+        display.debug("checking for any dead workers")
+        workers = self.get_workers()
+        import epdb; epdb.st()
+        '''
+
         # now re-save the hosts that failed from the iterator to our internal list
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
@@ -315,6 +322,18 @@ class TaskQueueManager:
 
     def terminate(self):
         self._terminated = True
+
+    def is_defunct(self):
+
+        # [<WorkerProcess(WorkerProcess-2, stopped[SIGKILL])>,
+        # <multiprocessing.queues.Queue object at 0x7f697e31e590>]
+
+        defunct = False
+        for idx,x in enumerate(self._workers):
+            if hasattr(x[0], 'exitcode'):
+                if x[0].exitcode == -9:
+                    defunct = True
+        return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
