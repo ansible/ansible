@@ -188,6 +188,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task.ignore_errors = False
 
         mock_handler_task = MagicMock(Handler)
+        mock_handler.name = 'test handler'
         mock_handler_task.action = 'foo'
         mock_handler_task.get_name.return_value = "test handler"
         mock_handler_task.has_triggered.return_value = False
