@@ -385,6 +385,10 @@ class StrategyModule(StrategyBase):
                 # most likely an abort, return failed
                 return self._tqm.RUN_UNKNOWN_ERROR
 
+        if self._tqm.is_defunct():
+            display.debug("aborting execution because of defunct workers")
+            return self._tqm.RUN_FAILED_BREAK_PLAY
+
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
