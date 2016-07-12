@@ -159,7 +159,8 @@ class StrategyModule(StrategyBase):
         # iteratate over each task, while there is one left to run
         result     = True
         work_to_do = True
-        while work_to_do and not self._tqm._terminated and not self._tqm.is_defunct():
+        #while work_to_do and not self._tqm._terminated and not self._tqm.has_dead_workers():
+        while work_to_do and not self._tqm._terminated:
 
             try:
                 display.debug("getting the remaining hosts for this loop")
@@ -384,11 +385,7 @@ class StrategyModule(StrategyBase):
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return self._tqm.RUN_UNKNOWN_ERROR
-
-        if self._tqm.is_defunct():
-            display.debug("aborting execution because of defunct workers")
-            return self._tqm.RUN_FAILED_BREAK_PLAY
-
+ 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
