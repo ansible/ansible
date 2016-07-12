@@ -22,7 +22,7 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 
 from ansible.compat.six import with_metaclass
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleFileNotFound
 
 try:
     from __main__ import display
