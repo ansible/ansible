@@ -16,11 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: veryfiy ansible_managed
+- name: verify ansible_managed in template action
   template: src=foo.j2 dest={{output_dir}}/special_vars.yaml
 
-- name: read the file into facts
+- name: read the action file into facts
   include_vars: "{{output_dir}}/special_vars.yaml"
+
+- name: verify ansible_managed in template lookup
+  copy: content={{lookup('template', 'foo_lookup.j2')}} dest={{output_dir}}/special_vars_lookup.yaml
+
+- name: read the lookup file into facts
+  include_vars: "{{output_dir}}/special_vars_lookup.yaml"
 
 
 - name: veriy all test vars are defined
@@ -35,3 +41,10 @@
     - test_template_fullpath
     - test_template_run_date
     - test_ansible_managed
+    - test_lookup_template_host
+    - test_lookup_template_path
+    - test_lookup_template_mtime
+    - test_lookup_template_uid
+    - test_lookup_template_fullpath
+    - test_lookup_template_run_date
+    - test_lookup_ansible_managed
