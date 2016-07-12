@@ -27,6 +27,7 @@ import ansible
 import os
 import shutil
 import tarfile
+import tempfile
 
 from mock import patch
 
@@ -46,12 +47,16 @@ class TestGalaxy(unittest.TestCase):
         
         # creating framework for a role
         gc = GalaxyCLI(args=["init"])
-        with patch('sys.argv', ["-c", "delete_me"]):
+        with patch('sys.argv', ["-c", "--offline", "delete_me"]):
             gc.parse()
         gc.run()
         cls.role_dir = "./delete_me"
         cls.role_name = "delete_me"
-        cls.role_path = "/etc/ansible/roles"
+
+        # making a temp dir for role installation
+        cls.role_path = os.path.join(tempfile.mkdtemp(), "roles")
+        if not os.path.isdir(cls.role_path):
+            os.makedirs(cls.role_path)
 
         # creating a tar file name for class data
         cls.role_tar = './delete_me.tar.gz'
@@ -111,7 +116,7 @@ class TestGalaxy(unittest.TestCase):
     def test_execute_remove(self):
         # installing role
         gc = GalaxyCLI(args=["install"])
-        with patch('sys.argv', ["--offline", "-r", self.role_req]):
+        with patch('sys.argv', ["--offline", "-p", self.role_path, "-r", self.role_req]):
             galaxy_parser = gc.parse()
         gc.run()
         
@@ -120,8 +125,8 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(os.path.exists(role_file))
 
         # removing role
-        gc.args = ["remove"]
-        with patch('sys.argv', ["-c", self.role_name]):
+        gc = GalaxyCLI(args=["remove"])
+        with patch('sys.argv', ["-c", "-p", self.role_path, self.role_name]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
         gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
