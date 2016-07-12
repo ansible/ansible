@@ -115,6 +115,6 @@ class LookupBase(with_metaclass(ABCMeta, object)):
 
         result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
         if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
+            raise AnsibleFileNotFound("Unable to find '%s' in expected paths." % needle)
 
         return result

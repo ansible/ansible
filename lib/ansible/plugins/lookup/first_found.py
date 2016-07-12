@@ -122,7 +122,7 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.boolean import boolean
 
@@ -177,21 +177,14 @@ class LookupModule(LookupBase):
             except (AnsibleUndefinedVariable, UndefinedError):
                 continue
 
-            if os.path.isabs(fn) and os.path.exists(fn):
-                return [fn]
-            else:
-                # check the templates and vars directories too,if they exist
-                #TODO: This should match 'task module' (include_vars/vars, template/templates, etc)
-                for subdir in ('templates', 'vars', 'files'):
-                    path = self.find_file_in_search_path(variables, subdir, fn)
-                    if path:
-                        return [path]
-
-                # if none of the above were found, just check the
-                # current filename against the current dir
-                path = self._loader.path_dwim(fn)
-                if os.path.exists(path):
-                    return [path]
+             # get subdir if set by task executor, default to files otherwise
+            subdir = self.getattr('_subdir', 'files')
+            path = None
+            try:
+                path = self.find_file_in_search_path(variables, subdir, fn)
+                return [path]
+            except AnsibleFileNotFound:
+                continue
         else:
             if skip:
                 return []
