@@ -53,7 +53,7 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups into which instances should be found
+      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security group names or IDs.
     required: false
   region:
     description:
