@@ -384,7 +384,7 @@ class StrategyModule(StrategyBase):
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return self._tqm.RUN_UNKNOWN_ERROR
- 
+
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
