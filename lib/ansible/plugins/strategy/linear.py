@@ -349,12 +349,15 @@ class StrategyModule(StrategyBase):
 
                 display.debug("checking for any_errors_fatal")
                 failed_hosts = []
+                unreachable_hosts = []
                 for res in results:
                     if res.is_failed():
                         failed_hosts.append(res._host.name)
+                    elif res.is_unreachable():
+                        unreachable_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
-                if any_errors_fatal and (len(failed_hosts) > 0 or len(self._tqm._unreachable_hosts.keys()) > 0):
+                if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
                     for host in hosts_left:
                         # don't double-mark hosts, or the iterator will potentially
                         # fail them out of the rescue/always states
