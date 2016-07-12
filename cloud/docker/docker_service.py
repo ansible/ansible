@@ -72,7 +72,7 @@ options:
       required: false
   scale:
       description:
-        - When C(sate) is I(present) scale services. Provide a dictionary of key/value pairs where the key
+        - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
       type: complex
       required: false
