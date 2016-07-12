@@ -178,37 +178,42 @@ Set-Attr $result.ansible_facts "ansible_env" $env_vars
 $psversion = $PSVersionTable.PSVersion.Major
 Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
 
-$winrm_https_listener_parent_path = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
-$winrm_https_listener_path = $null
-$https_listener = $null
-$winrm_cert_thumbprint = $null
-$uppercase_cert_thumbprint = $null
-
-if ($winrm_https_listener_parent_path ) {
-    $winrm_https_listener_path = $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
+$winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+if ($winrm_https_listener_parent_paths -isnot [array]) {
+   $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
 }
 
-if ($winrm_https_listener_path)
+$winrm_https_listener_paths = @()
+$https_listeners = @()
+$winrm_cert_thumbprints = @()
+$winrm_cert_expiry = @()
+
+foreach ($winrm_https_listener_parent_path in $winrm_https_listener_parent_paths) {
+    $winrm_https_listener_paths += $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
+}
+
+foreach ($winrm_https_listener_path in $winrm_https_listener_paths)
 {
-    $https_listener = Get-ChildItem -Path "WSMan:\localhost\Listener$winrm_https_listener_path"
+    $https_listeners += Get-ChildItem -Path "WSMan:\localhost\Listener$winrm_https_listener_path"
 }
 
-if ($https_listener)
+foreach ($https_listener in $https_listeners)
 {
-    $winrm_cert_thumbprint = $https_listener | where {$_.Name -EQ "CertificateThumbprint" } | select Value
+    $winrm_cert_thumbprints += $https_listener | where {$_.Name -EQ "CertificateThumbprint" } | select Value
 }
 
-if ($winrm_cert_thumbprint)
-{
-   $uppercase_cert_thumbprint = $winrm_cert_thumbprint.Value.ToString().ToUpper()
+foreach ($winrm_cert_thumbprint in $winrm_cert_thumbprints) {
+    Try {
+        $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | select NotAfter
+    }
+    Catch {}
 }
 
-$winrm_cert_expiry = Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $uppercase_cert_thumbprint | select NotAfter
-
-if ($winrm_cert_expiry)
+$winrm_cert_expirations = $winrm_cert_expiry | Sort-Object NotAfter
+if ($winrm_cert_expirations)
 {
     # this fact was renamed from ansible_winrm_certificate_expires due to collision with ansible_winrm_X connection var pattern
-    Set-Attr $result.ansible_facts "ansible_win_rm_certificate_expires" $winrm_cert_expiry.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
+    Set-Attr $result.ansible_facts "ansible_win_rm_certificate_expires" $winrm_cert_expirations[0].NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
 }
 
 $PendingReboot = Get-PendingRebootStatus
