@@ -25,26 +25,45 @@ Enabling or disabling check mode for tasks
 
 .. versionadded:: 2.2
 
-Sometimes you may want to modify the check mode behavior of individual tasks. This is done via the `check_mode` option, which can
-be added to tasks.
+Sometimes you may want to modify the check mode behavior of individual tasks. This is done via the ``check_mode`` option, which can
+be added to tasks. 
 
-If the playbook is run with checkmode on the command line, you can force tasks to still run, by specifying `check_mode: no`.
-On the other hand you can setup a test section which, independetly of the command line arguments, always runs a tasks in check mode with `check_mode: yes`.
-.. note:: Prior to version 2.2 only the ability to turn this on per-task existed.  The notation for that was `always_run: yes`.
+There are two options:
 
-Instead of `yes`/`no` you can use a Jinja2 expression, just like the `when` clause.
+1. Force a task to **run in check mode**, even when the playbook is called **without** ``--check``. This is called ``check_mode: yes``.
+2. Force a task to **run in normal mode** and make changes to the system, even when the playbook is called **with** ``--check``. This is called ``check_mode: no``.
+
+.. note:: Prior to version 2.2 only the the equivalent of ``check_mode: no`` existed. The notation for that was ``always_run: yes``.
+
+Instead of ``yes``/``no`` you can use a Jinja2 expression, just like the ``when`` clause.
 
 Example::
 
     tasks:
 
-      - name: this task is run even in check mode
+      - name: this task will make changes to the system even in check mode
         command: /something/to/run --even-in-check-mode
         check_mode: no
 
-Also if you want to skip, or ignore errors on some tasks in check mode
-you can use a boolean magic variable `ansible_check_mode` (added in version 2.1)
-which will be set to `True` during check mode.
+      - name: this task will always run under checkmode and not change the system
+        lineinfile: line="important config" dest=/path/to/myconfig.conf state=present
+        check_mode: yes
+
+
+Running single tasks with ``check_mode: yes`` can be useful to write tests for
+ansible modules, either to test the module itself or to the the conditions under
+which a module would make changes. 
+With ``register`` (see :doc:`playbooks_conditionals`) you can check the
+potential changes.
+
+Information about check mode in variables
+`````````````````````````````````````````
+
+.. versionadded:: 2.1
+
+If you want to skip, or ignore errors on some tasks in check mode
+you can use a boolean magic variable ``ansible_check_mode``
+which will be set to ``True`` during check mode.
 
 Example::
 
