@@ -125,12 +125,9 @@ EXAMPLES = '''
   with_file:
     - public_keys/doe-jane
 
-# Copies the key from the user who is running ansible to the remote machine
-- set_fact:
-    my_ssh_key: "{{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
-
-- authorized_key: user=ubuntu key="{{ lookup('file', my_ssh_key) }}"
-  sudo: yes
+# Copies the key from the user who is running ansible to the remote machine user ubuntu
+- authorized_key: user=ubuntu key="{{ lookup('file', lookup('env','HOME') + "/.ssh/id_rsa.pub") }}"
+  become: yes
 
 '''
 
