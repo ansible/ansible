@@ -36,6 +36,7 @@ author:
     - "Alexander Gubin (@alxgu)"
     - "Thomas O'Donnell (@andytom)"
     - "Robin Roth (@robinro)"
+    - "Andrii Radyk (@AnderEnder)"
 version_added: "1.2"
 short_description: Manage packages on SUSE and openSUSE
 description:
@@ -72,7 +73,7 @@ options:
     disable_recommends:
         version_added: "1.8"
         description:
-          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages. 
+          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
@@ -83,9 +84,18 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    update_cache:
+        version_added: "2.2"
+        description:
+          - Run the equivalent of C(zypper refresh) before the operation.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        aliases: [ "refresh" ]
+
 
 # informational: requirements for nodes
-requirements: 
+requirements:
     - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
     - rpm
 '''
@@ -114,6 +124,9 @@ EXAMPLES = '''
 
 # Apply all available patches
 - zypper: name=* state=latest type=patch
+
+# Refresh repositories and update package "openssl"
+- zypper: name=openssl state=present update_cache=yes
 '''
 
 
@@ -160,7 +173,7 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
         # zypper exit codes
         # 0: success
         # 106: signature verification failed
-        # 103: zypper was upgraded, run same command again 
+        # 103: zypper was upgraded, run same command again
         if packages is None:
             firstrun = True
             packages = {}
@@ -185,14 +198,15 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
 def get_cmd(m, subcommand):
     "puts together the basic zypper command arguments with those passed to the module"
     is_install = subcommand in ['install', 'update', 'patch']
+    is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
 
     # add global options before zypper command
-    if is_install and m.params['disable_gpg_check']:
+    if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
 
     cmd.append(subcommand)
-    if subcommand != 'patch':
+    if subcommand != 'patch' and not is_refresh:
         cmd.extend(['--type', m.params['type']])
     if m.check_mode and subcommand != 'search':
         cmd.append('--dry-run')
@@ -325,6 +339,18 @@ def package_absent(m, name):
 
     return retvals
 
+
+def repo_refresh(m):
+    "update the repositories"
+    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+
+    cmd = get_cmd(m, 'refresh')
+
+    retvals['cmd'] = cmd
+    result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
+
+    return retvals
+
 # ===========================================
 # Main control flow
 
@@ -337,12 +363,21 @@ def main():
             disable_gpg_check = dict(required=False, default='no', type='bool'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
             force = dict(required=False, default='no', type='bool'),
+            update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
         ),
         supports_check_mode = True
     )
 
     name = module.params['name']
     state = module.params['state']
+    update_cache = module.params['update_cache']
+
+    # Refresh repositories
+    if update_cache:
+        retvals = repo_refresh(module)
+
+        if retvals['rc'] != 0:
+            module.fail_json(msg="Zypper refresh run failed.", **retvals)
 
     # Perform requested action
     if name == ['*'] and state == 'latest':
@@ -366,7 +401,7 @@ def main():
         del retvals['stdout']
         del retvals['stderr']
 
-    module.exit_json(name=name, state=state, **retvals)
+    module.exit_json(name=name, state=state, update_cache=update_cache, **retvals)
 
 # import module snippets
 from ansible.module_utils.basic import *
