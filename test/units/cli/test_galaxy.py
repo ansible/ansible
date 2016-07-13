@@ -60,8 +60,11 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["install"])
         with patch('sys.argv', ["-c", "-v", '--ignore-errors', 'imaginary_role']):
             galaxy_parser = gc.parse()
-        gc.execute = MagicMock()
-        with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_obj:  # to eliminate config or default file used message
-            gc.run()
-        self.assertTrue(gc.execute.called)
-        self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
+        with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
+            with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
+                gc.run()
+                
+                # testing
+                self.assertEqual(mock_run.call_count, 1)
+                self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
+                self.assertEqual(mock_ex.call_count, 1)
