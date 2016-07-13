@@ -88,7 +88,7 @@ options:
     version_added: "2.1"
 notes:
   - Not tested on any Debian based system.
-  - Requires the python2 bindings of firewalld, who may not be installed by default if the distribution switched to python 3 
+  - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3 
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
 '''
