@@ -31,6 +31,8 @@ import tempfile
 
 from mock import patch
 
+from ansible.errors import AnsibleError
+
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
 
@@ -137,3 +139,65 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    def test_execute_setup(self):
+        #### testing with insufficient arguments
+        gc = GalaxyCLI(args=["setup"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        #### testing if self.options.setup_list==False and self.options.remove_id==None; defaults
+        gc = GalaxyCLI(args=["setup"])
+        with patch('sys.argv', ["-c", "source", "username", "repo", "secret"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "add_secret") as mocked_add:
+            completed_task = gc.execute_setup()
+
+            # tests
+            self.assertTrue(completed_task == 0)
+            self.assertEqual(mocked_add.call_count, 1)
+            mocked_add.assert_called_with('source', 'username', 'repo', 'secret')
+
+        #### testing if self.options.setup_list==True; using flag --list
+            # when no integrations are found
+        gc = GalaxyCLI(args=["setup"])
+        with patch('sys.argv', ["-c", "--list", "source", "username", "repo", "secret"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "list_secrets", return_value=[]) as mocked_list:
+            completed_task = gc.execute_setup()
+
+            # tests
+            self.assertTrue(completed_task == 0)
+            self.assertEqual(mocked_list.call_count, 1)
+
+            # when integrations are found
+        gc = GalaxyCLI(args=["setup"])
+        with patch('sys.argv', ["-c", "--list", "source", "username", "repo", "secret"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "list_secrets", return_value=[{'id':'id', 'source':'source', 'github_user':'username', 'github_repo':'repo'}]) as mocked_list:
+            completed_task = gc.execute_setup()
+        
+            # tests
+            self.assertTrue(completed_task == 0)
+            self.assertEqual(mocked_list.call_count, 1)
+
+        #### testing if self.options.remove_id==True; using flag --remove
+        gc = GalaxyCLI(args=["setup"])
+        with patch('sys.argv', ["-c", "--remove", "source", "username", "repo", "secret"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "remove_secret") as mocked_remove:
+            completed_task = gc.execute_setup()
+            
+            # tests
+            self.assertTrue(completed_task == 0)
+            self.assertEqual(mocked_remove.call_count, 1)
+            mocked_remove.assert_called_with('source')
