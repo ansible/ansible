@@ -157,7 +157,7 @@ class TestGalaxy(unittest.TestCase):
                                 ] 
         
         #### testing when gc.options.check_status == False and gc.options.wait == True (the defaults)
-        gc.args = ["import"]
+        gc = GalaxyCLI(args=["import"])
         with patch('sys.argv', ["-c", "username", "repo"]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
@@ -174,7 +174,7 @@ class TestGalaxy(unittest.TestCase):
                 mocked_get_import_task.assert_called_with(task_id=1)
     
         #### testing when gc.options.check_status == False and gc.options.wait == False; (using --no-wait flag)
-        gc.args = ["import"]
+        gc = GalaxyCLI(args=["import"])
         with patch('sys.argv', ["-c", "--no-wait", "username", "repo"]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
@@ -191,7 +191,7 @@ class TestGalaxy(unittest.TestCase):
         get_import_task_side_effects = [ create_task_return_val, get_task_return_val ]
         
         #### testing when gc.options.check_status == True; (using --status flag)
-        gc.args = ["import"]
+        gc = GalaxyCLI(args=["import"])
         with patch('sys.argv', ["-c", "--status", "username", "repo"]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
