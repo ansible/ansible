@@ -75,6 +75,12 @@ options:
         required: False
         default: null
         version_added: "2.0"
+    environment:
+        description:
+            - Register with a specific environment in the destination org. Used with Red Hat Satellite 6.x or Katello
+        required: False
+        default: null
+        version_added: "2.2"
     pool:
         description:
             - Specify a subscription pool name to consume.  Regular expressions accepted.
@@ -125,6 +131,13 @@ EXAMPLES = '''
 - redhat_subscription: state=present
                        activationkey=1-222333444
                        pool='^Red Hat Enterprise Server$'
+
+# Register as user credentials into given environment (against Red Hat
+# Satellite 6.x), and auto-subscribe to available content.
+- redhat_subscription: state=present
+                       username=joe_user password=somepass
+                       environment=Library
+                       autosubscribe=true
 '''
 
 import os
@@ -253,7 +266,7 @@ class Rhsm(RegistrationBase):
             return False
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
-                 consumer_type, consumer_name, consumer_id, force_register):
+                 consumer_type, consumer_name, consumer_id, force_register, environment):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -281,6 +294,8 @@ class Rhsm(RegistrationBase):
                 args.extend(['--consumerid', consumer_id])
             if force_register:
                 args.extend(['--force'])
+            if environment:
+                args.extend(['--environment', environment])
 
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
@@ -447,6 +462,7 @@ def main():
                     autosubscribe = dict(default=False, type='bool'),
                     activationkey = dict(default=None, required=False),
                     org_id = dict(default=None, required=False),
+                    environment = dict(default=None, required=False, type='str'),
                     pool = dict(default='^$', required=False, type='str'),
                     consumer_type = dict(default=None, required=False),
                     consumer_name = dict(default=None, required=False),
@@ -465,6 +481,7 @@ def main():
     autosubscribe = module.params['autosubscribe'] == True
     activationkey = module.params['activationkey']
     org_id = module.params['org_id']
+    environment = module.params['environment']
     pool = module.params['pool']
     consumer_type = module.params["consumer_type"]
     consumer_name = module.params["consumer_name"]
@@ -497,7 +514,8 @@ def main():
                 rhsm.enable()
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
-                             consumer_type, consumer_name, consumer_id, force_register)
+                             consumer_type, consumer_name, consumer_id, force_register,
+                             environment)
                 subscribed_pool_ids = rhsm.subscribe(pool)
             except Exception:
                 e = get_exception()
