@@ -26,9 +26,8 @@ description:
   - Cisco IOS XR configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS XR configuration sections in
-    a deterministic way.  This module works with either CLI or NXAPI
-    transports.
-extends_documentation_fragment: ios
+    a deterministic way.
+extends_documentation_fragment: iosxr
 options:
   lines:
     description:
@@ -37,7 +36,9 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: true
+    required: false
+    default: null
+    aliases: ['commands']
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
@@ -46,6 +47,16 @@ options:
         level or global commands.
     required: false
     default: null
+  src:
+    description:
+      - Specifies the source path to the file that contains the configuration
+        or configuration template to load.  The path to the source file can
+        either be the full path on the Ansible control host or a relative
+        path from the playbook or role root directory.  This argument is mutually
+        exclusive with I(lines).
+    required: false
+    default: null
+    version_added: "2.2"
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -69,11 +80,13 @@ options:
         the set of commands against the current device config.  If
         match is set to I(line), commands are matched line by line.  If
         match is set to I(strict), command lines are matched with respect
-        to position.  Finally if match is set to I(exact), command lines
-        must be an equal match.
+        to position.  If match is set to I(exact), command lines
+        must be an equal match.  Finally, if match is set to I(none), the
+        module will not attempt to compare the source configuration with
+        the running configuration on the remote device.
     required: false
     default: line
-    choices: ['line', 'strict', 'exact']
+    choices: ['line', 'strict', 'exact', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -91,9 +104,26 @@ options:
         current devices running-config.  When set to true, this will
         cause the module to push the contents of I(src) into the device
         without first checking if already configured.
+      - Note this argument should be considered deprecated.  To achieve
+        the equivalent, set the match argument to none.  This argument
+        will be removed in a future release.
     required: false
     default: false
-    choices: [ "true", "false" ]
+    choices: [ "yes", "no" ]
+    version_added: "2.2"
+  update:
+    description:
+      - The I(update) argument controls how the configuration statements
+        are processed on the remote device.  Valid choices for the I(update)
+        argument are I(merge) and I(check).  When the argument is set to
+        I(merge), the configuration changes are merged with the current
+        device running configuration.  When the argument is set to I(check)
+        the configuration updates are determined but not actually configured
+        on the remote device.
+    required: false
+    default: merge
+    choices: ['merge', 'replace', 'check']
+    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -105,25 +135,56 @@ options:
         config for comparison.
     required: false
     default: null
+  backup:
+    description:
+      - This argument will cause the module to create a full backup of
+        the current C(running-config) from the remote device before any
+        changes are made.  The backup file is written to the C(backup)
+        folder in the playbook root directory.  If the directory does not
+        exist, it is created.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
+  comment:
+    description:
+      - Allows a commit description to be specified to be included
+        when the configuration is committed.  If the configuration is
+        not changed or committed, this argument is ignored.
+    required: false
+    default: 'configured by iosxr_config'
+    version_added: "2.2"
 """
 
 EXAMPLES = """
-- iosxr_config:
-    lines: ['hostname {{ inventory_hostname }}']
-    force: yes
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: cisco
+    password: cisco
+    transport: cli
 
-- iosxr_config:
+- name: configure top level configuration
+  iosxr_config:
+    lines: hostname {{ inventory_hostname }}
+    provider: "{{ cli }}"
+
+- name: configure interface settings
+  iosxr_config:
     lines:
-      - description configured by ansible
-      - ipv4 address 10.0.0.25 255.255.255.0
-    parents: ['interface GigabitEthernet0/0/0/0']
+      - description test interface
+      - ip address 172.31.1.1 255.255.255.0
+    parents: interface GigabitEthernet0/0/0/0
+    provider: "{{ cli }}"
 
-- iosxr_config:
-    commands: "{{lookup('file', 'datcenter1.txt')}}"
-    parents: ['ipv4 access-list test']
-    before: ['no ip access-listv4 test']
-    replace: block
-
+- name: load a config from disk and replace the current config
+  iosxr_config:
+    src: config.cfg
+    update: replace
+    backup: yes
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -132,82 +193,144 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-
-responses:
-  description: The set of responses from issuing the commands on the device
-  retured: always
-  type: list
-  sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: path
+  sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.iosxr import NetworkModule, NetworkError
 
-def get_config(module):
-    config = module.params['config'] or dict()
-    if not config and not module.params['force']:
-        config = module.config
-    return config
+DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
-def main():
 
-    argument_spec = dict(
-        lines=dict(aliases=['commands'], required=True, type='list'),
-        parents=dict(type='list'),
-        before=dict(type='list'),
-        after=dict(type='list'),
-        match=dict(default='line', choices=['line', 'strict', 'exact']),
-        replace=dict(default='line', choices=['line', 'block']),
-        force=dict(default=False, type='bool'),
-        config=dict()
-    )
+def invoke(name, *args, **kwargs):
+    func = globals().get(name)
+    if func:
+        return func(*args, **kwargs)
 
-    module = get_module(argument_spec=argument_spec,
-                         supports_check_mode=True)
+def check_args(module, warnings):
+    if module.params['parents']:
+        if not module.params['lines'] or module.params['src']:
+            warnings.append('ignoring unnecessary argument parents')
+    if module.params['match'] == 'none' and module.params['replace']:
+        warnings.append('ignoring unnecessary argument replace')
+    if module.params['update'] == 'replace' and not module.params['src']:
+        module.fail_json(msg='Must specify src when update is `replace`')
+    if module.params['force']:
+        warnings.append('The force argument is deprecated, please use '
+                        'match=none instead.  This argument will be '
+                        'removed in the future')
 
-    lines = module.params['lines']
-    parents = module.params['parents'] or list()
 
-    before = module.params['before']
-    after = module.params['after']
+def get_config(module, result):
+    contents = module.params['config'] or result.get('__config__')
+    if not contents:
+        contents = module.config.get_config()
+    return NetworkConfig(indent=1, contents=contents)
 
+def get_candidate(module):
+    candidate = NetworkConfig(indent=1)
+    if module.params['src']:
+        candidate.load(module.params['src'])
+    elif module.params['lines']:
+        parents = module.params['parents'] or list()
+        candidate.add(module.params['lines'], parents=parents)
+    return candidate
+
+def load_config(module, commands, result):
+    replace = module.params['update'] == 'replace'
+    comment = module.params['comment']
+    commit = not module.check_mode
+    diff = module.config.load_config(commands, replace=replace, commit=commit,
+                                     comment=comment)
+    result['diff'] = dict(prepared=diff)
+    result['changed'] = True
+
+def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+    update = module.params['update']
 
-    contents = get_config(module)
-    config = module.parse_config(contents)
+    candidate = get_candidate(module)
 
-    if not module.params['force']:
-        contents = get_config(module)
-        config = NetworkConfig(contents=contents, indent=1)
-
-        candidate = NetworkConfig(indent=1)
-        candidate.add(lines, parents=parents)
-
-        commands = candidate.difference(config, path=parents, match=match, replace=replace)
+    if match != 'none' and update != 'replace':
+        config = get_config(module, result)
+        configobjs = candidate.difference(config, match=match, replace=replace)
     else:
-        commands = parents
-        commands.extend(lines)
+        config = None
+        configobjs = candidate.items
 
-    result = dict(changed=False)
+    if configobjs:
+        commands = dumps(configobjs, 'commands')
 
-    if commands:
-        if before:
-            commands[:0] = before
+        if module.params['before']:
+            commands[:0] = module.params['before']
 
-        if after:
-            commands.extend(after)
+        if module.params['after']:
+            commands.extend(module.params['after'])
 
-        if not module.check_mode:
-            commands = [str(c).strip() for c in commands]
-            response = module.configure(commands)
-            result['responses'] = response
-        result['changed'] = True
+        result['updates'] = commands.split('\n')
 
-    result['updates'] = commands
+        if update != 'check':
+            load_config(module, commands, result)
+
+def main():
+    """main entry point for module execution
+    """
+    argument_spec = dict(
+        lines=dict(aliases=['commands'], type='list'),
+        parents=dict(type='list'),
+
+        src=dict(type='path'),
+
+        before=dict(type='list'),
+        after=dict(type='list'),
+
+        match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
+        replace=dict(default='line', choices=['line', 'block']),
+
+        update=dict(choices=['merge', 'replace', 'check'], default='merge'),
+        backup=dict(type='bool', default=False),
+        comment=dict(default=DEFAULT_COMMIT_COMMENT),
+
+        # this argument is deprecated in favor of setting match: none
+        # it will be removed in a future version
+        force=dict(default=False, type='bool'),
+
+        config=dict(),
+    )
+
+    mutually_exclusive = [('lines', 'src')]
+
+    module = NetworkModule(argument_spec=argument_spec,
+                           connect_on_load=False,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
+
+    if module.params['force'] is True:
+        module.params['match'] = 'none'
+
+    warnings = list()
+    check_args(module, warnings)
+
+    result = dict(changed=False, warnings=warnings)
+
+    if module.params['backup']:
+        config = module.config.get_config()
+        result['__config__'] = config
+        result['__backup__'] = config
+
+    try:
+        run(module, result)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
+
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.iosxr import *
 if __name__ == '__main__':
     main()
