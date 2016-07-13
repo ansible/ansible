@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -454,3 +456,24 @@ class Task(Base, Conditional, Taggable, Become):
 
     def _get_attr_loop_control(self):
         return self._attributes['loop_control']
+
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain =  self._block.get_dep_chain()
+        # inside role: add the dependency chain from current to dependant
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack
+
