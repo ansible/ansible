@@ -48,7 +48,7 @@ options:
     version_added: 2.2
   command:
     description:
-      - Command or list of commands to execute in the container when it starts.
+      - Command to execute when the container starts.
     default: null
     required: false
   cpu_period:
@@ -113,7 +113,7 @@ options:
     required: false
   entrypoint:
     description:
-      - String or list of commands that overwrite the default ENTRYPOINT of the image.
+      - Command that overwrites the default ENTRYPOINT of the image.
     default: null
     required: false
   etc_hosts:
@@ -1137,7 +1137,7 @@ class Container(DockerBaseClass):
         Diff parameters vs existing container config. Returns tuple: (True | False, List of differences)
         '''
         self.log('Starting has_different_configuration')
-        self.parameters.expected_entrypoint = self._get_expected_entrypoint(image)
+        self.parameters.expected_entrypoint = self._get_expected_entrypoint()
         self.parameters.expected_links = self._get_expected_links()
         self.parameters.expected_ports = self._get_expected_ports()
         self.parameters.expected_exposed = self._get_expected_exposed(image)
@@ -1395,17 +1395,11 @@ class Container(DockerBaseClass):
                     extra_networks.append(dict(name=network, id=network_config['NetworkID']))
         return extra, extra_networks
 
-    def _get_expected_entrypoint(self, image):
+    def _get_expected_entrypoint(self):
         self.log('_get_expected_entrypoint')
-        if isinstance(self.parameters.entrypoint, list):
-            entrypoint = self.parameters.entrypoint
-        else:
-            entrypoint = []
-        if image and image['ContainerConfig'].get('Entrypoint'):
-            entrypoint = list(set(entrypoint + image['ContainerConfig'].get('Entrypoint')))
-        if len(entrypoint) == 0:
+        if not self.parameters.entrypoint:
             return None
-        return entrypoint
+        return shlex.split(self.parameters.entrypoint)
 
     def _get_expected_ports(self):
         if not self.parameters.published_ports:
@@ -1870,7 +1864,7 @@ def main():
         dns_search_domains=dict(type='list'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
-        entrypoint=dict(type='list'),
+        entrypoint=dict(type='str'),
         etc_hosts=dict(type='dict'),
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
