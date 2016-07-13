@@ -1142,9 +1142,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         valid_name = False
 
         # Attempt to find a valid storage account name
+        storage_account_name_base = self.name[:20].lower()
         for i in range(0, 5):
             rand = random.randrange(1000, 9999)
-            storage_account_name = self.name[:20] + str(rand)
+            storage_account_name = storage_account_name_base + str(rand)
             if self.check_storage_account_name(storage_account_name):
                 valid_name = True
                 break
