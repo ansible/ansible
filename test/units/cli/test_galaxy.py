@@ -29,7 +29,9 @@ import shutil
 import tarfile
 import tempfile
 
-from mock import patch
+from mock import patch, call
+
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -137,3 +139,68 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    def test_execute_import(self):
+
+        #### testing when correct arguments are not provided
+        gc = GalaxyCLI(args=["import"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        # setup to mock out return values from methods that access internet/use authentication
+        create_task_return_val = [
+                                    {'id':1, 'summary_fields':{'role':{'name':'test'}}, 'github_user':'username', 'github_repo':'repo'}
+                                   ]
+        get_task_return_val = [
+                                {'summary_fields':{'task_messages':[]}, 'state':'SUCCESS'}
+                                ] 
+        
+        #### testing when gc.options.check_status == False and gc.options.wait == True (the defaults)
+        gc.args = ["import"]
+        with patch('sys.argv', ["-c", "username", "repo"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "create_import_task", return_value=create_task_return_val) as mocked_create_import_task:
+            with patch.object(ansible.galaxy.api.GalaxyAPI, "get_import_task", return_value=get_task_return_val) as mocked_get_import_task:
+                completed = gc.execute_import()
+        
+                # tests
+                self.assertTrue(completed==0)
+                self.assertEqual(mocked_create_import_task.call_count, 1)
+                self.assertEqual(mocked_get_import_task.call_count, 1)
+                mocked_create_import_task.assert_called_with('username', 'repo', reference=None)
+                mocked_get_import_task.assert_called_with(task_id=1)
+    
+        #### testing when gc.options.check_status == False and gc.options.wait == False; (using --no-wait flag)
+        gc.args = ["import"]
+        with patch('sys.argv', ["-c", "--no-wait", "username", "repo"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "create_import_task", return_value=create_task_return_val) as mocked_create_import_task:
+            completed = gc.execute_import()
+            
+            # tests
+            self.assertTrue(completed==0)
+            self.assertEqual(mocked_create_import_task.call_count, 1)
+            mocked_create_import_task.assert_called_with('username', 'repo', reference=None)
+
+        # setup to mock out return values from methods that access internet/use authentication
+        get_import_task_side_effects = [ create_task_return_val, get_task_return_val ]
+        
+        #### testing when gc.options.check_status == True; (using --status flag)
+        gc.args = ["import"]
+        with patch('sys.argv', ["-c", "--status", "username", "repo"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "get_import_task", side_effect=get_import_task_side_effects) as mocked_get_import_task:
+            completed = gc.execute_import()
+
+            # tests
+            self.assertTrue(completed==0)
+            self.assertEqual(mocked_get_import_task.call_count, 2)
+            calls = [call(github_repo='repo', github_user='username'), call(task_id=1)]
+            mocked_get_import_task.assert_has_calls(calls)
