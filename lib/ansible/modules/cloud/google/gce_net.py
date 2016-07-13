@@ -174,6 +174,14 @@ def format_allowed(allowed):
             return_value.append(format_allowed_section(section))
     return return_value
 
+def sorted_allowed_list(allowed_list):
+    """Sort allowed_list (output of format_allowed) by protocol and port."""
+    # sort by protocol
+    allowed_by_protocol = sorted(allowed_list,key=lambda x: x['IPProtocol'])
+    # sort the ports list
+    return sorted(allowed_by_protocol, key=lambda y: y['ports'].sort())
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -256,21 +264,38 @@ def main():
                 # If old and new attributes are different, we update the firewall rule.
                 # This implicitly let's us clear out attributes as well.
                 # allowed_list is required and must not be None for firewall rules.
-                if allowed_list and (allowed_list != fw.allowed):
+                if allowed_list and (sorted_allowed_list(allowed_list) != sorted_allowed_list(fw.allowed)):
                     fw.allowed = allowed_list
                     fw_changed = True
 
-                if src_range != fw.source_ranges:
-                    fw.source_ranges = src_range
-                    fw_changed = True
+                # If these attributes are lists, we sort them first, then compare.
+                # Otherwise, we update if they differ.
+                if fw.source_ranges != src_range:
+                    if isinstance(src_range, list):
+                        if sorted(fw.source_ranges) != sorted(src_range):
+                            fw.source_ranges = src_range
+                            fw_changed = True
+                    else:
+                        fw.source_ranges = src_range
+                        fw_changed = True
 
-                if src_tags != fw.source_tags:
-                    fw.source_tags = src_tags
-                    fw_changed = True
+                if fw.source_tags != src_tags:
+                    if isinstance(src_range, list):
+                        if sorted(fw.source_tags) != sorted(src_tags):
+                            fw.source_tags = src_tags
+                            fw_changed = True
+                    else:
+                        fw.source_tags = src_tags
+                        fw_changed = True
 
-                if src_tags != fw.target_tags:
-                    fw.target_tags = target_tags
-                    fw_changed = True
+                if fw.target_tags != target_tags:
+                    if isinstance(target_tags, list):
+                        if sorted(fw.target_tags) != sorted(target_tags):
+                            fw.target_tags = target_tags
+                            fw_changed = True
+                    else:
+                        fw.target_tags = target_tags
+                        fw_changed = True
 
                 if fw_changed is True:
                     try:
