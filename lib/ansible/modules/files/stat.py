@@ -294,6 +294,21 @@ stat:
             returned: success, path exists and user can read stats and installed python supports it and the `mime` option was true, will return 'unknown' on error.
             type: string
             sample: us-ascii
+        readable:
+            description: Tells you if the invoking user has the right to read the path
+            returned: success, path exists and user can read the path
+            type: boolean
+            sample: False
+        writeable:
+            description: Tells you if the invoking user has the right to write the path
+            returned: success, path exists and user can write the path
+            type: boolean
+            sample: False
+        executable:
+            description: Tells you if the invoking user has the execute the path
+            returned: success, path exists and user can execute the path
+            type: boolean
+            sample: False
 '''
 
 import os
@@ -368,6 +383,9 @@ def main():
         'xoth'     : bool(mode & stat.S_IXOTH),
         'isuid'    : bool(mode & stat.S_ISUID),
         'isgid'    : bool(mode & stat.S_ISGID),
+        'readable' : os.access(path, os.R_OK),
+        'writeable' : os.access(path, os.W_OK),
+        'excutable' : os.access(path, os.X_OK),
         }
 
     if S_ISLNK(mode):
