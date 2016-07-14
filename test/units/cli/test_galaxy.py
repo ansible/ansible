@@ -177,7 +177,7 @@ class TestGalaxy(unittest.TestCase):
         search_return_val = {'count':1, 'results':[role]}
         
                 # running method to test #
-        gc.args=["search"]
+        gc = GalaxyCLI(args=["search"])
         with patch('sys.argv', ["-c", "search_example"]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
@@ -203,7 +203,7 @@ class TestGalaxy(unittest.TestCase):
         search_return_val = {'count':1001, 'results':roles}
 
                 # running method to test #        
-        gc.args=["search"]
+        gc = GalaxyCLI(args=["search"])
         with patch('sys.argv', ["-c", "search_example"]):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
