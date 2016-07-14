@@ -475,6 +475,10 @@ class Ec2Inventory(object):
                 self.get_elasticache_clusters_by_region(region)
                 self.get_elasticache_replication_groups_by_region(region)
 
+        # ensure localhost always reachable
+        self.push(self.inventory, 'localhost', 'localhost')
+        self.push(self.inventory, 'localhost', '127.0.0.1')
+
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
 
