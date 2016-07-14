@@ -152,6 +152,7 @@ class TestGalaxy(unittest.TestCase):
                 # setup #
         search_return_val = {'count':0, 'results':[]}
 
+                # running method to test #
         gc = GalaxyCLI(args=["search"])
         with patch('sys.argv', ["-c", "search_example"]):
             galaxy_parser = gc.parse()
@@ -175,6 +176,7 @@ class TestGalaxy(unittest.TestCase):
         role['description'] = "DESCRIPTION"
         search_return_val = {'count':1, 'results':[role]}
         
+                # running method to test #
         gc.args=["search"]
         with patch('sys.argv', ["-c", "search_example"]):
             galaxy_parser = gc.parse()
@@ -199,7 +201,8 @@ class TestGalaxy(unittest.TestCase):
         role['description'] = "DESCRIPTION"
         for i in range(0, 1001): roles.append(role)
         search_return_val = {'count':1001, 'results':roles}
-        
+
+                # running method to test #        
         gc.args=["search"]
         with patch('sys.argv', ["-c", "search_example"]):
             galaxy_parser = gc.parse()
