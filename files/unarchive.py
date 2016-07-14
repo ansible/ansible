@@ -28,12 +28,12 @@ version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
 extends_documentation_fragment: files
 description:
-     - The M(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set copy=no to unpack an archive which already exists on the target..
+     - The M(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
 options:
   src:
     description:
-      - If copy=yes (default), local path to archive file to copy to the target server; can be absolute or relative. If copy=no, path on the target server to existing archive file to unpack.
-      - If copy=no and src contains ://, the remote machine will download the file from the url first. (version_added 2.0)
+      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0)
     required: true
     default: null
   dest:
@@ -44,6 +44,8 @@ options:
   copy:
     description:
       - "If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine."
+      - "This option has been deprecated in favor of C(remote_src)"
+      - "This option is mutually exclusive with C(remote_src)."
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
@@ -78,15 +80,23 @@ options:
     default:
     required: false
     version_added: "2.1"
-  validate_certs:
-      description:
-        - This only applies if using a https url as the source of the file.
-        - This should only set to C(no) used on personally controlled sites using self-signed cer
-        - Prior to 2.2 the code worked as if this was set to C(yes).
+  remote_src:
+    description:
+      - "Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller."
+      - "This option is mutually exclusive with C(copy)."
       required: false
-      default: "yes"
+      default: "no"
       choices: ["yes", "no"]
       version_added: "2.2"
+  validate_certs:
+    description:
+      - This only applies if using a https url as the source of the file.
+      - This should only set to C(no) used on personally controlled sites using self-signed cer
+      - Prior to 2.2 the code worked as if this was set to C(yes).
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    version_added: "2.2"
 author: "Dag Wieers (@dagwieers)"
 todo:
     - re-implement tar support using native tarfile module
@@ -108,10 +118,10 @@ EXAMPLES = '''
 - unarchive: src=foo.tgz dest=/var/lib/foo
 
 # Unarchive a file that is already on the remote machine
-- unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
+- unarchive: src=/tmp/foo.zip dest=/usr/local/bin remote_src=yes
 
 # Unarchive a file that needs to be downloaded (added in 2.0)
-- unarchive: src=https://example.com/example.zip dest=/usr/local/bin copy=no
+- unarchive: src=https://example.com/example.zip dest=/usr/local/bin remote_src=yes
 '''
 
 import re
@@ -699,7 +709,8 @@ def main():
             src               = dict(required=True, type='path'),
             original_basename = dict(required=False, type='str'), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True, type='path'),
-            copy              = dict(default=True, type='bool'),
+            copy              = dict(required=False, default=True, type='bool'),
+            remote_src        = dict(required=False, default=False, type='bool'),
             creates           = dict(required=False, type='path'),
             list_files        = dict(required=False, default=False, type='bool'),
             keep_newer        = dict(required=False, default=False, type='bool'),
@@ -708,20 +719,22 @@ def main():
             validate_certs    = dict(required=False, default=True, type='bool'),
         ),
         add_file_common_args = True,
+        mutually_exclusive   = [("copy", "remote_src"),]
         # check-mode only works for zip files
-#        supports_check_mode = True,
+        #supports_check_mode = True,
     )
 
     # We screenscrape a huge amount of commands so use C locale anytime we do
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
-    src    = os.path.expanduser(module.params['src'])
-    dest   = os.path.expanduser(module.params['dest'])
-    copy   = module.params['copy']
+    src        = os.path.expanduser(module.params['src'])
+    dest       = os.path.expanduser(module.params['dest'])
+    copy       = module.params['copy']
+    remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
     # did tar file arrive?
     if not os.path.exists(src):
-        if copy:
+        if not remote_src or copy:
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If copy=false, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
