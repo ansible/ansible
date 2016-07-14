@@ -78,7 +78,7 @@ options:
         file is overridden.  By setting this argument to true, the remote
         file (if it exists) is appended to.
     required: false
-    default: false
+    default: no
     choices: ['yes', 'no']
     version_added: "2.2"
   before:
@@ -122,6 +122,16 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
+  update_config:
+    description:
+      - This arugment will either cause or prevent the changed commands
+        from being sent to the remote device.  The set to true, the
+        remote IOS device will be configured with the updated commands
+        and when set to false, the remote device will not be updated.
+    required: false
+    default: yes
+    choices: ['yes', 'no']
+    version_added: "2.2"
   backup_config:
     description:
       - This argument will cause the module to create a full backup of
@@ -130,7 +140,8 @@ options:
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
     required: false
-    default: false
+    default: no
+    choices: ['yes', 'no']
     version_added: "2.2"
 """
 
@@ -215,8 +226,6 @@ def main():
         parents=dict(type='list'),
 
         src=dict(type='path'),
-        dest=dict(type='path'),
-        append=dict(type='bool', default=False),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -224,6 +233,7 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
 
+        update_config=dict(type='bool', default=False),
         backup_config=dict(type='bool', default=False)
     )
     argument_spec.update(ios_argument_spec)
@@ -234,6 +244,8 @@ def main():
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    module.check_mode = not module.params['update_config']
 
     parents = module.params['parents'] or list()
 
@@ -266,11 +278,9 @@ def main():
         if module.params['after']:
             commands.extend(module.params['after'])
 
-        if not module.params['dest']:
+        if not module.check_mode:
             response = load_config(module, commands, nodiff=True)
             result.update(**response)
-        else:
-            result['__config__'] = dumps(configobjs, 'block')
 
         result['changed'] = True
 
