@@ -309,6 +309,18 @@ class TaskQueueManager:
     def terminate(self):
         self._terminated = True
 
+    def has_dead_workers(self):
+
+        # [<WorkerProcess(WorkerProcess-2, stopped[SIGKILL])>,
+        # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
+
+        defunct = False
+        for idx,x in enumerate(self._workers):
+            if hasattr(x[0], 'exitcode'):
+                if x[0].exitcode in [-9, -15]:
+                    defunct = True
+        return defunct
+
     def send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
