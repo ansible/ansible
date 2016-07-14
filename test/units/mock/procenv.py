@@ -1,4 +1,5 @@
 # (c) 2016, Matt Davis <mdavis@ansible.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
