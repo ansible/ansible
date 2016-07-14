@@ -29,7 +29,10 @@ import shutil
 import tarfile
 import tempfile
 
-from mock import patch
+from mock import patch, MagicMock
+
+from ansible.errors import AnsibleError
+from ansible.module_utils.urls import SSLValidationError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -137,3 +140,78 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    def test_execute_search(self):
+
+        ### testing if no search terms are given
+        gc = GalaxyCLI(args=["search"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        ### testing if the search term found no results
+                # setup #
+        search_return_val = {'count':0, 'results':[]}
+
+        gc = GalaxyCLI(args=["search"])
+        with patch('sys.argv', ["-c", "search_example"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "search_roles", return_value=search_return_val): # mocks out internet use
+            with patch.object(ansible.utils.display.Display, "display") as mocked_display:  # used for checking correct message
+                completed_task = gc.execute_search()
+
+                # tests #
+                self.assertTrue(completed_task)
+                self.assertEqual(mocked_display.call_count, 1)
+                #mocked_display.called_once_with("No roles match your search.", color=C.COLOR_ERROR)
+                mocked_display.called_once_with('')
+
+        ### testing search if there are fewer results than the page size
+                # setup #
+        role = MagicMock()
+        role['username'] = 'username'
+        role['name'] = 'role'
+        role['description'] = "DESCRIPTION"
+        search_return_val = {'count':1, 'results':[role]}
+        
+        gc.args=["search"]
+        with patch('sys.argv', ["-c", "search_example"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "search_roles", return_value=search_return_val) as mock_search:  # mocks out internet use
+            with patch.object(ansible.cli.CLI, "pager") as mock_pager:  # used for checking correct message
+                completed_task = gc.execute_search()
+
+                # tests #
+                self.assertTrue(completed_task)
+                self.assertEqual(mock_search.call_count, 1)
+                self.assertEqual(mock_pager.call_count, 1)
+                mock_pager.assert_called_with(u'\nFound 1 roles matching your search:\n\n Name Description\n ---- -----------\n %s.%s %s' % (role['username'], role['name'], role['description']))
+
+        ### testing search if there are more results than the page size
+                # setup #
+        roles = []
+        role = MagicMock()
+        role['username'] = 'username'
+        role['name'] = 'role'
+        role['description'] = "DESCRIPTION"
+        for i in range(0, 1001): roles.append(role)
+        search_return_val = {'count':1001, 'results':roles}
+        
+        gc.args=["search"]
+        with patch('sys.argv', ["-c", "search_example"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "search_roles", return_value=search_return_val) as mock_search:  # mocks out internet use
+            with patch.object(ansible.cli.CLI, "pager") as mock_pager:  # used for checkitn correct message
+                completed_task = gc.execute_search()
+                
+                # tests #
+                self.assertTrue(completed_task)
+                self.assertEqual(mock_search.call_count, 1)
+                self.assertEqual(mock_pager.call_count, 1)
+                self.assertIn('Found 1001 roles matching your search. Showing first 1000.', str(mock_pager.call_args_list))
