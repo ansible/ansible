@@ -242,7 +242,7 @@ ansible_become_method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
 ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (this is insecure, we strongly recommend using :option:`--ask-become-pass` or SSH keys)
 
 Remote host environment parameters:
 
