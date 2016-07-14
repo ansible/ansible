@@ -66,7 +66,6 @@ RETURN = '''
 '''
 
 import sys
-import requests
 
 def main():
     module = AnsibleModule(
