@@ -39,6 +39,7 @@ Ansible Changes By Release
 - vmware
   * vmware_local_user_manager
   * vmware_vmotion
+- wakeonlan
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
