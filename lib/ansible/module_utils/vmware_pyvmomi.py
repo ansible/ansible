@@ -34,11 +34,12 @@ except ImportError:
     pass
 
 import atexit
+import os
 import ssl
 import time
 from pprint import pprint
 
-from ansible.module_utils.urls import *
+from ansible.module_utils.urls import fetch_url
 
 
 class PyVmomiHelper(object):
