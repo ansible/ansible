@@ -15,6 +15,11 @@ Ansible Changes By Release
   - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
 
 ####New Modules:
+- asa
+  * asa_acl
+  * asa_command
+  * asa_config
+  * asa_template
 - aws
   * ec2_customer_gateway
   * ec2_vpc_nacl_facts
@@ -22,6 +27,9 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- ipmi
+  * ipmi_boot
+  * ipmi_power
 - letsencrypt
 - lxd
   * lxd_profile
