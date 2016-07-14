@@ -1,0 +1,490 @@
+- name: Remove ubuntu image
+  docker_image:
+    path: "{{ role_path + '/files/ubuntu_sshd' }}" 
+    name: ubuntu_sshd
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Build container with missing image
+  docker_container:
+    name: ubuntu_running_ssh
+    image: ubuntu_sshd:latest 
+    privileged: yes
+    debug: "{{ playbook_debug }}"
+    restart_policy: "no"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Start a container 
+  docker_container:
+    name: sleepy 
+    image: ubuntu:14.04
+    debug: "{{ playbook_debug }}"
+    command: sleep infinity
+  register: output
+
+- debug: var=output   
+  when: playbook_debug
+
+- name: Should be running
+  assert:
+    that:
+      - ansible_docker_container.State.Running
+
+- name: Create IntTesting network
+  command: docker network create --subnet 172.1.1.0/24 "{{ docker_network_name }}" 
+  register: output
+  ignore_errors: yes
+
+- name: Create IntTesting2 network
+  command: docker network create --subnet 172.1.10.0/24 "{{ docker_network_name + '2' }}" 
+  register: output
+  ignore_errors: yes
+
+- name: Add existing container to networks
+  docker_container:
+    name: sleepy
+    networks:
+      - name: "{{ docker_network_name }}" 
+        ipv4_address: 172.1.1.18
+      - name: "{{ docker_network_name + '2' }}" 
+        ipv4_address: 172.1.10.20
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }} is defined"
+
+- name: Add existing container to networks, should be idempotent
+  docker_container:
+    name: sleepy
+    networks:
+      - name: "{{ docker_network_name }}" 
+        ipv4_address: 172.1.1.18
+      - name: "{{ docker_network_name + '2' }}" 
+        ipv4_address: 172.1.10.20
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Update container network aliases
+  docker_container:
+    name: sleepy
+    networks:
+      - name: "{{ docker_network_name }}"
+        aliases:
+          - sleepyz
+          - zzzz  
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "'sleepyz' in ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }}.Aliases"
+      - "'zzzz' in ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }}.Aliases"
+
+- name: Update container network aliases, should be idempotent
+  docker_container:
+    name: sleepy
+    networks:
+      - name: "{{ docker_network_name }}"
+        aliases:
+          - sleepyz
+          - zzzz  
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Remove container from one network
+  docker_container:
+    name: sleepy
+    networks:
+      - name: "{{ docker_network_name }}"
+    debug: "{{ playbook_debug }}"
+    purge_networks: yes
+  register: output
+
+- assert:
+    that:
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }} is defined"
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name + '2' }} is not defined"
+
+- name: Remove container from all networks
+  docker_container:
+    name: sleepy
+    purge_networks: yes
+  register: output
+
+- assert:
+    that:
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }} is not defined"
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name + '2' }} is not defined"
+
+- name: Create db container and add to network 
+  docker_container:
+    name: db_test
+    image: "postgres:latest"
+    networks:
+      - name: "{{ docker_network_name }}"
+    debug: "{{ playbook_debug }}" 
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Start a container with networks 
+  docker_container:
+    name: sleepy2
+    image: ubuntu:14.04
+    command: sleep infinity
+    networks:
+      - name: "{{ docker_network_name }}"
+        ipv4_address: "172.1.1.100"
+        aliases:
+          - sleepyzz
+        links:
+          - db_test:db 
+          - sleepy
+      - name: "{{ docker_network_name + '2' }}"
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name }} is defined"
+      - "ansible_docker_container.NetworkSettings.Networks.{{ docker_network_name + '2' }} is defined" 
+
+- name: Start a container with networks should be idempotent
+  docker_container:
+    name: sleepy2
+    image: ubuntu:14.04
+    networks:
+      - name: "{{ docker_network_name }}"
+        ipv4_address: "172.1.1.100"
+        aliases:
+          - sleepyzz
+        links:
+          - db_test:db 
+          - sleepy
+      - name: "{{ docker_network_name + '2' }}"
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - not output.changed
+
+- docker_container:
+    name: db_test
+    purge_networks: yes
+
+- docker_container:
+    name: sleepy2
+    purge_networks: yes 
+  
+- name: Remove IntTesting network
+  command: docker network rm "{{ docker_network_name }}" 
+  ignore_errors: yes
+
+- name: Remove IntTesting network
+  command: docker network rm "{{ docker_network_name + '2' }}" 
+  ignore_errors: yes
+
+- name: Remove containers
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+    force_kill: yes
+  with_items:
+    - sleepy
+    - ubuntu_running_ssh
+    - sleepy2
+    - db_test
+
+- docker_container:
+    name: "{{ item }}" 
+    state: absent
+    force_kill: yes
+  with_items:
+    - sleepy5
+    - sleepy6 
+    - sleepy7
+    - sleepy8
+
+- name: Start container with exposed port range, root bind and command
+  docker_container:
+    name: sleepy5
+    image: ubuntu:14.04 
+    command: sleep infinity
+    expose:
+      - 6000-6100
+    volumes:
+      - "/:/rootfs:ro"
+    state: started 
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- name: Container sleepy5 should build with expected config 
+  assert:
+    that:
+      - ansible_docker_container.State.Running
+      - "ansible_docker_container.HostConfig.Binds[0] == '/:/rootfs:ro'"
+      - "ansible_docker_container.Config.Volumes['/rootfs'] is defined"
+      - "ansible_docker_container.Config.ExposedPorts['6000-6100/tcp'] is defined"
+      - "'sleep' in ansible_docker_container.Config.Cmd"
+      - "'infinity' in ansible_docker_container.Config.Cmd"
+
+- debug: var=output
+  when: playbook_debug 
+
+- name: Stop running container
+  docker_container:
+    name: sleepy5
+    state: stopped
+    force_kill: yes
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug 
+
+- name: Existing container should be stopped 
+  assert:
+    that:
+      - not ansible_docker_container.State.Running
+      - ansible_docker_container.State.Status == 'exited'
+
+- name: Create a present container
+  docker_container:
+    name: sleepy6
+    image: ubuntu:14.04 
+    command: sleep infinity 
+    debug: "{{ playbook_debug }}"
+    state: present 
+    force_kill: yes
+  register: output
+      
+- debug: var=output
+  when: playbook_debug
+
+- name: Container should be created and stopped
+  assert:
+    that:
+      - not ansible_docker_container.State.Running
+      - ansible_docker_container.State.Status == 'created'
+
+- name: Start container with published ports and no matching exposed ports 
+  docker_container:
+    image: ubuntu:14.04 
+    name: sleepy7 
+    command: sleep infinity
+    ports: 
+      - 9090:8080
+      - 9443:8443
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug 
+
+- name: Exposed ports should automatically include published ports
+  assert:
+    that:
+      - "ansible_docker_container.Config.ExposedPorts['8080/tcp'] is defined"
+      - "ansible_docker_container.Config.ExposedPorts['8443/tcp'] is defined"  
+
+- name: Test sleepy7 idempotency 
+  docker_container:
+    image: ubuntu:14.04
+    name: sleepy7
+    command: sleep infinity
+    ports:
+      - 9090:8080
+      - 9443:8443
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Automatic exposed ports should be idempotent  
+  assert:
+    that:
+      - not output.changed
+
+- name: Start container with published ports and range of exposed ports 
+  docker_container:
+    image: ubuntu:14.04 
+    name: sleepy8 
+    ports: 
+      - 5090:5090
+      - 4443:4443
+    exposed:
+      - 4000-5090 
+    command: sleep infinity
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Range of ports should be exposed 
+  assert:
+    that:
+      - ansible_docker_container.State.Running
+      - "ansible_docker_container.Config.ExposedPorts['4000-5090/tcp'] is defined"
+
+- name: Sleepy8 should be idempotent 
+  docker_container:
+    image: ubuntu:14.04
+    name: sleepy8
+    ports:
+      - 5090:5090
+      - 4443:4443
+    exposed:
+      - 4000-5090
+    command: sleep infinity
+    debug: "{{ playbook_debug }}" 
+  register: output   
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Exposed port range should be idempotent 
+  assert:
+    that:
+      - not output.changed
+
+- name: Run detached  
+  docker_container:
+    image: busybox
+    name: waitforme
+    detach: false
+    command: sleep 15
+
+- name: Should be exited 
+  assert:
+    that:
+      - ansible_docker_container.State.Status == 'exited'
+
+- name: Inspect the container
+  command: docker inspect --format='{% raw %}{{.State.Status}}{% endraw %}' waitforme
+  register: output
+
+- name: Should exist
+  assert:
+    that:
+      - output.stdout_lines[0] == 'exited'
+
+- name: Run detached with cleanup 
+  docker_container:
+    image: busybox
+    name: waitforme
+    detach: false
+    cleanup: true
+    command: echo "This works!"
+  register: output
+
+- name: Should contain expected output 
+  assert:
+    that:
+      - "'This works!' in ansible_docker_container.Output"
+
+- name: Inspect the cotnainer, ignoring errors 
+  command: docker inspect waitforme
+  ignore_errors: yes
+  register: output
+
+- name: Should not exist 
+  assert:
+    that:
+      - output.failed
+
+# Test volumes
+- name: Create a container with a host bound volume
+  docker_container:
+    name: mounty1
+    image: ubuntu:14.04
+    command: sleep infinity
+    volumes:
+      - .:/tmp/data
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Should have a host bound volume  
+  assert:
+    that:
+      - "ansible_docker_container.Mounts | length == 1"
+      - "ansible_docker_container.Mounts[0].Destination == '/tmp/data'"
+
+- name: Create a container with an unbound volume
+  docker_container:
+    name: mounty2
+    image: ubuntu:14.04
+    command: sleep infinity
+    volumes:
+      - /tmp/data
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Should have an unbound volume.
+  assert:
+    that:
+      - "ansible_docker_container.Mounts | length == 1"
+      - "ansible_docker_container.Config.Volumes['/tmp/data'] == {}"
+
+- name: Create a container bound to named volume
+  docker_container:
+    name: mounty3
+    image: ubuntu:14.04
+    command: sleep infinity
+    volumes:
+      - foo:/tmp/data
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Should have a named volume. 
+  assert:
+    that:
+      - "ansible_docker_container.Mounts | length == 1"
+      - "ansible_docker_container.Mounts[0].Name == 'foo'" 
+      - "ansible_docker_container.Config.Volumes['/tmp/data'] == {}"

@@ -1,0 +1,26 @@
+---
+dbtest_out: "{{ role_path }}/files/dbtest.out"
+wordpress_project:
+  version: '2'
+  services:
+    db:
+      image: mysql:5.7
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: "{{ compose_mysql_pswd }}"
+        MYSQL_DATABASE: "{{ compose_mysql_database }}"
+        MYSQL_USER: "{{ compose_mysql_user }}"
+        MYSQL_PASSWORD: "{{ compose_mysql_pswd }}"
+
+    wordpress:
+      depends_on:
+        - db
+      image: wordpress:latest
+      links:
+        - db
+      ports:
+        - "8000:80"
+      restart: always
+      environment:
+        WORDPRESS_DB_HOST: db:3306
+        WORDPRESS_DB_PASSWORD: wordpress

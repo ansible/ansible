@@ -1,0 +1,51 @@
+- name: Remove existing config
+  file:
+    path: ~/.docker/config.json
+    state: absent
+
+- name: Should fail on invalid email
+  docker_login:
+    username: "{{ dockerhub_username }}" 
+    password: "{{ dockerhub_password }}" 
+    email: foo
+    debug: "{{ playbook_debug }}"
+  register: output
+  ignore_errors: yes
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - output.failed
+      - "'email' in output.msg"
+
+- name: Should log into Docker hub
+  docker_login:
+    username: "{{ dockerhub_username }}" 
+    password: "{{ dockerhub_password }}" 
+    email: "{{ dockerhub_email }}" 
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "'Succeeded' in output.login_result.Status"
+
+- name: Should allow special chars in name
+  docker_login:
+    url: "{{ private_registry_url }}"
+    username: chris+house_knecht
+    password: password123
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "'Succeeded' in output.login_result.Status"

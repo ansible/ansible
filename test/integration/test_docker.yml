@@ -1,0 +1,30 @@
+# test_docker.yml
+#
+# Integration tests for Ansible's Docker modules.
+#
+- name: Run docker module tests 
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    docker_data_path: "{{ lookup('env','DOCKER_DATA_PATH') }}"
+    registry_common_name: ansibleregistry.com 
+    registry_host_port: 5000
+    private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
+  roles:
+    # Create a secure private registry for use by docker_login and docker_image
+    - role: ansible.local-registry
+      registry_users:
+        - username: testuser
+          password: testpassword
+        - username: chris+house_knecht
+          password: password123
+      registry_auth_path: /data/auth
+      registry_cert_path: /data/certs
+      registry_host_cert_path: "{{ docker_data_path }}/certs"
+      registry_host_auth_path: "{{ docker_data_path }}/auth"
+
+    - role: test_docker_login
+    - role: test_docker_image
+    - role: test_docker_container
+    - role: test_docker_service

@@ -1,0 +1,7 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - command: >
+        docker inspect --format="{% raw %}{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}{% endraw %}" registry
+      register: output

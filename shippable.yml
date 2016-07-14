@@ -8,73 +8,77 @@ matrix:
   exclude:
     - env: TEST=none
   include:
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos6
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos7
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora-rawhide
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora23
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:opensuseleap
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos6
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos7
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora-rawhide
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora23
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:opensuseleap
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
+#    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604
+#
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos6
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora-rawhide
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora23
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuseleap
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1204
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1404
+#    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604
+#
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos6
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos7
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora-rawhide
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora23
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:opensuseleap
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1204
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1404
+#    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1604
 
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos6
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora-rawhide
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora23
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuseleap
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1204
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1404
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604
+     # Run docker tests
+     - env: TEST=docker TARGET=test_docker IMAGE=ansibletesting/docker-modules:latest
 
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos6
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos7
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora-rawhide
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora23
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:opensuseleap
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1204
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1404
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1604
+#    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py24
+#      python: 2.7
+#    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py26
+#      python: 2.6
+#    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py27
+#      python: 2.7
+#    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py34
+#      python: 3.4
+#    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py35
+#      python: 3.5
+#
+#    - env: TEST=code-smell INSTALL_DEPS=1
+#      python: 2.7
 
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py24
-      python: 2.7
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py26
-      python: 2.6
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py27
-      python: 2.7
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py34
-      python: 3.4
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py35
-      python: 3.5
-
-    - env: TEST=code-smell INSTALL_DEPS=1
-      python: 2.7
 build:
   pre_ci_boot:
-    options: "--privileged=false --net=bridge"
+    options: "--privileged=false --net=bridge -e SHIPPABLE_HOST_IP=`/sbin/ip route|awk '/default/ { print  $3}'`"
   ci:
     - test/utils/shippable/ci.sh
 
-integrations:
-  notifications:
-    - integrationName: email
-      type: email
-      on_success: never
-      on_failure: never
-      on_start: never
-      on_pull_request: never
-    - integrationName: irc
-      type: irc
-      recipients:
-      - "chat.freenode.net#ansible-notices"
-      on_success: change
-      on_failure: always
-      on_start: never
-      on_pull_request: always
-    - integrationName: slack
-      type: slack
-      recipients:
-      - "#shippable"
-      on_success: change
-      on_failure: always
-      on_start: never
-      on_pull_request: never
+#integrations:
+#  notifications:
+#    - integrationName: email
+#      type: email
+#      on_success: never
+#      on_failure: never
+#      on_start: never
+#      on_pull_request: never
+#    - integrationName: irc
+#      type: irc
+#      recipients:
+#      - "chat.freenode.net#ansible-notices"
+#      on_success: change
+#      on_failure: always
+#      on_start: never
+#      on_pull_request: always
+#    - integrationName: slack
+#      type: slack
+#      recipients:
+#      - "#shippable"
+#      on_success: change
+#      on_failure: always
+#      on_start: never
+#      on_pull_request: never

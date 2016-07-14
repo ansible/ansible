@@ -1,0 +1,5 @@
+---
+registry_host: localhost
+docker_data_path: "{{ role_path }}/files"
+local_registry_user: testuser
+local_registry_password: testpassword

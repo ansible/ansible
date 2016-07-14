@@ -1,0 +1,211 @@
+
+- name: Remove my_sinatra.tar
+  file: path=my_sintra.tar state=absent
+
+- name: Remove image sinatra
+  docker_image:
+    state: absent
+    name: mysinatra
+    tag: v1
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Build and archive image
+  docker_image:
+    path: "{{ role_path }}/files/sinatra"
+    name: mysinatra
+    tag: v1
+    archive_path: "{{ docker_data_path }}/my_sinatra.tar"
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Get sinatra image facts
+  docker_image_facts:
+    name: mysinatra:v1
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Sinatra image should be present
+  assert:
+    that: output.images | length == 1
+
+- name: Get archive path facts
+  stat: path="{{ docker_data_path }}/my_sinatra.tar"
+  register: output
+
+- name: Archive file should be present
+  assert:
+    that: output.stat.exists
+
+- name: Remove image sinatra
+  docker_image:
+    state: absent
+    name: mysinatra
+    tag: v1
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Get sinatra image facts
+  docker_image_facts:
+    name: mysinatra:v1
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Sinatra image should be absent
+  assert:
+    that: output.images | length == 0
+
+- name: Load image from archive
+  docker_image:
+    name: mysinatra
+    tag: v1
+    load_path: "{{ docker_data_path }}/my_sinatra.tar"
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Get sinatra image facts
+  docker_image_facts:
+    name: mysinatra:v1
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Sinatra image should be present
+  assert:
+    that: output.images | length == 1
+
+- name: Log into docker hub
+  docker_login:
+    username: "{{ dockerhub_username }}"
+    password: "{{ dockerhub_password }}"
+    email: "{{ dockerhub_email }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Login into local registry
+  docker_login:
+    registry_url: "{{ private_registry_url }}"
+    username: testuser
+    password: testpassword
+    debug: "{{ playbook_debug }}"
+  register: output   
+
+- name: Remove tagged image
+  docker_image:
+    name: "{{ private_registry_url }}/dcoppenhagan/mysinatra"
+    tag: v1
+    debug: "{{ playbook_debug }}"
+    state: absent
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Tag and push sinatra to local registry 
+  docker_image:
+    name: mysinatra
+    tag: v1 
+    repository: "{{ private_registry_url }}/dcoppenhagan/mysinatra"
+    push: yes
+    debug: "{{ playbook_debug }}" 
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that: "output.image.push_status is defined"
+
+- name: Remove tagged image, if it exists
+  docker_image:
+    name: "{{ private_registry_url }}/chouseknecht/ubuntu"
+    tag: "14.04"
+    debug: "{{ playbook_debug }}"
+    state: absent
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Tag and push an image
+  docker_image:
+    name: ubuntu
+    tag: "14.04"
+    repository: "{{ private_registry_url }}/chouseknecht/ubuntu"
+    push: yes
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that: "output.image.push_status is defined"
+  when: output.changed
+
+- name: Image should exist in registry
+  command: "curl --insecure -u {{ local_registry_user }}:{{ local_registry_password }} {{ private_registry_url }}/v2/_catalog"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- assert:
+    that:
+      - "'chouseknecht' in output.stdout"
+
+- name: Remove local copy of image
+  docker_image:
+    name: "{{ private_registry_url }}/chouseknecht/ubuntu:14.04"
+    state: absent
+
+- name: Check if image exists
+  command: docker inspect "{{ private_registry_url }}/chouseknecht/ubuntu:14.04"
+  ignore_errors: yes
+  register: output
+
+- name: Should not exist
+  assert:
+    that:
+      - output.failed
+
+- name: Should pull image from local registry to create container
+  docker_container:
+    name: sleepy5 
+    image: "{{ private_registry_url }}/chouseknecht/ubuntu:14.04"
+    command: sleep infinity
+    state: started
+    debug: "{{ playbook_debug }}"
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name: Should be running
+  assert:
+    that:
+      - ansible_docker_container.State.Running
+
+- name: Remove container
+  docker_container:
+    name: sleepy5
+    force_kill: yes
+    state: absent

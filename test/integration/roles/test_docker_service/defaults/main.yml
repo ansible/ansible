@@ -1,0 +1,5 @@
+---
+compose_mysql_pswd: wordpress
+compose_mysql_user: wordpress
+compose_mysql_database: wordpress
+docker_host: 127.0.0.1
