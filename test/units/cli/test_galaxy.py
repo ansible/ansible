@@ -32,7 +32,6 @@ import tempfile
 from mock import patch, MagicMock
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.urls import SSLValidationError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
