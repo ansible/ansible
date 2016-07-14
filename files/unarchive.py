@@ -84,10 +84,10 @@ options:
     description:
       - "Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller."
       - "This option is mutually exclusive with C(copy)."
-      required: false
-      default: "no"
-      choices: ["yes", "no"]
-      version_added: "2.2"
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+    version_added: "2.2"
   validate_certs:
     description:
       - This only applies if using a https url as the source of the file.
