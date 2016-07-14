@@ -28,7 +28,7 @@ from ansible.compat.six import iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins import module_loader
+from ansible.plugins import module_loader, action_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
@@ -105,6 +105,12 @@ class DocCLI(CLI):
                     continue
 
                 if doc is not None:
+
+                    # is there corresponding action plugin?
+                    if module in action_loader:
+                        doc['action'] = True
+                    else:
+                        doc['action'] = False
 
                     all_keys = []
                     for (k,v) in iteritems(doc['options']):
@@ -248,6 +254,9 @@ class DocCLI(CLI):
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+
+        if 'action' in doc and doc['action']:
+            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
