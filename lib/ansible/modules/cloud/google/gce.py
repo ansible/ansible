@@ -130,8 +130,7 @@ options:
       - desired state of the resource
     required: false
     default: "present"
-    choices: ["active", "present", "absent", "deleted"]
-    aliases: []
+    choices: ["active", "present", "absent", "deleted", "started", "stopped", "terminated"]
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
@@ -516,6 +515,59 @@ def create_instances(module, gce, instance_names):
 
     return (changed, instance_json_data, instance_names)
 
+def start_instances(module, gce, instance_names, zone_name):
+    """Starts a list of stopped instances.
+
+    module: Ansible module object
+    gce: authenticated GCE connection object
+    instance_names: a list of instance names to start
+    zone_name: the zone where the instances reside prior to termination
+
+    Returns a dictionary of instance names that were started.
+    """
+    changed = False
+    started_instance_names = []
+    for name in instance_names:
+        inst = None
+        try:
+            inst = gce.ex_get_node(name, zone_name)
+        except ResourceNotFoundError:
+            pass
+        except Exception as e:
+            module.fail_json(msg=unexpected_error_msg(e), changed=False)
+        if inst and inst.state == libcloud.compute.types.NodeState.STOPPED:
+            gce.ex_start_node(inst)
+            started_instance_names.append(inst.name)
+            changed = True
+
+    return (changed, started_instance_names)
+
+def stop_instances(module, gce, instance_names, zone_name):
+    """Stops a list of instances.
+
+    module: Ansible module object
+    gce: authenticated GCE connection object
+    instance_names: a list of instance names to stop
+    zone_name: the zone where the instances reside prior to termination
+
+    Returns a dictionary of instance names that were stopped.
+    """
+    changed = False
+    stopped_instance_names = []
+    for name in instance_names:
+        inst = None
+        try:
+            inst = gce.ex_get_node(name, zone_name)
+        except ResourceNotFoundError:
+            pass
+        except Exception as e:
+            module.fail_json(msg=unexpected_error_msg(e), changed=False)
+        if inst and inst.state == libcloud.compute.types.NodeState.RUNNING:
+            gce.ex_stop_node(inst)
+            stopped_instance_names.append(inst.name)
+            changed = True
+
+    return (changed, stopped_instance_names)
 
 def terminate_instances(module, gce, instance_names, zone_name):
     """Terminates a list of instances.
@@ -558,8 +610,9 @@ def main():
             subnetwork = dict(),
             persistent_boot_disk = dict(type='bool', default=False),
             disks = dict(type='list'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted'],
-                    default='present'),
+            state = dict(choices=['active', 'present', 'absent', 'deleted',
+                                  'started', 'stopped', 'terminated'],
+                         default='present'),
             tags = dict(type='list'),
             zone = dict(default='us-central1-a'),
             service_account_email = dict(),
@@ -637,6 +690,22 @@ def main():
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
+        elif name:
+            json_output['name'] = name
+
+    elif state in ['started']:
+        json_output['state'] = 'started'
+        (changed, started_instance_names) = start_instances(module, gce, inames, zone)
+        if instance_names:
+            json_output['instance_names'] = started_instance_names
+        elif name:
+            json_output['name'] = name
+
+    elif state in ['stopped', 'terminated']:
+        json_output['state'] = 'stopped'
+        (changed, stopped_instance_names) = stop_instances(module, gce, inames, zone)
+        if instance_names:
+            json_output['instance_names'] = stopped_instance_names
         elif name:
             json_output['name'] = name
 
