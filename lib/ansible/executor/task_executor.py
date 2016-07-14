@@ -193,7 +193,7 @@ class TaskExecutor:
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
-                for subdir in ['tempalte', 'var', 'file']: #TODO: move this to constants?
+                for subdir in ['template', 'var', 'file']: #TODO: move this to constants?
                     if subdir in self._task.name:
                         break
                 setattr(mylookup,'_subdir', subdir + 's')
