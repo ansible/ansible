@@ -106,7 +106,7 @@ def get_server_certs(iam, name=None):
         >>> import boto3
         >>> iam = boto3.client('iam')
         >>> name = "server-cert-name"
-        >>> results = get_server_cert(iam, name)
+        >>> results = get_server_certs(iam, name)
         {
             "upload_date": "2015-04-25T00:36:40+00:00",
             "server_certificate_id": "ADWAJXWTZAXIPIMQHMJPO",
@@ -161,7 +161,7 @@ def main():
         module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
 
     cert_name = module.params.get('name')
-    results = get_server_cert(iam, cert_name)
+    results = get_server_certs(iam, cert_name)
     module.exit_json(results=results)
 
 
