@@ -157,15 +157,15 @@ class TestGalaxy(unittest.TestCase):
             galaxy_parser = gc.parse()
         super(GalaxyCLI, gc).run()
         gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
-        with patch.object(ansible.galaxy.api.GalaxyAPI, "search_roles", return_value=search_return_val): # mocks out internet use
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "search_roles", return_value=search_return_val) as mock_search: # mocks out internet use
             with patch.object(ansible.utils.display.Display, "display") as mocked_display:  # used for checking correct message
                 completed_task = gc.execute_search()
 
                 # tests #
                 self.assertTrue(completed_task)
+                self.assertEqual(mock_search.call_count, 1)
                 self.assertEqual(mocked_display.call_count, 1)
-                #mocked_display.called_once_with("No roles match your search.", color=C.COLOR_ERROR)
-                mocked_display.called_once_with('')
+                mocked_display.assert_called_once_with('No roles match your search.', color='red')
 
         ### testing search if there are fewer results than the page size
                 # setup #
