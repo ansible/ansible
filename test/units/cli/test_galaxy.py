@@ -30,7 +30,7 @@ import tarfile
 import tempfile
 
 from mock import patch
-
+from ansible.errors import AnsibleError
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
 
@@ -114,6 +114,51 @@ class TestGalaxy(unittest.TestCase):
         display_result = gc._display_role_info(role_info)
         if display_result.find('\t\tgalaxy_tags:') > -1:
             self.fail('Expected galaxy_tags to be indented twice')
+
+    def test_execute_info(self):
+        ''' testing that execute_info displays information associated with a role '''
+        ### testing cases when no role name is given ###
+        gc = GalaxyCLI(args=["info"])
+        with patch('sys.argv', ["-c", "--offline", "-v"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        ### testing case when valid role name is given ###
+            # installing role
+        gc = GalaxyCLI(args=["install"])
+        with patch('sys.argv', ["--offline", "-p", self.role_path, "-r", self.role_req]):
+            galaxy_parser = gc.parse()
+        gc.run()
+
+            # data used for testing
+        gr = ansible.galaxy.role.GalaxyRole(gc.galaxy, self.role_name)
+        install_date = gr.install_info['install_date']
+
+            # testing role for info
+        gc.args = ["info"]
+        with patch('sys.argv', ["-c", "--offline", "-p", self.role_path, self.role_name]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.cli.CLI, "pager") as mock_obj:
+            gc.run()
+            mock_obj.assert_called_once_with(u"\nRole: %s\n\tdescription: \n\tdependencies: []\n\tgalaxy_info:\n\t\tauthor: your name\n\t\tcompany: your company (optional)\n\t\tgalaxy_tags: []\n\t\tlicense: license (GPLv2, CC-BY, etc)\n\t\tmin_ansible_version: 1.2\n\tinstall_date: %s\n\tintalled_version: \n\tpath: ['%s']\n\tscm: None\n\tsrc: %s\n\tversion: " % (self.role_name, install_date, self.role_path, self.role_name))
+
+            # deleting role
+        gc.args = ["remove"]
+        with patch('sys.argv', ["-c", "-p", self.role_path, self.role_name]):
+            galaxy_parser = gc.parse()
+        gc.run()
+        
+        ### testing case when the name of a role not installed is given ###
+            # the role is not installed now
+        gc = GalaxyCLI(args=["info"])
+        with patch('sys.argv', ["-c", "--offline", "-p", self.role_path, self.role_name]):
+            galaxy_parser = gc.parse()
+
+            # this won't accurately reflect the expected outcome until GalaxyCLI.execute_info's FIXME is fixed
+        with patch.object(ansible.cli.CLI, "pager") as mock_obj:
+            gc.run()
+            #mock_obj.assert_called_once_with(u'\n- the role delete_me was not found') # FIXME: Uncomment
+
 
     def test_execute_remove(self):
         # installing role
