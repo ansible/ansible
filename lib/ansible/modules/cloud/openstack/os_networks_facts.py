@@ -37,7 +37,6 @@ options:
      description:
         - Name or ID of the Network
      required: false
-     version_added: "2.2"
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
