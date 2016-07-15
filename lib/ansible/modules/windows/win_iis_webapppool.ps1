@@ -21,6 +21,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+Set-StrictMode -Off
 $params = Parse-Args $args;
 
 # Name parameter
@@ -96,11 +97,11 @@ try {
     }
     if ($state -eq 'restarted') {
       switch ($pool.State)
-        { 
+        {
           'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
           default { Restart-WebAppPool -Name $name -ErrorAction Stop }
         }
-      $result.changed = $TRUE   
+      $result.changed = $TRUE
     }
   }
 } catch {
@@ -116,7 +117,7 @@ if ($pool)
     state = $pool.State
     attributes =  New-Object psobject @{}
   };
-  
+
   $pool.Attributes | ForEach { $result.info.attributes.Add($_.Name, $_.Value)};
 }
 
