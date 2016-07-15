@@ -49,13 +49,8 @@ class ActionModule(ActionBase):
             # NOTE: If there is a parameter error, _backup key may not be in results.
             self._write_backup(task_vars['inventory_hostname'], result['__backup__'])
 
-        if self._task.args.get('dest') and result.get('__config__'):
-            self._write_dest(self._task.args['dest'], result['__config__'],
-                             append=self._task.args['append'])
-
-        for key in ['__config__', '__backup__']:
-            if key in result:
-                del result[key]
+        if '__backup__' in result:
+            del result['__backup__']
 
         return result
 
@@ -74,18 +69,6 @@ class ActionModule(ActionBase):
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
         open(filename, 'w').write(contents)
-
-    def _write_dest(self, path, contents, append=False):
-        dirpath = os.path.dirname(path)
-        if not dirpath[0] == '/':
-            dirpath = self._get_working_path() + dirpath
-        if not os.path.exists(dirpath):
-            os.mkdir(dirpath)
-        if append:
-            flags = 'a'
-        else:
-            flags = 'w'
-        open(path, flags).write(contents)
 
     def _handle_template(self):
         src = self._task.args.get('src')
