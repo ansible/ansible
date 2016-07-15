@@ -336,7 +336,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
 
 
 def elb_healthy(asg_connection, elb_connection, module, group_name):
-    healthy_instances = []
+    healthy_instances = set()
     as_group = asg_connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
     # get healthy, inservice instances from ASG
@@ -359,7 +359,7 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
 
         for i in lb_instances:
             if i.state == "InService":
-                healthy_instances.append(i.instance_id)
+                healthy_instances.add(i.instance_id)
             log.debug("{0}: {1}".format(i.instance_id, i.state))
     return len(healthy_instances)
 
