@@ -26,7 +26,7 @@ import itertools
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.network import to_list
 
-DEFAULT_COMMENT_TOKENS = ['#', '!']
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
 
 class ConfigLine(object):
@@ -119,6 +119,8 @@ def dumps(objects, output='block'):
             line.extend([p.text for p in obj.parents])
             line.append(obj.text)
             items.append(' '.join(line))
+    else:
+        raise TypeError('unknown value supplied for keyword output')
     return '\n'.join(items)
 
 class NetworkConfig(object):
