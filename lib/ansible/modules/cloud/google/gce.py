@@ -515,73 +515,21 @@ def create_instances(module, gce, instance_names):
 
     return (changed, instance_json_data, instance_names)
 
-def start_instances(module, gce, instance_names, zone_name):
-    """Starts a list of stopped instances.
-
-    module: Ansible module object
-    gce: authenticated GCE connection object
-    instance_names: a list of instance names to start
-    zone_name: the zone where the instances reside prior to termination
-
-    Returns a dictionary of instance names that were started.
-    """
-    changed = False
-    started_instance_names = []
-    for name in instance_names:
-        inst = None
-        try:
-            inst = gce.ex_get_node(name, zone_name)
-        except ResourceNotFoundError:
-            pass
-        except Exception as e:
-            module.fail_json(msg=unexpected_error_msg(e), changed=False)
-        if inst and inst.state == libcloud.compute.types.NodeState.STOPPED:
-            gce.ex_start_node(inst)
-            started_instance_names.append(inst.name)
-            changed = True
-
-    return (changed, started_instance_names)
-
-def stop_instances(module, gce, instance_names, zone_name):
-    """Stops a list of instances.
-
-    module: Ansible module object
-    gce: authenticated GCE connection object
-    instance_names: a list of instance names to stop
-    zone_name: the zone where the instances reside prior to termination
-
-    Returns a dictionary of instance names that were stopped.
-    """
-    changed = False
-    stopped_instance_names = []
-    for name in instance_names:
-        inst = None
-        try:
-            inst = gce.ex_get_node(name, zone_name)
-        except ResourceNotFoundError:
-            pass
-        except Exception as e:
-            module.fail_json(msg=unexpected_error_msg(e), changed=False)
-        if inst and inst.state == libcloud.compute.types.NodeState.RUNNING:
-            gce.ex_stop_node(inst)
-            stopped_instance_names.append(inst.name)
-            changed = True
-
-    return (changed, stopped_instance_names)
-
-def terminate_instances(module, gce, instance_names, zone_name):
-    """Terminates a list of instances.
+def change_instance_state(module, gce, instance_names, zone_name, state):
+    """Changes the state of a list of instances. For example,
+    change from started to stopped, or started to absent.
 
     module: Ansible module object
     gce: authenticated GCE connection object
     instance_names: a list of instance names to terminate
     zone_name: the zone where the instances reside prior to termination
+    state: 'state' parameter passed into module as argument
 
-    Returns a dictionary of instance names that were terminated.
+    Returns a dictionary of instance names that were changed.
 
     """
     changed = False
-    terminated_instance_names = []
+    changed_instance_names = []
     for name in instance_names:
         inst = None
         try:
@@ -590,13 +538,22 @@ def terminate_instances(module, gce, instance_names, zone_name):
             pass
         except Exception as e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
-        if inst:
+        if inst and state in ['absent', 'deleted']:
             gce.destroy_node(inst)
-            terminated_instance_names.append(inst.name)
+            changed_instance_names.append(inst.name)
+            changed = True
+        elif inst and state == 'started' and \
+                  inst.state == libcloud.compute.types.NodeState.STOPPED:
+            gce.ex_start_node(inst)
+            changed_instance_names.append(inst.name)
+            changed = True
+        elif inst and state in ['stopped', 'terminated'] and \
+                  inst.state == libcloud.compute.types.NodeState.RUNNING:
+            gce.ex_stop_node(inst)
+            changed_instance_names.append(inst.name)
             changed = True
 
-    return (changed, terminated_instance_names)
-
+    return (changed, changed_instance_names)
 
 def main():
     module = AnsibleModule(
@@ -671,15 +628,15 @@ def main():
                          changed=False)
 
     json_output = {'zone': zone}
-    if state in ['absent', 'deleted']:
-        json_output['state'] = 'absent'
-        (changed, terminated_instance_names) = terminate_instances(
-            module, gce, inames, zone)
+    if state in ['absent', 'deleted', 'started', 'stopped', 'terminated']:
+        json_output['state'] = state
+        (changed, changed_instance_names) = change_instance_state(
+            module, gce, inames, zone, state)
 
         # based on what user specified, return the same variable, although
         # value could be different if an instance could not be destroyed
         if instance_names:
-            json_output['instance_names'] = terminated_instance_names
+            json_output['instance_names'] = changed_instance_names
         elif name:
             json_output['name'] = name
 
@@ -690,22 +647,6 @@ def main():
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
-        elif name:
-            json_output['name'] = name
-
-    elif state in ['started']:
-        json_output['state'] = 'started'
-        (changed, started_instance_names) = start_instances(module, gce, inames, zone)
-        if instance_names:
-            json_output['instance_names'] = started_instance_names
-        elif name:
-            json_output['name'] = name
-
-    elif state in ['stopped', 'terminated']:
-        json_output['state'] = 'stopped'
-        (changed, stopped_instance_names) = stop_instances(module, gce, inames, zone)
-        if instance_names:
-            json_output['instance_names'] = stopped_instance_names
         elif name:
             json_output['name'] = name
 
