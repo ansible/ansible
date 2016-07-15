@@ -28,6 +28,10 @@ from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 
 DEFAULT_COMMENT = 'configured by vyos_config'
 
+FILTERS = [
+    re.compile(r'set system login user \S+ authentication encrypted-password')
+]
+
 def argument_spec():
     return dict(
         running_config=dict(aliases=['config']),
@@ -68,6 +72,14 @@ def diff_config(candidate, config):
 
     return list(updates)
 
+def check_config(config, result):
+    result['filtered'] = list()
+    for regex in FILTERS:
+        for index, line in enumerate(list(config)):
+            if regex.search(line):
+                result['filtered'].append(line)
+                del config[index]
+
 def load_candidate(module, candidate):
     config = get_config(module)
 
@@ -79,6 +91,7 @@ def load_candidate(module, candidate):
     result = dict(changed=False)
 
     if updates:
+        check_config(updates, result)
         diff = module.config.load_config(updates)
         if diff:
             result['diff'] = dict(prepared=diff)
