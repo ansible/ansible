@@ -43,7 +43,7 @@ from utils import CaptureStd
 import yaml
 
 
-BLACKLIST_DIRS = frozenset(('.git', 'test', '.github'))
+BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 BLACKLIST_IMPORTS = {
     'requests': {
