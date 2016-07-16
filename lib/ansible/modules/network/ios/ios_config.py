@@ -57,30 +57,6 @@ options:
     required: false
     default: null
     version_added: "2.2"
-  dest:
-    description:
-      - Configures a destination file to write the source template or config
-        updates to.  The path to the destination file can either be a full
-        path on the Ansible control host or a relative path from the
-        playbook or role root directory.  This will, by default, overwrite any
-        previously created file.  See I(append) to change the behavior.
-      - When the I(dest) argument is used, the output from processing the
-        configuration lines is written to a file and not to the actual
-        device.  If theI(dest) argument is omitted, then the configuration
-        is written to the device.
-    required: false
-    default: null
-    version_added: "2.2"
-  append:
-    description:
-      - Changes the default behavior when writing the configuration out
-        to a remote file on disk.  By default if I(dest) is specified, the
-        file is overridden.  By setting this argument to true, the remote
-        file (if it exists) is appended to.
-    required: false
-    default: no
-    choices: ['yes', 'no']
-    version_added: "2.2"
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -122,17 +98,44 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
-  update_config:
+  force:
     description:
-      - This arugment will either cause or prevent the changed commands
-        from being sent to the remote device.  The set to true, the
-        remote IOS device will be configured with the updated commands
-        and when set to false, the remote device will not be updated.
+      - The force argument instructs the module to not consider the
+        current devices running-config.  When set to true, this will
+        cause the module to push the contents of I(src) into the device
+        without first checking if already configured.
+      - Note this argument should be considered deprecated.  To achieve
+        the equivalient, set the match argument to none.  This argument
+        will be removed in a future release.
     required: false
-    default: yes
-    choices: ['yes', 'no']
+    default: false
+    choices: [ "true", "false" ]
     version_added: "2.2"
-  backup_config:
+  update:
+    description:
+      - The I(update) argument controls how the configuration statements
+        are processed on the remote device.  Valid choices for the I(update)
+        argument are I(merge) and I(check).  When the argument is set to
+        I(merge), the configuration changes are merged with the current
+        device running configuration.  When the argument is set to I(check)
+        the configuration updates are determined but not actually configured
+        on the remote device.
+    required: false
+    default: merge
+    choices: ['merge', 'check']
+    version_added: "2.2"
+  commit:
+    description:
+      - This argument specifies the update method to use when applying the
+        configuration changes to the remote node.  If the value is set to
+        I(merge) the configuration updates are merged with the running-
+        config.  If the value is set to I(check), no changes are made to
+        the remote host.
+    required: false
+    default: merge
+    choices: ['merge', 'check']
+    version_added: "2.2"
+  backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
@@ -143,39 +146,80 @@ options:
     default: no
     choices: ['yes', 'no']
     version_added: "2.2"
+  config:
+    description:
+      - The C(config) argument allows the playbook desginer to supply
+        the base configuration to be used to validate configuration
+        changes necessary.  If this argument is provided, the module
+        will not download the running-config from the remote node.
+    required: false
+    default: null
+    version_added: "2.2"
+  default:
+    description:
+      - This argument specifies whether or not to collect all defaults
+        when getting the remote device running config.  When enabled,
+        the module will get the current config by issuing the command
+        C(show running-config all).
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
+  save:
+    description:
+      - The C(save) argument instructs the module to save the running-
+        config to the startup-config at the conclusion of the module
+        running.  If check mode is specified, this argument is ignored.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
+  state:
+    description:
+      - This argument specifies whether or not the running-config is
+        present on the remote device.  When set to I(absent) the
+        running-config on the remote device is erased.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
 """
 
 EXAMPLES = """
-- ios_config:
-    lines: ['hostname {{ inventory_hostname }}']
-    force: yes
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: cisco
+    password: cisco
+    transport: cli
 
-- ios_config:
+- name: configure top level configuration
+  ios_config:
+    lines: hostname {{ inventory_hostname }}
+    provider: "{{ cli }}"
+
+- name: configure interface settings
+  ios_config:
+    lines:
+      - description test interface
+      - ip address 172.31.1.1 255.255.255.0
+    parents: interface Ethernet1
+    provider: "{{ cli }}"
+
+- name: load new acl into device
+  ios_config:
     lines:
       - 10 permit ip host 1.1.1.1 any log
       - 20 permit ip host 2.2.2.2 any log
       - 30 permit ip host 3.3.3.3 any log
       - 40 permit ip host 4.4.4.4 any log
       - 50 permit ip host 5.5.5.5 any log
-    parents: ['ip access-list extended test']
-    before: ['no ip access-list extended test']
+    parents: ip access-list extended test
+    before: no ip access-list extended test
     match: exact
-
-- ios_config:
-    lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-    parents: ['ip access-list extended test']
-    before: ['no ip access-list extended test']
-    replace: block
-
-- ios_config:
-    commands: "{{lookup('file', 'datcenter1.txt')}}"
-    parents: ['ip access-list test']
-    before: ['no ip access-list test']
-    replace: block
+    provider: "{{ cli }}"
 
 """
 
@@ -185,16 +229,23 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: path
+  sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
 responses:
   description: The set of responses from issuing the commands on the device
   returned: when not check_mode
   type: list
   sample: ['...', '...']
 """
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.ios import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.ios import load_config, get_config, ios_argument_spec
+from ansible.module_utils.netcli import Command
 
 def invoke(name, *args, **kwargs):
     func = globals().get(name)
@@ -204,11 +255,28 @@ def invoke(name, *args, **kwargs):
 def check_args(module, warnings):
     if module.params['parents']:
         if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unneeded argument parents')
+            warnings.append('ignoring unnecessary argument parents')
     if module.params['match'] == 'none' and module.params['replace']:
-        warnings.append('ignorning unneeded argument replace')
-    if module.params['dest'] and module.params['save_config'] is True:
-        warnings.append('config will not be saved with dest argument used')
+        warnings.append('ignorning unnecessary argument replace')
+    if module.params['force']:
+        warnings.append('The force argument is deprecated, please use '
+                        'match=none instead.  This argument will be '
+                        'removed in the future')
+
+def get_config(module, result):
+    defaults = module.params['default']
+    if defaults is True:
+        key = '__configall__'
+    else:
+        key = '__config__'
+
+    contents = module.params['config'] or result.get(key)
+
+    if not contents:
+        contents = module.config.get_config(include_defaults=defaults)
+        result[key] = contents
+
+    return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -218,6 +286,65 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
+def load_backup(module):
+    try:
+        module.cli(['exit', 'config replace flash:/ansible-rollback force'])
+    except NetworkError:
+        module.fail_json(msg='unable to rollback configuration')
+
+def backup_config(module):
+    cmd = 'copy running-config flash:/ansible-rollback'
+    cmd = Command(cmd, prompt=re.compile('\? $'), response='\n')
+    module.cli(cmd)
+
+def load_config(module, commands, result):
+    if not module.check_mode and module.params['update'] != 'check':
+        module.config(commands)
+    result['changed'] = module.params['update'] != 'check'
+    result['updates'] = commands.split('\n')
+
+def present(module, result):
+    match = module.params['match']
+    replace = module.params['replace']
+
+    candidate = get_candidate(module)
+
+    if match != 'none':
+        config = get_config(module, result)
+        configobjs = candidate.difference(config, match=match, replace=replace)
+    else:
+        config = None
+        configobjs = candidate.items
+
+    if configobjs:
+        commands = dumps(configobjs, 'commands')
+
+        if module.params['before']:
+            commands[:0] = module.params['before']
+
+        if module.params['after']:
+            commands.extend(module.params['after'])
+
+        # create a backup copy of the current running-config on
+        # device flash drive
+        backup_config(module)
+
+        # send the configuration commands to the device and merge
+        # them with the current running config
+        load_config(module, commands, result)
+
+        # remove the backup copy of the running-config since its
+        # no longer needed
+        module.cli('delete /force flash:/ansible-rollback')
+
+    if module.params['save'] and not module.check_mode:
+        module.config.save_config()
+
+def absent(module, result):
+    if not module.check_mode:
+        module.cli('write erase')
+    result['changed'] = True
 
 def main():
 
@@ -233,10 +360,20 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
 
-        update_config=dict(type='bool', default=False),
-        backup_config=dict(type='bool', default=False)
+        # this argument is deprecated in favor of setting match: none
+        # it will be removed in a future version
+        force=dict(default=False, type='bool'),
+
+        update=dict(choices=['merge', 'check'], default='merge'),
+        backup=dict(type='bool', default=False),
+
+        config=dict(),
+        default=dict(type='bool', default=False),
+
+        save=dict(type='bool', default=False),
+
+        state=dict(choices=['present', 'absent'], default='present')
     )
-    argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -245,48 +382,25 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    module.check_mode = not module.params['update_config']
+    state = module.params['state']
 
-    parents = module.params['parents'] or list()
-
-    match = module.params['match']
-    replace = module.params['replace']
+    if module.params['force'] is True:
+        module.params['match'] = 'none'
 
     warnings = list()
-    invoke('check_args', module, warnings)
+    check_args(module, warnings)
 
-    result = dict(changed=False, saved=False)
+    result = dict(changed=False, warnings=warnings)
 
-    candidate = get_candidate(module)
+    if module.params['backup']:
+        result['__backup__'] = module.config.get_config()
 
-    if module.params['match'] != 'none':
-        config = get_config(module)
-        configobjs = candidate.difference(config, match=match, replace=replace)
-    else:
-        configobjs = candidate.items
-
-    if module.params['backup_config']:
-        result['__backup__'] = module.cli('show running-config')[0]
-
-    commands = list()
-    if configobjs:
-        commands = dumps(configobjs, 'commands')
-        commands = commands.split('\n')
-
-        if module.params['before']:
-            commands[:0] = module.params['before']
-
-        if module.params['after']:
-            commands.extend(module.params['after'])
-
-        if not module.check_mode:
-            response = load_config(module, commands, nodiff=True)
-            result.update(**response)
-
-        result['changed'] = True
-
-    result['updates'] = commands
-    result['connected'] = module.connected
+    try:
+        invoke(state, module, result)
+    except NetworkError:
+        load_backup(module)
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     module.exit_json(**result)
 
