@@ -220,6 +220,7 @@ def get_cmd(m, subcommand):
 
 
 def set_diff(m, retvals, result):
+    # TODO: if there is only one package, set before/after to version numbers
     packages = {'installed': [], 'removed': [], 'upgraded': []}
     for p in result:
         group = result[p]['group']
@@ -245,7 +246,7 @@ def set_diff(m, retvals, result):
 
 def package_present(m, name, want_latest):
     "install and update (if want_latest) the packages in name_install, while removing the packages in name_remove"
-    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     name_install, name_remove, urls = get_want_state(m, name)
 
     if not want_latest:
@@ -256,7 +257,7 @@ def package_present(m, name, want_latest):
         name_remove = [p for p in name_remove if p in prerun_state]
         if not name_install and not name_remove and not urls:
             # nothing to install/remove and nothing to update
-            return retvals
+            return None, retvals
 
     # zypper install also updates packages
     cmd = get_cmd(m, 'install')
@@ -271,25 +272,15 @@ def package_present(m, name, want_latest):
 
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
-    if retvals['rc'] == 0:
-        # installed all packages successfully
-        # checking the output is not straight-forward because zypper rewrites 'capabilities'
-        # could run get_installed_state and recheck, but this takes time
-        if result:
-            retvals['changed'] = True
-    else:
-        retvals['failed'] = True
-        # return retvals
-    if m._diff:
-        set_diff(m, retvals, result)
 
-    return retvals
+    return result, retvals
 
 
-def package_update_all(m, do_patch):
+def package_update_all(m):
     "run update or patch on all available packages"
-    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
-    if do_patch:
+    
+    retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
+    if m.params['type'] == 'patch':
         cmdname = 'patch'
     else:
         cmdname = 'update'
@@ -297,19 +288,12 @@ def package_update_all(m, do_patch):
     cmd = get_cmd(m, cmdname)
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
-    if retvals['rc'] == 0:
-        if result:
-            retvals['changed'] = True
-    else:
-        retvals['failed'] = True
-    if m._diff:
-        set_diff(m, retvals, result)
-    return retvals
+    return result, retvals
 
 
 def package_absent(m, name):
     "remove the packages in name"
-    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     # Get package state
     name_install, name_remove, urls = get_want_state(m, name, remove=True)
     if name_install:
@@ -321,28 +305,19 @@ def package_absent(m, name):
     prerun_state = get_installed_state(m, name_remove)
     name_remove = [p for p in name_remove if p in prerun_state]
     if not name_remove:
-        return retvals
+        return None, retvals
 
     cmd = get_cmd(m, 'remove')
     cmd.extend(name_remove)
 
     retvals['cmd'] = cmd
     result, retvals['rc'], retvals['stdout'], retvals['stderr'] = parse_zypper_xml(m, cmd)
-    if retvals['rc'] == 0:
-        # removed packages successfully
-        if result:
-            retvals['changed'] = True
-    else:
-        retvals['failed'] = True
-    if m._diff:
-        set_diff(m, retvals, result)
-
-    return retvals
+    return result, retvals
 
 
 def repo_refresh(m):
     "update the repositories"
-    retvals = {'rc': 0, 'stdout': '', 'stderr': '', 'changed': False, 'failed': False}
+    retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
 
     cmd = get_cmd(m, 'refresh')
 
@@ -381,20 +356,19 @@ def main():
 
     # Perform requested action
     if name == ['*'] and state == 'latest':
-        if module.params['type'] == 'package':
-            retvals = package_update_all(module, False)
-        elif module.params['type'] == 'patch':
-            retvals = package_update_all(module, True)
+        packages_changed, retvals = package_update_all(module)
     else:
         if state in ['absent', 'removed']:
-            retvals = package_absent(module, name)
+            packages_changed, retvals = package_absent(module, name)
         elif state in ['installed', 'present', 'latest']:
-            retvals = package_present(module, name, state == 'latest')
+            packages_changed, retvals = package_present(module, name, state == 'latest')
 
-    failed = retvals['failed']
-    del retvals['failed']
+    retvals['changed'] = retvals['rc'] == 0 and packages_changed
 
-    if failed:
+    if module._diff:
+        set_diff(module, retvals, packages_changed)
+
+    if retvals['rc'] != 0:
         module.fail_json(msg="Zypper run failed.", **retvals)
 
     if not retvals['changed']:
