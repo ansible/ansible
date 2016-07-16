@@ -2084,23 +2084,20 @@ class AnsibleModule(object):
             stderr=subprocess.PIPE,
         )
 
-        if cwd and os.path.isdir(cwd):
-            kwargs['cwd'] = cwd
-
         # store the pwd
         prev_dir = os.getcwd()
 
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
+            cwd = os.path.abspath(os.path.expanduser(cwd))
+            kwargs['cwd'] = cwd
             try:
-                abs_cwd = os.path.abspath(os.path.expanduser(cwd))
-                os.chdir(abs_cwd)
+                os.chdir(cwd)
             except (OSError, IOError):
                 e = get_exception()
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (abs_cwd, str(e)))
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
 
         try:
-
             if self._debug:
                 if isinstance(args, list):
                     running = ' '.join(args)
