@@ -1965,7 +1965,7 @@ class AnsibleModule(object):
         :kw path_prefix: If given, additional path to find the command in.
             This adds to the PATH environment vairable so helper commands in
             the same directory can also be found
-        :kw cwd: iIf given, working directory to run the command inside
+        :kw cwd: If given, working directory to run the command inside
         :kw use_unsafe_shell: See `args` parameter.  Default False
         :kw prompt_regex: Regex string (not a compiled regex) which can be
             used to detect prompts in the stdout which would otherwise cause
@@ -2093,10 +2093,11 @@ class AnsibleModule(object):
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
             try:
-                os.chdir(cwd)
+                abs_cwd = os.path.abspath(os.path.expanduser(cwd))
+                os.chdir(abs_cwd)
             except (OSError, IOError):
                 e = get_exception()
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (abs_cwd, str(e)))
 
         try:
 

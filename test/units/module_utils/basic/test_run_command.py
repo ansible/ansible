@@ -61,6 +61,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path == '/inaccessible':
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
+        def mock_os_abspath(path):
+            if path.startswith('/'):
+                return path
+            else:
+                return self.os.getcwd.return_value + '/' +  path
+
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
@@ -78,6 +84,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.os.path.isdir.return_value = True
         self.os.chdir.side_effect = mock_os_chdir
         self.os.read.side_effect = mock_os_read
+        self.os.path.abspath.side_effect = mock_os_abspath
 
         self.subprocess = patch('ansible.module_utils.basic.subprocess').start()
         self.cmd = Mock()
@@ -127,6 +134,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.module.run_command('/bin/ls', cwd='/new')
         self.assertEqual(self.os.chdir.mock_calls,
                          [call('/new'), call('/old'), ])
+
+    def test_cwd_relative_path(self):
+        self.os.getcwd.return_value = '/old'
+        self.module.run_command('/bin/ls', cwd='sub-dir')
+        self.assertEqual(self.os.chdir.mock_calls,
+                         [call('/old/sub-dir'), call('/old'), ])
 
     def test_cwd_not_a_dir(self):
         self.os.getcwd.return_value = '/old'
