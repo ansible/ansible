@@ -236,8 +236,12 @@ def yml_to_rules(module, yml_rules):
                 rules.add_rule('key', Rule(rule['key'], rule['policy']))
             elif ('service' in rule and 'policy' in rule):
                 rules.add_rule('service', Rule(rule['service'], rule['policy']))
+            elif ('event' in rule and 'policy' in rule):
+                rules.add_rule('event', Rule(rule['event'], rule['policy']))
+            elif ('query' in rule and 'policy' in rule):
+                rules.add_rule('query', Rule(rule['query'], rule['policy']))
             else:
-                module.fail_json(msg="a rule requires a key/service and a policy.")
+                module.fail_json(msg="a rule requires a key/service/event or query and a policy.")
     return rules
 
 template = '''%s "%s" {
@@ -245,7 +249,7 @@ template = '''%s "%s" {
 }
 '''
 
-RULE_TYPES = ['key', 'service']
+RULE_TYPES = ['key', 'service', 'event', 'query']
 
 class Rules:
 
