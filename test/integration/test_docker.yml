@@ -57,7 +57,7 @@
 
     - debug: var=output
 
-    - command: cat "{{ docker_data_path }}/auth/htpasswd"
+    - command: cat "/data/auth/htpasswd"
       register: output
 
     - debug: var=output
