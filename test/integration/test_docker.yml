@@ -52,7 +52,7 @@
     registry_host_port: 5000
     private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
   tasks:
-    - command: ping -c 3 "{{ docker_data_path }}"
+    - command: ping -c 3 "{{ registry_common_name }}"
       register: output
 
     - debug: var=output
