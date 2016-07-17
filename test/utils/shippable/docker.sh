@@ -58,7 +58,6 @@ container_id=$(docker run \
                -v ${host_shared_dir}:/ansible \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
-               --add-host=ansibleregistry.com:${registry_ip} \
                -w /ansible/test/integration
                "${image}" make test_registry)
 
