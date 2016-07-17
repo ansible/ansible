@@ -58,7 +58,7 @@ container_id=$(docker run \
                -v ${host_shared_dir}:/ansible \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
-               -w /ansible/test/integration
+               -w /ansible/test/integration \
                "${image}" make test_registry)
 
 registry_ip=$(docker inspect registry --format "{{ .NetworkSettings.IPAddress }}")
