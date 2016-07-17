@@ -1,0 +1,11 @@
+- name: Start the registry
+  hosts: docker
+  connection: local
+  gather_facts: no
+  roles:
+    - role: ansible.local-registry
+      registry_users:
+        - username: testuser
+          password: testpassword
+        - username: chris+house_knecht
+          password: password123
