@@ -54,8 +54,9 @@ container_id=$(docker run \
                "${image}" /run.sh)
 
 docker inspect registry
-docker exec registry ls -l /ansible
-docker exec regsitry ls -l /data
+docker exec registry ls -l /auth
+docker exec registry ls -l /certs
+docker exec registry cat /auth/htpasswd
 
 show_environment
 cleanup
