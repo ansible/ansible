@@ -38,9 +38,9 @@ fi
 mkdir -p ${host_shared_dir}/test_data/auth
 mkdir -p ${host_shared_dir}/test_data/certs
 
-show_environment 
+docker ps
 
-export DOCKER_API_VERSION=`docker version --format "{{ .Server.APIVersion }}"`
+docker_api_version=`docker version --format "{{ .Server.APIVersion }}"`
 
 cat << EOF >${host_shared_dir}/test/integration/group_vars/docker 
 ---
@@ -74,3 +74,4 @@ container_id=$(docker run \
                "${image}" /run.sh)
 
 docker rm --force registry
+docker ps
