@@ -64,6 +64,10 @@ container_id=$(docker run \
 registry_ip=$(docker inspect registry --format "{{ .NetworkSettings.IPAddress }}")
 echo "Registry IP: ${registry_ip}"
 
+cat << EOF >>${host_shared_dir}/test/integration/group_vars/docker
+docker_start_registry: no
+EOF
+
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
                -v ${host_shared_dir}:/ansible \

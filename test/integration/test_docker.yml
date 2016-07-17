@@ -13,6 +13,7 @@
           password: testpassword
         - username: chris+house_knecht
           password: password123
+  when: docker_start_registry
 
 - name: Wait for registry 
   hosts: docker
@@ -21,6 +22,7 @@
   tasks: 
     - command: ping -c 3 "{{ registry_common_name }}" 
     - wait_for: host="{{ registry_common_name }}" port="{{ registry_host_port }}"   
+  when: docker_start_registry
     
 - name: Run docker module tests 
   hosts: docker 

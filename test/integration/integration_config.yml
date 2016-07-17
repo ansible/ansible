@@ -3,7 +3,10 @@ win_output_dir: 'C:\ansible_testing'
 output_dir: ~/ansible_testing
 non_root_test_user: ansible
 pip_test_package: epdb
+
+# variables for docker modules testing
 playbook_debug: no
+docker_start_registry: yes
 
 # variables used in precedence tests, here passed to -e
 etest: 'from -e'
