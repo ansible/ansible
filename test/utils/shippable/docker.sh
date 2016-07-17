@@ -51,6 +51,8 @@ registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
 EOF
 
+cat ${host_shared_dir}/test/integration/group_vars/docker
+
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
                -v ${host_shared_dir}:/ansible \
@@ -59,3 +61,4 @@ container_id=$(docker run \
                -e DOCKER_API_VERSION=${docker_api_version} \
                --add-host=ansibleregistry.com:${SHIPPABLE_HOST_IP} \
                "${image}" /run.sh)
+
