@@ -2,6 +2,19 @@
 #
 # Integration tests for Ansible's Docker modules.
 #
+- name: Check vars
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    docker_data_path: "{{ lookup('env','DOCKER_DATA_PATH') }}"
+    registry_common_name: ansibleregistry.com 
+    registry_host_port: 5000
+    private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
+  tasks:
+    - debug: msg="docker_data_path: {{ docker_data_path }}"
+    - debug: msg="private_registry_url: {{ registry_registry_url }}"      
+
 - name: Run docker module tests 
   hosts: localhost
   connection: local
