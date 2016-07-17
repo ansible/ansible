@@ -7,7 +7,6 @@ keep_containers=""
 function show_environment
 {
     docker ps
-
 }
 
 function cleanup
@@ -53,6 +52,10 @@ container_id=$(docker run \
                -e DOCKER_API_VERSION=${docker_api_version} \
                --add-host=ansibleregistry.com:${SHIPPABLE_HOST_IP} \
                "${image}" /run.sh)
+
+docker inspect registry
+docker exec registry ls -l /ansible
+docker exec regsitry ls -l /data
 
 show_environment
 cleanup
