@@ -54,7 +54,7 @@ matrix:
 
 build:
   pre_ci_boot:
-    options: "--privileged=false --net=bridge -e SHIPPABLE_HOST_IP=`/sbin/ip route|awk '/default/ { print  $3}'`"
+    options: "--privileged=false --net=bridge -e SHIPPABLE_HOST_IP=`/sbin/ip route|awk '/default/ { print  $3}'` --add-host=ansibleregistry.com:`/sbin/ip route|awk '/default/{ print $3 }'`"
   ci:
     - test/utils/shippable/ci.sh
 
