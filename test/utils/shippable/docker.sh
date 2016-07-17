@@ -75,5 +75,6 @@ container_id=$(docker run \
                --add-host=ansibleregistry.com:${registry_ip} \
                "${image}" run.sh)
 
+
 docker rm --force registry
 docker ps
