@@ -321,6 +321,6 @@ test_async:
 test_docker:
 	/bin/rm -rf ./roles/ansible.local-registry; \
 	ansible-galaxy install -p ./roles  ansible.local-registry; \
-	ansible-playbook -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) test_docker.yml; \
+	ansible-playbook -i inventory.docker -e @$(VARS_FILE) -v $(TEST_FLAGS) test_docker.yml; \
 	RC=$$? ; \
 	exit $$RC;
