@@ -128,7 +128,7 @@ class Domain(JsonfyMixIn):
         self.manager.destroy_domain(self.name)
 
     def records(self):
-        json = self.manager.all_domain_records(self.id)
+        json = self.manager.all_domain_records(self.name)
         return map(DomainRecord, json)
 
     @classmethod
@@ -194,12 +194,12 @@ def core(module):
             records = domain.records()
             at_record = None
             for record in records:
-                if record.name == "@" and record.record_type == 'A':
+                if record.name == "@" and record.type == 'A':
                     at_record = record
 
             if not at_record.data == getkeyordie("ip"):
                 record.update(data=getkeyordie("ip"), record_type='A')
-                module.exit_json(changed=True, domain=Domain.find(id=record.domain_id).to_json())
+                module.exit_json(changed=True, domain=Domain.find(id=record.id).to_json())
 
         module.exit_json(changed=False, domain=domain.to_json())
 
