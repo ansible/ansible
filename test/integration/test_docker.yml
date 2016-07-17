@@ -13,10 +13,6 @@
           password: testpassword
         - username: chris+house_knecht
           password: password123
-      registry_auth_path: /data/auth
-      registry_cert_path: /data/certs
-      registry_host_cert_path: "{{ docker_data_path }}/certs"
-      registry_host_auth_path: "{{ docker_data_path }}/auth"
 
 - name: Wait for registry 
   hosts: docker
