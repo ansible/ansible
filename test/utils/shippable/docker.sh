@@ -58,7 +58,7 @@ container_id=$(docker run \
                -v ${host_shared_dir}:/ansible \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
-               "${image}" create-registry.sh)
+               "${image}" /create-registry.sh)
 
 registry_ip=$(docker inspect registry --format "{{ .NetworkSettings.IPAddress }}")
 echo "Registry IP: ${registry_ip}"
@@ -73,7 +73,7 @@ container_id=$(docker run \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
                --add-host=ansibleregistry.com:${registry_ip} \
-               "${image}" run-tests.sh)
+               "${image}" /run-tests.sh)
 
 
 docker rm --force registry
