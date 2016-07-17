@@ -42,8 +42,7 @@ show_environment
 
 docker_api_version=`docker version --format "{{ .Server.APIVersion }}"`
 
-if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
-     cat << EOF >${source_root}/test/integration/group_vars/docker 
+cat << EOF >${host_shared_dir}/test/integration/group_vars/docker 
 ---
 registry_host_cert_path: ${host_shared_dir}/test_data 
 registry_host_auth_path: ${host_shared_dir}/test_data
@@ -51,7 +50,6 @@ registry_common_name: ansibleregistry.com
 registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
 EOF
-fi
 
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
