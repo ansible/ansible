@@ -41,8 +41,17 @@ mkdir -p ${host_shared_dir}/test_data/certs
 show_environment 
 
 docker_api_version=`docker version --format "{{ .Server.APIVersion }}"`
-echo "Setting DOCKER_API_VERSION = ${docker_api_version}"
-echo "Shippable host IP = ${SHIPPABLE_HOST_IP}"
+
+if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
+     cat << EOF >${source_root}/test/integration/group_vars/docker 
+---
+registry_host_cert_path: ${host_shared_dir}/test_data 
+registry_host_auth_path: ${host_shared_dir}/test_data
+registry_common_name: ansibleregistry.com
+registry_host_port: 5000
+private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
+EOF
+fi
 
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
@@ -52,12 +61,3 @@ container_id=$(docker run \
                -e DOCKER_API_VERSION=${docker_api_version} \
                --add-host=ansibleregistry.com:${SHIPPABLE_HOST_IP} \
                "${image}" /run.sh)
-
-docker inspect registry
-docker exec registry ls -l /auth
-docker exec registry ls -l /certs
-docker exec registry cat /auth/htpasswd
-docker login -u testuser -p testpassword https://ansibleregistry.com:5000
-
-# show_environment
-# cleanup
