@@ -53,6 +53,7 @@ registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
 EOF
 
+cd $source_root
 source ./hacking/env_setup
 ansible-playbook -i inventory.docker test_registry.yml
 registry_ip=$(docker inspect --format "{{ .NetworkSettings.IPAddress }}")
