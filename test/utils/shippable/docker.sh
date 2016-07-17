@@ -53,10 +53,16 @@ registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
 EOF
 
-cd $source_root
-source ./hacking/env-setup
-ansible-playbook -i inventory.docker test_registry.yml
-registry_ip=$(docker inspect --format "{{ .NetworkSettings.IPAddress }}")
+container_id=$(docker run \
+               -v /var/run/docker.sock:/var/run/docker.sock \
+               -v ${host_shared_dir}:/ansible \
+               -v ${host_shared_dir}/test_data:/data \
+               -e DOCKER_API_VERSION=${docker_api_version} \
+               --add-host=ansibleregistry.com:${registry_ip} \
+               -w /ansible/test/integration
+               "${image}" make test_registry)
+
+registry_ip=$(docker inspect registry --format "{{ .NetworkSettings.IPAddress }}")
 echo "Registry IP: ${registry_ip}"
 
 container_id=$(docker run \
@@ -67,3 +73,4 @@ container_id=$(docker run \
                --add-host=ansibleregistry.com:${registry_ip} \
                "${image}" /run.sh)
 
+docker rm --force registry
