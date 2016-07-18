@@ -137,6 +137,7 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
     current_policies = [cp for cp in iam.get_all_user_policies(name).
                                         list_user_policies_result.
                                         policy_names]
+    pol = ""
     for pol in current_policies:
       '''
       urllib is needed here because boto returns url encoded strings instead
@@ -144,14 +145,13 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
       if urllib.unquote(iam.get_user_policy(name, pol).
                         get_user_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
+        break
+
     if state == 'present':
       # If policy document does not already exist (either it's changed
       # or the policy is not present) or if we're not skipping dupes then
       # make the put call.  Note that the put call does a create or update.
-      if not policy_match or not skip:
+      if (not policy_match or not skip) and pol != name:
         changed = True
         iam.put_user_policy(name, policy_name, pdoc)
     elif state == 'absent':
@@ -189,18 +189,18 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
       module.fail_json(msg=e.message)
 
   try:
+    pol = ""
     for pol in current_policies:
       if urllib.unquote(iam.get_role_policy(name, pol).
                         get_role_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
+        break
+
     if state == 'present':
       # If policy document does not already exist (either it's changed
       # or the policy is not present) or if we're not skipping dupes then
       # make the put call.  Note that the put call does a create or update.
-      if not policy_match or not skip:
+      if (not policy_match or not skip) and pol != name:
         changed = True
         iam.put_role_policy(name, policy_name, pdoc)
     elif state == 'absent':
@@ -234,6 +234,7 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
     current_policies = [cp for cp in iam.get_all_group_policies(name).
                                         list_group_policies_result.
                                         policy_names]
+    pol = ""
     for pol in current_policies:
       if urllib.unquote(iam.get_group_policy(name, pol).
                         get_group_policy_result.policy_document) == pdoc:
@@ -241,11 +242,12 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
         if policy_match:
           msg=("The policy document you specified already exists "
                "under the name %s." % pol)
+        break
     if state == 'present':
       # If policy document does not already exist (either it's changed
       # or the policy is not present) or if we're not skipping dupes then
       # make the put call.  Note that the put call does a create or update.
-      if not policy_match or not skip:
+      if (not policy_match or not skip) and pol != name:
         changed = True
         iam.put_group_policy(name, policy_name, pdoc)
     elif state == 'absent':
