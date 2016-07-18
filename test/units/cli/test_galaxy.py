@@ -30,6 +30,7 @@ import tarfile
 import tempfile
 
 from mock import patch
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -114,6 +115,33 @@ class TestGalaxy(unittest.TestCase):
         display_result = gc._display_role_info(role_info)
         if display_result.find('\t\tgalaxy_tags:') > -1:
             self.fail('Expected galaxy_tags to be indented twice')
+
+    def test_execute_install(self):
+        # testing installing with insufficient information
+        gc = GalaxyCLI(args=["install"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        # installing role
+        gc = GalaxyCLI(args=["install"])
+        with patch('sys.argv', ["--offline", "-r", self.role_req]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        completed_task = gc.execute_install()
+
+        # testing correct installation
+        role_file = os.path.join(self.role_path, self.role_name)
+        self.assertTrue(os.path.exists(role_file))
+        self.assertTrue(completed_task == 0)
+
+        # cleaning up
+        gc.args = ["remove"]
+        with patch('sys.argv', ["-c", "delete_me"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display") as mock_obj:
+            gc.run()
 
     def test_execute_remove(self):
         # installing role
