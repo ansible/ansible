@@ -41,7 +41,7 @@ For example, to manage a system service (which requires ``root`` privileges) whe
 
 To run a command as the ``apache`` user::
 
-    - name: Run a command as the apache uesr
+    - name: Run a command as the apache user
       command: somecommand
       become: true
       become_user: apache
