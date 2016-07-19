@@ -334,7 +334,7 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
+                all_vars = combine_vars(all_vars, task._role.get_vars(task._block._dep_chain, include_params=False))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         # next, we merge in the vars cache (include vars) and nonpersistent
