@@ -929,7 +929,7 @@ like so::
        - { role: app_user, name: Graham }
        - { role: app_user, name: John   }
 
-That's a bit arbitrary, but you can see how the same role was invoked multiple Times.  In that example it's quite likely there was
+That's a bit arbitrary, but you can see how the same role was invoked multiple times.  In that example it's quite likely there was
 no default for 'name' supplied at all.  Ansible can yell at you when variables aren't defined -- it's the default behavior in fact.
 
 So that's a bit about roles.
