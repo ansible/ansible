@@ -44,8 +44,8 @@ docker_api_version=`docker version --format "{{ .Server.APIVersion }}"`
 
 cat << EOF >${host_shared_dir}/test/integration/group_vars/docker 
 ---
-registry_host_cert_path: ${host_shared_dir}/test_data 
-registry_host_auth_path: ${host_shared_dir}/test_data
+registry_host_cert_path: ${host_shared_dir}/test_data/certs 
+registry_host_auth_path: ${host_shared_dir}/test_data/auth
 registry_auth_path: /auth
 registry_cert_path: /certs
 registry_common_name: ansibleregistry.com
@@ -56,8 +56,8 @@ EOF
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
                -v ${host_shared_dir}:/ansible \
-               -v ${host_shared_dir}/test_data:/certs \
-               -v ${host_shared_dir}/test_data:/auth \
+               -v ${host_shared_dir}/test_data/certs:/certs \
+               -v ${host_shared_dir}/test_data/auth:/auth \
                -e DOCKER_API_VERSION=${docker_api_version} \
                "${image}" /create-registry.sh)
 
