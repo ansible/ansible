@@ -28,6 +28,8 @@ $site = Get-AnsibleParam -obj $params -name "site" -type "str" -failifempty $tru
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 $physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str" -aliases "path"
 $application_pool = Get-AnsibleParam -obj $params -name "application_pool" -type "str"
+# Force update even if folders re equal or old is missing
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 
 $result = @{
   application_pool = $application_pool
@@ -85,6 +87,11 @@ try {
       }
 
       $app_folder = Get-Item $application.PhysicalPath
+      if ($force) {
+        # point at an existing folder
+        $app_folder = Get-Item $env:TEMP
+      }
+
       $folder = Get-Item $physical_path
       if ($folder.FullName -ne $app_folder.FullName) {
         Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name physicalPath -value $physical_path -WhatIf:$check_mode
