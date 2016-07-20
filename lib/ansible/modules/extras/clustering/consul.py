@@ -182,7 +182,7 @@ EXAMPLES = '''
 
   - name: register nginx with an http check
     consul:
-      name: nginx
+      service_name: nginx
       service_port: 80
       interval: 60s
       http: /status
