@@ -64,9 +64,18 @@ class TaskResult:
     def _check_key(self, key):
         if 'results' in self._result and self._task.loop:
             flag = False
+            found = False
             for res in self._result.get('results', []):
                 if isinstance(res, dict):
+                    if key in res:
+                        found = True
                     flag |= res.get(key, False)
-            return flag
+            if found:
+                return flag
+            else:
+                if key in self._result:
+                    return self._result.get(key, False)
+                else:
+                    return flag
         else:
             return self._result.get(key, False)
