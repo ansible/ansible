@@ -71,13 +71,17 @@ docker_start_registry: no
 EOF
 
 container_id=$(docker run \
+               -d \
                -v /var/run/docker.sock:/var/run/docker.sock \
                -v ${host_shared_dir}:/ansible \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
                -e DOCKER_START_REGISTRY=0 \
                --add-host=ansibleregistry.com:${registry_ip} \
-               "${image}" /run-tests.sh)
+               "${image}" sleep 60)
+
+docker exec ${container_id} cat /etc/hosts
+docker exec ${container_id} ping -c 3 ansibleregistry.com
 
 
 docker rm --force registry
