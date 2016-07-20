@@ -55,6 +55,7 @@ options:
       - Update even if old physical_path is missing or equal to current.
     type: bool
     default: 'no'
+    version_added: '2.4'
 author:
 - Henrik Wallström
 '''
