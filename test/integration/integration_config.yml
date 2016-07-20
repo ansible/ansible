@@ -6,7 +6,6 @@ pip_test_package: epdb
 
 # variables for docker modules testing
 playbook_debug: no
-docker_start_registry: yes
 
 # variables used in precedence tests, here passed to -e
 etest: 'from -e'
