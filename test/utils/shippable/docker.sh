@@ -82,7 +82,7 @@ container_id=$(docker run \
 
 docker exec ${container_id} cat /etc/hosts
 docker exec ${container_id} ping -c 3 ansibleregistry.com
-
+docker exec ${container_id} docker login -u testuser -p testpassword -e auser@yahoo.com https://ansibleregistry.com 
 
 docker rm --force registry
 docker ps
