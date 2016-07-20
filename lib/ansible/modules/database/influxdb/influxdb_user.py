@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, Kamil Szczygiel <kamil.szczygiel () intel.com>
+# (c) 2016, Adam Hamsik <haaaad () gmail.com>
 #
 # This file is part of Ansible
 #
@@ -31,38 +31,38 @@ requirements:
 options:
     hostname:
         description:
-            - The hostname or IP address on which InfluxDB server is listening
+            - The hostname or IP address on which InfluxDB server is listening.
         required: true
     username:
         description:
-            - Username that will be used to authenticate against InfluxDB server
+            - Username that will be used to authenticate against InfluxDB server.
         default: root
         required: false
     password:
         description:
-            - Password that will be used to authenticate against InfluxDB server
+            - Password that will be used to authenticate against InfluxDB server.
         default: root
         required: false
     port:
         description:
-            - The port on which InfluxDB server is listening
+            - The port on which InfluxDB server is listening.
         default: 8086
         required: false
     user_name:
         description:
-            - Name of the user that will be created/destroyed
+            - Name of the user that will be created/destroyed.
         required: true
     user_pass:
         description:
-            - User password to create
-        required: false
+            - User password to create.
+        required: true
     user_admin:
         description:
-            - Determine if created user will be admin or not
+            - Determine if created user will be admin or not.
         required: false
     state:
         description:
-            - Determines if the user should be created or destroyed
+            - Determines if the user should be created or destroyed.
         choices: ['present', 'absent']
         default: present
         required: false
@@ -70,7 +70,7 @@ options:
 
 EXAMPLES = '''
 # Example influxdb_user command from Ansible Playbooks
-- name: Create database
+- name: Create user
     influxdb_user:
       hostname: "{{ influxdb_ip_address }}"
       user_name: "{{ influxdb_user_name }}"
@@ -78,7 +78,7 @@ EXAMPLES = '''
       user_admin: no
       state: present
 
-- name: Destroy database
+- name: Destroy user
     influxdb_user:
       hostname: "{{ influxdb_ip_address }}"
       user_name: "{{ influxdb_user_name }}"
@@ -114,7 +114,7 @@ def influxdb_argument_spec():
         username=dict(default='root', type='str'),
         password=dict(default='root', type='str', no_log=True),
         user_name=dict(required=True, type='str'),
-        user_pass=dict(required=True, type='str'),
+        user_pass=dict(required=True, type='str', no_log=True),
         user_admin=dict(required=False, default=False, type='bool')
     )
 
