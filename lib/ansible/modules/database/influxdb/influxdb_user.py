@@ -100,7 +100,6 @@ RETURN = '''
 '''
 
 try:
-    import requests.exceptions
     from influxdb import InfluxDBClient
     from influxdb import exceptions
     HAS_INFLUXDB = True
@@ -204,6 +203,7 @@ def main():
             module.exit_json(changed=False)
 
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
