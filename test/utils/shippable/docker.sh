@@ -61,7 +61,7 @@ container_id=$(docker run \
                -e DOCKER_API_VERSION=${docker_api_version} \
                "${image}" /create-registry.sh)
 
-registry_ip=$(docker inspect registry --format "{{ .NetworkSettings.IPAddress }}")
+registry_ip=`docker inspect --format "{{ .NetworkSettings.IPAddress }}" registry`
 echo "Registry IP: ${registry_ip}"
 
 cat << EOF >>${host_shared_dir}/test/integration/group_vars/docker
