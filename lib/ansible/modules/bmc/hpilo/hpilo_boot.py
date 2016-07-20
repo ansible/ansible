@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 author: Dag Wieers
 module: hpilo_boot
 requirements: [ python hpilo ]
-short_description: Boot system using specific media through HP iLO interface
+short_description: Boot system using specific media through HP iLO interface.
 description:
   - "This module boots a system through its HP iLO interface. The boot media
     can be one of: cdrom, floppy, hdd, network or usb."
@@ -50,16 +50,16 @@ options:
     aliases: ['pass']
   media:
     description:
-      - The boot media to boot the system from
+      - The boot media to boot the system from.
     required: true
     default: network
     choices: [ "cdrom", "floppy", "hdd", "network", "normal", "usb" ]
   image:
     description:
-      - "The URL of a cdrom, floppy or usb boot media image.
-        'protocol://username:password@hostname:port/filename'"
+      - The URL of a cdrom, floppy or usb boot media image.
+        'protocol://<username>:<password>@<hostname>:<port>/filename'
       - protocol is either 'http' or 'https'
-      - "username:password is optional"
+      - username:password is optional
       - port is optional
   state:
     description:
@@ -76,7 +76,8 @@ options:
   force:
     description:
       - Whether to force a reboot (even when the system is already booted).
-      - As a safeguard, without force, hpilo_boot will refuse to reboot a server that is already running.
+      - As a safeguard, without force, hpilo_boot will refuse to reboot a
+        server that is already running.
     default: no
     choices: [ "yes", "no" ]
   timeout:

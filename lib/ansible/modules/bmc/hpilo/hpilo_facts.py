@@ -45,8 +45,8 @@ options:
         default: admin
 notes:
     - This module ought to be run from a system that can access the HP iLO
-    interface directly, either by using local_action or
-    using delegate_to.
+      interface directly, either by using local_action or
+      using delegate_to.
 '''
 
 EXAMPLES = '''
