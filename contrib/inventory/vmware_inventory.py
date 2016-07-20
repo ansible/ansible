@@ -80,7 +80,7 @@ class VMWareInventory(object):
     host_filters = []
     groupby_patterns = []
 
-    bad_types = ['Array']
+    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
     if (sys.version_info > (3, 0)):
         safe_types = [int, bool, str, float, None]
     else:
@@ -112,6 +112,10 @@ class VMWareInventory(object):
 
     def debugl(self, text):
         if self.args.debug:
+            try:
+                text = str(text)
+            except UnicodeEncodeError:
+                text = text.encode('ascii','ignore')                            
             print(text)
 
     def show(self):
@@ -313,18 +317,18 @@ class VMWareInventory(object):
         instances = []
 
         if hasattr(child, 'childEntity'):
-            self.debugl("CHILDREN: %s" % str(child.childEntity))
+            self.debugl("CHILDREN: %s" % child.childEntity)
             instances += self._get_instances_from_children(child.childEntity)
         elif hasattr(child, 'vmFolder'):
-            self.debugl("FOLDER: %s" % str(child))
+            self.debugl("FOLDER: %s" % child)
             instances += self._get_instances_from_children(child.vmFolder)
         elif hasattr(child, 'index'):
-            self.debugl("LIST: %s" % str(child))
+            self.debugl("LIST: %s" % child)
             for x in sorted(child):
                 self.debugl("LIST_ITEM: %s" % x)
                 instances += self._get_instances_from_children(x)
         elif hasattr(child, 'guest'):
-            self.debugl("GUEST: %s" % str(child))
+            self.debugl("GUEST: %s" % child)
             instances.append(child)
         elif hasattr(child, 'vm'):    
             # resource pools
@@ -433,7 +437,7 @@ class VMWareInventory(object):
                 newkey = t.render(v)
                 newkey = newkey.strip()
             except Exception as e:
-                self.debugl(str(e))
+                self.debugl(e)
                 #import epdb; epdb.st()
             if not newkey:
                 continue
@@ -520,13 +524,13 @@ class VMWareInventory(object):
 
         rdata = {}
 
-        self.debugl("PROCESSING: %s" % str(vobj))
+        self.debugl("PROCESSING: %s" % vobj)
 
         if type(vobj) in self.safe_types:
             try:
                 rdata = vobj
             except Exception as e:
-                self.debugl(str(e))
+                self.debugl(e)
 
         elif hasattr(vobj, 'append'):
             rdata = []
