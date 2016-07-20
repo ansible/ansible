@@ -29,7 +29,9 @@ import shutil
 import tarfile
 import tempfile
 
-from mock import patch
+from mock import patch, MagicMock, call
+
+from ansible.errors import AnsibleError
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -137,3 +139,33 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
+
+    def test_execute_delete(self):
+        # testing with insufficient arguments
+        gc = GalaxyCLI(args=["delete"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        # setting up
+        role1 = MagicMock()
+        role1.namespace = "username"
+        role1.name = "ROLE1"
+        role2 = MagicMock()
+        role2.namespace = "username"
+        role2.name = "ROLE2"
+        del_role_return_val = {'deleted_roles':[role1, role2], 'status':'Complete'}
+
+        # testing with sufficient arguments
+        gc = GalaxyCLI(args=["delete"])
+        with patch('sys.argv', ["-c", "username", "repo"]):
+            galaxy_parser = gc.parse()
+        super(GalaxyCLI, gc).run()
+        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
+        with patch.object(ansible.galaxy.api.GalaxyAPI, "delete_role", return_value=del_role_return_val) as mocked_delete_role:
+            completed_task = gc.execute_delete()
+
+            # tests
+            self.assertTrue(completed_task == True)
+            self.assertEqual(mocked_delete_role.call_count, 1)
+            mocked_delete_role.assert_called_with('username', 'repo')
