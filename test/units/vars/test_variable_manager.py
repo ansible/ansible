@@ -300,3 +300,57 @@ class TestVariableManager(unittest.TestCase):
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
         self.assertEqual(res['fact_cache_var'], 'fact_cache_var_from_fact_cache')
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_variable_manager_role_vars_dependencies(self):
+        '''
+        Tests vars from role dependencies with duplicate dependencies.
+        '''
+
+        v = VariableManager()
+        v._fact_cache = defaultdict(dict)
+
+        fake_loader = DictDataLoader({
+            # role common-role
+            '/etc/ansible/roles/common-role/tasks/main.yml': """
+            - debug: msg="{{role_var}}"
+            """,
+            # We do not need allow_duplicates: yes for this role
+            # because eliminating duplicates is done by the execution
+            # strategy, which we do not test here.
+
+            # role role1
+            '/etc/ansible/roles/role1/vars/main.yml': """
+            role_var: "role_var_from_role1"
+            """,
+            '/etc/ansible/roles/role1/meta/main.yml': """
+            dependencies:
+              - { role: common-role }
+            """,
+
+            # role role2
+            '/etc/ansible/roles/role2/vars/main.yml': """
+            role_var: "role_var_from_role2"
+            """,
+            '/etc/ansible/roles/role2/meta/main.yml': """
+            dependencies:
+              - { role: common-role }
+            """,
+        })
+
+        play1 = Play.load(dict(
+           hosts=['all'],
+           roles=['role1', 'role2'],
+        ), loader=fake_loader, variable_manager=v)
+
+        # The task defined by common-role exists twice because role1
+        # and role2 depend on common-role.  Check that the tasks see
+        # different values of role_var.
+        blocks = play1.compile()
+        task = blocks[1].block[0]
+        res = v.get_vars(loader=fake_loader, play=play1, task=task)
+        self.assertEqual(res['role_var'], 'role_var_from_role1')
+
+        task = blocks[2].block[0]
+        res = v.get_vars(loader=fake_loader, play=play1, task=task)
+        self.assertEqual(res['role_var'], 'role_var_from_role2')
