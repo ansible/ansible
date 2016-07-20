@@ -185,3 +185,15 @@
 
 - name: uninstall sos and sharutils
   yum: name=sos,sharutils state=removed
+
+- name: install non-existent rpm 
+  yum: name="{{ item }}"
+  with_items:
+  - does-not-exist
+  register: non_existent_rpm
+  ignore_errors: True
+
+- name: check non-existent rpm install failed
+  assert:
+    that:
+    - non_existent_rpm|failed
