@@ -299,7 +299,9 @@ def main():
     user = module.params['name']
     password = module.params['password']
     ssl = module.params['ssl']
-    ssl_cert_reqs = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+    ssl_cert_reqs = None
+    if ssl:
+        ssl_cert_reqs = getattr(ssl_lib, module.params['ssl_cert_reqs'])
     roles = module.params['roles']
     state = module.params['state']
     update_password = module.params['update_password']
