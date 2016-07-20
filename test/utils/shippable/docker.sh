@@ -46,8 +46,8 @@ cat << EOF >${host_shared_dir}/test/integration/group_vars/docker
 ---
 registry_host_cert_path: ${host_shared_dir}/test_data 
 registry_host_auth_path: ${host_shared_dir}/test_data
-registry_auth_path: ${host_shared_dir}/test_data 
-registry_cert_path: ${host_shared_dir}/test_data 
+registry_auth_path: /auth
+registry_cert_path: /certs
 registry_common_name: ansibleregistry.com
 registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
@@ -56,7 +56,8 @@ EOF
 container_id=$(docker run \
                -v /var/run/docker.sock:/var/run/docker.sock \
                -v ${host_shared_dir}:/ansible \
-               -v ${host_shared_dir}/test_data:/data \
+               -v ${host_shared_dir}/test_data:/certs \
+               -v ${host_shared_dir}/test_data:/auth \
                -e DOCKER_API_VERSION=${docker_api_version} \
                "${image}" /create-registry.sh)
 
