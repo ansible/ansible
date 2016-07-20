@@ -20,33 +20,31 @@
 DOCUMENTATION = '''
 ---
 module: auth0_user_facts
-short_description: Module for managing auth0 users
+short_description: Module for gathering facts about auth0 users.
 description:
-    - Auth0 user managing module. It can search for a given user and
-      return it's payload, create/delete user and update application
-      metadata.
-requirements: [ python requests ]
+    - Auth0 user gathering facts module. It can search for a given user and
+      return it's payload.
 version_added: "2.2"
 options:
   query:
     description:
-     - query to select given user
-    required: false
+     - Query used to select wanted user.
+    required: true
   auth0_token:
     description:
-     - authentication token used for auth0 communication
+     - Authentication token used for auth0 communication.
     default: null
     required: true
     aliases: ['token']
   auth0_domain:
     description:
-     - auth0 domain used for authentication
+     - Auth0 domain used for authentication.
     default: null
     required: true
     aliases: ['domain']
   search_engine:
     description:
-      - Select required search engine for user queries
+      - Select required search engine for user queries.
     default: 'v2'
     required: false
 '''
@@ -70,10 +68,10 @@ import sys
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            auth0_token=dict(required=True, type='str'),
+            auth0_token=dict(required=True, type='str', no_log=True),
             auth0_domain=dict(required=True, type='str'),
-            search_engine=dict(required=False, default=None, type='str'),
-            query=dict(type='str', required=True),
+            search_engine=dict(required=False, default='v2', type='str'),
+            query=dict(required=True, type='str'),
         ),
         supports_check_mode=False
     )

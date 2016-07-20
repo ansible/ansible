@@ -20,39 +20,39 @@
 DOCUMENTATION = '''
 ---
 module: auth0_user
-short_description: Module for managing auth0 users
+short_description: Module for managing auth0 users.
 description:
     - Auth0 user managing module. It can search for a given user and
       return it's payload, create/delete user and update application
       metadata.
-requirements: [ python requests ]
 version_added: "2.2"
 options:
   state:
     description:
-     - the state of the collection. Either present or absent
+     - The state of the user collection. delete_all will remove
+       all existing users defined in auth0 domain while absent
+       will remove only one given user identified by his user_id.
     default: 'present'
     required: true
-    aliases: []
     choices: ['present', 'absent', 'delete_all']
   user_data:
     description:
-     - data used to update given user definition
+     - Data used to update given user definition.
     required: false
     aliases: ['body']
   user_id:
     description:
-     - data used to update given user definition
+     - User id for a given user.
     required: false
   auth_token:
     description:
-     - authentication token used for auth0 communication
+     - Authentication token used for auth0 communication.
     default: null
     required: true
     aliases: ['token']
   auth0_domain:
     description:
-     - auth0 domain used for authentication
+     - Auth0 domain used for authentication.
     default: null
     required: true
     aliases: ['domain']
@@ -103,9 +103,9 @@ import sys
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            auth0_token=dict(required=True, type='str', aliases=['token']),
+            auth0_token=dict(required=True, type='str', aliases=['token'], no_log=True),
             auth0_domain=dict(required=True, type='str', aliases=['domain']),
-            state=dict(choices=['present', 'absent', 'delete_all']),
+            state=dict(required=True, default='present', choices=['present', 'absent', 'delete_all']),
             user_id=dict(required=False, type='str'),
             user_data=dict(type='dict', required=False, aliases=['body']),
 
