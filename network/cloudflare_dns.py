@@ -87,7 +87,7 @@ options:
     default: 30
   ttl:
     description:
-      - The TTL to give the new record. Min 1 (automatic), max 2147483647
+      - The TTL to give the new record. Must be between 120 and 2,147,483,647 seconds, or 1 for automatic.
     required: false
     default: 1 (automatic)
   type:
