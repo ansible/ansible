@@ -80,9 +80,13 @@ container_id=$(docker run \
                --link registry \
                "${image}" sleep 60)
 
-docker exec ${container_id} cat /etc/hosts
-docker exec ${container_id} ping -c 3 registry 
-docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
+#docker exec ${container_id} cat /etc/hosts
+#docker exec ${container_id} ping -c 3 registry 
+#docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
+
+docker version
+
+docker login -u tesetuser -p testpassword https://ansibleregistry:5000
 
 docker rm --force ${container_id}
 docker rm --force registry
