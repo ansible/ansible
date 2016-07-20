@@ -52,7 +52,7 @@ options:
     - The application pool in which the new site executes.
   force:
     description:
-      - Update even if old physical_path is missing or equal to current.
+      - Force update even if old physical_path is missing or equal to current.
     type: bool
     default: 'no'
     version_added: '2.4'
