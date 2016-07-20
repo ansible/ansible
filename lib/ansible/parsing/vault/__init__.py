@@ -30,6 +30,12 @@ from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
 from hashlib import md5
@@ -71,10 +77,9 @@ try:
 except ImportError:
     pass
 except Exception as e:
-    if e.__module__ == 'pkg_resources' and e.__class__.__name__ == 'DistributionNotFound':
-        pass
-    else:
-        raise
+    display.warning("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'")
+    import traceback
+    traceback.print_exc()
 
 from ansible.compat.six import PY3
 from ansible.utils.unicode import to_unicode, to_bytes
