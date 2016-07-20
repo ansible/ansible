@@ -389,7 +389,7 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
         volume = self.get_volume()
 
         if volume:
-            if 'attached' in volume and not self.module.param.get('force'):
+            if 'attached' in volume and not self.module.params.get('force'):
                 self.module.fail_json(msg="Volume '%s' is attached, use force=true for detaching and removing the volume." % volume.get('name'))
 
             self.result['changed'] = True
