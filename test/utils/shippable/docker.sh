@@ -77,12 +77,12 @@ container_id=$(docker run \
                -v ${host_shared_dir}/test_data:/data \
                -e DOCKER_API_VERSION=${docker_api_version} \
                -e DOCKER_START_REGISTRY=0 \
-               --link registry:ansibleregistry.com \
+               --link registry \
                "${image}" sleep 60)
 
 docker exec ${container_id} cat /etc/hosts
-docker exec ${container_id} ping -c 3 ansibleregistry.com
-docker exec ${container_id} docker login -u testuser -p testpassword -e auser@yahoo.com https://ansibleregistry.com:5000 
+docker exec ${container_id} ping -c 3 registry 
+docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
 
 docker rm --force ${container_id}
 docker rm --force registry
