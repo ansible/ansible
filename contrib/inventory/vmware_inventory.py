@@ -80,7 +80,7 @@ class VMWareInventory(object):
     host_filters = []
     groupby_patterns = []
 
-    bad_types = ['Array']
+    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
     if (sys.version_info > (3, 0)):
         safe_types = [int, bool, str, float, None]
     else:
