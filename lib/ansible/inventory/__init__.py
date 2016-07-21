@@ -718,13 +718,13 @@ class Inventory(object):
             self._vars_per_host = {}
             self._vars_per_group = {}
 
-    def get_host_vars(self, host, new_pb_basedir=False):
+    def get_host_vars(self, host, new_pb_basedir=False, return_results=False):
         """ Read host_vars/ files """
-        return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=new_pb_basedir)
+        return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=new_pb_basedir, return_results=return_results)
 
-    def get_group_vars(self, group, new_pb_basedir=False):
+    def get_group_vars(self, group, new_pb_basedir=False, return_results=False):
         """ Read group_vars/ files """
-        return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir)
+        return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir, return_results=return_results)
 
     def _find_group_vars_files(self, basedir):
         """ Find group_vars/ files """
@@ -746,7 +746,7 @@ class Inventory(object):
             found_vars = set(os.listdir(unicode(path)))
         return found_vars
 
-    def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False):
+    def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False, return_results=False):
         """
         Loads variables from group_vars/<groupname> and host_vars/<hostname> in directories parallel
         to the inventory base directory or in the same directory as the playbook.  Variables in the playbook
@@ -785,11 +785,15 @@ class Inventory(object):
             if host is None and any(map(lambda ext: group.name + ext in self._group_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # load vars in dir/group_vars/name_of_group
                 base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='strict')
-                self._variable_manager.add_group_vars_file(base_path, self._loader)
+                host_results = self._variable_manager.add_group_vars_file(base_path, self._loader)
+                if return_results:
+                    results = combine_vars(results, host_results)
             elif group is None and any(map(lambda ext: host.name + ext in self._host_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # same for hostvars in dir/host_vars/name_of_host
                 base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='strict')
-                self._variable_manager.add_host_vars_file(base_path, self._loader)
+                group_results = self._variable_manager.add_host_vars_file(base_path, self._loader)
+                if return_results:
+                    results = combine_vars(results, group_results)
 
         # all done, results is a dictionary of variables for this particular host.
         return results
