@@ -40,7 +40,7 @@ except ImportError:
     import configparser
 from ansible.module_utils.basic import get_all_subclasses
 
-# py2 vs py3; replace with six via ziploader
+# py2 vs py3; replace with six via ansiballz
 try:
     # python2
     from StringIO import StringIO

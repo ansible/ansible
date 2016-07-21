@@ -2031,7 +2031,7 @@ class AnsibleModule(object):
         # If using ansible or ansible-playbook with a remote system ...
         #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
 
-        # Clean out python paths set by ziploader
+        # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in os.environ:
             pypaths = os.environ['PYTHONPATH'].split(':')
             pypaths = [x for x in pypaths \
