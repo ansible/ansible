@@ -329,7 +329,7 @@ def main():
                              stack_policy_body=stack_policy_body,
                              template_url=template_url,
                              disable_rollback=disable_rollback,
-                             capabilities=['CAPABILITY_IAM'],
+                             capabilities=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
                              **kwargs)
             operation = 'CREATE'
         except Exception as err:
@@ -352,7 +352,7 @@ def main():
                              stack_policy_body=stack_policy_body,
                              disable_rollback=disable_rollback,
                              template_url=template_url,
-                             capabilities=['CAPABILITY_IAM'])
+                             capabilities=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'])
             operation = 'UPDATE'
         except Exception as err:
             error_msg = boto_exception(err)
