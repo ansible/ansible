@@ -80,7 +80,7 @@ container_id=$(docker run \
                --link registry \
                "${image}" sleep 60)
 
-docker exec ${container_id} curl https://registry:5000/v2/_catalog  
+docker exec ${container_id} curl --insecure --user testuser:testpassword https://registry:5000/v2/_catalog
 
 #docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
 
