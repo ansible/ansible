@@ -80,14 +80,14 @@ container_id=$(docker run \
                --link registry \
                "${image}" sleep 60)
 
-#docker exec ${container_id} cat /etc/hosts
-#docker exec ${container_id} ping -c 3 registry 
+docker exec ${container_id} curl https://registry:5000/v2/_catalog  
+
 #docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
 
 docker version
 docker exec registry ls /auth
 docker exec registry cat /auth/htpasswd
-docker exex registry ls /certs
+docker exec registry ls /certs
 
 #ping -c 3 ansibleregistry.com
 #docker login -u testuser -p testpassword -e auser@yahoo.com  https://ansibleregistry.com:5000
