@@ -86,7 +86,7 @@ container_id=$(docker run \
 
 docker version
 
-docker login -u tesetuser -p testpassword -e auser@yahoo.com  https://ansibleregistry:5000
+docker login -u tesetuser -p testpassword -e auser@yahoo.com  https://ansibleregistry.com:5000
 
 docker rm --force ${container_id}
 docker rm --force registry
