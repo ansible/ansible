@@ -165,16 +165,20 @@ def main():
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
-        if project:
-            p = cloud.get_project(project)
-            if p is None:
-                module.fail_json(msg="Project %s is not valid" % project)
-            filters['project'] = p['id']
         if domain:
             d = cloud.get_domain(domain)
             if d is None:
                 module.fail_json(msg="Domain %s is not valid" % domain)
             filters['domain'] = d['id']
+        if project:
+            if domain:
+                p = cloud.get_project(project, domain_id=filters['domain'])
+            else:
+                p = cloud.get_project(project)
+
+            if p is None:
+                module.fail_json(msg="Project %s is not valid" % project)
+            filters['project'] = p['id']
 
         assignment = cloud.list_role_assignments(filters=filters)
 
