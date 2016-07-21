@@ -48,7 +48,7 @@ registry_host_cert_path: ${host_shared_dir}/test_data/certs
 registry_host_auth_path: ${host_shared_dir}/test_data/auth
 registry_auth_path: /auth
 registry_cert_path: /certs
-registry_common_name: ansibleregistry.com
+registry_common_name: registry
 registry_host_port: 5000
 private_registry_url: "https://{{ registry_common_name }}:{{ registry_host_port }}"
 EOF
