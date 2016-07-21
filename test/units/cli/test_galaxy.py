@@ -125,8 +125,8 @@ class TestGalaxy(unittest.TestCase):
         role_info = {'name': 'some_role_name',
                      'galaxy_info': galaxy_info}
         display_result = gc._display_role_info(role_info)
-        if display_result.find('\t\tgalaxy_tags:') > -1:
-            self.fail('Expected galaxy_tags to be indented twice')
+        if display_result.find('\n\tgalaxy_info:') == -1:
+            self.fail('Expected galaxy_info to be indented once')
 
 <<<<<<< 370a90f18ef464bc26c495dd3cefb7f9292a2ace
     def test_execute_init(self):
