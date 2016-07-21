@@ -21,7 +21,7 @@ import socket
 
 from ansible.module_utils.basic import get_exception
 
-# py2 vs py3; replace with six via ziploader
+# py2 vs py3; replace with six via ansiballz
 try:
     from StringIO import StringIO
 except ImportError:
