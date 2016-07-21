@@ -85,7 +85,9 @@ container_id=$(docker run \
 #docker exec ${container_id} docker login -u testuser -p testpassword https://registry:5000/
 
 docker version
-docker exec ${container_id} ls /auth
+docker exec registry ls /auth
+docker exec registry cat /auth/htpasswd
+docker exex registry ls /certs
 
 #ping -c 3 ansibleregistry.com
 #docker login -u testuser -p testpassword -e auser@yahoo.com  https://ansibleregistry.com:5000
