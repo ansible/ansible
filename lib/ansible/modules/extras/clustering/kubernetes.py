@@ -334,7 +334,10 @@ def main():
     file_reference = module.params.get('file_reference')
 
     if inline_data:
-        data = inline_data
+        if not isinstance(inline_data, dict) and not isinstance(inline_data, list):
+            data = yaml.load(inline_data)
+        else:
+            data = inline_data
     else:
         try:
             f = open(file_reference, "r")
