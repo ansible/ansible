@@ -79,7 +79,7 @@ except ImportError:
 except Exception as e:
     display.warning("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'")
     import traceback
-    traceback.print_exc()
+    display.debug("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
 
 from ansible.compat.six import PY3
 from ansible.utils.unicode import to_unicode, to_bytes
