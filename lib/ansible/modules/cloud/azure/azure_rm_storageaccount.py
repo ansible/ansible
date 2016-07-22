@@ -389,7 +389,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 account_dict['tags'] = self.tags
             return account_dict
         sku = Sku(SkuName(self.account_type))
-        sku.tier = SkuTier.standard if 'Standard' in self.account_type else SkuTier['Pemium']
+        sku.tier = SkuTier.standard if 'Standard' in self.account_type else SkuTier.premium
         parameters = StorageAccountCreateParameters(sku, self.kind, self.location, tags=self.tags)
         self.log(str(parameters))
         try:
