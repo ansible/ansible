@@ -35,7 +35,6 @@ import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
 from nose.plugins.skip import SkipTest
-import ansible
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
