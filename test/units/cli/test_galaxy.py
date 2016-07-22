@@ -29,9 +29,13 @@ from nose.plugins.skip import SkipTest
 
 from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
+from mock import patch, call
 
 import ansible
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
+
+from nose.plugins.skip import SkipTest
+import ansible
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -159,3 +163,107 @@ class TestGalaxy(unittest.TestCase):
             # testing that error expected is not raised with --ignore-errors flag in use
             gc.run()
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
+
+    def run_parse_common(self, galaxycli_obj, action):
+        with patch.object(ansible.cli.SortedOptParser, "set_usage") as mocked_usage:
+            with patch('sys.argv', ["-c"]):
+                galaxy_parser = galaxycli_obj.parse()
+
+                # checking that the common results of parse() for all possible actions have been created/called
+                self.assertTrue(galaxy_parser)
+                self.assertTrue(isinstance(galaxycli_obj.parser, ansible.cli.SortedOptParser))
+                self.assertTrue(isinstance(galaxycli_obj.galaxy, ansible.galaxy.Galaxy))
+                if action in ['import', 'delete']:
+                    formatted_call = 'usage: %prog ' + action + ' [options] github_user github_repo'
+                elif action == 'info':
+                    formatted_call = 'usage: %prog ' + action + ' [options] role_name[,version]'
+                elif action == 'init':
+                    formatted_call = 'usage: %prog ' + action + ' [options] role_name'
+                elif action == 'install':
+                    formatted_call = 'usage: %prog ' + action + ' [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]'
+                elif action == 'list':
+                    formatted_call = 'usage: %prog ' + action + ' [role_name]'
+                elif action == 'login':
+                    formatted_call = 'usage: %prog ' + action + ' [options]'
+                elif action == 'remove':
+                    formatted_call = 'usage: %prog ' + action + ' role1 role2 ...'
+                elif action == 'search':
+                    formatted_call = 'usage: %prog ' + action + ' [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]'
+                elif action == 'setup':
+                    formatted_call = 'usage: %prog ' + action + ' [options] source github_user github_repo secret'
+                calls = [call('usage: %prog [delete|import|info|init|install|list|login|remove|search|setup] [--help] [options] ...'), call(formatted_call)]
+                mocked_usage.assert_has_calls(calls)
+        
+    def test_parse(self):
+        ''' systematically testing that the expected options parser is created '''
+        # testing no action given
+        gc = GalaxyCLI(args=[])
+        with patch('sys.argv', ["-c"]):
+            self.assertRaises(AnsibleOptionsError, gc.parse)
+                                                
+        # testing action that doesn't exist
+        gc = GalaxyCLI(args=["NOT_ACTION"])
+        with patch('sys.argv', ["-c"]):
+            self.assertRaises(AnsibleOptionsError, gc.parse)
+
+        # testing action 'delete'
+        gc = GalaxyCLI(args=["delete"])
+        self.run_parse_common(gc, "delete")
+        self.assertTrue(gc.options.verbosity==0)   
+        
+        # testing action 'import'
+        gc = GalaxyCLI(args=["import"])
+        self.run_parse_common(gc, "import")
+        self.assertTrue(gc.options.wait==True)
+        self.assertTrue(gc.options.reference==None)
+        self.assertTrue(gc.options.check_status==False)
+        self.assertTrue(gc.options.verbosity==0)
+
+        # testing action 'info'
+        gc = GalaxyCLI(args=["info"])
+        self.run_parse_common(gc, "info")
+        self.assertTrue(gc.options.offline==False)
+
+        # testing action 'init'
+        gc = GalaxyCLI(args=["init"])
+        self.run_parse_common(gc, "init")
+        self.assertTrue(gc.options.offline==False)
+        self.assertTrue(gc.options.force==False)
+
+        # testing action 'install'
+        gc = GalaxyCLI(args=["install"])
+        self.run_parse_common(gc, "install")
+        self.assertTrue(gc.options.ignore_errors==False)
+        self.assertTrue(gc.options.no_deps==False)
+        self.assertTrue(gc.options.role_file==None)
+        self.assertTrue(gc.options.force==False)
+
+        # testing action 'list'
+        gc = GalaxyCLI(args=["list"])
+        self.run_parse_common(gc, "list")
+        self.assertTrue(gc.options.verbosity==0)
+
+        # testing action 'login'
+        gc = GalaxyCLI(args=["login"])
+        self.run_parse_common(gc, "login")
+        self.assertTrue(gc.options.verbosity==0)
+        self.assertTrue(gc.options.token==None)
+
+        # testing action 'remove'
+        gc = GalaxyCLI(args=["remove"])
+        self.run_parse_common(gc, "remove")
+        self.assertTrue(gc.options.verbosity==0)
+
+        # testing action 'search'
+        gc = GalaxyCLI(args=["search"])
+        self.run_parse_common(gc, "search")
+        self.assertTrue(gc.options.platforms==None)
+        self.assertTrue(gc.options.tags==None)
+        self.assertTrue(gc.options.author==None)
+
+        # testing action 'setup'
+        gc = GalaxyCLI(args=["setup"])
+        self.run_parse_common(gc, "setup")
+        self.assertTrue(gc.options.verbosity==0)
+        self.assertTrue(gc.options.remove_id==None)
+        self.assertTrue(gc.options.setup_list==False)
