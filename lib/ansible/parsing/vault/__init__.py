@@ -115,6 +115,12 @@ class VaultLib:
         :returns: True if it is recognized.  Otherwise, False.
         """
 
+        if hasattr(data, 'read'):
+            current_position = data.tell()
+            header_part = data.read(len(b_HEADER))
+            data.seek(current_position)
+            return self.is_encrypted(header_part)
+
         if to_bytes(data, errors='strict', encoding='utf-8').startswith(b_HEADER):
             return True
         return False
