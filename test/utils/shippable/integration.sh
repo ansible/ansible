@@ -13,6 +13,10 @@ http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 keep_containers="${KEEP_CONTAINERS:-}"
 copy_source="${COPY_SOURCE:-}"
 
+# Force ansible color output by default.
+# To disable color force mode use FORCE_COLOR=0
+force_color="${FORCE_COLOR:-1}"
+
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
@@ -68,7 +72,7 @@ if [ "${controller_shared_dir}" ]; then
 fi
 
 # Enabling colored output in Shippable console
-color_settings="--env ANSIBLE_FORCE_COLOR=1"
+color_settings="--env ANSIBLE_FORCE_COLOR=$force_color"
 
 httptester_id=$(docker run -d "${http_image}")
 container_id=$(docker run -d \
