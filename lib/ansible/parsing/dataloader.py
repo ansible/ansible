@@ -331,11 +331,11 @@ class DataLoader():
 
         try:
             with open(to_bytes(real_path), 'rb') as f:
-                data = f.read()
-                if self._vault.is_encrypted(data):
+                if self._vault.is_encrypted(f):
                     # if the file is encrypted and no password was specified,
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name
+                    data = f.read()
                     if not self._vault_password:
                         raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
