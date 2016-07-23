@@ -26,7 +26,7 @@ To make an escaped string that will work on all versions you have two options::
 
 uses key=value escaping which has not changed.  The other option is to check for the ansible version::
 
-"{{ (ansible_version|version_compare('ge', '2.0'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
+"{{ (ansible_version|version_compare('2.0', 'ge'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
 
 * trailing newline When a string with a trailing newline was specified in the
   playbook via yaml dict format, the trailing newline was stripped. When
