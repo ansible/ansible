@@ -130,7 +130,29 @@ And here's an example showing some specific version downloads from multiple sour
       version: 0.1.0
 
 As you can see in the above, there are a large amount of controls available
-to customize where roles can be pulled from, and what to save roles as.     
+to customize where roles can be pulled from, and what to save roles as. 
+
+You can also pull down multiple roles from a single source(just make sure that you have a meta/main.yml file at the root level).
+::
+     meta\main.yml
+     common-role1\tasks\main.yml
+     common-role2\tasks\main.yml
+    
+For example, if the above common roles are published to a git repo, you can pull them down using:
+::
+     # multiple roles from the same repo
+     - src: git@gitlab.company.com:mygroup/ansible-common.git
+       name: common-roles
+       scm: git
+       version: master
+
+You could then use these common roles in your plays
+::
+     ---
+     - hosts: webservers
+       roles:
+         - common-roles/common-role1
+         - common-roles/common-role2
 
 Roles pulled from galaxy work as with other SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
 
