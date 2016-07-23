@@ -72,22 +72,24 @@ Installing Multiple Roles From Multiple Files
 =============================================
 
 At a basic level, including requirements files allows you to break up bits of configuration policy into smaller files. Role includes pull in roles from other files.
-
-    ansible-galaxy install -r requirements.yml
-
-    # from galaxy
-    - src: yatesr.timezone
-
-    - include: webserver.yml
+::
+      ansible-galaxy install -r requirements.yml
+ 
+Content of requirements.yml
+::
+     # from github
+     - src: yatesr.timezone
+     
+     - include: webserver.yml
 
 
 Content of the webserver.yml file.
-
-    # from github
-    - src: https://github.com/bennojoy/nginx
-
-    # from github installing to a relative path
-    - src: https://github.com/bennojoy/nginx
+::
+     # from github
+     - src: https://github.com/bennojoy/nginx
+ 
+     # from github installing to a relative path
+     - src: https://github.com/bennojoy/nginx
       path: vagrant/roles/
 
 Advanced Control over Role Requirements Files
