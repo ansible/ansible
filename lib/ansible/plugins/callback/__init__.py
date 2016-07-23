@@ -89,7 +89,7 @@ class CallbackBase:
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
-        if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
+        if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
