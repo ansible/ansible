@@ -179,3 +179,49 @@
     that:
       - "template_result.changed == False"
 
+
+# check_mode
+
+- name: fill in a basic template in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: check file exists
+  stat: path={{output_dir}}/short.templated
+  register: templated
+
+- name: verify that the file was marked as changed in check mode but was not created
+  assert: 
+    that: 
+      - "not templated.stat.exists"
+      - "template_result|changed"
+
+- name: fill in a basic template
+  template: src=short.j2 dest={{output_dir}}/short.templated
+
+- name: fill in a basic template in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: verify that the file was marked as not changes in check mode
+  assert: 
+    that: 
+      - "not template_result|changed"
+      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
+
+- name: change var for the template
+  set_fact: 
+    templated_var: "changed"
+
+- name: fill in a basic template with changed var in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: verify that the file was marked as changed in check mode but the content was not changed
+  assert: 
+    that: 
+      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
+      - "template_result|changed"

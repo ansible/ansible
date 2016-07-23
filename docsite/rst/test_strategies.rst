@@ -42,7 +42,7 @@ existing system, using the `--check` flag to the `ansible` command will report i
 bring the system into a desired state.
 
 This can let you know up front if there is any need to deploy onto the given system.  Ordinarily scripts and commands don't run in check mode, so if you
-want certain steps to always execute in check mode, such as calls to the script module, add the 'always_run' flag::
+want certain steps to always execute in check mode, such as calls to the script module, disable check mode for those tasks::
 
 
    roles:
@@ -50,7 +50,7 @@ want certain steps to always execute in check mode, such as calls to the script 
 
    tasks:
      - script: verify.sh
-       always_run: True
+       check_mode: no
 
 Modules That Are Useful for Testing
 ```````````````````````````````````
