@@ -284,7 +284,7 @@ a list of roles and parameters to insert before the specified role, such as the 
     ---
     dependencies:
       - { role: common, some_parameter: 3 }
-      - { role: apache, appache_port: 80 }
+      - { role: apache, apache_port: 80 }
       - { role: postgres, dbname: blarg, other_parameter: 12 }
 
 Role dependencies can also be specified as a full path, just like top level roles::
