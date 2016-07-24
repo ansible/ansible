@@ -134,7 +134,7 @@ And here's an example showing some specific version downloads from multiple sour
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as. 
 
-You can also pull down multiple roles from a single source(just make sure that you have a meta/main.yml file at the root level).
+You can also pull down multiple roles from a single source (just make sure that you have a meta/main.yml file at the root level).
 ::
      meta\main.yml
      common-role1\tasks\main.yml
