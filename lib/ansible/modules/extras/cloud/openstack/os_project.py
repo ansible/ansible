@@ -111,7 +111,7 @@ def _needs_update(module, project):
     keys = ('description', 'enabled')
     for key in keys:
         if module.params[key] is not None and module.params[key] != project.get(key):
-            return True       
+            return True
 
     return False
 
@@ -176,9 +176,13 @@ def main():
                 except:
                     # Ok, let's hope the user is non-admin and passing a sane id
                     pass
-        
+
         cloud = shade.openstack_cloud(**module.params)
-        project = cloud.get_project(name)
+
+        if domain:
+            project = cloud.get_project(name, domain_id=domain)
+        else:
+            project = cloud.get_project(name)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, project))
