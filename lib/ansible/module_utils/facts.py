@@ -188,7 +188,7 @@ class Facts(object):
         if not cached_facts:
             self.facts = {}
         else:
-            self.facts = cached_facts    
+            self.facts = cached_facts
         ### TODO: Eventually, these should all get moved to populate().  But
         # some of the values are currently being used by other subclasses (for
         # instance, os_family and distribution).  Have to sort out what to do
@@ -1327,7 +1327,7 @@ class LinuxHardware(Hardware):
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
                     self.get_holders(part, part_sysdir)
-        
+
                     d['partitions'][partname] = part
 
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
@@ -2276,6 +2276,25 @@ class LinuxNetwork(Network):
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
+
+            def parse_ethtool_output(device,output):
+                interfaces[device]['features'] = {}
+                for line in output.strip().split('\n'):
+                    if not line:
+                        continue
+                    if line.endswith(":") :
+                        continue
+                    key,value = line.split(": ")
+                    if not value :
+                        continue
+                    interfaces[device]['features'][key.strip().replace('-','_')] = value.strip()
+
+            ethtool_path = self.module.get_bin_path("ethtool")
+            if ethtool_path:
+                args = [ethtool_path, '-k', device]
+                rc, stdout, stderr = self.module.run_command(args)
+                ethtool_data = stdout
+                parse_ethtool_output(device,ethtool_data)
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
