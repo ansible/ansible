@@ -376,7 +376,7 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
                     existing_gateways = DRY_RUN_GATEWAYS
             err_msg = '{0} Retrieving gateways'.format(DRY_RUN_MSGS)
 
-    except botocore.exceptions.ClientError, e:
+    except botocore.exceptions.ClientError as e:
             err_msg = str(e)
 
     return gateways_retrieved, err_msg, existing_gateways
@@ -457,7 +457,7 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
             else:
                 time.sleep(polling_increment_secs)
 
-        except botocore.exceptions.ClientError, e:
+        except botocore.exceptions.ClientError as e:
             err_msg = str(e)
 
     if not status_achieved:
@@ -578,7 +578,7 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
                 "EIP {0} does not exist".format(eip_address)
             )
 
-    except botocore.exceptions.ClientError, e:
+    except botocore.exceptions.ClientError as e:
             err_msg = str(e)
 
     return allocation_id, err_msg
@@ -618,7 +618,7 @@ def allocate_eip_address(client, check_mode=False):
             ip_allocated = True
         err_msg = 'eipalloc id {0} created'.format(new_eip)
 
-    except botocore.exceptions.ClientError, e:
+    except botocore.exceptions.ClientError as e:
         err_msg = str(e)
 
     return ip_allocated, err_msg, new_eip
@@ -1022,7 +1022,7 @@ def main():
                 region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
         )
-    except botocore.exceptions.ClientError, e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
 
     changed = False
