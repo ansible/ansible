@@ -21,6 +21,14 @@ __metaclass__ = type
 
 import os
 import shutil
+<<<<<<< HEAD
+=======
+
+from mock import patch
+
+from ansible.errors import AnsibleError
+from ansible.module_utils.urls import SSLValidationError
+>>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
 import tarfile
 import tempfile
 
@@ -34,8 +42,11 @@ from mock import patch, call
 import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
+<<<<<<< HEAD
 from nose.plugins.skip import SkipTest
 
+=======
+>>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
 
@@ -120,6 +131,54 @@ class TestGalaxy(unittest.TestCase):
         if display_result.find('\n\tgalaxy_info:') == -1:
             self.fail('Expected galaxy_info to be indented once')
 
+<<<<<<< HEAD
+=======
+    def test_execute_init(self):
+        ''' verifies that execute_init created a skeleton framework of a role that complies with the galaxy metadata format '''
+        # testing that an error is raised if no role name is given
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.execute_init)
+
+        # setup - temp dir to create framework for role
+        role_path = os.path.join(tempfile.mkdtemp(), "roles")
+        
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+            gc.run()
+            self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+
+        # verifying that framework was created
+        for path in ['./delete_me', './delete_me/README.md', './delete_me/files', './delete_me/templates', './delete_me/handlers/main.yml', './delete_me/tasks/main.yml', './delete_me/vars/main.yml', './delete_me/tests/inventory', './delete_me/tests/test.yml', './delete_me/meta/main.yml']:
+            created_path = os.path.join(role_path, path)
+            self.assertTrue(os.path.exists(created_path))
+
+        # testing for case when the directory and files are in existence already
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
+
+        # testing for case when the directory and files are in existence already while using the option: --force
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me", "--force"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+            gc.run()
+            self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+
+        # testing framework is as expected
+        for path in ['./delete_me', './delete_me/README.md', './delete_me/files', './delete_me/templates', './delete_me/handlers/main.yml', './delete_me/tasks/main.yml', './delete_me/vars/main.yml', './delete_me/tests/inventory', './delete_me/tests/test.yml', './delete_me/meta/main.yml']:
+            created_path = os.path.join(role_path, path)
+            self.assertTrue(os.path.exists(created_path))
+
+        # removing the temporary dir and files we created
+        shutil.rmtree(role_path)
+
+>>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
     def test_execute_remove(self):
         # installing role
         gc = GalaxyCLI(args=["install"])
@@ -266,3 +325,7 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(gc.options.verbosity==0)
         self.assertTrue(gc.options.remove_id==None)
         self.assertTrue(gc.options.setup_list==False)
+<<<<<<< HEAD
+=======
+
+>>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
