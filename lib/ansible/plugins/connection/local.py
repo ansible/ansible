@@ -69,7 +69,6 @@ class Connection(ConnectionBase):
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
         display.vvv(u"EXEC {0}".format(cmd), host=self._play_context.remote_addr)
-        # FIXME: cwd= needs to be set to the basedir of the playbook
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
