@@ -40,8 +40,12 @@ options:
     default: null
   routes:
     description:
-      - "List of routes in the route table. Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id', 'instance_id', 'interface_id', or 'vpc_peering_connection_id'. If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'."
-    required: true
+      - "List of routes in the route table.
+        Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
+        'instance_id', 'interface_id', or 'vpc_peering_connection_id'.
+        If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'. Routes are required for present states."
+    required: false
+    default: None
   state:
     description:
       - "Create or destroy the VPC route table"
@@ -281,6 +285,18 @@ def route_spec_matches_route(route_spec, route):
         'interface_id': 'interface_id',
         'vpc_peering_connection_id': 'vpc_peering_connection_id',
     }
+
+    # This is a workaround to catch managed NAT gateways as they do not show
+    # up in any of the returned values when describing route tables.
+    # The caveat of doing it this way is that if there was an existing
+    # route for another nat gateway in this route table there is not a way to
+    # change to another nat gateway id. Long term solution would be to utilise
+    # boto3 which is a very big task for this module or to update boto.
+    if route_spec.get('gateway_id') and 'nat-' in route_spec['gateway_id']:
+        if route.destination_cidr_block == route_spec['destination_cidr_block']:
+            if all((not route.gateway_id, not route.instance_id, not route.interface_id, not route.vpc_peering_connection_id)):
+                return True
+
     for k in key_attr_map.iterkeys():
         if k in route_spec:
             if route_spec[k] != getattr(route, k):
@@ -316,27 +332,31 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     # correct than checking whether the route uses a propagating VGW.
     # The current logic will leave non-propagated routes using propagating
     # VGWs in place.
-    routes_to_delete = [r for r in routes_to_match
-                        if r.gateway_id != 'local'
-                        and (propagating_vgw_ids is not None
-                             and r.gateway_id not in propagating_vgw_ids)]
+    routes_to_delete = []
+    for r in routes_to_match:
+        if r.gateway_id:
+            if r.gateway_id != 'local' and not r.gateway_id.startswith('vpce-'):
+                if not propagating_vgw_ids or r.gateway_id not in propagating_vgw_ids:
+                    routes_to_delete.append(r)
+        else:
+            routes_to_delete.append(r)
 
-    changed = routes_to_delete or route_specs_to_create
+    changed = bool(routes_to_delete or route_specs_to_create)
     if changed:
-        for route_spec in route_specs_to_create:
-            try:
-                vpc_conn.create_route(route_table.id,
-                                      dry_run=check_mode,
-                                      **route_spec)
-            except EC2ResponseError as e:
-                if e.error_code == 'DryRunOperation':
-                    pass
-
         for route in routes_to_delete:
             try:
                 vpc_conn.delete_route(route_table.id,
                                       route.destination_cidr_block,
                                       dry_run=check_mode)
+            except EC2ResponseError as e:
+                if e.error_code == 'DryRunOperation':
+                    pass
+
+        for route_spec in route_specs_to_create:
+            try:
+                vpc_conn.create_route(route_table.id,
+                                      dry_run=check_mode,
+                                      **route_spec)
             except EC2ResponseError as e:
                 if e.error_code == 'DryRunOperation':
                     pass
@@ -462,17 +482,19 @@ def get_route_table_info(route_table):
 
     return route_table_info
 
-def create_route_spec(connection, routes, vpc_id):
+
+def create_route_spec(connection, module, vpc_id):
+    routes = module.params.get('routes')
 
     for route_spec in routes:
         rename_key(route_spec, 'dest', 'destination_cidr_block')
 
-        if 'gateway_id' in route_spec and route_spec['gateway_id'] and \
-                route_spec['gateway_id'].lower() == 'igw':
+        if route_spec.get('gateway_id') and route_spec['gateway_id'].lower() == 'igw':
             igw = find_igw(connection, vpc_id)
             route_spec['gateway_id'] = igw
 
     return routes
+
 
 def ensure_route_table_present(connection, module):
 
@@ -483,7 +505,7 @@ def ensure_route_table_present(connection, module):
     tags = module.params.get('tags')
     vpc_id = module.params.get('vpc_id')
     try:
-        routes = create_route_spec(connection, module.params.get('routes'), vpc_id)
+        routes = create_route_spec(connection, module, vpc_id)
     except AnsibleIgwSearchException as e:
         module.fail_json(msg=e[0])
 
@@ -564,7 +586,7 @@ def main():
             lookup = dict(default='tag', required=False, choices=['tag', 'id']),
             propagating_vgw_ids = dict(default=None, required=False, type='list'),
             route_table_id = dict(default=None, required=False),
-            routes = dict(default=None, required=False, type='list'),
+            routes = dict(default=[], required=False, type='list'),
             state = dict(default='present', choices=['present', 'absent']),
             subnets = dict(default=None, required=False, type='list'),
             tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
