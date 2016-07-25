@@ -342,6 +342,7 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
     params = dict()
     err_msg = ""
     gateways_retrieved = False
+    existing_gateways = list()
     if not states:
         states = ['available', 'pending']
     if nat_gateway_id:
@@ -361,14 +362,12 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
     try:
         if not check_mode:
             gateways = client.describe_nat_gateways(**params)['NatGateways']
-            existing_gateways = list()
             if gateways:
                 for gw in gateways:
                     existing_gateways.append(convert_to_lower(gw))
             gateways_retrieved = True
         else:
             gateways_retrieved = True
-            existing_gateways = []
             if nat_gateway_id:
                 if DRY_RUN_GATEWAYS[0]['nat_gateway_id'] == nat_gateway_id:
                     existing_gateways = DRY_RUN_GATEWAYS
