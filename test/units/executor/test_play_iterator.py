@@ -329,7 +329,7 @@ class TestPlayIterator(unittest.TestCase):
         # test the high-level add_tasks() method
         s = HostState(blocks=[0,1,2])
         itr._insert_tasks_into_state = MagicMock(return_value=s)
-        itr.add_tasks(hosts[0], [3,4,5])
+        itr.add_tasks(hosts[0], [MagicMock(), MagicMock(), MagicMock()])
         self.assertEqual(itr._host_states[hosts[0].name], s)
 
         # now actually test the lower-level method that does the work

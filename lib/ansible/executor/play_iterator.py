@@ -154,6 +154,8 @@ class PlayIterator:
         self._play = play
         self._blocks = []
 
+        self._task_uuid_cache = dict()
+
         # Default options to gather
         gather_subset = C.DEFAULT_GATHER_SUBSET
         gather_timeout = C.DEFAULT_GATHER_TIMEOUT
@@ -179,11 +181,16 @@ class PlayIterator:
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
         self._blocks.append(setup_block)
+        self.cache_block_tasks(setup_block)
 
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
+                self.cache_block_tasks(new_block)
                 self._blocks.append(new_block)
+
+        for handler_block in self._play.handlers:
+            self.cache_block_tasks(handler_block)
 
         self._host_states = {}
         start_at_matched = False
@@ -226,6 +233,18 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=[])
 
         return self._host_states[host.name].copy()
+
+    def cache_block_tasks(self, block):
+        def _cache_portion(p):
+            for t in p:
+                if isinstance(t, Block):
+                    self.cache_block_tasks(t)
+                elif t._uuid not in self._task_uuid_cache:
+                    self._task_uuid_cache[t._uuid] = t
+
+        for portion in (block.block, block.rescue, block.always):
+            if portion is not None:
+                _cache_portion(portion)
 
     def get_next_task_for_host(self, host, peek=False):
 
@@ -514,46 +533,7 @@ class PlayIterator:
         else:
             the_uuid = task
 
-        def _search_block(block):
-            '''
-            helper method to check a block's task lists (block/rescue/always)
-            for a given task uuid. If a Block is encountered in the place of a
-            task, it will be recursively searched (this happens when a task
-            include inserts one or more blocks into a task list).
-            '''
-            for b in (block.block, block.rescue, block.always):
-                for t in b:
-                    if isinstance(t, Block):
-                        res = _search_block(t)
-                        if res:
-                            return res
-                    elif t._uuid == the_uuid:
-                        return t
-            return None
-
-        def _search_state(state):
-            for block in state._blocks:
-                res = _search_block(block)
-                if res:
-                    return res
-            for child_state in (state.tasks_child_state, state.rescue_child_state, state.always_child_state):
-                if child_state is not None:
-                    res = _search_state(child_state)
-                    if res:
-                        return res
-            return None
-
-        s = self.get_host_state(host)
-        res = _search_state(s)
-        if res:
-            return res
-
-        for block in self._play.handlers:
-            res = _search_block(block)
-            if res:
-                return res
-
-        return None
+        return self._task_uuid_cache.get(the_uuid, None)
 
     def _insert_tasks_into_state(self, state, task_list):
         # if we've failed at all, or if the task list is empty, just return the current state
@@ -590,5 +570,7 @@ class PlayIterator:
         return state
 
     def add_tasks(self, host, task_list):
+        for b in task_list:
+            self.cache_block_tasks(b)
         self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)
 
