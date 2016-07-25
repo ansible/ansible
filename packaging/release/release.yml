@@ -169,7 +169,14 @@
       OFFICIAL: yes
 
   - name: rename the dist tar.gz to include the full release
-    command: "mv {{release_dir}}/dist/ansible-{{ansible_release_version}}.tar.gz {{release_dir}}/dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz"
+    command:
+      _raw_params: "mv dist/ansible-{{ansible_release_version}}.tar.gz dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz"
+      chdir: "{{release_dir}}/"
+
+  - name: generate the SHA file for the tar.gz
+    shell:
+      _raw_params: "sha256sum dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz > dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz.sha"
+      chdir: "{{release_dir}}/"
 
   - block:
     - pause:
