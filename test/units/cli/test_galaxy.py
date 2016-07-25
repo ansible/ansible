@@ -21,20 +21,15 @@ __metaclass__ = type
 
 import os
 import shutil
-<<<<<<< 370a90f18ef464bc26c495dd3cefb7f9292a2ace
 
 from mock import patch
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import SSLValidationError
-=======
 import tarfile
 import tempfile
 
 from mock import patch
-<<<<<<< b3dc925ddb987ad14efbf4ad3eafd1c14e6a2e84
->>>>>>> Adding a test for GalaxyCLI and two methods on which it depends. Tes…  (#16651)
-=======
 from nose.plugins.skip import SkipTest
 
 from ansible.compat.six import PY3
@@ -42,14 +37,7 @@ from ansible.compat.tests import unittest
 from mock import patch, call
 
 import ansible
-<<<<<<< 891f90226147c2ad264c8fd42f863f49c5592494
-from ansible.errors import AnsibleError
->>>>>>> Adding a test for GalaxyCLI. Tests exit_without_ignore method.
-=======
 from ansible.errors import AnsibleError, AnsibleOptionsError
-
-from nose.plugins.skip import SkipTest
->>>>>>> Test GalaxyCLI when no actions are provided
 
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
@@ -135,7 +123,6 @@ class TestGalaxy(unittest.TestCase):
         if display_result.find('\n\tgalaxy_info:') == -1:
             self.fail('Expected galaxy_info to be indented once')
 
-<<<<<<< 370a90f18ef464bc26c495dd3cefb7f9292a2ace
     def test_execute_init(self):
         ''' verifies that execute_init created a skeleton framework of a role that complies with the galaxy metadata format '''
         # testing that an error is raised if no role name is given
@@ -144,69 +131,43 @@ class TestGalaxy(unittest.TestCase):
             galaxy_parser = gc.parse()
         self.assertRaises(AnsibleError, gc.execute_init)
 
-        # This test requires internet connection. Using try/except to ensure internet is working rather than fail tests requiring internet while offline.
-        try:
-            # following tests use the role name 'delete_me'
-            # testing for cases when the directory doesn't already exist
-            gc = GalaxyCLI(args=["init"])
-            if os.path.exists('./delete_me'):
-                shutil.rmtree('./delete_me')
-            with patch('sys.argv', ["-c", "-v", "delete_me"]):
-                galaxy_parser = gc.parse()
-            with patch.object(ansible.cli.CLI, "run", return_value=None): # to eliminate config or default file used message
-                with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
-                    gc.run()
-                    self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+        # setup - temp dir to create framework for role
+        role_path = os.path.join(tempfile.mkdtemp(), "roles")
+        
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+            gc.run()
+            self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
 
-            # verifying that the expected framework was created
-            self.assertTrue(os.path.exists('./delete_me'))
-            self.assertTrue(os.path.isfile('./delete_me/README.md'))
-            self.assertTrue(os.path.isdir('./delete_me/files'))
-            self.assertTrue(os.path.isdir('./delete_me/templates'))
-            self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
-            self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+        # verifying that framework was created
+        for path in ['./delete_me', './delete_me/README.md', './delete_me/files', './delete_me/templates', './delete_me/handlers/main.yml', './delete_me/tasks/main.yml', './delete_me/vars/main.yml', './delete_me/tests/inventory', './delete_me/tests/test.yml', './delete_me/meta/main.yml']:
+            created_path = os.path.join(role_path, path)
+            self.assertTrue(os.path.exists(created_path))
 
-            # testing for case when the directory and files are in existence already
-            gc = GalaxyCLI(args=["init"])
-            with patch('sys.argv', ["-c", "-v", "delete_me"]):
-                galaxy_parser = gc.parse()
-            with patch.object(ansible.cli.CLI, "run", return_value=None):
-                self.assertRaises(AnsibleError, gc.run)
+        # testing for case when the directory and files are in existence already
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me"]):
+            galaxy_parser = gc.parse()
+        self.assertRaises(AnsibleError, gc.run)
 
-            # testing for case when the directory and files are in existence already while using the option: --force
-            gc = GalaxyCLI(args=["init"])
-            with patch('sys.argv', ["-c", "-v", "delete_me", "--force"]):
-                galaxy_parser = gc.parse()
-            with patch.object(ansible.cli.CLI, "run", return_value=None):  # to eliminate config or default file used message
-                with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
-                    gc.run()
-                    self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
+        # testing for case when the directory and files are in existence already while using the option: --force
+        gc = GalaxyCLI(args=["init"])
+        with patch('sys.argv', ["-c", "--offline", "-p", role_path, "delete_me", "--force"]):
+            galaxy_parser = gc.parse()
+        with patch.object(ansible.utils.display.Display, "display") as mock_display:  # used to test that it was called with the expected message
+            gc.run()
+            self.assertTrue(mock_display.called_once_with("- delete_me was created successfully"))
 
-            # verifying that the files expected were created
-            self.assertTrue(os.path.exists('./delete_me'))
-            self.assertTrue(os.path.isfile('./delete_me/README.md'))
-            self.assertTrue(os.path.isdir('./delete_me/files'))
-            self.assertTrue(os.path.isdir('./delete_me/templates'))
-            self.assertTrue(os.path.isfile('./delete_me/handlers/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/tasks/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/vars/main.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/tests/inventory'))
-            self.assertTrue(os.path.isfile('./delete_me/tests/test.yml'))
-            self.assertTrue(os.path.isfile('./delete_me/meta/main.yml'))
+        # testing framework is as expected
+        for path in ['./delete_me', './delete_me/README.md', './delete_me/files', './delete_me/templates', './delete_me/handlers/main.yml', './delete_me/tasks/main.yml', './delete_me/vars/main.yml', './delete_me/tests/inventory', './delete_me/tests/test.yml', './delete_me/meta/main.yml']:
+            created_path = os.path.join(role_path, path)
+            self.assertTrue(os.path.exists(created_path))
 
-            # removing the files we created
-            shutil.rmtree('./delete_me')
+        # removing the temporary dir and files we created
+        shutil.rmtree(role_path)
 
-        except AnsibleError as e:
-            if "Failed to get data from the API server" in e.message:
-                raise SkipTest(' there is a test case within this method that requires an internet connection and a valid CA cert    ificate installed; this part of the method is skipped when one or both of these requirements are not provided\n ... ok')
-            else:
-                raise
-=======
     def test_execute_remove(self):
         # installing role
         gc = GalaxyCLI(args=["install"])
@@ -229,9 +190,6 @@ class TestGalaxy(unittest.TestCase):
         # testing role was removed
         self.assertTrue(completed_task == 0)
         self.assertTrue(not os.path.exists(role_file))
-<<<<<<< b3dc925ddb987ad14efbf4ad3eafd1c14e6a2e84
->>>>>>> Adding a test for GalaxyCLI and two methods on which it depends. Tes…  (#16651)
-=======
 
     def test_exit_without_ignore(self):
         ''' tests that GalaxyCLI exits with the error specified unless the --ignore-errors flag is used '''
@@ -252,9 +210,6 @@ class TestGalaxy(unittest.TestCase):
             # testing that error expected is not raised with --ignore-errors flag in use
             gc.run()
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
-<<<<<<< 891f90226147c2ad264c8fd42f863f49c5592494
->>>>>>> Adding a test for GalaxyCLI. Tests exit_without_ignore method.
-=======
 
     def run_parse_common(self, galaxycli_obj, action):
         with patch.object(ansible.cli.SortedOptParser, "set_usage") as mocked_usage:
@@ -359,4 +314,4 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(gc.options.verbosity==0)
         self.assertTrue(gc.options.remove_id==None)
         self.assertTrue(gc.options.setup_list==False)
->>>>>>> Test GalaxyCLI when no actions are provided
+
