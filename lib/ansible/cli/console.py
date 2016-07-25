@@ -332,6 +332,22 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
 
+    def do_check(self, arg):
+        """Toggle whether plays run with check mode"""
+        if arg:
+            self.options.check = C.mk_boolean(arg)
+            display.v("check mode changed to %s" % self.options.check)
+        else:
+            display.display("Please specify check mode value, e.g. `check yes`")
+
+    def do_diff(self, arg):
+        """Toggle whether plays run with diff"""
+        if arg:
+            self.options.diff = C.mk_boolean(arg)
+            display.v("diff mode changed to %s" % self.options.diff)
+        else:
+            display.display("Please specify a diff value , e.g. `diff yes`")
+
     def do_exit(self, args):
         """Exits from the console"""
         sys.stdout.write('\n')

@@ -34,7 +34,7 @@ def mk_boolean(value):
     if value is None:
         return False
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+    if val.lower() in [ "true", "t", "y", "1", "yes", "on" ]:
         return True
     else:
         return False
