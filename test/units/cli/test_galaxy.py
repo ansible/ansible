@@ -21,14 +21,11 @@ __metaclass__ = type
 
 import os
 import shutil
-<<<<<<< HEAD
-=======
 
 from mock import patch
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import SSLValidationError
->>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
 import tarfile
 import tempfile
 
@@ -42,11 +39,6 @@ from mock import patch, call
 import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
-<<<<<<< HEAD
-from nose.plugins.skip import SkipTest
-
-=======
->>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
 if PY3:
     raise SkipTest('galaxy is not ported to be py3 compatible yet')
 
@@ -131,8 +123,6 @@ class TestGalaxy(unittest.TestCase):
         if display_result.find('\n\tgalaxy_info:') == -1:
             self.fail('Expected galaxy_info to be indented once')
 
-<<<<<<< HEAD
-=======
     def test_execute_init(self):
         ''' verifies that execute_init created a skeleton framework of a role that complies with the galaxy metadata format '''
         # testing that an error is raised if no role name is given
@@ -178,7 +168,6 @@ class TestGalaxy(unittest.TestCase):
         # removing the temporary dir and files we created
         shutil.rmtree(role_path)
 
->>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
     def test_execute_remove(self):
         # installing role
         gc = GalaxyCLI(args=["install"])
@@ -325,7 +314,3 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(gc.options.verbosity==0)
         self.assertTrue(gc.options.remove_id==None)
         self.assertTrue(gc.options.setup_list==False)
-<<<<<<< HEAD
-=======
-
->>>>>>> ed4c277... setting framework up in a temporary directory and cleaning up code a little
