@@ -80,6 +80,8 @@ class Connection(ConnectionBase):
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
+        self.docker_env = os.environ.copy()
+        self.docker_env["DOCKER_API_VERSION"] = docker_version
 
         # The remote user we will request from docker (if supported)
         self.remote_user = None
@@ -112,7 +114,15 @@ class Connection(ConnectionBase):
         cmd = list(self.docker_cmd)
         cmd += ['version']
 
-        cmd_output = subprocess.check_output(cmd)
+        try:
+            cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            match = re.search('^Error response from daemon: client is newer than server (?:.+?)server API version: (.+?)\)$',
+                             err.output, re.MULTILINE)
+            if match:
+                return self._sanitize_version(match.group(1))
+            else:
+                raise
 
         for line in cmd_output.split('\n'):
             if line.startswith('Server version:'):  # old docker versions
@@ -129,8 +139,7 @@ class Connection(ConnectionBase):
         """ Get the default user configured in the docker container """
         cmd = list(self.docker_cmd)
         cmd += ['inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr]
-        p = subprocess.Popen(cmd,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
 
@@ -177,7 +186,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
         local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
@@ -216,7 +225,7 @@ class Connection(ConnectionBase):
         with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError:
                 raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
@@ -239,7 +248,7 @@ class Connection(ConnectionBase):
         args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
         # Rename if needed
