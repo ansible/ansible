@@ -4,6 +4,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install --force systemd-sysvinit && \
     zypper --non-interactive install --auto-agree-with-licenses --no-recommends \
     acl \
+    apache2 \
     asciidoc \
     bzip2 \
     curl \
