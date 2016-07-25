@@ -71,12 +71,9 @@ if [ "${controller_shared_dir}" ]; then
     cp -a "${SHIPPABLE_BUILD_DIR}" "${controller_shared_dir}"
 fi
 
-# Enabling colored output in Shippable console
-color_settings="--env ANSIBLE_FORCE_COLOR=$force_color"
-
 httptester_id=$(docker run -d "${http_image}")
 container_id=$(docker run -d \
-    ${color_settings} \
+    --env "ANSIBLE_FORCE_COLOR=${force_color}" \
     -v "/sys/fs/cgroup:/sys/fs/cgroup:ro" \
     -v "${host_shared_dir}:${test_shared_dir}" \
     --link="${httptester_id}:ansible.http.tests" \
