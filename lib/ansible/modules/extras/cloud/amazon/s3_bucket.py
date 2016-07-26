@@ -203,13 +203,7 @@ def _create_or_update_bucket(connection, module, location):
             module.fail_json(msg=e.message)
 
     if policy is not None:
-        # Deal with policy if either JSON formatted string or just data structure
-        if isinstance(policy, basestring):
-            compare_policy = json.dumps(policy)
-            load_policy = policy
-        else:
-            compare_policy = policy
-            load_policy = json.loads(policy)
+        compare_policy = json.loads(policy)
 
         if current_policy is None or json.loads(current_policy) != compare_policy:
             try:
@@ -350,7 +344,7 @@ def main():
     argument_spec.update(
         dict(
             force = dict(required=False, default='no', type='bool'),
-            policy = dict(required=False),
+            policy = dict(required=False, type='json'),
             name = dict(required=True, type='str'),
             requester_pays = dict(default='no', type='bool'),
             s3_url = dict(aliases=['S3_URL'], type='str'),
