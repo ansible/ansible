@@ -281,7 +281,9 @@ class DataLoader():
         find one file in first path in stack taking roles into account and adding play basedir as fallback
         '''
         result = None
-        if source.startswith('~') or source.startswith(os.path.sep):
+        if not source:
+           display.warning('Invalid request to find a file that matches an empty string or "null" value')
+        elif source.startswith('~') or source.startswith(os.path.sep):
             # path is absolute, no relative needed, check existence and return source
             test_path = to_bytes(unfrackpath(source),errors='strict')
             if os.path.exists(test_path):
