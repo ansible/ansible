@@ -667,6 +667,7 @@ class AnsibleModule(object):
                 'path': self._check_type_path,
                 'raw': self._check_type_raw,
                 'jsonarg': self._check_type_jsonarg,
+                'json': self._check_type_jsonarg,
             }
         if not bypass_checks:
             self._check_required_arguments()
