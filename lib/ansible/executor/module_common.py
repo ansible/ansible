@@ -626,15 +626,10 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
-        executable = interpreter.split(u' ', 1)
-        if len(executable) == 2 and executable[0].endswith(u'env'):
-            # Handle /usr/bin/env python style interpreter settings
-            interpreter = u"'{0}', '{1}'".format(*executable)
-        else:
-            # Still have to enclose the parts of the interpreter in quotes
-            # because we're substituting it into the template as a python
-            # string
-            interpreter = u"'{0}'".format(interpreter)
+        # Enclose the parts of the interpreter in quotes because we're
+        # substituting it into the template as a Python string
+        interpreter_parts = interpreter.split(u' ')
+        interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
         output.write(to_bytes(ACTIVE_ZIPLOADER_TEMPLATE % dict(
             zipdata=zipdata,
