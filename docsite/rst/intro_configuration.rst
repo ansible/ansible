@@ -457,6 +457,8 @@ Ansible knows how to look in multiple locations if you feed it a colon separated
 local_tmp
 =========
 
+.. versionadded:: 2.1
+
 When Ansible gets ready to send a module to a remote machine it usually has to
 add a few things to the module: Some boilerplate code, the module's
 parameters, and a few constants from the config file.  This combination of
