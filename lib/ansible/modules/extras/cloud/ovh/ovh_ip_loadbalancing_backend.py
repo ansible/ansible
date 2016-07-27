@@ -108,7 +108,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import sys
+import time
 try:
     import ovh
     import ovh.exceptions
@@ -306,7 +306,7 @@ def main():
     module.exit_json(changed=moduleChanged)
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
