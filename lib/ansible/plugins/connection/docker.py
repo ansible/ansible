@@ -113,7 +113,8 @@ class Connection(ConnectionBase):
 
         cmd += ['version']
 
-        cmd_output = subprocess.check_output(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
 
         for line in cmd_output.split('\n'):
             if line.startswith('Server version:'):  # old docker versions
@@ -125,7 +126,8 @@ class Connection(ConnectionBase):
             'version', '--format', "'{{.Server.Version}}'"
         ]
 
-        cmd_output = subprocess.check_output(new_docker_cmd)
+        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
 
         return self._sanitize_version(cmd_output)
 
