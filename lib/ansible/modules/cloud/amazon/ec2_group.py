@@ -217,7 +217,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
             group_id = group.id
             groups[group_id] = group
             groups[group_name] = group
-        elif group_name in groups:
+        elif group_name in groups and (vpc_id is None or groups[group_name].vpc_id == vpc_id):
             group_id = groups[group_name].id
         else:
             if not rule.get('group_desc', '').strip():
