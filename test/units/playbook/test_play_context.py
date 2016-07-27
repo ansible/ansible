@@ -164,6 +164,10 @@ class TestPlayContext(unittest.TestCase):
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
 
+        play_context.become_method = 'dockerexec'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """echo %s; %s""" % (play_context.success_key, default_cmd))
+
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
 

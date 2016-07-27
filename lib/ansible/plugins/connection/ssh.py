@@ -49,7 +49,7 @@ class Connection(ConnectionBase):
 
     transport = 'ssh'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('runas', 'dockerexec'))
 
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)

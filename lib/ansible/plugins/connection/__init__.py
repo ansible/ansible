@@ -59,7 +59,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
 
     has_pipelining = False
-    become_methods = C.BECOME_METHODS
+    become_methods = frozenset(C.BECOME_METHODS)
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.

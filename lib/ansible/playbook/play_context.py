@@ -552,6 +552,10 @@ class PlayContext(Base):
 
                 becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'dockerexec':
+
+                becomecmd = 'echo %s; %s' % (success_key, cmd)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 

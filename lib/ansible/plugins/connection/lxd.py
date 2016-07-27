@@ -22,6 +22,8 @@ import os
 from distutils.spawn import find_executable
 from subprocess import call, Popen, PIPE
 
+import ansible.constants as C
+
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -32,6 +34,7 @@ class Connection(ConnectionBase):
 
     transport = "lxd"
     has_pipelining = True
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('dockerexec',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

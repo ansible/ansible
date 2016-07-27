@@ -45,7 +45,7 @@ class Connection(ConnectionBase):
 
     transport = 'zone'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    become_methods = frozenset(C.BECOME_METHODS) - frozenset(('su', 'dockerexec'))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
