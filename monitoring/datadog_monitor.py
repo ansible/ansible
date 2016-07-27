@@ -143,8 +143,8 @@ datadog_monitor:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            api_key=dict(required=True),
-            app_key=dict(required=True),
+            api_key=dict(required=True, no_log=True),
+            app_key=dict(required=True, no_log=True),
             state=dict(required=True, choises=['present', 'absent', 'mute', 'unmute']),
             type=dict(required=False, choises=['metric alert', 'service check', 'event alert']),
             name=dict(required=True),
