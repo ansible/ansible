@@ -330,7 +330,7 @@ def main():
             backend=dict(required=False, default=None),
             weight=dict(required=False, default=None),
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
-            shutdown_sessions=dict(required=False, default=False),
+            shutdown_sessions=dict(required=False, default=False, type='bool'),
             fail_on_not_found=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
