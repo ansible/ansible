@@ -83,16 +83,26 @@ options:
 EXAMPLES = '''
 # Adds or modify the backend '212.1.1.1' to a 
 # loadbalancing 'ip-1.1.1.1'
-- ovh_ip_loadbalancing name=ip-1.1.1.1 backend=212.1.1.1 
-  state=present probe=none weight=8 
-  endpoint=ovh-eu application_key=yourkey 
-  application_secret=yoursecret consumer_key=yourconsumerkey
+- ovh_ip_loadbalancing:
+    name: ip-1.1.1.1
+    backend: 212.1.1.1
+    state: present
+    probe: none
+    weight: 8
+    endpoint: ovh-eu
+    application_key: yourkey
+    application_secret: yoursecret
+    consumer_key: yourconsumerkey
 
-# Removes a backend '212.1.1.1' from a loadbalancing 
-# 'ip-1.1.1.1'
-- ovh_ip_loadbalancing name=ip-1.1.1.1 backend=212.1.1.1 
-  state=absent endpoint=ovh-eu application_key=yourkey 
-  application_secret=yoursecret consumer_key=yourconsumerkey
+# Removes a backend '212.1.1.1' from a loadbalancing 'ip-1.1.1.1'
+- ovh_ip_loadbalancing:
+    name: ip-1.1.1.1
+    backend: 212.1.1.1
+    state: absent
+    endpoint: ovh-eu
+    application_key: yourkey
+    application_secret: yoursecret
+    consumer_key: yourconsumerkey
 '''
 
 RETURN = '''
@@ -294,9 +304,6 @@ def main():
             moduleChanged = True
 
     module.exit_json(changed=moduleChanged)
-
-    # We should never reach here
-    module.fail_json(msg='Internal ovh_ip_loadbalancing_backend module error')
 
 # import module snippets
 from ansible.module_utils.basic import *
