@@ -142,11 +142,13 @@ If you don't need the powerstate, you can improve performance by turning off pow
 AZURE_INCLUDE_POWERSTATE=no
 
 azure_rm.ini
-----------------------
-As mentioned above you can control execution using environment variables or an .ini file. A sample
+------------
+As mentioned above, you can control execution using environment variables or a .ini file. A sample
 azure_rm.ini is included. The name of the .ini file is the basename of the inventory script (in this case
-'azure_rm') with a .ini extension. This provides you with the flexibility of copying and customizing this
-script and having matching .ini files. Go forth and customize your Azure inventory!
+'azure_rm') with a .ini extension. It also assumes the .ini file is alongside the script. To specify
+a different path for the .ini file, define the AZURE_INI_PATH environment variable:
+
+  export AZURE_INI_PATH=/path/to/custom.ini
 
 Powerstate:
 -----------
@@ -728,7 +730,8 @@ class AzureInventory(object):
 
     def _load_settings(self):
         basename = os.path.splitext(os.path.basename(__file__))[0]
-        path = basename + '.ini'
+        default_path = os.path.join(os.path.dirname(__file__), (basename + '.ini'))
+        path = os.path.expanduser(os.path.expandvars(os.environ.get('AZURE_INI_PATH', default_path)))
         config = None
         settings = None
         try:
