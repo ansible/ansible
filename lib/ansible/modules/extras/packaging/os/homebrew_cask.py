@@ -24,6 +24,8 @@ author:
     - "Indrajit Raychaudhuri (@indrajitr)"
     - "Daniel Jaouen (@danieljaouen)"
     - "Enric Lluelles (@enriclluelles)"
+requirements:
+   - "python >= 2.6"
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.

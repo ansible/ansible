@@ -27,6 +27,8 @@ author:
     - "Indrajit Raychaudhuri (@indrajitr)"
     - "Daniel Jaouen (@danieljaouen)"
     - "Andrew Dunham (@andrew-d)"
+requirements:
+   - "python >= 2.6"
 short_description: Package manager for Homebrew
 description:
     - Manages Homebrew packages
