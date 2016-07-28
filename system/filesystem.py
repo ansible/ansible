@@ -30,6 +30,7 @@ options:
   fstype:
     description:
     - File System type to be created.
+    - reiserfs support was added in 2.2.
     required: true
   dev:
     description:
@@ -141,6 +142,13 @@ def main():
             'grow_flag' : None,
             'force_flag' : '-F',
             'fsinfo': 'tune2fs',
+        },
+        'reiserfs' : {
+            'mkfs' : 'mkfs.reiserfs',
+            'grow' : 'resize_reiserfs',
+            'grow_flag' : None,
+            'force_flag' : '-f',
+            'fsinfo': 'reiserfstune',
         },
         'ext4dev' : {
             'mkfs' : 'mkfs.ext4',
