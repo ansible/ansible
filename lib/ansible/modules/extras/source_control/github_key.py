@@ -52,6 +52,22 @@ options:
 author: Robert Estelle (@erydo)
 '''
 
+RETURN = '''
+deleted_keys:
+    description: Keys that were deleted, if any.
+    returned: When state=absent
+    type: list
+
+matching_keys:
+    description: Keys that match the specified name.
+    returned: When state=present
+    type: list
+
+key:
+    description: The key created.
+    returned: When state=present and a new key is created.
+'''
+
 EXAMPLES = '''
 - name: Read SSH public key to authorize
   shell: cat /home/foo/.ssh/id_rsa.pub
@@ -154,7 +170,8 @@ def ensure_key_absent(session, name, check_mode):
     to_delete = [key for key in get_all_keys(session) if key['title'] == name]
     delete_keys(session, to_delete, check_mode=check_mode)
 
-    return {'changed': bool(to_delete), 'deleted_keys': to_delete}
+    return {'changed': bool(to_delete),
+            'deleted_keys': to_delete}
 
 
 def ensure_key_present(session, name, pubkey, force, check_mode):
