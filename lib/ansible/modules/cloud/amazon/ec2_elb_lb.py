@@ -454,7 +454,7 @@ class ElbManager(object):
         self.wait = wait
         self.wait_timeout = wait_timeout
         self.tags = tags
-        
+
         self.aws_connect_params = aws_connect_params
         self.region = region
 
@@ -496,7 +496,7 @@ class ElbManager(object):
         self._set_instance_ids()
 
         self._set_tags()
-        
+
     def ensure_gone(self):
         """Destroy the ELB"""
         if self.elb:
@@ -608,7 +608,7 @@ class ElbManager(object):
                     info['cross_az_load_balancing'] = 'no'
 
             # return stickiness info?
-            
+
             info['tags'] = self.tags
 
         return info
@@ -1170,7 +1170,7 @@ class ElbManager(object):
         """Add/Delete tags"""
         if self.tags is None:
             return
-        
+
         params = {'LoadBalancerNames.member.1': self.name}
 
         tagdict = dict()
@@ -1181,8 +1181,8 @@ class ElbManager(object):
                                                   [('member', Tag)])
             tagdict = dict((tag.Key, tag.Value) for tag in current_tags
                            if hasattr(tag, 'Key'))
-            
-        # Add missing tags 
+
+        # Add missing tags
         dictact = dict(set(self.tags.items()) - set(tagdict.items()))
         if dictact:
             for i, key in enumerate(dictact):
@@ -1192,7 +1192,7 @@ class ElbManager(object):
             self.elb_conn.make_request('AddTags', params)
             self.changed=True
 
-        # Remove extra tags 
+        # Remove extra tags
         dictact = dict(set(tagdict.items()) - set(self.tags.items()))
         if dictact:
             for i, key in enumerate(dictact):
@@ -1200,7 +1200,7 @@ class ElbManager(object):
 
             self.elb_conn.make_request('RemoveTags', params)
             self.changed=True
-    
+
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
@@ -1274,7 +1274,7 @@ def main():
     wait = module.params['wait']
     wait_timeout = module.params['wait_timeout']
     tags = module.params['tags']
-    
+
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
 
