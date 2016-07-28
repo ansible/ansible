@@ -103,9 +103,10 @@ EXAMPLES = '''
     tags:
       example: tag1
       another: tag2
-    
+
 '''
 
+import os
 import xml.etree.ElementTree as ET
 import urlparse
 
@@ -122,16 +123,13 @@ except ImportError:
     HAS_BOTO = False
 
 def get_request_payment_status(bucket):
-    
+
     response = bucket.get_request_payment()
     root = ET.fromstring(response)
     for message in root.findall('.//{http://s3.amazonaws.com/doc/2006-03-01/}Payer'):
         payer = message.text
-    
-    if payer == "BucketOwner":
-        return False
-    else:
-        return True
+
+    return (payer != "BucketOwner")
 
 def create_tags_container(tags):
 
@@ -143,7 +141,7 @@ def create_tags_container(tags):
     tags_obj.add_tag_set(tag_set)
     return tags_obj
 
-def _create_bucket(connection, module, location):
+def _create_or_update_bucket(connection, module, location):
 
     policy = module.params.get("policy")
     name = module.params.get("name")
@@ -151,7 +149,7 @@ def _create_bucket(connection, module, location):
     tags = module.params.get("tags")
     versioning = module.params.get("versioning")
     changed = False
-    
+
     try:
         bucket = connection.get_bucket(name)
     except S3ResponseError as e:
@@ -160,42 +158,38 @@ def _create_bucket(connection, module, location):
             changed = True
         except S3CreateError as e:
             module.fail_json(msg=e.message)
-    
+
     # Versioning
     versioning_status = bucket.get_versioning_status()
-    if not versioning_status and versioning:
-        try:
-            bucket.configure_versioning(versioning)
-            changed = True
-            versioning_status = bucket.get_versioning_status()
-        except S3ResponseError as e:
-            module.fail_json(msg=e.message)
-    elif not versioning_status and not versioning:
-        # do nothing
-        pass
-    else:
-        if versioning_status['Versioning'] == "Enabled" and not versioning:
-            bucket.configure_versioning(versioning)
-            changed = True
-            versioning_status = bucket.get_versioning_status()
-        elif ( (versioning_status['Versioning'] == "Disabled" and versioning) or (versioning_status['Versioning'] == "Suspended" and versioning) ):
-            bucket.configure_versioning(versioning)
-            changed = True
-            versioning_status = bucket.get_versioning_status()
-    
+    if not versioning_status:
+        if versioning:
+            try:
+                bucket.configure_versioning(versioning)
+                changed = True
+                versioning_status = bucket.get_versioning_status()
+            except S3ResponseError as e:
+                module.fail_json(msg=e.message)
+    elif versioning_status['Versioning'] == "Enabled" and not versioning:
+        bucket.configure_versioning(versioning)
+        changed = True
+        versioning_status = bucket.get_versioning_status()
+    elif ( (versioning_status['Versioning'] == "Disabled" and versioning) or (versioning_status['Versioning'] == "Suspended" and versioning) ):
+        bucket.configure_versioning(versioning)
+        changed = True
+        versioning_status = bucket.get_versioning_status()
+
     # Requester pays
     requester_pays_status = get_request_payment_status(bucket)
     if requester_pays_status != requester_pays:
         if requester_pays:
-            bucket.set_request_payment(payer='Requester')
-            changed = True
-            requester_pays_status = get_request_payment_status(bucket)
+            payer='Requester'
         else:
-            bucket.set_request_payment(payer='BucketOwner')
-            changed = True
-            requester_pays_status = get_request_payment_status(bucket)
+            payer='BucketOwner'
+        bucket.set_request_payment(payer=payer)
+        changed = True
+        requester_pays_status = get_request_payment_status(bucket)
 
-    # Policy        
+    # Policy
     try:
         current_policy = bucket.get_policy()
     except S3ResponseError as e:
@@ -203,30 +197,19 @@ def _create_bucket(connection, module, location):
             current_policy = None
         else:
             module.fail_json(msg=e.message)
-    
-    if current_policy is not None and policy is not None:
-        if policy is not None:
-            policy = json.dumps(policy)
-            
-        if json.loads(current_policy) != json.loads(policy):
+
+    if policy is not None:
+        compare_policy = json.loads(policy)
+
+        if current_policy is None or json.loads(current_policy) != compare_policy:
             try:
                 bucket.set_policy(policy)
                 changed = True
                 current_policy = bucket.get_policy()
             except S3ResponseError as e:
                 module.fail_json(msg=e.message)
+    elif current_policy is not None:
 
-    elif current_policy is None and policy is not None:
-        policy = json.dumps(policy)
-            
-        try:
-            bucket.set_policy(policy)
-            changed = True
-            current_policy = bucket.get_policy()
-        except S3ResponseError as e:
-            module.fail_json(msg=e.message)
-    
-    elif current_policy is not None and policy is None:
         try:
             bucket.delete_policy()
             changed = True
@@ -236,23 +219,17 @@ def _create_bucket(connection, module, location):
                 current_policy = None
             else:
                 module.fail_json(msg=e.message)
-            
-    ####
-    ## Fix up json of policy so it's not escaped
-    ####
-    
     # Tags
     try:
         current_tags = bucket.get_tags()
-        tag_set = TagSet()
     except S3ResponseError as e:
         if e.error_code == "NoSuchTagSet":
             current_tags = None
         else:
             module.fail_json(msg=e.message)
-    
+
     if current_tags is not None or tags is not None:
-       
+
         if current_tags is None:
             current_tags_dict = {}
         else:
@@ -270,13 +247,13 @@ def _create_bucket(connection, module, location):
                 module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed, name=bucket.name, versioning=versioning_status, requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict)
-    
+
 def _destroy_bucket(connection, module):
-    
+
     force = module.params.get("force")
     name = module.params.get("name")
     changed = False
-    
+
     try:
         bucket = connection.get_bucket(name)
     except S3ResponseError as e:
@@ -285,25 +262,26 @@ def _destroy_bucket(connection, module):
         else:
             # Bucket already absent
             module.exit_json(changed=changed)
-    
+
     if force:
         try:
             # Empty the bucket
             for key in bucket.list():
                 key.delete()
-                
+
         except BotoServerError as e:
             module.fail_json(msg=e.message)
-    
+
     try:
         bucket = connection.delete_bucket(name)
         changed = True
     except S3ResponseError as e:
         module.fail_json(msg=e.message)
-        
+
     module.exit_json(changed=changed)
 
-def _create_bucket_ceph(connection, module, location):
+def _create_or_update_bucket_ceph(connection, module, location):
+    #TODO: add update
 
     name = module.params.get("name")
 
@@ -318,17 +296,20 @@ def _create_bucket_ceph(connection, module, location):
         except S3CreateError as e:
             module.fail_json(msg=e.message)
 
-    module.exit_json(changed=changed)
+    if bucket:
+        module.exit_json(changed=changed)
+    else:
+        module.fail_json(msg='Unable to create bucket, no error from the API')
 
 def _destroy_bucket_ceph(connection, module):
 
     _destroy_bucket(connection, module)
 
-def create_bucket(connection, module, location, flavour='aws'):
+def create_or_update_bucket(connection, module, location, flavour='aws'):
     if flavour == 'ceph':
-        _create_bucket_ceph(connection, module, location)
+        _create_or_update_bucket_ceph(connection, module, location)
     else:
-        _create_bucket(connection, module, location)
+        _create_or_update_bucket(connection, module, location)
 
 def destroy_bucket(connection, module, flavour='aws'):
     if flavour == 'ceph':
@@ -354,27 +335,27 @@ def is_walrus(s3_url):
         return False
 
 def main():
-    
+
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             force = dict(required=False, default='no', type='bool'),
-            policy = dict(required=False, default=None),
-            name = dict(required=True),
+            policy = dict(required=False, type='json'),
+            name = dict(required=True, type='str'),
             requester_pays = dict(default='no', type='bool'),
-            s3_url = dict(aliases=['S3_URL']),
-            state = dict(default='present', choices=['present', 'absent']),
+            s3_url = dict(aliases=['S3_URL'], type='str'),
+            state = dict(default='present', type='str', choices=['present', 'absent']),
             tags = dict(required=None, default={}, type='dict'),
             versioning = dict(default='no', type='bool'),
             ceph = dict(default='no', type='bool')
         )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
-    
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     if region in ('us-east-1', '', None):
@@ -440,7 +421,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        create_bucket(connection, module, location, flavour=flavour)
+        create_or_update_bucket(connection, module, location)
     elif state == 'absent':
         destroy_bucket(connection, module, flavour=flavour)
 
