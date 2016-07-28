@@ -1474,7 +1474,7 @@ class AnsibleModule(object):
         if isinstance(value, (unicode, bytes)):
             return value.strip()
         else:
-            if isinstance(value (list, tuple, dict)):
+            if isinstance(value, (list, tuple, dict)):
                 return json.dumps(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
