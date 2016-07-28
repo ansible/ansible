@@ -31,17 +31,17 @@ from ansible.module_utils.gcp import gcp_connect
 from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
 
 try:
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
+    from libcloud.dns.types import Provider
+    from libcloud.dns.providers import get_driver
     HAS_LIBCLOUD_BASE = True
 except ImportError:
     HAS_LIBCLOUD_BASE = False
 
-USER_AGENT_PRODUCT = "Ansible-gce"
+USER_AGENT_PRODUCT = "Ansible-gcdns"
 USER_AGENT_VERSION = "v1"
 
-def gce_connect(module, provider=Provider.GCE):
-    """Return a GCP connection for Google Compute Engine."""
+def gcdns_connect(module, provider=Provider.GOOGLE):
+    """Return a GCP connection for Google Cloud DNS."""
     if not HAS_LIBCLOUD_BASE:
         module.fail_json(msg='libcloud must be installed to use this module')
 
