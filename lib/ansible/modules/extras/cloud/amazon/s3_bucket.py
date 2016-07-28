@@ -207,7 +207,7 @@ def _create_or_update_bucket(connection, module, location):
 
         if current_policy is None or json.loads(current_policy) != compare_policy:
             try:
-                bucket.set_policy(load_policy)
+                bucket.set_policy(policy)
                 changed = True
                 current_policy = bucket.get_policy()
             except S3ResponseError as e:
