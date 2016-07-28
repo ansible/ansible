@@ -212,7 +212,8 @@ def main():
         module.fail_json(rc=256,
                          msg='Destination %s is a directory !' % dest)
 
-    if not os.path.exists(dest):
+    path_exists = os.path.exists(dest)
+    if not path_exists:
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
                              msg='Destination %s does not exist !' % dest)
@@ -229,6 +230,9 @@ def main():
     block = params['block']
     marker = params['marker']
     present = params['state'] == 'present'
+
+    if not present and not path_exists:
+        module.exit_json(changed=False, msg="File not present")
 
     if insertbefore is None and insertafter is None:
         insertafter = 'EOF'
@@ -299,9 +303,12 @@ def main():
         changed = True
 
     if changed and not module.check_mode:
-        if module.boolean(params['backup']) and os.path.exists(dest):
+        if module.boolean(params['backup']) and path_exists:
             module.backup_local(dest)
         write_changes(module, result, dest)
+
+    if module.check_mode and not path_exists:
+        module.exit_json(changed=changed, msg=msg)
 
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
