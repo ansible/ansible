@@ -389,6 +389,7 @@ try:
     import boto
     import boto.ec2.elb
     import boto.ec2.elb.attributes
+    import boto.vpc
     from boto.ec2.elb.healthcheck import HealthCheck
     from boto.ec2.tag import Tag
     from boto.regioninfo import RegionInfo
@@ -416,6 +417,12 @@ def _throttleable_operation(max_retries):
                         raise
         return _do_op
     return _operation_wrapper
+
+def _get_vpc_connection(module, region, aws_connect_params):
+    try:
+        return connect_to_aws(boto.vpc, region, **aws_connect_params)
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        module.fail_json(msg=str(e))
 
 
 _THROTTLING_RETRIES = 5
@@ -1288,7 +1295,13 @@ def main():
         security_group_ids = []
         try:
             ec2 = ec2_connect(module)
-            grp_details = ec2.get_all_security_groups()
+            if subnets: # We have at least one subnet, ergo this is a VPC
+                vpc_conn = _get_vpc_connection(module=module, region=region, aws_connect_params=aws_connect_params)
+                vpc_id = vpc_conn.get_all_subnets([subnets[0]])[0].vpc_id
+                filters = {'vpc_id': vpc_id}
+            else:
+                filters = None
+            grp_details = ec2.get_all_security_groups(filters=filters)
 
             for group_name in security_group_names:
                 if isinstance(group_name, basestring):
