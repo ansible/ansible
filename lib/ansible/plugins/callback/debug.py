@@ -1,19 +1,7 @@
-import codecs
-import imp
-import os
-
-# For some reason this would cause ImportError
-# import ansible.plugins.callback.default as DEFAULT_MODULE
-# So, please forgive the horror you are about to witness, but it is necessary
-ANSIBLE_PATH = imp.find_module('ansible')[1]
-DEFAULT_PATH = os.path.join(ANSIBLE_PATH, 'plugins/callback/default.py')
-DEFAULT_MODULE = imp.load_source(
-    'ansible.plugins.callback.default',
-    DEFAULT_PATH
-)
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
 
-class CallbackModule(DEFAULT_MODULE.CallbackModule):  # pylint: disable=too-few-public-methods,no-init
+class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-methods,no-init
     '''
     Override for the default callback module.
 
@@ -33,7 +21,7 @@ class CallbackModule(DEFAULT_MODULE.CallbackModule):  # pylint: disable=too-few-
             if key in result:
                 save[key] = result.pop(key)
 
-        output = DEFAULT_MODULE.CallbackModule._dump_results(self, result)
+        output = CallbackModule_default._dump_results(self, result)
 
         for key in ['stdout', 'stderr', 'msg']:
             if key in save and save[key]:
