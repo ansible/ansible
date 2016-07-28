@@ -1,0 +1,43 @@
+
+# Test restart policy
+# Test that env vars containing '=' work
+
+- name: Test restart policy and env vars with multiple equals 
+  docker_container:
+    name: spark01
+    image: ubuntu:14.04 
+    restart_policy: on-failure
+    restart_retries: 5
+    env:
+      SPARK_OPTS: "--driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=info"
+    command: sleep infinity
+  register: output 
+
+- debug: var=output
+  when: playbook_debug
+
+- name: 
+  assert:
+     that:
+       - "ansible_docker_container.Config.Env[0] == 'SPARK_OPTS=--driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=info'"
+       - "ansible_docker_container.HostConfig.RestartPolicy.MaximumRetryCount == 5"
+       - "ansible_docker_container.HostConfig.RestartPolicy.Name == 'on-failure'"
+
+- name: spark01 should be idempotent 
+  docker_container:
+    name: spark01
+    image: ubuntu:14.04
+    restart_policy: on-failure
+    restart_retries: 5
+    env:
+      SPARK_OPTS: "--driver-java-options=-Xms1024M --driver-java-options=-Xmx4096M --driver-java-options=-Dlog4j.logLevel=info"
+    command: sleep infinity
+  register: output
+
+- debug: var=output
+  when: playbook_debug
+
+- name:
+  assert:
+     that:
+       - not output.changed

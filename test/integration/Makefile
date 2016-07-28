@@ -319,3 +319,15 @@ test_async:
 	# Verify that the warning exists by examining debug output.
 	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS) \
 	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'
+
+test_registry:
+	/bin/rm -rf ./roles/ansible.local-registry; \
+	ansible-galaxy install -p ./roles  ansible.local-registry; \
+	ansible-playbook -i inventory.docker -e @$(VARS_FILE) -v $(TEST_FLAGS) test_registry.yml; \
+
+test_docker:
+	/bin/rm -rf ./roles/ansible.local-registry; \
+	ansible-galaxy install -p ./roles  ansible.local-registry; \
+	ansible-playbook -i inventory.docker -e @$(VARS_FILE) -v $(TEST_FLAGS) test_docker.yml; \
+	RC=$$? ; \
+	exit $$RC;

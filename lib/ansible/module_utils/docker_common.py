@@ -34,13 +34,14 @@ try:
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
+    from docker.constants import DEFAULT_TIMEOUT_SECONDS
     from docker.utils.types import Ulimit, LogConfig
     from docker import auth
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
+DEFAULT_DOCKER_API_VERSION = 'auto'
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
@@ -110,14 +111,14 @@ class DockerBaseClass(object):
         self.debug = False
 
     def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        # pass
+        if self.debug:
+            log_file = open('docker.log', 'a')
+            if pretty_print:
+                log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
+                log_file.write(u'\n')
+            else:
+                log_file.write(msg + u'\n')
 
 
 class AnsibleDockerClient(Client):
@@ -167,14 +168,14 @@ class AnsibleDockerClient(Client):
             self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
-        pass
-        # if self.debug:
-        #     log_file = open('docker.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
-        #         log_file.write(u'\n')
-        #     else:
-        #         log_file.write(msg + u'\n')
+        # pass
+        if self.debug:
+            log_file = open('docker.log', 'a')
+            if pretty_print:
+                log_file.write(json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')))
+                log_file.write(u'\n')
+            else:
+                log_file.write(msg + u'\n')
 
     def fail(self, msg):
         self.module.fail_json(msg=msg)

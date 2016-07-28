@@ -1,0 +1,85 @@
+# basic tests for docker_service module
+
+- name: Stop the services, if running, using inline compose
+  docker_service:
+    project_name: wordpress
+    definition: "{{ wordpress_project }}"
+    state: absent
+
+- name: Launch compose services using inline compose
+  docker_service:
+    project_name: wordpress
+    definition: "{{ wordpress_project }}"
+
+- command: docker ps --filter name=wordpress_db_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: db_status 
+
+- command: docker ps --filter name=wordpress_wordpress_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: wordpress_status 
+
+- assert:
+    that: 
+      - "'Status Up' in db_status.stdout_lines[0]" 
+      - "'Status Up' in wordpress_status.stdout_lines[0]" 
+ 
+- name: Stop the service, if running, using filesystem
+  docker_service:
+    project_name: wordpress
+    project_src: "{{ role_path }}/files/wordpress"
+    state: absent
+
+- command: docker ps --filter name=wordpress_db_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: db_status 
+
+- command: docker ps --filter name=wordpress_wordpress_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: wordpress_status 
+
+- assert:
+    that:
+      - "db_status.stdout_lines | length == 0"
+      - "wordpress_status.stdout_lines | length == 0"
+
+- name: Start the service from filesystem project
+  docker_service:
+    project_name: wordpress
+    project_src: "{{ role_path }}/files/wordpress"
+
+- command: docker ps --filter name=wordpress_db_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: db_status 
+
+- command: docker ps --filter name=wordpress_wordpress_1 --format {% raw %}'Status {{ .Status }}'{% endraw %}
+  register: wordpress_status 
+
+- assert:
+    that:
+      - "'Status Up' in db_status.stdout_lines[0]"
+      - "'Status Up' in db_status.stdout_lines[0]"
+
+- command: docker inspect {% raw %}--format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'{% endraw %} wordpress_db_1
+  register: inspection 
+
+- set_fact:
+    mysqlip: "{{ inspection.stdout_lines[0] }}"
+
+- name: Wait for mysqld to start
+  local_action: wait_for port=3306 host="{{ docker_host }}" timeout=60
+
+- name: Remove dbtest.out
+  file:
+    path: "{{ dbtest_out }}"
+    state: absent
+
+- name: Pause - give the containers a chance to finish starting and connecting
+  pause: seconds=10
+
+- name: Get the database test page
+  get_url:
+    url: "http://{{ docker_host }}:9000/wp-admin/install.php"
+    dest: "{{ dbtest_out }}"
+    force: yes
+
+- set_fact:
+    htmlcontent: "{{ lookup('file', dbtest_out) }}"
+
+- assert:
+    that: "'Continue' in htmlcontent"

@@ -1,0 +1,41 @@
+# test_docker.yml
+#
+# Integration tests for Ansible's Docker modules.
+#
+- name: Start the registry
+  hosts: docker 
+  connection: local
+  gather_facts: no
+  vars:
+    docker_start_registry: "{{ lookup('env','DOCKER_START_REGISTRY') | default(1, true) }}" 
+  roles:
+    - role: ansible.local-registry
+      registry_users:
+        - username: testuser
+          password: testpassword
+        - username: chris+house_knecht
+          password: password123
+      when: docker_start_registry
+
+- name: Wait for registry 
+  hosts: docker
+  connection: local
+  gather_facts: no
+  vars:
+    docker_start_registry: "{{ lookup('env','DOCKER_START_REGISTRY') | default(1, true) }}" 
+  tasks: 
+    - command: ping -c 3 "{{ registry_common_name }}" 
+      when: docker_start_registry
+    - wait_for: host="{{ registry_common_name }}" port="{{ registry_host_port }}"   
+      when: docker_start_registry
+    
+- name: Run docker module tests 
+  hosts: docker 
+  connection: local
+  gather_facts: no
+  roles:
+    - role: test_docker_login
+    - role: test_docker_image
+    - role: test_docker_container
+    - role: test_docker_service
+
