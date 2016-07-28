@@ -1,7 +1,9 @@
 Ansible Changes By Release
 ==========================
 
-## 2.1.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
+## 2.1.2 "The Song Remains the Same" - ACTIVE DEVELOPMENT
+
+## 2.1.1 "The Song Remains the Same" - 07-28-2016
 
 ###Minor Changes:
 
@@ -9,8 +11,33 @@ Ansible Changes By Release
 * Fixed a bug in pkg_util module that caused "update_catalog must be one of" error if 'update_catalog' arg was used.
 * Fixed a bug where psuedo-connection vars (eg, ansible_winrm_transport) defined in group_vars or host_vars were not getting passed to the connection.
 * Fixed a bug where temp file permissions on BSDs were not using filesystem acls when available.
+* Fixed some bugs in variable dependency resolution. These were mainly related to includes and roles, to bringe the VariableManager code in-line with our documentation.
+* Fixed a bug in unarchive, when the destination was a symlinked directory.
+* Fixed a bug related to performance when loading a large number of groups.
+* Fixed bugs related to the way host and group vars are loaded, which (for large sets of inventory variables) can reduce CPU and memory usage by 50%.
+* Fixed a bug where includes were not being implicitly evaluated as static when no loop or variables were being used.
+* Fixed several more bugs in relation to the way play execution continues or halts when hosts fail, to bringe the behavior more in line with 1.9.x.
+* Fixed bugs related to the use of the underlying shell executable with the script and raw modules.
+* Fixed several bugs in relation to the way ssh keys were used with various networking modules.
+* Fixed a bug related to the way handlers are tracked internally, which could cause bugs when roles are reused within the same play (allow_duplicates: yes) or when the role dependencies formed a "diamond" pattern.
+* Fixed a bug related to setfacl on platforms which do not support the -R option for recursive changes.
+* Several fixes to the way async works to prevent race conditions and other bugs
+* More fixes to the way failed and unreachable hosts affect future plays
+* Fixed a bug in the way the to_json filter encoded some objects
+* Fixed a bug in the way roles and dependencies are loaded, and how they inherit params from parent roles.
+* Fixed a bug in which the number of retries in a do/until loop was off by one
+* Fixed a bug in the way the passwd lookup deals with salts
+* When using the local connection, internally the remote_user value is now forced to be the current user even if remote_user is specified, to prevent issues with become settings
+* Fix for Azure modules to work with most recent Azure python library (2.0.0rc5)
+* Fix for bug related to unreachable hosts and any_errors_fatal in the linear strategy
+* Fix for error handling in relation to killed/dead worker processes. If workers are killed via SIGKILL or SIGTERM, this will halt execution of the playbook.
+* Fixed a regression in the way we handle variables from dependent roles.
+* Added better handling for certain errors thrown from the cryptography.
+* Fixed a typo in the azure_rm_storageaccount module.
+* Fixed some minor bugs in the os_user_role and cs_volume modules.
+* Fixed a bug related to the return value of a low-level inventory API call related to getting variables for hosts and groups. 
 
-## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
+## 2.1 "The Song Remains the Same" - 05-25-2016
 
 ###Major Changes:
 
