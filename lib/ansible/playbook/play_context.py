@@ -115,6 +115,7 @@ SU_PROMPT_LOCALIZATIONS = [
     'හස්පදය',
     '密码',
     '密碼',
+    '口令',
 ]
 
 TASK_ATTRIBUTE_OVERRIDES = (
