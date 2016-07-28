@@ -14,6 +14,8 @@ class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-
 
     def _dump_results(self, result):
         '''Return the text to output for a result.'''
+
+        # Enable JSON identation
         result['_ansible_verbose_always'] = True
 
         save = {}
