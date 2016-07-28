@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import re
 
 DOCUMENTATION = '''
@@ -146,7 +147,7 @@ class Timezone(object):
         command = ' '.join(commands)
         (rc, stdout, stderr) = self.module.run_command(command, check_rc=True)
         if kwargs.get('log', False):
-            self.msg.append('executed `{0}`'.format(command))
+            self.msg.append('executed `%s`' % command)
         return stdout
 
     def diff(self, phase1='before', phase2='after'):
@@ -238,9 +239,9 @@ class SystemdTimezone(Timezone):
         # Validate given timezone
         if 'name' in self.value:
             tz = self.value['name']['planned']
-            tzfile = '/usr/share/zoneinfo/{0}'.format(tz)
+            tzfile = '/usr/share/zoneinfo/%s' % tz
             if not os.path.isfile(tzfile):
-                self.abort('given timezone "{0}" is not available'.format(tz))
+                self.abort('given timezone "%s" is not available' % tz)
 
     def _get_status(self, phase):
         if phase not in self.status:
@@ -295,11 +296,11 @@ class NosystemdTimezone(Timezone):
         # Validate given timezone
         if 'name' in self.value:
             tz = self.value['name']['planned']
-            tzfile = '/usr/share/zoneinfo/{0}'.format(tz)
+            tzfile = '/usr/share/zoneinfo/%s' % tz
             if not os.path.isfile(tzfile):
-                self.abort('given timezone "{0}" is not available'.format(tz))
+                self.abort('given timezone "%s" is not available' % tz)
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
-            self.update_timezone += ' {0} /etc/localtime'.format(tzfile)
+            self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
@@ -309,7 +310,7 @@ class NosystemdTimezone(Timezone):
             self.conf_files['name']    = '/etc/timezone',
             self.conf_files['hwclock'] = '/etc/default/rcS',
             self.regexps['name']       = re.compile(r'^([^\s]+)', re.MULTILINE)
-            self.tzline_format         = '{0}\n'
+            self.tzline_format         = '%s\n'
         else:
             # RHEL/CentOS
             if self.module.get_bin_path('tzdata-update') is not None:
@@ -319,7 +320,7 @@ class NosystemdTimezone(Timezone):
             self.conf_files['name']    = '/etc/sysconfig/clock'
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
             self.regexps['name']       = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
-            self.tzline_format         = 'ZONE="{0}"\n'
+            self.tzline_format         = 'ZONE="%s"\n'
         self.update_hwclock  = self.module.get_bin_path('hwclock', required=True)
 
     def _edit_file(self, filename, regexp, value):
@@ -336,7 +337,7 @@ class NosystemdTimezone(Timezone):
         try:
             file = open(filename, 'r')
         except IOError:
-            self.abort('cannot read "{0}"'.format(filename))
+            self.abort('cannot read "%s"' % filename)
         else:
             lines = file.readlines()
             file.close()
@@ -358,27 +359,30 @@ class NosystemdTimezone(Timezone):
         try:
             file = open(filename, 'w')
         except IOError:
-            self.abort('cannot write to "{0}"'.format(filename))
+            self.abort('cannot write to "%s"' % filename)
         else:
             file.writelines(lines)
             file.close()
-        self.msg.append('Added 1 line and deleted {0} line(s) on {1}'.format(len(matched_indices), filename))
+        self.msg.append('Added 1 line and deleted %s line(s) on %s' % (len(matched_indices), filename))
 
     def get(self, key, phase):
         if key == 'hwclock' and os.path.isfile('/etc/adjtime'):
             # If /etc/adjtime exists, use that file.
             key = 'adjtime'
+
+        filename = self.conf_files[key]
+
         try:
-            file = open(self.conf_files[key], mode='r')
+            file = open(filename, mode='r')
         except IOError:
-            self.abort('cannot read configuration file "{0}" for {1}'.format(filename, key))
+            self.abort('cannot read configuration file "%s" for %s' % (filename, key))
         else:
             status = file.read()
             file.close()
             try:
                 value = self.regexps[key].search(status).group(1)
             except AttributeError:
-                self.abort('cannot find the valid value from configuration file "{0}" for {1}'.format(filename, key))
+                self.abort('cannot find the valid value from configuration file "%s" for %s' % (filename, key))
             else:
                 if key == 'hwclock':
                     # For key='hwclock'; convert yes/no -> UTC/local
@@ -395,7 +399,7 @@ class NosystemdTimezone(Timezone):
     def set_timezone(self, value):
         self._edit_file(filename=self.conf_files['name'],
                         regexp=self.regexps['name'],
-                        value=self.tzline_format.format(value))
+                        value=self.tzline_format.format % value)
         self.execute(self.update_timezone)
 
     def set_hwclock(self, value):
@@ -411,7 +415,7 @@ class NosystemdTimezone(Timezone):
         elif key == 'hwclock':
             self.set_hwclock(value)
         else:
-            self.abort('unknown parameter "{0}"'.format(key))
+            self.abort('unknown parameter "%s"' % key)
 
 
 def main():
