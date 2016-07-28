@@ -29,14 +29,28 @@
 - include: 'upstart_setup.yml'
   when: service_type == "upstart"
 
+- name: disable the ansible test service
+  service: name=ansible_test enabled=no
+
+- name: (check mode run) enable the ansible test service
+  service: name=ansible_test enabled=yes
+  register: enable_in_check_mode_result
+  check_mode: yes
+
+- name: assert that changes reported for check mode run
+  assert:
+    that:
+    - "enable_in_check_mode_result.changed == true"
+
 - name: enable the ansible test service
   service: name=ansible_test enabled=yes
   register: enable_result
 
-- name: assert that the service was enabled
+- name: assert that the service was enabled and changes reported
   assert:
     that:
     - "enable_result.enabled == true"
+    - "enable_result.changed == true"
 
 - name: start the ansible test service
   service: name=ansible_test state=started
