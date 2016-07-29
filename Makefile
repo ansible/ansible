@@ -24,8 +24,8 @@ OS = $(shell uname -s)
 # directory of the target file ($@), kinda like `dirname`.
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1 docs/man/man1/ansible-galaxy.1 docs/man/man1/ansible-vault.1
 ifneq ($(shell which a2x 2>/dev/null),)
-ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
-ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
+ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
+ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
 else
 ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
