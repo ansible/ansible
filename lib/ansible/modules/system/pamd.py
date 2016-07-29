@@ -101,6 +101,27 @@ options:
     - This is the path to the PAM service files
 """
 
+EXAMPLES = """
+- name: Update pamd rule's control in /etc/pam.d/system-auth
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so new_control=sufficient
+- name: Update pamd rule's complex control in /etc/pam.d/system-auth
+  pamd: name=system-auth type=session control='[success=1 default=ignore]' module_path=pam_succeed_if.so new_control='[success=2 default=ignore]'
+- name: Insert a new rule before an existing rule
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so new_type=auth new_control=sufficient new_module_path=pam_faillock.so state=before
+- name: Insert a new rule after an existing rule
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so new_type=auth new_control=sufficient new_module_path=pam_faillock.so state=after
+- name: Remove module arguments from an existing rule
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so module_arguments='' state=updated
+- name: Replace all module arguments in an existing rule
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so module_arguments='preauth silent deny=3 unlock_time=604800 fail_interval=900' state=updated
+- name: Remove specific arguments from a rule
+  pamd: name=system-auth type=session control='[success=1 default=ignore]' module_path=pam_succeed_if.so module_arguments='crond quiet' state=args_absent
+- name: Ensure specific arguments are present in a rule
+  pamd: name=system-auth type=session control='[success=1 default=ignore]' module_path=pam_succeed_if.so module_arguments='crond quiet' state=args_present
+- name: Update specific argument value in a rule
+  pamd: name=system-auth type=auth control=required module_path=pam_faillock.so module_arguments='fail_interval=300' state=args_present
+"""
+
 #The PamdRule class encapsulates a rule in a pam.d service
 class PamdRule(object):
     def __init__(self, ansible, stringline=None, rule_type=None,
@@ -283,7 +304,15 @@ class PamdUtil(object):
             if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
                 for arg_to_add in module_args.split(' '):
                     if "=" in arg_to_add:
-                        pass
+                        pre_string = arg_to_add[:arg_to_add.index('=')+1]
+                        indicies = [ i for i, arg in enumerate(rule.rule_module_args) if arg.startswith(pre_string) ]
+                        for i in indicies:
+                            if rule.rule_module_args[i] != arg_to_add:
+                                rule.rule_module_args[i] = arg_to_add
+                                changed = True
+                                result['updated_arg_'+str(change_count)] = arg_to_add
+                                result['in_rule_'+str(change_count)] = str(rule)
+                                change_count += 1
                     elif arg_to_add not in rule.rule_module_args:
                         rule.rule_module_args.append(arg_to_add)
                         changed = True
