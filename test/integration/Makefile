@@ -170,8 +170,23 @@ test_vault: setup
 test_delegate_to: setup
 	ansible-playbook test_delegate_to.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-test_winrm: setup
-	ansible-playbook test_winrm.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+# Split Windows CI targets to support parallel execution.
+# Targets should be balanced to have similar run times.
+ci_win: ci_win1 ci_win2 ci_win3
+ci_win1: test_win_group1
+ci_win2: test_win_group2
+ci_win3: test_win_group3 test_connection_winrm
+
+test_winrm: test_win_group1 test_win_group2 test_win_group3
+
+test_win_group1: setup
+	ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group2: setup
+	ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group3: setup
+	ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags: setup
 	# Run everything by default
