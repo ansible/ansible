@@ -1814,20 +1814,19 @@ class AnsibleModule(object):
         return self.digest_from_file(filename, 'sha256')
 
     def backup_local(self, fn):
-        '''make a date-marked backup of the specified file, return True or False on success or failure'''
+        '''make a date-marked backup of the specified file, return backup file name'''
 
         backupdest = ''
         if os.path.exists(fn):
             # backups named basename-YYYY-MM-DD@HH:MM:SS~
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
             backupdest = '%s.%s' % (fn, ext)
-
-            try:
-                shutil.copy2(fn, backupdest)
-            except (shutil.Error, IOError):
-                e = get_exception()
-                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
-
+            if not os.path.exists(backupdest):
+                try:
+                    shutil.copy2(fn, backupdest)
+                except (shutil.Error, IOError):
+                    e = get_exception()
+                    self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
     def cleanup(self, tmpfile):
