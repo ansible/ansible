@@ -40,10 +40,11 @@ except ImportError:
 USER_AGENT_PRODUCT = "Ansible-gce"
 USER_AGENT_VERSION = "v1"
 
-def gce_connect(module, provider=Provider.GCE):
+def gce_connect(module, provider=None):
     """Return a GCP connection for Google Compute Engine."""
     if not HAS_LIBCLOUD_BASE:
         module.fail_json(msg='libcloud must be installed to use this module')
+    provider = provider or Provider.GCE
 
     return gcp_connect(module, provider, get_driver, USER_AGENT_PRODUCT, USER_AGENT_VERSION)
 
