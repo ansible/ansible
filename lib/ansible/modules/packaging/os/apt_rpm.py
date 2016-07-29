@@ -126,7 +126,7 @@ def install_packages(module, pkgspec):
 
         cmd = ("%s -y install %s > /dev/null" % (APT_PATH, packages))
 
-        rc, out, err = module.run_command(cmd)
+        rc, out, err = module.run_command(cmd,use_unsafe_shell=True)
 
         installed = True
         for packages in pkgspec:
