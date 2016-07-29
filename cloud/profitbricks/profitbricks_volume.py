@@ -45,11 +45,20 @@ options:
     description:
       - The system image ID for the volume, e.g. a3eae284-a2fe-11e4-b187-5f1f641608c8. This can also be a snapshot image ID.
     required: true
+  image_password:
+    description:
+      - Password set for the administrative user.
+    required: false
+  ssh_keys:
+    description:
+      - Public SSH keys allowing access to the virtual machine.
+    required: false
   disk_type:
     description:
-      - The disk type. Currently only HDD.
+      - The disk type of the volume.
     required: false
     default: HDD
+    choices: [ "HDD", "SSD" ]
   licence_type:
     description:
       - The licence type for the volume. This is used when the image is non-standard. 
@@ -163,6 +172,8 @@ def _create_volume(module, profitbricks, datacenter, name):
     size = module.params.get('size')
     bus = module.params.get('bus')
     image = module.params.get('image')
+    image_password = module.params.get('image_password')
+    ssh_keys = module.params.get('ssh_keys')
     disk_type = module.params.get('disk_type')
     licence_type = module.params.get('licence_type')
     wait_timeout = module.params.get('wait_timeout')
@@ -174,6 +185,8 @@ def _create_volume(module, profitbricks, datacenter, name):
             size=size,
             bus=bus,
             image=image,
+            image_password=image_password,
+            ssh_keys=ssh_keys,
             disk_type=disk_type,
             licence_type=licence_type
             )
@@ -250,9 +263,10 @@ def create_volume(module, profitbricks):
     else:
         names = [name] * count
 
-    for name in  names: 
+    for name in names: 
         create_response = _create_volume(module, profitbricks, str(datacenter), name)
         volumes.append(create_response)
+        _attach_volume(module, profitbricks, datacenter, create_response['id'])
         failed = False
 
     results = {
@@ -308,19 +322,50 @@ def delete_volume(module, profitbricks):
 
     return changed
 
+def _attach_volume(module, profitbricks, datacenter, volume):
+    """
+    Attaches a volume.
+
+    This will attach a volume to the server.
+
+    module : AnsibleModule object
+    profitbricks: authenticated profitbricks object.
+
+    Returns:
+        True if the volume was attached, false otherwise
+    """
+    server = module.params.get('server')
+
+    # Locate UUID for Server
+    if server: 
+        if not (uuid_match.match(server)):
+            server_list = profitbricks.list_servers(datacenter)
+            for s in server_list['items']:
+                if server == s['properties']['name']:
+                    server= s['id']
+                    break
+
+        try:
+            return profitbricks.attach_volume(datacenter, server, volume)
+        except Exception as e:
+            module.fail_json(msg='failed to attach volume: %s' % str(e))
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             datacenter=dict(),
+            server=dict(),
             name=dict(),
             size=dict(default=10),
             bus=dict(default='VIRTIO'),
             image=dict(),
+            image_password=dict(default=None),
+            ssh_keys=dict(type='list', default=[]),
             disk_type=dict(default='HDD'),
             licence_type=dict(default='UNKNOWN'),
-            count=dict(default=1),
+            count=dict(type='int', default=1),
             auto_increment=dict(type='bool', default=True),
-            instance_ids=dict(),
+            instance_ids=dict(type='list', default=[]),
             subscription_user=dict(),
             subscription_password=dict(),
             wait=dict(type='bool', default=True),
@@ -360,8 +405,8 @@ def main():
             module.fail_json(msg='name parameter is required for new instance')
 
         try:
-            (failed, volume_dict_array) = create_volume(module, profitbricks)
-            module.exit_json(failed=failed, volumes=volume_dict_array)
+            (volume_dict_array) = create_volume(module, profitbricks)
+            module.exit_json(**volume_dict_array)
         except Exception as e:
             module.fail_json(msg='failed to set volume state: %s' % str(e))
 
