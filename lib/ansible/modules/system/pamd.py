@@ -102,12 +102,6 @@ class PamdRule(object):
                                        rule_module_path is not None):
             ansible.fail_json(msg='This is bizarre.  You can only pass' +
                               'in a line OR a type, control, and module path')
-        elif rule_module_args is not None and not (rule_type is not None and
-                                                   rule_control is not None and
-                                                   rule_module_path is not None):
-            ansible.fail_json(msg='If you pass in rule_module_args, ' +
-                              'you must pass in a type, control and module path.' +
-                              '  You are missing at least one of the three')
         elif stringline is not None:
             self.line = stringline
             self.__parsline__()
@@ -115,6 +109,7 @@ class PamdRule(object):
             self.rule_type = rule_type
             self.rule_control = rule_control
             self.rule_module_path = rule_module_path
+            self.rule_module_args = rule_module_args
 
     def __parsline__(self):
 
@@ -135,7 +130,7 @@ class PamdRule(object):
     def get_module_args_as_string(self):
         try:
             if self.rule_module_args is not None:
-                return ' '.join(self.rule_module_args)
+                return self.rule_module_args
         except AttributeError:
             pass
         return ''
@@ -164,14 +159,20 @@ class PamdService(object):
             fileinput.close()
         else:
             self.ansible.fail_json(msg='Unable to locate PAM module file %s' % self.fname)
+    
+    def __str__(self):
+        return self.fname
 
-    def update_rule(self, old_rule, new_rule):
+class PamdUtil(object):
+
+    @staticmethod
+    def update_rule(service, old_rule, new_rule):
 
         changed = False
         change_count = 0
         result = {'action': 'update_rule'}
 
-        for rule in self.rules:
+        for rule in service.rules:
             if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
 
                 if new_rule.rule_type is not None and new_rule.rule_type != rule.rule_type:
@@ -183,64 +184,73 @@ class PamdService(object):
                 if new_rule.rule_module_path is not None and new_rule.rule_module_path != rule.rule_module_path:
                     rule.rule_module_path = new_rule.rule_module_path
                     changed = True
+                if new_rule.rule_module_args is not None and new_rule.rule_module_args != rule.rule_module_args:
+                    rule.rule_module_args = new_rule.rule_module_args
+                    changed = True
+                if changed:
+                    result['updated_rule_'+str(change_count)] = str(rule)
+                    result['new_rule'] = str(new_rule)
 
-                result['updated_rule_'+str(change_count)] = str(rule)
-                result['new_rule'] = str(new_rule)
-
-                change_count += 1
+                    change_count += 1
 
         result['change_count'] = change_count
         return changed, result
 
-    def insert_before_rule(self, old_rule, new_rule):
+    @staticmethod
+    def insert_before_rule(service, old_rule, new_rule):
         index = 0
         change_count = 0
         result = {'action': 'insert_before_rule'}
         changed = False
-        for rule in self.rules:
+        for rule in service.rules:
             if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
                 if index == 0:
-                    self.rules.insert(0, new_rule)
+                    service.rules.insert(0, new_rule)
                     changed = True
-
-                elif new_rule.rule_type != self.rules[index-1].rule_type or new_rule.rule_control != self.rules[index-1].rule_control or new_rule.rule_module_path != self.rules[index-1].rule_module_path:
-                    self.rules.insert(index, new_rule)
+                elif new_rule.rule_type != service.rules[index-1].rule_type or new_rule.rule_control != service.rules[index-1].rule_control or new_rule.rule_module_path != service.rules[index-1].rule_module_path:
+                    service.rules.insert(index, new_rule)
                     changed = True
-
-                result['new_rule'] = str(new_rule)
-                result['before_rule_'+str(change_count)] = str(rule)
-                change_count += 1
+                if changed:
+                    result['new_rule'] = str(new_rule)
+                    result['before_rule_'+str(change_count)] = str(rule)
+                    change_count += 1
             index += 1
         result['change_count'] = change_count
         return changed, result
 
-    def insert_after_rule(self, old_rule, new_rule):
+    @staticmethod
+    def insert_after_rule(service, old_rule, new_rule):
         index = 0
         change_count = 0
         result = {'action': 'insert_after_rule'}
         changed = False
-        for rule in self.rules:
+        for rule in service.rules:
             if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
-                if new_rule.rule_type != self.rules[index+1].rule_type or new_rule.rule_control != self.rules[index+1].rule_control or new_rule.rule_module_path != self.rules[index+1].rule_module_path:
-                    self.rules.insert(index+1, new_rule)
+                if new_rule.rule_type != service.rules[index+1].rule_type or new_rule.rule_control != service.rules[index+1].rule_control or new_rule.rule_module_path != service.rules[index+1].rule_module_path:
+                    service.rules.insert(index+1, new_rule)
                     changed = True
-
-                result['new_rule'] = str(new_rule)
-                result['after_rule_'+str(change_count)] = str(rule)
-                change_count += 1
+                if changed:
+                    result['new_rule'] = str(new_rule)
+                    result['after_rule_'+str(change_count)] = str(rule)
+                    change_count += 1
             index += 1
 
         result['change_count'] = change_count
         return changed, result
-
-    def write_rules(self):
+    
+    @staticmethod
+    def update_module_arguments(service, old_rule, module_args):
+        pass
+    
+    @staticmethod
+    def write_rules(service):
         previous_rule = None
 
-        f = open(self.fname, 'w')
-        for amble in self.preamble:
+        f = open(service.fname, 'w')
+        for amble in service.preamble:
             f.write(amble+'\n')
 
-        for rule in self.rules:
+        for rule in service.rules:
             if previous_rule is not None and previous_rule.rule_type != rule.rule_type:
                 f.write('\n')
             f.write(str(rule)+'\n')
@@ -283,23 +293,23 @@ def main():
     pamd = PamdService(path, service, module)
 
     old_rule = PamdRule(module, rule_type=old_type, rule_control=old_control,
-                        rule_module_path=old_module_path, rule_module_args=module_arguments)
+                        rule_module_path=old_module_path)
     new_rule = PamdRule(module, rule_type=new_type, rule_control=new_control,
                         rule_module_path=new_module_path, rule_module_args=module_arguments)
 
     if state == 'updated':
-        change, result = pamd.update_rule(old_rule, new_rule)
+        change, result = PamdUtil.update_rule(pamd, old_rule, new_rule)
     elif state == 'before':
         if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
             module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
-        change, result = pamd.insert_before_rule(old_rule, new_rule)
+        change, result = PamdUtil.insert_before_rule(pamd, old_rule, new_rule)
     elif state == 'after':
         if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
             module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
-        change, result = pamd.insert_after_rule(old_rule, new_rule)
+        change, result = PamdUtil.insert_after_rule(pamd, old_rule, new_rule)
 
     if not module.check_mode:
-        pamd.write_rules()
+        PamdUtil.write_rules(pamd)
 
     facts = {}
     facts['pamd'] = {'changed': change, 'result': result}
