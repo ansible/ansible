@@ -1,6 +1,5 @@
 ansible(1)
 =========
-:doctype:manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
