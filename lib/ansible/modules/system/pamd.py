@@ -129,7 +129,9 @@ class PamdRule(object):
 
     def get_module_args_as_string(self):
         try:
-            if self.rule_module_args is not None:
+            if self.rule_module_args is not None and type(self.rule_module_args) is list:
+                return ' '.join(self.rule_module_args)
+            elif self.rule_module_args is not None and type(self.rule_module_args) is str:
                 return self.rule_module_args
         except AttributeError:
             pass
