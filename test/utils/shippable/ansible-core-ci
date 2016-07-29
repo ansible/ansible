@@ -74,6 +74,12 @@ def main():
                               default=None,
                               help='path to ssh public key for authentication')
 
+    start_parser.add_argument('--query',
+                              dest='query',
+                              action='store_true',
+                              default=False,
+                              help='query only, do not start instance')
+
     shippable = start_subparsers.add_parser('shippable', help='start instance for shippable testing')
 
     shippable.add_argument('--run-id',
@@ -164,6 +170,7 @@ def start_instance(args):
             platform=args.platform,
             version=args.version,
             public_key=public_key,
+            query=args.query,
         )
     )
 
@@ -203,6 +210,9 @@ def start_instance(args):
         print_stderr('instance started: %s' % args.instance_id)
 
     print(args.instance_id)
+
+    if args.query:
+        print_stderr(json.dumps(response.json(), indent=4, sort_keys=True))
 
 
 def stop_instance(args):

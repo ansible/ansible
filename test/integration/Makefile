@@ -98,6 +98,8 @@ endif
 # Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
 ifeq ($(container),docker)
 TEST_CONNECTION_FILTER := 'test_docker'
+else ifeq ($(container),freebsd)
+TEST_CONNECTION_FILTER := 'test_freebsd'
 else
 TEST_CONNECTION_FILTER := 'test_default'
 endif
