@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 import os
 import fileinput
 
@@ -68,22 +69,31 @@ options:
   module_arguments:
     required: false
     description:
-    - The module arguments to add the new rule
+    - When state is 'updated', the module_arguments will replace existing
+      module_arguments.  When state is 'args_absent' args matching those
+      listed in module_arguments will be removed.  When state is
+      'args_present' any args listed in module_arguments are added if
+      missing from the existing rule.  Furthermore, if the module argument
+      takes a value denoted by '=', the value will be changed to that specified
+      in module_arguments.
   insert:
     required: false
     default: none
     choices:
-    - none
+    - updated
     - before
     - after
+    - args_present
+    - args_absent
     description:
-    - The default of 'none' will modify an existing rule if type,
+    - The default of 'updated' will modify an existing rule if type,
       control and module_path all match an existing rule.  With 'before',
       the new rule will be inserted before a rule matching type, control
       and module_path.  Similarly, with 'after', the new rule will be inserted
       after an existing rule matching type, control and module_path.  With
       either 'before' or 'after' new_type, new_control, and new_module_path
-      must all be specified.
+      must all be specified.  If state is 'args_absent' or 'args_present',
+      new_type, new_control, and new_module_path will be ignored.
   path:
     required: false
     default: /etc/pam.d/
@@ -109,7 +119,14 @@ class PamdRule(object):
             self.rule_type = rule_type
             self.rule_control = rule_control
             self.rule_module_path = rule_module_path
-            self.rule_module_args = rule_module_args
+            
+            try:
+                if self.rule_module_args is not None and type(self.rule_module_args) is list:
+                    self.rule_module_args = rule_module_args
+                elif self.rule_module_args is not None and type(self.rule_module_args) is str:
+                    self.rule_module_args = rule_module_args.split(' ')
+            except AttributeError:
+                self.rule_module_args = []
 
     def __parsline__(self):
 
@@ -129,10 +146,8 @@ class PamdRule(object):
 
     def get_module_args_as_string(self):
         try:
-            if self.rule_module_args is not None and type(self.rule_module_args) is list:
+            if self.rule_module_args is not None:
                 return ' '.join(self.rule_module_args)
-            elif self.rule_module_args is not None and type(self.rule_module_args) is str:
-                return self.rule_module_args
         except AttributeError:
             pass
         return ''
@@ -153,7 +168,7 @@ class PamdService(object):
         self.rules = []
 
         if os.path.exists(self.fname):
-            for line in fileinput.FileInput(self.fname, inplace=not self.check):
+            for line in fileinput.FileInput(self.fname, inplace=False):
                 if line.startswith('#') and not line.isspace():
                     self.preamble.append(line.rstrip())
                 elif not line.startswith('#') and not line.isspace():
@@ -241,9 +256,42 @@ class PamdUtil(object):
         return changed, result
     
     @staticmethod
-    def update_module_arguments(service, old_rule, module_args):
-        pass
-    
+    def remove_module_arguments(service, old_rule, module_args):
+        result = {'action': 'args_absent'}
+        changed = False
+        change_count = 0
+        for rule in service.rules:
+            if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
+                for arg_to_remove in module_args.split(' '):
+                    for arg in rule.rule_module_args:
+                        if arg == arg_to_remove:
+                            rule.rule_module_args.remove(arg)
+                            changed = True
+                            result['removed_arg_'+str(change_count)] = arg
+                            result['from_rule_'+str(change_count)] = str(rule)
+                            change_count += 1
+        
+        result['change_count'] = change_count
+        return changed, result
+
+    @staticmethod
+    def add_module_arguments(service, old_rule, module_args):
+        result = {'action': 'args_present'}
+        changed = False
+        change_count = 0
+        for rule in service.rules:
+            if old_rule.rule_type == rule.rule_type and old_rule.rule_control == rule.rule_control and old_rule.rule_module_path == rule.rule_module_path:
+                for arg_to_add in module_args.split(' '):
+                    if "=" in arg_to_add:
+                        pass
+                    elif arg_to_add not in rule.rule_module_args:
+                        rule.rule_module_args.append(arg_to_add)
+                        changed = True
+                        result['added_arg_'+str(change_count)] = arg_to_add
+                        result['to_rule_'+str(change_count)] = str(rule)
+                        change_count += 1
+        result['change_count'] = change_count
+        return changed, result
     @staticmethod
     def write_rules(service):
         previous_rule = None
@@ -272,7 +320,7 @@ def main():
             new_control      = dict(required=False),
             new_module_path  = dict(required=False),
             module_arguments = dict(required=False),
-            state            = dict(required=False, default="updated", choices=[ 'before', 'after', 'updated']),
+            state            = dict(required=False, default="updated", choices=[ 'before', 'after', 'updated', 'args_absent', 'args_present']),
             path             = dict(required=False, default='/etc/pam.d')
         ),
         supports_check_mode = True
@@ -299,20 +347,28 @@ def main():
     new_rule = PamdRule(module, rule_type=new_type, rule_control=new_control,
                         rule_module_path=new_module_path, rule_module_args=module_arguments)
 
-    if state == 'updated':
-        change, result = PamdUtil.update_rule(pamd, old_rule, new_rule)
-    elif state == 'before':
-        if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
-            module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
-        change, result = PamdUtil.insert_before_rule(pamd, old_rule, new_rule)
-    elif state == 'after':
-        if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
-            module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
-        change, result = PamdUtil.insert_after_rule(pamd, old_rule, new_rule)
+    try:
+        if state == 'updated':
+            change, result = PamdUtil.update_rule(pamd, old_rule, new_rule)
+        elif state == 'before':
+            if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
+                module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
+            change, result = PamdUtil.insert_before_rule(pamd, old_rule, new_rule)
+        elif state == 'after':
+            if new_rule.rule_control is None or new_rule.rule_type is None or new_rule.rule_module_path is None:
+                module.fail_json(msg='When inserting a new rule before or after an existing rule, new_type, new_control and new_module_path must all be set.')
+            change, result = PamdUtil.insert_after_rule(pamd, old_rule, new_rule)
+        elif state == 'args_absent':
+            change, result = PamdUtil.remove_module_arguments(pamd, old_rule, module_arguments)
+        elif state == 'args_present':
+            change, result = PamdUtil.add_module_arguments(pamd, old_rule, module_arguments)
 
-    if not module.check_mode:
-        PamdUtil.write_rules(pamd)
+        if not module.check_mode:
+            PamdUtil.write_rules(pamd)
 
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg='error running changing pamd: %s' % str(e))
     facts = {}
     facts['pamd'] = {'changed': change, 'result': result}
 
