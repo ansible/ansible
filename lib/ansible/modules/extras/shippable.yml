@@ -16,6 +16,11 @@ matrix:
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
+
+    - env: TEST=integration PLATFORM=windows VERSION=2008-SP2
+    - env: TEST=integration PLATFORM=windows VERSION=2008-R2_SP1
+    - env: TEST=integration PLATFORM=windows VERSION=2012-RTM
+    - env: TEST=integration PLATFORM=windows VERSION=2012-R2_RTM
 build:
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
