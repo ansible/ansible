@@ -40,11 +40,12 @@ except ImportError:
 USER_AGENT_PRODUCT = "Ansible-gcdns"
 USER_AGENT_VERSION = "v1"
 
-def gcdns_connect(module, provider=Provider.GOOGLE):
+def gcdns_connect(module, provider=None):
     """Return a GCP connection for Google Cloud DNS."""
     if not HAS_LIBCLOUD_BASE:
         module.fail_json(msg='libcloud must be installed to use this module')
 
+    provider = provider or Provider.GOOGLE
     return gcp_connect(module, provider, get_driver, USER_AGENT_PRODUCT, USER_AGENT_VERSION)
 
 def unexpected_error_msg(error):
