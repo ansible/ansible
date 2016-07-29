@@ -1,0 +1,11 @@
+- hosts: windows
+  gather_facts: false
+  roles:
+    - { role: test_win_group, tags: test_win_group }
+    - { role: test_win_file, tags: test_win_file }
+    - { role: test_win_copy, tags: test_win_copy }
+    - { role: test_win_template, tags: test_win_template }
+    - { role: test_win_lineinfile, tags: test_win_lineinfile }
+    - { role: test_win_stat, tags: test_win_stat }
+    - { role: test_win_get_url, tags: test_win_get_url }
+    - { role: test_win_msi, tags: test_win_msi }

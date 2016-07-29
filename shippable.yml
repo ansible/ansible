@@ -8,6 +8,10 @@ matrix:
   exclude:
     - env: TEST=none
   include:
+    - env: TEST=remote TARGET=ci_win1 PLATFORM=windows VERSION=2012-R2_RTM
+    - env: TEST=remote TARGET=ci_win2 PLATFORM=windows VERSION=2012-R2_RTM
+    - env: TEST=remote TARGET=ci_win3 PLATFORM=windows VERSION=2012-R2_RTM
+
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos6
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos7
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora-rawhide
