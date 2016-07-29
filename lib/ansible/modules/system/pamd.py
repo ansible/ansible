@@ -122,6 +122,15 @@ EXAMPLES = """
   pamd: name=system-auth type=auth control=required module_path=pam_faillock.so module_arguments='fail_interval=300' state=args_present
 """
 
+RETURN = '''
+dest:
+    description: path to pam.d service that was changed
+    returned: success
+    type: string
+    sample: "/etc/pam.d/system-auth"
+...
+'''
+
 #The PamdRule class encapsulates a rule in a pam.d service
 class PamdRule(object):
     def __init__(self, ansible, stringline=None, rule_type=None,
@@ -400,6 +409,8 @@ def main():
         module.fail_json(msg='error running changing pamd: %s' % str(e))
     facts = {}
     facts['pamd'] = {'changed': change, 'result': result}
+
+    module.params['dest'] = pamd.fname
 
     module.exit_json(changed=change, ansible_facts=facts)
 
