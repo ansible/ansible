@@ -444,6 +444,60 @@
   assert:
     that: "repo_content.stat.exists"
 
+# See https://github.com/ansible/ansible-modules-core/pull/4243
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: clone repo
+  git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
+
+- name: clone repo with same url to same destination
+  git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
+  register: checkout_same_url
+
+- name: check repo not changed (when get url command supported in git version)
+  assert:
+    that:
+      - not checkout_same_url|changed
+  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
+
+- name: check repo changed (when get url command not supported in git version)
+  assert:
+    that:
+      - checkout_same_url|changed
+  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '<')
+
+
+- name: clone repo with new url to same destination
+  git: repo={{ repo_update_url_2 }} dest={{ checkout_dir }}
+  register: checkout_new_url
+
+- name: check repo changed
+  assert:
+    that:
+      - checkout_new_url|changed
+
+
+- name: clone repo with new url in check mode
+  git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
+  register: checkout_new_url_check_mode
+  check_mode: True
+
+- name: check repo reported changed in check mode
+  assert:
+    that:
+      - checkout_new_url_check_mode|changed
+
+- name: clone repo with new url after check mode
+  git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
+  register: checkout_new_url_after_check_mode
+
+- name: check repo still changed after check mode
+  assert:
+    that:
+      - checkout_new_url_after_check_mode|changed
+
 # Test that checkout by branch works when the branch is not in our current repo but the sha is
 
 - name: clear checkout_dir
