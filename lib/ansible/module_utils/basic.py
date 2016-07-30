@@ -1820,7 +1820,7 @@ class AnsibleModule(object):
         if os.path.exists(fn):
             # backups named basename-YYYY-MM-DD@HH:MM:SS~
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
-            backupdest = '%s.%s' % (fn, ext)
+            backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
             try:
                 shutil.copy2(fn, backupdest)
