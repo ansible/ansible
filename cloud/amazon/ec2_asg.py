@@ -26,8 +26,9 @@ options:
   state:
     description:
       - register or deregister the instance
-    required: true
+    required: false
     choices: ['present', 'absent']
+    default: present
   name:
     description:
       - Unique name for group to be created or deleted
