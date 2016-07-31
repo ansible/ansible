@@ -315,18 +315,21 @@ no_log: setup
 	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
 
 test_binary_modules:
-	mytmpdir=$(MYTMPDIR); \
-	ls -al $$mytmpdir; \
-	curl https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
-	[ $$? != 0 ] && wget -qO- https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
-	ls -al $$mytmpdir; \
-	cd library; \
-	GOROOT=$$mytmpdir/go GOOS=linux GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_linux helloworld.go; \
-	GOROOT=$$mytmpdir/go GOOS=windows GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_win32nt.exe helloworld.go; \
-	GOROOT=$$mytmpdir/go GOOS=darwin GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_darwin helloworld.go; \
-	cd ..; \
-	rm -rf $$mytmpdir; \
+	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook download_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
 	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+
+binary_modules:
+	# Compiled versions of these binary modules are available at the url below.
+	# This avoids a dependency on go and keeps the binaries out of our git repository.
+	# https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/
+	cd library; \
+	GOOS=linux   GOARCH=amd64 go build -o helloworld_linux       helloworld.go; \
+	GOOS=windows GOARCH=amd64 go build -o helloworld_win32nt.exe helloworld.go; \
+	GOOS=darwin  GOARCH=amd64 go build -o helloworld_darwin      helloworld.go; \
+	GOOS=freebsd GOARCH=amd64 go build -o helloworld_freebsd     helloworld.go
+
+clean_binary_modules:
+	rm library/helloworld_*
 
 test_async:
 	# Verify that extra data before module JSON output during async call is ignored.
