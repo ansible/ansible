@@ -246,7 +246,7 @@ class TaskExecutor:
             task_vars[loop_var] = item
 
             try:
-                tmp_task = self._task.copy()
+                tmp_task = self._task.copy(exclude_tasks=True)
                 tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=to_unicode(e)))
@@ -265,7 +265,7 @@ class TaskExecutor:
             res[loop_var] = item
             res['_ansible_item_result'] = True
 
-            self._rslt_q.put(TaskResult(self._host, self._task, res), block=False)
+            self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
             results.append(res)
             del task_vars[loop_var]
 
@@ -516,7 +516,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host, self._task, result), block=False)
+                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result), block=False)
                         time.sleep(delay)
         else:
             if retries > 1:

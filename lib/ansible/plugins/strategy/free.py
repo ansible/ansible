@@ -146,6 +146,7 @@ class StrategyModule(StrategyBase):
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                                del task_vars
                     else:
                         display.debug("%s is blocked, skipping for now" % host_name)
 

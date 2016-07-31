@@ -326,12 +326,12 @@ class Task(Base, Conditional, Taggable, Become):
             all_vars.update(self.vars)
         return all_vars
 
-    def copy(self, exclude_block=False):
+    def copy(self, exclude_block=False, exclude_tasks=False):
         new_me = super(Task, self).copy()
 
         new_me._block = None
         if self._block and not exclude_block:
-            new_me._block = self._block.copy()
+            new_me._block = self._block#.copy(exclude_tasks=exclude_tasks)
 
         new_me._role = None
         if self._role:
@@ -339,7 +339,8 @@ class Task(Base, Conditional, Taggable, Become):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy(exclude_block=exclude_block)
+            new_me._task_include = self._task_include#.copy(exclude_block=True)
+            #new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
 
         return new_me
 

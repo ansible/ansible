@@ -60,8 +60,11 @@ class IncludedFile:
 
         for res in results:
 
-            if res._task.action == 'include':
-                if res._task.loop:
+            original_host = res._host
+            original_task = res._task
+
+            if original_task.action == 'include':
+                if original_task.loop:
                     if 'results' not in res._result:
                         continue
                     include_results = res._result['results']
@@ -73,16 +76,13 @@ class IncludedFile:
                     if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result:
                         continue
 
-                    original_host = get_original_host(res._host)
-                    original_task = iterator.get_original_task(original_host, res._task)
-
                     task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=original_host, task=original_task)
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
-                    if res._task.loop_control:
-                        loop_var = res._task.loop_control.loop_var or 'item'
+                    if original_task.loop_control:
+                        loop_var = original_task.loop_control.loop_var or 'item'
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 

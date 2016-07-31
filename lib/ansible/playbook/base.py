@@ -80,6 +80,7 @@ class Base:
 
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
+        #self._uuid = 1
 
         # and initialize the base attributes
         self._initialize_base_attributes()
@@ -137,8 +138,8 @@ class Base:
         '''
 
         # check cache before retrieving attributes
-        if self.__class__ in BASE_ATTRIBUTES:
-            return BASE_ATTRIBUTES[self.__class__]
+        if self.__class__.__name__ in BASE_ATTRIBUTES:
+            return BASE_ATTRIBUTES[self.__class__.__name__]
 
         # Cache init
         base_attributes = dict()
@@ -147,7 +148,7 @@ class Base:
                 if name.startswith('_'):
                     name = name[1:]
                 base_attributes[name] = value
-        BASE_ATTRIBUTES[self.__class__] = base_attributes
+        BASE_ATTRIBUTES[self.__class__.__name__] = base_attributes
         return base_attributes
 
     def _initialize_base_attributes(self):
