@@ -228,7 +228,7 @@ def release_address(ec2, address, check_mode):
     return {'changed': True}
 
 
-def find_device(ec2, device_id, isinstance=True):
+def find_device(ec2, module, device_id, isinstance=True):
     """ Attempt to find the EC2 instance and return it """
 
     if isinstance:
@@ -253,7 +253,7 @@ def find_device(ec2, device_id, isinstance=True):
     raise EIPException("could not find instance" + device_id)
 
 
-def ensure_present(ec2, domain, address, device_id,
+def ensure_present(ec2, module, domain, address, device_id,
                    reuse_existing_ip_allowed, check_mode, isinstance=True):
     changed = False
 
@@ -268,7 +268,7 @@ def ensure_present(ec2, domain, address, device_id,
     if device_id:
         # Allocate an IP for instance since no public_ip was provided
         if isinstance:
-            instance = find_device(ec2, device_id)
+            instance = find_device(ec2, module, device_id)
             if reuse_existing_ip_allowed:
                 if len(instance.vpc_id) > 0 and domain is None:
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
@@ -276,7 +276,7 @@ def ensure_present(ec2, domain, address, device_id,
             assoc_result = associate_ip_and_device(ec2, address, device_id,
                                                  check_mode)
         else:
-            instance = find_device(ec2, device_id, isinstance=False)
+            instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, device_id,
                                                  check_mode, isinstance=False)
@@ -357,7 +357,7 @@ def main():
 
         if state == 'present':
             if device_id:
-                result = ensure_present(ec2, domain, address, device_id,
+                result = ensure_present(ec2, module, domain, address, device_id,
                                     reuse_existing_ip_allowed,
                                     module.check_mode, isinstance=is_instance)
             else:
