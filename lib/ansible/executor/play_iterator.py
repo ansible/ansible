@@ -508,6 +508,12 @@ class PlayIterator:
         the different processes, and not all data structures are preserved. This method
         allows us to find the original task passed into the executor engine.
         '''
+
+        if isinstance(task, Task):
+            the_uuid = task._uuid
+        else:
+            the_uuid = task
+
         def _search_block(block):
             '''
             helper method to check a block's task lists (block/rescue/always)
@@ -521,7 +527,7 @@ class PlayIterator:
                         res = _search_block(t)
                         if res:
                             return res
-                    elif t._uuid == task._uuid:
+                    elif t._uuid == the_uuid:
                         return t
             return None
 

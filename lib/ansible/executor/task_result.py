@@ -41,7 +41,7 @@ class TaskResult:
 
     def is_skipped(self):
         # loop results
-        if 'results' in self._result and self._task.loop:
+        if 'results' in self._result:
             results = self._result['results']
             # Loop tasks are only considered skipped if all items were skipped.
             # some squashed results (eg, yum) are not dicts and can't be skipped individually
@@ -62,7 +62,7 @@ class TaskResult:
         return self._check_key('unreachable')
 
     def _check_key(self, key):
-        if self._result.get('results', []) and self._task.loop:
+        if self._result.get('results', []):
             flag = False
             for res in self._result.get('results', []):
                 if isinstance(res, dict):

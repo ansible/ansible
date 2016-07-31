@@ -43,7 +43,8 @@ from ansible.plugins import action_loader, connection_loader, filter_loader, loo
 from ansible.template import Templar
 from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import wrap_var
-from ansible.vars import combine_vars
+from ansible.vars import combine_vars, strip_internal_keys
+
 
 try:
     from __main__ import display
@@ -174,6 +175,7 @@ class StrategyBase:
         # The next common higher level is __init__.py::run() and that has
         # tasks inside of play_iterator so we'd have to extract them to do it
         # there.
+
         global action_write_locks
         if task.action not in action_write_locks:
             display.debug('Creating lock for %s' % task.action)
@@ -189,21 +191,22 @@ class StrategyBase:
             shared_loader_obj = SharedPluginLoaderObj()
 
             queued = False
+            starting_worker = self._cur_worker
             while True:
                 (worker_prc, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
-                    worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
+                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
                     queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
                     self._cur_worker = 0
-                    time.sleep(0.005)
                 if queued:
                     break
+                elif self._cur_worker == starting_worker:
+                    time.sleep(0.0001)
 
-            del task_vars
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
@@ -219,222 +222,233 @@ class StrategyBase:
 
         ret_results = []
 
+        def get_original_host(host_name):
+            host_name = to_unicode(host_name)
+            if host_name in self._inventory._hosts_cache:
+                return self._inventory._hosts_cache[host_name]
+            else:
+                return self._inventory.get_host(host_name)
+
+        def search_handler_blocks(handler_name, handler_blocks):
+            for handler_block in handler_blocks:
+                for handler_task in handler_block.block:
+                    handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    try:
+                        # first we check with the full result of get_name(), which may
+                        # include the role name (if the handler is from a role). If that
+                        # is not found, we resort to the simple name field, which doesn't
+                        # have anything extra added to it.
+                        target_handler_name = templar.template(handler_task.name)
+                        if target_handler_name == handler_name:
+                            return handler_task
+                        else:
+                            target_handler_name = templar.template(handler_task.get_name())
+                            if target_handler_name == handler_name:
+                                return handler_task
+                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        # We skip this handler due to the fact that it may be using
+                        # a variable in the name that was conditionally included via
+                        # set_fact or some other method, and we don't want to error
+                        # out unnecessarily
+                        continue
+            return None
+
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
-                result = self._final_q.get()
-                display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
+                task_result = self._final_q.get(block=False)
+                original_host = get_original_host(task_result._host)
+                original_task = iterator.get_original_task(original_host, task_result._task)
+                task_result._host = original_host
+                task_result._task = original_task
 
-                # helper method, used to find the original host from the one
-                # returned in the result/message, which has been serialized and
-                # thus had some information stripped from it to speed up the
-                # serialization process
-                def get_original_host(host):
-                    if host.name in self._inventory._hosts_cache:
-                       return self._inventory._hosts_cache[host.name]
+                # send callbacks for 'non final' results
+                if '_ansible_retry' in task_result._result:
+                    self._tqm.send_callback('v2_runner_retry', task_result)
+                    continue
+                elif '_ansible_item_result' in task_result._result:
+                    if task_result.is_failed() or task_result.is_unreachable():
+                        self._tqm.send_callback('v2_runner_item_on_failed', task_result)
+                    elif task_result.is_skipped():
+                        self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
                     else:
-                       return self._inventory.get_host(host.name)
+                        self._tqm.send_callback('v2_runner_item_on_ok', task_result)
+                    continue
+
+                if original_task.register:
+                    if original_task.run_once:
+                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                    else:
+                        host_list = [original_host]
+
+                    clean_copy = strip_internal_keys(task_result._result)
+                    if 'invocation' in clean_copy:
+                        del clean_copy['invocation']
+
+                    for target_host in host_list:
+                        self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
 
                 # all host status messages contain 2 entries: (msg, task_result)
-                if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
-                    task_result = result[1]
-                    host = get_original_host(task_result._host)
-                    task = task_result._task
-                    if result[0] == 'host_task_failed' or task_result.is_failed():
-                        if not task.ignore_errors:
-                            display.debug("marking %s as failed" % host.name)
-                            if task.run_once:
-                                # if we're using run_once, we have to fail every host here
-                                [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
-                            else:
-                                iterator.mark_host_failed(host)
-
-                            # only add the host to the failed list officially if it has
-                            # been failed by the iterator
-                            if iterator.is_failed(host):
-                                self._tqm._failed_hosts[host.name] = True
-                                self._tqm._stats.increment('failures', host.name)
-                            else:
-                                # otherwise, we grab the current state and if we're iterating on
-                                # the rescue portion of a block then we save the failed task in a
-                                # special var for use within the rescue/always
-                                state, _ = iterator.get_next_task_for_host(host, peek=True)
-                                if state.run_state == iterator.ITERATING_RESCUE:
-                                    original_task = iterator.get_original_task(host, task)
-                                    self._variable_manager.set_nonpersistent_facts(
-                                        host,
-                                        dict(
-                                            ansible_failed_task=original_task.serialize(),
-                                            ansible_failed_result=task_result._result,
-                                        ),
-                                    )
+                role_ran = False
+                if task_result.is_failed():
+                    role_ran = True
+                    if not original_task.ignore_errors:
+                        display.debug("marking %s as failed" % original_host.name)
+                        if original_task.run_once:
+                            # if we're using run_once, we have to fail every host here
+                            [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
                         else:
-                            self._tqm._stats.increment('ok', host.name)
-                        self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=task.ignore_errors)
-                    elif result[0] == 'host_unreachable':
-                        self._tqm._unreachable_hosts[host.name] = True
-                        self._tqm._stats.increment('dark', host.name)
-                        self._tqm.send_callback('v2_runner_on_unreachable', task_result)
-                    elif result[0] == 'host_task_skipped':
-                        self._tqm._stats.increment('skipped', host.name)
-                        self._tqm.send_callback('v2_runner_on_skipped', task_result)
-                    elif result[0] == 'host_task_ok':
-                        if task.action != 'include':
-                            self._tqm._stats.increment('ok', host.name)
-                            if 'changed' in task_result._result and task_result._result['changed']:
-                                self._tqm._stats.increment('changed', host.name)
-                            self._tqm.send_callback('v2_runner_on_ok', task_result)
+                            iterator.mark_host_failed(original_host)
 
+                        # only add the host to the failed list officially if it has
+                        # been failed by the iterator
+                        if iterator.is_failed(original_host):
+                            self._tqm._failed_hosts[original_host.name] = True
+                            self._tqm._stats.increment('failures', original_host.name)
+                        else:
+                            # otherwise, we grab the current state and if we're iterating on
+                            # the rescue portion of a block then we save the failed task in a
+                            # special var for use within the rescue/always
+                            state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+                            if state.run_state == iterator.ITERATING_RESCUE:
+                                self._variable_manager.set_nonpersistent_facts(
+                                    original_host,
+                                    dict(
+                                        ansible_failed_task=original_task.serialize(),
+                                        ansible_failed_result=task_result._result,
+                                    ),
+                                    )
+                    else:
+                        self._tqm._stats.increment('ok', original_host.name)
+                    self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=original_task.ignore_errors)
+                elif task_result.is_unreachable():
+                    self._tqm._unreachable_hosts[original_host.name] = True
+                    self._tqm._stats.increment('dark', original_host.name)
+                    self._tqm.send_callback('v2_runner_on_unreachable', task_result)
+                elif task_result.is_skipped():
+                    self._tqm._stats.increment('skipped', original_host.name)
+                    self._tqm.send_callback('v2_runner_on_skipped', task_result)
+                else:
+                    role_ran = True
+
+                    if original_task.loop:
+                        # this task had a loop, and has more than one result, so
+                        # loop over all of them instead of a single result
+                        result_items = task_result._result.get('results', [])
+                    else:
+                        result_items = [ task_result._result ]
+
+                    for result_item in result_items:
+                        if '_ansible_notify' in result_item:
+                            if task_result.is_changed():
+                                # The shared dictionary for notified handlers is a proxy, which
+                                # does not detect when sub-objects within the proxy are modified.
+                                # So, per the docs, we reassign the list so the proxy picks up and
+                                # notifies all other threads
+                                for handler_name in result_item['_ansible_notify']:
+                                    # Find the handler using the above helper.  First we look up the
+                                    # dependency chain of the current task (if it's from a role), otherwise
+                                    # we just look through the list of handlers in the current play/all
+                                    # roles and use the first one that matches the notify name
+                                    if handler_name in self._listening_handlers:
+                                        for listening_handler_name in self._listening_handlers[handler_name]:
+                                            listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
+                                            if listening_handler is None:
+                                                raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                                            if original_host not in self._notified_handlers[listening_handler]:
+                                                self._notified_handlers[listening_handler].append(original_host)
+                                                display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
+
+                                    else:
+                                        target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
+                                        if target_handler is None:
+                                            raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
+                                        if target_handler in self._notified_handlers:
+                                            if original_host not in self._notified_handlers[target_handler]:
+                                                self._notified_handlers[target_handler].append(original_host)
+                                                # FIXME: should this be a callback?
+                                                display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                        else:
+                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+
+                        if 'add_host' in result_item:
+                            # this task added a new host (add_host module)
+                            new_host_info = result_item.get('add_host', dict())
+                            self._add_host(new_host_info, iterator)
+
+                        elif 'add_group' in result_item:
+                            # this task added a new group (group_by module)
+                            self._add_group(original_host, result_item)
+
+                        elif 'ansible_facts' in result_item:
+                            loop_var = 'item'
+                            if original_task.loop_control:
+                                loop_var = original_task.loop_control.loop_var or 'item'
+
+                            item = result_item.get(loop_var, None)
+
+                            if original_task.action == 'include_vars':
+                                for (var_name, var_value) in iteritems(result_item['ansible_facts']):
+                                    # find the host we're actually refering too here, which may
+                                    # be a host that is not really in inventory at all
+                                    if original_task.delegate_to is not None and original_task.delegate_facts:
+                                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                                        self.add_tqm_variables(task_vars, play=iterator._play)
+                                        if item is not None:
+                                            task_vars[loop_var] = item
+                                        templar = Templar(loader=self._loader, variables=task_vars)
+                                        host_name = templar.template(original_task.delegate_to)
+                                        actual_host = self._inventory.get_host(host_name)
+                                        if actual_host is None:
+                                            actual_host = Host(name=host_name)
+                                    else:
+                                        actual_host = original_host
+
+                                    if original_task.run_once:
+                                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                                    else:
+                                        host_list = [actual_host]
+
+                                    for target_host in host_list:
+                                        self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                            else:
+                                if original_task.run_once:
+                                    host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                                else:
+                                    host_list = [original_host]
+
+                                for target_host in host_list:
+                                    if original_task.action == 'set_fact':
+                                        self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
+                                    else:
+                                        self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                    if 'diff' in task_result._result:
                         if self._diff:
                             self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                    self._pending_results -= 1
-                    if host.name in self._blocked_hosts:
-                        del self._blocked_hosts[host.name]
+                    if original_task.action != 'include':
+                        self._tqm._stats.increment('ok', original_host.name)
+                        if 'changed' in task_result._result and task_result._result['changed']:
+                            self._tqm._stats.increment('changed', original_host.name)
 
-                    # If this is a role task, mark the parent role as being run (if
-                    # the task was ok or failed, but not skipped or unreachable)
-                    if task_result._task._role is not None and result[0] in ('host_task_ok', 'host_task_failed'):
-                        # lookup the role in the ROLE_CACHE to make sure we're dealing
-                        # with the correct object and mark it as executed
-                        for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[task_result._task._role._role_name]):
-                            if role_obj._uuid == task_result._task._role._uuid:
-                                role_obj._had_task_run[host.name] = True
+                    # finally, send the ok for this task
+                    self._tqm.send_callback('v2_runner_on_ok', task_result)
 
-                    ret_results.append(task_result)
+                self._pending_results -= 1
+                if original_host.name in self._blocked_hosts:
+                    del self._blocked_hosts[original_host.name]
 
-                elif result[0] == 'add_host':
-                    result_item = result[1]
-                    new_host_info = result_item.get('add_host', dict())
+                # If this is a role task, mark the parent role as being run (if
+                # the task was ok or failed, but not skipped or unreachable)
+                if original_task._role is not None and role_ran:
+                    # lookup the role in the ROLE_CACHE to make sure we're dealing
+                    # with the correct object and mark it as executed
+                    for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
+                        if role_obj._uuid == original_task._role._uuid:
+                            role_obj._had_task_run[original_host.name] = True
 
-                    self._add_host(new_host_info, iterator)
-
-                elif result[0] == 'add_group':
-                    host = get_original_host(result[1])
-                    result_item = result[2]
-                    self._add_group(host, result_item)
-
-                elif result[0] == 'notify_handler':
-                    task_result  = result[1]
-                    handler_name = result[2]
-
-                    original_host = get_original_host(task_result._host)
-                    original_task = iterator.get_original_task(original_host, task_result._task)
-
-                    def search_handler_blocks(handler_name, handler_blocks):
-                        for handler_block in handler_blocks:
-                            for handler_task in handler_block.block:
-                                handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
-                                templar = Templar(loader=self._loader, variables=handler_vars)
-                                try:
-                                    # first we check with the full result of get_name(), which may
-                                    # include the role name (if the handler is from a role). If that
-                                    # is not found, we resort to the simple name field, which doesn't
-                                    # have anything extra added to it.
-                                    target_handler_name = templar.template(handler_task.name)
-                                    if target_handler_name == handler_name:
-                                        return handler_task
-                                    else:
-                                        target_handler_name = templar.template(handler_task.get_name())
-                                        if target_handler_name == handler_name:
-                                            return handler_task
-                                except (UndefinedError, AnsibleUndefinedVariable):
-                                    # We skip this handler due to the fact that it may be using
-                                    # a variable in the name that was conditionally included via
-                                    # set_fact or some other method, and we don't want to error
-                                    # out unnecessarily
-                                    continue
-                        return None
-
-                    # Find the handler using the above helper.  First we look up the
-                    # dependency chain of the current task (if it's from a role), otherwise
-                    # we just look through the list of handlers in the current play/all
-                    # roles and use the first one that matches the notify name
-                    if handler_name in self._listening_handlers:
-                        for listening_handler_name in self._listening_handlers[handler_name]:
-                            listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
-                            if listening_handler is None:
-                                raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
-
-                            if original_host not in self._notified_handlers[listening_handler]:
-                                self._notified_handlers[listening_handler].append(original_host)
-                                display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
-                    else:
-                        target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                        if target_handler is None:
-                            raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
-
-                        if target_handler in self._notified_handlers:
-                            if original_host not in self._notified_handlers[target_handler]:
-                                self._notified_handlers[target_handler].append(original_host)
-                                # FIXME: should this be a callback?
-                                display.vv("NOTIFIED HANDLER %s" % (handler_name,))
-                        else:
-                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
-
-                elif result[0] == 'register_host_var':
-                    # essentially the same as 'set_host_var' below, however we
-                    # never follow the delegate_to value for registered vars and
-                    # the variable goes in the fact_cache
-                    host      = get_original_host(result[1])
-                    task      = result[2]
-                    var_value = wrap_var(result[3])
-                    var_name  = task.register
-
-                    if task.run_once:
-                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                    else:
-                        host_list = [host]
-
-                    for target_host in host_list:
-                        self._variable_manager.set_nonpersistent_facts(target_host, {var_name: var_value})
-
-                elif result[0] in ('set_host_var', 'set_host_facts'):
-                    host = get_original_host(result[1])
-                    task = result[2]
-                    item = result[3]
-
-                    # find the host we're actually refering too here, which may
-                    # be a host that is not really in inventory at all
-                    if task.delegate_to is not None and task.delegate_facts:
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        loop_var = 'item'
-                        if task.loop_control:
-                            loop_var = task.loop_control.loop_var or 'item'
-                        if item is not None:
-                            task_vars[loop_var] = item
-                        templar = Templar(loader=self._loader, variables=task_vars)
-                        host_name = templar.template(task.delegate_to)
-                        actual_host = self._inventory.get_host(host_name)
-                        if actual_host is None:
-                            actual_host = Host(name=host_name)
-                    else:
-                        actual_host = host
-
-                    if task.run_once:
-                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                    else:
-                        host_list = [actual_host]
-
-                    if result[0] == 'set_host_var':
-                        var_name  = result[4]
-                        var_value = result[5]
-                        for target_host in host_list:
-                            self._variable_manager.set_host_variable(target_host, var_name, var_value)
-                    elif result[0] == 'set_host_facts':
-                        facts = result[4]
-                        for target_host in host_list:
-                            if task.action == 'set_fact':
-                                self._variable_manager.set_nonpersistent_facts(target_host, facts.copy())
-                            else:
-                                self._variable_manager.set_host_facts(target_host, facts.copy())
-                elif result[0].startswith('v2_runner_item') or result[0] == 'v2_runner_retry':
-                    self._tqm.send_callback(result[0], result[1])
-                elif result[0] == 'v2_on_file_diff':
-                    if self._diff:
-                        self._tqm.send_callback('v2_on_file_diff', result[1])
-                else:
-                    raise AnsibleError("unknown result message received: %s" % result[0])
+                ret_results.append(task_result)
 
             except Queue.Empty:
                 time.sleep(0.005)

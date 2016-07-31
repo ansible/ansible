@@ -185,7 +185,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._parent_block = None
         if self._parent_block and not exclude_parent:
-            new_me._parent_block = self._parent_block.copy(exclude_tasks=exclude_tasks)
+            new_me._parent_block = self._parent_block#.copy(exclude_tasks=exclude_tasks)
 
         new_me._role = None
         if self._role:
@@ -193,8 +193,8 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy(exclude_block=True)
-            new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
+            new_me._task_include = self._task_include#.copy(exclude_block=True)
+            #new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
 
         return new_me
 
@@ -213,8 +213,8 @@ class Block(Base, Become, Conditional, Taggable):
 
         if self._role is not None:
             data['role'] = self._role.serialize()
-        if self._task_include is not None:
-            data['task_include'] = self._task_include.serialize()
+        #if self._task_include is not None:
+        #    data['task_include'] = self._task_include.serialize()
         if self._parent_block is not None:
             data['parent_block'] = self._parent_block.copy(exclude_tasks=True).serialize()
 
