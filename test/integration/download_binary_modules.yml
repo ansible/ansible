@@ -1,0 +1,10 @@
+- hosts: all
+  tasks:
+    - debug: var=ansible_system
+
+    - name: download binary module
+      tags: test_binary_modules
+      get_url:
+        url: "https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/helloworld_{{ ansible_system|lower }}"
+        dest: "{{ playbook_dir }}/library/helloworld_{{ ansible_system|lower }}"
+        mode: 0755
