@@ -1005,9 +1005,14 @@ class FreeBsdService(Service):
                 if self.module.check_mode:
                     self.module.exit_json(changed=True, msg="changing service enablement")
 
-                rc, stdout, stderr = self.execute_command("%s %s=\"%s\"" % (self.sysrc_cmd, self.rcconf_key, self.rcconf_value ) )
+                rc, change_stdout, change_stderr = self.execute_command("%s %s=\"%s\"" % (self.sysrc_cmd, self.rcconf_key, self.rcconf_value ) )
                 if rc != 0:
-                    self.module.fail_json(msg="unable to set rcvar using sysrc", stdout=stdout, stderr=stderr)
+                    self.module.fail_json(msg="unable to set rcvar using sysrc", stdout=change_stdout, stderr=change_stderr)
+
+                # sysrc does not exit with code 1 on permission error => validate successful change using service(8)
+                rc, check_stdout, check_stderr = self.execute_command("%s %s %s" % (self.svc_cmd, self.name, "enabled"))
+                if self.enable != (rc == 0): # rc = 0 indicates enabled service, rc = 1 indicates disabled service
+                    self.module.fail_json(msg="unable to set rcvar: sysrc did not change value", stdout=change_stdout, stderr=change_stderr)
 
             else:
                 self.changed = False
