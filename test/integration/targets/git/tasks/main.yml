@@ -36,7 +36,7 @@
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
     git_version_supporting_depth: 1.9.1
-    git_version_supporting_get_url: 2.7.0
+    git_version_supporting_get_url: 1.7.5
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
@@ -456,17 +456,11 @@
   git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
   register: checkout_same_url
 
-- name: check repo not changed (when get url command supported in git version)
+- name: check repo not changed
   assert:
     that:
       - not checkout_same_url|changed
   when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
-
-- name: check repo changed (when get url command not supported in git version)
-  assert:
-    that:
-      - checkout_same_url|changed
-  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '<')
 
 
 - name: clone repo with new url to same destination
@@ -558,7 +552,7 @@
 
 - assert:
     that: "not checkout2|changed"
-  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=') and git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: again try to access earlier commit
   shell: git checkout 79624b4
