@@ -57,7 +57,7 @@ EXAMPLES = '''
     name: pacur/centos-7
 
 - name: Inspect multiple images
-  docker_iamge_facts:
+  docker_image_facts:
     name:
       - pacur/centos-7
       - sinatra
