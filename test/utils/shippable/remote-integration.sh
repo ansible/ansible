@@ -1,4 +1,7 @@
-#!/bin/sh -e
+#!/bin/sh
+
+set -eux
+env
 
 # TODO: add support for other posix environments
 container=freebsd
@@ -85,9 +88,11 @@ if [ ! -f "${HOME}/.ssh/id_rsa.pub" ]; then
     done
 fi
 
+repo_name="${REPO_NAME:-ansible}"
+
 if [ -d "${build_dir}" ]; then
     cd "${build_dir}"
-else
+elif [ "${repo_name}" = "ansible" ]; then
     git clone "${REPOSITORY_URL:-https://github.com/ansible/ansible.git}" "${build_dir}"
     cd "${build_dir}"
 
@@ -99,13 +104,49 @@ else
         git checkout -f FETCH_HEAD
         git merge "origin/${BRANCH}"
     fi
+
+    git submodule init
+    git submodule sync
+    git submodule update
+else
+    case "${repo_name}" in
+        "ansible-modules-core")
+            this_module_group="core"
+            ;;
+        "ansible-modules-extras")
+            this_module_group="extras"
+            ;;
+        *)
+            echo "Unsupported repo name: ${repo_name}"
+            exit 1
+            ;;
+    esac
+
+    git clone "https://github.com/ansible/ansible.git" "${build_dir}"
+
+    cd "${build_dir}"
+
+    git submodule init
+    git submodule sync
+    git submodule update
+
+    cd "${build_dir}/lib/ansible/modules/${this_module_group}"
+
+    if [ "${PULL_REQUEST:-false}" = "false" ]; then
+        echo "Only pull requests are supported for module repositories."
+        exit
+    else
+        git fetch origin "pull/${PULL_REQUEST}/head"
+        git checkout -f FETCH_HEAD
+        git merge "origin/${BRANCH}"
+    fi
+
+    cd "${build_dir}"
 fi
 
-git submodule init
-git submodule sync
-git submodule update
-
+set +u
 . hacking/env-setup
+set -u
 
 cd test/integration
 
