@@ -164,8 +164,8 @@ def main():
         if state == 'present':
             # If f_ip already assigned to server, check that it matches
             # requirements.
-            f_ip = cloud.get_server_public_ip(server)
-            f_ip = _get_floating_ip(cloud, f_ip) if f_ip else f_ip
+            public_ip = cloud.get_server_public_ip(server)
+            f_ip = _get_floating_ip(cloud, public_ip) if public_ip else public_ip
             if f_ip:
                 if network:
                     network_id = cloud.get_network(name_or_id=network)["id"]
