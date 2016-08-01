@@ -81,3 +81,8 @@ chroot
 test_default
 ssh
 paramiko_ssh
+
+[test_freebsd:children]
+test_default
+ssh
+paramiko_ssh
