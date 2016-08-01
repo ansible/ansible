@@ -37,7 +37,7 @@ options:
   listeners:
     description:
       - List of ports/protocols for this ELB to listen on (see example)
-    required: true
+    required: false
   purge_listeners:
     description:
       - Purge existing listeners on ELB that are not found in listeners
@@ -1223,7 +1223,7 @@ def main():
     argument_spec.update(dict(
             state={'required': True, 'choices': ['present', 'absent']},
             name={'required': True},
-            listeners={'required': True, 'type': 'list'},
+            listeners={'default': None, 'required': False, 'type': 'list'},
             purge_listeners={'default': True, 'required': False, 'type': 'bool'},
             instance_ids={'default': None, 'required': False, 'type': 'list'},
             purge_instance_ids={'default': False, 'required': False, 'type': 'bool'},
@@ -1282,7 +1282,7 @@ def main():
     tags = module.params['tags']
 
     if state == 'present' and not listeners:
-        module.fail_json(msg="At least one port is required for ELB creation")
+        module.fail_json(msg="At least one listener is required for ELB creation")
 
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
