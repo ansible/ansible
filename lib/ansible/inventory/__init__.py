@@ -58,7 +58,6 @@ class Inventory(object):
         self.host_list = host_list
         self._loader = loader
         self._variable_manager = variable_manager
-        self.localhost = None
 
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
@@ -90,8 +89,6 @@ class Inventory(object):
         self.clear_pattern_cache()
 
         self.parse_inventory(host_list)
-        if self.localhost is None:
-            self.localhost = self._create_implicit_localhost()
 
     def serialize(self):
         data = dict()
@@ -128,13 +125,7 @@ class Inventory(object):
                     display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
                     host = h
                     port = None
-                new_host = Host(host, port)
-                all.add_host(new_host)
-                if new_host.name in C.LOCALHOST:
-                    if self.localhost is None:
-                        self.localhost = new_host
-                    else:
-                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (new_host.name, self.localhost.name))
+                all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
@@ -470,9 +461,12 @@ class Inventory(object):
                     for host in matching_hosts:
                         __append_host_to_results(host)
 
+        if pattern in C.LOCALHOST and len(results) == 0:
+            new_host = self._create_implicit_localhost(pattern)
+            results.append(new_host)
         return results
 
-    def _create_implicit_localhost(self, pattern='localhost'):
+    def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
         new_host.address = "127.0.0.1"
         new_host.implicit = True
@@ -506,11 +500,17 @@ class Inventory(object):
     def get_host(self, hostname):
         if hostname not in self._hosts_cache:
             self._hosts_cache[hostname] = self._get_host(hostname)
+            if hostname in C.LOCALHOST:
+                for host in C.LOCALHOST.difference((hostname,)):
+                    self._hosts_cache[host] = self._hosts_cache[hostname]
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in C.LOCALHOST and self.localhost:
-            self.localhost
+        if hostname in C.LOCALHOST:
+            for host in self.get_group('all').get_hosts():
+                if host.name in C.LOCALHOST:
+                    return host
+            return self._create_implicit_localhost(hostname)
         matching_host = None
         for group in self.groups.values():
             for host in group.get_hosts():
