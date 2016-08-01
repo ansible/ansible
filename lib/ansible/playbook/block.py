@@ -44,16 +44,15 @@ class Block(Base, Become, Conditional, Taggable):
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play         = play
         self._role         = role
-        self._task_include = None
-        self._parent_block = None
+        self._parent       = None
         self._dep_chain    = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
 
         if task_include:
-            self._task_include = task_include
+            self._parent = task_include
         elif parent_block:
-            self._parent_block = parent_block
+            self._parent = parent_block
 
         super(Block, self).__init__()
 
@@ -65,10 +64,8 @@ class Block(Base, Become, Conditional, Taggable):
 
         all_vars = self.vars.copy()
 
-        if self._parent_block:
-            all_vars.update(self._parent_block.get_vars())
-        if self._task_include:
-            all_vars.update(self._task_include.get_vars())
+        if self._parent:
+            all_vars.update(self._parent.get_vars())
 
         return all_vars
 
@@ -109,7 +106,7 @@ class Block(Base, Become, Conditional, Taggable):
                 play=self._play,
                 block=self,
                 role=self._role,
-                task_include=self._task_include,
+                task_include=None,
                 variable_manager=self._variable_manager,
                 loader=self._loader,
                 use_handlers=self._use_handlers,
@@ -124,7 +121,7 @@ class Block(Base, Become, Conditional, Taggable):
                 play=self._play,
                 block=self,
                 role=self._role,
-                task_include=self._task_include,
+                task_include=None,
                 variable_manager=self._variable_manager,
                 loader=self._loader,
                 use_handlers=self._use_handlers,
@@ -139,7 +136,7 @@ class Block(Base, Become, Conditional, Taggable):
                 play=self._play,
                 block=self, 
                 role=self._role, 
-                task_include=self._task_include,
+                task_include=None,
                 variable_manager=self._variable_manager, 
                 loader=self._loader, 
                 use_handlers=self._use_handlers,
@@ -149,10 +146,8 @@ class Block(Base, Become, Conditional, Taggable):
 
     def get_dep_chain(self):
         if self._dep_chain is None:
-            if self._parent_block:
-                return self._parent_block.get_dep_chain()
-            elif self._task_include:
-                return self._task_include._block.get_dep_chain()
+            if self._parent:
+                return self._parent.get_dep_chain()
             else:
                 return None
         else:
@@ -162,12 +157,18 @@ class Block(Base, Become, Conditional, Taggable):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
-                if isinstance(task, Block):
-                    new_task = task.copy(exclude_parent=True)
-                    new_task._parent_block = new_block
+                new_task = task.copy(exclude_parent=True)
+                if task._parent:
+                    new_task._parent = task._parent.copy(exclude_tasks=True)
+                    # go up the parentage tree until we find an
+                    # object without a parent and make this new
+                    # block their parent
+                    cur_obj = new_task
+                    while cur_obj._parent:
+                        cur_obj = cur_obj._parent
+                    cur_obj._parent = new_block
                 else:
-                    new_task = task.copy(exclude_block=True)
-                    new_task._block = new_block
+                    new_task._parent = new_block
                 new_task_list.append(new_task)
             return new_task_list
 
@@ -175,26 +176,21 @@ class Block(Base, Become, Conditional, Taggable):
         new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
 
-        if self._dep_chain:
+        if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
+
+        new_me._parent = None
+        if self._parent and not exclude_parent:
+            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
 
         if not exclude_tasks:
             new_me.block  = _dupe_task_list(self.block or [], new_me)
             new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
             new_me.always = _dupe_task_list(self.always or [], new_me)
 
-        new_me._parent_block = None
-        if self._parent_block and not exclude_parent:
-            new_me._parent_block = self._parent_block#.copy(exclude_tasks=exclude_tasks)
-
         new_me._role = None
         if self._role:
             new_me._role = self._role
-
-        new_me._task_include = None
-        if self._task_include:
-            new_me._task_include = self._task_include#.copy(exclude_block=True)
-            #new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
 
         return new_me
 
@@ -213,10 +209,9 @@ class Block(Base, Become, Conditional, Taggable):
 
         if self._role is not None:
             data['role'] = self._role.serialize()
-        #if self._task_include is not None:
-        #    data['task_include'] = self._task_include.serialize()
-        if self._parent_block is not None:
-            data['parent_block'] = self._parent_block.copy(exclude_tasks=True).serialize()
+        if self._parent is not None:
+            data['parent'] = self._parent.copy(exclude_tasks=True).serialize()
+            data['parent_type'] = self._parent.__class__.__name__
 
         return data
 
@@ -226,7 +221,10 @@ class Block(Base, Become, Conditional, Taggable):
         serialize method
         '''
 
+        # import is here to avoid import loops
         from ansible.playbook.task import Task
+        from ansible.playbook.task_include import TaskInclude
+        from ansible.playbook.handler_task_include import HandlerTaskInclude
 
         # we don't want the full set of attributes (the task lists), as that
         # would lead to a serialize/deserialize loop
@@ -243,19 +241,18 @@ class Block(Base, Become, Conditional, Taggable):
             r.deserialize(role_data)
             self._role = r
 
-        # if there was a serialized task include, unpack it too
-        ti_data = data.get('task_include')
-        if ti_data:
-            ti = Task()
-            ti.deserialize(ti_data)
-            self._task_include = ti
-
-        pb_data = data.get('parent_block')
-        if pb_data:
-            pb = Block()
-            pb.deserialize(pb_data)
-            self._parent_block = pb
-            self._dep_chain = self._parent_block.get_dep_chain()
+        parent_data = data.get('parent')
+        if parent_data:
+            parent_type = data.get('parent_type')
+            if parent_type == 'Block':
+                p = Block()
+            elif parent_type == 'TaskInclude':
+                p = TaskInclude()
+            elif parent_type == 'HandlerTaskInclude':
+                p = HandlerTaskInclude()
+            p.deserialize(pb_data)
+            self._parent = p
+            self._dep_chain = self._parent.get_dep_chain()
 
     def evaluate_conditional(self, templar, all_vars):
         dep_chain = self.get_dep_chain()
@@ -263,23 +260,17 @@ class Block(Base, Become, Conditional, Taggable):
             for dep in dep_chain:
                 if not dep.evaluate_conditional(templar, all_vars):
                     return False
-        if self._task_include is not None:
-            if not self._task_include.evaluate_conditional(templar, all_vars):
-                return False
-        if self._parent_block is not None:
-            if not self._parent_block.evaluate_conditional(templar, all_vars):
+        if self._parent is not None:
+            if not self._parent.evaluate_conditional(templar, all_vars):
                 return False
         return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
         self._loader = loader
-        if self._parent_block:
-            self._parent_block.set_loader(loader)
+        if self._parent:
+            self._parent.set_loader(loader)
         elif self._role:
             self._role.set_loader(loader)
-
-        if self._task_include:
-            self._task_include.set_loader(loader)
 
         dep_chain = self.get_dep_chain()
         if dep_chain:
@@ -295,14 +286,8 @@ class Block(Base, Become, Conditional, Taggable):
         try:
             value = self._attributes[attr]
 
-            if self._parent_block and (value is None or extend):
-                parent_value = getattr(self._parent_block, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
-            if self._task_include and (value is None or extend):
-                parent_value = getattr(self._task_include, attr, None)
+            if self._parent and (value is None or extend):
+                parent_value = getattr(self._parent, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
@@ -383,3 +368,8 @@ class Block(Base, Become, Conditional, Taggable):
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
 
+    def get_include_params(self):
+        if self._parent:
+            return self._parent.get_include_params()
+        else:
+            return dict()

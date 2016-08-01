@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
+from ansible.playbook.task_include import TaskInclude
 from ansible.template import Templar
 
 try:
@@ -86,16 +87,20 @@ class IncludedFile:
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 
+                    include_file = None
                     if original_task:
                         if original_task.static:
                             continue
 
-                        if original_task._task_include:
+                        if original_task._parent:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
-                            parent_include = original_task._task_include
+                            parent_include = original_task._parent
                             cumulative_path = None
                             while parent_include is not None:
+                                if not isinstance(parent_include, TaskInclude):
+                                    parent_include = parent_include._parent
+                                    continue
                                 parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
                                 if cumulative_path is None:
                                     cumulative_path = parent_include_dir
@@ -111,14 +116,14 @@ class IncludedFile:
                                 if os.path.exists(include_file):
                                     break
                                 else:
-                                    parent_include = parent_include._task_include
-                        elif original_task._role:
+                                    parent_include = parent_include._parent
+
+                    if include_file is None:
+                        if original_task._role:
                             include_target = templar.template(include_result['include'])
                             include_file = loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target)
                         else:
                             include_file = loader.path_dwim(include_result['include'])
-                    else:
-                        include_file = loader.path_dwim(include_result['include'])
 
                     include_file = templar.template(include_file)
                     inc_file = IncludedFile(include_file, include_variables, original_task)

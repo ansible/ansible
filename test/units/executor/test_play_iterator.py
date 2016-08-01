@@ -121,7 +121,7 @@ class TestPlayIterator(unittest.TestCase):
 
         # lookup up an original task
         target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_block=True)
+        task_copy = target_task.copy(exclude_parent=True)
         found_task = itr.get_original_task(hosts[0], task_copy)
         self.assertEqual(target_task, found_task)
 
