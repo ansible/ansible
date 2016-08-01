@@ -4,6 +4,7 @@
 # (c) 2014, Lorin Hochstein
 # (c) 2015, Leendert Brouwer
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2016, Gian Perrone
 #
 # Maintainer: Leendert Brouwer (https://github.com/objectified)
 #
