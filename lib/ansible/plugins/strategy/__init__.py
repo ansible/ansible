@@ -574,9 +574,9 @@ class StrategyBase:
 
             block_list = load_list_of_blocks(
                 data,
-                play=included_file._task._block._play,
+                play=iterator._play,
                 parent_block=None,
-                task_include=included_file._task,
+                task_include=None,
                 role=included_file._task._role,
                 use_handlers=is_handler,
                 loader=self._loader,
@@ -602,9 +602,9 @@ class StrategyBase:
         # set the vars for this task from those specified as params to the include
         for b in block_list:
             # first make a copy of the including task, so that each has a unique copy to modify
-            b._task_include = b._task_include.copy()
+            b._parent = included_file._task.copy()
             # then we create a temporary set of vars to ensure the variable reference is unique
-            temp_vars = b._task_include.vars.copy()
+            temp_vars = b._parent.vars.copy()
             temp_vars.update(included_file._args.copy())
             # pop tags out of the include args, if they were specified there, and assign
             # them to the include. If the include already had tags specified, we raise an
@@ -613,12 +613,12 @@ class StrategyBase:
             if isinstance(tags, string_types):
                 tags = tags.split(',')
             if len(tags) > 0:
-                if len(b._task_include.tags) > 0:
+                if len(b._parent.tags) > 0:
                     raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
-                b._task_include.tags = tags
-            b._task_include.vars = temp_vars
+                b._parent.tags = tags
+            b._parent.vars = temp_vars
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)

@@ -85,6 +85,8 @@ class Base:
         # and initialize the base attributes
         self._initialize_base_attributes()
 
+        self._cached_parent_attrs = dict()
+
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
@@ -111,13 +113,21 @@ class Base:
     @staticmethod
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
-        if hasattr(self, method):
+        try:
             value = getattr(self, method)()
-        else:
+        except AttributeError:
             try:
                 value = self._attributes[prop_name]
-                if value is None and hasattr(self, '_get_parent_attribute'):
-                    value = self._get_parent_attribute(prop_name)
+                if value is None:
+                    try:
+                        if prop_name in self._cached_parent_attrs:
+                            value = self._cached_parent_attrs[prop_name]
+                        else:
+                            value = self._get_parent_attribute(prop_name)
+                            # FIXME: temporarily disabling due to bugs
+                            #self._cached_parent_attrs[prop_name] = value
+                    except AttributeError:
+                        pass
             except KeyError:
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
@@ -150,6 +160,20 @@ class Base:
                 base_attributes[name] = value
         BASE_ATTRIBUTES[self.__class__.__name__] = base_attributes
         return base_attributes
+
+    def dump_me(self, depth=0):
+        if depth == 0:
+            print("DUMPING OBJECT ------------------------------------------------------")
+        print("%s- %s (%s)" % (" " * depth, self.__class__.__name__, self))
+        if hasattr(self, '_parent') and self._parent:
+            self._parent.dump_me(depth+2)
+            dep_chain = self._parent.get_dep_chain()
+            print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
+            if dep_chain:
+                for dep in dep_chain:
+                    dep.dump_me(depth+2)
+        if hasattr(self, '_play') and self._play:
+            self._play.dump_me(depth+2)
 
     def _initialize_base_attributes(self):
         # each class knows attributes set upon it, see Task.py for example
