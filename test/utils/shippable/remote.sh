@@ -131,6 +131,7 @@ test_remote() {
 cat <<EOF
 env \
 REPOSITORY_URL='${REPOSITORY_URL:-}' \
+REPO_NAME='${REPO_NAME:-}' \
 PULL_REQUEST='${PULL_REQUEST:-}' \
 BRANCH='${BRANCH:-}' \
 COMMIT='${COMMIT:-}' \
