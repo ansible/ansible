@@ -114,15 +114,16 @@ class Connection(ConnectionBase):
         cmd = list(self.docker_cmd)
         cmd += ['version']
 
-        try:
-            cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as err:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, cmd_error = p.communicate()
+
+        if p.returncode != 0:
             match = re.search('^Error response from daemon: client is newer than server (?:.+?)server API version: (.+?)\)$',
-                             err.output, re.MULTILINE)
+                             cmd_error, re.MULTILINE)
             if match:
                 return self._sanitize_version(match.group(1))
             else:
-                raise
+                raise subprocess.CalledProcessError(p.returncode)
 
         for line in cmd_output.split('\n'):
             if line.startswith('Server version:'):  # old docker versions
@@ -131,7 +132,8 @@ class Connection(ConnectionBase):
         # no result yet, must be newer Docker version
         cmd += ['--format', "'{{.Server.Version}}'"]
 
-        cmd_output = subprocess.check_output(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        cmd_output = p.communicate()[0]
 
         return self._sanitize_version(cmd_output)
 
