@@ -152,7 +152,7 @@ def http_commands(protocol, port, enable, config):
             # update the port
             commands.append('protocol {0} port {1}'.format(protocol, port))
             changed = True
-    elif not started_config.get('runnng') and enable:
+    elif not started_config.get('running') and enable:
         # turn on server
         commands.append('protocol {0} port {1}'.format(protocol, port))
         changed = True
