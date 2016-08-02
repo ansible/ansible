@@ -129,7 +129,7 @@ import atexit
 import os
 import ssl
 import time
-from pprint import pprint
+
 from ansible.module_utils.urls import fetch_url
 
 class PyVmomiHelper(object):
@@ -237,8 +237,6 @@ class PyVmomiHelper(object):
                                        self.params['esxi']['datacenter'])
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
         self.folder_map = self._build_folder_map(self.folders)
-        #pprint(self.folder_map)
-        #sys.exit(1)
         return (self.folders, self.folder_map)
 
 
@@ -471,7 +469,6 @@ class PyVmomiHelper(object):
         clonespec = vim.vm.CloneSpec()
         clonespec.location = relospec
 
-        print "cloning VM..."
         template = get_obj(self.content, [vim.VirtualMachine], self.params['template_src'])
         task = template.Clone(folder=destfolder, name=self.params['guest'], spec=clonespec)
         self.wait_for_task(task)
@@ -480,21 +477,11 @@ class PyVmomiHelper(object):
             return ({'changed': False, 'failed': True, 'msg': task.info.error.msg})
         else:
 
-            #import epdb; epdb.st()
             vm = task.info.result
-
-            #if wait_for_ip and not poweron:
-            #    print "powering on the VM ..."
-            #    self.set_powerstate(vm, 'poweredon')
-
             if wait_for_ip:
-                print "powering on the VM ..."
                 self.set_powerstate(vm, 'poweredon', force=False)
-                print "waiting for IP ..."
                 self.wait_for_vm_ip(vm)
-
             vm_facts = self.gather_facts(vm)
-            #import epdb; epdb.st()
             return ({'changed': True, 'failed': False, 'instance': vm_facts})
         
 
@@ -503,7 +490,6 @@ class PyVmomiHelper(object):
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.TaskInfo.html
         # https://github.com/virtdevninja/pyvmomi-community-samples/blob/master/samples/tools/tasks.py
         while task.info.state not in ['success', 'error']:
-            print(task.info.state)
             time.sleep(1)
 
     def wait_for_vm_ip(self, vm, poll=100, sleep=5):            
@@ -511,10 +497,8 @@ class PyVmomiHelper(object):
         facts = {}
         thispoll = 0
         while not ips and thispoll <= poll:
-            print "polling for IP"
             newvm = self.getvm(uuid=vm.config.uuid)
             facts = self.gather_facts(newvm)
-            print "\t%s %s" % (facts['ipv4'], facts['ipv6'])
             if facts['ipv4'] or facts['ipv6']:
                 ips = True
             else:
