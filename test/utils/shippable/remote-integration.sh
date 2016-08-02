@@ -150,12 +150,6 @@ set -u
 
 cd test/integration
 
-# FIXME: these test targets fail
-sed -i '' 's/ blocks / /;' Makefile
-sed -i '' 's/ pull / /;' Makefile
-sed -i '' 's/ test_handlers / /;' Makefile
-sed -i '' 's/ no_log / /;' Makefile
-
 # TODO: support httptester via reverse ssh tunnel
 
 rm -rf "/tmp/shippable"
