@@ -263,28 +263,25 @@ class PyVmomiHelper(object):
 
 
     def set_powerstate(self, vm, state, force):
-	"""
-	Set the power status for a VM determined by the current and
-	requested states. force is forceful
-	"""
+        """
+        Set the power status for a VM determined by the current and
+        requested states. force is forceful
+        """
         facts = self.gather_facts(vm)
         expected_state = state.replace('_', '').lower()
         current_state = facts['hw_power_status'].lower()
         result = {}
 
-	# Need Force
-	if not force and current_state not in ['poweredon', 'poweredoff']:
-	    return "VM is in %s power state. Force is required!" % current_state
+        # Need Force
+        if not force and current_state not in ['poweredon', 'poweredoff']:
+            return "VM is in %s power state. Force is required!" % current_state
 
-	# State is already true
-	if current_state == expected_state:
+        # State is already true
+        if current_state == expected_state:
             result['changed'] = False
             result['failed'] = False
-
-	else:
-
+        else:
             task = None
-
             try:
                 if expected_state == 'poweredoff':
                     task = vm.PowerOff()
@@ -341,9 +338,6 @@ class PyVmomiHelper(object):
             mac = device.macAddress
             ips = list(device.ipAddress)
             netDict[mac] = ips
-        #facts['network'] = {}
-        #facts['network']['ipaddress_v4'] = None
-        #facts['network']['ipaddress_v6'] = None
         for k,v in netDict.iteritems():
             for ipaddress in v:
                 if ipaddress:
@@ -352,23 +346,21 @@ class PyVmomiHelper(object):
                     else:
                         facts['ipv4'] = ipaddress
 
-	for idx,entry in enumerate(vm.config.hardware.device):
+        for idx,entry in enumerate(vm.config.hardware.device):
+            if not hasattr(entry, 'macAddress'):
+                continue
 
-	    if not hasattr(entry, 'macAddress'):
-		continue
+            factname = 'hw_eth' + str(idx)
+            facts[factname] = {
+                'addresstype': entry.addressType,
+                'label': entry.deviceInfo.label,
+                'macaddress': entry.macAddress,
+                'ipaddresses': netDict.get(entry.macAddress, None),
+                'macaddress_dash': entry.macAddress.replace(':', '-'),
+                'summary': entry.deviceInfo.summary,
+            }
+            facts['hw_interfaces'].append('eth'+str(idx))
 
-	    factname = 'hw_eth' + str(idx)
-	    facts[factname] = {
-		'addresstype': entry.addressType,
-		'label': entry.deviceInfo.label,
-		'macaddress': entry.macAddress,
-		'ipaddresses': netDict.get(entry.macAddress, None),
-		'macaddress_dash': entry.macAddress.replace(':', '-'),
-		'summary': entry.deviceInfo.summary,
-	    }
-	    facts['hw_interfaces'].append('eth'+str(idx))
-
-        #import epdb; epdb.st()
         return facts
 
 
