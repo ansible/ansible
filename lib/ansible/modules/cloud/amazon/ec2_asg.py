@@ -336,8 +336,12 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
         # but has not yet show up in the ELB
         try:
             lb_instances = elb_connection.describe_instance_health(lb, instances=instances)
-        except boto.exception.InvalidInstance:
-            pass
+        except boto.exception.BotoServerError as e:
+            if e.error_code == 'InvalidInstance':
+                return None
+
+            module.fail_json(msg=str(e))
+
         for i in lb_instances:
             if i.state == "InService":
                 healthy_instances.append(i.instance_id)
