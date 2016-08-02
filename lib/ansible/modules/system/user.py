@@ -149,7 +149,7 @@ options:
               This will B(not) overwrite an existing SSH key.
     ssh_key_bits:
         required: false
-        default: 2048
+        default: default set by ssh-keygen
         version_added: "0.9"
         description:
             - Optionally specify number of bits in SSH key to create.
@@ -602,8 +602,9 @@ class User(object):
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
-        cmd.append('-b')
-        cmd.append(self.ssh_bits)
+        if self.ssh_bits > 0:
+            cmd.append('-b')
+            cmd.append(self.ssh_bits)
         cmd.append('-C')
         cmd.append(self.ssh_comment)
         cmd.append('-f')
@@ -2025,7 +2026,7 @@ class HPUX(User):
 
 def main():
     ssh_defaults = {
-            'bits': '2048',
+            'bits': 0,
             'type': 'rsa',
             'passphrase': None,
             'comment': 'ansible-generated on %s' % socket.gethostname()
@@ -2057,7 +2058,7 @@ def main():
             append=dict(default='no', type='bool'),
             # following are specific to ssh key generation
             generate_ssh_key=dict(type='bool'),
-            ssh_key_bits=dict(default=ssh_defaults['bits'], type='str'),
+            ssh_key_bits=dict(default=ssh_defaults['bits'], type='int'),
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='path'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
