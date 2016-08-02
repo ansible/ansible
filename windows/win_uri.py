@@ -104,7 +104,7 @@ url:
   description: The Target URL
   returned: always
   type: string
-  sample: "http://www.ansible.com"
+  sample: "https://www.ansible.com"
 method:
   description: The HTTP method used.
   returned: always
