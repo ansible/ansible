@@ -67,7 +67,7 @@ options:
     description:
       - URL for the message sender's icon.
     required: false
-    default: "http://www.ansible.com/favicon.ico"
+    default: "https://www.ansible.com/favicon.ico"
   icon_emoji:
     description:
       - Emoji for the message sender. The representation for the available emojis can be
@@ -213,7 +213,7 @@ def main():
             msg         = dict(type='str', required=False, default=None),
             channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='http://www.ansible.com/favicon.ico'),
+            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
             icon_emoji  = dict(type='str', default=None),
             link_names  = dict(type='int', default=1, choices=[0,1]),
             validate_certs = dict(default='yes', type='bool'),
