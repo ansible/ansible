@@ -43,7 +43,7 @@ options:
         required: False
    vm_hardware:
         description:
-            - FIXME
+            - Attributes such as cpus, memroy, osid, and disk controller
         required: False
    vm_nic:
         description:
@@ -102,6 +102,14 @@ Example from Ansible playbook
         wait_for_ip_address: yes
       register: deploy
 '''
+
+RETURN = """
+instance:
+    descripton: metadata about the new virtualmachine
+    returned: always
+    type: dict
+    sample: None
+"""
 
 try:
     import json
