@@ -28,7 +28,7 @@
 
 - name: Async Hello, World!
   action: "helloworld_{{ ansible_system|lower }}"
-  async: 1
+  async: 10
   poll: 1
   when: ansible_system != 'Win32NT'
   register: async_hello_world
@@ -42,7 +42,7 @@
   action: "helloworld_{{ ansible_system|lower }}"
   args:
     name: Ansible
-  async: 1
+  async: 10
   poll: 1
   when: ansible_system != 'Win32NT'
   register: async_hello_ansible

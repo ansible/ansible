@@ -4,7 +4,7 @@
   # make sure non-JSON data before module output is ignored
   - name: async ping with invalid locale via ssh
     ping:
-    async: 3
+    async: 10
     poll: 1
     register: result
   - debug: var=result
