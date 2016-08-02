@@ -293,7 +293,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return remote_path
 
-    def _fixup_perms(self, remote_path, remote_user, execute=True, recursive=True):
+    def _fixup_perms(self, remote_paths, remote_user, execute=True):
         """
         We need the files we upload to be readable (and sometimes executable)
         by the user being sudo'd to but we want to limit other people's access
@@ -319,15 +319,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until
             # we have a need for it, at which point we'll have to do something different.
-            return remote_path
+            return remote_paths
 
-        if remote_path is None:
-            # Sometimes code calls us naively -- it has a var which could
-            # contain a path to a tmp dir but doesn't know if it needs to
-            # exist or not.  If there's no path, then there's no need for us
-            # to do work
-            display.debug('_fixup_perms called with remote_path==None.  Sure this is correct?')
-            return remote_path
+        remote_paths = [p for p in remote_paths if p]
+
+        if not remote_paths:
+            # When all paths are None, there is nothing for us to do. The most common cause
+            # of this is when pipelining is in use.
+            return remote_paths
 
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
             # Unprivileged user that's different than the ssh user.  Let's get
@@ -340,17 +339,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 mode = 'rX'
 
-            res = self._remote_set_user_facl(remote_path, self._play_context.become_user, mode, recursive=recursive, sudoable=False)
+            res = self._remote_set_user_facl(remote_paths, self._play_context.become_user, mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
                 # unprivileged user can use chown
                 if execute:
-                    res = self._remote_chmod('u+x', remote_path, recursive=recursive)
+                    res = self._remote_chmod(remote_paths, 'u+x')
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
 
-                res = self._remote_chown(remote_path, self._play_context.become_user, recursive=recursive)
+                res = self._remote_chown(remote_paths, self._play_context.become_user)
                 if res['rc'] != 0 and remote_user == 'root':
                     # chown failed even if remove_user is root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.  Unprivileged become user would be unable to read the file.')
@@ -359,7 +358,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
-                        res = self._remote_chmod('a+%s' % mode, remote_path, recursive=recursive)
+                        res = self._remote_chmod(remote_paths, 'a+%s' % mode)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
                     else:
@@ -368,34 +367,34 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Can't depend on the file being transferred with execute
             # permissions.  Only need user perms because no become was
             # used here
-            res = self._remote_chmod('u+x', remote_path, recursive=recursive)
+            res = self._remote_chmod(remote_paths, 'u+x')
             if res['rc'] != 0:
                 raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
 
-        return remote_path
+        return remote_paths
 
-    def _remote_chmod(self, mode, path, recursive=True, sudoable=False):
+    def _remote_chmod(self, paths, mode):
         '''
         Issue a remote chmod command
         '''
-        cmd = self._connection._shell.chmod(mode, path, recursive=recursive)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        cmd = self._connection._shell.chmod(paths, mode)
+        res = self._low_level_execute_command(cmd, sudoable=False)
         return res
 
-    def _remote_chown(self, path, user, group=None, recursive=True, sudoable=False):
+    def _remote_chown(self, paths, user):
         '''
         Issue a remote chown command
         '''
-        cmd = self._connection._shell.chown(path, user, group, recursive=recursive)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        cmd = self._connection._shell.chown(paths, user)
+        res = self._low_level_execute_command(cmd, sudoable=False)
         return res
 
-    def _remote_set_user_facl(self, path, user, mode, recursive=True, sudoable=False):
+    def _remote_set_user_facl(self, paths, user, mode):
         '''
         Issue a remote call to setfacl
         '''
-        cmd = self._connection._shell.set_user_facl(path, user, mode, recursive=recursive)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        cmd = self._connection._shell.set_user_facl(paths, user, mode)
+        res = self._low_level_execute_command(cmd, sudoable=False)
         return res
 
     def _execute_remote_stat(self, path, all_vars, follow, tmp=None):
@@ -618,7 +617,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Fix permissions of the tmp path and tmp files.  This should be
         # called after all files have been transferred.
-        self._fixup_perms(tmp, remote_user, recursive=True)
+        self._fixup_perms([tmp, remote_module_path, args_file_path], remote_user)
 
         cmd = ""
         in_data = None
