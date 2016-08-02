@@ -176,7 +176,7 @@ test_delegate_to: setup
 # Targets should be balanced to have similar run times.
 ci_win: ci_win1 ci_win2 ci_win3
 ci_win1: test_win_group1
-ci_win2: test_win_group2
+ci_win2: test_win_group2 test_binary_modules_winrm
 ci_win3: test_win_group3 test_connection_winrm
 
 test_winrm: test_win_group1 test_win_group2 test_win_group3
@@ -315,6 +315,9 @@ test_lookup_paths: setup
 no_log: setup
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
 	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
+
+test_binary_modules_winrm: INVENTORY = inventory.winrm
+test_binary_modules_winrm: test_binary_modules
 
 test_binary_modules:
 	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook download_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
