@@ -407,10 +407,10 @@ def main():
     if ssh_args:
       ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
-    if source.startswith('rsync://') and dest.startswith('rsync://'):
+    if source.startswith('"rsync://') and dest.startswith('"rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if not source.startswith('rsync://') and not dest.startswith('rsync://'):
+    if not source.startswith('"rsync://') and not dest.startswith('"rsync://'):
         if dest_port != 22:
             cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
         else:
