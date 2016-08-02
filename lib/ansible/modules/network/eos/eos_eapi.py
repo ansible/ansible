@@ -22,11 +22,13 @@ DOCUMENTATION = """
 module: eos_eapi
 version_added: "2.1"
 author: "Chris Houseknecht (@chouseknecht)"
-short_description: Manage and configure EAPI. Requires EOS v4.12 or greater. 
+short_description: Manage and configure eAPI.
+requirements:
+  - "EOS v4.12 or greater"
 description:
-  - Use to enable or disable EAPI access, and set the port and state
-    of http, https, localHttp and unix-socket servers.
-  - When enabling EAPI access the default is to enable HTTP on port
+  - Use to enable or disable eAPI access, and set the port and state
+    of http, https, local_http and unix-socket servers.
+  - When enabling eAPI access the default is to enable HTTP on port
     80, enable HTTPS on port 443, disable local HTTP, and disable
     Unix socket server. Use the options listed below to override the
     default configuration.
@@ -35,13 +37,13 @@ extends_documentation_fragment: eos
 options:
     state:
         description:
-            - Set to started or stopped. A state of started will
-              enable EAPI access, and a state of stopped will
-              disable or shutdown all EAPI access.
+            - A state of I(started) will
+              enable eAPI access, and a state of I(stopped) will
+              disable or shutdown all eAPI access.
         choices:
             - started
             - stopped
-        requred: false
+        required: false
         default: started
     http_port:
         description:
@@ -63,6 +65,9 @@ options:
             - Enable HTTP server access.
         required: false
         default: true
+        choices:
+            - yes
+            - no
         aliases:
             - enable_http
     https:
@@ -70,6 +75,9 @@ options:
             - Enable HTTPS server access.
         required: false
         default: true
+        choices:
+            - yes
+            - no
         aliases:
             - enable_https
     local_http:
@@ -77,6 +85,9 @@ options:
             - Enable local HTTP server access.
         required: false
         default: false
+        choices:
+            - yes
+            - no
         aliases:
             - enable_local_http
     socket:
@@ -84,17 +95,20 @@ options:
             - Enable Unix socket server access.
         required: false
         default: false
+        choices:
+            - yes
+            - no
         aliases:
             - enable_socket
 """
 
 EXAMPLES = """
-    - name: Enable EAPI access with default configuration
+    - name: Enable eAPI access with default configuration
       eos_eapi:
           state: started
           provider: {{ provider }}
 
-    - name: Enable EAPI with no HTTP, HTTPS at port 9443, local HTTP at port 80, and socket enabled
+    - name: Enable eAPI with no HTTP, HTTPS at port 9443, local HTTP at port 80, and socket enabled
       eos_eapi:
           state: started
           http: false
@@ -104,7 +118,7 @@ EXAMPLES = """
           socket: yes
           provider: {{ provider }}
 
-    - name: Shutdown EAPI access
+    - name: Shutdown eAPI access
       eos_eapi:
           state: stopped
           provider: {{ provider }}
@@ -180,7 +194,7 @@ def config_server(module):
 
     if not config.get('enabled'):
         if state == 'started':
-            # turn on eapi access
+            # turn on eAPI access
             commands.append('no shutdown')
             result['changed'] = True
         else:
@@ -188,7 +202,7 @@ def config_server(module):
             return result
 
     if config.get('enabled') and state == 'stopped':
-        # turn off eapi access and exit
+        # turn off eAPI access and exit
         commands.append('shutdown')
         result['changed'] = True
         result['commands'] = commands
@@ -257,7 +271,7 @@ def main():
         socket=dict(aliases=['enable_socket'], default=False, type='bool'),
         local_http=dict(aliases=['enable_local_http'], default=False, type='bool'),
 
-        # Only allow use of transport cli when coniguring EAPI
+        # Only allow use of transport cli when configuring eAPI
         transport=dict(required=True, choices=['cli'])
     )
 

@@ -23,9 +23,9 @@ author: "Peter sprygada (@privateip)"
 short_description: Manage Arista EOS device configurations
 description:
   - Manages network device configurations over SSH or eAPI.  This module
-    allows implementors to work with the device running-config.  It
+    allows implementers to work with the device running-config.  It
     provides a way to push a set of commands onto a network device
-    by evaluting the current running-config and only pushing configuration
+    by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 extends_documentation_fragment: eos
@@ -49,9 +49,9 @@ options:
   include_defaults:
     description:
       - By default when the M(eos_template) connects to the remote
-        device to retrieve the configuration it will issue the `show
-        running-config` command.  If this option is set to True then
-        the issued command will be `show running-config all`
+        device to retrieve the configuration it will issue the C(show
+        running-config) command.  If this option is set to True then
+        the issued command will be C(show running-config all).
     required: false
     default: false
     choices: ['yes', 'no']
@@ -69,8 +69,7 @@ options:
       - This argument will cause the provided configuration to be replaced
         on the destination node.   The use of the replace argument will
         always cause the task to set changed to true and will implies
-        I(force) is true.  This argument is only valid with I(transport)
-        is eapi.
+        C(force=true).  This argument is only valid with C(transport=eapi).
     required: false
     default: false
     choices: ['yes', 'no']
@@ -81,23 +80,23 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
 """
 
 EXAMPLES = """
-- name: push a configuration onto the device
+- name: Push a configuration onto the device
   eos_template:
     src: config.j2
 
-- name: forceable push a configuration onto the device
+- name: Forceable push a configuration onto the device
   eos_template:
     src: config.j2
     force: yes
 
-- name: provide the base configuration for comparision
+- name: Provide the base configuration for comparison
   eos_template:
     src: candidate_config.txt
     config: current_config.txt
