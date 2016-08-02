@@ -430,20 +430,21 @@ def main():
                                     src_group_id=grantGroup,
                                     cidr_ip=thisip)
                         changed = True
-        elif vpc_id and not module.check_mode:
+        elif vpc_id:
             # when using a vpc, but no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
             if default_egress_rule not in groupRules:
-                ec2.authorize_security_group_egress(
-                    group_id=group.id,
-                    ip_protocol=-1,
-                    from_port=None,
-                    to_port=None,
-                    src_group_id=None,
-                    cidr_ip='0.0.0.0/0'
-                )
+                if not module.check_mode:
+                    ec2.authorize_security_group_egress(
+                        group_id=group.id,
+                        ip_protocol=-1,
+                        from_port=None,
+                        to_port=None,
+                        src_group_id=None,
+                        cidr_ip='0.0.0.0/0'
+                    )
                 changed = True
             else:
                 # make sure the default egress rule is not removed
