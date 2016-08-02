@@ -17,7 +17,7 @@
 
 DOCUMENTATION = '''
 ---
-module: vmware_template_deploy
+module: vmware_deploy_template
 short_description: Deploy a template to a new virtualmachine in vcenter
 description:
     - Uses the pyvmomi Clone() method to copy a template to a new virtualmachine in vcenter
@@ -75,7 +75,7 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 Example from Ansible playbook
     - name: create the VM
-      vmware_template_deploy:
+      vmware_deploy_template:
         validate_certs: False
         hostname: 192.168.1.209
         username: administrator@vsphere.local
