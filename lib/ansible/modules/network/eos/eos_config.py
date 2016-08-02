@@ -22,10 +22,10 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Arista EOS configuration sections
 description:
-  - Arista EOS configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - Arista EOS configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with eos configuration sections in
-    a deterministic way.  This module works with either CLI or eapi
+    a deterministic way.  This module works with either CLI or eAPI
     transports.
 extends_documentation_fragment: eos
 options:
@@ -51,7 +51,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
@@ -80,7 +80,7 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct
+        line is not correct.
     required: false
     default: line
     choices: ['line', 'block']
@@ -100,8 +100,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
 """
