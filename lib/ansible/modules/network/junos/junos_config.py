@@ -51,7 +51,7 @@ options:
     default: null
   zeroize:
     description:
-      - The C(zeroize) argument is used to completely ssantaize the
+      - The C(zeroize) argument is used to completely santaize the
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device
