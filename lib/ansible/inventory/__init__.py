@@ -90,8 +90,6 @@ class Inventory(object):
         self.clear_pattern_cache()
 
         self.parse_inventory(host_list)
-        if self.localhost is None:
-            self.localhost = self._create_implicit_localhost()
 
     def serialize(self):
         data = dict()
@@ -128,13 +126,15 @@ class Inventory(object):
                     display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
                     host = h
                     port = None
+
                 new_host = Host(host, port)
+                if h in C.LOCALHOST:
+                    # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
+                    if self.localhost is not None:
+                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
+                    display.vvvv("Set default localhost to %s" % h)
+                    self.localhost = new_host
                 all.add_host(new_host)
-                if new_host.name in C.LOCALHOST:
-                    if self.localhost is None:
-                        self.localhost = new_host
-                    else:
-                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (new_host.name, self.localhost.name))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
@@ -470,22 +470,30 @@ class Inventory(object):
                     for host in matching_hosts:
                         __append_host_to_results(host)
 
+        if pattern in C.LOCALHOST and len(results) == 0:
+            new_host = self._create_implicit_localhost(pattern)
+            results.append(new_host)
         return results
 
-    def _create_implicit_localhost(self, pattern='localhost'):
-        new_host = Host(pattern)
-        new_host.address = "127.0.0.1"
-        new_host.implicit = True
-        new_host.vars = self.get_host_vars(new_host)
-        new_host.set_variable("ansible_connection", "local")
-        if "ansible_python_interpreter" not in new_host.vars:
-            py_interp = sys.executable
-            if not py_interp:
-                # sys.executable is not set in some cornercases.  #13585
-                display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. You can correct this by setting ansible_python_interpreter for localhost')
-                py_interp = '/usr/bin/python'
-            new_host.set_variable("ansible_python_interpreter", py_interp)
-        self.get_group("ungrouped").add_host(new_host)
+    def _create_implicit_localhost(self, pattern):
+
+        if self.localhost:
+            new_host = self.localhost
+        else:
+            new_host = Host(pattern)
+            new_host.address = "127.0.0.1"
+            new_host.implicit = True
+            new_host.vars = self.get_host_vars(new_host)
+            new_host.set_variable("ansible_connection", "local")
+            if "ansible_python_interpreter" not in new_host.vars:
+                py_interp = sys.executable
+                if not py_interp:
+                    # sys.executable is not set in some cornercases.  #13585
+                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. You can correct this by setting ansible_python_interpreter for localhost')
+                    py_interp = '/usr/bin/python'
+                new_host.set_variable("ansible_python_interpreter", py_interp)
+            self.get_group("ungrouped").add_host(new_host)
+            self.localhost = new_host
         return new_host
 
     def clear_pattern_cache(self):
@@ -509,14 +517,28 @@ class Inventory(object):
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in C.LOCALHOST and self.localhost:
-            self.localhost
         matching_host = None
-        for group in self.groups.values():
-            for host in group.get_hosts():
-                if hostname == host.name:
-                    matching_host = host
-                self._hosts_cache[host.name] = host
+        if hostname in C.LOCALHOST:
+            if self.localhost:
+                matching_host= self.localhost
+            else:
+                for host in self.get_group('all').get_hosts():
+                    if host.name in C.LOCALHOST:
+                        matching_host = host
+                        break
+                if not matching_host:
+                    matching_host = self._create_implicit_localhost(hostname)
+                # update caches
+                self._hosts_cache[hostname] = matching_host
+                for host in C.LOCALHOST.difference((hostname,)):
+                    self._hosts_cache[host] = self._hosts_cache[hostname]
+        else:
+            for group in self.groups.values():
+                for host in group.get_hosts():
+                    if host not in self._hosts_cache:
+                        self._hosts_cache[host.name] = host
+                    if hostname == host.name:
+                        matching_host = host
         return matching_host
 
     def get_group(self, groupname):
