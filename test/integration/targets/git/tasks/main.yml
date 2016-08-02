@@ -552,7 +552,7 @@
 
 - assert:
     that: "not checkout2|changed"
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=') and git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=') and git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
 
 - name: again try to access earlier commit
   shell: git checkout 79624b4
