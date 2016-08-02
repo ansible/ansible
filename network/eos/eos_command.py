@@ -21,10 +21,10 @@ DOCUMENTATION = """
 module: eos_command
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Run arbitrary command on EOS device
+short_description: Run arbitrary commands on EOS device
 description:
-  - Sends an aribtrary set of commands to an EOS node and returns the results
-    read from the device.  The M(eos_command) module includes an
+  - Sends an arbitrary set of commands to an EOS node and returns the results
+    read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: eos
@@ -33,9 +33,9 @@ options:
     description:
       - The commands to send to the remote EOS device over the
         configured provider.  The resulting output from the command
-        is returned.  If the I(waitfor) argument is provided, the
+        is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retries has been exceeded.
+        the number of I(retries) has been exceeded.
     required: true
   wait_for:
     description:
@@ -52,8 +52,8 @@ options:
     description:
       - Specifies the number of retries a command should be tried
         before it is considered failed.  The command is run on the
-        target device every retry and evaluated against the waitfor
-        conditionals
+        target device every retry and evaluated against the I(wait_for)
+        conditionals.
     required: false
     default: 10
   interval:
