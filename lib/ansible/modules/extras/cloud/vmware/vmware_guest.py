@@ -17,10 +17,13 @@
 
 DOCUMENTATION = '''
 ---
-module: vmware_deploy_template
-short_description: Deploy a template to a new virtualmachine in vcenter
+module: vmware_guest
+short_description: Manages virtualmachines in vcenter
 description:
-    - Uses the pyvmomi Clone() method to copy a template to a new virtualmachine in vcenter
+    - Uses pyvmomi to ...
+    - copy a template to a new virtualmachine
+    - poweron/poweroff/restart a virtualmachine
+    - remove a virtualmachine
 version_added: 2.2
 author: James Tanner (@jctanner) <tanner.jc@gmail.com>
 notes:
@@ -29,30 +32,43 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-   guest:
+   state:
+        description:
+            - What state should the virtualmachine be in?
+        required: True
+        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
+   name:
         description:
             - Name of the newly deployed guest
         required: True
+   name_match:
+        description:
+            - If multiple vms matching the name, use the first or last found 
+        required: False
+        default: 'first'
+        choices: ['first', 'last']
+   uuid:
+        description:
+            - UUID of the instance to manage if known, this is vmware's unique identifier.
+            - This is required if name is not supplied.
+        required: False
    template:
         description:
-            - Name of the template to deploy 
-        required: True
-   vm_folder:
+            - Name of the template to deploy, if needed to create the guest (state=present).
+            - If the guest exists already this setting will be ignored.
+        required: False
+   folder:
         description:
             - Destination folder path for the new guest
         required: False
-   vm_hardware:
+   hardware:
         description:
             - Attributes such as cpus, memroy, osid, and disk controller
         required: False
-   vm_nic:
+   nic:
         description:
             - A list of nics to add
         required: True
-   power_on_after_clone:
-        description:
-            - Poweron the VM after it is cloned
-        required: False
    wait_for_ip_address:
         description:
             - Wait until vcenter detects an IP address for the guest
@@ -61,7 +77,7 @@ options:
         description:
             - Ignore warnings and complete the actions
         required: False
-   datacenter_name:
+   datacenter:
         description:
             - Destination datacenter for the deploy operation
         required: True
@@ -75,30 +91,30 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 Example from Ansible playbook
     - name: create the VM
-      vmware_deploy_template:
+      vmware_guest:
         validate_certs: False
         hostname: 192.168.1.209
         username: administrator@vsphere.local
         password: vmware
-        guest: testvm_2
-        vm_folder: testvms
-        vm_disk:
+        name: testvm_2
+        state: poweredon
+        folder: testvms
+        disk:
             - size_gb: 10
               type: thin
               datastore: g73_datastore
-        vm_nic:
+        nic:
             - type: vmxnet3
               network: VM Network
               network_type: standard
-        vm_hardware:
+        hardware:
             memory_mb: 512
             num_cpus: 1
             osid: centos64guest
             scsi: paravirtual
-        datacenter_name: datacenter1
+        datacenter: datacenter1
         esxi_hostname: 192.168.1.117
-        template_src: template_el7
-        power_on_after_clone: yes
+        template: template_el7
         wait_for_ip_address: yes
       register: deploy
 '''
@@ -240,7 +256,7 @@ class PyVmomiHelper(object):
         return (self.folders, self.folder_map)
 
 
-    def getvm(self, name=None, uuid=None, folder=None, firstmatch=False):
+    def getvm(self, name=None, uuid=None, folder=None, name_match=None):
 
         # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.SearchIndex.html
         # self.si.content.searchIndex.FindByInventoryPath('DC1/vm/test_folder')
@@ -276,32 +292,35 @@ class PyVmomiHelper(object):
                     if not type(cObj) == vim.VirtualMachine:
                         continue
                     if cObj.name == name:
-                        #vm = cObj
-                        #break
                         matches.append(cObj)
-            if len(matches) > 1 and not firstmatch:
-                assert len(matches) <= 1, "more than 1 vm exists by the name %s in folder %s. Please specify a uuid, a datacenter or firstmatch=true" % name
+            if len(matches) > 1 and not name_match:
+                module.fail_json(msg='more than 1 vm exists by the name %s in folder %s. Please specify a uuid, a datacenter or name_match' \
+                                 % (folder, name))
             elif len(matches) > 0:
                 vm = matches[0]
-            #else:
-            #import epdb; epdb.st()
-
         else:
-            if firstmatch:
-                vm = get_obj(self.content, [vim.VirtualMachine], name)
-            else:
+            vmList = get_all_objs(self.content, [vim.VirtualMachine])
+            if name_match:
+                if name_match == 'first':
+                    vm = get_obj(self.content, [vim.VirtualMachine], name)
+                elif name_match == 'last':
+                    matches = []
+                    vmList = get_all_objs(self.content, [vim.VirtualMachine])
+                    for thisvm in vmList:
+                        if thisvm.config.name == name:
+                            matches.append(thisvm)
+                    if matches:
+                        vm = matches[-1]
+            else:            
                 matches = []
                 vmList = get_all_objs(self.content, [vim.VirtualMachine])
                 for thisvm in vmList:
-                    if thisvm.config == None:
-                        import epdb; epdb.st()
                     if thisvm.config.name == name:
                         matches.append(thisvm)
-                # FIXME - fail this properly
-                #import epdb; epdb.st()
-                assert len(matches) <= 1, "more than 1 vm exists by the name %s. Please specify a folder, a uuid, or firstmatch=true" % name
-                if matches:
-                    vm = matches[0]
+                    if len(matches) > 1:
+                        module.fail_json(msg='more than 1 vm exists by the name %s. Please specify a uuid, or a folder, or a datacenter or name_match' % name)
+                    if matches:
+                        vm = matches[0]
 
         return vm
 
@@ -440,16 +459,20 @@ class PyVmomiHelper(object):
 
         datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = get_obj(self.content, [vim.Datacenter], 
-                             self.params['datacenter_name'])
+                             self.params['datacenter'])
 
         # folder is a required clone argument
         if len(datacenters) > 1:
             # FIXME: need to find the folder in the right DC.
             raise "multi-dc with folders is not yet implemented"
         else:    
-            destfolder = get_obj(self.content, [vim.Folder], self.params['vm_folder'])
+            destfolder = get_obj(
+                            self.content, 
+                            [vim.Folder], 
+                            self.params['folder']
+                         )
 
-        datastore_name = self.params['vm_disk'][0]['datastore']
+        datastore_name = self.params['disk'][0]['datastore']
         datastore = get_obj(self.content, [vim.Datastore], datastore_name)
 
 
@@ -469,8 +492,8 @@ class PyVmomiHelper(object):
         clonespec = vim.vm.CloneSpec()
         clonespec.location = relospec
 
-        template = get_obj(self.content, [vim.VirtualMachine], self.params['template_src'])
-        task = template.Clone(folder=destfolder, name=self.params['guest'], spec=clonespec)
+        template = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
+        task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
 
         if task.info.state == 'error':
@@ -762,56 +785,60 @@ def main():
             state=dict(
                 required=False,
                 choices=[
-                    'powered_on',
-                    'powered_off',
+                    'poweredon',
+                    'poweredoff',
                     'present',
                     'absent',
                     'restarted',
                     'reconfigured'
                 ],
                 default='present'),
-            template_src=dict(required=False, type='str'),
-            guest=dict(required=True, type='str'),
-            vm_folder=dict(required=False, type='str', default=None),
-            vm_disk=dict(required=False, type='list', default=[]),
-            vm_nic=dict(required=False, type='list', default=[]),
-            vm_hardware=dict(required=False, type='dict', default={}),
-            vm_hw_version=dict(required=False, default=None, type='str'),
-            force=dict(required=False, type='bool', default=False),
-            firstmatch=dict(required=False, type='bool', default=False),
-            datacenter_name=dict(required=False, type='str', default=None),
-            esxi_hostname=dict(required=False, type='str', default=None),
             validate_certs=dict(required=False, type='bool', default=True),
-            power_on_after_clone=dict(required=False, type='bool', default=True),
+            template_src=dict(required=False, type='str', aliases=['template']),
+            name=dict(required=True, type='str'),
+            name_match=dict(required=False, type='str', default='first'),
+            uuid=dict(required=False, type='str'),
+            folder=dict(required=False, type='str', default=None, aliases=['folder']),
+            disk=dict(required=False, type='list', default=[]),
+            nic=dict(required=False, type='list', default=[]),
+            hardware=dict(required=False, type='dict', default={}),
+            force=dict(required=False, type='bool', default=False),
+            datacenter=dict(required=False, type='str', default=None),
+            esxi_hostname=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=True)
         ),
         supports_check_mode=True,
         mutually_exclusive=[],
         required_together=[
             ['state', 'force'],
-            [
-                'vm_disk',
-                'vm_nic',
-                'vm_hardware',
-                'esxi_hostname'
-            ],
-            ['template_src'],
+            ['template'],
         ],
     )
 
     pyv = PyVmomiHelper(module)
 
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['guest'], 
-                   folder=module.params['vm_folder'], 
-                   firstmatch=module.params['firstmatch'])
+    vm = pyv.getvm(name=module.params['name'], 
+                   folder=module.params['folder'], 
+                   uuid=module.params['uuid'], 
+                   name_match=module.params['name_match'])
 
     # VM already exists
     if vm:
-        # Run for facts only
-        if module.params['vmware_guest_facts']:
+
+        if module.params['state'] == 'absent':
+            # destroy it
+            if module.params['force']:
+                # has to be poweredoff first
+                result = pyv.set_powerstate(vm, 'poweredoff', module.params['force'])
+            result = pyv.remove_vm(vm)
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted']:
+            # set powerstate
+            result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+        else:
+            # Run for facts only
             try:
-                module.exit_json(ansible_facts=pyv.gather_facts(vm))
+                module.exit_json(instance=pyv.gather_facts(vm))
             except Exception:
                 e = get_exception()
                 module.fail_json(
@@ -819,11 +846,22 @@ def main():
 
     # VM doesn't exist
     else:
+        create_states = ['poweredon', 'poweredoff', 'present', 'restarted']
+        if module.params['state'] in create_states:
+            poweron = (module.params['state'] != 'poweredoff')
+            # Create it ...
+            result = pyv.deploy_template(
+                        poweron=poweron, 
+                        wait_for_ip=module.params['wait_for_ip_address']
+                     )
+        elif module.params['state'] == 'absent':
+            result = {'changed': False, 'failed': False}
+        else:
+            result = {'changed': False, 'failed': False}
 
-        # Create it ...
-        result = pyv.deploy_template(poweron=module.params['power_on_after_clone'], 
-                                     wait_for_ip=module.params['wait_for_ip_address'])
-
+    # FIXME
+    if not 'failed' in result:
+        result['failed'] = False
 
     if result['failed']:
         module.fail_json(**result)
