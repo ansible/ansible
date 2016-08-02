@@ -61,6 +61,32 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
+Examples from an ansible playbook ...
+    - name: poweroff the VM
+      vmware_guest_state:
+        validate_certs: False
+        hostname: 192.168.1.209
+        username: administrator@vsphere.local
+        password: vmware
+        guest: testvm_2
+        vm_folder: testvms
+        state: powered_off
+      ignore_errors: True
+
+    - name: remove the VM
+      vmware_guest_state:
+        validate_certs: False
+        hostname: 192.168.1.209
+        username: administrator@vsphere.local
+        password: vmware
+        guest: testvm_2
+        vm_folder: testvms
+        state: absent
+      ignore_errors: True
+'''
+
+RETURN = '''
+state=absent
 '''
 
 try:
