@@ -45,7 +45,7 @@ options:
       - Use with I(detach) to remove the container after successful execution.
     default: false
     required: false
-    version_added: 2.2
+    version_added: "2.2"
   command:
     description:
       - Command to execute when the container starts.
@@ -150,10 +150,11 @@ options:
     description:
       - When C(state) is I(present) or I(started) the module compares the configuration of an existing
         container to requested configuration. The evaluation includes the image version. If
-        the image vesion in the registry does not match the container, the container will be
+        the image version in the registry does not match the container, the container will be
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
     default: false
     required: false
+    version_added: "2.2"      
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
@@ -691,6 +692,7 @@ class TaskParameters(DockerBaseClass):
         self.force_kill = None
         self.groups = None
         self.hostname = None
+        self.ignore_image = None
         self.image = None
         self.interactive = None
         self.ipc_mode = None
@@ -1629,7 +1631,9 @@ class ContainerManager(DockerBaseClass):
         else:
             # Existing container
             different, differences = container.has_different_configuration(image)
-            image_different = self._image_is_different(image, container)
+            image_different = False
+            if not self.parameters.ignore_image:
+                image_different = self._image_is_different(image, container)
             if image_different or different or self.parameters.recreate:
                 self.diff['differences'] = differences
                 if image_different:
@@ -1892,6 +1896,7 @@ def main():
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
         groups=dict(type='list'),
         hostname=dict(type='str'),
+        ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
         interactive=dict(type='bool', default=False),
         ipc_mode=dict(type='str'),
