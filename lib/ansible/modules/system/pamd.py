@@ -280,173 +280,170 @@ class PamdService(object):
         return self.fname
 
 
-class PamdUtil(object):
+def update_rule(service, old_rule, new_rule):
 
-    @staticmethod
-    def update_rule(service, old_rule, new_rule):
+    changed = False
+    change_count = 0
+    result = {'action': 'update_rule'}
 
-        changed = False
-        change_count = 0
-        result = {'action': 'update_rule'}
+    for rule in service.rules:
+        if (old_rule.rule_type == rule.rule_type and
+                old_rule.rule_control == rule.rule_control and
+                old_rule.rule_module_path == rule.rule_module_path):
 
-        for rule in service.rules:
-            if (old_rule.rule_type == rule.rule_type and
-                    old_rule.rule_control == rule.rule_control and
-                    old_rule.rule_module_path == rule.rule_module_path):
-
-                if (new_rule.rule_type is not None and
-                        new_rule.rule_type != rule.rule_type):
-                    rule.rule_type = new_rule.rule_type
+            if (new_rule.rule_type is not None and
+                    new_rule.rule_type != rule.rule_type):
+                rule.rule_type = new_rule.rule_type
+                changed = True
+            if (new_rule.rule_control is not None and
+                    new_rule.rule_control != rule.rule_control):
+                rule.rule_control = new_rule.rule_control
+                changed = True
+            if (new_rule.rule_module_path is not None and
+                    new_rule.rule_module_path != rule.rule_module_path):
+                rule.rule_module_path = new_rule.rule_module_path
+                changed = True
+            try:
+                if (new_rule.rule_module_args is not None and
+                        new_rule.rule_module_args !=
+                        rule.rule_module_args):
+                    rule.rule_module_args = new_rule.rule_module_args
                     changed = True
-                if (new_rule.rule_control is not None and
-                        new_rule.rule_control != rule.rule_control):
-                    rule.rule_control = new_rule.rule_control
-                    changed = True
-                if (new_rule.rule_module_path is not None and
-                        new_rule.rule_module_path != rule.rule_module_path):
-                    rule.rule_module_path = new_rule.rule_module_path
-                    changed = True
-                try:
-                    if (new_rule.rule_module_args is not None and
-                            new_rule.rule_module_args !=
-                            rule.rule_module_args):
-                        rule.rule_module_args = new_rule.rule_module_args
+            except AttributeError:
+                pass
+            if changed:
+                result['updated_rule_'+str(change_count)] = str(rule)
+                result['new_rule'] = str(new_rule)
+
+                change_count += 1
+
+    result['change_count'] = change_count
+    return changed, result
+
+
+def insert_before_rule(service, old_rule, new_rule):
+    index = 0
+    change_count = 0
+    result = {'action':
+              'insert_before_rule'}
+    changed = False
+    for rule in service.rules:
+        if (old_rule.rule_type == rule.rule_type and
+                old_rule.rule_control == rule.rule_control and
+                old_rule.rule_module_path == rule.rule_module_path):
+            if index == 0:
+                service.rules.insert(0, new_rule)
+                changed = True
+            elif (new_rule.rule_type != service.rules[index-1].rule_type or
+                    new_rule.rule_control !=
+                    service.rules[index-1].rule_control or
+                    new_rule.rule_module_path !=
+                    service.rules[index-1].rule_module_path):
+                service.rules.insert(index, new_rule)
+                changed = True
+            if changed:
+                result['new_rule'] = str(new_rule)
+                result['before_rule_'+str(change_count)] = str(rule)
+                change_count += 1
+        index += 1
+    result['change_count'] = change_count
+    return changed, result
+
+
+def insert_after_rule(service, old_rule, new_rule):
+    index = 0
+    change_count = 0
+    result = {'action': 'insert_after_rule'}
+    changed = False
+    for rule in service.rules:
+        if (old_rule.rule_type == rule.rule_type and
+                old_rule.rule_control == rule.rule_control and
+                old_rule.rule_module_path == rule.rule_module_path):
+            if (new_rule.rule_type != service.rules[index+1].rule_type or
+                    new_rule.rule_control !=
+                    service.rules[index+1].rule_control or
+                    new_rule.rule_module_path !=
+                    service.rules[index+1].rule_module_path):
+                service.rules.insert(index+1, new_rule)
+                changed = True
+            if changed:
+                result['new_rule'] = str(new_rule)
+                result['after_rule_'+str(change_count)] = str(rule)
+                change_count += 1
+        index += 1
+
+    result['change_count'] = change_count
+    return changed, result
+
+
+def remove_module_arguments(service, old_rule, module_args):
+    result = {'action': 'args_absent'}
+    changed = False
+    change_count = 0
+    for rule in service.rules:
+        if (old_rule.rule_type == rule.rule_type and
+                old_rule.rule_control == rule.rule_control and
+                old_rule.rule_module_path == rule.rule_module_path):
+            for arg_to_remove in module_args.split():
+                for arg in rule.rule_module_args:
+                    if arg == arg_to_remove:
+                        rule.rule_module_args.remove(arg)
                         changed = True
-                except AttributeError:
-                    pass
-                if changed:
-                    result['updated_rule_'+str(change_count)] = str(rule)
-                    result['new_rule'] = str(new_rule)
-
-                    change_count += 1
-
-        result['change_count'] = change_count
-        return changed, result
-
-    @staticmethod
-    def insert_before_rule(service, old_rule, new_rule):
-        index = 0
-        change_count = 0
-        result = {'action':
-                  'insert_before_rule'}
-        changed = False
-        for rule in service.rules:
-            if (old_rule.rule_type == rule.rule_type and
-                    old_rule.rule_control == rule.rule_control and
-                    old_rule.rule_module_path == rule.rule_module_path):
-                if index == 0:
-                    service.rules.insert(0, new_rule)
-                    changed = True
-                elif (new_rule.rule_type != service.rules[index-1].rule_type or
-                        new_rule.rule_control !=
-                        service.rules[index-1].rule_control or
-                        new_rule.rule_module_path !=
-                        service.rules[index-1].rule_module_path):
-                    service.rules.insert(index, new_rule)
-                    changed = True
-                if changed:
-                    result['new_rule'] = str(new_rule)
-                    result['before_rule_'+str(change_count)] = str(rule)
-                    change_count += 1
-            index += 1
-        result['change_count'] = change_count
-        return changed, result
-
-    @staticmethod
-    def insert_after_rule(service, old_rule, new_rule):
-        index = 0
-        change_count = 0
-        result = {'action': 'insert_after_rule'}
-        changed = False
-        for rule in service.rules:
-            if (old_rule.rule_type == rule.rule_type and
-                    old_rule.rule_control == rule.rule_control and
-                    old_rule.rule_module_path == rule.rule_module_path):
-                if (new_rule.rule_type != service.rules[index+1].rule_type or
-                        new_rule.rule_control !=
-                        service.rules[index+1].rule_control or
-                        new_rule.rule_module_path !=
-                        service.rules[index+1].rule_module_path):
-                    service.rules.insert(index+1, new_rule)
-                    changed = True
-                if changed:
-                    result['new_rule'] = str(new_rule)
-                    result['after_rule_'+str(change_count)] = str(rule)
-                    change_count += 1
-            index += 1
-
-        result['change_count'] = change_count
-        return changed, result
-
-    @staticmethod
-    def remove_module_arguments(service, old_rule, module_args):
-        result = {'action': 'args_absent'}
-        changed = False
-        change_count = 0
-        for rule in service.rules:
-            if (old_rule.rule_type == rule.rule_type and
-                    old_rule.rule_control == rule.rule_control and
-                    old_rule.rule_module_path == rule.rule_module_path):
-                for arg_to_remove in module_args.split():
-                    for arg in rule.rule_module_args:
-                        if arg == arg_to_remove:
-                            rule.rule_module_args.remove(arg)
-                            changed = True
-                            result['removed_arg_'+str(change_count)] = arg
-                            result['from_rule_'+str(change_count)] = str(rule)
-                            change_count += 1
-
-        result['change_count'] = change_count
-        return changed, result
-
-    @staticmethod
-    def add_module_arguments(service, old_rule, module_args):
-        result = {'action': 'args_present'}
-        changed = False
-        change_count = 0
-        for rule in service.rules:
-            if (old_rule.rule_type == rule.rule_type and
-                    old_rule.rule_control == rule.rule_control and
-                    old_rule.rule_module_path == rule.rule_module_path):
-                for arg_to_add in module_args.split(' '):
-                    if "=" in arg_to_add:
-                        pre_string = arg_to_add[:arg_to_add.index('=')+1]
-                        indicies = [i for i, arg
-                                    in enumerate(rule.rule_module_args)
-                                    if arg.startswith(pre_string)]
-                        for i in indicies:
-                            if rule.rule_module_args[i] != arg_to_add:
-                                rule.rule_module_args[i] = arg_to_add
-                                changed = True
-                                result['updated_arg_' +
-                                       str(change_count)] = arg_to_add
-                                result['in_rule_' +
-                                       str(change_count)] = str(rule)
-                                change_count += 1
-                    elif arg_to_add not in rule.rule_module_args:
-                        rule.rule_module_args.append(arg_to_add)
-                        changed = True
-                        result['added_arg_'+str(change_count)] = arg_to_add
-                        result['to_rule_'+str(change_count)] = str(rule)
+                        result['removed_arg_'+str(change_count)] = arg
+                        result['from_rule_'+str(change_count)] = str(rule)
                         change_count += 1
-        result['change_count'] = change_count
-        return changed, result
 
-    @staticmethod
-    def write_rules(service):
-        previous_rule = None
+    result['change_count'] = change_count
+    return changed, result
 
-        f = open(service.fname, 'w')
-        for amble in service.preamble:
-            f.write(amble+'\n')
 
-        for rule in service.rules:
-            if (previous_rule is not None and
-                    previous_rule.rule_type != rule.rule_type):
-                f.write('\n')
-            f.write(str(rule)+'\n')
-            previous_rule = rule
-        f.close()
+def add_module_arguments(service, old_rule, module_args):
+    result = {'action': 'args_present'}
+    changed = False
+    change_count = 0
+    for rule in service.rules:
+        if (old_rule.rule_type == rule.rule_type and
+                old_rule.rule_control == rule.rule_control and
+                old_rule.rule_module_path == rule.rule_module_path):
+            for arg_to_add in module_args.split(' '):
+                if "=" in arg_to_add:
+                    pre_string = arg_to_add[:arg_to_add.index('=')+1]
+                    indicies = [i for i, arg
+                                in enumerate(rule.rule_module_args)
+                                if arg.startswith(pre_string)]
+                    for i in indicies:
+                        if rule.rule_module_args[i] != arg_to_add:
+                            rule.rule_module_args[i] = arg_to_add
+                            changed = True
+                            result['updated_arg_' +
+                                   str(change_count)] = arg_to_add
+                            result['in_rule_' +
+                                   str(change_count)] = str(rule)
+                            change_count += 1
+                elif arg_to_add not in rule.rule_module_args:
+                    rule.rule_module_args.append(arg_to_add)
+                    changed = True
+                    result['added_arg_'+str(change_count)] = arg_to_add
+                    result['to_rule_'+str(change_count)] = str(rule)
+                    change_count += 1
+    result['change_count'] = change_count
+    return changed, result
+
+
+def write_rules(service):
+    previous_rule = None
+
+    f = open(service.fname, 'w')
+    for amble in service.preamble:
+        f.write(amble+'\n')
+
+    for rule in service.rules:
+        if (previous_rule is not None and
+                previous_rule.rule_type != rule.rule_type):
+            f.write('\n')
+        f.write(str(rule)+'\n')
+        previous_rule = rule
+    f.close()
 
 
 def main():
@@ -499,9 +496,9 @@ def main():
 
     try:
         if state == 'updated':
-            change, result = PamdUtil.update_rule(pamd,
-                                                  old_rule,
-                                                  new_rule)
+            change, result = update_rule(pamd,
+                                         old_rule,
+                                         new_rule)
         elif state == 'before':
             if (new_rule.rule_control is None or
                     new_rule.rule_type is None or
@@ -511,9 +508,9 @@ def main():
                                  'or after an existing rule, new_type, ' +
                                  'new_control and new_module_path must ' +
                                  'all be set.')
-            change, result = PamdUtil.insert_before_rule(pamd,
-                                                         old_rule,
-                                                         new_rule)
+            change, result = insert_before_rule(pamd,
+                                                old_rule,
+                                                new_rule)
         elif state == 'after':
             if (new_rule.rule_control is None or
                     new_rule.rule_type is None or
@@ -523,19 +520,20 @@ def main():
                                  'or after an existing rule, new_type,' +
                                  ' new_control and new_module_path must' +
                                  ' all be set.')
-            change, result = PamdUtil.insert_after_rule(pamd,
-                                                        old_rule,
-                                                        new_rule)
+            change, result = insert_after_rule(pamd,
+                                               old_rule,
+                                               new_rule)
         elif state == 'args_absent':
-            change, result = PamdUtil.remove_module_arguments(pamd,
-                                                              old_rule,
-                                                              module_arguments)
+            change, result = remove_module_arguments(pamd,
+                                                     old_rule,
+                                                     module_arguments)
         elif state == 'args_present':
-            change, result = PamdUtil.add_module_arguments(pamd, old_rule,
-                                                           module_arguments)
+            change, result = add_module_arguments(pamd,
+                                                  old_rule,
+                                                  module_arguments)
 
         if not module.check_mode:
-            PamdUtil.write_rules(pamd)
+            write_rules(pamd)
 
     except Exception:
         e = get_exception()
