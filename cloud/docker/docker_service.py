@@ -108,18 +108,26 @@ options:
       default: smart
   build:
       description:
-        - Whether or not to build images before starting containers.
-        - Missing images will always be built.
-        - If an image is present and C(build) is false, the image will not be built.
-        - If an image is present and C(build) is true, the image will be built.
+        - Use with state I(present) to always build images prior to starting the application.
+        - Same as running docker-compose build with the pull option.
+        - Images will only be rebuilt if Docker detects a change in the Dockerfile or build directory contents.
+        - Use the C(nocache) option to ignore the image cache when performing the build.
+        - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
       type: bool
       required: false
-      default: true
+      default: false
   pull:
       description:
         - Use with state I(present) to always pull images prior to starting the application.
         - Same as running docker-compose pull.
         - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
+      type: bool
+      required: false
+      default: false
+      version_added: "2.2"
+  nocache:
+      description:
+        - Use with the build option to ignore the cache during the image build process.
       type: bool
       required: false
       default: false
@@ -475,6 +483,7 @@ class ContainerManager(DockerBaseClass):
         self.scale = None
         self.debug = None
         self.pull = None
+        self.nocache = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -569,7 +578,7 @@ class ContainerManager(DockerBaseClass):
 
         up_options = {
             u'--no-recreate': False,
-            u'--build': self.build,
+            u'--build': True,
             u'--no-build': False,
             u'--no-deps': False,
             u'--force-recreate': False,
@@ -589,6 +598,9 @@ class ContainerManager(DockerBaseClass):
         if self.pull:
             result.update(self.cmd_pull())
 
+        if self.build:
+            result.update(self.cmd_build())
+
         for service in self.project.services:
             if not service_names or service.name in service_names:
                 plan = service.convergence_plan(strategy=converge)
@@ -607,11 +619,13 @@ class ContainerManager(DockerBaseClass):
 
         if not self.check_mode and result['changed']:
             try:
+                do_build = build_action_from_opts(up_options)
+                self.log('Setting do_build to %s' % do_build)
                 self.project.up(
                     service_names=service_names,
                     start_deps=start_deps,
                     strategy=converge,
-                    do_build=build_action_from_opts(up_options),
+                    do_build=do_build,
                     detached=detached,
                     remove_orphans=self.remove_orphans)
             except Exception as exc:
@@ -715,6 +729,34 @@ class ContainerManager(DockerBaseClass):
                         name=service.image_name,
                         id=service.image()['Id']
                     )
+        return result
+
+    def cmd_build(self):
+        result = dict(
+            changed=False,
+            actions=dict(),
+        )
+        if not self.check_mode:
+            for service in self.project.get_services(self.services, include_deps=False):
+                self.log('Building image for service %s' % service.name)
+                if service.can_be_built():
+                    # store the existing image ID
+                    image = service.image()
+                    old_image_id = None
+                    if image and image.get('Id'):
+                        old_image_id = image['Id']
+
+                    # build the image
+                    new_image_id = service.build(pull=True, no_cache=self.nocache)
+
+                    if new_image_id not in old_image_id:
+                        # if a new image was built
+                        result['changed'] = True
+                        result['actions'][service.name] = dict()
+                        result['actions'][service.name]['built_image'] = dict(
+                            name=service.image_name,
+                            id=service.image()['Id']
+                        )
         return result
 
     def cmd_down(self):
@@ -824,7 +866,7 @@ def main():
         definition=dict(type='dict'),
         hostname_check=dict(type='bool', default=False),
         recreate=dict(type='str', choices=['always','never','smart'], default='smart'),
-        build=dict(type='bool', default=True),
+        build=dict(type='bool', default=False),
         remove_images=dict(type='str', choices=['all', 'local']),
         remove_volumes=dict(type='bool', default=False),
         remove_orphans=dict(type='bool', default=False),
@@ -834,6 +876,7 @@ def main():
         services=dict(type='list'),
         dependencies=dict(type='bool', default=True),
         pull=dict(type='bool', default=False),
+        nocache=dict(type='bool', default=False),
         debug=dict(type='bool', default=False)
     )
 
