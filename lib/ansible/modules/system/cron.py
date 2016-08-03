@@ -224,6 +224,7 @@ class CronTab(object):
         self.root      = (os.getuid() == 0)
         self.lines     = None
         self.ansible   = "#Ansible: "
+        self.terminated= True
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -242,7 +243,9 @@ class CronTab(object):
             # read the cronfile
             try:
                 f = open(self.cron_file, 'r')
-                self.lines = f.read().splitlines()
+                read_cron_file = f.read()
+                self.terminated = read_cron_file.endswith(('\r', '\n'))
+                self.lines = read_cron_file.splitlines()
                 f.close()
             except IOError:
                 # cron file does not exist
@@ -255,6 +258,8 @@ class CronTab(object):
 
             if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
+
+            self.terminated = out.endswith(('\r', '\n'))
 
             lines = out.splitlines()
             count = 0
@@ -464,8 +469,8 @@ class CronTab(object):
             crons.append(cron)
 
         result = '\n'.join(crons)
-        if result and result[-1] not in ['\n', '\r']:
-            result += '\n'
+        if result:
+            result = result.rstrip('\r\n') + '\n'
         return result
 
     def _read_user_execute(self):
@@ -659,6 +664,10 @@ def main():
             if len(old_job) > 0:
                 crontab.remove_job(name)
                 changed = True
+
+    # no changes to env/job, but existing crontab needs a terminating newline
+    if not changed and not crontab.terminated:
+        changed = True
 
     res_args = dict(
         jobs = crontab.get_jobnames(),
