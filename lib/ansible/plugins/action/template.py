@@ -26,7 +26,9 @@ from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.utils.unicode import to_bytes, to_unicode, to_str
+from ansible.errors import AnsibleError
+
 
 
 class ActionModule(ActionBase):
@@ -63,23 +65,23 @@ class ActionModule(ActionBase):
         if state is not None:
             result['failed'] = True
             result['msg'] = "'state' cannot be specified on a template"
-            return result
         elif (source is None and faf is not None) or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
-            return result
-
-        if faf:
+        elif faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
             if source is None:
                 result['failed'] = True
                 result['msg'] = "could not find src in first_available_file list"
-                return result
         else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
+            try:
+                source = self._find_needle('templates', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_str(e)
+
+        if 'failed' in result:
+            return result
 
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest)

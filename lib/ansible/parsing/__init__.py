@@ -1,4 +1,4 @@
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansbile.com>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #

@@ -17,23 +17,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import re
 
-from ansible.module_utils.basic import json
-from ansible.module_utils.network import NetCli, NetworkError, get_module, Command
+from ansible.module_utils.basic import json, get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import NetCli, Command, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+# temporary fix until modules are update.  to be removed before 2.2 final
+from ansible.module_utils.network import get_module
 
 EAPI_FORMATS = ['json', 'text']
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
-
-ModuleStub = collections.namedtuple('ModuleStub', 'params fail_json')
 
 def argument_spec():
     return dict(
@@ -343,17 +342,11 @@ class Cli(NetCli, EosConfigMixin):
         re.compile(r"[^\r\n]\/bin\/(?:ba)?sh")
     ]
 
-    def __init__(self):
-        super(Cli, self).__init__()
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=True, **kwargs)
         self.shell.send('terminal length 0')
-        self._connected = True
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
     ### implementation of network.Cli ###
 

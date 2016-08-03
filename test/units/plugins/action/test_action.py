@@ -231,7 +231,7 @@ class TestActionBase(unittest.TestCase):
             mock_connection.module_implementation_preferences = ('.ps1',)
             (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args)
             self.assertEqual(style, "new")
-            self.assertEqual(shebang, None)
+            self.assertEqual(shebang, u'#!powershell')
 
             # test module not found
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
@@ -607,8 +607,10 @@ class TestActionBase(unittest.TestCase):
         self.assertRaises(AnsibleError, action_base._execute_module)
 
     def test_action_base_sudo_only_if_user_differs(self):
+        fake_loader = MagicMock()
+        fake_loader.get_basedir.return_value = os.getcwd()
         play_context = PlayContext()
-        action_base = DerivedActionBase(None, None, play_context, None, None, None)
+        action_base = DerivedActionBase(None, None, play_context, fake_loader, None, None)
         action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
         action_base._connection._shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
 

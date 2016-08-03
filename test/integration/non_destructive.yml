@@ -34,8 +34,9 @@
     - { role: test_unarchive, tags: test_unarchive }
     - { role: test_filters, tags: test_filters }
     - { role: test_facts_d, tags: test_facts_d }
-    - { role: test_async, tags: test_async }
-    - { role: test_command_shell, tags: test_command_shell }
+    - { role: test_async, tags: [test_async, test_async_status, test_async_wrapper] }
+    - { role: test_command_shell, tags: [test_command_shell, test_command, test_shell] }
+    - { role: test_task_ordering, tags: test_task_ordering }
     - { role: test_script, tags: test_script }
     - { role: test_authorized_key, tags: test_authorized_key }
     - { role: test_embedded_module, tags: test_embedded_module }

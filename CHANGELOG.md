@@ -8,18 +8,38 @@ Ansible Changes By Release
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
+* Several Windows facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
+  - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
+  - ansible_date_time.iso8601 (changed to UTC instead of local time)
+  - ansible_distribution (now uses OS caption string, e.g.: "Microsoft Windows Server 2012 R2 Standard", version is still available on ansible_distribution_version)
+  - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
 
 ####New Modules:
+- asa
+  * asa_acl
+  * asa_command
+  * asa_config
+  * asa_template
 - aws
   * ec2_customer_gateway
   * ec2_vpc_nacl_facts
+  * ec2_vpc_vgw
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- ipmi
+  * ipmi_boot
+  * ipmi_power
 - letsencrypt
+- lxd
+  * lxd_profile
+  * lxd_container
 - netconf_config
 - openstack
   * os_keystone_service
+  * os_recordset
+  * os_stack
+  * os_zone
 - rocketchat
 - sensu_subscription
 - smartos
@@ -27,7 +47,9 @@ Ansible Changes By Release
 - systemd
 - telegram
 - vmware
+  * vmware_local_user_manager
   * vmware_vmotion
+- wakeonlan
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.

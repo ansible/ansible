@@ -65,6 +65,7 @@ class Play(Base, Taggable, Become):
     # Connection
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
@@ -265,7 +266,7 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
-                block_list.extend(r.get_handler_blocks())
+                block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list
 

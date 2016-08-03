@@ -106,13 +106,15 @@ Distributing Plugins
 Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
 to /usr/share/ansible/plugins, in a subfolder for each plugin type::
 
-    * action_plugins
-    * lookup_plugins
-    * callback_plugins
-    * connection_plugins
-    * filter_plugins
-    * vars_plugins
-    * strategy_plugins
+    * action
+    * lookup
+    * callback
+    * connection
+    * filter
+    * strategy
+    * cache
+    * test
+    * shell
 
 To change this path, edit the ansible configuration file.
 

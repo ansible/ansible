@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -31,24 +32,14 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from units.mock.procenv import swap_stdin_and_argv
+from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 
 realimport = builtins.__import__
 
-class TestModuleUtilsBasic(unittest.TestCase):
-
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
-
-    def tearDown(self):
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
+class TestModuleUtilsBasic(ModuleTestCase):
 
     def clear_modules(self, mods):
         for mod in mods:
@@ -760,63 +751,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
-
-    def test_module_utils_basic_ansible_module_set_mode_if_different(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        mock_stat1 = MagicMock()
-        mock_stat1.st_mode = 0o444
-        mock_stat2 = MagicMock()
-        mock_stat2.st_mode = 0o660
-
-        with patch('os.lstat', side_effect=[mock_stat1]):
-            self.assertEqual(am.set_mode_if_different('/path/to/file', None, True), True)
-        with patch('os.lstat', side_effect=[mock_stat1]):
-            self.assertEqual(am.set_mode_if_different('/path/to/file', None, False), False)
-
-        with patch('os.lstat') as m:
-            with patch('os.lchmod', return_value=None, create=True) as m_os:
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-                m_os.assert_called_with('/path/to/file', 0o660)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(return_value=0o660)
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False), True)
-                m_os.assert_called_with('/path/to/file', 0o660)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                self.assertRaises(SystemExit, am.set_mode_if_different, '/path/to/file', 'o+w,g+w,a-r', False)
-
-                m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am.check_mode = True
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
-                am.check_mode = False
-
-        original_hasattr = hasattr
-        def _hasattr(obj, name):
-            if obj == os and name == 'lchmod':
-                return False
-            return original_hasattr(obj, name)
-
-        # FIXME: this isn't working yet
-        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
-                with patch('os.path.islink', return_value=False):
-                    with patch('os.chmod', return_value=None) as m_chmod:
-                        self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
-        with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-            with patch.object(builtins, 'hasattr', side_effect=_hasattr):
-                with patch('os.path.islink', return_value=True):
-                    with patch('os.chmod', return_value=None) as m_chmod:
-                        with patch('os.stat', return_value=mock_stat2):
-                            self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
 
     @patch('tempfile.NamedTemporaryFile')
     @patch('os.umask')

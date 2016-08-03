@@ -1,0 +1,6 @@
+- hosts: windows
+  gather_facts: false
+  roles:
+    - { role: test_win_service, tags: test_win_service }
+    - { role: test_win_feature, tags: test_win_feature }
+    - { role: test_win_user, tags: test_win_user }

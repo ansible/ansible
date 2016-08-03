@@ -149,7 +149,7 @@ Callbacks are pieces of code in ansible that get called on specific events, perm
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -184,12 +184,12 @@ command_warnings
 
 .. versionadded:: 1.8
 
-By default since Ansible 1.8, Ansible will warn when usage of the shell and
-command module appear to be simplified by using a default Ansible module
-instead.  This can include reminders to use the 'git' module instead of
-shell commands to execute 'git'.  Using modules when possible over arbitrary
-shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks::
+By default since Ansible 1.8, Ansible will issue a warning when the shell or 
+command module is used and the command appears to be similar to an existing 
+Ansible module. For example, this can include reminders to use the 'git' module
+instead of shell commands to execute 'git'.  Using modules when possible over 
+arbitrary shell commands can lead to more reliable and consistent playbook runs, 
+and also easier to maintain playbooks::
 
     command_warnings = False
 
@@ -457,6 +457,8 @@ Ansible knows how to look in multiple locations if you feed it a colon separated
 local_tmp
 =========
 
+.. versionadded:: 2.1
+
 When Ansible gets ready to send a module to a remote machine it usually has to
 add a few things to the module: Some boilerplate code, the module's
 parameters, and a few constants from the config file.  This combination of
@@ -515,7 +517,8 @@ being set when the module is executed on the given remote system.  By default th
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
 
     module_lang = en_US.UTF-8
 

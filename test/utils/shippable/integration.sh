@@ -13,6 +13,10 @@ http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 keep_containers="${KEEP_CONTAINERS:-}"
 copy_source="${COPY_SOURCE:-}"
 
+# Force ansible color output by default.
+# To disable color force mode use FORCE_COLOR=0
+force_color="${FORCE_COLOR:-1}"
+
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
@@ -22,7 +26,7 @@ else
 fi
 
 if [ "${copy_source}" ]; then
-    test_shared_dir="/tmp/shared-dir"
+    test_shared_dir="/shared"
 else
     test_shared_dir="${test_ansible_dir}"
 fi
@@ -69,6 +73,7 @@ fi
 
 httptester_id=$(docker run -d "${http_image}")
 container_id=$(docker run -d \
+    --env "ANSIBLE_FORCE_COLOR=${force_color}" \
     -v "/sys/fs/cgroup:/sys/fs/cgroup:ro" \
     -v "${host_shared_dir}:${test_shared_dir}" \
     --link="${httptester_id}:ansible.http.tests" \

@@ -334,7 +334,7 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
+                all_vars = combine_vars(all_vars, task._role.get_vars(task._block._dep_chain, include_params=False))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         # next, we merge in the vars cache (include vars) and nonpersistent
@@ -489,15 +489,18 @@ class VariableManager:
                 # try looking it up based on the address field, and finally
                 # fall back to creating a host on the fly to use for the var lookup
                 if delegated_host is None:
-                    for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
-                        # check if the address matches, or if both the delegated_to host
-                        # and the current host are in the list of localhost aliases
-                        if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
-                            delegated_host = h
-                            break
+                    if delegated_host_name in C.LOCALHOST:
+                        delegated_host = self._inventory.localhost
                     else:
-                        delegated_host = Host(name=delegated_host_name)
-                        delegated_host.vars.update(new_delegated_host_vars)
+                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                            # check if the address matches, or if both the delegated_to host
+                            # and the current host are in the list of localhost aliases
+                            if h.address == delegated_host_name:
+                                delegated_host = h
+                                break
+                        else:
+                            delegated_host = Host(name=delegated_host_name)
+                            delegated_host.vars.update(new_delegated_host_vars)
             else:
                 delegated_host = Host(name=delegated_host_name)
                 delegated_host.vars.update(new_delegated_host_vars)

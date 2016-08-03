@@ -1,6 +1,3 @@
-- name: set service_type fact
-  set_fact: service_type=systemd
-
 - name: install the systemd unit file
   copy: src=ansible.systemd dest=/etc/systemd/system/ansible_test.service
   register: install_systemd_result
@@ -15,7 +12,6 @@
     - "install_systemd_result.dest == '/etc/systemd/system/ansible_test.service'"
     - "install_systemd_result.state == 'file'"
     - "install_systemd_result.mode == '0644'"
-    - "install_systemd_result.checksum == 'ca4b413fdf3cb2002f51893b9e42d2e449ec5afb'"
+    - "install_systemd_result.checksum == '6b5f2b9318524a387c77c550cef4dd411a471acf'"
     - "install_broken_systemd_result.dest == '/etc/systemd/system/ansible_test_broken.service'"
     - "install_broken_systemd_result.state == 'link'"
-

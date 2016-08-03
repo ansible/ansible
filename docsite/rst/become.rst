@@ -7,8 +7,8 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 
 Become
 ``````
-Ansible allows you 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
-privilege escalation tools, which you probably already use or have configured, like 'sudo', 'su', 'pfexec', 'doas', 'pbrun', 'dzdo', and others.
+Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
+privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, and others.
 
 
 .. note:: Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
@@ -26,10 +26,10 @@ become
     set to 'true'/'yes' to activate privilege escalation.
 
 become_user
-    set to user with desired privileges, the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
+    set to user with desired privileges — the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'/'dzdo'
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`
 
 For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
 
@@ -41,7 +41,7 @@ For example, to manage a system service (which requires ``root`` privileges) whe
 
 To run a command as the ``apache`` user::
 
-    - name: Run a command as the apache uesr
+    - name: Run a command as the apache user
       command: somecommand
       become: true
       become_user: apache

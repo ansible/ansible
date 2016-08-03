@@ -34,6 +34,7 @@ RUN dnf clean all && \
     python-mock \
     python-nose \
     python-paramiko \
+    python-passlib \
     python-pip \
     python-setuptools \
     python-virtualenv \
@@ -50,7 +51,7 @@ RUN dnf clean all && \
     && \
     dnf clean all
 
-RUN dnf -y --setopt=install_weak_deps=false update glibc-common && \
+RUN dnf -y --setopt=install_weak_deps=false reinstall glibc-common && \
     localedef --quiet -f ISO-8859-1 -i pt_BR pt_BR && \
     localedef --quiet -f ISO-8859-1 -i es_MX es_MX && \
     dnf clean all

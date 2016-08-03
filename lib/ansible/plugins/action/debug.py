@@ -18,7 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.unicode import to_unicode
 from ansible.errors import AnsibleUndefinedVariable
 
@@ -73,6 +72,7 @@ class ActionModule(ActionBase):
             # force flag to make debug output module always verbose
             result['_ansible_verbose_always'] = True
         else:
+            result['skipped_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
 
         return result

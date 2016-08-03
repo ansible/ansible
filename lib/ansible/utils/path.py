@@ -22,7 +22,7 @@ from errno import EEXIST
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_str
 
-__all__ = ['unfrackpath']
+__all__ = ['unfrackpath', 'makedirs_safe']
 
 def unfrackpath(path):
     '''
@@ -31,16 +31,18 @@ def unfrackpath(path):
     example:
     '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(to_bytes(path, errors='strict')))))
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
-    if not os.path.exists(to_bytes(path, errors='strict')):
+
+    rpath = unfrackpath(path)
+    if not os.path.exists(rpath):
         try:
             if mode:
-                os.makedirs(path, mode)
+                os.makedirs(rpath, mode)
             else:
-                os.makedirs(path)
+                os.makedirs(rpath)
         except OSError as e:
             if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (path, to_str(e)))
+                raise AnsibleError("Unable to create local directories(%s): %s" % (rpath, to_str(e)))

@@ -349,33 +349,27 @@ class StrategyBase:
                     # dependency chain of the current task (if it's from a role), otherwise
                     # we just look through the list of handlers in the current play/all
                     # roles and use the first one that matches the notify name
-                    target_handler = None
-                    if original_task._role:
-                        target_handler = search_handler_blocks(handler_name, original_task._role.get_handler_blocks())
-                    if target_handler is None:
-                        target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                    if target_handler is None:
-                        if handler_name in self._listening_handlers:
-                            for listening_handler_name in self._listening_handlers[handler_name]:
-                                listening_handler = None
-                                if original_task._role:
-                                    listening_handler = search_handler_blocks(listening_handler_name, original_task._role.get_handler_blocks())
-                                if listening_handler is None:
-                                    listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
-                                if listening_handler is None:
-                                    raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                    if handler_name in self._listening_handlers:
+                        for listening_handler_name in self._listening_handlers[handler_name]:
+                            listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
+                            if listening_handler is None:
+                                raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
 
-                                if original_host not in self._notified_handlers[listening_handler]:
-                                    self._notified_handlers[listening_handler].append(original_host)
-                                    display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
-                        else:
-                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+                            if original_host not in self._notified_handlers[listening_handler]:
+                                self._notified_handlers[listening_handler].append(original_host)
+                                display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
                     else:
+                        target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
+                        if target_handler is None:
+                            raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
+
                         if target_handler in self._notified_handlers:
                             if original_host not in self._notified_handlers[target_handler]:
                                 self._notified_handlers[target_handler].append(original_host)
                                 # FIXME: should this be a callback?
                                 display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                        else:
+                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
@@ -460,9 +454,14 @@ class StrategyBase:
 
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
+
+            if self._tqm.has_dead_workers():
+                raise AnsibleError("A worker was found in a dead state")
+
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.005)
+
         display.debug("no more pending results, returning what we have")
 
         return ret_results

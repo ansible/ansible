@@ -718,7 +718,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
-        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+
+        # Change directory to basedir of task for command execution
+        cwd = os.getcwd()
+        os.chdir(self._loader.get_basedir())
+        try:
+            rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        finally:
+            os.chdir(cwd)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -823,3 +830,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff
+
+    def _find_needle(self, dirname, needle):
+        '''
+            find a needle in haystack of paths, optionally using 'dirname' as a subdir.
+            This will build the ordered list of paths to search and pass them to dwim
+            to get back the first existing file found.
+        '''
+
+        path_stack = self._task.get_search_path()
+
+        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
+
+        if result is None:
+            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
+
+        return result
+

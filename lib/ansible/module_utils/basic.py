@@ -27,8 +27,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 # ansible modules can be written in any language.  To simplify
@@ -667,6 +667,7 @@ class AnsibleModule(object):
                 'path': self._check_type_path,
                 'raw': self._check_type_raw,
                 'jsonarg': self._check_type_jsonarg,
+                'json': self._check_type_jsonarg,
             }
         if not bypass_checks:
             self._check_required_arguments()
@@ -818,7 +819,7 @@ class AnsibleModule(object):
         return (uid, gid)
 
     def find_mount_point(self, path):
-        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        path = os.path.realpath(os.path.expanduser(os.path.expandvars(path)))
         while not os.path.ismount(path):
             path = os.path.dirname(path)
         return path
@@ -1473,7 +1474,7 @@ class AnsibleModule(object):
         if isinstance(value, (unicode, bytes)):
             return value.strip()
         else:
-            if isinstance(value (list, tuple, dict)):
+            if isinstance(value, (list, tuple, dict)):
                 return json.dumps(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
@@ -1819,7 +1820,7 @@ class AnsibleModule(object):
         if os.path.exists(fn):
             # backups named basename-YYYY-MM-DD@HH:MM:SS~
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
-            backupdest = '%s.%s' % (fn, ext)
+            backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
             try:
                 shutil.copy2(fn, backupdest)
@@ -2031,7 +2032,7 @@ class AnsibleModule(object):
         # If using ansible or ansible-playbook with a remote system ...
         #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
 
-        # Clean out python paths set by ziploader
+        # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in os.environ:
             pypaths = os.environ['PYTHONPATH'].split(':')
             pypaths = [x for x in pypaths \

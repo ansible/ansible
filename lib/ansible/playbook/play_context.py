@@ -21,7 +21,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pipes
+import pwd
 import random
 import re
 import string
@@ -409,6 +411,12 @@ class PlayContext(Base):
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
+        # if the final connection type is local, reset the remote_user value
+        # to that of the currently logged in user, to ensure any become settings
+        # are obeyed correctly
+        if new_info.connection == 'local':
+            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
             # in the event that we were using local before make sure to reset the
@@ -432,9 +440,14 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
-        # have always_run override check mode
         if task.always_run:
+            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
             new_info.check_mode = False
+
+        # check_mode replaces always_run, overwrite always_run if both are given
+        if task.check_mode is not None:
+            new_info.check_mode = task.check_mode
+
 
         return new_info
 

@@ -1,6 +1,5 @@
 ansible(1)
 =========
-:doctype:manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -42,7 +41,7 @@ The 'ARGUMENTS' to pass to the module.
 Use privilege escalation (specific one depends on become_method),
 this does not imply prompting for passwords.
 
-*K*, *--ask-become-pass*::
+*-K*, *--ask-become-pass*::
 
 Ask for privilege escalation password.
 
@@ -104,7 +103,7 @@ Show help message and exit.
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
-Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
+Alternatively you can use a comma separated list of hosts or single host with trailing comma 'host,'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 

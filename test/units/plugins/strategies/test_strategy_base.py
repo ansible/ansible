@@ -172,7 +172,7 @@ class TestStrategyBase(unittest.TestCase):
                 raise Queue.Empty
             else:
                 return queue_items.pop()
-            
+
         mock_queue = MagicMock()
         mock_queue.empty.side_effect = _queue_empty
         mock_queue.get.side_effect = _queue_get
@@ -198,6 +198,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task.ignore_errors = False
 
         mock_handler_task = MagicMock(Handler)
+        mock_handler_task.name = 'test handler'
         mock_handler_task.action = 'foo'
         mock_handler_task.get_name.return_value = "test handler"
         mock_handler_task.has_triggered.return_value = False
@@ -237,6 +238,10 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._variable_manager = mock_var_mgr
         strategy_base._blocked_hosts = dict()
 
+        def _has_dead_workers():
+            return False            
+
+        strategy_base._tqm.has_dead_workers = _has_dead_workers
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
 

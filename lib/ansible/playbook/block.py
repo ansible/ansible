@@ -269,9 +269,6 @@ class Block(Base, Become, Conditional, Taggable):
         if self._parent_block is not None:
             if not self._parent_block.evaluate_conditional(templar, all_vars):
                 return False
-        elif self._role is not None:
-            if not self._role.evaluate_conditional(templar, all_vars):
-                return False
         return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
@@ -299,13 +296,13 @@ class Block(Base, Become, Conditional, Taggable):
             value = self._attributes[attr]
 
             if self._parent_block and (value is None or extend):
-                parent_value = getattr(self._parent_block, attr)
+                parent_value = getattr(self._parent_block, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
             if self._task_include and (value is None or extend):
-                parent_value = getattr(self._task_include, attr)
+                parent_value = getattr(self._task_include, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:

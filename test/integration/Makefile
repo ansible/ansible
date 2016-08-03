@@ -27,7 +27,7 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: setup other non_destructive destructive
 
-other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection test_async_conditional includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -86,10 +86,20 @@ environment: setup
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
+# For our Docker images, which identify themselves with "ENV container=docker", automatically run the test_async target.
+# Otherwise, skip it, since we don't know if local ssh is available. You can always run the test_async target manually.
+ifeq ($(container),docker)
+test_async_conditional: test_async
+else
+test_async_conditional:
+endif
+
 # For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
 # Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
 ifeq ($(container),docker)
 TEST_CONNECTION_FILTER := 'test_docker'
+else ifeq ($(container),freebsd)
+TEST_CONNECTION_FILTER := 'test_freebsd'
 else
 TEST_CONNECTION_FILTER := 'test_default'
 endif
@@ -124,7 +134,7 @@ test_group_by: setup
 
 test_handlers:
 	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | grep -Po 'RUNNING HANDLER \[test_handlers : \K[^\]]+')" = "test handler" ]
+	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o 'RUNNING HANDLER \[test_handlers : .*?]')" = "RUNNING HANDLER [test_handlers : test handler]" ]
 	# Not forcing, should only run on successful host
 	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 	# Forcing from command line
@@ -162,8 +172,23 @@ test_vault: setup
 test_delegate_to: setup
 	ansible-playbook test_delegate_to.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-test_winrm: setup
-	ansible-playbook test_winrm.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+# Split Windows CI targets to support parallel execution.
+# Targets should be balanced to have similar run times.
+ci_win: ci_win1 ci_win2 ci_win3
+ci_win1: test_win_group1
+ci_win2: test_win_group2 test_binary_modules_winrm
+ci_win3: test_win_group3 test_connection_winrm
+
+test_winrm: test_win_group1 test_win_group2 test_win_group3
+
+test_win_group1: setup
+	ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group2: setup
+	ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group3: setup
+	ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags: setup
 	# Run everything by default
@@ -178,12 +203,14 @@ blocks: setup
 	rm -f block_test.out
 	# run the test and check to make sure the right number of completions was logged
 	ansible-playbook -vv -e outputdir=$(TEST_DIR) test_blocks/main.yml | tee block_test.out
-	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" = "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	env python -c 'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' <block_test.out >block_test_wo_colors.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l | sed 's/ *//')" = "$$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 	# cleanup the output log again, to make sure the test is clean
-	rm -f block_test.out
+	rm -f block_test.out block_test_wo_colors.out
 	# run test with free strategy and again count the completions
 	ansible-playbook -vv -e outputdir=$(TEST_DIR) test_blocks/main.yml -e test_strategy=free | tee block_test.out
-	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" = "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	env python -c 'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' <block_test.out >block_test_wo_colors.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l | sed 's/ *//')" = "$$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 
 cloud: amazon rackspace azure
 
@@ -287,18 +314,31 @@ test_lookup_paths: setup
 
 no_log: setup
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
-	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
+	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
+
+test_binary_modules_winrm: INVENTORY = inventory.winrm
+test_binary_modules_winrm: test_binary_modules
 
 test_binary_modules:
-	mytmpdir=$(MYTMPDIR); \
-	ls -al $$mytmpdir; \
-	curl https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
-	[ $$? != 0 ] && wget -qO- https://storage.googleapis.com/golang/go1.6.2.$(UNAME)-amd64.tar.gz | tar -xz -C $$mytmpdir; \
-	ls -al $$mytmpdir; \
-	cd library; \
-	GOROOT=$$mytmpdir/go GOOS=linux GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_linux helloworld.go; \
-	GOROOT=$$mytmpdir/go GOOS=windows GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_win32nt.exe helloworld.go; \
-	GOROOT=$$mytmpdir/go GOOS=darwin GOARCH=amd64 $$mytmpdir/go/bin/go build -o helloworld_darwin helloworld.go; \
-	cd ..; \
-	rm -rf $$mytmpdir; \
+	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook download_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
 	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+
+binary_modules:
+	# Compiled versions of these binary modules are available at the url below.
+	# This avoids a dependency on go and keeps the binaries out of our git repository.
+	# https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/
+	cd library; \
+	GOOS=linux   GOARCH=amd64 go build -o helloworld_linux       helloworld.go; \
+	GOOS=windows GOARCH=amd64 go build -o helloworld_win32nt.exe helloworld.go; \
+	GOOS=darwin  GOARCH=amd64 go build -o helloworld_darwin      helloworld.go; \
+	GOOS=freebsd GOARCH=amd64 go build -o helloworld_freebsd     helloworld.go
+
+clean_binary_modules:
+	rm library/helloworld_*
+
+test_async:
+	# Verify that extra data before module JSON output during async call is ignored.
+	ANSIBLE_DEBUG=0 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS)
+	# Verify that the warning exists by examining debug output.
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS) \
+	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'

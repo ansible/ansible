@@ -40,7 +40,7 @@ except ImportError:
     import configparser
 from ansible.module_utils.basic import get_all_subclasses
 
-# py2 vs py3; replace with six via ziploader
+# py2 vs py3; replace with six via ansiballz
 try:
     # python2
     from StringIO import StringIO
@@ -113,15 +113,21 @@ if platform.system() != 'SunOS':
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
+GATHER_TIMEOUT=None
+
 class TimeoutError(Exception):
     pass
 
 def timeout(seconds=10, error_message="Timer expired"):
+
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
+            if 'GATHER_TIMEOUT' in globals():
+                if GATHER_TIMEOUT:
+                    seconds = GATHER_TIMEOUT
             signal.signal(signal.SIGALRM, _handle_timeout)
             signal.alarm(seconds)
             try:
@@ -182,7 +188,7 @@ class Facts(object):
         if not cached_facts:
             self.facts = {}
         else:
-            self.facts = cached_facts    
+            self.facts = cached_facts
         ### TODO: Eventually, these should all get moved to populate().  But
         # some of the values are currently being used by other subclasses (for
         # instance, os_family and distribution).  Have to sort out what to do
@@ -1249,6 +1255,18 @@ class LinuxHardware(Hardware):
                          'uuid': uuid,
                          })
 
+    def get_holders(self, block_dev_dict, sysdir):
+        block_dev_dict['holders'] = []
+        if os.path.isdir(sysdir + "/holders"):
+            for folder in os.listdir(sysdir + "/holders"):
+                if not folder.startswith("dm-"):
+                    continue
+                name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    block_dev_dict['holders'].append(name)
+                else:
+                    block_dev_dict['holders'].append(folder)
+
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
@@ -1308,6 +1326,8 @@ class LinuxHardware(Hardware):
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    self.get_holders(part, part_sysdir)
+
                     d['partitions'][partname] = part
 
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
@@ -1337,16 +1357,7 @@ class LinuxHardware(Hardware):
                 if m:
                     d['host'] = m.group(1)
 
-            d['holders'] = []
-            if os.path.isdir(sysdir + "/holders"):
-                for folder in os.listdir(sysdir + "/holders"):
-                    if not folder.startswith("dm-"):
-                        continue
-                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
-                    if name:
-                        d['holders'].append(name)
-                    else:
-                        d['holders'].append(folder)
+            self.get_holders(d, sysdir)
 
             self.facts['devices'][diskname] = d
 
@@ -2265,6 +2276,25 @@ class LinuxNetwork(Network):
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
+
+            def parse_ethtool_output(device,output):
+                interfaces[device]['features'] = {}
+                for line in output.strip().split('\n'):
+                    if not line:
+                        continue
+                    if line.endswith(":") :
+                        continue
+                    key,value = line.split(": ")
+                    if not value :
+                        continue
+                    interfaces[device]['features'][key.strip().replace('-','_')] = value.strip()
+
+            ethtool_path = self.module.get_bin_path("ethtool")
+            if ethtool_path:
+                args = [ethtool_path, '-k', device]
+                rc, stdout, stderr = self.module.run_command(args)
+                ethtool_data = stdout
+                parse_ethtool_output(device,ethtool_data)
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
@@ -3219,6 +3249,9 @@ def get_all_facts(module):
 
     # Retrieve module parameters
     gather_subset = module.params['gather_subset']
+
+    global GATHER_TIMEOUT
+    GATHER_TIMEOUT = module.params['gather_timeout']
 
     # Retrieve all facts elements
     additional_subsets = set()

@@ -61,9 +61,9 @@ _SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 # ******************************************************************************
 
-ZIPLOADER_TEMPLATE = u'''%(shebang)s
+ANSIBALLZ_TEMPLATE = u'''%(shebang)s
 %(coding)s
-ZIPLOADER_WRAPPER = True # For test-module script to tell this is a ZIPLOADER_WRAPPER
+ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WRAPPER
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -140,7 +140,7 @@ def debug(command, zipped_mod, json_params):
     # The code here normally doesn't run.  It's only used for debugging on the
     # remote machine.
     #
-    # The subcommands in this function make it easier to debug ziploader
+    # The subcommands in this function make it easier to debug ansiballz
     # modules.  Here's the basic steps:
     #
     # Run ansible with the environment variable: ANSIBLE_KEEP_REMOTE_FILES=1 and -vvv
@@ -262,9 +262,9 @@ if __name__ == '__main__':
     # See comments in the debug() method for information on debugging
     #
 
-    ZIPLOADER_PARAMS = %(params)s
+    ANSIBALLZ_PARAMS = %(params)s
     if PY3:
-        ZIPLOADER_PARAMS = ZIPLOADER_PARAMS.encode('utf-8')
+        ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
     try:
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         modlib.close()
 
         if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], zipped_mod, ZIPLOADER_PARAMS)
+            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
         else:
             z = zipfile.ZipFile(zipped_mod, mode='r')
             module = os.path.join(temp_path, 'ansible_module_%(ansible_module)s.py')
@@ -290,14 +290,14 @@ if __name__ == '__main__':
             # may load the system-wide install of ansible rather than the one in
             # the module.  sitecustomize is the only way to override that setting.
             z = zipfile.ZipFile(zipped_mod, mode='a')
+
             # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
-            z = zipfile.ZipFile(zipped_mod, mode='a')
             sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
             sitecustomize = sitecustomize.encode('utf-8')
             z.writestr('sitecustomize.py', sitecustomize)
             z.close()
 
-            exitcode = invoke_module(module, zipped_mod, ZIPLOADER_PARAMS)
+            exitcode = invoke_module(module, zipped_mod, ANSIBALLZ_PARAMS)
     finally:
         try:
             shutil.rmtree(temp_path)
@@ -320,10 +320,10 @@ def _strip_comments(source):
 if C.DEFAULT_KEEP_REMOTE_FILES:
     # Keep comments when KEEP_REMOTE_FILES is set.  That way users will see
     # the comments with some nice usage instructions
-    ACTIVE_ZIPLOADER_TEMPLATE = ZIPLOADER_TEMPLATE
+    ACTIVE_ANSIBALLZ_TEMPLATE = ANSIBALLZ_TEMPLATE
 else:
-    # ZIPLOADER_TEMPLATE stripped of comments for smaller over the wire size
-    ACTIVE_ZIPLOADER_TEMPLATE = _strip_comments(ZIPLOADER_TEMPLATE)
+    # ANSIBALLZ_TEMPLATE stripped of comments for smaller over the wire size
+    ACTIVE_ANSIBALLZ_TEMPLATE = _strip_comments(ANSIBALLZ_TEMPLATE)
 
 class ModuleDepFinder(ast.NodeVisitor):
     # Caveats:
@@ -526,7 +526,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
     # a separate arguments file needs to be sent over the wire.
     # module_substyle is extra information that's useful internally.  It tells
     # us what we have to look to substitute in the module files and whether
-    # we're using module replacer or ziploader to format the module itself.
+    # we're using module replacer or ansiballz to format the module itself.
     if _is_binary(module_data):
         module_substyle = module_style = 'binary'
     elif REPLACER in module_data:
@@ -566,39 +566,39 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
 
-        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ziploader_cache')
+        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
 
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
-            display.debug('ZIPLOADER: using cached module: %s' % cached_module_filename)
+            display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
             zipdata = open(cached_module_filename, 'rb').read()
-            # Fool the check later... I think we should just remove the check
-            py_module_names.add(('basic',))
         else:
             if module_name in strategy.action_write_locks:
-                display.debug('ZIPLOADER: Using lock for %s' % module_name)
+                display.debug('ANSIBALLZ: Using lock for %s' % module_name)
                 lock = strategy.action_write_locks[module_name]
             else:
                 # If the action plugin directly invokes the module (instead of
                 # going through a strategy) then we don't have a cross-process
                 # Lock specifically for this module.  Use the "unexpected
                 # module" lock instead
-                display.debug('ZIPLOADER: Using generic lock for %s' % module_name)
+                display.debug('ANSIBALLZ: Using generic lock for %s' % module_name)
                 lock = strategy.action_write_locks[None]
 
-            display.debug('ZIPLOADER: Acquiring lock')
+            display.debug('ANSIBALLZ: Acquiring lock')
             with lock:
-                display.debug('ZIPLOADER: Lock acquired: %s' % id(lock))
+                display.debug('ANSIBALLZ: Lock acquired: %s' % id(lock))
                 # Check that no other process has created this while we were
                 # waiting for the lock
                 if not os.path.exists(cached_module_filename):
-                    display.debug('ZIPLOADER: Creating module')
+                    display.debug('ANSIBALLZ: Creating module')
                     # Create the module zip data
                     zipoutput = BytesIO()
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-                    zf.writestr('ansible/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\ntry:\n    from ansible.release import __version__,__author__\nexcept ImportError:\n    __version__="' + to_bytes(__version__) + b'"\n    __author__="' + to_bytes(__author__) + b'"\n')
+                    ### Note: If we need to import from release.py first,
+                    ### remember to catch all exceptions: https://github.com/ansible/ansible/issues/16523
+                    zf.writestr('ansible/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n__version__="' + to_bytes(__version__) + b'"\n__author__="' + to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
                     zf.writestr('ansible_module_%s.py' % module_name, module_data)
@@ -615,19 +615,19 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                         # Note -- if we have a global function to setup, that would
                         # be a better place to run this
                         os.mkdir(lookup_path)
-                    display.debug('ZIPLOADER: Writing module')
+                    display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
 
                     # Rename the file into its final position in the cache so
                     # future users of this module can read it off the
                     # filesystem instead of constructing from scratch.
-                    display.debug('ZIPLOADER: Renaming module')
+                    display.debug('ANSIBALLZ: Renaming module')
                     os.rename(cached_module_filename + '-part', cached_module_filename)
-                    display.debug('ZIPLOADER: Done creating module')
+                    display.debug('ANSIBALLZ: Done creating module')
 
             if zipdata is None:
-                display.debug('ZIPLOADER: Reading module after lock')
+                display.debug('ANSIBALLZ: Reading module after lock')
                 # Another process wrote the file while we were waiting for
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
@@ -635,25 +635,18 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     zipdata = open(cached_module_filename, 'rb').read()
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file.  Look at traceback for that process for debugging information.')
-                # Fool the check later... I think we should just remove the check
-                py_module_names.add(('basic',))
         zipdata = to_unicode(zipdata, errors='strict')
 
         shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
-        executable = interpreter.split(u' ', 1)
-        if len(executable) == 2 and executable[0].endswith(u'env'):
-            # Handle /usr/bin/env python style interpreter settings
-            interpreter = u"'{0}', '{1}'".format(*executable)
-        else:
-            # Still have to enclose the parts of the interpreter in quotes
-            # because we're substituting it into the template as a python
-            # string
-            interpreter = u"'{0}'".format(interpreter)
+        # Enclose the parts of the interpreter in quotes because we're
+        # substituting it into the template as a Python string
+        interpreter_parts = interpreter.split(u' ')
+        interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
-        output.write(to_bytes(ACTIVE_ZIPLOADER_TEMPLATE % dict(
+        output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
             params=python_repred_params,
@@ -662,13 +655,6 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             coding=ENCODING_STRING,
             )))
         module_data = output.getvalue()
-
-        # Sanity check from 1.x days.  Maybe too strict.  Some custom python
-        # modules that use ziploader may implement their own helpers and not
-        # need basic.py.  All the constants that we substituted into basic.py
-        # for module_replacer are now available in other, better ways.
-        if ('basic',) not in py_module_names:
-            raise AnsibleError("missing required import in %s: Did not import ansible.module_utils.basic for boilerplate helper code" % module_path)
 
     elif module_substyle == 'powershell':
         # Module replacer for jsonargs and windows
@@ -685,6 +671,12 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         module_args_json = to_bytes(json.dumps(module_args))
         module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
+        # Powershell/winrm don't actually make use of shebang so we can
+        # safely set this here.  If we let the fallback code handle this
+        # it can fail in the presence of the UTF8 BOM commonly added by
+        # Windows text editors
+        shebang = u'#!powershell'
+
         # Sanity check from 1.x days.  This is currently useless as we only
         # get here if we are going to substitute powershell.ps1 into the
         # module anyway.  Leaving it for when/if we add other powershell
@@ -698,7 +690,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         # these strings could be included in a third-party module but
         # officially they were included in the 'basic' snippet for new-style
         # python modules (which has been replaced with something else in
-        # ziploader) If we remove them from jsonargs-style module replacer
+        # ansiballz) If we remove them from jsonargs-style module replacer
         # then we can remove them everywhere.
         python_repred_args = to_bytes(repr(module_args_json))
         module_data = module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
@@ -731,9 +723,6 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
        ... will result in the insertion of basic.py into the module
        from the module_utils/ directory in the source tree.
-
-    All modules are required to import at least basic, though there will also
-    be other snippets.
 
     For powershell, there's equivalent conventions like this:
 

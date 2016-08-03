@@ -1,0 +1,11 @@
+cryptography
+jinja2
+junit-xml
+ndg-httpsclient
+pyasn1
+pyopenssl
+pyyaml
+requests
+setuptools
+pywinrm
+xmltodict

@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -99,8 +101,10 @@ class Task(Base, Conditional, Taggable, Become):
     def get_path(self):
         ''' return the absolute path of the task with its line number '''
 
-        if hasattr(self, '_ds'):
-            return "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        path = ""
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        return path
 
     def get_name(self):
         ''' return the name of the task '''
@@ -196,7 +200,7 @@ class Task(Base, Conditional, Taggable, Become):
         if 'vars' in ds:
             # _load_vars is defined in Base, and is used to load a dictionary
             # or list of dictionaries in a standard way
-            new_ds['vars'] = self._load_vars(None, ds.pop('vars'))
+            new_ds['vars'] = self._load_vars(None, ds.get('vars'))
         else:
             new_ds['vars'] = dict()
 
@@ -415,13 +419,13 @@ class Task(Base, Conditional, Taggable, Become):
             value = self._attributes[attr]
 
             if self._block and (value is None or extend):
-                parent_value = getattr(self._block, attr)
+                parent_value = getattr(self._block, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
                     value = parent_value
             if self._task_include and (value is None or extend):
-                parent_value = getattr(self._task_include, attr)
+                parent_value = getattr(self._task_include, attr, None)
                 if extend:
                     value = self._extend_value(value, parent_value)
                 else:
@@ -446,4 +450,30 @@ class Task(Base, Conditional, Taggable, Become):
         Override for the 'tags' getattr fetcher, used from Base.
         '''
         return self._get_parent_attribute('any_errors_fatal')
+
+    def _get_attr_loop(self):
+        return self._attributes['loop']
+
+    def _get_attr_loop_control(self):
+        return self._attributes['loop_control']
+
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain =  self._block.get_dep_chain()
+        # inside role: add the dependency chain from current to dependant
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack
 
