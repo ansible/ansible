@@ -17,7 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_nat_gateway
-short_description: Manage AWS VPC NAT Gateways
+short_description: Manage AWS VPC NAT Gateways.
 description:
   - Ensure the state of AWS VPC NAT Gateways based on their id, allocation and subnet ids.
 version_added: "2.1"
@@ -25,7 +25,7 @@ requirements: [boto3, botocore]
 options:
   state:
     description:
-      - Ensure NAT Gateway is present or absent
+      - Ensure NAT Gateway is present or absent.
     required: false
     default: "present"
     choices: ["present", "absent"]
@@ -44,18 +44,18 @@ options:
   allocation_id:
     description:
       - The id of the elastic IP allocation. If this is not passed and the
-        eip_address is not passed. An EIP is generated for this Nat Gateway
+        eip_address is not passed. An EIP is generated for this NAT Gateway.
     required: false
     default: None
   eip_address:
     description:
-      - The elasti ip address of the EIP you want attached to this Nat Gateway.
-        If this is not passed and the allocation_id is not passed.
-        An EIP is generated for this Nat Gateway
+      - The elastic IP address of the EIP you want attached to this NAT Gateway.
+        If this is not passed and the allocation_id is not passed,
+        an EIP is generated for this NAT Gateway.
     required: false
   if_exist_do_not_create:
     description:
-      - if a Nat Gateway exists already in the subnet_id, then do not create a new one.
+      - if a NAT Gateway exists already in the subnet_id, then do not create a new one.
     required: false
     default: false
   release_eip:
@@ -66,12 +66,12 @@ options:
     default: true
   wait:
     description:
-      - Wait for operation to complete before returning
+      - Wait for operation to complete before returning.
     required: false
     default: false
   wait_timeout:
     description:
-      - How many seconds to wait for an operation to complete before timing out
+      - How many seconds to wait for an operation to complete before timing out.
     required: false
     default: 300
   client_token:
@@ -93,7 +93,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Create new nat gateway with client token
+- name: Create new nat gateway with client token.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -102,7 +102,7 @@ EXAMPLES = '''
     client_token: abcd-12345678
   register: new_nat_gateway
 
-- name: Create new nat gateway using an allocation-id
+- name: Create new nat gateway using an allocation-id.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -110,7 +110,7 @@ EXAMPLES = '''
     region: ap-southeast-2
   register: new_nat_gateway
 
-- name: Create new nat gateway, using an eip address  and wait for available status
+- name: Create new nat gateway, using an EIP address  and wait for available status.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -119,7 +119,7 @@ EXAMPLES = '''
     region: ap-southeast-2
   register: new_nat_gateway
 
-- name: Create new nat gateway and allocate new eip
+- name: Create new nat gateway and allocate new EIP.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -127,7 +127,7 @@ EXAMPLES = '''
     region: ap-southeast-2
   register: new_nat_gateway
 
-- name: Create new nat gateway and allocate new eip if a nat gateway does not yet exist in the subnet.
+- name: Create new nat gateway and allocate new EIP if a nat gateway does not yet exist in the subnet.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -136,7 +136,7 @@ EXAMPLES = '''
     if_exist_do_not_create: true
   register: new_nat_gateway
 
-- name: Delete nat gateway using discovered nat gateways from facts module
+- name: Delete nat gateway using discovered nat gateways from facts module.
   ec2_vpc_nat_gateway:
     state: absent
     region: ap-southeast-2
@@ -146,7 +146,7 @@ EXAMPLES = '''
   register: delete_nat_gateway_result
   with_items: "{{ gateways_to_remove.result }}"
 
-- name: Delete nat gateway and wait for deleted status
+- name: Delete nat gateway and wait for deleted status.
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
@@ -154,7 +154,7 @@ EXAMPLES = '''
     wait_timeout: 500
     region: ap-southeast-2
 
-- name: Delete nat gateway and release EIP
+- name: Delete nat gateway and release EIP.
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
@@ -179,7 +179,7 @@ subnet_id:
   type: string
   sample: "subnet-12345"
 state:
-  description: The current state of the Nat Gateway.
+  description: The current state of the NAT Gateway.
   returned: In all cases.
   type: string
   sample: "available"
@@ -211,6 +211,7 @@ except ImportError:
 
 import datetime
 import random
+import re
 import time
 
 from dateutil.tz import tzutc
@@ -262,6 +263,7 @@ DRY_RUN_ALLOCATION_UNCONVERTED = {
 
 DRY_RUN_MSGS = 'DryRun Mode:'
 
+
 def convert_to_lower(data):
     """Convert all uppercase keys in dict with lowercase_
 
@@ -299,6 +301,7 @@ def convert_to_lower(data):
             else:
                 results[key] = val
     return results
+
 
 def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
                      states=None, check_mode=False):
@@ -381,9 +384,10 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
 
     return gateways_retrieved, err_msg, existing_gateways
 
+
 def wait_for_status(client, wait_timeout, nat_gateway_id, status,
                     check_mode=False):
-    """Wait for the Nat Gateway to reach a status
+    """Wait for the NAT Gateway to reach a status
     Args:
         client (botocore.client.EC2): Boto3 client
         wait_timeout (int): Number of seconds to wait, until this timeout is reached.
@@ -418,25 +422,25 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
         ]
 
     Returns:
-        Tuple (bool, str, list)
+        Tuple (bool, str, dict)
     """
     polling_increment_secs = 5
     wait_timeout = time.time() + wait_timeout
     status_achieved = False
-    nat_gateway = list()
+    nat_gateway = dict()
     states = ['pending', 'failed', 'available', 'deleting', 'deleted']
     err_msg = ""
 
     while wait_timeout > time.time():
         try:
-            gws_retrieved, err_msg, nat_gateway = (
+            gws_retrieved, err_msg, nat_gateways = (
                 get_nat_gateways(
                     client, nat_gateway_id=nat_gateway_id,
                     states=states, check_mode=check_mode
                 )
             )
-            if gws_retrieved and nat_gateway:
-                nat_gateway = nat_gateway[0]
+            if gws_retrieved and nat_gateways:
+                nat_gateway = nat_gateways[0]
                 if check_mode:
                     nat_gateway['state'] = status
 
@@ -449,7 +453,7 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
                     break
 
                 elif nat_gateway.get('state') == 'pending':
-                    if nat_gateway.has_key('failure_message'):
+                    if 'failure_message' in nat_gateway:
                         err_msg = nat_gateway.get('failure_message')
                         status_achieved = False
                         break
@@ -465,6 +469,7 @@ def wait_for_status(client, wait_timeout, nat_gateway_id, status,
 
     return status_achieved, err_msg, nat_gateway
 
+
 def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
                              check_mode=False):
     """Retrieve all NAT Gateways for a subnet.
@@ -472,7 +477,7 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
         subnet_id (str): The subnet_id the nat resides in.
 
     Kwargs:
-        allocation_id (str): The eip Amazon identifier.
+        allocation_id (str): The EIP Amazon identifier.
             default = None
 
     Basic Usage:
@@ -525,6 +530,7 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
                 gateways.append(gw)
 
     return gateways, allocation_id_exists
+
 
 def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
     """Release an EIP from your EIP Pool
@@ -583,6 +589,7 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
 
     return allocation_id, err_msg
 
+
 def allocate_eip_address(client, check_mode=False):
     """Release an EIP from your EIP Pool
     Args:
@@ -623,6 +630,7 @@ def allocate_eip_address(client, check_mode=False):
 
     return ip_allocated, err_msg, new_eip
 
+
 def release_address(client, allocation_id, check_mode=False):
     """Release an EIP from your EIP Pool
     Args:
@@ -656,6 +664,7 @@ def release_address(client, allocation_id, check_mode=False):
         pass
 
     return ip_released
+
 
 def create(client, subnet_id, allocation_id, client_token=None,
            wait=False, wait_timeout=0, if_exist_do_not_create=False,
@@ -743,11 +752,8 @@ def create(client, subnet_id, allocation_id, client_token=None,
             )
             if success:
                 err_msg = (
-                    'Nat gateway {0} created'.format(result['nat_gateway_id'])
+                    'NAT gateway {0} created'.format(result['nat_gateway_id'])
                 )
-            if check_mode:
-                result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
-                result['subnet_id'] = subnet_id
 
     except botocore.exceptions.ClientError as e:
         if "IdempotentParameterMismatch" in e.message:
@@ -762,16 +768,17 @@ def create(client, subnet_id, allocation_id, client_token=None,
 
     return success, changed, err_msg, result
 
+
 def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
-              if_exist_do_not_create=False, wait=False, wait_timeout=0,
-              client_token=None, check_mode=False):
+               if_exist_do_not_create=False, wait=False, wait_timeout=0,
+               client_token=None, check_mode=False):
     """Create an Amazon NAT Gateway.
     Args:
         client (botocore.client.EC2): Boto3 client
         subnet_id (str): The subnet_id the nat resides in.
 
     Kwargs:
-        allocation_id (str): The eip Amazon identifier.
+        allocation_id (str): The EIP Amazon identifier.
             default = None
         eip_address (str): The Elastic IP Address of the EIP.
             default = None
@@ -829,7 +836,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
             changed = False
             results = existing_gateways[0]
             err_msg = (
-                'Nat Gateway {0} already exists in subnet_id {1}'
+                'NAT Gateway {0} already exists in subnet_id {1}'
                 .format(
                     existing_gateways[0]['nat_gateway_id'], subnet_id
                 )
@@ -864,7 +871,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
             changed = False
             results = existing_gateways[0]
             err_msg = (
-                'Nat Gateway {0} already exists in subnet_id {1}'
+                'NAT Gateway {0} already exists in subnet_id {1}'
                 .format(
                     existing_gateways[0]['nat_gateway_id'], subnet_id
                 )
@@ -877,6 +884,7 @@ def pre_create(client, subnet_id, allocation_id=None, eip_address=None,
     )
 
     return success, changed, err_msg, results
+
 
 def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
            release_eip=False, check_mode=False):
@@ -944,7 +952,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
             changed = True
             success = True
             err_msg = (
-                'Nat gateway {0} is in a deleting state. Delete was successfull'
+                'NAT gateway {0} is in a deleting state. Delete was successfull'
                 .format(nat_gateway_id)
             )
 
@@ -957,7 +965,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
                 )
                 if status_achieved:
                     err_msg = (
-                        'Nat gateway {0} was deleted successfully'
+                        'NAT gateway {0} was deleted successfully'
                         .format(nat_gateway_id)
                     )
 
@@ -969,9 +977,10 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
             release_address(client, allocation_id, check_mode=check_mode)
         )
         if not eip_released:
-            err_msg = "Failed to release eip %s".format(allocation_id)
+            err_msg = "Failed to release EIP %s".format(allocation_id)
 
     return success, changed, err_msg, results
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -1067,4 +1076,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-
