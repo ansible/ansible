@@ -197,15 +197,16 @@ class PamdService(object):
         self.preamble = []
         self.rules = []
 
-        if os.path.exists(self.fname):
-            for line in fileinput.FileInput(self.fname, inplace=False):
+        
+
+        try:
+            for line in open(self.fname, 'r'):
                 if line.startswith('#') and not line.isspace():
                     self.preamble.append(line.rstrip())
                 elif not line.startswith('#') and not line.isspace():
                     self.rules.append(PamdRule(ansible, stringline=line.rstrip()))
-            fileinput.close()
-        else:
-            self.ansible.fail_json(msg='Unable to locate PAM module file %s' % self.fname)
+        except Exception:
+            self.ansible.fail_json(msg='Unable to open PAM module file %s' % self.fname)
     
     def __str__(self):
         return self.fname
