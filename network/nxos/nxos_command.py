@@ -115,8 +115,13 @@ failed_conditions:
 """
 
 import time
-import shlex
 import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcmd import Conditional
+from ansible.module_utils.network import get_module
+from ansible.module_utils.nxos import *
+
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
@@ -158,7 +163,7 @@ def main():
         kwargs['command_type'] = 'cli_show'
 
     while retries > 0:
-        response = module.execute(commands, **kwargs)
+        response = module.cli(commands, **kwargs)
         result['stdout'] = response
 
         for index, cmd in enumerate(commands):
@@ -188,11 +193,5 @@ def main():
     return module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
-        main()
-
+    main()
