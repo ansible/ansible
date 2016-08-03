@@ -298,6 +298,12 @@ options:
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
       - A value of ALL will publish all exposed container ports to random host ports, ignoring
         any other mappings.
+      - If C(networks) parameter is provided, will inspect each network to see if there exists
+        a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
+        If such a network is found, then published ports where no host IP address is specified 
+        will be bound to the host IP pointed to by com.docker.network.bridge.host_binding_ipv4.
+        Note that the first bridge network with a com.docker.network.bridge.host_binding_ipv4 
+        value encountered in the list of C(networks) is the one that will be used. 
     aliases:
       - ports
     required: false
@@ -916,6 +922,20 @@ class TaskParameters(DockerBaseClass):
 
         return self.client.create_host_config(**params)
 
+    @property
+    def default_host_ip(self):
+        ip = '0.0.0.0'
+        if not self.networks:
+            return ip
+        for net in self.networks:
+            if net.get('name'):
+                network = self.client.inspect_network(net['name'])
+                if network.get('Driver') == 'bridge' and \
+                   network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
+                    ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
+                    break
+        return ip
+
     def _parse_publish_ports(self):
         '''
         Parse ports from docker CLI syntax
@@ -926,6 +946,8 @@ class TaskParameters(DockerBaseClass):
         if 'all' in self.published_ports:
             return 'all'
 
+        default_ip = self.default_host_ip
+
         binds = {}
         for port in self.published_ports:
             parts = str(port).split(':')
@@ -935,9 +957,9 @@ class TaskParameters(DockerBaseClass):
 
             p_len = len(parts)
             if p_len == 1:
-                bind = ('0.0.0.0',)
+                bind = (default_ip,)
             elif p_len == 2:
-                bind = ('0.0.0.0', int(parts[0]))
+                bind = (default_ip, int(parts[0]))
             elif p_len == 3:
                 bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
 
@@ -1413,7 +1435,7 @@ class Container(DockerBaseClass):
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:
-                    expected_bound_ports[container_port].append({ 'HostIp': host_ip, 'HostPort': str(host_port)})
+                    expected_bound_ports[container_port].append({'HostIp': host_ip, 'HostPort': str(host_port)})
             else:
                 expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': str(config[1])}]
         return expected_bound_ports
