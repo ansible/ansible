@@ -24,7 +24,7 @@ function getFirewallRule ($fwsettings) {
     try {
 
         #$output = Get-NetFirewallRule -name $($fwsettings.'Rule Name');
-        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.'Rule Name')")
+        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.'Rule Name')" verbose)
         if (!($rawoutput -eq 'No rules match the specified criteria.')){
             $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                     $FirstRun = $true;
