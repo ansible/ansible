@@ -400,9 +400,35 @@ actions:
           returned: always
           type: complex
           contains:
+              pulled_image:
+                  description: Provides image details when a new image is pulled for the service.
+                  returned: on image pull
+                  type: complex
+                  contains:
+                      name:
+                          description: name of the image
+                          returned: always
+                          type: string
+                      id:
+                          description: image hash
+                          returned: always
+                          type: string
+              built_image:
+                  description: Provides image details when a new image is built for the service.
+                  returned: on image build
+                  type: complex
+                  contains:
+                      name:
+                          description: name of the image
+                          returned: always
+                          type: string
+                      id:
+                          desription: image hash
+                          returned: always
+                          type: string
+
               action:
-                  description: A descriptive name of the action to be performed on the set of containers
-                               within the service.
+                  description: A descriptive name of the action to be performed on the service's containers.
                   returned: always
                   type: list
                   contains:
