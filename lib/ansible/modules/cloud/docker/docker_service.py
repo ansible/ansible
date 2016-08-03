@@ -123,6 +123,7 @@ options:
       type: bool
       required: false
       default: false
+      version_added: "2.2"
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
