@@ -115,6 +115,14 @@ options:
       type: bool
       required: false
       default: true
+  pull:
+      description:
+        - Use with state I(present) to always pull images prior to starting the application.
+        - Same as running docker-compose pull.
+        - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
+      type: bool
+      required: false
+      default: false
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
@@ -465,6 +473,7 @@ class ContainerManager(DockerBaseClass):
         self.services = None
         self.scale = None
         self.debug = None
+        self.pull = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -576,13 +585,17 @@ class ContainerManager(DockerBaseClass):
         converge = convergence_strategy_from_opts(up_options)
         self.log("convergence strategy: %s" % converge)
 
+        if self.pull:
+            result.update(self.cmd_pull())
+
         for service in self.project.services:
             if not service_names or service.name in service_names:
                 plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
                 if self.debug or self.check_mode:
-                    result['actions'][service.name] = dict()
+                    if not result['actions'].get(service.name):
+                        result['actions'][service.name] = dict()
                     result['actions'][service.name][plan.action] = []
                     for container in plan.containers:
                         result['actions'][service.name][plan.action].append(dict(
@@ -667,6 +680,40 @@ class ContainerManager(DockerBaseClass):
 
                 result['ansible_facts'][service.name][container.name] = facts
 
+        return result
+
+    def cmd_pull(self):
+        result = dict(
+            changed=False,
+            actions=dict(),
+        )
+
+        if not self.check_mode:
+            for service in self.project.get_services(self.services, include_deps=False):
+                self.log('Pulling image for service %s' % service.name)
+                # store the existing image ID
+                image = service.image()
+                old_image_id = None
+                if image and image.get('Id'):
+                    old_image_id = image['Id']
+
+                # pull the image
+                service.pull(ignore_pull_failures=False)
+
+                # store the new image ID
+                image = service.image()
+                new_image_id = None
+                if image and image.get('Id'):
+                    new_image_id = image['Id']
+
+                if new_image_id != old_image_id:
+                    # if a new image was pulled
+                    result['changed'] = True
+                    result['actions'][service.name] = dict()
+                    result['actions'][service.name]['pulled_image'] = dict(
+                        name=service.image_name,
+                        id=service.image()['Id']
+                    )
         return result
 
     def cmd_down(self):
@@ -785,6 +832,7 @@ def main():
         scale=dict(type='dict'),
         services=dict(type='list'),
         dependencies=dict(type='bool', default=True),
+        pull=dict(type='bool', default=False),
         debug=dict(type='bool', default=False)
     )
 
