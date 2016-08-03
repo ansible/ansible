@@ -177,19 +177,22 @@ class Ec2Inventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
+    def generate_data(self):
         # Data to print
         if self.args.host:
-            data_to_print = self.get_host_info()
+            return self.get_host_info()
 
         elif self.args.list:
             # Display list of instances for inventory
             if self.inventory == self._empty_inventory():
-                data_to_print = self.get_inventory_from_cache()
+                return self.get_inventory_from_cache()
             else:
-                data_to_print = self.json_format_dict(self.inventory, True)
+                return self.json_format_dict(self.inventory, True)
 
-        print(data_to_print)
+        return None
 
+    def print_data(self):
+        print(self.generate_data())
 
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
@@ -677,6 +680,19 @@ class Ec2Inventory(object):
             for instance in reservation.instances:
                 return instance
 
+    @staticmethod
+    def get_first_from_vars_or_tags(dict, keys):
+        for k in keys:
+            v = getattr(dict, k, None)
+            if v is not None:
+                return v
+        tags = getattr(dict, 'tags')
+        for k in keys:
+            v = tags.get(k, None)
+            if v is not None:
+                return v
+        return None
+
     def add_instance(self, instance, region):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
@@ -689,13 +705,9 @@ class Ec2Inventory(object):
         if self.destination_format and self.destination_format_tags:
             dest = self.destination_format.format(*[ getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags ])
         elif instance.subnet_id:
-            dest = getattr(instance, self.vpc_destination_variable, None)
-            if dest is None:
-                dest = getattr(instance, 'tags').get(self.vpc_destination_variable, None)
+            dest = self.get_first_from_vars_or_tags(instance, self.vpc_destination_variable.split(','))
         else:
-            dest = getattr(instance, self.destination_variable, None)
-            if dest is None:
-                dest = getattr(instance, 'tags').get(self.destination_variable, None)
+            dest = self.get_first_from_vars_or_tags(instance, self.destination_variable.split(','))
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
@@ -1425,5 +1437,7 @@ class Ec2Inventory(object):
             return json.dumps(data)
 
 
-# Run the script
-Ec2Inventory()
+if __name__ == "__main__":
+    # Run the script
+    inventory = Ec2Inventory()
+    inventory.print_data()
