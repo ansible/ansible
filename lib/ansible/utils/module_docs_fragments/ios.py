@@ -30,24 +30,23 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
-        device.  The port value will default to the well known SSH port
-        of 22
+      - Specifies the port to use when building the connection to the remote
+        device.
     required: false
     default: 22
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
+      - Configures the username to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
         the SSH session. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+        value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
       - Specifies the password to use to authenticate the connection to
         the remote device.   The value of I(password) is used to authenticate
         the SSH session. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+        value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
   ssh_keyfile:
@@ -55,16 +54,16 @@ options:
       - Specifies the SSH key to use to authenticate the connection to
         the remote device.   The value of I(ssh_keyfile) is the path to the
         key used to authenticate the SSH session. If the value is not specified
-        in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
+        in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
         will be used instead.
     required: false
   authorize:
     description:
-      - Instructs the module to enter priviledged mode on the remote device
+      - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode. If the value
+        attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
-        ANSIBLE_NET_AUTHORIZE will be used instead.
+        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -73,7 +72,7 @@ options:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
     required: false
     default: none
   timeout:
@@ -84,7 +83,7 @@ options:
     default: 10
   provider:
     description:
-      - Convience method that allows all M(ios) arguments to be passed as
+      - Convenience method that allows all I(ios) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
@@ -105,8 +104,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
     aliases: ['config']
