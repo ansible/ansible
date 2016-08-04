@@ -26,7 +26,7 @@ description:
   - Network devices running the Junos operating system provide a command
     driven interface both over CLI and RPC.  This module provides an
     interface to execute commands using these functions and return the
-    results to the Ansible playbook.  In addition, the M(junos_command)
+    results to the Ansible playbook.  In addition, this
     module can specify a set of conditionals to be evaluated against the
     returned output, only returning control to the playbook once the
     entire set of conditionals has been met.
@@ -51,8 +51,9 @@ options:
       - Specifies what to evaluate from the output of the command
         and what conditionals to apply.  This argument will cause
         the task to wait for a particular conditional or set of
-        considitonals to be true before moving forward.   If the
+        conditionals to be true before moving forward.   If the
         conditional is not true by the configured retries, the
+        :1
         task fails.  See examples.
     required: false
     default: null
@@ -60,8 +61,8 @@ options:
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed.  The command is run on the
-        target device every retry and evaluated against the waitfor
-        conditionals
+        target device every retry and evaluated against the I(waitfor)
+        conditionals.
     required: false
     default: 10
   interval:
