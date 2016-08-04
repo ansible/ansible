@@ -460,7 +460,7 @@ class CronTab(object):
 
         self.lines = newlines
 
-    def render(self):
+    def render(self, diff=None):
         """
         Render this crontab as it would be in the crontab.
         """
@@ -469,7 +469,7 @@ class CronTab(object):
             crons.append(cron)
 
         result = '\n'.join(crons)
-        if result:
+        if result and not diff:
             result = result.rstrip('\r\n') + '\n'
         return result
 
@@ -586,7 +586,7 @@ def main():
 
     if module._diff:
         diff = dict()
-        diff['before'] = crontab.render()
+        diff['before'] = crontab.render(diff=True)
         if crontab.cron_file:
             diff['before_header'] = crontab.cron_file
         else:
