@@ -28,6 +28,7 @@ from ansible.compat.six.moves import configparser
 
 from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
+from ansible.utils.path import makedirs_safe
 
 BOOL_TRUE = frozenset([ "true", "t", "y", "1", "yes", "on" ])
 
@@ -77,7 +78,7 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif istmppath:
             value = shell_expand(value)
             if not os.path.exists(value):
-                os.makedirs(value, 0o700)
+                makedirs_safe(value, 0o700)
             prefix = 'ansible-local-%s' % os.getpid()
             value = tempfile.mkdtemp(prefix=prefix, dir=value)
         elif ispathlist:
