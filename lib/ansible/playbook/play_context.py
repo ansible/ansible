@@ -161,6 +161,7 @@ class PlayContext(Base):
     _shell            = FieldAttribute(isa='string')
     _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args  = FieldAttribute(isa='string')
+    _ssh_prompt       = FieldAttribute(isa='string')
     _sftp_extra_args  = FieldAttribute(isa='string')
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
@@ -268,7 +269,7 @@ class PlayContext(Base):
         self.check_mode = boolean(options.check)
 
         # get ssh options FIXME: make these common to all connections
-        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args', 'ssh_prompt']:
             setattr(self, flag, getattr(options,flag, ''))
 
         # general flags (should we move out?)

@@ -127,7 +127,11 @@ class Connection(ConnectionBase):
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
             self.sshpass_pipe = os.pipe()
-            self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
+            if self._play_context.ssh_prompt == "assword":
+                self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
+            else:
+                self._command += ['sshpass', '-P',self._play_context.ssh_prompt,'-d{0}'.format(self.sshpass_pipe[0])]
+            display.vvvvv('SSH: building command (' + ')('.join(self._command))
 
         self._command += [binary]
 
@@ -232,7 +236,7 @@ class Connection(ConnectionBase):
 
         if other_args:
             self._command += other_args
-
+        display.vvvvv('SSH: built command (' + ')('.join(self._command))
         return self._command
 
     def _send_initial_data(self, fh, in_data):

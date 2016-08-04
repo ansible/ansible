@@ -71,6 +71,9 @@ class AdHocCLI(CLI):
         self.parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_option("--ssh-prompt", dest="ssh_prompt",
+            help="ssh connection prompt string (default=%s)" % C.DEFAULT_SSH_PROMPT,
+            default=C.DEFAULT_SSH_PROMPT, metavar="SSH_PROMPT")
 
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
