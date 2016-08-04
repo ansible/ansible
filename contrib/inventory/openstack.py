@@ -86,7 +86,7 @@ def get_groups_from_server(server_vars, namegroup=True):
 
     for extra_group in metadata.get('groups', '').split(','):
         if extra_group:
-            groups.append(extra_group)
+            groups.append(extra_group.strip())
 
     groups.append('instance-%s' % server_vars['id'])
     if namegroup:
