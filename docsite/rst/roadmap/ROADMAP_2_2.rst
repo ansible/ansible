@@ -90,8 +90,8 @@ Target: September 2016
 
 - **Vault** (Jtanner/Adrian)
 
-  - Extend ‘transparent vault file usage’ to other action plugins other than 'copy' 
-  - Add ‘per variable’ vault support (!vault YAML directive, existing PR already)
+  - Extend ‘transparent vault file usage’ to other action plugins other than 'copy'  https://github.com/ansible/ansible/issues/7298 
+  - Add ‘per variable’ vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
   - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087
   - Add vault support to lookups
   - Allow for multiple vault secrets https://github.com/ansible/ansible/issues/13243
