@@ -532,12 +532,12 @@ class AzureRMModuleBase(object):
                 ]
                 parameters.location = location
             else:
-                # for windows add inbound RDP rules
+                # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
                                  source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 5986',
-                                 source_port_range='*', destination_port_range='5986', priority=101, name='RDP01'),
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
+                                 source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
                 ]
         else:
             # Open custom ports
