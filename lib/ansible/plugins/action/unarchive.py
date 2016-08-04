@@ -68,7 +68,7 @@ class ActionModule(ActionBase):
 
         if copy:
             try:
-                source = self._find_needle('files', source)
+                source = self._loader.get_real_file(self._find_needle('files', source))
             except AnsibleError as e:
                 result['failed'] = True
                 result['msg'] = to_str(e)
