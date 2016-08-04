@@ -52,9 +52,9 @@ Target: September 2016
 
 - **VMware** (Brian, Jtanner)
 
-  - ~~module/inventory script: port to pyvmomi (jtanner, bcoca)~~
+  - *module/inventory script: port to pyvmomi (jtanner, bcoca)*
     done: https://github.com/ansible/ansible/pull/15967
-  - ~~inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)~~
+  - *inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)*
     done: https://github.com/ansible/ansible/pull/15967
 
   - vsphere: feature parity with whereismyjetpack and viasat modules 
@@ -91,7 +91,7 @@ Target: September 2016
 
 - **Vault** (Jtanner/Adrian)
 
-  - ~~Extend ‘transparent vault file usage’ to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)~~
+  - *Extend ‘transparent vault file usage’ to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)*
     done: https://github.com/ansible/ansible/pull/16957
   - Add ‘per variable’ vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
   - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087
