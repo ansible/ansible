@@ -29,12 +29,14 @@ from ansible.compat.six.moves import configparser
 from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
 
+BOOL_TRUE = frozenset([ "true", "t", "y", "1", "yes", "on" ])
+
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
     if value is None:
         return False
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes", "on" ]:
+    if val.lower() in BOOL_TRUE:
         return True
     else:
         return False
