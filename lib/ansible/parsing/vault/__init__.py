@@ -113,7 +113,6 @@ class VaultLib:
             for _password in password.split('\n'):
                 b_password = to_bytes(_password, errors='strict', encoding='utf-8')
                 passwords.append(b_password)
-        passwords = [x.strip() for x in passwords if x.strip()]
         return passwords
 
     def is_encrypted(self, data):
