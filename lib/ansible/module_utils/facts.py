@@ -2277,24 +2277,7 @@ class LinuxNetwork(Network):
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
-            def parse_ethtool_output(device,output):
-                interfaces[device]['features'] = {}
-                for line in output.strip().split('\n'):
-                    if not line:
-                        continue
-                    if line.endswith(":") :
-                        continue
-                    key,value = line.split(": ")
-                    if not value :
-                        continue
-                    interfaces[device]['features'][key.strip().replace('-','_')] = value.strip()
-
-            ethtool_path = self.module.get_bin_path("ethtool")
-            if ethtool_path:
-                args = [ethtool_path, '-k', device]
-                rc, stdout, stderr = self.module.run_command(args)
-                ethtool_data = stdout
-                parse_ethtool_output(device,ethtool_data)
+            interfaces[device]['features'] = self.get_ethtool_data(device)
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
@@ -2304,6 +2287,23 @@ class LinuxNetwork(Network):
             else:
                 new_interfaces[i] = interfaces[i]
         return new_interfaces, ips
+
+    def get_ethtool_data(self, device):
+
+        features = {}
+        ethtool_path = self.module.get_bin_path("ethtool")
+        if ethtool_path:
+            args = [ethtool_path, '-k', device]
+            rc, stdout, stderr = self.module.run_command(args)
+            if rc == 0:
+                for line in stdout.strip().split('\n'):
+                    if not line or line.endswith(":"):
+                        continue
+                    key,value = line.split(": ")
+                    if not value:
+                        continue
+                    features[key.strip().replace('-','_')] = value.strip()
+        return features
 
 class GenericBsdIfconfigNetwork(Network):
     """
