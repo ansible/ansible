@@ -85,6 +85,8 @@ container_id=$(docker run -d \
 
 show_environment
 
+docker exec "${container_id}" pip install jsonpath-rw
+
 if [ "${copy_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
 fi

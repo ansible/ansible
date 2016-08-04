@@ -44,7 +44,8 @@ pkg install -y \
 # TODO: bootstrap.sh should install these
 pip install \
     junit-xml \
-    virtualenv
+    virtualenv \
+    jsonpath-rw
 
 # FIXME: tests assume bash is in /bin/bash
 if [ ! -f /bin/bash ]; then
