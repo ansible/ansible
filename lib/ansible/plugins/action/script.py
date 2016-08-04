@@ -72,7 +72,7 @@ class ActionModule(ActionBase):
         args   = ' '.join(parts[1:])
 
         try:
-            source = self._find_needle('files', source)
+            source = self._loader.get_real_file(self._find_needle('files', source))
         except AnsibleError as e:
             return dict(failed=True, msg=to_str(e))
 
