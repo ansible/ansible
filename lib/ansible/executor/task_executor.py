@@ -424,11 +424,13 @@ class TaskExecutor:
 
         # Read some values from the task, so that we can modify them if need be
         if self._task.until:
-            retries = self._task.retries + 1
+            retries = self._task.retries
             if retries is None:
                 retries = 3
             elif retries <= 0:
                 retries = 1
+            else:
+                retries += 1
         else:
             retries = 1
 
