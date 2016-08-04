@@ -329,7 +329,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
             )
         )
         self.assertFalse(success)
-        self.assertEqual(gws, [])
+        self.assertEqual(gws, {})
 
     def test_gateway_in_subnet_exists_with_allocation_id(self):
         client = boto3.client('ec2', region_name=aws_region)
