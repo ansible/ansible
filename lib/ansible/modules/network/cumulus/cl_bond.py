@@ -25,70 +25,79 @@ description:
     - Configures a bond interface on Cumulus Linux To configure a bridge port
       use the cl_bridge module. To configure any other type of interface use the
       cl_interface module. Follow the guidelines for bonding found in the
-      Cumulus User Guide at http://docs.cumulusnetworks.com
+      Cumulus User Guide at U(http://docs.cumulusnetworks.com).
 options:
     name:
         description:
-            - name of the interface
+            - Name of the interface.
         required: true
     alias_name:
         description:
-            - add a port description
+            - Description of the port.
     ipv4:
         description:
-            - list of IPv4 addresses to configure on the interface.
-              use X.X.X.X/YY syntax.
+            - List of IPv4 addresses to configure on the interface.
+              In the form I(X.X.X.X/YY).
     ipv6:
         description:
-            - list of IPv6 addresses  to configure on the interface.
-              use X:X:X::X/YYY syntax
+            - List of IPv6 addresses to configure on the interface.
+              In the form I(X:X:X::X/YYY).
     addr_method:
         description:
-            - configures the port to use DHCP.
-              To enable this feature use the option 'dhcp'
+            - Configures the port to use DHCP.
+              To enable this feature use the option I(dhcp).
         choices: ['dhcp']
     mtu:
         description:
-            - set MTU. Configure Jumbo Frame by setting MTU to 9000.
+            - Set MTU. Configure Jumbo Frame by setting MTU to I(9000).
     virtual_ip:
         description:
-            - define IPv4 virtual IP used by the Cumulus Linux VRR feature
+            - Define IPv4 virtual IP used by the Cumulus Linux VRR feature.
     virtual_mac:
         description:
-            - define Ethernet mac associated with Cumulus Linux VRR feature
+            - Define Ethernet mac associated with Cumulus Linux VRR feature.
     vids:
         description:
-            - in vlan aware mode, lists vlans defined under the interface
+            - In vlan-aware mode, lists VLANs defined under the interface.
     mstpctl_bpduguard:
         description:
-            - Enables BPDU Guard on a port in vlan-aware mode
+            - Enables BPDU Guard on a port in vlan-aware mode.
+        choices:
+            - true
+            - false
     mstpctl_portnetwork:
         description:
-            - Enables bridge assurance in vlan-aware mode
+            - Enables bridge assurance in vlan-aware mode.
+        choices:
+            - true
+            - false
     mstpctl_portadminedge:
         description:
-            - Enables admin edge port
+            - Enables admin edge port.
+        choices:
+            - true
+            - false
     clag_id:
         description:
-            - specify a unique clag_id for every dual connected bond on each
+            - Specify a unique clag_id for every dual connected bond on each
               peer switch. The value must be between 1 and 65535 and must be the
               same on both peer switches in order for the bond to be considered
-              dual-connected
+              dual-connected.
     pvid:
         description:
-            - in vlan aware mode, defines vlan that is the untagged vlan
+            - In vlan-aware mode, defines vlan that is the untagged vlan.
     miimon:
         description:
-            - mii link monitoring interval
+            - The mii link monitoring interval.
         default: 100
     mode:
         description:
-            - bond mode. as of Cumulus Linux 2.5 only LACP bond mode is
-              supported
+            - The bond mode, as of Cumulus Linux 2.5 only LACP bond mode is
+              supported.
         default: '802.3ad'
     min_links:
         description:
-            - minimum number of links
+            - Minimum number of links.
         default: 1
     lacp_bypass_allow:
         description:
@@ -98,7 +107,7 @@ options:
             - Period for enabling LACP bypass. Max value is 900.
     lacp_bypass_priority:
         description:
-            - List of ports and priorities. Example "swp1=10, swp2=20"
+            - List of ports and priorities. Example I("swp1=10, swp2=20").
     lacp_bypass_all_active:
         description:
             - Activate all interfaces for bypass.
@@ -106,28 +115,28 @@ options:
               of using bypass_priority.
     lacp_rate:
         description:
-            - lacp rate
+            - The lacp rate.
         default: 1
     slaves:
         description:
-            - bond members
+            - Bond members.
         required: True
     xmit_hash_policy:
         description:
-            - transmit load balancing algorithm. As of Cumulus Linux 2.5 only
-              layer3+4 policy is supported
+            - Transmit load balancing algorithm. As of Cumulus Linux 2.5 only
+              I(layer3+4) policy is supported.
         default: layer3+4
     location:
         description:
-            - interface directory location
+            - Interface directory location.
         default:
-            - /etc/network/interfaces.d
+            - '/etc/network/interfaces.d'
 
 requirements:  [ Alternate Debian network interface manager - \
 ifupdown2 @ github.com/CumulusNetworks/ifupdown2 ]
 notes:
-    - because the module writes the interface directory location. Ensure that
-      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/*' or
+    - As this module writes the interface directory location, ensure that
+      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/\*' or
       whatever path is mentioned in the ``location`` attribute.
 
     - For the config to be activated, i.e installed in the kernel,

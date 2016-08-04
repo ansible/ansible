@@ -24,14 +24,14 @@ short_description: Install Cumulus Linux license
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
       when a license is installed.
-      For more details go the Cumulus Linux License Documentation @
-      http://docs.cumulusnetwork.com and the Licensing KB Site @
-      https://support.cumulusnetworks.com/hc/en-us/sections/200507688
+      For more details go the Cumulus Linux License Documentation at
+      U(http://docs.cumulusnetwork.com) and the Licensing KB Site at
+      U(https://support.cumulusnetworks.com/hc/en-us/sections/200507688)
 notes:
-    - to activate a license for the FIRST time, the switchd service must be
+    - To activate a license for the FIRST time, the switchd service must be
       restarted. This action is disruptive. The license renewal process occurs
       via the Cumulus Networks Customer Portal -
-      http://customers.cumulusnetworks.com.
+      U(http://customers.cumulusnetworks.com).
     - A non-EULA license is REQUIRED for automation. Manually install the
       license on a test switch, using the command "cl-license -i <license_file>"
       to confirm the license is a Non-EULA license.
@@ -39,15 +39,19 @@ notes:
 options:
     src:
         description:
-            - full path to the license. Can be local path or http url
+            - The full path to the license. Can be local path or HTTP URL.
+        required: true
     force:
         description:
-            - force installation of a license. Typically not needed.
+            - Force installation of a license. Typically not needed.
               It is recommended to manually run this command via the ansible
               command. A reload of switchd is not required. Running the force
               option in a playbook will break the idempotent state machine of
               the module and cause the switchd notification to kick in all the
               time, causing a disruption.
+        choices:
+            - yes
+            - no
 
 '''
 EXAMPLES = '''

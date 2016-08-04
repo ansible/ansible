@@ -23,19 +23,19 @@ author: "Cumulus Networks (@CumulusLinux)"
 short_description: Install a different Cumulus Linux version.
 description:
     - install a different version of Cumulus Linux in the inactive slot. For
-      more details go the Image Management User Guide @
-      http://docs.cumulusnetworks.com/
+      more details go the Image Management User Guide at
+      U(http://docs.cumulusnetworks.com/).
 options:
     src:
         description:
-            - full path to the Cumulus Linux binary image. Can be a local path,
+            - The full path to the Cumulus Linux binary image. Can be a local path,
               http or https URL. If the code version is in the name of the file,
               the module will assume this is the version of code you wish to
               install.
         required: true
     version:
         description:
-            - inform the module of the exact version one is installing. This
+            - Inform the module of the exact version one is installing. This
               overrides the automatic check of version in the file name. For
               example, if the binary file name is called CumulusLinux-2.2.3.bin,
               and version is set to '2.5.0', then the module will assume it is
@@ -46,7 +46,7 @@ options:
     switch_slot:
         description:
             - Switch slots after installing the image.
-              To run the installed code, reboot the switch
+              To run the installed code, reboot the switch.
         choices: ['yes', 'no']
         default: 'no'
         required: false
