@@ -274,6 +274,7 @@ def main():
     elif mode in "changemaster":
         chm=[]
         chm_params = {}
+        result = {}
         if master_host:
             chm.append("MASTER_HOST=%(master_host)s")
             chm_params['master_host'] = master_host
@@ -322,9 +323,12 @@ def main():
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
             changemaster(cursor, chm, chm_params)
+        except MySQLdb.Warning, e:
+                result['warning'] = str(e)
         except Exception, e:
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (e, chm))
-        module.exit_json(changed=True)
+        result['changed']=True
+        module.exit_json(**result)
     elif mode in "startslave":
         started = start_slave(cursor)
         if started is True:
