@@ -25,71 +25,73 @@ description:
     - Configures a bridge interface on Cumulus Linux To configure a bond port
       use the cl_bond module. To configure any other type of interface use the
       cl_interface module. Follow the guidelines for bridging found in the
-      Cumulus User Guide at http://docs.cumulusnetworks.com
+      Cumulus User Guide at U(http://docs.cumulusnetworks.com)
 options:
     name:
         description:
-            - name of the interface
+            - Name of the interface.
         required: true
     alias_name:
         description:
-            - add a port description
+            - Description of the port.
     ipv4:
         description:
-            - list of IPv4 addresses to configure on the interface.
-              use X.X.X.X/YY syntax.
+            - List of IPv4 addresses to configure on the interface.
+              In the form I(X.X.X.X/YY).
     ipv6:
         description:
-            - list of IPv6 addresses  to configure on the interface.
-              use X:X:X::X/YYY syntax
+            - List of IPv6 addresses to configure on the interface.
+              In the form I(X:X:X::X/YYY).
     addr_method:
         description:
-            - configures the port to use DHCP.
-              To enable this feature use the option 'dhcp'
+            - Configures the port to use DHCP.
+              To enable this feature use the option I(dhcp).
         choices: ['dhcp']
     mtu:
         description:
-            - set MTU. Configure Jumbo Frame by setting MTU to 9000.
+            - Set MTU. Configure Jumbo Frame by setting MTU to I(9000).
     virtual_ip:
         description:
-            - define IPv4 virtual IP used by the Cumulus Linux VRR feature
+            - Define IPv4 virtual IP used by the Cumulus Linux VRR feature.
     virtual_mac:
         description:
-            - define Ethernet mac associated with Cumulus Linux VRR feature
+            - Define Ethernet mac associated with Cumulus Linux VRR feature.
     vids:
         description:
-            - in vlan aware mode, lists vlans defined under the interface
+            - In vlan-aware mode, lists VLANs defined under the interface.
     pvid:
         description:
-            - in vlan aware mode, defines vlan that is the untagged vlan
+            - In vlan-aware mode, defines vlan that is the untagged vlan.
     stp:
         description:
-            - enables spanning tree. As of Cumulus Linux 2.5 the default
+            - Enables spanning tree Protocol. As of Cumulus Linux 2.5 the default
               bridging mode, only per vlan RSTP or 802.1d is supported. For the
               vlan aware mode, only common instance STP is supported
         default: 'yes'
+        choices: ['yes', 'no']
     ports:
         description:
-            - list of bridge members
+            - List of bridge members.
         required: True
     vlan_aware:
         description:
-            - enables vlan aware mode.
+            - Enables vlan-aware mode.
+        choices: ['yes', 'no']
     mstpctl_treeprio:
         description:
-            - set spanning tree root priority. Must be a multiple of 4096
+            - Set spanning tree root priority. Must be a multiple of 4096.
     location:
         description:
-            - interface directory location
+            - Interface directory location.
         default:
-            - /etc/network/interfaces.d
+            - '/etc/network/interfaces.d'
 
 
 requirements: [ Alternate Debian network interface manager
 ifupdown2 @ github.com/CumulusNetworks/ifupdown2 ]
 notes:
-    - because the module writes the interface directory location. Ensure that
-      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/*' or
+    - As this module writes the interface directory location, ensure that
+      ``/etc/network/interfaces`` has a 'source /etc/network/interfaces.d/\*' or
       whatever path is mentioned in the ``location`` attribute.
 
     - For the config to be activated, i.e installed in the kernel,
