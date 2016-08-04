@@ -275,7 +275,7 @@ class ActionModule(ActionBase):
             private_key = self._play_context.private_key_file
 
             if private_key is not None:
-                private_key = format(os.path.expanduser(private_key))
+                private_key = os.path.expanduser(private_key)
                 self._task.args['private_key'] = private_key
 
             # Src and dest rsync "path" handling
