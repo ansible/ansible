@@ -193,7 +193,7 @@ responses:
   sample: ['...', '...']
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ios import NetworkModule
+from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.ios import load_config, get_config, ios_argument_spec
 
 def invoke(name, *args, **kwargs):
@@ -271,9 +271,10 @@ def main():
     commands = list()
     if configobjs:
         commands = dumps(configobjs, 'commands')
+        commands = commands.split('\n')
 
         if module.params['before']:
-            commands[:0] = before
+            commands[:0] = module.params['before']
 
         if module.params['after']:
             commands.extend(module.params['after'])
@@ -283,9 +284,6 @@ def main():
             result.update(**response)
 
         result['changed'] = True
-
-    if commands:
-        commands = commands.split('\n')
 
     result['updates'] = commands
     result['connected'] = module.connected
