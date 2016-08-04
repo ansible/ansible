@@ -258,18 +258,20 @@ def main():
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
 
     if mode in "getmaster":
-        masterstatus = get_master_status(cursor)
-        try:
-            module.exit_json( **masterstatus )
-        except TypeError:
-            module.fail_json(msg="Server is not configured as mysql master")
+        status = get_master_status(cursor)
+        if not isinstance(status, dict):
+            status = dict(Is_Master=False, msg="Server is not configured as mysql master")
+        else:
+            status['Is_Master'] = True
+        module.exit_json(**status)
 
     elif mode in "getslave":
-        slavestatus = get_slave_status(cursor)
-        try:
-            module.exit_json( **slavestatus )
-        except TypeError, e:
-            module.fail_json(msg="Server is not configured as mysql slave. ERROR: %s" % e)
+        status = get_slave_status(cursor)
+        if not isinstance(status, dict):
+            status = dict(Is_Slave=False, msg="Server is not configured as mysql slave")
+        else:
+            status['Is_Slave'] = True
+        module.exit_json(**status)
 
     elif mode in "changemaster":
         chm=[]
