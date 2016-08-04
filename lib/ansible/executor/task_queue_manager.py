@@ -34,6 +34,7 @@ from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.helpers import pct_to_int
 from ansible.utils.unicode import to_unicode
 from ansible.compat.six import string_types
 
@@ -225,8 +226,19 @@ class TaskQueueManager:
         )
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
-        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
-        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        num_hosts = len(self._inventory.get_hosts(new_play.hosts))
+
+        max_serial = 0
+        if play.serial:
+            # the play has not been post_validated here, so we may need
+            # to convert the scalar value to a list at this point
+            serial_items = play.serial
+            if not isinstance(serial_items, list):
+                serial_items = [serial_items]
+            max_serial = max([pct_to_int(x, num_hosts) for x in serial_items])
+
+        contenders =  [self._options.forks, max_serial, num_hosts]
+        contenders =  [v for v in contenders if v is not None and v > 0]
         self._initialize_processes(min(contenders))
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())

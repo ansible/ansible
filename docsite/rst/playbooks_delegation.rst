@@ -42,6 +42,36 @@ play, in order to determine the number of hosts per pass::
 
 If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
 
+As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - 10
+
+In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
+every following batch would contain 10 hosts until all available hosts are used.
+
+It is also possible to list multiple batche sizes as percentages::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - "10%"
+      - "20%"
+      - "100%"
+
+You can also mix and match the values::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - "20%"
+
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
 

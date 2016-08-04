@@ -13,6 +13,7 @@ Ansible Changes By Release
   - ansible_date_time.iso8601 (changed to UTC instead of local time)
   - ansible_distribution (now uses OS caption string, e.g.: "Microsoft Windows Server 2012 R2 Standard", version is still available on ansible_distribution_version)
   - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
+- Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 
 ####New Modules:
 - asa
