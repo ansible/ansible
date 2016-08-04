@@ -1062,7 +1062,7 @@ def main():
             )
 
     if not success:
-        module.exit_json(
+        module.fail_json(
             msg=err_msg, success=success, changed=changed
         )
     else:
