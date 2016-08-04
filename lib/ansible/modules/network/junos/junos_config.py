@@ -23,8 +23,8 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage configuration on remote devices running Junos
 description:
-  - The M(junos_config) module provides an abstraction for working
-    with the configuration running on remote devices.  It can perform
+  - Provides an abstraction for working
+    with the configuration running on remote Junos devices.  It can perform
     operations that influence the configuration state.
   - This module provides an implementation for configuring Juniper
     JUNOS devices.  The configuration statements must start with either
@@ -46,7 +46,7 @@ options:
         current configuration to the identifier specified in the
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail.  To rollback
-        to the most recent commit, set the C(rollback) argument to 0
+        to the most recent commit, set the C(rollback) argument to 0.
     required: false
     default: null
   zeroize:
@@ -54,8 +54,11 @@ options:
       - The C(zeroize) argument is used to completely santaize the
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
-        statements on the remote device
+        statements on the remote device.
     required: false
+    choices:
+        - yes
+        - no
     default: null
   confirm:
     description:
@@ -77,9 +80,12 @@ options:
     description:
       - The C(replace) argument will instruct the remote device to
         replace the current configuration hierarchy with the one specified
-        in the corresponding hierarchy of the source configuraiton loaded
+        in the corresponding hierarchy of the source configuration loaded
         from this module.
     required: true
+    choices:
+        - yes
+        - no
     default: false
 requirements:
   - junos-eznc

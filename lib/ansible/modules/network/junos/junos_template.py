@@ -23,7 +23,7 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage configuration on remote devices running Junos
 description:
-  - The M(junos_template) module will load a candidate configuration
+  - This module will load a candidate configuration
     from a template file onto a remote device running Junos.  The
     module will return the differences in configuration if the diff
     option is specified on the Ansible command line

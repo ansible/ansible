@@ -40,9 +40,9 @@ options:
   state:
     description:
       - Specifies the state of the M(junos_netconf) resource on
-        the remote device.  If the O(state) argument is set to
+        the remote device.  If the I(state) argument is set to
         I(present) the netconf service will be configured.  If the
-        O(state) argument is set to I(absent) the netconf service
+        I(state) argument is set to I(absent) the netconf service
         will be removed from the configuration.
     required: true
     default: present
