@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_unicode, to_str
 
@@ -228,27 +229,28 @@ class PlaybookExecutor:
 
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts)
+        all_hosts_len = len(all_hosts)
 
-        # check to see if the serial number was specified as a percentage,
-        # and convert it to an integer value based on the number of hosts
-        if isinstance(play.serial, string_types) and play.serial.endswith('%'):
-            serial_pct = int(play.serial.replace("%",""))
-            serial = int((serial_pct/100.0) * len(all_hosts)) or 1
-        else:
-            if play.serial is None:
-                serial = -1
+        # the serial value can be listed as a scalar or a list of
+        # scalars, so we make sure it's a list here
+        serial_batch_list = play.serial
+        if len(serial_batch_list) == 0:
+            serial_batch_list = [-1]
+
+        cur_item = 0
+        serialized_batches = []
+
+        while len(all_hosts) > 0:
+            # get the serial value from current item in the list
+            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+
+            # if the serial count was not specified or is invalid, default to
+            # a list of all hosts, otherwise grab a chunk of the hosts equal
+            # to the current serial item size
+            if serial <= 0:
+                serialized_batches.append(all_hosts)
+                break
             else:
-                serial = int(play.serial)
-
-        # if the serial count was not specified or is invalid, default to
-        # a list of all hosts, otherwise split the list of hosts into chunks
-        # which are based on the serial size
-        if serial <= 0:
-            return [all_hosts]
-        else:
-            serialized_batches = []
-
-            while len(all_hosts) > 0:
                 play_hosts = []
                 for x in range(serial):
                     if len(all_hosts) > 0:
@@ -256,7 +258,14 @@ class PlaybookExecutor:
 
                 serialized_batches.append(play_hosts)
 
-            return serialized_batches
+            # increment the current batch list item number, and if we've hit
+            # the end keep using the last element until we've consumed all of
+            # the hosts in the inventory
+            cur_item += 1
+            if cur_item > len(serial_batch_list) - 1:
+                cur_item = len(serial_batch_list) - 1
+
+        return serialized_batches
 
     def _generate_retry_inventory(self, retry_path, replay_hosts):
         '''
