@@ -643,6 +643,7 @@ The following  checklist items are important guidelines for people who want to c
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
     * Documenting `default` is not needed for `required: true`.
     * Remove unnecessary doc like `aliases: []` or `choices: []`.
+    * Do not create choices that can be confused for booleans.  choices: ['no', 'verify', 'always], 'no' will be seen as a boolean, check basic.py for BOOLEANS_* constantsto see the full lists. If your option IS a boolean, just use `type=bool`, there is no need to populate 'choices'.
     * The version is not a float number and value the current development version.
     * Verify that arguments in doc and module spec dict are identical.
     * For password / secret arguments no_log=True should be set.
