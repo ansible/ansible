@@ -98,15 +98,7 @@ options:
         either a network mask or a plain number, specifying the number of 1's
         at the left side of the network mask. Thus, a mask of 24 is equivalent
         to 255.255.255.0. A "!" argument before the address specification
-        inverts the sense of the address.Source specification. Address can be
-        either a network name, a hostname, a network IP address (with /mask),
-        or a plain IP address.  Hostnames will be resolved once only, before
-        the rule is submitted to the kernel. Please note that specifying any
-        name to be resolved with a remote query such as DNS is a really bad
-        idea. The mask can be either a network mask or a plain number,
-        specifying the number of 1's at the left side of the network mask.
-        Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
-        before the address specification inverts the sense of the address.
+        inverts the sense of the address.
     required: false
     default: null
   destination:
@@ -119,15 +111,7 @@ options:
         either a network mask or a plain number, specifying the number of 1's
         at the left side of the network mask. Thus, a mask of 24 is equivalent
         to 255.255.255.0. A "!" argument before the address specification
-        inverts the sense of the address.Source specification. Address can be
-        either a network name, a hostname, a network IP address (with /mask),
-        or a plain IP address. Hostnames will be resolved once only, before
-        the rule is submitted to the kernel. Please note that specifying any
-        name to be resolved with a remote query such as DNS is a really bad
-        idea. The mask can be either a network mask or a plain number,
-        specifying the number of 1's at the left side of the network mask.
-        Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
-        before the address specification inverts the sense of the address.
+        inverts the sense of the address.
     required: false
     default: null
   match:
