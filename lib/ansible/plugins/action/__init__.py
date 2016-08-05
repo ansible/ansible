@@ -373,28 +373,28 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return remote_paths
 
-    def _remote_chmod(self, paths, mode):
+    def _remote_chmod(self, paths, mode, sudoable=False):
         '''
         Issue a remote chmod command
         '''
         cmd = self._connection._shell.chmod(paths, mode)
-        res = self._low_level_execute_command(cmd, sudoable=False)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
-    def _remote_chown(self, paths, user):
+    def _remote_chown(self, paths, user, sudoable=False):
         '''
         Issue a remote chown command
         '''
         cmd = self._connection._shell.chown(paths, user)
-        res = self._low_level_execute_command(cmd, sudoable=False)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
-    def _remote_set_user_facl(self, paths, user, mode):
+    def _remote_set_user_facl(self, paths, user, mode, sudoable=False):
         '''
         Issue a remote call to setfacl
         '''
         cmd = self._connection._shell.set_user_facl(paths, user, mode)
-        res = self._low_level_execute_command(cmd, sudoable=False)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
     def _execute_remote_stat(self, path, all_vars, follow, tmp=None):
