@@ -55,8 +55,7 @@ options:
         issued to add any necessary flags to collect all defaults as
         well as the device configuration.  If the destination device
         does not support such a flag, this argument is silently ignored.
-    required: false
-    default: false
+    required: true
     choices: [ "true", "false" ]
   backup:
     description:

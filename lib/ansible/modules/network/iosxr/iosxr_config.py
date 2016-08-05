@@ -23,8 +23,8 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco IOS XR configuration sections
 description:
-  - Cisco IOS XR configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - Cisco IOS XR configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with IOS XR configuration sections in
     a deterministic way.  This module works with either CLI or NXAPI
     transports.
@@ -101,8 +101,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
 """
