@@ -200,7 +200,6 @@ class LogicMonitor(object):
         self.password = params["password"]
         self.fqdn = socket.getfqdn()
         self.lm_url = "logicmonitor.com/santaba"
-        self.urlopen = open_url  # use the ansible provided open_url
         self.__version__ = self.__version__ + "-ansible-module"
 
     def rpc(self, action, params):
@@ -227,7 +226,7 @@ class LogicMonitor(object):
             headers = {"X-LM-User-Agent": self.__version__}
 
             # Set headers
-            f = self.urlopen(url, headers=headers)
+            f = open_url(url, headers=headers)
 
             raw = f.read()
             resp = json.loads(raw)
