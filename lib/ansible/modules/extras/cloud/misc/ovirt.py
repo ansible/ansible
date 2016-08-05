@@ -333,6 +333,7 @@ def vm_start(conn, vmname, hostname=None, ip=None, netmask=None, gateway=None,
     vm = conn.vms.get(name=vmname)
     use_cloud_init = False
     nics = None
+    nic = None
     if hostname or ip or netmask or gateway or domain or dns or rootpw or key:
         use_cloud_init = True
     if ip and netmask and gateway:
