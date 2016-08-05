@@ -392,7 +392,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_release_address(self):
         client = boto3.client('ec2', region_name=aws_region)
-        success = (
+        success, _ = (
             ng.release_address(
                 client, 'eipalloc-1234567', check_mode=True
             )
