@@ -255,6 +255,18 @@ def _win_query(v):
     v.dialect = netaddr.mac_eui48
     return str(v)
 
+def _eui64_query(v):
+    return str(v.eui64())
+
+def _eui64_int_query(v):
+    return int(v.eui64())
+
+def _modified_eui64_query(v):
+    return str(v.modified_eui64())
+
+def _modified_eui64_int_query(v):
+    return int(v.modified_eui64())
+
 
 # ---- IP address and network filters ----
 
@@ -598,33 +610,40 @@ def nthhost(value, query=''):
 # Usage:
 #
 #  - prefix | slaac(mac)
-def slaac(value, query = ''):
-    ''' Get the SLAAC address within given network '''
-    try:
-        vtype = ipaddr(value, 'type')
-        if vtype == 'address':
-            v = ipaddr(value, 'cidr')
-        elif vtype == 'network':
-            v = ipaddr(value, 'subnet')
-
-        if v.version != 6:
-            return False
-
-        value = netaddr.IPNetwork(v)
-    except:
+def slaac(value, query = '', alias = 'slaac', ignore_rfc = False):
+    if not value:
         return False
 
-    if not query:
+    elif value == True:
         return False
 
-    try:
-        mac = hwaddr(query, alias = 'slaac')
+    # Check if value is a list and parse each element
+    elif isinstance(value, (list, tuple, types.GeneratorType)):
 
-        eui = netaddr.EUI(mac)
-    except:
+        _ret = []
+        for element in value:
+            if slaac(element, str(query), alias=alias, ignore_rfc=ignore_rfc):
+                _ret.append(slaac(element, str(query), alias=alias, ignore_rfc=ignore_rfc))
+
+        if _ret:
+            return _ret
+        else:
+            return list()
+
+    # Check RFC 4862 5.5.3
+    elif ignore_rfc or int(ipaddr(value, 'prefix', version=6)) == 64:
+        return ipaddr(
+            value = value,
+            query = hwaddr(
+                value = query,
+                query = 'modified_eui64/int',
+                alias = alias
+            ),
+            version = 6,
+            alias = alias
+        )
+    else:
         return False
-
-    return eui.ipv6(value.network)
 
 
 # ---- HWaddr / MAC address filters ----
@@ -642,6 +661,10 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
             'int': _int_hwaddr_query,
             'cisco': _cisco_query,
             'eui48': _win_query,
+            'eui64': _eui64_query,
+            'eui64/int': _eui64_int_query,
+            'modified_eui64': _modified_eui64_query,
+            'modified_eui64/int': _modified_eui64_int_query,
             'linux': _linux_query,
             'pgsql': _postgresql_query,
             'postgresql': _postgresql_query,
