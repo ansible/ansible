@@ -321,13 +321,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        remote_paths = [p for p in remote_paths if p]
-
-        if not remote_paths:
-            # When all paths are None, there is nothing for us to do. The most common cause
-            # of this is when pipelining is in use.
-            return remote_paths
-
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
@@ -615,9 +608,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
+        remote_files = None
+
+        if args_file_path:
+            remote_files = tmp, remote_module_path, args_file_path
+        elif remote_module_path:
+            remote_files = tmp, remote_module_path
+
         # Fix permissions of the tmp path and tmp files.  This should be
         # called after all files have been transferred.
-        self._fixup_perms([tmp, remote_module_path, args_file_path], remote_user)
+        if remote_files:
+            self._fixup_perms(remote_files, remote_user)
 
         cmd = ""
         in_data = None

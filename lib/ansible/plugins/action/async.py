@@ -73,8 +73,13 @@ class ActionModule(ActionBase):
                 args_data += '%s="%s" ' % (k, pipes.quote(to_unicode(v)))
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), args_data)
 
+        remote_paths = tmp, remote_module_path, async_module_path
+
         # argsfile doesn't need to be executable, but this saves an extra call to the remote host
-        self._fixup_perms([tmp, remote_module_path, async_module_path, argsfile], remote_user, execute=True)
+        if argsfile:
+            remote_paths += argsfile,
+
+        self._fixup_perms(remote_paths, remote_user, execute=True)
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))

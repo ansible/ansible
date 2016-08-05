@@ -225,7 +225,8 @@ class ActionModule(ActionBase):
                 self._loader.cleanup_tmp_file(source_full)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms([tmp, remote_path], remote_user)
+                if remote_path:
+                    self._fixup_perms((tmp, remote_path), remote_user)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
