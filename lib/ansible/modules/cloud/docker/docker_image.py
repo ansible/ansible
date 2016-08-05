@@ -116,7 +116,8 @@ options:
   tag:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
-       C(latest).
+        I(latest).
+      - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
     default: latest
     required: false
   container_limits:
@@ -258,6 +259,12 @@ class ImageManager(DockerBaseClass):
         self.http_timeout = parameters.get('http_timeout')
         self.push = parameters.get('push')
 
+        # If name contains a tag, it takes precedence over tag parameter.
+        repo, repo_tag = parse_repository_tag(self.name)
+        if repo_tag:
+           self.name = repo
+           self.tag = repo_tag
+        
         if self.state in ['present', 'build']:
             self.present()
         elif self.state == 'absent':
