@@ -60,6 +60,9 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._listening_handlers = {}
         mock_tqm.send_callback.return_value = None
 
+        for attr in ('RUN_OK', 'RUN_ERROR', 'RUN_FAILED_HOSTS', 'RUN_UNREACHABLE_HOSTS'):
+            setattr(mock_tqm, attr, getattr(TaskQueueManager, attr))
+
         mock_iterator  = MagicMock()
         mock_iterator._play = MagicMock()
         mock_iterator._play.handlers = []
@@ -77,7 +80,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_host.name = 'host1'
 
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), mock_tqm.RUN_OK)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), mock_tqm.RUN_ERROR)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=TaskQueueManager.RUN_ERROR), mock_tqm.RUN_ERROR)
         mock_tqm._failed_hosts = dict(host1=True)
         mock_iterator.get_failed_hosts.return_value = [mock_host]
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), mock_tqm.RUN_FAILED_HOSTS)
