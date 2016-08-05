@@ -27,40 +27,40 @@ description:
     - Manages Layer 2 interfaces
 author: Jason Edelman (@jedelman8)
 notes:
-    - When state=absent, vlans can be added/removed from trunk links and
-      the existing access vlan can be 'unconfigured' to just having VLAN 1
+    - When C(state=absent), VLANs can be added/removed from trunk links and
+      the existing access VLAN can be 'unconfigured' to just having VLAN 1
       on that interface
     - When working with trunks VLANs the keywords add/remove are always sent
       in the `switchport trunk allowed vlan` command. Use verbose mode to see
       commands sent.
-    - When state=unconfigured, the interface will result with having a default
+    - When C(state=unconfigured), the interface will result with having a default
       Layer 2 interface, i.e. vlan 1 in access mode
 options:
     interface:
         description:
-            - Full name of the interface, i.e. Ethernet1/1
+            - Full name of the interface, i.e. Ethernet1/1.
         required: true
         default: null
     mode:
         description:
-            - Mode for the Layer 2 port
+            - Mode for the Layer 2 port.
         required: false
         default: null
         choices: ['access','trunk']
     access_vlan:
         description:
-            - if mode=access, used as the access vlan id
+            - If C(mode=access), used as the access VLAN ID.
         required: false
         default: null
     native_vlan:
         description:
-            - if mode=trunk, used as the trunk native vlan id
+            - If C(mode=trunk), used as the trunk native VLAN ID.
         required: false
         default: null
     trunk_vlans:
         description:
-            - if mode=trunk, used as the vlan range to ADD or REMOVE
-              from the trunk
+            - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
+              from the trunk.
         required: false
         default: null
     state:

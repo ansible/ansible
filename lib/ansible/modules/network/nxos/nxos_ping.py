@@ -22,27 +22,29 @@ module: nxos_ping
 version_added: "2.1"
 short_description: Tests reachability using ping from Nexus switch
 description:
-    - Tests reachability using ping from switch to a remote destination
+    - Tests reachability using ping from switch to a remote destination.
 extends_documentation_fragment: nxos
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 options:
     dest:
         description:
-            - IP address or hostname (resolvable by switch) of remote node
+            - IP address or hostname (resolvable by switch) of remote node.
         required: true
     count:
         description:
-            - Number of packets to send
+            - Number of packets to send.
         required: false
         default: 2
     source:
         description:
-            - Source IP Address
+            - Source IP Address.
         required: false
         default: null
     vrf:
         description:
-            - Outgoing VRF
+            - Outgoing VRF.
         required: false
         default: null
 '''

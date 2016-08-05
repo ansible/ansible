@@ -23,8 +23,8 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary command on Cisco NXOS devices
 description:
-  - Sends an aribtrary command to an NXOS node and returns the results
-    read from the device.  The M(nxos_command) modulule includes an
+  - Sends an arbitrary command to an NXOS node and returns the results
+    read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: nxos
@@ -50,8 +50,8 @@ options:
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed.  The command is run on the
-        target device every retry and evaluated against the waitfor
-        conditionals
+        target device every retry and evaluated against the I(waitfor)
+        conditionals.
     required: false
     default: 10
   interval:
