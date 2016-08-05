@@ -29,7 +29,7 @@ except ImportError:
     HAS_LIB = False
 
 
-def query(data, expr):
+def json_query(data, expr):
     '''Query data using json-path based query language. Example:
     - debug: msg="{{ instance | .tagged_instances[*].block_device_mapping..volume_id') }}"
     '''
@@ -44,5 +44,5 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'query': query
+            'json_query': json_query
         }

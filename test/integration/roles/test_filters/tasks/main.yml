@@ -78,8 +78,8 @@
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
 
-- name: Test query filter
+- name: Test json_query filter
   assert:
     that:
-      - "users | query('[*].hosts[*].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
+      - "users | json_query('[*].hosts[*].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
 
