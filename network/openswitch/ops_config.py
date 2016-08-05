@@ -23,8 +23,8 @@ version_added: "2.1"
 author: "Peter sprygada (@privateip)"
 short_description: Manage OpenSwitch configuration using CLI
 description:
-  - OpenSwitch configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - OpenSwitch configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with ops configuration sections in
     a deterministic way.
 extends_documentation_fragment: openswitch
@@ -51,7 +51,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
@@ -80,7 +80,7 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct
+        line is not correct.
     required: false
     default: line
     choices: ['line', 'block']
@@ -100,8 +100,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
 """
@@ -141,6 +141,7 @@ def get_config(module):
     if not config and not module.params['force']:
         config = module.config
     return config
+
 
 def build_candidate(lines, parents, config, strategy):
     candidate = list()
@@ -244,4 +245,3 @@ from ansible.module_utils.netcfg import *
 from ansible.module_utils.openswitch import *
 if __name__ == '__main__':
     main()
-
