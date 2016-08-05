@@ -6,7 +6,7 @@ import cmd
 import pprint
 import sys
 
-from ansible.plugins.strategy import linear
+from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 
 try:
     from __main__ import display
@@ -25,7 +25,7 @@ class NextAction(object):
         self.result = result
 
 
-class StrategyModule(linear.StrategyModule):
+class StrategyModule(LinearStrategyModule):
     def __init__(self, tqm):
         self.curr_tqm = tqm
         super(StrategyModule, self).__init__(tqm)
