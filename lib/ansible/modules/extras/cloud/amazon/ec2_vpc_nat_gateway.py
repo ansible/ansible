@@ -62,6 +62,7 @@ options:
     description:
       - Deallocate the EIP from the VPC.
       - Option is only valid with the absent state.
+      - You should use this with the wait option. Since you can not release an address while a delete operation is happening.
     required: false
     default: true
   wait:
@@ -159,6 +160,8 @@ EXAMPLES = '''
     state: absent
     nat_gateway_id: nat-12345678
     release_eip: yes
+    wait: yes
+    wait_timeout: 300
     region: ap-southeast-2
 '''
 
@@ -648,10 +651,11 @@ def release_address(client, allocation_id, check_mode=False):
         True
 
     Returns:
-        Boolean
+        Boolean, string
     """
+    err_msg = ''
     if check_mode:
-        return True
+        return True, ''
 
     ip_released = False
     params = {
@@ -660,10 +664,10 @@ def release_address(client, allocation_id, check_mode=False):
     try:
         client.release_address(**params)
         ip_released = True
-    except botocore.exceptions.ClientError:
-        pass
+    except botocore.exceptions.ClientError as e:
+        err_msg = str(e)
 
-    return ip_released
+    return ip_released, err_msg
 
 
 def create(client, subnet_id, allocation_id, client_token=None,
@@ -973,11 +977,15 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
         err_msg = str(e)
 
     if release_eip:
-        eip_released = (
-            release_address(client, allocation_id, check_mode=check_mode)
+        eip_released, eip_err = (
+            release_address(client, allocation_id, check_mode)
         )
         if not eip_released:
-            err_msg = "Failed to release EIP %s".format(allocation_id)
+            err_msg = (
+                "{0}: Failed to release EIP {1}: {2}"
+                .format(err_msg, allocation_id, eip_err)
+            )
+            success = False
 
     return success, changed, err_msg, results
 
@@ -1037,7 +1045,6 @@ def main():
     changed = False
     err_msg = ''
 
-    #Ensure resource is present
     if state == 'present':
         if not subnet_id:
             module.fail_json(msg='subnet_id is required for creation')
