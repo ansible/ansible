@@ -62,8 +62,8 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
+        implementer to pass in the configuration to use as the base
+        config for comparison.
     required: false
     default: null
 """
@@ -97,12 +97,14 @@ responses:
 """
 import copy
 
+
 def compare(this, other):
     parents = [item.text for item in this.parents]
     for entry in other:
         if this == entry:
             return None
     return this
+
 
 def expand(obj, queue):
     block = [item.raw for item in obj.parents]
@@ -117,11 +119,13 @@ def expand(obj, queue):
         if c.raw not in current_level:
             current_level[c.raw] = collections.OrderedDict()
 
+
 def flatten(data, obj):
     for k, v in data.items():
         obj.append(k)
         flatten(v, obj)
     return obj
+
 
 def get_config(module):
     config = module.params['config'] or dict()
@@ -129,10 +133,12 @@ def get_config(module):
         config = module.config
     return config
 
+
 def sort(val):
     if isinstance(val, (list, set)):
         return sorted(val)
     return val
+
 
 def diff(this, other, path=None):
     updates = list()
@@ -152,6 +158,7 @@ def diff(this, other, path=None):
                     updates.append((list(path), key, value, other_value))
     return updates
 
+
 def merge(changeset, config=None):
     config = config or dict()
     for path, key, value, _ in changeset:
@@ -162,6 +169,7 @@ def merge(changeset, config=None):
             current_level = current_level[part]
         current_level[key] = value
     return config
+
 
 def main():
     """ main entry point for module execution
@@ -242,4 +250,3 @@ from ansible.module_utils.openswitch import *
 
 if __name__ == '__main__':
     main()
-
