@@ -39,6 +39,7 @@ options:
             - name of package to install/remove
         required: false
         default: None
+        aliases: ['pkg', 'package', 'formula']
     path:
         description:
             - ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system.
@@ -56,17 +57,20 @@ options:
         required: false
         default: no
         choices: [ "yes", "no" ]
+        aliases: ['update-brew']
     upgrade_all:
         description:
             - upgrade all homebrew packages
         required: false
         default: no
         choices: [ "yes", "no" ]
+        aliases: ['upgrade']
     install_options:
         description:
             - options flags to install a package
         required: false
         default: null
+        aliases: ['options']
         version_added: "1.4"
 notes:  []
 '''
