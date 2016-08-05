@@ -147,7 +147,7 @@ class PlaybookExecutor:
                             result = self._tqm.run(play=play)
 
                             # break the play if the result equals the special return code
-                            if result == self._tqm.RUN_FAILED_BREAK_PLAY:
+                            if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:
                                 result = self._tqm.RUN_FAILED_HOSTS
                                 break_play = True
 
