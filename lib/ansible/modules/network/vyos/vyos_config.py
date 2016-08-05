@@ -39,31 +39,28 @@ options:
     default: null
   src:
     description:
-      - The C(src) argument provides the path to the configuration
-        file to load.
+      - Path to the configuration file to load.
     required: no
     default: null
   rollback:
     description:
-      - This argument will rollback the device configuration to the
+      - Rollback the device configuration to the
         revision specified.  If the specified rollback revision does
         not exist, then the module will produce an error and fail.
-      - NOTE THIS WILL CAUSE THE DEVICE TO REBOOT AUTOMATICALLY
+      - NOTE THIS WILL CAUSE THE DEVICE TO REBOOT AUTOMATICALLY.
     required: false
     default: null
   update_config:
     description:
-      - This argument will control whether or not the configuration
-        on the remote device is udpated with the calculated changes.
-        When set to true, the configuration will be updated and
-        when set to false, the configuration will not be updated.
+      - Should  the configuration on the remote device be updated with the
+        calculated changes. When set to true, the configuration will be updated
+        and when set to false, the configuration will not be updated.
     required: false
     default: true
     choices: ['yes', 'no']
   backup_config:
     description:
-      - The C(backup_config) argument will instruct the module to
-        create a local backup copy of the current running configuration
+      - Create a local backup copy of the current running configuration
         prior to making any changes.   The configuration file will be
         stored in the backups folder in the root of the playbook or role.
     required: false
@@ -119,6 +116,7 @@ def invoke(name, *args, **kwargs):
     if func:
         return func(*args, **kwargs)
 
+
 def config_to_commands(config):
     set_format = config.startswith('set') or config.startswith('delete')
     candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
@@ -135,14 +133,17 @@ def config_to_commands(config):
         commands = str(candidate).split('\n')
     return commands
 
+
 def do_lines(module, result):
     commands = module.params['lines']
     result.update(load_config(module, commands))
+
 
 def do_src(module, result):
     contents = module.params['src']
     commands = config_to_commands(contents)
     result.update(load_config(module, commands))
+
 
 def do_rollback(module, result):
     rollback = 'rollback %s' % module.params['rollback']
@@ -155,6 +156,7 @@ def do_rollback(module, result):
         exc = get_exception()
         cmds = [str(c) for c in exc.kwargs.get('commands', list())]
         module.fail_json(msg=str(exc), commands=cmds)
+
 
 def main():
 
