@@ -58,20 +58,23 @@ class ShellBase(object):
         return path.endswith('/')
 
     def chmod(self, paths, mode):
-        cmd = ['chmod', mode] + paths
+        cmd = ['chmod', mode]
+        cmd.extend(paths)
         cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def chown(self, paths, user):
-        cmd = ['chown', user] + paths
+        cmd = ['chown', user]
+        cmd.extend(paths)
         cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)] + paths
+        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
+        cmd.extend(paths)
         cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
