@@ -40,6 +40,7 @@ options:
             - Name of the package to install, upgrade, or remove.
         required: false
         default: null
+        aliases: [ 'pkg', 'package' ]
 
     state:
         description:
@@ -75,6 +76,7 @@ options:
         required: false
         default: no
         choices: ["yes", "no"]
+        aliases: [ 'update-cache' ]
 
     upgrade:
         description:
