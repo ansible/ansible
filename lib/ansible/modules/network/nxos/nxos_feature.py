@@ -24,15 +24,17 @@ short_description: Manage features in NX-OS switches
 description:
     - Offers ability to enable and disable features in NX-OS
 extends_documentation_fragment: nxos
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 options:
     feature:
         description:
-            - Name of feature
+            - Name of feature.
         required: true
     state:
         description:
-            - Desired state of the feature
+            - Desired state of the feature.
         required: false
         default: 'enabled'
         choices: ['enabled','disabled']
@@ -89,7 +91,7 @@ feature:
 def execute_config_command(commands, module):
     try:
         module.configure(commands)
-    except ShellError: 
+    except ShellError:
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
