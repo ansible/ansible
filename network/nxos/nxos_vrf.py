@@ -24,7 +24,9 @@ short_description: Manages global VRF configuration
 description:
     - Manages global VRF configuration
 extends_documentation_fragment: nxos
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 notes:
     - Cisco NX-OS creates the default VRF by itself. Therefore,
       you're not allowed to use default as I(vrf) name in this module.
@@ -37,17 +39,17 @@ notes:
 options:
     vrf:
         description:
-            - Name of VRF to be managed
+            - Name of VRF to be managed.
         required: true
     admin_state:
         description:
-            - Administrative state of the VRF
+            - Administrative state of the VRF.
         required: false
         default: up
         choices: ['up','down']
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']

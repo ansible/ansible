@@ -24,7 +24,9 @@ short_description: Gets facts about NX-OS switches
 description:
     - Offers ability to extract facts from device
 extends_documentation_fragment: nxos
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 '''
 
 EXAMPLES = '''
