@@ -43,8 +43,8 @@ options:
     version_added: "2.0"
   force:
     description:
-      - Use with absent state to un-tag and remove all images matching the specified name. Use with states C(present)
-        and C(tagged) to take action even when an image already exists.
+      - Use with state I(absent) to un-tag and remove all images matching the specified name. Use with state
+        C(present) to build, load or pull an image when the image already exists.
     default: false
     required: false
     version_added: "2.1"
@@ -105,13 +105,14 @@ options:
         from Docker Hub. To build the image, provide a path value set to a directory containing a context and
         Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
         repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(build) is DEPRECATED. Specifying C(build) will behave the same as C(present)."
+      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.3. Specifying C(build) will behave the
+         same as C(present)."
     required: false
     default: present
     choices:
       - absent
       - present
-      - build (DEPRECATED)
+      - build
   tag:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
@@ -528,7 +529,7 @@ def main():
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present', 'build'], default='present'),
         tag=dict(type='str', default='latest'),
         use_tls=dict(type='str', default='no', choices=['no', 'encrypt', 'verify'])
     )
