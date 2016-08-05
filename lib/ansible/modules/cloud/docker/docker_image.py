@@ -32,9 +32,14 @@ description:
 options:
   archive_path:
     description:
-      - Use with state C(presen) to archive an image to a .tar file.
+      - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+  load_path:
+    description:
+      - Use with state C(present) to load an image from a .tar file.
+    required: false
+    version_added: "2.2"
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
@@ -120,6 +125,14 @@ options:
       - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
     default: latest
     required: false
+  buildargs:
+    description:
+      - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
+      - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
+      - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
+    type: complex
+    required: false
+    version_added: "2.2"
   container_limits:
     description:
       - A dictionary of limits applied to each container created by the build process.
@@ -212,6 +225,14 @@ EXAMPLES = '''
     push: yes
     load_path: my_sinatra.tar
     push: True
+
+- name: Build image and with buildargs
+   docker_image:
+     path: /path/to/build/dir
+     name: myimage
+     buildargs:
+       log_volume: /var/log/myapp
+       listen_port: 8080
 '''
 
 RETURN = '''
@@ -258,6 +279,7 @@ class ImageManager(DockerBaseClass):
         self.tag = parameters.get('tag')
         self.http_timeout = parameters.get('http_timeout')
         self.push = parameters.get('push')
+        self.buildargs = parameters.get('buildargs')
 
         # If name contains a tag, it takes precedence over tag parameter.
         repo, repo_tag = parse_repository_tag(self.name)
@@ -484,6 +506,12 @@ class ImageManager(DockerBaseClass):
             params['tag'] = "%s:%s" % (self.name, self.tag)
         if self.container_limits:
             params['container_limits'] = self.container_limits
+        if self.buildargs:
+            for key, value in self.buildargs.iteritems():
+                if not isinstance(value, basestring):
+                    self.buildargs[key] = str(value)
+            params['buildargs'] = self.buildargs
+
         for line in self.client.build(**params):
             # line = json.loads(line)
             self.log(line, pretty_print=True)
@@ -540,7 +568,8 @@ def main():
         rm=dict(type='bool', default=True),
         state=dict(type='str', choices=['absent', 'present', 'build'], default='present'),
         tag=dict(type='str', default='latest'),
-        use_tls=dict(type='str', default='no', choices=['no', 'encrypt', 'verify'])
+        use_tls=dict(type='str', default='no', choices=['no', 'encrypt', 'verify']),
+        buildargs=dict(type='dict', default=None),
     )
 
     client = AnsibleDockerClient(
