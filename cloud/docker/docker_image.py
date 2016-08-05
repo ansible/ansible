@@ -92,7 +92,7 @@ options:
   repository:
     description:
       - Full path to a repository. Use with state C(present) to tag the image into the repository. Expects
-        format I(repository:tag). If no tag is provided, will default to 'latest'.
+        format I(repository:tag). If no tag is provided, will use the value of the C(tag) parameter or I(latest).
     required: false
     version_added: "2.1"
   state:
@@ -436,6 +436,8 @@ class ImageManager(DockerBaseClass):
         repo, repo_tag = parse_repository_tag(repository)
         if not repo_tag:
             repo_tag = "latest"
+            if tag:
+                repo_tag = tag
         image = self.client.find_image(name=repo, tag=repo_tag)
         found = 'found' if image else 'not found'
         self.log("image %s was %s" % (repo, found))
