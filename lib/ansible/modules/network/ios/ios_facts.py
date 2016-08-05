@@ -23,8 +23,8 @@ author: "Peter Sprygada (@privateip)"
 short_description: Collect facts from remote devices running IOS
 description:
   - Collects a base set of device facts from a remote device that
-    is running IOS.  The M(ios_facts) module prepends all of the
-    base network fact keys with U(ansible_net_<fact>).  The facts
+    is running IOS.  This module prepends all of the
+    base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: ios
@@ -184,8 +184,8 @@ class Hardware(FactsBase):
         data = self.runner.get_command('show memory statistics | include Processor')
         match = re.findall('\s(\d+)\s', data)
         if match:
-            self.facts['memtotal_mb'] = int(match[0])/1024
-            self.facts['memfree_mb'] = int(match[1])/1024
+            self.facts['memtotal_mb'] = int(match[0]) / 1024
+            self.facts['memfree_mb'] = int(match[1]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)

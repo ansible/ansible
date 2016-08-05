@@ -52,8 +52,8 @@ options:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
-        path from the playbook or role root dir.  This argument is mutually
-        exclusive with O(lines).
+        path from the playbook or role root directory.  This argument is mutually
+        exclusive with I(lines).
     required: false
     default: null
     version_added: "2.2"
@@ -62,11 +62,11 @@ options:
       - Configures a destination file to write the source template or config
         updates to.  The path to the destination file can either be a full
         path on the Ansible control host or a relative path from the
-        playbook or role root dir.  This will, by default, overwrite any
-        previously created file.  See O(append) to change the behavior.
-      - When the O(dest) argument is used, the output from processing the
+        playbook or role root directory.  This will, by default, overwrite any
+        previously created file.  See I(append) to change the behavior.
+      - When the I(dest) argument is used, the output from processing the
         configuration lines is written to a file and not to the actual
-        device.  If the O(dest) argument is omitted, then the configuration
+        device.  If theI(dest) argument is omitted, then the configuration
         is written to the device.
     required: false
     default: null
@@ -74,7 +74,7 @@ options:
   append:
     description:
       - Changes the default behavior when writing the configuration out
-        to a remote file on disk.  By default if O(dest) is specified, the
+        to a remote file on disk.  By default if I(dest) is specified, the
         file is overridden.  By setting this argument to true, the remote
         file (if it exists) is appended to.
     required: false
