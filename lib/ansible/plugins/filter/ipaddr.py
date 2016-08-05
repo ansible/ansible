@@ -258,7 +258,7 @@ def _win_query(v):
 
 # ---- IP address and network filters ----
 
-def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
+def ipaddr(value, query = '', version = False, alias = 'ipaddr', **kwargs):
     ''' Check if string is an IP address or network and filter it '''
 
     query_func_extra_args = {
@@ -331,8 +331,8 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
 
         _ret = []
         for element in value:
-            if ipaddr(element, str(query), version):
-                    _ret.append(ipaddr(element, str(query), version))
+            if ipaddr(element, str(query), version, alias, **kwargs):
+                _ret.append(ipaddr(element, str(query), version, alias, **kwargs))
 
         if _ret:
             return _ret
@@ -438,7 +438,16 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     for arg in query_func_extra_args.get(query, tuple()):
         extras.append(locals()[arg])
     try:
-        return query_func_map[query](v, *extras)
+        return query_func_map[query](v, *extras, **kwargs)
+    except TypeError as e:
+        message = e.args[0]
+        keyword_error = 'got an unexpected keyword argument \''
+        if message.find(keyword_error) > 0:
+            unknown_keyword = message[message.find(keyword_error) + len(keyword_error):-1]
+
+            raise errors.AnsibleFilterError(alias + ": filter type '%s' received unknown keyword: %s" % (query, unknown_keyword))
+        else:
+            raise
     except KeyError:
         try:
             float(query)
@@ -666,8 +675,8 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 
     return False
 
-def macaddr(value, query = ''):
-    return hwaddr(value, query, alias = 'macaddr')
+def macaddr(value, query = '', alias = 'macaddr'):
+    return hwaddr(value, query, alias = alias)
 
 def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
