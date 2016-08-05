@@ -585,6 +585,19 @@ def env_fallback(*args, **kwargs):
     else:
         raise AnsibleFallbackNotFound
 
+def _lenient_lowercase(lst):
+    """Lowercase elements of a list.
+
+    If an element is not a string, pass it through untouched.
+    """
+    lowered = []
+    for value in lst:
+        try:
+            lowered.append(value.lower())
+        except AttributeError:
+            lowered.append(value)
+    return lowered
+
 
 class AnsibleFallbackNotFound(Exception):
     pass
@@ -1339,9 +1352,28 @@ class AnsibleModule(object):
             if isinstance(choices, SEQUENCETYPE):
                 if k in self.params:
                     if self.params[k] not in choices:
-                        choices_str=",".join([str(c) for c in choices])
-                        msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
-                        self.fail_json(msg=msg)
+                        # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking the value.  If we can't figure this out, module author is responsible.
+                        lowered_choices = None
+                        if self.params[k] == 'False':
+                            lowered_choices = _lenient_lowercase(choices)
+                            FALSEY = frozenset(BOOLEANS_FALSE)
+                            overlap = FALSEY.intersection(choices)
+                            if len(overlap) == 1:
+                                # Extract from a set
+                                (self.params[k],) = overlap
+
+                        if self.params[k] == 'True':
+                            if lowered_choices is None:
+                                lowered_choices = _lenient_lowercase(choices)
+                            TRUTHY = frozenset(BOOLEANS_TRUE)
+                            overlap = TRUTHY.intersection(choices)
+                            if len(overlap) == 1:
+                                (self.params[k],) = overlap
+
+                        if self.params[k] not in choices:
+                            choices_str=",".join([str(c) for c in choices])
+                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                            self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
 
