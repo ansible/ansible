@@ -25,8 +25,8 @@ Ansible currently supports the following networking devices:
 Network Automation Installation
 ```````````````````````````````
 
-* Download the `latest Ansible network release <http://releases.ansible.com/ansible-network/latest/>`_.
-* `Playbooks for testing <https://github.com/ansible/test-network-modules>`_ Ansible core network modules.
+* Install the `latest Ansible network release <http://docs.ansible.com/ansible/intro_installation.html>`_.
+* Get the `playbooks for testing <https://github.com/ansible/test-network-modules>`_ Ansible core network modules.
 
 
 .. _networking_module_index:
