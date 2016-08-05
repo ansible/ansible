@@ -67,6 +67,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._cleanup_remote_tmp  = False
         self._supports_check_mode = True
+        self._module_facts        = dict()
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -146,7 +147,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
+            handler=self, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -178,6 +180,53 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = self._templar.template(final_environment)
         return self._connection._shell.env_prefix(**final_environment)
 
+    def _compute_interpreter(self, lang, task_vars):
+        '''
+        Determine a suitable interpreter for lang using ansible_<lang>_interpreter,
+        and return the determined interpreter, or None if not found.
+        '''
+
+        # compute name of configuration variable for this language
+
+        interpreter_config = 'ansible_%s_interpreter' % lang
+
+        # check for previously cached result for this module
+
+        interpreter = self._module_facts.get(interpreter_config, None)
+        if interpreter is not None:
+            return interpreter
+
+        # no cached value found: proceed with determination of suitable interpreter path
+
+        interpreter = None
+
+        if interpreter_config in task_vars:
+            interp_list = to_bytes(task_vars[interpreter_config].strip(), errors='strict').split(':')
+            interpreter = None
+            fallback_interp = interp_list[0]
+
+            # If more than a single interpreter is specified, or if the only
+            # one specified does not have a full path, check each candidate
+            # value until a valid one is found.
+
+            if len(interp_list) > 1 or os.path.sep not in fallback_interp:
+                try:
+                    while interpreter is None:
+                        candidate = interp_list.pop(0).strip()
+                        interpreter = self._remote_check_interp(interpreter_config, candidate)
+                except:
+                    interpreter = None
+
+            # If no interpreter found, fall back to first one specified
+
+            if interpreter is None:
+                interpreter = fallback_interp
+
+            if interpreter is not None and interpreter != task_vars[interpreter_config]:
+                self._module_facts[interpreter_config] = interpreter
+
+        return interpreter
+
     def _early_needs_tmp_path(self):
         '''
         Determines if a temp path should be created before the action is executed.
@@ -200,6 +249,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # even when conn has pipelining, old style modules need tmp to store arguments
             return True
         return False
+
+    def _remote_check_interp(self, var, candidate):
+        '''
+        Check whether candidate (which is either the base name or the
+        full path to an interpreter) is available, and if so return full path.
+        '''
+        cmd = self._connection._shell.check_interp(candidate)
+        self._display.debug("calling _low_level_execute_command to check %s" % var)
+        data = self._low_level_execute_command(cmd, sudoable=True)
+
+        interp_full_path = data['stdout'].strip().splitlines()[-1]
+        if 'NOTFOUND' in interp_full_path:
+            return None
+        else:
+            return interp_full_path
 
     def _make_tmp_path(self, remote_user):
         '''
@@ -679,6 +743,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+
+        # merge additional facts provided by the module
+        if self._module_facts:
+            if 'ansible_facts' in data:
+                data['ansible_facts'].update(self._module_facts)
+            else:
+                data['ansible_facts'] = self._module_facts
+
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='replace'):
