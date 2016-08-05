@@ -24,7 +24,7 @@ author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary commands on ios devices.
 description:
   - Sends arbitrary commands to an IOSXR node and returns the results
-    read from the device. The M(iosxr_command) module includes an
+    read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: iosxr

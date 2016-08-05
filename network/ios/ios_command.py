@@ -24,7 +24,7 @@ author: "Peter Sprygada (@privateip)"
 short_description: Run commands on remote devices running Cisco IOS
 description:
   - Sends arbitrary commands to an ios node and returns the results
-    read from the device. The M(ios_command) module includes an
+    read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
@@ -35,7 +35,7 @@ options:
     description:
       - List of commands to send to the remote ios device over the
         configured provider. The resulting output from the command
-        is returned. If the I(waitfor) argument is provided, the
+        is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retries has expired.
     required: true
@@ -55,7 +55,7 @@ options:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        I(waitfor) conditions.
+        I(wait_for) conditions.
     required: false
     default: 10
   interval:
