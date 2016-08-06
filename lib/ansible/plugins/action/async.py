@@ -70,17 +70,13 @@ class ActionModule(ActionBase):
                 args_data += '%s="%s" ' % (k, pipes.quote(to_unicode(v)))
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), args_data)
 
-        self._fixup_perms(tmp, remote_user, execute=True, recursive=True)
-        # Only the following two files need to be executable but we'd have to
-        # make three remote calls if we wanted to just set them executable.
-        # There's not really a problem with marking too many of the temp files
-        # executable so we go ahead and mark them all as executable in the
-        # line above (the line above is needed in any case [although
-        # execute=False is okay if we uncomment the lines below] so that all
-        # the files are readable in case the remote_user and become_user are
-        # different and both unprivileged)
-        #self._fixup_perms(remote_module_path, remote_user, execute=True, recursive=False)
-        #self._fixup_perms(async_module_path, remote_user, execute=True, recursive=False)
+        remote_paths = tmp, remote_module_path, async_module_path
+
+        # argsfile doesn't need to be executable, but this saves an extra call to the remote host
+        if argsfile:
+            remote_paths += argsfile,
+
+        self._fixup_perms(remote_paths, remote_user, execute=True)
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))
