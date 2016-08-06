@@ -80,5 +80,16 @@ EXAMPLES = '''
     path="http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe"
     Product_Id="{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}"
     Arguments="/install /passive /norestart"
+
+# Install/uninstall an msi-based package
+- name: Install msi-based package (Remote Desktop Connection Manager)
+  win_package:
+    path: "https://download.microsoft.com/download/A/F/0/AF0071F3-B198-4A35-AA90-C68D103BDCCF/rdcman.msi"
+    product_id: "{0240359E-6A4C-4884-9E94-B397A02D893C}"
+- name: Uninstall msi-based package
+  win_package:
+    path: "https://download.microsoft.com/download/A/F/0/AF0071F3-B198-4A35-AA90-C68D103BDCCF/rdcman.msi"
+    product_id: "{0240359E-6A4C-4884-9E94-B397A02D893C}"
+    state: absent
 '''
 
