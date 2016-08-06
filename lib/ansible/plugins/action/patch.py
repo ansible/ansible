@@ -63,7 +63,7 @@ class ActionModule(ActionBase):
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._transfer_file(src, tmp_src)
 
-        self._fixup_perms(tmp, remote_user, recursive=True)
+        self._fixup_perms((tmp, tmp_src), remote_user)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

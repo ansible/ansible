@@ -15,7 +15,7 @@ test_flags="${TEST_FLAGS:-}"
 force_color="${FORCE_COLOR:-1}"
 
 # FIXME: these tests fail
-skip_tags='test_copy,test_template,test_unarchive,test_command_shell,test_sudo,test_become,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
+skip_tags='test_copy,test_template,test_unarchive,test_command_shell,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
 
 cd ~/
 
