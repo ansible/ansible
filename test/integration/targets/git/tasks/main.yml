@@ -36,7 +36,6 @@
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
     git_version_supporting_depth: 1.9.1
-    git_version_supporting_get_url: 1.7.5
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
@@ -97,7 +96,6 @@
   assert:
     that:
       - "not git_result2.changed"
-  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
 
 #
 # Test repo=git@github.com:/...
@@ -460,7 +458,6 @@
   assert:
     that:
       - not checkout_same_url|changed
-  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
 
 
 - name: clone repo with new url to same destination
@@ -552,7 +549,7 @@
 
 - assert:
     that: "not checkout2|changed"
-  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=') and git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 - name: again try to access earlier commit
   shell: git checkout 79624b4
@@ -612,19 +609,14 @@
   git: repo={{ checkout_dir }} dest={{checkout_dir}}.copy version=newtag
   register: update_new_tag
 
-- name: check new head not changed
-  assert:
-    that:
-      - not update_new_tag|changed
-  when: git_version.stdout | version_compare("{{git_version_supporting_get_url}}", '>=')
-
 - name: get tags of new head
   command: git tag --contains chdir="{{ checkout_dir }}.copy"
   register: listoftags
 
-- name: check new head tags
+- name: check new head
   assert:
     that:
+      - not update_new_tag|changed
       - "'newtag' in listoftags.stdout_lines"
 
 
