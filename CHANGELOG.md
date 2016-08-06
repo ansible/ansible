@@ -16,6 +16,7 @@ Ansible Changes By Release
 - Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 
 ####New Modules:
+- archive
 - asa
   * asa_acl
   * asa_command
@@ -24,18 +25,26 @@ Ansible Changes By Release
 - aws
   * ec2_customer_gateway
   * ec2_vpc_nacl_facts
+  * ec2_vpc_nat_gateway
   * ec2_vpc_vgw
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- github_key
+- google
+  * gcdns_record
+  * gcdns_zone
 - ipmi
   * ipmi_boot
   * ipmi_power
 - letsencrypt
+- logicmonitor
+- logicmonitor_facts
 - lxd
   * lxd_profile
   * lxd_container
 - netconf_config
+- ovh_ip_loadbalancing_backend
 - openstack
   * os_keystone_service
   * os_recordset
@@ -48,6 +57,7 @@ Ansible Changes By Release
 - systemd
 - telegram
 - vmware
+  * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
