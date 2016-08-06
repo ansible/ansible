@@ -96,5 +96,3 @@ class CallbackModule(CallbackBase):
             out = self.debug
             self.send_msg("Great! \n Playbook %s complited:\n%s \n Last task debug:\n %s" % (name,s, out))
 
-
-
