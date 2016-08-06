@@ -45,7 +45,7 @@ pkg install -y \
 pip install \
     junit-xml \
     virtualenv \
-    jsonpath-rw
+    jmespath
 
 # FIXME: tests assume bash is in /bin/bash
 if [ ! -f /bin/bash ]; then

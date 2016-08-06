@@ -23,21 +23,21 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
 try:
-    from jsonpath_rw import jsonpath, parse
+    import jmespath
     HAS_LIB = True
 except ImportError:
     HAS_LIB = False
 
 
 def json_query(data, expr):
-    '''Query data using json-path based query language. Example:
-    - debug: msg="{{ instance | .tagged_instances[*].block_device_mapping..volume_id') }}"
+    '''Query data using jmespath query language ( http://jmespath.org ). Example:
+    - debug: msg="{{ instance | json_query(tagged_instances[*].block_device_mapping.*.volume_id') }}"
     '''
     if not HAS_LIB:
-        raise AnsibleError('You need to install "jsonpath_rw" prior to running '
-                           'query filter')
+        raise AnsibleError('You need to install "jmespath" prior to running '
+                           'json_query filter')
 
-    return [match.value for match in parse(expr).find(data)]
+    return jmespath.search(expr, data)
 
 class FilterModule(object):
     ''' Query filter '''
