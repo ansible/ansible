@@ -127,6 +127,11 @@ def main():
     else:
         dest_type="e"
 
+    if module.params['routing_key'] == "":
+        props = "~"
+    else:
+        props = urllib.quote(module.params['routing_key'],'')
+
     url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
@@ -134,7 +139,7 @@ def main():
         urllib.quote(module.params['name'],''),
         dest_type,
         urllib.quote(module.params['destination'],''),
-        urllib.quote(module.params['routing_key'],'')
+        props
     )
 
     # Check if exchange already exists
