@@ -57,45 +57,25 @@ class ShellBase(object):
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
-    def chmod(self, mode, path, recursive=True):
-        path = pipes.quote(path)
-        cmd = ['chmod']
-
-        if recursive:
-            cmd.append('-R') # many chmods require -R before file list
-
-        cmd.extend([mode, path])
+    def chmod(self, paths, mode):
+        cmd = ['chmod', mode]
+        cmd.extend(paths)
+        cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
-    def chown(self, path, user, group=None, recursive=True):
-        path = pipes.quote(path)
-        user = pipes.quote(user)
-
-        cmd = ['chown']
-
-        if recursive:
-            cmd.append('-R') # many chowns require -R before file list
-
-        if group is None:
-            cmd.extend([user, path])
-        else:
-            group = pipes.quote(group)
-            cmd.extend(['%s:%s' % (user, group), path])
+    def chown(self, paths, user):
+        cmd = ['chown', user]
+        cmd.extend(paths)
+        cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
-    def set_user_facl(self, path, user, mode, recursive=True):
+    def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        path = pipes.quote(path)
-        mode = pipes.quote(mode)
-        user = pipes.quote(user)
-
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
-        if recursive:
-            cmd = ['find', path, '-exec'] + cmd + ["'{}'", "'+'"]
-        else:
-            cmd.append(path)
+        cmd.extend(paths)
+        cmd = [pipes.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
