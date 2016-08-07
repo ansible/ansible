@@ -367,7 +367,7 @@ options:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
          rather than stopping it. Use keep_volumes to retain volumes associated with the removed container.'
-      - 'I(present)" - Asserts the existence of a container matching the name and any provided configuration parameters. If no
+      - 'I(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
         with the requested config. Image version will be taken into account when comparing configuration. To ignore image
