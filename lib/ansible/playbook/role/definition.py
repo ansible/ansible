@@ -136,9 +136,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         '''
 
         # we always start the search for roles in the base directory of the playbook
+        # and the current working directory
         role_search_paths = [
             os.path.join(self._loader.get_basedir(), u'roles'),
             self._loader.get_basedir(),
+            os.path.join(os.getcwd(), u'roles'),
+            os.getcwd(),
         ]
 
         # also search in the configured roles path
