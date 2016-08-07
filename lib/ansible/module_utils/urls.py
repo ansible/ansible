@@ -81,6 +81,16 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
+'''
+The **urls** utils module offers a replacement for the `requests`_ library for most cases. 
+
+Sometimes you really need the requests library, but you should always check, whether 
+this utils module is sufficient for your use case.
+
+.. _requests:
+   http://docs.python-requests.org/en/master/
+'''
+
 import netrc
 import os
 import re
@@ -728,11 +738,11 @@ def maybe_add_ssl_handler(url, validate_certs):
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-        force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None,
-        force_basic_auth=False, follow_redirects='urllib2'):
+             force=False, last_mod_time=None, timeout=10, validate_certs=True,
+             url_username=None, url_password=None, http_agent=None,
+             force_basic_auth=False, follow_redirects='urllib2'):
     '''
-    Fetches a file from an HTTP/FTP server using urllib2
+    Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
     Does not require the module environment
     '''
@@ -870,14 +880,14 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url = dict(),
-        force = dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent = dict(default='ansible-httpget'),
-        use_proxy = dict(default='yes', type='bool'),
-        validate_certs = dict(default='yes', type='bool'),
-        url_username = dict(required=False),
-        url_password = dict(required=False),
-        force_basic_auth = dict(required=False, type='bool', default='no'),
+        url=dict(),
+        force=dict(default='no', aliases=['thirsty'], type='bool'),
+        http_agent=dict(default='ansible-httpget'),
+        use_proxy=dict(default='yes', type='bool'),
+        validate_certs=dict(default='yes', type='bool'),
+        url_username=dict(required=False),
+        url_password=dict(required=False),
+        force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
 
@@ -885,7 +895,34 @@ def url_argument_spec():
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
-    Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
+    Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
+
+    Args:
+        :module (AnsibleModule): The AnsibleModule (used to get username, password etc. (s.b.).
+        :url:                    The url to use.
+        :data:                   The data to be sent (in case of POST/PUT).
+        :headers (dict):         A dict with the request headers.
+        :method (String):        "POST", "PUT", etc.
+        :use_proxy (Boolean):    Default: True
+        :force (Boolean):        If True: Do not get a cached copy (Default: False)
+        :last_mod_time:          Default: None
+        :timeout (int):          Default: 10
+
+    Returns:
+        :response: the response (body). Use `resp.body()` to read the data.
+        :info:     status code and other meta data. When a HttpError (status > 400) occurred
+                   then info['body'] contains the error response data::
+
+    Example:
+        >>> data={...}
+            resp, info = fetch_url("http://example.com", 
+                                   data=module.jsonify(data)
+                                   header={Content-type': 'application/json'},
+                                   method="POST")
+            status_code = info["body"]
+            body = resp.read()
+            if status_code >= 400 :
+                body = info['body']
     '''
 
     if not HAS_URLPARSE:
