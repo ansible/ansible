@@ -44,6 +44,24 @@
     that: 
         - 'diff_result_9851.stdout == ""'
 
+- name: verify in_container
+  assert:
+    that:
+      # String is in list
+      - '( "foo" | in_container(["foo", "bar"]) ) == true'
+      - '( "aaa" | in_container(["foo", "bar"]) ) == false'
+
+      # String is in dict (hash)
+      - '( "foo" | in_container({"foo": 1, "bar": 2}) ) == true'
+      - '( "aaa" | in_container({"foo": 1, "bar": 2}) ) == false'
+
+      # String is in string
+      - '( "foo" | in_container("Is foo in bar") ) == true'
+      - '( "aaa" | in_container("Is foo in bar") ) == false'
+
+      # TypeError
+      - '( 5 | in_container(1) ) == false'
+
 - name: fill in a basic template
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result

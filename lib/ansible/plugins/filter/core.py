@@ -368,6 +368,17 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def in_container(value, container):
+    '''
+    Returns True is the value is in the container. False otherwise.
+    The container can be a string, list or dict
+    '''
+
+    try:
+        return True if value in container else False
+    except TypeError:
+        return False
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -445,4 +456,7 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # in container
+            'in_container': in_container,
         }
