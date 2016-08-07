@@ -18,6 +18,17 @@ The vault feature can encrypt any structured data file used by Ansible.  This ca
 
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety. However, that might be a little too much and could annoy your coworkers :)
 
+.. _best_practices_for_variables_and_vaults:
+
+Best Practice for Variables and Vaults
+``````````````````````````````````````
+
+For maintenance it is useful to be able to use grep, or similar tools, to find variables in your Ansible setup. Since vaults obscure these variables, it is best to work with a layer of indirection. So when running a playbook, Ansible will find the variables in the unencrypted file. All the sensitive variables will come from the encrypted file.
+
+A best practice to do this is to start with a "group_vars/" subdirectory named after the group. Inside this subdirectory create two files named "vars" and "vault". Inside the "vars" file define all the variables needed, including the sensitive ones. Copy all the sensitive variables over to the "vault" file. Now prefix these variables with "vault_". Adjust the variables in the "vars" file to point to the matching "vault_" variables. Make sure the "vault" file is vault encrypted.
+
+This best practice has no limit on the amount of variable and vault files or their names.
+
 .. _creating_files:
 
 Creating Encrypted Files
