@@ -212,6 +212,9 @@ def main():
         supports_check_mode = True
     )
 
+    # Set LANG env since we parse stdout
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     global APK_PATH
     APK_PATH = module.get_bin_path('apk', required=True)
 
