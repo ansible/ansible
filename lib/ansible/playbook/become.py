@@ -105,25 +105,31 @@ class Become:
         '''
         Override for the 'become' getattr fetcher, used from Base.
         '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become')
-        else:
+        if self._attributes['become'] is not None:
             return self._attributes['become']
+        elif hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become')
+
+        return None
 
     def _get_attr_become_method(self):
         '''
         Override for the 'become_method' getattr fetcher, used from Base.
         '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_method')
-        else:
+        if self._attributes['become_method'] is not None:
             return self._attributes['become_method']
+        elif hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become_method')
+
+        return None
 
     def _get_attr_become_user(self):
         '''
         Override for the 'become_user' getattr fetcher, used from Base.
         '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_user')
-        else:
+        if self._attributes['become_user'] is not None:
             return self._attributes['become_user']
+        elif hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become_user')
+
+        return None
