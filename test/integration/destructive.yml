@@ -1,5 +1,9 @@
 - hosts: testhost
-  gather_facts: True
+  gather_facts: False
+  pre_tasks:
+    - setup:
+      tags:
+        - always
   roles:
     # In destructive because it creates and removes a user
     - { role: test_sudo, tags: test_sudo}
