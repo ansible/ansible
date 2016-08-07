@@ -25,7 +25,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_str
 
 
 class ActionModule(ActionBase):
@@ -152,7 +152,10 @@ class ActionModule(ActionBase):
 
         if remote_checksum != local_checksum:
             # create the containing directories, if needed
-            makedirs_safe(os.path.dirname(dest))
+            try:
+                makedirs_safe(os.path.dirname(dest))
+            except OSError as e:
+                raise AnsibleError("Unable to create local destination directories: %s" % to_str(e))
 
             # fetch the file and check for changes
             if remote_data is None:
