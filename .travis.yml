@@ -20,6 +20,8 @@ matrix:
     - env: TARGET=sanity TOXENV=py35
       python: 3.5
     - env: TARGET=sanity TOXENV=py24
+  allow_failures:
+    - env: TARGET=sanity TOXENV=py24
 addons:
   apt:
     sources:
