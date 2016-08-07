@@ -115,7 +115,7 @@
   template:
     src: foo.j2
     dest: '{{output_dir}}/foo.symlink'
-    mode: 0600
+    mode: '0600'
     follow: True
   register: template_result
 
@@ -135,7 +135,7 @@
   template:
     src: foo.j2
     dest: '{{output_dir}}/foo.symlink'
-    mode: 0600
+    mode: '0600'
     follow: True
   register: template_result
 
