@@ -965,7 +965,7 @@ class Hardware(Facts):
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -1202,7 +1202,7 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
-    @timeout(10)
+    @timeout(30)
     def get_mount_facts(self):
         uuids = dict()
         self.facts['mounts'] = []
@@ -2055,7 +2055,7 @@ class Network(Facts):
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -2839,7 +2839,7 @@ class Virtual(Facts):
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
