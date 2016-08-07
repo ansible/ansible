@@ -403,6 +403,10 @@ class TaskExecutor:
             include_file = templar.template(include_file)
             return dict(include=include_file, include_variables=include_variables)
 
+        prev_var = None
+        if self._task.action == 'debug' and 'var' in self._task.args:
+            prev_var = self._task.args.pop('var')
+
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
@@ -411,6 +415,9 @@ class TaskExecutor:
                 display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
+
+        if prev_var is not None:
+            self._task.args['var'] = prev_var
 
         # get the connection and the handler for this execution
         if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
