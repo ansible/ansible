@@ -77,6 +77,11 @@ EXAMPLES = '''
     name: httpd
     enabled: yes
     masked: no
+# Example action to enable a timer for dnf-automatic
+- systemd:
+    name: dnf-automatic.timer
+    state: started
+    enabled: True
 '''
 
 RETURN = '''
