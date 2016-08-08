@@ -45,7 +45,7 @@ except ImportError:
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
-    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
+    # FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))

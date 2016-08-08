@@ -193,22 +193,25 @@ class VariableManager:
 
     def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
-        Returns the variables, with optional "context" given via the parameters
-        for the play, host, and task (which could possibly result in different
-        sets of variables being returned due to the additional context).
+        Returns the variables, with optional "context" given via the parameter for the play, host, and task.
+
+        The context can  possibly result in different
+        sets of variables being returned due to the additional context.
 
         The order of precedence is:
-        - play->roles->get_default_vars (if there is a play context)
-        - group_vars_files[host] (if there is a host context)
-        - host_vars_files[host] (if there is a host context)
-        - host->get_vars (if there is a host context)
-        - fact_cache[host] (if there is a host context)
-        - play vars (if there is a play context)
-        - play vars_files (if there's no host context, ignore
-          file names that cannot be templated)
-        - task->get_vars (if there is a task context)
-        - vars_cache[host] (if there is a host context)
-        - extra vars
+
+         - play->roles->get_default_vars (if there is a play context)
+         - group_vars_files[host] (if there is a host context)
+         - host_vars_files[host] (if there is a host context)
+         - host->get_vars (if there is a host context)
+         - fact_cache[host] (if there is a host context)
+         - play vars (if there is a play context)
+         - play vars_files (if there's no host context, ignore
+           file names that cannot be templated)
+         - task->get_vars (if there is a task context)
+         - vars_cache[host] (if there is a host context)
+         - extra vars
+
         '''
 
         display.debug("in VariableManager get_vars()")

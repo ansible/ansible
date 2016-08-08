@@ -19,7 +19,6 @@ __metaclass__ = type
 
 import collections
 import os
-import sys
 import time
 from multiprocessing import Lock
 from itertools import chain
@@ -31,8 +30,7 @@ try:
     import memcache
 except ImportError:
     print('python-memcached is required for the memcached fact cache')
-    sys.exit(1)
-
+    raise SystemExit(1)
 
 class ProxyClientPool(object):
     """
