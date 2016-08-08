@@ -35,7 +35,7 @@ options:
   dest_port:
     description:
       - Port number for ssh on the destination host. Prior to ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
-    default: Value of ansible_ssh_port for this host, remote_port config setting, or 22 if none of those are set
+    default: Value of ansible_ssh_port for this host, remote_port config setting, or the value from ssh client configuration if none of those are set
     version_added: "1.5"
   mode:
     description:
@@ -281,7 +281,7 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
-            dest_port = dict(default=22, type='int'),
+            dest_port = dict(default=None, type='int'),
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
@@ -411,10 +411,13 @@ def main():
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
     if not source.startswith('"rsync://') and not dest.startswith('"rsync://'):
-        if dest_port != 22:
+        # If the user specified a port value
+        # Note:  The action plugin takes care of setting this to a port from
+        # inventory if the user didn't specify an explict dest_port
+        if dest_port is not None:
             cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
         else:
-            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)  # need ssh param
+            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)
 
     if rsync_path:
         cmd = cmd + " --rsync-path=%s" % (rsync_path)
