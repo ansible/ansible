@@ -73,13 +73,13 @@
 # VERIFY dest as a directory does not break file attributes
 # Note: expanduser is needed to go down the particular codepath that was broken before
 - name: setup directory for test
-  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group=root
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ ansible_env.GROUP | default('root') }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
   register: file_result
 
 - name: check that the file has the correct attributes
@@ -103,7 +103,7 @@
       - "dir_attrs.stat.mode == '0755'"
 
 - name: Check that template to a dirctory where the directory does not end with a / is allowed
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group=root
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
 
 - name: make a symlink to the templated file
   file:
