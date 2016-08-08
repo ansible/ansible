@@ -49,21 +49,21 @@ includes: setup
 pull:	pull_run pull_no_127 pull_limit_inventory
 
 pull_run:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep MAGICKEYWORD; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep MAGICKEYWORD; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13681
 pull_no_127:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep -v 127\.0\.0\.1; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep -v 127\.0\.0\.1; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13688
 pull_limit_inventory:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS); \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
@@ -314,7 +314,7 @@ test_lookup_paths: setup
 
 no_log: setup
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
-	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
+	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) $(TEST_FLAGS) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
 
 test_binary_modules_winrm: INVENTORY = inventory.winrm
 test_binary_modules_winrm: test_binary_modules
