@@ -40,8 +40,8 @@
   register: diff_result_9851
 
 - name: 9851 - verify generated file matches known good
-  assert:  
-    that: 
+  assert:
+    that:
         - 'diff_result_9851.stdout == ""'
 
 - name: fill in a basic template
@@ -56,9 +56,9 @@
   register: diff_result
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-        - 'diff_result.stdout == ""' 
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
 
 - name: Verify human_readable
   assert:
@@ -77,3 +77,9 @@
         - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+
+- name: Test json_query filter
+  assert:
+    that:
+      - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
+
