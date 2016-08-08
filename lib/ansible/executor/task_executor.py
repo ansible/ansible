@@ -468,7 +468,7 @@ class TaskExecutor:
 
             if self._task.async > 0:
                 if self._task.poll > 0:
-                    result = self._poll_async_result(result=result, templar=templar)
+                    result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -552,10 +552,13 @@ class TaskExecutor:
         display.debug("attempt loop complete, returning result")
         return result
 
-    def _poll_async_result(self, result, templar):
+    def _poll_async_result(self, result, templar, task_vars=None):
         '''
         Polls for the specified JID to be complete
         '''
+
+        if task_vars is None:
+            task_vars = self._job_vars
 
         async_jid = result.get('ansible_job_id')
         if async_jid is None:
@@ -584,7 +587,7 @@ class TaskExecutor:
         while time_left > 0:
             time.sleep(self._task.poll)
 
-            async_result = normal_handler.run()
+            async_result = normal_handler.run(task_vars=task_vars)
             # We do not bail out of the loop in cases where the failure
             # is associated with a parsing error. The async_runner can
             # have issues which result in a half-written/unparseable result
