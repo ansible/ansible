@@ -194,7 +194,7 @@ class TaskExecutor:
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']: #TODO: move this to constants?
-                    if subdir in self._task.name:
+                    if subdir in self._task.action:
                         break
                 setattr(mylookup,'_subdir', subdir + 's')
 
