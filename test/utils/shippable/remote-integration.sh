@@ -15,7 +15,7 @@ test_flags="${TEST_FLAGS:-}"
 force_color="${FORCE_COLOR:-1}"
 
 # FIXME: these tests fail
-skip_tags='test_copy,test_template,test_unarchive,test_command_shell,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
+skip_tags='test_unarchive,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
 
 cd ~/
 
@@ -54,6 +54,11 @@ fi
 # FIXME: tests assume true is in /bin/true
 if [ ! -f /bin/true ]; then
     ln -s /usr/bin/true /bin/true
+fi
+
+# FIXME: tests assume sha1sum is available (some platforms have shasum instead)
+if [ ! -f /usr/local/bin/sha1sum ]; then
+    ln -s /usr/local/bin/shasum /usr/local/bin/sha1sum
 fi
 
 # FIXME: async doesn't work with ansible_python_interpreter, see: https://github.com/ansible/ansible/issues/14101
