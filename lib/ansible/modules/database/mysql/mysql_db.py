@@ -302,13 +302,15 @@ def main():
     if db_exists(cursor, db):
         if state == "absent":
             if module.check_mode:
-                changed = True
+                module.exit_json(changed=True, db=db)
             else:
                 try:
                     changed = db_delete(cursor, db)
                 except Exception:
                     e = get_exception()
                     module.fail_json(msg="error deleting database: " + str(e))
+                module.exit_json(changed=changed, db=db)
+
         elif state == "dump":
             if module.check_mode:
                 module.exit_json(changed=True, db=db)
@@ -320,6 +322,7 @@ def main():
                     module.fail_json(msg="%s" % stderr)
                 else:
                     module.exit_json(changed=True, db=db, msg=stdout)
+        
         elif state == "import":
             if module.check_mode:
                 module.exit_json(changed=True, db=db)
@@ -331,6 +334,12 @@ def main():
                     module.fail_json(msg="%s" % stderr)
                 else:
                     module.exit_json(changed=True, db=db, msg=stdout)
+        
+        elif state == "present":
+            if module.check_mode:
+                module.exit_json(changed=False, db=db)
+            module.exit_json(changed=False, db=db)
+
     else:
         if state == "present":
             if module.check_mode:
@@ -341,8 +350,34 @@ def main():
                 except Exception:
                     e = get_exception()
                     module.fail_json(msg="error creating database: " + str(e))
+            module.exit_json(changed=changed, db=db)
 
-    module.exit_json(changed=changed, db=db)
+        elif state == "import":
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
+            else:
+                try:
+                    changed = db_create(cursor, db, encoding, collation)
+                    if changed:
+                        rc, stdout, stderr = db_import(module, login_host, login_user,
+                                                    login_password, db, target, all_databases,
+                                                    login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                        if rc != 0:
+                            module.fail_json(msg="%s" % stderr)
+                        else:
+                            module.exit_json(changed=True, db=db, msg=stdout)
+                except Exception, e:
+                    module.fail_json(msg="error creating database: " + str(e))
+
+        elif state == "absent":
+            if module.check_mode:
+                module.exit_json(changed=False, db=db)
+            module.exit_json(changed=False, db=db)
+
+        elif state == "dump":
+            if module.check_mode:
+                module.exit_json(changed=False, db=db)
+            module.fail_json(msg="Cannot dump database %s - not found" % (db))
 
 # import module snippets
 from ansible.module_utils.basic import *
