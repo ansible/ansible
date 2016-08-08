@@ -83,9 +83,30 @@ except ImportError:
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
 
-def semanage_port_exists(seport, port, proto):
-    """ Get the SELinux port type definition from policy. Return None if it does
-    not exist.
+
+def semanage_port_get_ports(seport, setype, proto):
+    """ Get the list of ports that have the specified type definition.
+
+    :param seport: Instance of seobject.portRecords
+
+    :type setype: str
+    :param setype: SELinux type.
+
+    :type proto: str
+    :param proto: Protocol ('tcp' or 'udp')
+
+    :rtype: list
+    :return: List of ports that have the specified SELinux type.
+    """
+    records = seport.get_all_by_type()
+    if (setype, proto) in records:
+        return records[(setype, proto)]
+    else:
+        return []
+
+
+def semanage_port_get_type(seport, port, proto):
+    """ Get the SELinux type of the specified port.
 
     :param seport: Instance of seobject.portRecords
 
@@ -95,15 +116,19 @@ def semanage_port_exists(seport, port, proto):
     :type proto: str
     :param proto: Protocol ('tcp' or 'udp')
 
-    :rtype: bool
-    :return: True if the SELinux port type definition exists, False otherwise
+    :rtype: tuple
+    :return: Tuple containing the SELinux type and MLS/MCS level, or None if not found.
     """
     ports = port.split('-', 1)
     if len(ports) == 1:
         ports.extend(ports)
-    ports = map(int, ports)
-    record = (ports[0], ports[1], proto)
-    return record in seport.get_all()
+    key = (int(ports[0]), int(ports[1]), proto)
+
+    records = seport.get_all()
+    if key in records:
+        return records[key]
+    else:
+        return None
 
 
 def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', sestore=''):
@@ -137,11 +162,15 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
         seport = seobject.portRecords(sestore)
         seport.set_reload(do_reload)
         change = False
+        ports_by_type = semanage_port_get_ports(seport, setype, proto)
         for port in ports:
-            exists = semanage_port_exists(seport, port, proto)
-            if not exists and not module.check_mode:
-                seport.add(port, proto, serange, setype)
-            change = change or not exists
+            if port not in ports_by_type:
+                change = True
+                port_type = semanage_port_get_type(seport, port, proto)
+                if port_type is None and not module.check_mode:
+                    seport.add(port, proto, serange, setype)
+                elif port_type is not None and not module.check_mode:
+                    seport.modify(port, proto, serange, setype)
 
     except ValueError:
         e = get_exception()
@@ -162,7 +191,7 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
     return change
 
 
-def semanage_port_del(module, ports, proto, do_reload, sestore=''):
+def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
     """ Delete SELinux port type definition from the policy.
 
     :type module: AnsibleModule
@@ -173,6 +202,9 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
 
     :type proto: str
     :param proto: Protocol ('tcp' or 'udp')
+
+    :type setype: str
+    :param setype: SELinux type.
 
     :type do_reload: bool
     :param do_reload: Whether to reload SELinux policy after commit
@@ -187,11 +219,12 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
         seport = seobject.portRecords(sestore)
         seport.set_reload(do_reload)
         change = False
+        ports_by_type = semanage_port_get_ports(seport, setype, proto)
         for port in ports:
-            exists = semanage_port_exists(seport, port, proto)
-            if not exists and not module.check_mode:
-                seport.delete(port, proto)
-            change = change or not exists
+            if port in ports_by_type:
+                change = True
+                if not module.check_mode:
+                    seport.delete(port, proto)
 
     except ValueError:
         e = get_exception()
@@ -262,7 +295,7 @@ def main():
     if state == 'present':
         result['changed'] = semanage_port_add(module, ports, proto, setype, do_reload)
     elif state == 'absent':
-        result['changed'] = semanage_port_del(module, ports, proto, do_reload)
+        result['changed'] = semanage_port_del(module, ports, proto, setype, do_reload)
     else:
         module.fail_json(msg='Invalid value of argument "state": {0}'.format(state))
 
