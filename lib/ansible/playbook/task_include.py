@@ -55,10 +55,8 @@ class TaskInclude(Task):
         they are params to the included tasks.
         '''
         all_vars = dict()
-        if self._block:
-            all_vars.update(self._block.get_vars())
-        if self._task_include:
-            all_vars.update(self._task_include.get_vars())
+        if self._parent:
+            all_vars.update(self._parent.get_vars())
 
         all_vars.update(self.vars)
         all_vars.update(self.args)

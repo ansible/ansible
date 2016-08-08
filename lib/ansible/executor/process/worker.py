@@ -100,6 +100,10 @@ class WorkerProcess(multiprocessing.Process):
         signify that they are ready for their next task.
         '''
 
+        #import cProfile, pstats, StringIO
+        #pr = cProfile.Profile()
+        #pr.enable()
+
         if HAS_ATFORK:
             atfork()
 
@@ -120,7 +124,7 @@ class WorkerProcess(multiprocessing.Process):
             display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host, self._task, executor_result)
+            task_result = TaskResult(self._host.name, self._task._uuid, executor_result)
 
             # put the result on the result queue
             display.debug("sending task result")
@@ -130,7 +134,7 @@ class WorkerProcess(multiprocessing.Process):
         except AnsibleConnectionFailure:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host, self._task, dict(unreachable=True))
+            task_result = TaskResult(self._host.name, self._task._uuid, dict(unreachable=True))
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
@@ -138,11 +142,19 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
+                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
                 except:
                     display.debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
 
         display.debug("WORKER PROCESS EXITING")
+
+        #pr.disable()
+        #s = StringIO.StringIO()
+        #sortby = 'time'
+        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        #ps.print_stats()
+        #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
+        #    f.write(s.getvalue())
 

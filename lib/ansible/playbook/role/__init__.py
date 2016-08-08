@@ -353,7 +353,9 @@ class Role(Base, Become, Conditional, Taggable):
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
-            new_task_block = task_block.copy()
+            new_task_block = task_block.copy(exclude_parent=True)
+            if task_block._parent:
+                new_task_block._parent = task_block._parent.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             block_list.append(new_task_block)

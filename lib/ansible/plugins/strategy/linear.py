@@ -253,6 +253,7 @@ class StrategyModule(StrategyBase):
 
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
+                        del task_vars
 
                     # if we're bypassing the host loop, break out now
                     if run_once:
@@ -315,7 +316,7 @@ class StrategyModule(StrategyBase):
                                 final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                 display.debug("done filtering new block on tags")
 
-                                noop_block = Block(parent_block=task._block)
+                                noop_block = Block(parent_block=task._parent)
                                 noop_block.block  = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]

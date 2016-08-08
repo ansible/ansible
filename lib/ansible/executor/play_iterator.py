@@ -244,14 +244,14 @@ class PlayIterator:
             if ra != rb:
                 return True
             else:
-                return old_s.cur_dep_chain != task._block.get_dep_chain()
+                return old_s.cur_dep_chain != task.get_dep_chain()
 
         if task and task._role:
             # if we had a current role, mark that role as completed
             if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and not peek:
                 s.cur_role._completed[host.name] = True
             s.cur_role = task._role
-            s.cur_dep_chain = task._block.get_dep_chain()
+            s.cur_dep_chain = task.get_dep_chain()
 
         if not peek:
             self._host_states[host.name] = s
@@ -508,6 +508,12 @@ class PlayIterator:
         the different processes, and not all data structures are preserved. This method
         allows us to find the original task passed into the executor engine.
         '''
+
+        if isinstance(task, Task):
+            the_uuid = task._uuid
+        else:
+            the_uuid = task
+
         def _search_block(block):
             '''
             helper method to check a block's task lists (block/rescue/always)
@@ -521,7 +527,7 @@ class PlayIterator:
                         res = _search_block(t)
                         if res:
                             return res
-                    elif t._uuid == task._uuid:
+                    elif t._uuid == the_uuid:
                         return t
             return None
 
