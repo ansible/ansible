@@ -166,7 +166,7 @@ Availability Zone
   ``us-east-1b``
 
 Security Group
-  Instances belong to one or more security groups. A group is created for each security group, with all characters except alphanumerics, dashes (-) converted to underscores (_). Each group is prefixed by ``security_group_``
+  Instances belong to one or more security groups. A group is created for each security group, with all characters except alphanumerics, converted to underscores (_). Each group is prefixed by ``security_group_``. Currently, dashes (-) are also converted to underscores (_), you can change using the `replace_dash_in_groups` setting in ec2.ini (this has changed across several versions so check the ec2.ini for details).
   e.g.
   ``security_group_default``
   ``security_group_webservers``
