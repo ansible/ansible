@@ -250,7 +250,6 @@ CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'fact_caching', 'ANSIBL
 CACHE_PLUGIN_CONNECTION        = get_config(p, DEFAULTS, 'fact_caching_connection', 'ANSIBLE_CACHE_PLUGIN_CONNECTION', None)
 CACHE_PLUGIN_PREFIX            = get_config(p, DEFAULTS, 'fact_caching_prefix', 'ANSIBLE_CACHE_PLUGIN_PREFIX', 'ansible_facts')
 CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'fact_caching_timeout', 'ANSIBLE_CACHE_PLUGIN_TIMEOUT', 24 * 60 * 60, integer=True)
-CACHE_PLUGIN_FORMAT            = get_config(p, DEFAULTS, 'fact_caching_format', 'ANSIBLE_CACHE_PLUGIN_FORMAT', False, boolean=True)
 
 # Display
 ANSIBLE_FORCE_COLOR            = get_config(p, DEFAULTS, 'force_color', 'ANSIBLE_FORCE_COLOR', None, boolean=True)

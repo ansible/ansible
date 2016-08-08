@@ -547,6 +547,7 @@ To configure fact caching using redis, enable it in ``ansible.cfg`` as follows::
     gathering = smart
     fact_caching = redis
     fact_caching_timeout = 86400
+    # seconds
 
 To get redis up and running, perform the equivalent OS commands::
 
@@ -565,13 +566,12 @@ To configure fact caching using jsonfile, enable it in ``ansible.cfg`` as follow
     fact_caching = jsonfile
     fact_caching_connection = /path/to/cachedir
     fact_caching_timeout = 86400
-    fact_caching_format = True
+    # seconds
 
-``fact_caching_connection`` is a local filesystem path to a writeable directory (ansible will attempt to create the directory if one does not exist).
+``fact_caching_connection`` is a local filesystem path to a writeable
+directory (ansible will attempt to create the directory if one does not exist).
 
 ``fact_caching_timeout`` is the number of seconds to cache the recorded facts.
-
-``fact_caching_format`` is a boolean to ensure the json cache files are indented and sorted. (This helps during development/debugging)
 
 .. _registered_variables:
 
