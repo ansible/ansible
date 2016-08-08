@@ -49,21 +49,21 @@ includes: setup
 pull:	pull_run pull_no_127 pull_limit_inventory
 
 pull_run:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep MAGICKEYWORD; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep MAGICKEYWORD; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13681
 pull_no_127:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep -v 127\.0\.0\.1; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep -v 127\.0\.0\.1; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13688
 pull_limit_inventory:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS); \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
