@@ -1,0 +1,5 @@
+---
+- hosts: cantconnect, namefailure, nokey
+  tasks:
+    - name: ping
+      ping:

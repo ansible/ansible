@@ -22,7 +22,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pipes
-import sys
 from io import StringIO
 
 from ansible.compat.tests import unittest
@@ -33,6 +32,41 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
 from ansible.utils.unicode import to_bytes, to_unicode
+
+ssh_stderr_key_too_open = """
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0666 for '/home/adrian/.ssh/id_rsa' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "/home/adrian/.ssh/id_rsa": bad permissions
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+"""
+
+ssh_stderr_could_not_resolve = """
+ssh: Could not resolve hostname noname.g.a: No address associated with hostname
+"""
+
+ssh_stderr_no_route_to_host = """
+ssh: connect to host 192.168.1.253 port 22: No route to host
+"""
+
+class TestOpenSshStderrErrorMapper(unittest.TestCase):
+    def test_private_key_too_open(self):
+
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_key_too_open)
+        self.assertTrue('too_open' in error_parser.warnings)
+        print(error_parser)
+
+    def test_could_not_resolve(self):
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_could_not_resolve)
+        self.assertTrue('could_not_resolve' in error_parser.errors)
+
+    def test_no_route_to_host(self):
+        error_parser = ssh.OpenSshStderrErrorMapper(stderr=ssh_stderr_no_route_to_host)
+        self.assertTrue('no_route_to_host' in error_parser.errors)
+
 
 class TestConnectionBaseClass(unittest.TestCase):
 
@@ -288,10 +322,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         # test multiple failures
         conn._exec_command.side_effect = [(255, '', '')]*10
         self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+        
+        # test multiple failures, verify it raise ssh.AnsibleConnectionFailure
+        conn._exec_command.side_effect = [(255, '', '')]*10
+        self.assertRaises(ssh.AnsibleSshConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
         # test other failure from exec_command
         conn._exec_command.side_effect = [Exception('bad')]*10
         self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
+        
+        # test other failure from exec_command also raise AnsibleConnectionFailure
+        conn._exec_command.side_effect = [AnsibleConnectionFailure('There was an ansible connection failure')]*10
+        self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+        
+        # test other failure from exec_command also raise ssh.AnsibleSshConnectionFailure
+        conn._exec_command.side_effect = [ssh.AnsibleSshConnectionFailure('There was an ansible ssh connection failure')]*10
+        self.assertRaises(ssh.AnsibleSshConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
     @patch('os.path.exists')
     def test_plugins_connection_ssh_put_file(self, mock_ospe):

@@ -1,0 +1,30 @@
+# non-localhost that ssh can connect to
+testhost
+baduser ansible_user=kt
+noname ansible_user=adrian
+cantconnect ansible_user=adrian
+nokey
+badkey
+toomanykeys
+privatekeytooopen
+
+stricthostkey
+viaproxy
+gssapionly
+nokey
+emptykey
+toopen
+passwordonly
+testhost
+badalias
+badcipher
+badcontrolpath
+quiethost
+fatalhost
+errorhost
+infohost
+verbosehost
+debughost
+debug2host
+debug3host
+

@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
+import codecs
 import json
 import subprocess
 import sys
@@ -455,7 +456,13 @@ class TaskExecutor:
             try:
                 result = self._handler.run(task_vars=variables)
             except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=to_unicode(e))
+                failure_dict = dict(unreachable=True, msg=to_unicode(e))
+                e_type, e_value, e_tb = sys.exc_info()
+                failure_dict['_connection_failure_excection_message'] = to_unicode(e)
+                failure_dict['_connection_failure_exception_type'] = str(e_type)
+                failure_dict['_connection_failure_exception_value'] = str(e_value)
+                # failure_dict['_connection_failure_exception_tb'] = ''.join(traceback.format_exc())
+                return failure_dict
             display.debug("handler run complete")
 
             # preserve no log

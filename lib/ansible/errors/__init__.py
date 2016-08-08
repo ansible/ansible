@@ -174,6 +174,10 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+class AnsibleTmpPathCreationConnectionFailure(AnsibleConnectionFailure):
+    ''' the transport / connection_plugin had a fatal error creating the remote tmp_path '''
+    pass
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass

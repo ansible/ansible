@@ -19,14 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import errno
 import fcntl
 import os
 import pipes
 import pty
+import re
 import select
 import subprocess
 import time
+from collections import defaultdict
+
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
@@ -42,6 +46,110 @@ except ImportError:
     display = Display()
 
 SSHPASS_AVAILABLE = None
+
+
+class AnsibleSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh connection plugin had a fatal error '''
+    pass
+
+
+# Could track retry attempts here. A little odd.
+class AnsibleAttemptedSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh connection plugin had a fatal error but may attempt to retry '''
+    pass
+
+class AnsibleSshInitialWriteConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error during the initial data write '''
+    pass
+
+
+class AnsibleSshCommandErrorConnectionFailure(AnsibleSshConnectionFailure):
+    ''' the ssh connection plugin had a fatal error (255 return code from ssh command '''
+    def __init__(self, message=None, obj=None, show_content=True, suppress_extended_error=False,
+                 ssh_cmd=None, ssh_stderr=None):
+        message = message or ""
+        super(AnsibleSshCommandErrorConnectionFailure, self).__init__(message=message, obj=obj,
+                                                                      show_content=show_content,
+                                                                      suppress_extended_error=suppress_extended_error)
+        self.ssh_cmd = ssh_cmd
+        self.ssh_stderr = ssh_stderr
+
+        #self.message = '%s\nSTDERR: %s' % (self.message, codecs.escape_decode(self.ssh_stderr))
+        self.message = '%s\n' % (self.message)
+
+class AnsibleSshCommandErrorPermissionDenied(AnsibleSshCommandErrorConnectionFailure):
+    pass
+
+
+# FIXME: better enum-like
+class SshErrors:
+    permission_denied = 'permission_denied'
+    no_route_to_host = 'no_route_to_host'
+    could_not_resolve = 'could_not_resolve'
+    connection_refused = 'connection_refused'
+
+class OpenSshStderrErrorMapper:
+    # Attempt to make sense of openssh errors and warnings in hopes of generating
+    # more useful ansible error messages
+
+    # FIXME: The names on the rhs are just placeholders for now, to be replaced with exceptions
+    warning_regexes = {r"""Permissions (.*) for '(.*)' are too open.""":
+                       'too_open',
+                     r"""Load key (\".*\"): bad permissions""": 'bad_permssions',
+                     r"""could not open key file '(.*)': (.*)""": 'could_not_open_key_file',}
+    error_regexes = {r"""connect to host (.*) port (.*): No route to host""": SshErrors.no_route_to_host,
+                     r"""connect to address (.*) port (\d*): Connection refused""": SshErrors.connection_refused,
+                     r"""Permission denied \((.*)\)""": SshErrors.permission_denied,
+                     r"""ssh: Could not resolve hostname (.*): No address associated with hostname""":
+                    SshErrors.could_not_resolve}
+
+    def __init__(self, stderr=None):
+        self.stderr = stderr
+        self._errors = defaultdict(list)
+        self._warnings = defaultdict(list)
+        self._match_errors()
+        self._match_warnings()
+
+    def _matcher(self, regex_map, error_string):
+        # TODO: could be a module or staticmethod if returns a dict
+        matches = defaultdict(list)
+        for line in error_string.splitlines():
+            for error_regex in regex_map:
+                match = re.search(error_regex, line)
+                # print(match)
+                if not match:
+                    continue
+
+                matches[regex_map[error_regex]].append(line)
+    #            for match_group in match.groups():
+    #                # print('error_match %s' % match_group)
+    #                matches[regex_map[error_regex]].append(match_group)
+        return matches
+
+    def _match_errors(self):
+        matches = self._matcher(regex_map=self.error_regexes, error_string=self.stderr)
+        self._errors.update(matches)
+
+    def _match_warnings(self):
+        matches = self._matcher(regex_map=self.warning_regexes, error_string=self.stderr)
+        self._warnings.update(matches)
+
+    def __str__(self):
+        lines = []
+        for i in self.errors:
+            lines.append('%s' % i)
+        for i in self.warnings:
+            lines.append('%s' % i)
+        return '\n'.join(lines)
+
+    @property
+    def errors(self):
+        return self._errors
+
+    @property
+    def warnings(self):
+        "Any not fatal errors that may help toubleshoot failures."
+        return self._warnings
 
 
 class Connection(ConnectionBase):
@@ -144,9 +252,11 @@ class Connection(ConnectionBase):
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
-        elif binary == 'ssh':
-            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
-            self._command += ['-q']
+        # FIXME/TODO/AKL: determine if the '-q' is crucial or not, it originates from the
+        #                 pipeline by default branches.
+#        elif binary == 'ssh':
+#            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
+#            self._command += ['-q']
 
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
@@ -248,7 +358,7 @@ class Connection(ConnectionBase):
             fh.write(in_data)
             fh.close()
         except (OSError, IOError):
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            raise AnsibleSshInitialWriteConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         display.debug('Sent initial data (%d bytes)' % len(in_data))
 
@@ -445,6 +555,7 @@ class Connection(ConnectionBase):
             # We examine the output line-by-line until we have negotiated any
             # privilege escalation prompt and subsequent success/error message.
             # Afterwards, we can accumulate output without looking at it.
+            # TODO: Examine stderr in same fashion to detect if we need to move to a fail state
 
             if state < states.index('ready_to_send'):
                 if tmp_stdout:
@@ -546,12 +657,14 @@ class Connection(ConnectionBase):
             if cmd[0] == b"sshpass" and p.returncode == 6:
                 raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
-        controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
-        if p.returncode != 0 and controlpersisterror:
-            raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
+            controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
+            if p.returncode != 0 and controlpersisterror:
+                raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
-        if p.returncode == 255 and in_data:
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            if p.returncode == 255 and in_data:
+                msg = 'SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh'
+                raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
+            # AKL: we have filtered stdout and stdin, the cmd string, the exit code
 
         return (p.returncode, stdout, stderr)
 
@@ -597,14 +710,15 @@ class Connection(ConnectionBase):
         for attempt in range(remaining_tries):
             try:
                 return_tuple = self._exec_command(*args, **kwargs)
-                # 0 = success
-                # 1-254 = remote command return code
-                # 255 = failure from the ssh command itself
-                if return_tuple[0] != 255:
+                # Could we raise StopIteration here instead of the break?
+                # This will raise exceptions on error
+                error = self._check_for_errors_in_return_results(return_code=return_tuple[0],
+                                                                 stdout=return_tuple[1],
+                                                                 stderr=return_tuple[2])
+                if not error:
                     break
-                else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
-            except (AnsibleConnectionFailure, Exception) as e:
+            except (AnsibleSshConnectionFailure, Exception) as e:
+                # Do we really want to retry on any Exception?
                 if attempt == remaining_tries - 1:
                     raise
                 else:
@@ -612,7 +726,7 @@ class Connection(ConnectionBase):
                     if pause > 30:
                         pause = 30
 
-                    if isinstance(e, AnsibleConnectionFailure):
+                    if isinstance(e, AnsibleSshConnectionFailure):
                         msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
                     else:
                         msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
@@ -623,6 +737,33 @@ class Connection(ConnectionBase):
                     continue
 
         return return_tuple
+
+    def _check_for_errors_in_return_results(self, return_code, stdout, stderr):
+        display.v('return_code=%s' % return_code)
+        display.v('stderr=%s' % stderr)
+        # 0 = success
+        # 1-254 = remote command return code
+        # 255 = failure from the ssh command itself
+        if return_code != 255:
+            return False
+
+        display.v('ssh stderr: %s' % stderr)
+        error_mapper = OpenSshStderrErrorMapper(stderr=stderr)
+        for error, matches in error_mapper.errors.items():
+            # TODO/FIXME: better exception mapper
+            if error == SshErrors.permission_denied:
+                raise AnsibleSshCommandErrorPermissionDenied(message='\n'.join(matches),
+                                                             ssh_stderr=stderr)
+            msg = '\n'.join(matches)
+            # FIXME: pass in useful stuff to the exception constructor
+            raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
+
+        for warning, matches in error_mapper.warnings.items():
+            msg = '\n'.join(matches)
+            raise AnsibleSshCommandErrorConnectionFailure(message=msg, ssh_stderr=stderr)
+
+        raise AnsibleSshCommandErrorConnectionFailure(message='ssh connection failed', ssh_stderr=stderr)
+
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
