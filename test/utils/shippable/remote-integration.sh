@@ -62,11 +62,6 @@ if [ ! -f /usr/local/bin/sha1sum ]; then
     ln -s /usr/local/bin/shasum /usr/local/bin/sha1sum
 fi
 
-# FIXME: async doesn't work with ansible_python_interpreter, see: https://github.com/ansible/ansible/issues/14101
-if [ ! -f /usr/bin/python ]; then
-    ln -s /usr/local/bin/python /usr/bin/python
-fi
-
 # Tests assume loopback addresses other than 127.0.0.1 will work.
 # Add aliases for loopback addresses used by tests.
 
