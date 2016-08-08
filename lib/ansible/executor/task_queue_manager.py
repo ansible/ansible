@@ -26,7 +26,6 @@ import tempfile
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -81,7 +80,6 @@ class TaskQueueManager:
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done    = False
-        self._result_prc       = None
 
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
@@ -112,9 +110,6 @@ class TaskQueueManager:
         for i in range(num):
             rslt_q = multiprocessing.Queue()
             self._workers.append([None, rslt_q])
-
-        self._result_prc = ResultProcess(self._final_q, self._workers)
-        self._result_prc.start()
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -299,9 +294,7 @@ class TaskQueueManager:
         self._cleanup_processes()
 
     def _cleanup_processes(self):
-        if self._result_prc:
-            self._result_prc.terminate()
-
+        if hasattr(self, '_workers'):
             for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
                 if worker_prc and worker_prc.is_alive():
