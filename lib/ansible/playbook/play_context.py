@@ -534,7 +534,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'doas':
 
-                prompt = 'Password:'
+                prompt = 'doas (%s@' % self.remote_user
                 exe = self.become_exe or 'doas'
 
                 if not self.become_pass:
