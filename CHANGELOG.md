@@ -3,6 +3,9 @@ Ansible Changes By Release
 
 ## 2.1.2 "The Song Remains the Same" - ACTIVE DEVELOPMENT
 
+###Minor Changes:
+* Fix a bug with async's poll keyword not making use of ansible_python_interpreter to run (and thus breaking when /usr/bin/python is not present on the remote machine.)
+
 ## 2.1.1 "The Song Remains the Same" - 07-28-2016
 
 ###Minor Changes:
