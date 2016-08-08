@@ -78,33 +78,34 @@ vars:
     password: cisco
     transport: cli
 
-- name: run show version on remote devices
-  ios_command:
-    commands: show version
-    provider "{{ cli }}"
+tasks:
+  - name: run show version on remote devices
+    ios_command:
+      commands: show version
+      provider "{{ cli }}"
 
-- name: run show version and check to see if output contains IOS
-  ios_command:
-    commands: show version
-    wait_for: result[0] contains IOS
-    provider "{{ cli }}"
+  - name: run show version and check to see if output contains IOS
+    ios_command:
+      commands: show version
+      wait_for: result[0] contains IOS
+      provider "{{ cli }}"
 
-- name: run multiple commands on remote nodes
-   ios_command:
-    commands:
-      - show version
-      - show interfaces
-    provider "{{ cli }}"
+  - name: run multiple commands on remote nodes
+     ios_command:
+      commands:
+        - show version
+        - show interfaces
+      provider "{{ cli }}"
 
-- name: run multiple commands and evaluate the output
-  ios_command:
-    commands:
-      - show version
-      - show interfaces
-    wait_for:
-      - result[0] contains IOS
-      - result[1] contains Loopback0
-    provider "{{ cli }}"
+  - name: run multiple commands and evaluate the output
+    ios_command:
+      commands:
+        - show version
+        - show interfaces
+      wait_for:
+        - result[0] contains IOS
+        - result[1] contains Loopback0
+      provider: "{{ cli }}"
 """
 
 RETURN = """
