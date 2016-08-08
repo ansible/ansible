@@ -99,7 +99,7 @@ class CacheModule(BaseCacheModule):
             display.warning("error while trying to write to %s : %s" % (cachefile, to_bytes(e)))
             pass
         else:
-            f.write(jsonify(value))
+            f.write(jsonify(value, format=C.CACHE_PLUGIN_FORMAT))
         finally:
             try:
                 f.close()
