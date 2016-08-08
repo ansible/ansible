@@ -1326,6 +1326,7 @@ class LinuxHardware(Hardware):
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
                     d['partitions'][partname] = part
@@ -3222,6 +3223,19 @@ def get_uname_version(module):
     rc, out, err = module.run_command(['uname', '-v'])
     if rc == 0:
         return out
+    return None
+
+def get_partition_uuid(partname):
+    try:
+        uuids = os.listdir("/dev/disk/by-uuid")
+    except OSError:
+        return
+
+    for uuid in uuids:
+        dev = os.path.realpath("/dev/disk/by-uuid/" + uuid)
+        if dev == ("/dev/" + partname):
+            return uuid
+
     return None
 
 def get_file_lines(path):
