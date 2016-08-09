@@ -60,10 +60,13 @@ class Base:
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
     _no_log              = FieldAttribute(isa='bool')
-    _always_run           = FieldAttribute(isa='bool')
-    _run_once             = FieldAttribute(isa='bool')
-    _ignore_errors        = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool')
+    _always_run          = FieldAttribute(isa='bool')
+    _run_once            = FieldAttribute(isa='bool')
+    _ignore_errors       = FieldAttribute(isa='bool')
+    _check_mode          = FieldAttribute(isa='bool')
+
+    # other internal params
+    _finalized           = False
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -118,7 +121,7 @@ class Base:
         except AttributeError:
             try:
                 value = self._attributes[prop_name]
-                if value is None:
+                if value is None and not self._finalized:
                     try:
                         if prop_name in self._cached_parent_attrs:
                             value = self._cached_parent_attrs[prop_name]
@@ -420,6 +423,8 @@ class Base:
                 if templar._fail_on_undefined_errors and name != 'name':
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
                             " The error was: %s" % (name,e), obj=self.get_ds())
+
+        self._finalized = True
 
     def serialize(self):
         '''
