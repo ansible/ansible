@@ -94,8 +94,8 @@ Target: September 2016
   - *Extend ‘transparent vault file usage’ to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)*
     **done:** https://github.com/ansible/ansible/pull/16957
   - Add ‘per variable’ vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
-  - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087
-  - Add vault support to lookups
+  - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087 (deferred to 2.3)
+  - Add vault support to lookups (likely deferred to 2.3 or until lookup plugins are revamped)
   - Allow for multiple vault secrets https://github.com/ansible/ansible/issues/13243
   - Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
 
