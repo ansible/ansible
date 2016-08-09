@@ -60,4 +60,14 @@ options:
       - level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
+  unsafe_writes:
+    description:
+      -  Normally this module uses atomic operations to prevent data corruption or inconsistent reads from the target files,
+         sometimes systems are configured or just broken in ways that prevent this. One example are docker mounted files,
+         they cannot be updated atomically and can only be done in an unsafe manner.
+      -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
+         not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
+    required: false
+    default: false
+    version_added: "2.2"
 """
