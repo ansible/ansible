@@ -899,36 +899,35 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
-    '''
-    Sends a request via HTTP(S) or FTP (needs the module as parameter)
+    '''Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
-    Args:
-        :module (AnsibleModule): The AnsibleModule (used to get username, password etc. (s.b.).
-        :url:                    The url to use.
-        :data:                   The data to be sent (in case of POST/PUT).
-        :headers (dict):         A dict with the request headers.
-        :method (String):        "POST", "PUT", etc.
-        :use_proxy (Boolean):    Default: True
-        :force (Boolean):        If True: Do not get a cached copy (Default: False)
-        :last_mod_time:          Default: None
-        :timeout (int):          Default: 10
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
 
-    Returns:
-        :response: the response (body). Use `resp.body()` to read the data.
-        :info:     status code and other meta data. When a HttpError (status > 400) occurred
-                   then info['body'] contains the error response data::
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
 
-    Example:
-        >>> data={...}
-            resp, info = fetch_url("http://example.com", 
-                                   data=module.jsonify(data)
-                                   header={Content-type': 'application/json'},
-                                   method="POST")
-            status_code = info["body"]
-            body = resp.read()
-            if status_code >= 400 :
-                body = info['body']
-    '''
+    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+        The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
+        occurred then ``info['body']`` contains the error response data::
+
+    Example::
+
+        data={...}
+        resp, info = fetch_url("http://example.com",
+                               data=module.jsonify(data)
+                               header={Content-type': 'application/json'},
+                               method="POST")
+        status_code = info["status"]
+        body = resp.read()
+        if status_code >= 400 :
+            body = info['body']
+'''
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
