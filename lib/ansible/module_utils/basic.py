@@ -254,6 +254,7 @@ FILE_COMMON_ARGUMENTS=dict(
     regexp = dict(), # used by assemble
     delimiter = dict(), # used by assemble
     directory_mode = dict(), # used by copy
+    unsafe_writes  = dict(type='bool'), # should be available to any module using atomic_move
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -902,7 +903,10 @@ class AnsibleModule(object):
                                          str(':'.join(new_context)))
             except OSError:
                 e = get_exception()
-                self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
+                if e.errno == 95: # skip certain errors are they are 'ok'.
+                    self.debug("Skipped setting selinux on '%s' as the operation is not suported: %s" % (path, to_str(e))
+                else:
+                    self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
