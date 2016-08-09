@@ -23,7 +23,7 @@ author: "Peter Sprygada (@privateip)"
 short_description: Collect facts from remote devices running OS
 description:
   - Collects a base set of device facts from a remote device that
-    is running VyOS.  The M(vyos_facts) module prepends all of the
+    is running VyOS.  This module prepends all of the
     base network fact keys with U(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
@@ -32,7 +32,7 @@ options:
   gather_subset:
     description:
       - When supplied, this argument will restrict the facts collected
-        to a given subset.  Possible values for this argument inlcude
+        to a given subset.  Possible values for this argument include
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial M(!) to specify that a specific subset should
@@ -103,6 +103,7 @@ import re
 from ansible.module_utils.netcmd import CommandRunner
 from ansible.module_utils.vyos import NetworkModule
 
+
 class FactsBase(object):
 
     def __init__(self, runner):
@@ -110,6 +111,7 @@ class FactsBase(object):
         self.facts = dict()
 
         self.commands()
+
 
 class Default(FactsBase):
 
@@ -236,6 +238,7 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
     spec = dict(
         gather_subset=dict(default=['!config'], type='list')
@@ -305,4 +308,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
