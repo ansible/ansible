@@ -900,7 +900,7 @@ def url_argument_spec():
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
-    Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
+    Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     Args:
         :module (AnsibleModule): The AnsibleModule (used to get username, password etc. (s.b.).
