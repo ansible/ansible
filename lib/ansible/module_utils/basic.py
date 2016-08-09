@@ -903,9 +903,6 @@ class AnsibleModule(object):
                                          str(':'.join(new_context)))
             except OSError:
                 e = get_exception()
-                if e.errno == 95: # skip certain errors are they are 'ok'.
-                    self.debug("Skipped setting selinux on '%s' as the operation is not suported: %s" % (path, to_str(e))
-                else:
                     self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
