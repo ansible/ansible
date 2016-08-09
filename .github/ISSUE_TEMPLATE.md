@@ -6,6 +6,8 @@
  - Feature Idea
  - Documentation Report
 
+##### COMPONENT NAME
+<!--- Name of the plugin/module/task -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from “ansible --version” between quotes below -->
