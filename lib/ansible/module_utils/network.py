@@ -239,7 +239,7 @@ class NetCli(object):
         self._connected = False
         self.default_output = 'text'
 
-    def connect(self, params, kickstart, **kwargs):
+    def connect(self, params, kickstart=True, **kwargs):
         host = params['host']
         port = params.get('port') or 22
 
