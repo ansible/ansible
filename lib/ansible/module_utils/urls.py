@@ -82,13 +82,18 @@
 # Agreement.
 
 '''
-The **urls** utils module offers a replacement for the `requests`_ library for most cases. 
+The **urls** utils module offers a replacement for the urllib2 python library.
 
-Sometimes you really need the requests library, but you should always check, whether 
-this utils module is sufficient for your use case.
+urllib2 is the python stdlib way to retrieve files from the Internet but it
+lacks some security features (around verifying SSL certificates) that users
+should care about in most situations. Using the functions in this module corrects
+deficiencies in the urllib2 module wherever possible.
 
-.. _requests:
-   http://docs.python-requests.org/en/master/
+There are also third-party libraries (for instance, requests) which can be used
+to replace urllib2 with a more secure library. However, all third party libraries
+require that the library be installed on the managed machine. That is an extra step
+for users making use of a module. If possible, avoid third party libraries by using
+this code instead.
 '''
 
 import netrc
