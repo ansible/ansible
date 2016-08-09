@@ -29,17 +29,18 @@ description:
       the switch, but not found in the "allowed" list, this interface will be
       unconfigured. By default this is `/etc/network/interface.d`
       For more details go the Configuring Interfaces at
-      http://docs.cumulusnetworks.com
+      U(http://docs.cumulusnetworks.com).
 notes:
     - lo must be included in the allowed list.
     - eth0 must be in allowed list if out of band management is done
 options:
     allowed:
         description:
-            - list of ports to run initial run at 10G
+            - List of ports to run initial run at 10G.
+        required: true
     location:
         description:
-            - folder to store interface files.
+            - Directory to store interface files.
         default: '/etc/network/interfaces.d/'
 '''
 
