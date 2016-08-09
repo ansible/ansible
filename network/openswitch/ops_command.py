@@ -24,7 +24,7 @@ author: "Peter sprygada (@privateip)"
 short_description: Run arbitrary commands on OpenSwitch devices.
 description:
   - Sends arbitrary commands to an OpenSwitch node and returns the results
-    read from the device. The M(ops_command) module includes an
+    read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: openswitch
@@ -42,7 +42,7 @@ options:
       - List of conditions to evaluate against the output of the
         command. The task will wait for a each condition to be true
         before moving forward. If the conditional is not true
-        within the configured number of retries, the task fails.
+        within the configured number of I(retries), the task fails.
         See examples.
     required: false
     default: null
@@ -51,12 +51,12 @@ options:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        waitfor conditions.
+        I(waitfor) conditions.
     required: false
     default: 10
   interval:
     description:
-      - Configures the interval in seconds to wait between retries
+      - Configures the interval in seconds to wait between I(retries)
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
@@ -104,11 +104,13 @@ failed_conditions:
 
 import time
 
+
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
         yield item
+
 
 def main():
     spec = dict(
@@ -163,4 +165,3 @@ from ansible.module_utils.netcfg import *
 from ansible.module_utils.openswitch import *
 if __name__ == '__main__':
         main()
-

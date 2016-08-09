@@ -32,21 +32,24 @@ options:
     description:
       - When enabled, this argument will collect the current
         running configuration from the remote device.  If the
-        transport is C(rest) then the collected configuration will
+        C(transport=rest) then the collected configuration will
         be the full system configuration.
     required: false
+    choices:
+        - true
+        - false
     default: false
   endpoints:
     description:
       - Accepts a list of endpoints to retrieve from the remote
         device using the REST API.  The endpoints should be valid
-        endpoints availble on the device.  This argument is only
-        valid when the transport is C(rest).
+        endpoints available on the device.  This argument is only
+        valid when the C(transport=rest).
     required: false
     default: null
 notes:
   - The use of the REST transport is still experimental until it is
-    fully implemented
+    fully implemented.
 """
 
 EXAMPLES = """
@@ -91,11 +94,13 @@ endpoints:
 """
 import re
 
+
 def get(module, url, expected_status=200):
     response = module.connection.get(url)
     if response.headers['status'] != expected_status:
         module.fail_json(**response.headers)
     return response
+
 
 def get_config(module):
     if module.params['transport'] == 'ssh':
@@ -107,6 +112,7 @@ def get_config(module):
     elif module.params['transport'] == 'cli':
         response = module.connection.send('show running-config')
         return response[0]
+
 
 def get_facts(module):
     if module.params['transport'] == 'rest':
@@ -167,4 +173,3 @@ from ansible.module_utils.openswitch import *
 
 if __name__ == '__main__':
     main()
-
