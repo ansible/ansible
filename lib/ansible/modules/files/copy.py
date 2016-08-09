@@ -321,12 +321,11 @@ def main():
                     (rc,out,err) = module.run_command(validate % src)
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
+                mysrc = src
                 if remote_src:
-                    _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
-                    shutil.copy2(src, tmpdest)
-                    module.atomic_move(tmpdest, dest)
-                else:
-                    module.atomic_move(src, dest)
+                    _, mysrc = tempfile.mkstemp(dir=os.path.dirname(dest))
+                    shutil.copy2(src, mysrc)
+                module.atomic_move(mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
             except IOError:
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True

@@ -233,7 +233,7 @@ def main():
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
 
-        module.atomic_move(path, dest)
+        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
     cleanup(path, result)
