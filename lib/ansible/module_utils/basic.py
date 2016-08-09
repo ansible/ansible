@@ -903,7 +903,7 @@ class AnsibleModule(object):
                                          str(':'.join(new_context)))
             except OSError:
                 e = get_exception()
-                    self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
+                self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
