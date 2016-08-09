@@ -214,7 +214,7 @@ def main():
     if out is None:
         out = ''
 
-    module.exit_json(
+    ret = dict(
         cmd=args,
         stdout=out.rstrip('\r\n'),
         rc=rc,
@@ -223,6 +223,12 @@ def main():
         delta=str(delta),
         changed=True,
     )
+
+    if rc:
+        module.exit_json(**ret)
+    else:
+        ret['msg'] = 'command exceeded timeout'
+        module.fail_json(**ret)
 
 # import module snippets
 from ansible.module_utils.basic import *
