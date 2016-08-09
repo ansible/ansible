@@ -39,7 +39,7 @@ options:
         choices:
             - started
             - stopped
-        requred: false
+        required: false
         default: started
     http_port:
         description:
@@ -56,12 +56,18 @@ options:
             - Enable/disable HTTP server.
         required: false
         default: true
+        choices:
+            - true
+            - false
         aliases:
             - enable_http
     https:
         description:
             - Enable/disable HTTPS server.
         required: false
+        choices:
+            - true
+            - false
         default: true
         aliases:
             - enable_https
@@ -70,6 +76,9 @@ options:
             - Enable/disable NXAPI web based UI for entering commands.
         required: false
         default: true
+        choices:
+            - true
+            - false
         aliases:
             - enable_sandbox
 """
@@ -143,6 +152,7 @@ def http_commands(protocol, port, enable, config):
 def execute_commands(module, commands):
     if not module.params.get('check_mode'):
         module.configure(commands)
+
 
 def get_nxapi_state(module):
     features = module.execute(['show feature | grep nxapi'])[0]
@@ -231,7 +241,7 @@ def main():
     """
 
     argument_spec = dict(
-        state=dict(default='started', choices=['started','stopped']),
+        state=dict(default='started', choices=['started', 'stopped']),
         http_port=dict(default=80, type='int'),
         https_port=dict(default=443, type='int'),
         http=dict(aliases=['enable_http'], default=True, type='bool'),

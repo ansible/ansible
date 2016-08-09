@@ -24,26 +24,28 @@ short_description: Manages interface specific VRF configuration
 description:
     - Manages interface specific VRF configuration
 extends_documentation_fragment: nxos
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 notes:
     - VRF needs to be added globally with M(nxos_vrf) before
-      adding a VRF to an interface
+      adding a VRF to an interface.
     - Remove a VRF from an interface will still remove
-      all L3 attributes just as it does from CLI
+      all L3 attributes just as it does from CLI.
     - VRF is not read from an interface until IP address is
-      configured on that interface
+      configured on that interface.
 options:
     vrf:
         description:
-            - Name of VRF to be managed
+            - Name of VRF to be managed.
         required: true
     interface:
         description:
-            - Full name of interface to be managed, i.e. Ethernet1/1
+            - Full name of interface to be managed, i.e. I(Ethernet1/1).
         required: true
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']

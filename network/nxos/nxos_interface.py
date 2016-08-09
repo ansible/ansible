@@ -39,24 +39,24 @@ options:
         default: null
     admin_state:
         description:
-            - Administrative state of the interface
+            - Administrative state of the interface.
         required: false
         default: up
         choices: ['up','down']
     description:
         description:
-            - Interface description
+            - Interface description.
         required: false
         default: null
     mode:
         description:
-            - Manage Layer 2 or Layer 3 state of the interface
+            - Manage I(Layer2) or I(Layer3) state of the interface.
         required: false
         default: null
         choices: ['layer2','layer3']
     state:
         description:
-            - Specify desired state of the resource
+            - Specify desired state of the resource.
         required: true
         default: present
         choices: ['present','absent','default']

@@ -28,36 +28,36 @@ extends_documentation_fragment: nxos
 options:
     vlan_id:
         description:
-            - single vlan id
+            - Single VLAN ID.
         required: false
         default: null
     vlan_range:
         description:
-            - range of VLANs such as 2-10 or 2,5,10-15, etc.
+            - A range of VLANs such as I(2-10) or I(2,5,10-15) etc.
         required: false
         default: null
     name:
         description:
-            - name of VLAN
+            - The name of VLAN.
         required: false
         default: null
     vlan_state:
         description:
-            - Manage the vlan operational state of the VLAN
-              (equivalent to state {active | suspend} command
+            - Manage the VLAN operational state of the VLAN
+              (equivalent to state {active | suspend} command.
         required: false
         default: active
         choices: ['active','suspend']
     admin_state:
         description:
-            - Manage the vlan admin state of the VLAN equivalent
-              to shut/no shut in vlan config mode
+            - Manage the VLAN admin state of the VLAN equivalent
+              to shut/no shut in VLAN config mode.
         required: false
         default: up
         choices: ['up','down']
     state:
         description:
-            - Manage the state of the resource
+            - Manage the state of the resource.
         required: false
         default: present
         choices: ['present','absent']
