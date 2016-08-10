@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_quota
 short_description: Manage OpenStack Quotas
 extends_documentation_fragment: openstack
-version_added: "2.0"
+version_added: "2.1"
 author: "Michael Gale (gale.michael@gmail.com)"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
@@ -42,93 +42,123 @@ options:
     backup_gigabytes:
         required: False
         default: None
+        description: Maximum size of backups
     backups:
         required: False
         default: None
+        description: Max number of backups allows
     cores:
         required: False
         default: None
+        description: Max number of CPU's per project
     fixed_ips:
         required: False
         default: None
+        description: Number of fixed IP's to allow
     floating_ips:
         required: False
         default: None
+        description: Number of floating IP's to allow
     gigabytes:
         required: False
         default: None
+        description: Max volume storage for project
     gigabytes_lvm:
         required: False
         default: None
+        description: Max size of individual lvm volumes
     injected_file_size:
         required: False
         default: None
+        description: Max file size
     injected_files:
         required: False
         default: None
+        description: Number of injected files to allow
     injected_path_size:
         required: False
         default: None
+        description: Max file size
     instances:
         required: False
         default: None
+        description: Maximum number of instances
     key_pairs:
         required: False
         default: None
+        description: Number of key pairs to allow
     network:
         required: False
         default: None
+        description: Number of networks to allow
     per_volume_gigabytes:
         required: False
         default: None
+        description: Max size of individual volumes
     port:
         required: False
         default: None
+        description: Number of Network ports to allow, should be greater than instances.
     project:
         required: False
         default: None
+        description: Project name
     properties:
         required: False
         default: None
+        description: Number of properties to allow
     ram:
         required: False
         default: None
+        description: Maximum amount of ram
     rbac_policy:
         required: False
         default: None
+        description: Number of polcies to allow
     router:
         required: False
         default: None
+        description: Number of routers to allow
     secgroup_rules:
         required: False
         default: None
+        description: Number of rules per security group to allow
     secgroups:
         required: False
         default: None
+        description: Number of security groups to allow
     server_group_members:
         required: False
         default: None
+        description: Number of server group members to allow
     server_groups:
         required: False
         default: None
+        description: Number of server groups to allow
     snapshots:
         required: False
         default: None
+        description: Number of snapshots to allow
     snapshots_lvm:
         required: False
         default: None
+        description: Number of LVM snapshots to allow
     subnet:
         required: False
         default: None
+        description: Number of subnets to allow
     subnetpool:
         required: False
         default: None
+        description: Number of subnet pools to allow
     volumes:
         required: False
         default: None
+        description: Number of volumes to allow
     volumes_lvm:
         required: False
         default: None
+        description: Number of LVM volumes to allow
 
 
 requirements:
@@ -157,7 +187,7 @@ EXAMPLES = '''
 RETURN = '''
 openstack_quotas:
     description: Dictionary describing the quota.
-    returned: 
+    returned:
 '''
 
 
@@ -297,7 +327,7 @@ def main():
             project_quota_output = project_quota_update
 
         exit_hostvars(module,cloud, project_quota_output, changed=changes_required)
-        
+
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
