@@ -65,9 +65,6 @@ class Base:
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
 
-    # other internal params
-    _finalized           = False
-
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
         'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
@@ -81,9 +78,12 @@ class Base:
         self._loader = None
         self._variable_manager = None
 
+        # other internal params
+        self._validated = False
+        self._finalized = False
+
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
-        #self._uuid = 1
 
         # and initialize the base attributes
         self._initialize_base_attributes()
@@ -272,20 +272,25 @@ class Base:
     def validate(self, all_vars=dict()):
         ''' validation that is done at parse time, not load time '''
 
-        # walk all fields in the object
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        if not self._validated:
+            # walk all fields in the object
+            for (name, attribute) in iteritems(self._get_base_attributes()):
 
-            # run validator only if present
-            method = getattr(self, '_validate_%s' % name, None)
-            if method:
-                method(attribute, name, getattr(self, name))
-            else:
-                # and make sure the attribute is of the type it should be
-                value = getattr(self, name)
-                if value is not None:
-                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
-                        raise AnsibleParserError("The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
+                # run validator only if present
+                method = getattr(self, '_validate_%s' % name, None)
+                if method:
+                    method(attribute, name, getattr(self, name))
+                else:
+                    # and make sure the attribute is of the type it should be
+                    value = getattr(self, name)
+                    if value is not None:
+                        if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                            raise AnsibleParserError(
+                                "The field '%s' is supposed to be a string type,"
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
+                            )
+
+        self._validated = True
 
     def copy(self):
         '''
@@ -303,9 +308,10 @@ class Base:
             else:
                 setattr(new_me, name, attr_val)
 
-        new_me._loader           = self._loader
+        new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
-
+        new_me._validated = self._validated
+        new_me._finalized = self._finalized
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
