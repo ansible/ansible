@@ -20,7 +20,9 @@ short_description: Gather facts about EC2 Elastic Load Balancers in AWS
 description:
     - Gather facts about EC2 Elastic Load Balancers in AWS
 version_added: "2.0"
-author: "Michael Schultz (github.com/mjschultz)"
+author:
+  - "Michael Schultz (github.com/mjschultz)"
+  - "Fernando Jose Pando (@nand0p)"
 options:
   names:
     description:
@@ -70,126 +72,149 @@ EXAMPLES = '''
 
 '''
 
-import xml.etree.ElementTree as ET
-
 try:
     import boto.ec2.elb
+    from boto.ec2.tag import Tag
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
+class ElbInformation(object):
+    """ Handles ELB information """
 
-def get_error_message(xml_string):
+    def __init__(self,
+                 module,
+                 names,
+                 region,
+                 **aws_connect_params):
 
-    root = ET.fromstring(xml_string)
-    for message in root.findall('.//Message'):
-        return message.text
+        self.module = module
+        self.names = names
+        self.region = region
+        self.aws_connect_params = aws_connect_params
+        self.connection = self._get_elb_connection()
 
-
-def get_elb_listeners(listeners):
-    listener_list = []
-    for listener in listeners:
-        listener_dict = {
-            'load_balancer_port': listener[0],
-            'instance_port': listener[1],
-            'protocol': listener[2],
-        }
+    def _get_tags(self, elbname):
+        params = {'LoadBalancerNames.member.1': elbname}
         try:
-            ssl_certificate_id = listener[4]
-        except IndexError:
-            pass
-        else:
-            if ssl_certificate_id:
-                listener_dict['ssl_certificate_id'] = ssl_certificate_id
-        listener_list.append(listener_dict)
+            elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
+            return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
+        except:
+            return {}
 
-    return listener_list
+    def _get_elb_connection(self):
+        try:
+            return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
+        except BotoServerError as err:
+            self.module.fail_json(msg=err.message)
+
+    def _get_elb_listeners(self, listeners):
+        listener_list = []
+
+        for listener in listeners:
+            listener_dict = {
+                'load_balancer_port': listener[0],
+                'instance_port': listener[1],
+                'protocol': listener[2],
+            }
+
+            try:
+                ssl_certificate_id = listener[4]
+            except IndexError:
+                pass
+            else:
+                if ssl_certificate_id:
+                    listener_dict['ssl_certificate_id'] = ssl_certificate_id
+
+            listener_list.append(listener_dict)
+
+        return listener_list
+
+    def _get_health_check(self, health_check):
+        protocol, port_path = health_check.target.split(':')
+        try:
+            port, path = port_path.split('/', 1)
+            path = '/{}'.format(path)
+        except ValueError:
+            port = port_path
+            path = None
+
+        health_check_dict = {
+            'ping_protocol': protocol.lower(),
+            'ping_port': int(port),
+            'response_timeout': health_check.timeout,
+            'interval': health_check.interval,
+            'unhealthy_threshold': health_check.unhealthy_threshold,
+            'healthy_threshold': health_check.healthy_threshold,
+        }
+
+        if path:
+            health_check_dict['ping_path'] = path
+        return health_check_dict
+
+    def _get_elb_info(self, elb):
+        elb_info = {
+            'name': elb.name,
+            'zones': elb.availability_zones,
+            'dns_name': elb.dns_name,
+            'canonical_hosted_zone_name': elb.canonical_hosted_zone_name,
+            'canonical_hosted_zone_name_id': elb.canonical_hosted_zone_name_id,
+            'hosted_zone_name': elb.canonical_hosted_zone_name,
+            'hosted_zone_id': elb.canonical_hosted_zone_name_id,
+            'instances': [instance.id for instance in elb.instances],
+            'listeners': self._get_elb_listeners(elb.listeners),
+            'scheme': elb.scheme,
+            'security_groups': elb.security_groups,
+            'health_check': self._get_health_check(elb.health_check),
+            'subnets': elb.subnets,
+            'instances_inservice': [],
+            'instances_inservice_count': 0,
+            'instances_outofservice': [],
+            'instances_outofservice_count': 0,
+            'instances_inservice_percent': 0.0,
+            'tags': self._get_tags(elb.name)
+        }
+
+        if elb.vpc_id:
+            elb_info['vpc_id'] = elb.vpc_id
+
+        if elb.instances:
+            try:
+                instance_health = self.connection.describe_instance_health(elb.name)
+            except BotoServerError as err:
+                self.module.fail_json(msg=err.message)
+            elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
+            elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
+            elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
+            elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
+            elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
+                        float(elb_info['instances_inservice_count']) +
+                        float(elb_info['instances_outofservice_count']))*100
+        return elb_info
 
 
-def get_health_check(health_check):
-    protocol, port_path = health_check.target.split(':')
-    try:
-        port, path = port_path.split('/', 1)
-        path = '/{}'.format(path)
-    except ValueError:
-        port = port_path
-        path = None
+    def list_elbs(self):
+        elb_array = []
 
-    health_check_dict = {
-        'ping_protocol': protocol.lower(),
-        'ping_port': int(port),
-        'response_timeout': health_check.timeout,
-        'interval': health_check.interval,
-        'unhealthy_threshold': health_check.unhealthy_threshold,
-        'healthy_threshold': health_check.healthy_threshold,
-    }
-    if path:
-        health_check_dict['ping_path'] = path
-    return health_check_dict
+        try:
+            all_elbs = self.connection.get_all_load_balancers()
+        except BotoServerError as err:
+            self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message))
 
+        if all_elbs:
+            for existing_lb in all_elbs:
+                if existing_lb.name in self.names:
+                    elb_array.append(self._get_elb_info(existing_lb))
 
-def get_elb_info(connection,elb):
-    elb_info = {
-        'name': elb.name,
-        'zones': elb.availability_zones,
-        'dns_name': elb.dns_name,
-        'canonical_hosted_zone_name': elb.canonical_hosted_zone_name,
-        'canonical_hosted_zone_name_id': elb.canonical_hosted_zone_name_id,
-        'hosted_zone_name': elb.canonical_hosted_zone_name,
-        'hosted_zone_id': elb.canonical_hosted_zone_name_id,
-        'instances': [instance.id for instance in elb.instances],
-        'listeners': get_elb_listeners(elb.listeners),
-        'scheme': elb.scheme,
-        'security_groups': elb.security_groups,
-        'health_check': get_health_check(elb.health_check),
-        'subnets': elb.subnets,
-        'instances_inservice': [],
-        'instances_inservice_count': 0,
-        'instances_outofservice': [],
-        'instances_outofservice_count': 0,
-        'instances_inservice_percent': 0.0,
-    }
-    if elb.vpc_id:
-        elb_info['vpc_id'] = elb.vpc_id
-    if elb.instances:
-        instance_health = connection.describe_instance_health(elb.name)
-        elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
-        elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
-        elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
-        elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
-        elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
-                    float(elb_info['instances_inservice_count']) + 
-                    float(elb_info['instances_outofservice_count']))*100
-
-    return elb_info
-
-
-def list_elb(connection, module):
-    elb_names = module.params.get("names")
-    if not elb_names:
-        elb_names = None
-
-    try:
-        all_elbs = connection.get_all_load_balancers(elb_names)
-    except BotoServerError as e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-    elb_array = []
-    for elb in all_elbs:
-        elb_array.append(get_elb_info(connection,elb))
-
-    module.exit_json(elbs=elb_array)
-
+        return elb_array
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
+    argument_spec.update(dict(
             names={'default': None, 'type': 'list'}
         )
     )
-
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
@@ -197,15 +222,19 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
-    if region:
-        try:
-            connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
-            module.fail_json(msg=str(e))
-    else:
+    if not region:
         module.fail_json(msg="region must be specified")
 
-    list_elb(connection, module)
+    names = module.params['names']
+    elb_information = ElbInformation(module,
+                              names,
+                              region,
+                              **aws_connect_params)
+
+    ec2_facts_result = dict(changed=False,
+                            elbs=elb_information.list_elbs())
+
+    module.exit_json(**ec2_facts_result)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
