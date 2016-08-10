@@ -290,7 +290,7 @@ def main():
     # Parse headers to dict
     if module.params['headers']:
         try:
-            headers = dict(item.split(':') for item in module.params['headers'].split(','))
+            headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
         except:
             module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
     else:
