@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
+# (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
+#
 # Based on homebrew (Andrew Dunham <andrew@du.nham.ca>)
 #
 # This file is part of Ansible
@@ -24,16 +26,29 @@ import re
 DOCUMENTATION = '''
 ---
 module: homebrew_tap
-author: "Daniel Jaouen (@danieljaouen)"
+author:
+    - "Indrajit Raychaudhuri (@indrajitr)"
+    - "Daniel Jaouen (@danieljaouen)"
 short_description: Tap a Homebrew repository.
 description:
     - Tap external Homebrew repositories.
 version_added: "1.6"
 options:
-    tap:
+    name:
         description:
-            - The repository to tap.
+            - The GitHub user/organization repository to tap.
         required: true
+        aliases: ['tap']
+    url:
+        description:
+            - The optional git URL of the repository to tap. The URL is not
+              assumed to be on GitHub, and the protocol doesn't have to be HTTP.
+              Any location and protocol that git can handle is fine.
+        required: false
+        version_added: "2.2"
+        note:
+            - I(name) option may not be a list of multiple taps (but a single
+              tap instead) when this option is provided.
     state:
         description:
             - state of the repository.
@@ -44,9 +59,10 @@ requirements: [ homebrew ]
 '''
 
 EXAMPLES = '''
-homebrew_tap: tap=homebrew/dupes state=present
-homebrew_tap: tap=homebrew/dupes state=absent
-homebrew_tap: tap=homebrew/dupes,homebrew/science state=present
+homebrew_tap: name=homebrew/dupes
+homebrew_tap: name=homebrew/dupes state=absent
+homebrew_tap: name=homebrew/dupes,homebrew/science state=present
+homebrew_tap: name=telemachus/brew url=https://bitbucket.org/telemachus/brew
 '''
 
 
@@ -70,7 +86,7 @@ def already_tapped(module, brew_path, tap):
     return tap_name in taps
 
 
-def add_tap(module, brew_path, tap):
+def add_tap(module, brew_path, tap, url=None):
     '''Adds a single tap.'''
     failed, changed, msg = False, False, ''
 
@@ -86,6 +102,7 @@ def add_tap(module, brew_path, tap):
             brew_path,
             'tap',
             tap,
+            url,
         ])
         if already_tapped(module, brew_path, tap):
             changed = True
@@ -183,7 +200,8 @@ def remove_taps(module, brew_path, taps):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['tap'], required=True),
+            name=dict(aliases=['tap'], type='list', required=True),
+            url=dict(default=None, required=False),
             state=dict(default='present', choices=['present', 'absent']),
         ),
         supports_check_mode=True,
@@ -195,10 +213,22 @@ def main():
         opt_dirs=['/usr/local/bin']
     )
 
-    taps = module.params['name'].split(',')
+    taps = module.params['name']
+    url = module.params['url']
 
     if module.params['state'] == 'present':
-        failed, changed, msg = add_taps(module, brew_path, taps)
+        if url is None:
+            # No tap URL provided explicitly, continue with bulk addition
+            # of all the taps.
+            failed, changed, msg = add_taps(module, brew_path, taps)
+        else:
+            # When an tap URL is provided explicitly, we allow adding
+            # *single* tap only. Validate and proceed to add single tap.
+            if len(taps) > 1:
+                msg = "List of muliple taps may not be provided with 'url' option."
+                module.fail_json(msg=msg)
+            else:
+                failed, changed, msg = add_tap(module, brew_path, taps[0], url)
 
         if failed:
             module.fail_json(msg=msg)
