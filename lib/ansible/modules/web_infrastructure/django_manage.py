@@ -274,7 +274,7 @@ def main():
     lines = out.split('\n')
     filt = globals().get(command + "_filter_output", None)
     if filt:
-        filtered_output = filter(filt, out.split('\n'))
+        filtered_output = filter(filt, lines)
         if len(filtered_output):
             changed = filtered_output
 
