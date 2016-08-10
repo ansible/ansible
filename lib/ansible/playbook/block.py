@@ -192,6 +192,7 @@ class Block(Base, Become, Conditional, Taggable):
         if self._role:
             new_me._role = self._role
 
+        new_me.validate()
         return new_me
 
     def serialize(self):
