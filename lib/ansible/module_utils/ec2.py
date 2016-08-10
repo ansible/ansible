@@ -55,6 +55,59 @@ class AnsibleAWSError(Exception):
     pass
 
 
+# This list of failures is based on this API Reference
+# http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+RETRY_ON = [
+    'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+    'InternalFailure', 'InternalError'
+]
+
+NOT_FOUND = re.compile(r'^\w+.NotFound')
+
+
+def aws_retry(tries=10, delay=3, backoff=2):
+    """ Retry calling the AWS decorated function using an exponential backoff.
+    Kwargs:
+        tries (int): Number of times to try (not retry) before giving up
+            default=10
+        delay (int): Initial delay between retries in seconds
+            default=3
+        backoff (int): backoff multiplier e.g. value of 2 will double the delay each retry
+            default=2
+
+    Basic Usage:
+        >>>@aws_retry()
+           def get_vpc_id_by_name('test', 'us-west-2')
+    """
+    def deco(f):
+        @wraps(f)
+        def retry(*args, **kwargs):
+            max_tries, max_delay = tries, delay
+            while max_tries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except Exception as e:
+                    if isinstance(e, botocore.exceptions.ClientError):
+                        response_code = e.response['Error']['Code']
+                        if response_code in RETRY_ON or NOT_FOUND.search(response_code):
+                            msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
+                            syslog.syslog(syslog.LOG_INFO, msg)
+                            time.sleep(max_delay)
+                            max_tries -= 1
+                            max_delay *= backoff
+                        else:
+                            # Return original exception if exception is not a ClientError
+                            raise e
+                    else:
+                        # Return original exception if exception is not a ClientError
+                        raise e
+            return f(*args, **kwargs)
+
+        return retry  # true decorator
+
+    return deco
+
+
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
