@@ -171,7 +171,8 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     if color == "normal" and text is not None:
         payload = dict(text=text)
     elif text is not None:
-        payload = dict(attachments=[dict(text=text, color=color)])
+        # With a custom color we have to set the message as attachment, and explicitely turn markdown parsing on for it.
+        payload = dict(attachments=[dict(text=text, color=color, mrkdwn_in=["text"])])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
