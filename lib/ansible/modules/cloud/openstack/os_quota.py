@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_quota
 short_description: Manage OpenStack Quotas
 extends_documentation_fragment: openstack
-version_added: "2.1"
+version_added: "2.2"
 author: "Michael Gale (gale.michael@gmail.com)"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
