@@ -81,6 +81,21 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
+'''
+The **urls** utils module offers a replacement for the urllib2 python library.
+
+urllib2 is the python stdlib way to retrieve files from the Internet but it
+lacks some security features (around verifying SSL certificates) that users
+should care about in most situations. Using the functions in this module corrects
+deficiencies in the urllib2 module wherever possible.
+
+There are also third-party libraries (for instance, requests) which can be used
+to replace urllib2 with a more secure library. However, all third party libraries
+require that the library be installed on the managed machine. That is an extra step
+for users making use of a module. If possible, avoid third party libraries by using
+this code instead.
+'''
+
 import netrc
 import os
 import re
@@ -728,11 +743,11 @@ def maybe_add_ssl_handler(url, validate_certs):
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-        force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None,
-        force_basic_auth=False, follow_redirects='urllib2'):
+             force=False, last_mod_time=None, timeout=10, validate_certs=True,
+             url_username=None, url_password=None, http_agent=None,
+             force_basic_auth=False, follow_redirects='urllib2'):
     '''
-    Fetches a file from an HTTP/FTP server using urllib2
+    Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
     Does not require the module environment
     '''
@@ -870,23 +885,49 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url = dict(),
-        force = dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent = dict(default='ansible-httpget'),
-        use_proxy = dict(default='yes', type='bool'),
-        validate_certs = dict(default='yes', type='bool'),
-        url_username = dict(required=False),
-        url_password = dict(required=False),
-        force_basic_auth = dict(required=False, type='bool', default='no'),
+        url=dict(),
+        force=dict(default='no', aliases=['thirsty'], type='bool'),
+        http_agent=dict(default='ansible-httpget'),
+        use_proxy=dict(default='yes', type='bool'),
+        validate_certs=dict(default='yes', type='bool'),
+        url_username=dict(required=False),
+        url_password=dict(required=False),
+        force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
-    '''
-    Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
-    '''
+    '''Sends a request via HTTP(S) or FTP (needs the module as parameter)
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+        The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
+        occurred then ``info['body']`` contains the error response data::
+
+    Example::
+
+        data={...}
+        resp, info = fetch_url("http://example.com",
+                               data=module.jsonify(data)
+                               header={Content-type': 'application/json'},
+                               method="POST")
+        status_code = info["status"]
+        body = resp.read()
+        if status_code >= 400 :
+            body = info['body']
+'''
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
