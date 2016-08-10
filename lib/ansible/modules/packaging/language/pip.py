@@ -410,6 +410,7 @@ def main():
             out += out_pip
             err += err_pip
 
+            changed = False
             if name:
                 for pkg in name:
                     is_present = _is_present(pkg, version, out.split())
