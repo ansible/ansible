@@ -791,6 +791,7 @@ def main():
             path=dict(
                 default="/usr/local/bin",
                 required=False,
+                type='path',
             ),
             state=dict(
                 default="present",
