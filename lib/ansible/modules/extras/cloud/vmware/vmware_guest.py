@@ -65,6 +65,10 @@ options:
         description:
             - Attributes such as cpus, memroy, osid, and disk controller
         required: False
+   disk:
+        description:
+            - A list of disks to add
+        required: False
    nic:
         description:
             - A list of nics to add
@@ -799,8 +803,8 @@ def main():
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default=None, aliases=['folder']),
-            disk=dict(required=False, type='list', default=[]),
-            nic=dict(required=False, type='list', default=[]),
+            disk=dict(required=True, type='list'),
+            nic=dict(required=True, type='list'),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
             datacenter=dict(required=False, type='str', default=None),
