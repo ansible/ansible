@@ -322,7 +322,7 @@ def main():
                     module.fail_json(msg="%s" % stderr)
                 else:
                     module.exit_json(changed=True, db=db, msg=stdout)
-        
+
         elif state == "import":
             if module.check_mode:
                 module.exit_json(changed=True, db=db)
@@ -334,7 +334,7 @@ def main():
                     module.fail_json(msg="%s" % stderr)
                 else:
                     module.exit_json(changed=True, db=db, msg=stdout)
-        
+
         elif state == "present":
             if module.check_mode:
                 module.exit_json(changed=False, db=db)
@@ -366,7 +366,8 @@ def main():
                             module.fail_json(msg="%s" % stderr)
                         else:
                             module.exit_json(changed=True, db=db, msg=stdout)
-                except Exception, e:
+                except Exception:
+                    e = get_exception()
                     module.fail_json(msg="error creating database: " + str(e))
 
         elif state == "absent":
