@@ -19,14 +19,14 @@
 import unittest
 import botocore
 
-from ansible.module_utils.ec2 import aws_retry
+from ansible.module_utils.ec2 import AWSRetry
 
 class RetryTestCase(unittest.TestCase):
 
     def test_no_failures(self):
         self.counter = 0
 
-        @aws_retry(tries=2, delay=0.1)
+        @AWSRetry.retry(tries=2, delay=0.1)
         def no_failures():
             self.counter += 1
 
@@ -37,7 +37,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
 	err_msg = {'Error': {'Code': 'InstanceId.NotFound'}}
 
-        @aws_retry(tries=2, delay=0.1)
+        @AWSRetry.retry(tries=2, delay=0.1)
         def retry_once():
             self.counter += 1
             if self.counter < 2:
@@ -53,7 +53,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
 	err_msg = {'Error': {'Code': 'RequestLimitExceeded'}}
 
-        @aws_retry(tries=4, delay=0.1)
+        @AWSRetry.retry(tries=4, delay=0.1)
         def fail():
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
@@ -66,7 +66,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
 	err_msg = {'Error': {'Code': 'AuthFailure'}}
 
-        @aws_retry(tries=4, delay=0.1)
+        @AWSRetry.retry(tries=4, delay=0.1)
         def raise_unexpected_error():
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')

@@ -29,6 +29,8 @@
 import os
 from time import sleep
 
+from cloud import CloudRetry
+
 try:
     import boto
     import boto.ec2 #boto does weird import stuff
@@ -55,57 +57,27 @@ class AnsibleAWSError(Exception):
     pass
 
 
-# This list of failures is based on this API Reference
-# http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
-RETRY_ON = [
-    'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-    'InternalFailure', 'InternalError'
-]
+class AWSRetry(CloudRetry):
+    base_class = botocore.exceptions.ClientError
 
-NOT_FOUND = re.compile(r'^\w+.NotFound')
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.response['Error']['Code']
 
+    @staticmethod
+    def found(response_code):
+        # This list of failures is based on this API Reference
+        # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        retry_on = [
+            'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+            'InternalFailure', 'InternalError'
+        ]
 
-def aws_retry(tries=10, delay=3, backoff=2):
-    """ Retry calling the AWS decorated function using an exponential backoff.
-    Kwargs:
-        tries (int): Number of times to try (not retry) before giving up
-            default=10
-        delay (int): Initial delay between retries in seconds
-            default=3
-        backoff (int): backoff multiplier e.g. value of 2 will double the delay each retry
-            default=2
-
-    Basic Usage:
-        >>>@aws_retry()
-           def get_vpc_id_by_name('test', 'us-west-2')
-    """
-    def deco(f):
-        @wraps(f)
-        def retry(*args, **kwargs):
-            max_tries, max_delay = tries, delay
-            while max_tries > 1:
-                try:
-                    return f(*args, **kwargs)
-                except Exception as e:
-                    if isinstance(e, botocore.exceptions.ClientError):
-                        response_code = e.response['Error']['Code']
-                        if response_code in RETRY_ON or NOT_FOUND.search(response_code):
-                            msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
-                            syslog.syslog(syslog.LOG_INFO, msg)
-                            time.sleep(max_delay)
-                            max_tries -= 1
-                            max_delay *= backoff
-                        else:
-                            # Return original exception if exception is not a ClientError
-                            raise e
-                    else:
-                        # Return original exception if exception is not a ClientError
-                        raise e
-            return f(*args, **kwargs)
-
-        return retry  # true decorator
-
-    return deco
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
