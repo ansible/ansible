@@ -960,12 +960,12 @@ class Hardware(Facts):
     """
     platform = 'Generic'
 
-    def __new__(cls, *arguments, **keyword):
+    def __new__(cls):
         subclass = cls
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -2051,12 +2051,12 @@ class Network(Facts):
                    '50' : 'site',
                    '80' : 'organization' }
 
-    def __new__(cls, *arguments, **keyword):
+    def __new__(cls):
         subclass = cls
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
@@ -2835,12 +2835,12 @@ class Virtual(Facts):
     All subclasses MUST define platform.
     """
 
-    def __new__(cls, *arguments, **keyword):
+    def __new__(cls):
         subclass = cls
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def populate(self):
         return self.facts
