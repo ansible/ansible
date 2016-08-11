@@ -447,3 +447,42 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         return self._get_parent_attribute('any_errors_fatal')
 
+    def _get_attr_loop(self):
+        return self._attributes['loop']
+
+    def _get_attr_loop_control(self):
+        return self._attributes['loop_control']
+
+    def get_dep_chain(self):
+        if self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain =  self.get_dep_chain()
+        # inside role: add the dependency chain from current to dependant
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack
+
+    def all_parents_static(self):
+        if self._task_include and not self._task_include.statically_loaded:
+            return False
+        elif self._block:
+            return self._block.all_parents_static()
+
+        return True
+

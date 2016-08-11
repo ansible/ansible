@@ -119,38 +119,41 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
                                 (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                                (not templar._contains_vars(t.args['_raw_params']) and not t.loop)
+                                (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
                 if is_static:
                     if t.loop is not None:
                         raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
 
-                    # FIXME: all of this code is very similar (if not identical) to that in
-                    #        plugins/strategy/__init__.py, and should be unified to avoid
-                    #        patches only being applied to one or the other location
-                    if task_include:
-                        # handle relative includes by walking up the list of parent include
-                        # tasks and checking the relative result to see if it exists
-                        parent_include = task_include
-                        cumulative_path = None
-                        while parent_include is not None:
-                            parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
-                            if cumulative_path is None:
-                                cumulative_path = parent_include_dir
-                            elif not os.path.isabs(cumulative_path):
-                                cumulative_path = os.path.join(parent_include_dir, cumulative_path)
-                            include_target = templar.template(t.args['_raw_params'])
-                            if t._role:
-                                new_basedir = os.path.join(t._role._role_path, 'tasks', cumulative_path)
-                                include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
-                            else:
-                                include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
+                    # we set a flag to indicate this include was static
+                    t.statically_loaded = True
 
-                            if os.path.exists(include_file):
-                                break
-                            else:
-                                parent_include = parent_include._task_include
-                    else:
+                    # handle relative includes by walking up the list of parent include
+                    # tasks and checking the relative result to see if it exists
+                    parent_include = task_include
+                    cumulative_path = None
+
+                    found = False
+                    while parent_include is not None:
+                        parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+                        if cumulative_path is None:
+                            cumulative_path = parent_include_dir
+                        elif not os.path.isabs(cumulative_path):
+                            cumulative_path = os.path.join(parent_include_dir, cumulative_path)
+                        include_target = templar.template(t.args['_raw_params'])
+                        if t._role:
+                            new_basedir = os.path.join(t._role._role_path, 'tasks', cumulative_path)
+                            include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
+                        else:
+                            include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
+
+                        if os.path.exists(include_file):
+                            found = True
+                            break
+                        else:
+                            parent_include = parent_include._task_include
+
+                    if not found:
                         try:
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable as e:
@@ -176,6 +179,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             return []
                         elif not isinstance(data, list):
                             raise AnsibleError("included task files must contain a list of tasks", obj=data)
+
+                        # since we can't send callbacks here, we display a message directly in
+                        # the same fashion used by the on_include callback. We also do it here,
+                        # because the recursive nature of helper methods means we may be loading
+                        # nested includes, and we want the include order printed correctly
+                        display.display("statically included: %s" % include_file, color=C.COLOR_SKIP)
                     except AnsibleFileNotFound as e:
                         if t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -227,7 +236,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         b.tags = list(set(b.tags).union(tags))
                     # END FIXME
 
-                    # FIXME: send callback here somehow...
                     # FIXME: handlers shouldn't need this special handling, but do
                     #        right now because they don't iterate blocks correctly
                     if use_handlers:
