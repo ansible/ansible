@@ -157,7 +157,7 @@ task:
           Service: lambda.amazonaws.com
 
 '''
-
+import time
 import json
 import itertools
 import sys
@@ -513,51 +513,97 @@ def create_role(module, iam, name, path, role_list, prof_list, trust_policy_doc)
         updated_role_list = list_all_roles(iam)
     return changed, updated_role_list, iam_role_result, instance_profile_result
 
+def get_instance_profiles_for_role(iam, name):
+    return [rp['instance_profile_name'] for rp in
+            iam.list_instance_profiles_for_role(name).
+            list_instance_profiles_for_role_result.
+            instance_profiles]
 
-def delete_role(module, iam, name, role_list, prof_list):
+def get_policies_in_role(iam, name):
+    return iam.list_role_policies(name).list_role_policies_result.policy_names
+
+def get_iam_roles(iam):
+    return [rl['role_name'] for rl in iam.list_roles().list_roles_response.
+                     list_roles_result.roles]
+
+def get_instance_profiles(iam):
+    return [prof['instance_profile_name'] for prof in
+            iam.list_instance_profiles().list_instance_profiles_response.instance_profiles]
+
+def wait_for_aws(check_function, changed, msg, max_attempts, max_wait):
+    for i in range(max_attempts+1):
+        if check_function():
+            break
+        else:
+            if i == (max_attempts):
+                module.fail_json(changed=changed, msg=msg)
+            time.sleep(min(2**i, max_wait))
+
+def delete_role(module, iam, name, prof_list, max_attempts=10, max_wait=32):
+
     changed = False
     iam_role_result = None
     instance_profile_result = None
+
     try:
-        if name in role_list:
-            cur_ins_prof = [rp['instance_profile_name'] for rp in
-                            iam.list_instance_profiles_for_role(name).
-                            list_instance_profiles_for_role_result.
-                            instance_profiles]
-            for profile in cur_ins_prof:
-                iam.remove_role_from_instance_profile(profile, name)
-            try:
-              iam.delete_role(name)
-            except boto.exception.BotoServerError as err:
-              error_msg = boto_exception(err)
-              if ('must detach all policies first') in error_msg:
-                for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
-                  iam.delete_role_policy(name, policy)
-              try:
-                iam_role_result = iam.delete_role(name)
-              except boto.exception.BotoServerError as err:
-                  error_msg = boto_exception(err)
-                  if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
-                  else:
-                      module.fail_json(changed=changed, msg=str(err))
-              else:
-                changed = True
+        # Follow the official AWS docs for deleting a IAM role:
+        # http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_delete.html#roles-managingrole-deleting-api
 
-            else:
-                changed = True
+        # Step 1: Remove this role from any instance profiles
+        for profile in get_instance_profiles_for_role(iam, name):
+            iam.remove_role_from_instance_profile(profile, name)
+            changed = True
 
+            # Check to see of the role is actually removed
+            wait_for_aws(lambda : profile not in get_instance_profiles_for_role(iam, name),
+                         changed,
+                         "Timeout waiting for role in profile deletion",
+                         max_attempts,
+                         max_wait)
+
+        # Step 2: Remove all policies from the role
+        for policy in get_policies_in_role(iam, name):
+            iam.delete_role_policy(name, policy)
+            changed = True
+
+            # Check to see of the policy is actually removed
+            wait_for_aws(lambda : policy not in get_policies_in_role(iam, name),
+                         changed,
+                         "Timeout waiting for role policy deletion",
+                         max_attempts,
+                         max_wait)
+
+        # Step 3: Delete the role
+        iam_role_result = iam.delete_role(name)
+        if iam_role_result:
+            changed = True
+
+        # Check to see if the role has been removed
+        wait_for_aws(lambda : name not in get_iam_roles(iam),
+                     changed,
+                     "Timeout waiting for IAM role deltion",
+                     max_attempts,
+                     max_wait)
+
+        # Delete any instance profiles matching the IAM role name
         for prof in prof_list:
             if name == prof:
                 instance_profile_result = iam.delete_instance_profile(name)
+                wait_for_aws(lambda : prof not in get_instance_profiles(iam),
+                             changed,
+                             "Timeout waiting for instance profile deletion",
+                             max_attempts,
+                             max_wait)
+
     except boto.exception.BotoServerError as err:
-        module.fail_json(changed=changed, msg=str(err))
-    else:
-        updated_role_list = list_all_roles(iam)
-    return changed, updated_role_list, iam_role_result, instance_profile_result
+        # Catch the case where a non-existent role is deleted.
+        error_msg = boto_exception(err)
+        if ('The role with name %s cannot be found.' % (name)) in error_msg:
+            changed = False
+        else:
+            module.fail_json(changed=changed, msg=str(err))
+
+    return changed, get_iam_roles(iam), iam_role_result, instance_profile_result
 
 
 def main():
@@ -789,7 +835,7 @@ def main():
                 module, iam, name, path, orig_role_list, orig_prof_list, trust_policy_doc)
         elif state == 'absent':
             changed, role_list, role_result, instance_profile_result = delete_role(
-                module, iam, name, orig_role_list, orig_prof_list)
+                module, iam, name, orig_prof_list)
         elif state == 'update':
             module.fail_json(
                 changed=False, msg='Role update not currently supported by boto.')
