@@ -163,7 +163,7 @@ class StrategyBase:
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
-        display.debug("entering _queue_task() for %s/%s" % (host, task))
+        display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
         # Add a write lock for tasks.
         # Maybe this should be added somewhere further up the call stack but
@@ -182,9 +182,7 @@ class StrategyBase:
             action_write_locks[task.action] = Lock()
 
         # and then queue the new task
-        display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
-            display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
 
             # create a dummy object with plugin loaders set as an easier
             # way to share them with the forked processes
@@ -198,6 +196,7 @@ class StrategyBase:
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
                     queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
@@ -212,7 +211,7 @@ class StrategyBase:
             # most likely an abort
             display.debug("got an error while queuing: %s" % e)
             return
-        display.debug("exiting _queue_task() for %s/%s" % (host, task))
+        display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def _process_pending_results(self, iterator, one_pass=False):
         '''
