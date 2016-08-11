@@ -50,7 +50,7 @@ Also be aware that when combining `when` with `with_items` (or any other loop st
 Nested Loops
 ````````````
 
-Loops can be nested as well (outer loops come earlier in the list) ::
+Loops can be nested as well (outer loops come earlier in the list)::
 
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
