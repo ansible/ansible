@@ -375,6 +375,25 @@ def reset(git_path, module, dest):
     cmd = "%s reset --hard HEAD" % (git_path,)
     return module.run_command(cmd, check_rc=True, cwd=dest)
 
+def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
+    ''' Return the difference between 2 versions '''
+    if before == None:
+        return { 'prepared': '>> Newly checked out %s' % after }
+    elif before != after:
+        # Ensure we have the object we are referring to during git diff !
+        fetch(git_path, module, repo, dest, after, remote, depth, bare, '')
+        cmd = '%s diff %s %s' % (git_path, before, after)
+        (rc, out, err) = module.run_command(cmd, cwd=dest)
+        if rc == 0 and out:
+            return { 'prepared': out }
+        elif rc == 0:
+            return { 'prepared': '>> No visual differences between %s and %s' % (before, after) }
+        elif err:
+            return { 'prepared': '>> Failed to get proper diff between %s and %s:\n>> %s' % (before, after, err) }
+        else:
+            return { 'prepared': '>> Failed to get proper diff between %s and %s' % (before, after) }
+    return {}
+
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
     cwd = None
@@ -761,8 +780,7 @@ def main():
     key_file  = module.params['key_file']
     ssh_opts  = module.params['ssh_opts']
 
-    return_values = {}
-    return_values['warnings'] = []
+    result = dict( warnings=list() )
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
@@ -796,13 +814,13 @@ def main():
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
-        return_values['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
     recursive = module.params['recursive']
     track_submodules = module.params['track_submodules']
 
-    before = None
+    result.update(before=None)
     local_mods = False
     repo_updated = None
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
@@ -812,7 +830,12 @@ def main():
         # In those cases we do an ls-remote
         if module.check_mode or not allow_clone:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
-            module.exit_json(changed=True, before=before, after=remote_head, **return_values)
+            result.update(changed=True, after=remote_head)
+            if module._diff:
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                if diff:
+                    result['diff'] = diff
+            module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
         repo_updated = True
@@ -820,16 +843,17 @@ def main():
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
-        before = get_version(module, git_path, dest)
-        module.exit_json(changed=False, before=before, after=before, **return_values)
+        result['before'] = get_version(module, git_path, dest)
+        result.update(changed=False, after=result['before'])
+        module.exit_json(**result)
     else:
         # else do a pull
         local_mods = has_local_mods(module, git_path, dest, bare)
-        before = get_version(module, git_path, dest)
+        result['before'] = get_version(module, git_path, dest)
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
-                module.fail_json(msg="Local modifications exist in repository (force=no).", **return_values)
+                module.fail_json(msg="Local modifications exist in repository (force=no).", **result)
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
@@ -837,10 +861,14 @@ def main():
         # exit if already at desired sha version
         set_remote_url(git_path, module, repo, dest, remote)
         remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
-        if before == remote_head:
+        if result['before'] == remote_head:
             if local_mods:
-                module.exit_json(changed=True, before=before, after=remote_head,
-                    msg="Local modifications exist", **return_values)
+                result.update(changed=True, after=remote_head, msg='Local modifications exist')
+                if module._diff:
+                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                    if diff:
+                        result['diff'] = diff
+                module.exit_json(**result)
             elif version == 'HEAD':
                 # If the remote and local match and we're using the default of
                 # HEAD (It's not a real tag) then exit early
@@ -856,7 +884,12 @@ def main():
 
         if repo_updated is None:
             if module.check_mode:
-                module.exit_json(changed=True, before=before, after=remote_head, **return_values)
+                result.update(changed=(result['before']!=remote_head), after=remote_head)
+                if module._diff:
+                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                    if diff:
+                        result['diff'] = diff
+                module.exit_json(**result)
             fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec)
             repo_updated = True
 
@@ -872,20 +905,25 @@ def main():
 
         if module.check_mode:
             if submodules_updated:
-                module.exit_json(changed=True, before=before, after=remote_head, submodules_changed=True, **return_values)
+                result.update(changed=True, after=remote_head, submodules_changed=True)
             else:
-                module.exit_json(changed=False, before=before, after=remote_head, **return_values)
+                result.update(changed=False, after=remote_head)
+            module.exit_json(**result)
 
         if submodules_updated:
             # Switch to version specified
             submodule_update(git_path, module, dest, track_submodules)
 
     # determine if we changed anything
-    after = get_version(module, git_path, dest)
+    result['after'] = get_version(module, git_path, dest)
 
-    changed = False
-    if before != after or local_mods or submodules_updated:
-        changed = True
+    result.update(changed=False)
+    if result['before'] != result['after'] or local_mods or submodules_updated:
+        result.update(changed=True)
+        if module._diff:
+            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+            if diff:
+                result['diff'] = diff
 
     # cleanup the wrapper script
     if ssh_wrapper:
@@ -895,7 +933,7 @@ def main():
             # No need to fail if the file already doesn't exist
             pass
 
-    module.exit_json(changed=changed, before=before, after=after, **return_values)
+    module.exit_json(**result)
 
 # import module snippets
 from ansible.module_utils.basic import *
