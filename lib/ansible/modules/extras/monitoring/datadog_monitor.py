@@ -103,6 +103,11 @@ options:
         description: ["A dictionary of thresholds by status. This option is only available for service checks and metric alerts. Because each of them can have multiple thresholds, we don't define them directly in the query."]
         required: false
         default: {'ok': 1, 'critical': 1, 'warning': 1}
+    locked:
+        description: ["A boolean indicating whether changes to this monitor should be restricted to the creator or admins."]
+        required: false
+        default: False
+        version_added: 2.2
 '''
 
 EXAMPLES = '''
@@ -158,7 +163,8 @@ def main():
             escalation_message=dict(required=False, default=None),
             notify_audit=dict(required=False, default=False, type='bool'),
             thresholds=dict(required=False, type='dict', default=None),
-            tags=dict(required=False, type='list', default=None)
+            tags=dict(required=False, type='list', default=None),
+            locked=dict(required=False, default=False, type='bool')
         )
     )
 
@@ -241,6 +247,7 @@ def install_monitor(module):
         "renotify_interval": module.params['renotify_interval'],
         "escalation_message": module.params['escalation_message'],
         "notify_audit": module.boolean(module.params['notify_audit']),
+        "locked": module.boolean(module.params['locked']),
     }
 
     if module.params['type'] == "service check":
