@@ -254,9 +254,10 @@ class StrategyBase:
                         continue
             return None
 
-        while not self._final_q.empty() and not self._tqm._terminated:
+        passes = 0
+        while not self._tqm._terminated:
             try:
-                task_result = self._final_q.get(block=False)
+                task_result = self._final_q.get(timeout=0.001)
                 original_host = get_original_host(task_result._host)
                 original_task = iterator.get_original_task(original_host, task_result._task)
                 task_result._host = original_host
@@ -451,7 +452,9 @@ class StrategyBase:
                 ret_results.append(task_result)
 
             except Queue.Empty:
-                time.sleep(0.005)
+                passes += 1
+                if passes > 2:
+                   break
 
             if one_pass:
                 break
@@ -474,7 +477,6 @@ class StrategyBase:
 
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            time.sleep(0.005)
 
         display.debug("no more pending results, returning what we have")
 
