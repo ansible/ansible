@@ -48,4 +48,5 @@ pip list
 
 source hacking/env-setup
 
-test/utils/shippable/modules/generate-tests "${this_module_group}" --verbose | /bin/bash -eux
+test/utils/shippable/modules/generate-tests "${this_module_group}" --verbose --output /tmp/integration.sh >/dev/null
+/bin/bash -eux /tmp/integration.sh
