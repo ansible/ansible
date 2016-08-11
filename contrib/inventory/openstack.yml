@@ -30,3 +30,4 @@ ansible:
   use_hostnames: True
   expand_hostvars: False
   fail_on_errors: True
+  use_floatingip: False

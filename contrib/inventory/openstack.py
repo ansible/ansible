@@ -118,9 +118,21 @@ def get_host_groups(inventory, refresh=False):
     return groups
 
 
-def append_hostvars(hostvars, groups, key, server, namegroup=False):
+def append_hostvars(hostvars, groups, key, server, mods, namegroup=False):
+    ansible_ip = None
+    if mods['use_floatingip']:
+       for n,v in server['addresses'].iteritems():
+           for os_addr in v:
+               if os_addr['OS-EXT-IPS:type'] == "floating":
+                   ansible_ip = os_addr['addr']
+                   break
+           if ansible_ip:
+               break
+    if not ansible_ip: 
+        ansible_ip = server['interface_ip']
+
     hostvars[key] = dict(
-        ansible_ssh_host=server['interface_ip'],
+        ansible_ssh_host=ansible_ip,
         openstack=server)
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
@@ -131,14 +143,17 @@ def get_host_groups_from_cloud(inventory):
     firstpass = collections.defaultdict(list)
     hostvars = {}
     list_args = {}
+    hv_mods = dict()
     if hasattr(inventory, 'extra_config'):
         use_hostnames = inventory.extra_config['use_hostnames']
+        hv_mods['use_floatingip'] = inventory.extra_config['use_floatingip']
         list_args['expand'] = inventory.extra_config['expand_hostvars']
         if StrictVersion(shade.__version__) >= StrictVersion("1.6.0"):
             list_args['fail_on_cloud_config'] = \
                 inventory.extra_config['fail_on_errors']
     else:
         use_hostnames = False
+        hv_mods['use_floatingip'] = False
 
     for server in inventory.list_hosts(**list_args):
 
@@ -147,18 +162,18 @@ def get_host_groups_from_cloud(inventory):
         firstpass[server['name']].append(server)
     for name, servers in firstpass.items():
         if len(servers) == 1 and use_hostnames:
-            append_hostvars(hostvars, groups, name, servers[0])
+            append_hostvars(hostvars, groups, name, servers[0], hv_mods)
         else:
             server_ids = set()
             # Trap for duplicate results
             for server in servers:
                 server_ids.add(server['id'])
             if len(server_ids) == 1 and use_hostnames:
-                append_hostvars(hostvars, groups, name, servers[0])
+                append_hostvars(hostvars, groups, name, servers[0], hv_mods)
             else:
                 for server in servers:
                     append_hostvars(
-                        hostvars, groups, server['id'], server,
+                        hostvars, groups, server['id'], server, hv_mods,
                         namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
@@ -226,6 +241,7 @@ def main():
                     'use_hostnames': False,
                     'expand_hostvars': True,
                     'fail_on_errors': True,
+		    'use_floatingip': False,
                 }
             ))
 
