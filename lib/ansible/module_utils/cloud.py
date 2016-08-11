@@ -24,9 +24,9 @@ module as shown below.
 
 from ansible.module_utils.cloud import *
 
-The 'cloud' module provides the following common argument specs:
+The 'cloud' module provides the following common classes:
 
-    * CloudRetry Class
+    * CloudRetry
         - The base class to be used by other cloud providers, in order to
           provide a backoff/retry decorator based on status codes.
 
@@ -78,7 +78,7 @@ class CloudRetry(object):
         """
         def deco(f):
             @wraps(f)
-            def retry(*args, **kwargs):
+            def retry_func(*args, **kwargs):
                 max_tries, max_delay = tries, delay
                 while max_tries > 1:
                     try:
@@ -100,6 +100,6 @@ class CloudRetry(object):
                             raise e
                 return f(*args, **kwargs)
 
-            return retry  # true decorator
+            return retry_func  # true decorator
 
         return deco
