@@ -33,11 +33,17 @@ options:
     description:
       - The commands to send to the remote NXOS device over the
         configured provider.  The resulting output from the command
-        is returned.  If the I(waitfor) argument is provided, the
+        is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retires as expired.
+      - The I(commands) argument also accepts an alternative form
+        that allows for complex values that specify the command
+        to run and the output format to return.   This can be done
+        on a command by command basis.  The complex argument supports
+        the keywords C(command) and C(output) where C(command) is the
+        command to run and C(output) is one of 'text' or 'json'.
     required: true
-  waitfor:
+  wait_for:
     description:
       - Specifies what to evaluate from the output of the command
         and what conditionals to apply.  This argument will cause
@@ -46,11 +52,24 @@ options:
         by the configured retries, the task fails.  See examples.
     required: false
     default: null
+    aliases: ['waitfor']
+    version_added: "2.2"
+  match:
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the I(wait_for) must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    required: false
+    default: all
+    version_added: "2.2"
   retries:
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed.  The command is run on the
-        target device every retry and evaluated against the I(waitfor)
+        target device every retry and evaluated against the I(wait_for)
         conditionals.
     required: false
     default: 10
@@ -65,33 +84,49 @@ options:
 """
 
 EXAMPLES = """
-- nxos_command:
-    commands: ["show version"]
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: admin
+    password: admin
+    transport: cli
 
-- nxos_command:
-    commands: "{{ lookup('file', 'commands.txt') }}"
+- name: run show verion on remote devices
+  nxos_command:
+    commands: show version
+    provider "{{ cli }}"
 
-- nxos_command:
-    commands:
-        - "show interface {{ item }}"
-  with_items: interfaces
+- name: run show version and check to see if output contains Arista
+  nxos_command:
+    commands: show version
+    wait_for: result[0] contains Cisco
+    provider: "{{ cli }}"
 
-
-- nxos_command:
+- name: run multiple commands on remote nodes
+   nxos_command:
     commands:
       - show version
-    waitfor:
-      - "result[0] contains 7.2(0)D1(1)"
+      - show interfaces
+    provider: "{{ cli }}"
 
-- nxos_command:
-  commands:
-    - show version | json
-    - show interface Ethernet2/1 | json
-    - show version
-  waitfor:
-    - "result[1].TABLE_interface.ROW_interface.state eq up"
-    - "result[2] contains 'version 7.2(0)D1(1)'"
-    - "result[0].sys_ver_str == 7.2(0)D1(1)"
+- name: run multiple commands and evalute the output
+  nxos_command:
+    commands:
+      - show version
+      - show interfaces
+    wait_for:
+      - result[0] contains Cisco
+      - result[1] contains loopback0
+    provider: "{{ cli }}"
+
+- name: run commands and specify the output format
+  nxos_command:
+    commands:
+      - command: show version
+        output: json
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -113,84 +148,99 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-
-import time
-import re
-
 from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcmd import Conditional
-from ansible.module_utils.network import get_module
-from ansible.module_utils.nxos import *
+from ansible.module_utils.netcli import CommandRunner, FailedConditionsError
+from ansible.module_utils.netcli import AddCommandError
+from ansible.module_utils.nxos import NetworkModule, NetworkError
 
+VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
-INDEX_RE = re.compile(r'(\[\d+\])')
-
-def iterlines(stdout):
+def to_lines(stdout):
     for item in stdout:
         if isinstance(item, basestring):
             item = str(item).split('\n')
         yield item
 
+def parse_commands(module):
+    for cmd in module.params['commands']:
+        if isinstance(cmd, basestring):
+            cmd = dict(command=cmd, output=None)
+        elif 'command' not in cmd:
+            module.fail_json(msg='command keyword argument is required')
+        elif cmd.get('output') not in [None, 'text', 'json']:
+            module.fail_json(msg='invalid output specified for command')
+        elif not set(cmd.keys()).issubset(VALID_KEYS):
+            module.fail_json(msg='unknown keyword specified')
+        yield cmd
+
 def main():
     spec = dict(
-        commands=dict(type='list'),
-        waitfor=dict(type='list'),
+        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
+        commands=dict(type='list', required=True),
+
+        wait_for=dict(type='list', aliases=['waitfor']),
+        match=dict(default='all', choices=['any', 'all']),
+
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
 
-    module = get_module(argument_spec=spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec,
+                           connect_on_load=False,
+                           supports_check_mode=True)
 
+    commands = list(parse_commands(module))
+    conditionals = module.params['wait_for'] or list()
 
-    commands = module.params['commands']
+    warnings = list()
 
-    retries = module.params['retries']
-    interval = module.params['interval']
+    runner = CommandRunner(module)
+
+    for cmd in commands:
+        if module.check_mode and not cmd['command'].startswith('show'):
+            warnings.append('only show commands are supported when using '
+                            'check mode, not executing `%s`' % cmd['command'])
+        else:
+            if cmd['command'].startswith('conf'):
+                module.fail_json(msg='nxos_command does not support running '
+                                     'config mode commands.  Please use '
+                                     'nxos_config instead')
+            try:
+                runner.add_command(**cmd)
+            except AddCommandError:
+                exc = get_exception()
+                warnings.append('duplicate command detected: %s' % cmd)
+
+    for item in conditionals:
+        runner.add_conditional(item)
+
+    runner.retries = module.params['retries']
+    runner.interval = module.params['interval']
+    runner.match = module.params['match']
 
     try:
-        queue = set()
-        for entry in (module.params['waitfor'] or list()):
-            queue.add(Conditional(entry))
-    except AttributeError:
+        runner.run()
+    except FailedConditionsError:
         exc = get_exception()
-        module.fail_json(msg=exc.message)
+        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
-    result = dict(changed=False, result=list())
+    result = dict(changed=False)
 
-    kwargs = dict()
-    if module.params['transport'] == 'nxapi':
-        kwargs['command_type'] = 'cli_show'
+    result['stdout'] = list()
+    for cmd in commands:
+        try:
+            output = runner.get_command(cmd['command'], cmd.get('output'))
+        except ValueError:
+            output = 'command not executed due to check_mode, see warnings'
+        result['stdout'].append(output)
 
-    while retries > 0:
-        response = module.cli(commands, **kwargs)
-        result['stdout'] = response
+    result['warnings'] = warnings
+    result['stdout_lines'] = list(to_lines(result['stdout']))
 
-        for index, cmd in enumerate(commands):
-            if cmd.endswith('json'):
-                try:
-                    response[index] = module.from_json(response[index])
-                except ValueError:
-                    exc = get_exception()
-                    module.fail_json(msg='failed to parse json response',
-                            exc_message=str(exc), response=response[index],
-                            cmd=cmd, response_dict=response)
-
-        for item in list(queue):
-            if item(response):
-                queue.remove(item)
-
-        if not queue:
-            break
-
-        time.sleep(interval)
-        retries -= 1
-    else:
-        failed_conditions = [item.raw for item in queue]
-        module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
-
-    result['stdout_lines'] = list(iterlines(result['stdout']))
-    return module.exit_json(**result)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
