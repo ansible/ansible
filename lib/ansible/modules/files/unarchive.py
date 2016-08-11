@@ -103,8 +103,7 @@ todo:
     - re-implement zip support using native zipfile module
 notes:
     - requires C(gtar)/C(unzip) command on target host
-    - can handle I(gzip), I(bzip2) and I(xz) compressed as well as uncompressed tar files
-    - detects type of archive automatically
+    - can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2) and I(.tar.xz) files using C(gtar)
     - uses gtar's C(--diff arg) to calculate if changed or not. If this C(arg) is not
       supported, it will always unpack the archive
     - existing files/directories in the destination which are not in the archive
