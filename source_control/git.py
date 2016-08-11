@@ -902,10 +902,12 @@ def main():
     submodules_updated = False
     if recursive and not bare:
         submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
+        if submodules_updated:
+            result.update(submodules_changed=submodules_updated)
 
         if module.check_mode:
             if submodules_updated:
-                result.update(changed=True, after=remote_head, submodules_changed=True)
+                result.update(changed=True, after=remote_head)
             else:
                 result.update(changed=False, after=remote_head)
             module.exit_json(**result)
