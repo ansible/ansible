@@ -161,6 +161,7 @@ def print_stderr(*args, **kwargs):
     """Print to stderr."""
 
     print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
 
 
 def dump_stderr(label, l):
