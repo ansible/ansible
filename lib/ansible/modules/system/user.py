@@ -299,6 +299,8 @@ class User(object):
             self.module.debug('In check mode, would have run: "%s"' % cmd)
             return (0, '','')
         else:
+            # cast all args to strings ansible-modules-core/issues/4397
+            cmd = [str(x) for x in cmd]
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def remove_user_userdel(self):
