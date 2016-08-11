@@ -16,7 +16,7 @@ Also verify first that your issue/request is not already reported in GitHub
  - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Name of the plugin/module/task -->
+<!--- Name of the plugin/task/feature -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from “ansible --version” between quotes below -->
