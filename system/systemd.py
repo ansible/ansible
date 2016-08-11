@@ -309,9 +309,15 @@ def main():
         (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
 
         # check systemctl result or if it is a init script
-        initscript = '/etc/init.d/' + unit
-        if rc == 0 or (os.access(initscript, os.X_OK) and bool(glob.glob('/etc/rc?.d/S??' + unit))):
+        if rc == 0:
             enabled = True
+        elif rc == 1:
+            # Deals with init scripts
+            # if both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
+            initscript = '/etc/init.d/' + unit
+            if os.path.exists(initscript) and os.access(initscript, os.X_OK) and \
+               (not out.startswith('disabled') or bool(glob.glob('/etc/rc?.d/S??' + unit))):
+                enabled = True
 
         # default to current state
         result['enabled'] = enabled
