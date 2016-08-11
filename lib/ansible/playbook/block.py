@@ -374,3 +374,19 @@ class Block(Base, Become, Conditional, Taggable):
             return self._parent.get_include_params()
         else:
             return dict()
+
+    def all_parents_static(self):
+        '''
+        Determine if all of the parents of this block were statically loaded
+        or not. Since Task/TaskInclude objects may be in the chain, they simply
+        call their parents all_parents_static() method. Only Block objects in
+        the chain check the statically_loaded value of the parent.
+        '''
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:
+                return False
+            return self._parent.all_parents_static()
+
+        return True
+

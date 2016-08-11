@@ -578,7 +578,7 @@ class StrategyBase:
                 data,
                 play=iterator._play,
                 parent_block=None,
-                task_include=None,
+                task_include=included_file._task,
                 role=included_file._task._role,
                 use_handlers=is_handler,
                 loader=self._loader,

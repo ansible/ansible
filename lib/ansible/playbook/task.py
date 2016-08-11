@@ -463,3 +463,8 @@ class Task(Base, Conditional, Taggable, Become):
 
         return path_stack
 
+    def all_parents_static(self):
+        if self._parent:
+            return self._parent.all_parents_static()
+        return True
+
