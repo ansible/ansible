@@ -48,6 +48,10 @@ options:
             - The port on which InfluxDB server is listening.
         default: 8086
         required: false
+    database_name:
+        description:
+            - Database name to work with.
+        required: true
     user_name:
         description:
             - Name of the user that will be created/destroyed.
@@ -72,6 +76,7 @@ EXAMPLES = '''
 # Example influxdb_user command from Ansible Playbooks
 - name: Create user
     influxdb_user:
+      database_name: influx
       hostname: "{{ influxdb_ip_address }}"
       user_name: "{{ influxdb_user_name }}"
       user_pass: "{{ influxdb_user_pass }}"
@@ -80,12 +85,14 @@ EXAMPLES = '''
 
 - name: Destroy user
     influxdb_user:
+      database_name: influx
       hostname: "{{ influxdb_ip_address }}"
       user_name: "{{ influxdb_user_name }}"
       state: absent
 
 - name: Create admin user
     influxdb_user:
+      database_name: influx
       hostname: "{{ influxdb_ip_address }}"
       username: "{{ influxdb_username }}"
       password: "{{ influxdb_password }}"
@@ -111,6 +118,7 @@ def influxdb_argument_spec():
     return dict(
         hostname=dict(required=True, type='str'),
         port=dict(default=8086, type='int'),
+        database_name=dict(required=True, type='str', default=False),
         username=dict(default='root', type='str'),
         password=dict(default='root', type='str', no_log=True),
         user_name=dict(required=True, type='str'),
@@ -187,20 +195,23 @@ def main():
     user_pass = module.params['user_pass']
     user_admin = module.params['user_admin']
 
-    client = connect_to_influxdb(module)
-    user = find_user(module, client, user_name)
+    try:
+        client = connect_to_influxdb(module)
+        user = find_user(module, client, user_name)
 
-    if state == 'present':
-        if user:
-            module.exit_json(changed=False)
-        else:
-            create_user(module, client, user_name, user_pass, user_admin)
+        if state == 'present':
+            if user:
+                module.exit_json(changed=False)
+            else:
+                create_user(module, client, user_name, user_pass, user_admin)
 
-    if state == 'absent':
-        if user:
-            drop_user(module, client, user_name)
-        else:
-            module.exit_json(changed=False)
+        if state == 'absent':
+            if user:
+                drop_user(module, client, user_name)
+            else:
+                module.exit_json(changed=False)
+    except Exception as e:
+        module.fail_json(msg="{}: {}".format(e.__class__.__name__, str(e)))
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
