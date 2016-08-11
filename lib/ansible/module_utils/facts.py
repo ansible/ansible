@@ -961,6 +961,12 @@ class Hardware(Facts):
     platform = 'Generic'
 
     def __new__(cls, *arguments, **keyword):
+        # When Hardware is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Hardware:
+            return super(Hardware, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
@@ -2052,6 +2058,12 @@ class Network(Facts):
                    '80' : 'organization' }
 
     def __new__(cls, *arguments, **keyword):
+        # When Network is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Network:
+            return super(Network, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
@@ -2836,6 +2848,12 @@ class Virtual(Facts):
     """
 
     def __new__(cls, *arguments, **keyword):
+        # When Virtual is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Virtual:
+            return super(Virtual, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
