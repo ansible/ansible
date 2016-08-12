@@ -59,8 +59,11 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
 
-        with self.assertRaises(botocore.exceptions.ClientError):
+        #with self.assertRaises(botocore.exceptions.ClientError):
+        try:
             fail()
+        except Exception as e:
+            self.assertEqual(e.response['Error']['Code'], 'RequestLimitExceeded')
         self.assertEqual(self.counter, 4)
 
     def test_unexpected_exception_does_not_retry(self):
@@ -72,8 +75,11 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
 
-        with self.assertRaises(botocore.exceptions.ClientError):
+        #with self.assertRaises(botocore.exceptions.ClientError):
+        try:
             raise_unexpected_error()
+        except Exception as e:
+            self.assertEqual(e.response['Error']['Code'], 'AuthFailure')
 
         self.assertEqual(self.counter, 1)
 
