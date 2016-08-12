@@ -67,7 +67,7 @@ ifeq ($(OFFICIAL),yes)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 0.git$(DATE)$(GITINFO)
+    DEB_RELEASE = 100.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
@@ -83,7 +83,7 @@ RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
-    RPMRELEASE = 0.git$(DATE)$(GITINFO)
+    RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
