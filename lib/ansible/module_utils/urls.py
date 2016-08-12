@@ -631,6 +631,13 @@ class SSLValidationHandler(urllib2.BaseHandler):
         use_proxy = self.detect_no_proxy(req.get_full_url())
 
         if not use_proxy:
+            try:
+                # cleanup the temp file created, don't worry
+                # if it fails for some reason
+                os.remove(tmp_ca_cert_path)
+            except:
+                pass
+            
             # ignore proxy settings for this host request
             return req
 
