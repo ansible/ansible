@@ -36,6 +36,8 @@ options:
     description:
       - List of container names or container IDs to connect to a network.
     default: null
+    aliases:
+      - containers
 
   driver:
     description:
@@ -157,7 +159,6 @@ facts:
     sample: {}
 '''
 
-
 from ansible.module_utils.docker_common import *
 
 try:
@@ -219,7 +220,6 @@ class DockerNetworkManager(object):
         network = None
         for n in networks:
             if n['Name'] == self.parameters.network_name:
-                self.results[u'actions'].append('Found network %s' % self.parameters.network_name)
                 network = n
         return network
 
@@ -346,7 +346,7 @@ class DockerNetworkManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['facts'] = self.get_existing_network()
+        self.results['ansible_facts'] = {u'ansible_docker_network': self.get_existing_network()}
 
     def absent(self):
         self.remove_network()
@@ -355,7 +355,7 @@ class DockerNetworkManager(object):
 def main():
     argument_spec = dict(
         network_name       = dict(type='str', required=True, aliases=['name']),
-        connected          = dict(type='list', default=[]),
+        connected          = dict(type='list', default=[], aliases=['containers']),
         state              = dict(type='str', default='present', choices=['present', 'absent']),
         driver             = dict(type='str', default='bridge'),
         driver_options     = dict(type='dict', default={}),
@@ -366,11 +366,8 @@ def main():
         debug              = dict(type='bool', default=False)
     )
 
-    required_if = []
-
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        required_if=required_if,
         supports_check_mode=True
     )
 
