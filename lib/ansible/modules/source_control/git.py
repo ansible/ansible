@@ -661,7 +661,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
                     break
     return changed
 
-def submodule_update(git_path, module, dest, track_submodules):
+def submodule_update(git_path, module, dest, track_submodules, force=False):
     ''' init and update any submodules '''
 
     # get the valid submodule params
@@ -676,6 +676,8 @@ def submodule_update(git_path, module, dest, track_submodules):
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote' ]
     else:
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    if force:
+        cmd.append('--force')
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
@@ -938,7 +940,7 @@ def main():
 
         if submodules_updated:
             # Switch to version specified
-            submodule_update(git_path, module, dest, track_submodules)
+            submodule_update(git_path, module, dest, track_submodules, force=force)
 
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
