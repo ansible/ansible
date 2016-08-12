@@ -2,5 +2,3 @@ tox
 pyyaml
 jinja2
 setuptools
-botocore
-boto3

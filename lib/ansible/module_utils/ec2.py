@@ -27,9 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 from time import sleep
 
-from cloud import CloudRetry
+from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto

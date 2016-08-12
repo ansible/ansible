@@ -39,7 +39,7 @@ from functools import wraps
 import syslog
 import time
 
-from pycompat24 import get_exception
+from ansible.module_utils.pycompat24 import get_exception
 
 
 class CloudRetry(object):
