@@ -206,6 +206,7 @@ EXAMPLES = '''
 
 import re
 import tempfile
+from ansible.utils.path import unfrackpath
 from distutils.version import LooseVersion
 
 def get_submodule_update_params(module, git_path, cwd):
@@ -521,14 +522,32 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
+def get_remote_url(git_path, module, dest, remote):
+    '''Return URL of remote source for repo.'''
+    command = [git_path, 'ls-remote', '--get-url', remote]
+    (rc, out, err) = module.run_command(command, cwd=dest)
+    if rc != 0:
+        # There was an issue getting remote URL, most likely
+        # command is not available in this version of Git.
+        return None
+    return out.rstrip('\n')
+
 def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
-    commands = [("set a new url %s for %s" % (repo, remote), [git_path, 'remote', 'set-url', remote, repo])]
+    # Return if remote URL isn't changing.
+    remote_url = get_remote_url(git_path, module, dest, remote)
+    if remote_url == repo or remote_url == unfrackpath(repo):
+        return False
 
-    for (label,command) in commands:
-        (rc,out,err) = module.run_command(command, cwd=dest)
-        if rc != 0:
-            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
+    command = [git_path, 'remote', 'set-url', remote, repo]
+    (rc, out, err) = module.run_command(command, cwd=dest)
+    if rc != 0:
+        label = "set a new url %s for %s" % (repo, remote)
+        module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
+
+    # Return False if remote_url is None to maintain previous bevhavior
+    # for Git versions prior to 1.7.5 that lack required functionality.
+    return remote_url is not None
 
 def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
     ''' updates repo from remote sources '''
@@ -859,7 +878,14 @@ def main():
                 reset(git_path, module, dest)
 
         # exit if already at desired sha version
-        set_remote_url(git_path, module, repo, dest, remote)
+        if module.check_mode:
+            remote_url = get_remote_url(git_path, module, dest, remote)
+            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackpath(repo)
+        else:
+            remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
+        if remote_url_changed:
+            result.update(remote_url_changed=True)
+
         remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
         if result['before'] == remote_head:
             if local_mods:
@@ -908,9 +934,7 @@ def main():
         if module.check_mode:
             if submodules_updated:
                 result.update(changed=True, after=remote_head)
-            else:
-                result.update(changed=False, after=remote_head)
-            module.exit_json(**result)
+                module.exit_json(**result)
 
         if submodules_updated:
             # Switch to version specified
@@ -920,7 +944,7 @@ def main():
     result['after'] = get_version(module, git_path, dest)
 
     result.update(changed=False)
-    if result['before'] != result['after'] or local_mods or submodules_updated:
+    if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
             diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
