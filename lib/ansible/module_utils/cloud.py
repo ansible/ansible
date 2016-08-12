@@ -39,6 +39,8 @@ from functools import wraps
 import syslog
 import time
 
+from pycompat24 import get_exception
+
 
 class CloudRetry(object):
     """ CloudRetry can be used by any cloud provider, in order to implement a
@@ -83,7 +85,8 @@ class CloudRetry(object):
                 while max_tries > 1:
                     try:
                         return f(*args, **kwargs)
-                    except Exception as e:
+                    except Exception:
+                        e = get_exception()
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
                             if cls.found(response_code):
