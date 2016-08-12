@@ -8,7 +8,7 @@ As described in :doc:`intro_dynamic_inventory`, ansible can pull inventory infor
 
 How do we write a new one?
 
-Simple!  We just create a script or program that can return JSON in the right format when fed the proper arguments.
+Simple!  We just create a script or program that can print JSON in the right format when fed the proper arguments.
 You can do this in any language.
 
 .. _inventory_script_conventions:
@@ -16,7 +16,7 @@ You can do this in any language.
 Script Conventions
 ``````````````````
 
-When the external node script is called with the single argument ``--list``, the script must return a JSON hash/dictionary of all the groups to be managed. Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or simply a list of host/IP addresses, like so::
+When the external node script is called with the single argument ``--list``, the script must output a JSON encoded hash/dictionary of all the groups to be managed to stdout. Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or simply a list of host/IP addresses, like so::
 
     {
         "databases"   : {
@@ -41,9 +41,9 @@ When the external node script is called with the single argument ``--list``, the
 
 Before version 1.0, each group could only have a list of hostnames/IP addresses, like the webservers, marietta, and 5points groups above.
 
-When called with the arguments ``--host <hostname>`` (where <hostname> is a host from above), the script must return either an empty JSON
-hash/dictionary, or a hash/dictionary of variables to make available to templates and playbooks.  Returning variables is optional,
-if the script does not wish to do this, returning an empty hash/dictionary is the way to go::
+When called with the arguments ``--host <hostname>`` (where <hostname> is a host from above), the script must print either an empty JSON
+hash/dictionary, or a hash/dictionary of variables to make available to templates and playbooks.  Printing variables is optional,
+if the script does not wish to do this, printing an empty hash/dictionary is the way to go::
 
     {
         "favcolor"   : "red",
