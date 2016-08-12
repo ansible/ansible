@@ -680,6 +680,7 @@ class TaskParameters(DockerBaseClass):
         self.cpuset_mems = None
         self.cpu_shares = None
         self.detach = None
+        self.debug = None
         self.devices = None
         self.dns_servers = None
         self.dns_opts = None
@@ -1606,13 +1607,10 @@ class ContainerManager(DockerBaseClass):
         elif state == 'absent':
             self.absent()
 
-        if not self.check_mode:
-            try:
-                del self.results['actions']
-            except:
-                pass
+        if not self.check_mode and not self.parameters.debug:
+            self.results.pop('actions')
 
-        if self.client.module._diff:
+        if self.client.module._diff or self.parameters.debug:
             self.results['diff'] = self.diff
 
         if self.facts:
