@@ -1373,16 +1373,18 @@ class Container(DockerBaseClass):
                 if network.get('aliases') and not connected_networks[network['name']].get('Aliases'):
                     diff = True
                 if network.get('aliases') and connected_networks[network['name']].get('Aliases'):
-                    if set(network.get('aliases')) != set(connected_networks[network['name']].get('Aliases')):
-                        diff = True
+                    for alias in network.get('aliases'):
+                        if alias not in connected_networks[network['name']].get('Aliases', []):
+                            diff = True
                 if network.get('links') and not connected_networks[network['name']].get('Links'):
                     diff = True
                 if network.get('links') and connected_networks[network['name']].get('Links'):
                     expected_links = []
                     for link, alias in network['links'].iteritems():
                         expected_links.append("%s:%s" % (link, alias))
-                    if set(expected_links) != set(connected_networks[network['name']].get('Links', [])):
-                        diff = True
+                    for link in expected_links:
+                        if link not in connected_networks[network['name']].get('Links', []):
+                            diff = True
                 if diff:
                     different = True
                     differences.append(dict(
