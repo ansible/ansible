@@ -43,7 +43,7 @@ def main():
 
     parser.add_argument('--endpoint',
                         dest='endpoint',
-                        default='https://u30i4oezgk.execute-api.us-east-1.amazonaws.com',
+                        default='https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
                         help='api endpoint')
 
     parser.add_argument('--stage',
