@@ -145,7 +145,7 @@ def main():
     except botocore.exceptions.NoCredentialsError, e:
         module.fail_json(msg=str(e))
 
-    results = get_nat_gateways(ec2, module)
+    results = get_nat_gateways(connection, module)
 
     module.exit_json(result=camel_dict_to_snake_dict(results))
 
