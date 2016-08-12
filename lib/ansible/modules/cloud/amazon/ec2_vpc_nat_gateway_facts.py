@@ -147,7 +147,7 @@ def main():
 
     results = get_nat_gateways(connection, module)
 
-    module.exit_json(result=camel_dict_to_snake_dict(results))
+    module.exit_json(result=results)
 
 # import module snippets
 from ansible.module_utils.basic import *
