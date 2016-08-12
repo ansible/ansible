@@ -28,7 +28,6 @@ options:
   name:
     description:
       - Name of the network to operate on.
-    default: null
     required: true
     aliases:
       - network_name
