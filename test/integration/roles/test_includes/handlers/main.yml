@@ -1,2 +1,4 @@
 - include: more_handlers.yml
 
+- name: named_include_handler
+  include: more_handlers.yml

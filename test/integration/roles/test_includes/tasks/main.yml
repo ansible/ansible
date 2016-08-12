@@ -80,5 +80,5 @@
     # both these via a handler include
     - included_handler
     - verify_handler
-
+    - named_include_handler
 
