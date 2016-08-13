@@ -193,7 +193,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         elif not isinstance(data, list):
                             raise AnsibleError("included task files must contain a list of tasks", obj=data)
                         else:
-                            if t.name:
+                            if isinstance(t, HandlerTaskInclude) and t.name:
                                 for mapping in data:
                                     mapping['name'] = t.name
 
