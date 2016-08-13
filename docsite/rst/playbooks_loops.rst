@@ -125,8 +125,8 @@ Assuming that ``first_example_file`` contained the text "hello" and ``second_exa
 Looping over Fileglobs
 ``````````````````````
 
-``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
-be used like this::
+``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern. It calls
+`Python's glob library <https://docs.python.org/2/library/glob.html>`_, and can be used like this::
 
     ---
     - hosts: all
