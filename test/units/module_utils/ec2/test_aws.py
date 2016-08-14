@@ -27,7 +27,7 @@ class RetryTestCase(unittest.TestCase):
     def test_no_failures(self):
         self.counter = 0
 
-        @AWSRetry.retry(tries=2, delay=0.1)
+        @AWSRetry.backoff(tries=2, delay=0.1)
         def no_failures():
             self.counter += 1
 
@@ -38,7 +38,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
         err_msg = {'Error': {'Code': 'InstanceId.NotFound'}}
 
-        @AWSRetry.retry(tries=2, delay=0.1)
+        @AWSRetry.backoff(tries=2, delay=0.1)
         def retry_once():
             self.counter += 1
             if self.counter < 2:
@@ -54,7 +54,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
         err_msg = {'Error': {'Code': 'RequestLimitExceeded'}}
 
-        @AWSRetry.retry(tries=4, delay=0.1)
+        @AWSRetry.backoff(tries=4, delay=0.1)
         def fail():
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
@@ -70,7 +70,7 @@ class RetryTestCase(unittest.TestCase):
         self.counter = 0
         err_msg = {'Error': {'Code': 'AuthFailure'}}
 
-        @AWSRetry.retry(tries=4, delay=0.1)
+        @AWSRetry.backoff(tries=4, delay=0.1)
         def raise_unexpected_error():
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
