@@ -597,7 +597,13 @@ class Ec2Inventory(object):
                                  "getting RDS clusters")
 
         client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
-        clusters = client.describe_db_clusters()["DBClusters"]
+
+        marker, clusters = '', []
+        while marker is not None:
+            resp = client.describe_db_clusters(Marker=marker)
+            clusters.extend(resp["DBClusters"])
+            marker = resp.get('Marker', None)
+
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
         for c in clusters:
