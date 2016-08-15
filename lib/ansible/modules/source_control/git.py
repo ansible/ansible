@@ -204,10 +204,14 @@ EXAMPLES = '''
 - git: repo=https://github.com/ansible/ansible-examples.git dest=/src/ansible-examples refspec=+refs/pull/*:refs/heads/*
 '''
 
+import os
 import re
 import tempfile
-from ansible.utils.path import unfrackpath
 from distutils.version import LooseVersion
+
+def unfrackgitpath(path):
+    # copied from ansible.utils.path
+    return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
 
 def get_submodule_update_params(module, git_path, cwd):
 
@@ -536,7 +540,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
     # Return if remote URL isn't changing.
     remote_url = get_remote_url(git_path, module, dest, remote)
-    if remote_url == repo or remote_url == unfrackpath(repo):
+    if remote_url == repo or remote_url == unfrackgitpath(repo):
         return False
 
     command = [git_path, 'remote', 'set-url', remote, repo]
@@ -882,7 +886,7 @@ def main():
         # exit if already at desired sha version
         if module.check_mode:
             remote_url = get_remote_url(git_path, module, dest, remote)
-            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackpath(repo)
+            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackgitpath(repo)
         else:
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
         if remote_url_changed:
