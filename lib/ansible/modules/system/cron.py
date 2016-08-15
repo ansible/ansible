@@ -224,7 +224,7 @@ class CronTab(object):
         self.root      = (os.getuid() == 0)
         self.lines     = None
         self.ansible   = "#Ansible: "
-        self.terminated= True
+        self.existing  = ''
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -243,9 +243,8 @@ class CronTab(object):
             # read the cronfile
             try:
                 f = open(self.cron_file, 'r')
-                read_cron_file = f.read()
-                self.terminated = read_cron_file.endswith(('\r', '\n'))
-                self.lines = read_cron_file.splitlines()
+                self.existing = f.read()
+                self.lines = self.existing.splitlines()
                 f.close()
             except IOError:
                 # cron file does not exist
@@ -259,7 +258,7 @@ class CronTab(object):
             if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
-            self.terminated = out.endswith(('\r', '\n'))
+            self.existing = out
 
             lines = out.splitlines()
             count = 0
@@ -268,6 +267,9 @@ class CronTab(object):
                                  not re.match( r'# \(/tmp/.*installed on.*\)', l) and
                                  not re.match( r'# \(.*version.*\)', l)):
                     self.lines.append(l)
+                else:
+                    pattern = re.escape(l) + '[\r\n]?'
+                    self.existing = re.sub(pattern, '', self.existing, 1)
                 count += 1
 
     def is_empty(self):
@@ -460,7 +462,7 @@ class CronTab(object):
 
         self.lines = newlines
 
-    def render(self, diff=None):
+    def render(self):
         """
         Render this crontab as it would be in the crontab.
         """
@@ -469,7 +471,7 @@ class CronTab(object):
             crons.append(cron)
 
         result = '\n'.join(crons)
-        if result and not diff:
+        if result:
             result = result.rstrip('\r\n') + '\n'
         return result
 
@@ -586,7 +588,7 @@ def main():
 
     if module._diff:
         diff = dict()
-        diff['before'] = crontab.render(diff=True)
+        diff['before'] = crontab.existing
         if crontab.cron_file:
             diff['before_header'] = crontab.cron_file
         else:
@@ -666,7 +668,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and not crontab.terminated:
+    if not changed and not crontab.existing.endswith(('\r', '\n')):
         changed = True
 
     res_args = dict(
