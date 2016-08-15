@@ -32,7 +32,7 @@ options:
     description:
       - Specifies the port to use when buiding the connection to the remote
         device.  The port value will default to the well known SSH port
-        of 22
+        of 22 (for C(transport=cli)) or port 830 (for C(transport=netconf))
     required: false
     default: 22
   username:
