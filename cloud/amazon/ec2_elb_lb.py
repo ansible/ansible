@@ -1277,7 +1277,7 @@ def main():
     tags = module.params['tags']
     
     if state == 'present' and not listeners:
-        module.fail_json(msg="At least one port is required for ELB creation")
+        module.fail_json(msg="At least one listener is required for ELB creation")
 
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
