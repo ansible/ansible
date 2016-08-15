@@ -209,6 +209,33 @@ import re
 import tempfile
 from distutils.version import LooseVersion
 
+def head_splitter(headfile, remote, module=None, fail_on_error=False):
+    '''Extract the head reference'''
+    # https://github.com/ansible/ansible-modules-core/pull/907
+
+    res = None
+    if os.path.exists(headfile):
+        rawdata = None
+        try:
+            f = open(headfile, 'r')
+            rawdata = f.readline()
+            f.close()
+        except:
+            if fail_on_error and module:
+                module.fail_json(msg="Unable to read %s" % headfile)
+        if rawdata:
+            try:
+                rawdata = rawdata.replace('refs/remotes/%s' % remote, '', 1)
+                refparts = rawdata.split(' ')
+                newref = refparts[-1]
+                nrefparts = newref.split('/',2)
+                res = nrefparts[-1].rstrip('\n')
+            except:
+                if fail_on_error and module:
+                    module.fail_json(msg="Unable to split head from '%s'" % rawdata)
+    return res
+
+
 def unfrackgitpath(path):
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
@@ -323,6 +350,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, verify_commit):
     ''' makes a new git repo if it does not already exist '''
+
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
@@ -454,7 +482,8 @@ def get_branches(git_path, module, dest):
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out, stdout=out, stderr=err)
     for line in out.split('\n'):
-        branches.append(line.strip())
+        if line.strip():
+            branches.append(line.strip())
     return branches
 
 def get_tags(git_path, module, dest):
@@ -464,7 +493,8 @@ def get_tags(git_path, module, dest):
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in out.split('\n'):
-        tags.append(line.strip())
+        if line.strip():
+            tags.append(line.strip())
     return tags
 
 def is_remote_branch(git_path, module, dest, remote, version):
@@ -518,12 +548,10 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
     # the remote HEAD in .git/refs/remotes/<remote>/HEAD
-    f = open(os.path.join(repo_path, "HEAD"))
+    headfile = os.path.join(repo_path, "HEAD")
     if is_not_a_branch(git_path, module, dest):
-        f.close()
-        f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
-    branch = f.readline().split(' ')[-1].replace('refs/remotes/' + remote + '/','',1).rstrip("\n")
-    f.close()
+        headfile = os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD')
+    branch = head_splitter(headfile, remote, module=module, fail_on_error=True)
     return branch
 
 def get_remote_url(git_path, module, dest, remote):
@@ -806,6 +834,11 @@ def main():
     ssh_opts  = module.params['ssh_opts']
 
     result = dict( warnings=list() )
+
+    # Certain features such as depth require a file:/// protocol for path based urls
+    # so force a protocal here ...
+    if repo.startswith('/'):
+        repo = 'file://' + repo
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
