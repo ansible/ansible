@@ -167,11 +167,11 @@ class Base:
     def dump_me(self, depth=0):
         if depth == 0:
             print("DUMPING OBJECT ------------------------------------------------------")
-        print("%s- %s (%s)" % (" " * depth, self.__class__.__name__, self))
+        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
-            print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
+            #print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
