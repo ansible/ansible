@@ -66,7 +66,7 @@ Ansible Changes By Release
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 
-## 2.1 "The Song Remains the Same" - ACTIVE DEVELOPMENT
+## 2.1 "The Song Remains the Same"
 
 ###Major Changes:
 
@@ -75,7 +75,7 @@ Ansible Changes By Release
 * Added new modules for Azure (see below for the full list)
 * Added the ability to specify includes as "static" (either through a configuration option or on a per-include basis). When includes are static,
   they are loaded at compile time and cannot contain dynamic features like loops.
-* Added a new strategy `debug`, which allows per-task debugging of playbooks.
+* Added a new strategy `debug`, which allows per-task debugging of playbooks, for more details see https://docs.ansible.com/ansible/playbooks_debugger.html
 * Added a new option for tasks: `loop_control`. This currently only supports one option - `loop_var`, which allows a different loop variable from `item` to be used.
 * Added the ability to filter facts returned by the fact gathering setup step using the `gather_subset` option on the play or in the ansible.cfg configuration file.
   See http://docs.ansible.com/ansible/intro_configuration.html#gathering for details on the format of the option.
