@@ -39,6 +39,7 @@ from ansible.inventory.group import Group
 from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.unicode import to_unicode
@@ -255,6 +256,25 @@ class StrategyBase:
                         continue
             return None
 
+        def parent_handler_match(target_handler, handler_name):
+            if target_handler:
+                if isinstance(target_handler, TaskInclude):
+                    try:
+                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=target_handler)
+                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        target_handler_name = templar.template(target_handler.name)
+                        if target_handler_name == handler_name:
+                            return True
+                        else:
+                            target_handler_name = templar.template(target_handler.get_name())
+                            if target_handler_name == handler_name:
+                                return True
+                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        pass
+                return parent_handler_match(target_handler._parent, handler_name)
+            else:
+                return False
+
         passes = 0
         while not self._tqm._terminated:
             try:
@@ -367,15 +387,25 @@ class StrategyBase:
 
                                     else:
                                         target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                                        if target_handler is None:
-                                            raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
-                                        if target_handler in self._notified_handlers:
+                                        if target_handler is not None:
                                             if original_host not in self._notified_handlers[target_handler]:
                                                 self._notified_handlers[target_handler].append(original_host)
                                                 # FIXME: should this be a callback?
                                                 display.vv("NOTIFIED HANDLER %s" % (handler_name,))
                                         else:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+                                            # As there may be more than one handler with the notified name as the
+                                            # parent, so we just keep track of whether or not we found one at all
+                                            found = False
+                                            for target_handler in self._notified_handlers:
+                                                if parent_handler_match(target_handler, handler_name):
+                                                    self._notified_handlers[target_handler].append(original_host)
+                                                    display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                                    found = True
+
+                                            # and if none were found, then we raise an error
+                                            if not found:
+                                                raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+ 
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
