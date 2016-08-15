@@ -587,7 +587,7 @@ class TaskExecutor:
             # have issues which result in a half-written/unparseable result
             # file on disk, which manifests to the user as a timeout happening
             # before it's time to timeout.
-            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('parsed', True)) or 'skipped' in async_result:
+            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('parsed', False)) or 'skipped' in async_result:
                 break
 
             time_left -= self._task.poll
