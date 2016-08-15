@@ -522,7 +522,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     if is_not_a_branch(git_path, module, dest):
         f.close()
         f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
-    branch = f.readline().split('/')[-1].rstrip("\n")
+    branch = f.readline().split(' ')[-1].replace('refs/remotes/' + remote + '/','',1).rstrip("\n")
     f.close()
     return branch
 
