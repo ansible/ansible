@@ -237,6 +237,24 @@ You can specify regions or tables to fetch secrets from::
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
+      
+      
+If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
+
+    ---
+    - name: test
+      hosts: localhost
+      vars:
+        context:
+          app: my_app
+          environment: production
+      tasks:
+
+      - name: "Test credstash lookup plugin -- get the password with a context passed as a variable"
+        debug: msg="{{ lookup('credstash', 'some-password', context=context) }}"
+
+      - name: "Test credstash lookup plugin -- get the password with a context defined here"
+        debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
 
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
