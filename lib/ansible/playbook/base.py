@@ -86,6 +86,19 @@ class Base:
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
+    def dump_me(self, depth=0):
+        if depth == 0:
+            print("DUMPING OBJECT ------------------------------------------------------")
+        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
+        if hasattr(self, '_block') and self.__class__.__name__ == 'Task' and self._block:
+            self._block.dump_me(depth+2)
+        for attr_name in ('_parent_block', '_task_include'):
+            if hasattr(self, attr_name):
+                attr = getattr(self, attr_name)
+                if attr is not None:
+                    attr.dump_me(depth+2)
+        if hasattr(self, '_play') and self._play:
+            self._play.dump_me(depth+2)
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook

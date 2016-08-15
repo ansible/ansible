@@ -575,11 +575,28 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
+            ti_copy = included_file._task.copy()
+            temp_vars = ti_copy.vars.copy()
+            temp_vars.update(included_file._args)
+            # pop tags out of the include args, if they were specified there, and assign
+            # them to the include. If the include already had tags specified, we raise an
+            # error so that users know not to specify them both ways
+            tags = included_file._task.vars.pop('tags', [])
+            if isinstance(tags, string_types):
+                tags = tags.split(',')
+            if len(tags) > 0:
+                if len(included_file._task.tags) > 0:
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                            obj=included_file._task._ds)
+                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
+                included_file._task.tags = tags
+            ti_copy.vars = temp_vars
+
             block_list = load_list_of_blocks(
                 data,
                 play=included_file._task._block._play,
                 parent_block=None,
-                task_include=included_file._task,
+                task_include=ti_copy,
                 role=included_file._task._role,
                 use_handlers=is_handler,
                 loader=self._loader,
@@ -601,27 +618,6 @@ class StrategyBase:
                 self._tqm._stats.increment('failures', host.name)
                 self._tqm.send_callback('v2_runner_on_failed', tr)
             return []
-
-        # set the vars for this task from those specified as params to the include
-        for b in block_list:
-            # first make a copy of the including task, so that each has a unique copy to modify
-            b._task_include = b._task_include.copy()
-            # then we create a temporary set of vars to ensure the variable reference is unique
-            temp_vars = b._task_include.vars.copy()
-            temp_vars.update(included_file._args.copy())
-            # pop tags out of the include args, if they were specified there, and assign
-            # them to the include. If the include already had tags specified, we raise an
-            # error so that users know not to specify them both ways
-            tags = temp_vars.pop('tags', [])
-            if isinstance(tags, string_types):
-                tags = tags.split(',')
-            if len(tags) > 0:
-                if len(b._task_include.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                            obj=included_file._task._ds)
-                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
-                b._task_include.tags = tags
-            b._task_include.vars = temp_vars
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)
