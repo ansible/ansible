@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.release import __version__
 from ansible.parsing.utils.jsonify import jsonify
+from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
@@ -670,6 +671,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _parse_returned_data(self, res):
         try:
             data = json.loads(self._filter_non_json_lines(res.get('stdout', u'')))
+
+            # We do not want to allow a compromised remote host to alter
+            # connection or interpreter settings, so clean up returned facts.
+
+            for k in MAGIC_VARIABLE_MAPPING:
+                data.pop(k, None)
+            interp_regex = re.compile('ansible_.*_interpreter')
+
+            for k in list(data.keys()):
+                if interp_regex.match(k):
+                    del data[k]
+
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)
