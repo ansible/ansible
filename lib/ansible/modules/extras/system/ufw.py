@@ -263,10 +263,11 @@ def main():
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
             cmd.append([value])
+            cmd.append([params['direction'], "%s" % params['direction']])
+            cmd.append([params['interface'], "on %s" % params['interface']])
             cmd.append([module.boolean(params['log']), 'log'])
 
-            for (key, template) in [('direction', "%s"      ), ('interface', "on %s"   ),
-                                    ('from_ip',   "from %s" ), ('from_port', "port %s" ),
+            for (key, template) in [('from_ip',   "from %s" ), ('from_port', "port %s" ),
                                     ('to_ip',     "to %s"   ), ('to_port',   "port %s" ),
                                     ('proto',     "proto %s"), ('app',       "app '%s'")]:
 
