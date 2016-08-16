@@ -2277,12 +2277,10 @@ class AnsibleModule(object):
         elif full in number:
             result = int(number.replace(full,''))
         else:
-            i = 0
-            for suffix in suffixes:
+            for i, suffix in enumerate(suffixes):
                 if suffix in number:
                     result = int(number.replace(suffix ,'')) * (1024 ** i)
                     break
-                i += 1
 
         if result is None:
             raise ValueError("Failed to convert %s. The suffix must be one of %s or %s" % (number, full, ', '.join(suffixes)))
