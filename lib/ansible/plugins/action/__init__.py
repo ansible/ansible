@@ -663,9 +663,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _parse_returned_data(self, res):
         try:
             data = json.loads(self._filter_non_json_lines(res.get('stdout', u'')))
+            data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
-            data = dict(failed=True, parsed=False)
+            data = dict(failed=True, _ansible_parsed=False)
             data['msg'] = "MODULE FAILURE"
             data['module_stdout'] = res.get('stdout', u'')
             if 'stderr' in res:
