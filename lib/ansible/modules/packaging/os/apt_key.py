@@ -132,7 +132,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = out.split('\n')
     for line in lines:
-        if line.startswith("pub"):
+        if line.startswith("pub") or line.startswith("sub"):
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
