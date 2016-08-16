@@ -682,6 +682,8 @@ class AnsibleModule(object):
                 'raw': self._check_type_raw,
                 'jsonarg': self._check_type_jsonarg,
                 'json': self._check_type_jsonarg,
+                'bytes': self._check_type_bytes,
+                'bits': self._check_type_bits,
             }
         if not bypass_checks:
             self._check_required_arguments()
@@ -1515,6 +1517,19 @@ class AnsibleModule(object):
         return value
 
 
+    def _check_type_bytes(self, value):
+        try:
+            self.human_to_bytes(value)
+        except ValueError:
+            raise TypeError('%s cannot be converted to a Byte value' % type(value))
+
+
+    def _check_type_bits(self, value):
+        try:
+            self.human_to_bytes(value, bits=True)
+        except ValueError:
+            raise TypeError('%s cannot be converted to a Bit value' % type(value))
+
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.items():
@@ -2223,7 +2238,8 @@ class AnsibleModule(object):
         fh.write(str)
         fh.close()
 
-    def pretty_bytes(self,size):
+    def bytes_to_human(self, size):
+
         ranges = (
                 (1<<70, 'ZB'),
                 (1<<60, 'EB'),
@@ -2238,6 +2254,38 @@ class AnsibleModule(object):
             if size >= limit:
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
+
+    # for backwards compatibility
+    pretty_bytes = bytes_to_human
+
+    def human_to_bytes(number, bits=False):
+
+        result = None
+        suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
+        full = 'Bytes'
+
+        if bits:
+            suffixes = [ x.replace('B', 'b')  for x in suffixes ]
+            full = 'Bits'
+
+        if number is None:
+            result = 0
+        elif isinstance(number, int):
+            result = number
+        elif number.isdigit():
+            result = int(number)
+        elif full in number:
+            result = int(number.replace(full,''))
+        else:
+            for i, suffix in enumerate(suffixes):
+                if suffix in number:
+                    result = int(number.replace(suffix ,'')) * (1024 ** i)
+                    break
+
+        if result is None:
+            raise ValueError("Failed to convert %s. The suffix must be one of %s or %s" % (number, full, ', '.join(suffixes)))
+
+        return result
 
     #
     # Backwards compat
