@@ -56,7 +56,7 @@ class AnsibleAWSError(Exception):
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
-        return _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params)
+        return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
 
