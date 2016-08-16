@@ -2239,9 +2239,7 @@ class AnsibleModule(object):
         fh.close()
 
     def bytes_to_human(self, size):
-        return self.pretty_bytes(size)
 
-    def pretty_bytes(self, size):
         ranges = (
                 (1<<70, 'ZB'),
                 (1<<60, 'EB'),
@@ -2256,6 +2254,9 @@ class AnsibleModule(object):
             if size >= limit:
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
+
+    # for backwards compatibility
+    pretty_bytes = bytes_to_human
 
     def human_to_bytes(number, bits=False):
 
