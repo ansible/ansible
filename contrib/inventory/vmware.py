@@ -96,10 +96,11 @@ class VMwareInventory(object):
             sslcheck = self.config.get('auth', 'sslcheck')
         if not sslcheck:
             sslcheck = True
-        if sslcheck.lower() in ['no', 'false']:
-            sslcheck = False
         else:
-            sslcheck = True
+            if sslcheck.lower() in ['no', 'false']:
+                sslcheck = False
+            else:
+                sslcheck = True
 
         # Limit the clusters being scanned
         self.filter_clusters = os.environ.get('VMWARE_CLUSTERS')
