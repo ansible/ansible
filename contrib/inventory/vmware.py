@@ -94,6 +94,8 @@ class VMwareInventory(object):
         sslcheck = os.environ.get('VMWARE_SSLCHECK')
         if not sslcheck and self.config.has_option('auth', 'sslcheck'):
             sslcheck = self.config.get('auth', 'sslcheck')
+        if not sslcheck:
+            sslcheck = True
         if sslcheck.lower() in ['no', 'false']:
             sslcheck = False
         else:
