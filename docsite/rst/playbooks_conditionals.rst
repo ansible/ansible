@@ -24,7 +24,7 @@ This is easy to do in Ansible with the `when` clause, which contains a raw Jinja
 It's actually pretty simple::
 
     tasks:
-      - name: "shutdown Debian flavored systems"
+      - name: "shut down Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
         # note that Ansible facts and vars like ansible_os_family can be used
@@ -33,7 +33,7 @@ It's actually pretty simple::
 You can also use parentheses to group conditions::
 
     tasks:
-      - name: "shutdown CentOS 6 and Debian 7 systems"
+      - name: "shut down CentOS 6 and Debian 7 systems"
         command: /sbin/shutdown -t now
         when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
               (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
