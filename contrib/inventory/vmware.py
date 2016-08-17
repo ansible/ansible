@@ -313,7 +313,6 @@ class VMwareInventory(object):
         inv.setdefault(child_group, [])
 
     def process_host(self, host):
-        print("# PROCESSING %s" % host.name)
         if not self.guests_only:
             self._add_host(self.inv, 'all', host.name)
             self._add_host(self.inv, hw_group, host.name)
@@ -370,7 +369,6 @@ class VMwareInventory(object):
         threadid = i
         while True:
             host = q.get()
-            print("(%s) WORKING %s" % (threadid, host.name))
             self.process_host(host)
             q.task_done()
 
