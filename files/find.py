@@ -56,7 +56,7 @@ options:
         required: false
         default: null
         description:
-            - One or more re patterns which should be matched against the file content
+            - One or more regex patterns which should be matched against the file content
     paths:
         required: true
         aliases: [ "name", "path" ]
