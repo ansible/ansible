@@ -214,9 +214,14 @@ Function Choco-Install
             Choco-Upgrade -package $package -version $version -source $source -force $force `
                 -installargs $installargs -packageparams $packageparams `
                 -ignoredependencies $ignoredependencies
+
+            return
         }
 
-        return
+        if (-not $force)
+        {
+            return
+        }
     }
 
     $cmd = "$executable install -dv -y $package"
