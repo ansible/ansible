@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 import tempfile
 from string import ascii_letters, digits
 
@@ -103,7 +104,7 @@ def _get_config(p, section, key, env_var, default):
     return default
 
 def load_config_file():
-    ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+    ''' Load Config File order(first found is used): ENV, CWD, playbook sibling traversed, HOME, /etc/ansible '''
 
     p = configparser.ConfigParser()
 
@@ -121,6 +122,21 @@ def load_config_file():
     # FIXME: Needs deprecation? See: https://github.com/ansible/ansible/issues/11175#issuecomment-109386699
     path1 = os.getcwd() + "/ansible.cfg"
     path_list.append(path1)
+
+    # It only makes sense to search for playbook location when we use ansible-playbook and we have argv[1]
+    if len(sys.argv[0]) >= 2 and sys.argv[0].endswith("ansible-playbook"):
+        # Only check for playbook reference in position 1
+        # See https://github.com/ansible/ansible/issues/11175#issuecomment-240129682
+        first_argument = sys.argv[1]
+        if os.path.isfile(first_argument):
+            adjacent_path = os.path.dirname(os.path.abspath(first_argument))
+            while True:
+                if adjacent_path == "/":
+                    path_list.append("/ansible.cfg")
+                    break
+                else:
+                    path_list.append(adjacent_path + "/ansible.cfg")
+                adjacent_path = os.path.dirname(adjacent_path)
 
     # Get config for HOME
     path2 = os.path.expanduser("~/.ansible.cfg")
