@@ -85,7 +85,7 @@ options:
   definition:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
-        - Mutually exclusive with C(project_src) and C(project_files).
+        - Mutually exclusive with C(project_src) and C(files).
       type: complex
       required: false
   hostname_check:
