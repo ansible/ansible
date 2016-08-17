@@ -59,7 +59,12 @@ Function Chocolatey-Install-Upgrade
     if ($ChocoAlreadyInstalled -eq $null)
     {
         #We need to install chocolatey
-        iex ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
+        $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
+        if ($LASTEXITCODE -ne 0)
+        {
+            Set-Attr $result "choco_bootstrap_output" $install_output
+            Fail-Json $result "Chocolatey bootstrap installation failed."
+        }
         $result.changed = $true
         $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
     }
