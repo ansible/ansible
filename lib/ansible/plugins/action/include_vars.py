@@ -34,6 +34,8 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('_raw_params')
+        if source is None:
+            raise AnsibleError("No filename was specified to include.", self._task._ds)
 
         if self._task._role:
             source = self._loader.path_dwim_relative(self._task._role._role_path, 'vars', source)
