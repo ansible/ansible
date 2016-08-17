@@ -107,16 +107,30 @@ def load_config_file():
 
     p = configparser.ConfigParser()
 
+    path_list = []
+
+    # Get config file location from ENV
     path0 = os.getenv("ANSIBLE_CONFIG", None)
     if path0 is not None:
         path0 = os.path.expanduser(path0)
         if os.path.isdir(path0):
             path0 += "/ansible.cfg"
-    path1 = os.getcwd() + "/ansible.cfg"
-    path2 = os.path.expanduser("~/.ansible.cfg")
-    path3 = "/etc/ansible/ansible.cfg"
+    path_list.append(path0)
 
-    for path in [path0, path1, path2, path3]:
+    # Get config file location from CWD
+    # FIXME: Needs deprecation? See: https://github.com/ansible/ansible/issues/11175#issuecomment-109386699
+    path1 = os.getcwd() + "/ansible.cfg"
+    path_list.append(path1)
+
+    # Get config for HOME
+    path2 = os.path.expanduser("~/.ansible.cfg")
+    path_list.append(path2)
+
+    # Get config from /etc/ansible
+    path3 = "/etc/ansible/ansible.cfg"
+    path_list.append(path3)
+
+    for path in path_list:
         if path is not None and os.path.exists(path):
             try:
                 p.read(path)
