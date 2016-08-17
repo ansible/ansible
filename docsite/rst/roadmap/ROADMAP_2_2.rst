@@ -84,6 +84,7 @@ Target: September 2016
   - Quagga modules 
   - Bird modules (stretch)
   - GoBGP modules (stretch)
+  - Support for Dell Networking operating systems (OS9, OS6, OS10)
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
 
