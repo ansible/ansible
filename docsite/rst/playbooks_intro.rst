@@ -344,7 +344,7 @@ As we've mentioned, modules are written to be 'idempotent' and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
-These 'notify' actions are triggered at the end of each block of tasks in a playbook, and will only be
+These 'notify' actions are triggered at the end of each block of tasks in a play, and will only be
 triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
