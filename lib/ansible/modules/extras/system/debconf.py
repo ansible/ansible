@@ -108,6 +108,11 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     if unseen:
         cmd.append('-u')
 
+    if vtype == 'boolean':
+        if value == 'True':
+            value = 'true'
+        elif value == 'False':
+            value = 'false'
     data = ' '.join([pkg, question, vtype, value])
 
     return module.run_command(cmd, data=data)
