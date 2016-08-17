@@ -424,14 +424,17 @@ class VMwareInventory(object):
 
         if self.threads > 1:
             # Thread the processing of each physical host
-            hosts_queue = Queue()
-            for i in range(self.threads):
-                worker = Thread(target=self._host_worker, args=(i, hosts_queue,))
-                worker.setDaemon(True)
-                worker.start()
-            for host in hosts:
-                hosts_queue.put(host)
-            hosts_queue.join()
+            try:
+                hosts_queue = Queue()
+                for i in range(self.threads):
+                    worker = Thread(target=self._host_worker, args=(i, hosts_queue,))
+                    worker.setDaemon(True)
+                    worker.start()
+                for host in hosts:
+                    hosts_queue.put(host)
+                    hosts_queue.join()
+            except KeyboardInterrupt:
+                raise
         else:
             # Loop through physical hosts one at a time:
             for host in hosts:
