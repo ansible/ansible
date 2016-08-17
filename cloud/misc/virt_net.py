@@ -534,16 +534,16 @@ def core(module):
         else:
             module.fail_json(msg="Command %s not recognized" % basecmd)
 
-    if autostart:
+    if autostart is not None:
         if not name:
             module.fail_json(msg = "state change requires a specified name")
 
         res['changed'] = False
-        if autostart == 'yes':
+        if autostart:
             if not v.get_autostart(name):
                 res['changed'] = True
                 res['msg'] = v.set_autostart(name, True)
-        elif autostart == 'no':
+        else:
             if v.get_autostart(name):
                 res['changed'] = True
                 res['msg'] = v.set_autostart(name, False)
@@ -562,7 +562,7 @@ def main():
             command = dict(choices=ALL_COMMANDS),
             uri = dict(default='qemu:///system'),
             xml = dict(),
-            autostart = dict(choices=['yes', 'no'])
+            autostart = dict(type='bool')
         ),
         supports_check_mode = True
     )

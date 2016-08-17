@@ -55,7 +55,7 @@ EXAMPLES = '''
 - ecs_service_facts:
     cluster: test-cluster
     service: console-test-service
-    details: "true"
+    details: true
 
 # Basic listing example
 - ecs_service_facts:
@@ -201,7 +201,7 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        details=dict(required=False, choices=['true', 'false'] ),
+        details=dict(required=False, type='bool', default=False ),
         cluster=dict(required=False, type='str' ),
         service=dict(required=False, type='str' )
     ))
@@ -214,9 +214,7 @@ def main():
     if not HAS_BOTO3:
       module.fail_json(msg='boto3 is required.')
 
-    show_details = False
-    if 'details' in module.params and module.params['details'] == 'true':
-        show_details = True
+    show_details = module.params.get('details', False)
 
     task_mgr = EcsServiceManager(module)
     if show_details:
