@@ -279,14 +279,11 @@ class CloudFormsInventory(object):
                     print "Skipping %s because power_state = %s" % (host['name'], host['power_state'])
                 continue
 
-            if self.args.debug:
-                print "Host named [%s] will use [%s] as dns_name" % (host['name'], dns_name)
-
             # Create ansible groups for tags
             if 'tags' in host:
                 for group in host['tags']:
                     safe_key = self.to_safe(group['name'])
-                    self.push(self.inventory, safe_key, dns_name)
+                    self.push(self.inventory, safe_key, host['name'])
 
                     if self.args.debug:
                         print "Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key)
@@ -313,10 +310,10 @@ class CloudFormsInventory(object):
 
                 if key in host:
                     # Add host to sub-group
-                    self.push(self.inventory[safe_key], 'hosts', dns_name)
+                    self.push(self.inventory[safe_key], 'hosts', host['name'])
 
-            self.hosts[dns_name] = host
-            self.push(self.inventory, 'all', dns_name)
+            self.hosts[host['name']] = host
+            self.push(self.inventory, 'all', host['name'])
 
         if self.args.debug:
             print "Saving cached data"
