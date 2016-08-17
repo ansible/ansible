@@ -224,9 +224,9 @@ Time Limited Background Operations
 ``````````````````````````````````
 
 Long running operations can be run in the background, and it is possible to
-check their status later. For example, to execute ``long_running_operation`
+check their status later. For example, to execute ``long_running_operation``
 asynchronously in the background, with a timeout of 3600 seconds (``-B``), 
-and without polling (-P)::
+and without polling (``-P``)::
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
