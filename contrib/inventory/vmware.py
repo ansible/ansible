@@ -40,6 +40,9 @@ import sys
 import time
 import ConfigParser
 
+from Queue import Queue
+from threading import Thread
+
 from six import text_type
 
 # Disable logging message trigged by pSphere/suds.
@@ -114,8 +117,16 @@ class VMwareInventory(object):
             if hasattr(ssl, '_create_unverified_context'):
                 ssl._create_default_https_context = ssl._create_unverified_context
 
+        # Use worker threads
+        self.threads = os.environ.get('VMWARE_THREADS')
+        if not self.threads and self.config.has_option('defaults', 'threads'):
+            self.threads = self.config.get('defaults', 'threads')
+        if self.threads:
+            self.threads = int(self.threads.strip())
+
         # Create the VMware client connection.
         self.client = Client(auth_host, auth_user, auth_password)
+           
 
     def _put_cache(self, name, value):
         '''
@@ -301,6 +312,68 @@ class VMwareInventory(object):
                 group_children.append(child_group)
         inv.setdefault(child_group, [])
 
+    def process_host(self, host):
+        print("# PROCESSING %s" % host.name)
+        if not self.guests_only:
+            self._add_host(self.inv, 'all', host.name)
+            self._add_host(self.inv, hw_group, host.name)
+            host_info = self._get_host_info(host)
+            if meta_hostvars:
+                inv['_meta']['hostvars'][host.name] = host_info
+            self._put_cache(host.name, host_info)
+
+        # Loop through all VMs on physical host.
+        for vm in host.vm:
+            if self.prefix_filter:
+                if vm.name.startswith( self.prefix_filter ):
+                    continue
+            self._add_host(self.inv, 'all', vm.name)
+            self._add_host(self.inv, self.vm_group, vm.name)
+            vm_info = self._get_vm_info(vm)
+            if self.meta_hostvars:
+                self.inv['_meta']['hostvars'][vm.name] = vm_info
+            self._put_cache(vm.name, vm_info)
+
+            # Group by resource pool.
+            vm_resourcePool = vm_info.get('vmware_resourcePool', None)
+            if vm_resourcePool:
+                self._add_child(self.inv, self.vm_group, 'resource_pools')
+                self._add_child(self.inv, 'resource_pools', vm_resourcePool)
+                self._add_host(self.inv, vm_resourcePool, vm.name)
+
+            # Group by datastore.
+            for vm_datastore in vm_info.get('vmware_datastores', []):
+                self._add_child(self.inv, self.vm_group, 'datastores')
+                self._add_child(self.inv, 'datastores', vm_datastore)
+                self._add_host(self.inv, vm_datastore, vm.name)
+
+            # Group by network.
+            for vm_network in vm_info.get('vmware_networks', []):
+                self._add_child(self.inv, self.vm_group, 'networks')
+                self._add_child(self.inv, 'networks', vm_network)
+                self._add_host(self.inv, vm_network, vm.name)
+
+            # Group by guest OS.
+            vm_guestId = vm_info.get('vmware_guestId', None)
+            if vm_guestId:
+                self._add_child(self.inv, self.vm_group, 'guests')
+                self._add_child(self.inv, 'guests', vm_guestId)
+                self._add_host(self.inv, vm_guestId, vm.name)
+
+            # Group all VM templates.
+            vm_template = vm_info.get('vmware_template', False)
+            if vm_template:
+                self._add_child(self.inv, self.vm_group, 'templates')
+                self._add_host(self.inv, 'templates', vm.name)
+
+    def _host_worker(self, i, q):
+        threadid = i
+        while True:
+            host = q.get()
+            print("(%s) WORKING %s" % (threadid, host.name))
+            self.process_host(host)
+            q.task_done()
+
     def get_inventory(self, meta_hostvars=True):
         '''
         Reads the inventory from cache or VMware API via pSphere.
@@ -311,13 +384,16 @@ class VMwareInventory(object):
         else:
             cache_name = '__inventory_all__'
 
-        inv = self._get_cache(cache_name, None)
-        if inv is not None:
-            return inv
+        self.inv = self._get_cache(cache_name, None)
+        if self.inv is not None:
+            return self.inv
 
-        inv = {'all': {'hosts': []}}
+        self.inv = {'all': {'hosts': []}}
         if meta_hostvars:
-            inv['_meta'] = {'hostvars': {}}
+            self.meta_hostvars = True
+            self.inv['_meta'] = {'hostvars': {}}
+        else:
+            self.meta_hostvars = False
 
         default_group = os.path.basename(sys.argv[0]).rstrip('.py')
 
@@ -328,14 +404,14 @@ class VMwareInventory(object):
                 hw_group = default_group + '_hw'
 
         if self.config.has_option('defaults', 'vm_group'):
-            vm_group = self.config.get('defaults', 'vm_group')
+            self.vm_group = self.config.get('defaults', 'vm_group')
         else:
-            vm_group = default_group + '_vm'
+            self.vm_group = default_group + '_vm'
 
         if self.config.has_option('defaults', 'prefix_filter'):
-            prefix_filter = self.config.get('defaults', 'prefix_filter')
+            self.prefix_filter = self.config.get('defaults', 'prefix_filter')
         else:
-            prefix_filter = None
+            self.prefix_filter = None
 
         if self.filter_clusters:
             # Loop through clusters and find hosts:
@@ -348,63 +424,23 @@ class VMwareInventory(object):
             # Get list of all physical hosts
             hosts = HostSystem.all(self.client)
 
-        # Loop through physical hosts:
-        for host in hosts:
+        if self.threads > 1:
+            # Thread the processing of each physical host
+            hosts_queue = Queue()
+            for i in range(self.threads):
+                worker = Thread(target=self._host_worker, args=(i, hosts_queue,))
+                worker.setDaemon(True)
+                worker.start()
+            for host in hosts:
+                hosts_queue.put(host)
+            hosts_queue.join()
+        else:
+            # Loop through physical hosts one at a time:
+            for host in hosts:
+                self.process_host(host)
 
-            if not self.guests_only:
-                self._add_host(inv, 'all', host.name)
-                self._add_host(inv, hw_group, host.name)
-                host_info = self._get_host_info(host)
-                if meta_hostvars:
-                    inv['_meta']['hostvars'][host.name] = host_info
-                self._put_cache(host.name, host_info)
-
-            # Loop through all VMs on physical host.
-            for vm in host.vm:
-                if prefix_filter:
-                    if vm.name.startswith( prefix_filter ):
-                        continue
-                self._add_host(inv, 'all', vm.name)
-                self._add_host(inv, vm_group, vm.name)
-                vm_info = self._get_vm_info(vm)
-                if meta_hostvars:
-                    inv['_meta']['hostvars'][vm.name] = vm_info
-                self._put_cache(vm.name, vm_info)
-
-                # Group by resource pool.
-                vm_resourcePool = vm_info.get('vmware_resourcePool', None)
-                if vm_resourcePool:
-                    self._add_child(inv, vm_group, 'resource_pools')
-                    self._add_child(inv, 'resource_pools', vm_resourcePool)
-                    self._add_host(inv, vm_resourcePool, vm.name)
-
-                # Group by datastore.
-                for vm_datastore in vm_info.get('vmware_datastores', []):
-                    self._add_child(inv, vm_group, 'datastores')
-                    self._add_child(inv, 'datastores', vm_datastore)
-                    self._add_host(inv, vm_datastore, vm.name)
-
-                # Group by network.
-                for vm_network in vm_info.get('vmware_networks', []):
-                    self._add_child(inv, vm_group, 'networks')
-                    self._add_child(inv, 'networks', vm_network)
-                    self._add_host(inv, vm_network, vm.name)
-
-                # Group by guest OS.
-                vm_guestId = vm_info.get('vmware_guestId', None)
-                if vm_guestId:
-                    self._add_child(inv, vm_group, 'guests')
-                    self._add_child(inv, 'guests', vm_guestId)
-                    self._add_host(inv, vm_guestId, vm.name)
-
-                # Group all VM templates.
-                vm_template = vm_info.get('vmware_template', False)
-                if vm_template:
-                    self._add_child(inv, vm_group, 'templates')
-                    self._add_host(inv, 'templates', vm.name)
-
-        self._put_cache(cache_name, inv)
-        return inv
+        self._put_cache(cache_name, self.inv)
+        return self.inv
 
     def get_host(self, hostname):
         '''
