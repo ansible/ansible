@@ -22,12 +22,12 @@
 
 import argparse
 import ConfigParser
-import copy
 import os
 import re
 from time import time
 import requests
 from requests.auth import HTTPBasicAuth
+import warnings
 
 try:
     import json
@@ -40,7 +40,7 @@ class CloudFormsInventory(object):
         Main execution path
         """
         self.inventory = dict()  # A list of groups and the hosts in that group
-        self.cache = dict()      # Details about hosts in the inventory
+        self.hosts = dict()      # Details about hosts in the inventory
 
         # Parse CLI arguments
         self.parse_cli_args()
@@ -53,7 +53,7 @@ class CloudFormsInventory(object):
             self.update_cache()
         else:
             self.load_inventory_from_cache()
-            self.load_cache_from_cache()
+            self.load_hosts_from_cache()
 
         data_to_print = ""
 
@@ -64,10 +64,14 @@ class CloudFormsInventory(object):
             data_to_print += self.get_host_info(self.args.host)
         else:
             self.inventory['_meta'] = {'hostvars': {}}
-            for hostname in self.cache:
+            for hostname in self.hosts:
                 self.inventory['_meta']['hostvars'][hostname] = {
-                    'cloudforms': self.cache[hostname],
+                    'cloudforms': self.hosts[hostname],
                 }
+                # include the ansible_ssh_host in the top level
+                if 'ansible_ssh_host' in self.hosts[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.hosts[hostname]['ansible_ssh_host']
+
             data_to_print += self.json_format_dict(self.inventory, self.args.pretty)
 
         print(data_to_print)
@@ -77,10 +81,10 @@ class CloudFormsInventory(object):
         Determines if the cache files have expired, or if it is still valid
         """
         if self.args.debug:
-            print "Determining if cache [%s] is still valid (< %s seconds old)" % (self.cache_path_cache, self.cache_max_age)
+            print "Determining if cache [%s] is still valid (< %s seconds old)" % (self.cache_path_hosts, self.cache_max_age)
 
-        if os.path.isfile(self.cache_path_cache):
-            mod_time = os.path.getmtime(self.cache_path_cache)
+        if os.path.isfile(self.cache_path_hosts):
+            mod_time = os.path.getmtime(self.cache_path_hosts)
             current_time = time()
             if (mod_time + self.cache_max_age) > current_time:
                 if os.path.isfile(self.cache_path_inventory):
@@ -114,14 +118,59 @@ class CloudFormsInventory(object):
         config.read(config_paths)
 
         # CloudForms API related
-        self.cloudforms_url = config.get('cloudforms', 'url')
-        self.cloudforms_user = config.get('cloudforms', 'user')
-        self.cloudforms_pw = config.get('cloudforms', 'password')
-        self.cloudforms_ssl_verify = config.getboolean('cloudforms', 'ssl_verify')
-        self.cloudforms_version = config.get('cloudforms', 'version')
-        self.cloudforms_limit = config.getint('cloudforms', 'limit')
-        self.cloudforms_prefer_ip_address = config.getboolean('cloudforms', 'prefer_ip_address')
-        self.cloudforms_purge_actions = config.getboolean('cloudforms', 'purge_actions')
+        if config.has_option('cloudforms', 'url'):
+            self.cloudforms_url = config.get('cloudforms', 'url')
+        else:
+            self.cloudforms_url = None
+
+        if not self.cloudforms_url:
+            warnings.warn("No url specified, expected something like 'https://cfme.example.com'")
+
+        if config.has_option('cloudforms', 'username'):
+            self.cloudforms_username = config.get('cloudforms', 'username')
+        else:
+            self.cloudforms_username = None
+
+        if not self.cloudforms_username:
+            warnings.warn("No username specified, you need to specify a CloudForms username.")
+
+        if config.has_option('cloudforms', 'password'):
+            self.cloudforms_pw = config.get('cloudforms', 'password')
+        else:
+            self.cloudforms_pw = None
+
+        if not self.cloudforms_pw:
+            warnings.warn("No password specified, you need to specify a password for the CloudForms user.")
+
+        if config.has_option('cloudforms', 'ssl_verify'):
+            self.cloudforms_ssl_verify = config.getboolean('cloudforms', 'ssl_verify')
+        else:
+            self.cloudforms_ssl_verify = True
+
+        if config.has_option('cloudforms', 'version'):
+            self.cloudforms_version = config.get('cloudforms', 'version')
+        else:
+            self.cloudforms_version = None
+
+        if config.has_option('cloudforms', 'limit'):
+            self.cloudforms_limit = config.getint('cloudforms', 'limit')
+        else:
+            self.cloudforms_limit = 100
+
+        if config.has_option('cloudforms', 'prefer_ip_address'):
+            self.cloudforms_prefer_ip_address = config.getboolean('cloudforms', 'prefer_ip_address')
+        else:
+            self.cloudforms_prefer_ip_address = False
+
+        if config.has_option('cloudforms', 'purge_actions'):
+            self.cloudforms_purge_actions = config.getboolean('cloudforms', 'purge_actions')
+        else:
+            self.cloudforms_purge_actions = False
+
+        if config.has_option('cloudforms', 'clean_group_keys'):
+            self.cloudforms_clean_group_keys = config.getboolean('cloudforms', 'clean_group_keys')
+        else:
+            self.cloudforms_clean_group_keys = True
 
         # Ansible related
         try:
@@ -137,14 +186,14 @@ class CloudFormsInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             cache_path = '.'
         (script, ext) = os.path.splitext(os.path.basename(__file__))
-        self.cache_path_cache = cache_path + "/%s.cache" % script
+        self.cache_path_hosts = cache_path + "/%s.hosts" % script
         self.cache_path_inventory = cache_path + "/%s.inventory" % script
         self.cache_max_age = config.getint('cache', 'max_age')
 
         if self.args.debug:
             print "CloudForms settings:"
             print "cloudforms_url               = %s" % self.cloudforms_url
-            print "cloudforms_user              = %s" % self.cloudforms_user
+            print "cloudforms_username          = %s" % self.cloudforms_username
             print "cloudforms_pw                = %s" % self.cloudforms_pw
             print "cloudforms_ssl_verify        = %s" % self.cloudforms_ssl_verify
             print "cloudforms_version           = %s" % self.cloudforms_version
@@ -153,7 +202,7 @@ class CloudFormsInventory(object):
             print "cloudforms_purge_actions     = %s" % self.cloudforms_purge_actions
             print "Cache settings:"
             print "cache_max_age        = %s" % self.cache_max_age
-            print "cache_path_cache     = %s" % self.cache_path_cache
+            print "cache_path_hosts     = %s" % self.cache_path_hosts
             print "cache_path_inventory = %s" % self.cache_path_inventory
 
     def parse_cli_args(self):
@@ -176,17 +225,22 @@ class CloudFormsInventory(object):
         results = []
 
         ret = requests.get(url,
-                           auth=HTTPBasicAuth(self.cloudforms_user, self.cloudforms_pw),
+                           auth=HTTPBasicAuth(self.cloudforms_username, self.cloudforms_pw),
                            verify=self.cloudforms_ssl_verify)
 
         ret.raise_for_status()
-        results = json.loads(ret.text)
+
+        try:
+            results = json.loads(ret.text)
+        except ValueError:
+            warnings.warn("Unexpected response from {0} ({1}): {2}".format(self.cloudforms_url, r.status_code, r.reason))
+            results = {}
 
         if self.args.debug:
             print "======================================================================="
             print "======================================================================="
             print "======================================================================="
-            print json.dumps(results, indent=2)
+            print ret.text
             print "======================================================================="
             print "======================================================================="
             print "======================================================================="
@@ -206,28 +260,13 @@ class CloudFormsInventory(object):
 
         while not last_page:
             offset = page * limit
-            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags&attributes=id,ipaddresses,name,power_state" % (self.cloudforms_url, offset, limit))
+            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses" % (self.cloudforms_url, offset, limit))
             results += ret['resources']
             if ret['subcount'] < limit:
                 last_page = True
             page += 1
 
         return results
-
-    def _get_host_by_id(self, hid):
-        return self._get_json("%s/api/vms/%s" % (self.cloudforms_url, hid))
-
-    def _resolve_host(self, host):
-        """
-        Resolve host details.
-        """
-        host_id = host['id']
-        ret = self._get_host_by_id(host_id)
-
-        if self.cloudforms_purge_actions:
-            del ret['actions']
-
-        return ret
 
     def update_cache(self):
         """
@@ -240,12 +279,14 @@ class CloudFormsInventory(object):
             print "Updating cache..."
 
         for host in self._get_hosts():
+            # Ignore VMs that are not powered on
             if host['power_state'] != 'on':
                 if self.args.debug:
                     print "Skipping %s because power_state = %s" % (host['name'], host['power_state'])
                 continue
 
-            if self.cloudforms_prefer_ip_address and host.has_key('ipaddresses') and host['ipaddresses'][0]:
+            # rename the host to IP if configured to do so
+            if self.cloudforms_prefer_ip_address and 'ipaddresses' in host and host['ipaddresses'][0]:
                 dns_name = host['ipaddresses'][0]
             else:
                 dns_name = host['name']
@@ -253,8 +294,8 @@ class CloudFormsInventory(object):
             if self.args.debug:
                 print "Host named [%s] will use [%s] as dns_name" % (host['name'], dns_name)
 
-            # Create ansible groups for hostgroup, location and organization
-            if host.has_key('tags'):
+            # Create ansible groups for tags
+            if 'tags' in host:
                 for group in host['tags']:
                     safe_key = self.to_safe(group['name'])
                     self.push(self.inventory, safe_key, dns_name)
@@ -262,41 +303,61 @@ class CloudFormsInventory(object):
                     if self.args.debug:
                         print "Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key)
 
-            full_host = self._resolve_host(host)
-            if host.has_key('ipaddresses'):
-                full_host['ipaddresses'] = host['ipaddresses']
+            # Set ansible_ssh_host to the first available ip address
+            if 'ipaddresses' in host and host['ipaddresses'] and isinstance(host['ipaddresses'], list):
+                host['ansible_ssh_host'] = host['ipaddresses'][0]
 
-            self.cache[dns_name] = full_host
+            # Create additional groups
+            for key in ('location', 'type', 'vendor'):
+                safe_key = self.to_safe(host[key])
+
+                # Create top-level group
+                if key not in self.inventory:
+                    self.inventory[key] = dict(children=[], vars={}, hosts=[])
+
+                # Create sub-group
+                if safe_key not in self.inventory:
+                    self.inventory[safe_key] = dict(children=[], vars={}, hosts=[])
+
+                # Add sub-group, as a child of top-level
+                if safe_key not in self.inventory[key]['children']:
+                    self.push(self.inventory[key], 'children', safe_key)
+
+                if key in host:
+                    # Add host to sub-group
+                    self.push(self.inventory[safe_key], 'hosts', dns_name)
+
+            self.hosts[dns_name] = host
             self.push(self.inventory, 'all', dns_name)
 
         if self.args.debug:
             print "Saving cached data"
 
-        self.write_to_cache(self.cache, self.cache_path_cache)
+        self.write_to_cache(self.hosts, self.cache_path_hosts)
         self.write_to_cache(self.inventory, self.cache_path_inventory)
 
     def get_host_info(self, host):
         """
         Get variables about a specific host
         """
-        if not self.cache or len(self.cache) == 0:
+        if not self.hosts or len(self.hosts) == 0:
             # Need to load cache from cache
-            self.load_cache_from_cache()
+            self.load_hosts_from_cache()
 
-        if host not in self.cache:
+        if host not in self.hosts:
             if self.args.debug:
                 print "[%s] not found in cache." % host
 
             # try updating the cache
             self.update_cache()
 
-            if host not in self.cache:
+            if host not in self.hosts:
                 if self.args.debug:
                     print "[%s] does not exist after cache update." % host
                 # host might not exist anymore
                 return self.json_format_dict({}, self.args.pretty)
 
-        return self.json_format_dict(self.cache[host], self.args.pretty)
+        return self.json_format_dict(self.hosts[host], self.args.pretty)
 
     def push(self, d, k, v):
         """
@@ -315,13 +376,13 @@ class CloudFormsInventory(object):
         json_inventory = cache.read()
         self.inventory = json.loads(json_inventory)
 
-    def load_cache_from_cache(self):
+    def load_hosts_from_cache(self):
         """
-        Reads the cache from the cache file sets self.cache
+        Reads the cache from the cache file sets self.hosts
         """
-        cache = open(self.cache_path_cache, 'r')
+        cache = open(self.cache_path_hosts, 'r')
         json_cache = cache.read()
-        self.cache = json.loads(json_cache)
+        self.hosts = json.loads(json_cache)
 
     def write_to_cache(self, data, filename):
         """
@@ -336,8 +397,11 @@ class CloudFormsInventory(object):
         """
         Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
         """
-        regex = "[^A-Za-z0-9\_]"
-        return re.sub(regex, "_", word.replace(" ", ""))
+        if self.cloudforms_clean_group_keys:
+            regex = "[^A-Za-z0-9\_]"
+            return re.sub(regex, "_", word.replace(" ", ""))
+        else:
+            return word
 
     def json_format_dict(self, data, pretty=False):
         """
