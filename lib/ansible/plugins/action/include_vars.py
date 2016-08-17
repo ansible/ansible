@@ -31,6 +31,10 @@ class ActionModule(ActionBase):
         source = self._task.args.get('file')
         if not source:
             source = self._task.args.get('_raw_params')
+            if source is None:
+                raise AnsibleError("No filename was found for the included vars. " + \
+                                   "Use `- include_vars: <filename>` or the `file:` option " + \
+                                   "to specify the vars filename.", self._task._ds)
 
         if task_vars is None:
             task_vars = dict()
