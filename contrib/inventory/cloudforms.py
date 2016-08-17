@@ -157,11 +157,6 @@ class CloudFormsInventory(object):
         else:
             self.cloudforms_limit = 100
 
-        if config.has_option('cloudforms', 'prefer_ip_address'):
-            self.cloudforms_prefer_ip_address = config.getboolean('cloudforms', 'prefer_ip_address')
-        else:
-            self.cloudforms_prefer_ip_address = False
-
         if config.has_option('cloudforms', 'purge_actions'):
             self.cloudforms_purge_actions = config.getboolean('cloudforms', 'purge_actions')
         else:
@@ -198,7 +193,6 @@ class CloudFormsInventory(object):
             print "cloudforms_ssl_verify        = %s" % self.cloudforms_ssl_verify
             print "cloudforms_version           = %s" % self.cloudforms_version
             print "cloudforms_limit             = %s" % self.cloudforms_limit
-            print "cloudforms_prefer_ip_address = %s" % self.cloudforms_prefer_ip_address
             print "cloudforms_purge_actions     = %s" % self.cloudforms_purge_actions
             print "Cache settings:"
             print "cache_max_age        = %s" % self.cache_max_age
@@ -284,12 +278,6 @@ class CloudFormsInventory(object):
                 if self.args.debug:
                     print "Skipping %s because power_state = %s" % (host['name'], host['power_state'])
                 continue
-
-            # rename the host to IP if configured to do so
-            if self.cloudforms_prefer_ip_address and 'ipaddresses' in host and host['ipaddresses'][0]:
-                dns_name = host['ipaddresses'][0]
-            else:
-                dns_name = host['name']
 
             if self.args.debug:
                 print "Host named [%s] will use [%s] as dns_name" % (host['name'], dns_name)
