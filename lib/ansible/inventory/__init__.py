@@ -717,6 +717,12 @@ class Inventory(object):
         """
         # Only update things if dir is a different playbook basedir
         if dir_name != self._playbook_basedir:
+            # we're changing the playbook basedir, so if we had set one previously
+            # clear the host/group vars entries from the VariableManager so they're
+            # not incorrectly used by playbooks from different directories
+            if self._playbook_basedir:
+                self._variable_manager.clear_playbook_hostgroup_vars_files(self._playbook_basedir)
+
             self._playbook_basedir = dir_name
             # get group vars from group_vars/ files
             # TODO: excluding the new_pb_basedir directory may result in group_vars
@@ -782,10 +788,10 @@ class Inventory(object):
 
         # look in both the inventory base directory and the playbook base directory
         # unless we do an update for a new playbook base dir
-        if not new_pb_basedir:
+        if not new_pb_basedir and _playbook_basedir:
             basedirs = [_basedir, _playbook_basedir]
         else:
-            basedirs = [_playbook_basedir]
+            basedirs = [_basedir]
 
         for basedir in basedirs:
             # this can happen from particular API usages, particularly if not run
