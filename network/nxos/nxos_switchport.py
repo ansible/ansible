@@ -73,6 +73,7 @@ options:
             - if mode=trunk, these are the only VLANs that should be
               configured on the trunk
         required: false
+        version_added: 2.2
         default: null
 
 '''
