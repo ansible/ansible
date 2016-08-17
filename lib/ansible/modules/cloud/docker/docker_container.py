@@ -1012,7 +1012,8 @@ class TaskParameters(DockerBaseClass):
                 protocol = 'tcp'
                 match = re.search(r'(/.+$)', port)
                 if match:
-                    protocol = match.group(1)
+                    protocol = match.group(1).replace('/', '')
+                    port = re.sub(r'/.+$', '', port)
                 exposed.append((port, protocol))
         if published_ports:
             # Any published port should also be exposed
