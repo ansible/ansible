@@ -27,7 +27,7 @@
       - "getmac_result.stdout"
       - "not getmac_result.stderr"
       - "not getmac_result|failed"
-      - "not getmac_result|changed"
+      - "getmac_result|changed"
 
 - name: run ipconfig with /all argument
   raw: ipconfig /all
@@ -41,7 +41,7 @@
       - "'Physical Address' in ipconfig_result.stdout"
       - "not ipconfig_result.stderr"
       - "not ipconfig_result|failed"
-      - "not ipconfig_result|changed"
+      - "ipconfig_result|changed"
 
 - name: run ipconfig with invalid argument
   raw: ipconfig /badswitch
@@ -55,7 +55,7 @@
       - "ipconfig_invalid_result.stdout" # ipconfig displays errors on stdout.
       - "not ipconfig_invalid_result.stderr"
       - "ipconfig_invalid_result|failed"
-      - "not ipconfig_invalid_result|changed"
+      - "ipconfig_invalid_result|changed"
 
 - name: run an unknown command
   raw: uname -a
@@ -69,7 +69,7 @@
       - "not unknown_result.stdout"
       - "unknown_result.stderr" # An unknown command displays error on stderr.
       - "unknown_result|failed"
-      - "not unknown_result|changed"
+      - "unknown_result|changed"
 
 - name: run a command that takes longer than 60 seconds
   raw: Start-Sleep -s 75
@@ -82,7 +82,7 @@
       - "not sleep_command.stdout"
       - "not sleep_command.stderr"
       - "not sleep_command|failed"
-      - "not sleep_command|changed"
+      - "sleep_command|changed"
 
 - name: run a raw command with key=value arguments
   raw: echo wwe=raw
