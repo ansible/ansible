@@ -170,7 +170,7 @@ class TestSunOSVirtual(BaseTestFactsPlatform):
     fact_class = facts.SunOSVirtual
 
 
-LSBLK_OUTPUT = """
+LSBLK_OUTPUT = b"""
 /dev/sda
 /dev/sda1                             32caaec3-ef40-4691-a3b6-438c3f9bc1c0
 /dev/sda2                             66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK
@@ -187,7 +187,7 @@ LSBLK_OUTPUT = """
 /dev/mapper/docker-253:1-1050967-pool
 """
 
-LSBLK_OUTPUT_2  = """
+LSBLK_OUTPUT_2  = b"""
 /dev/sda
 /dev/sda1                            32caaec3-ef40-4691-a3b6-438c3f9bc1c0
 /dev/sda2                            66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK
@@ -401,7 +401,7 @@ MTAB_ENTRIES = \
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
 
-FINDMNT_OUTPUT = """
+FINDMNT_OUTPUT = b"""
 /sys                            sysfs                                sysfs           rw,nosuid,nodev,noexec,relatime,seclabel
 /proc                           proc                                 proc            rw,nosuid,nodev,noexec,relatime
 /dev                            devtmpfs                             devtmpfs        rw,nosuid,seclabel,size=8044400k,nr_inodes=2011100,mode=755
@@ -517,9 +517,9 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         lsblk_uuids = lh._lsblk_uuid()
 
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertIn('/dev/loop9', lsblk_uuids)
-        self.assertIn('/dev/sda1', lsblk_uuids)
-        self.assertEquals(lsblk_uuids['/dev/sda1'], '32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertIn(b'/dev/loop9', lsblk_uuids)
+        self.assertIn(b'/dev/sda1', lsblk_uuids)
+        self.assertEquals(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
 
     @patch('ansible.module_utils.facts.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT,''))
     def test_lsblk_uuid_non_zero(self, mock_run_lsblk):
@@ -545,7 +545,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         lh = facts.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertIn('/dev/loop0', lsblk_uuids)
-        self.assertIn('/dev/sda1', lsblk_uuids)
-        self.assertEquals(lsblk_uuids['/dev/mapper/an-example-mapper with a space in the name'], '84639acb-013f-4d2f-9392-526a572b4373')
-        self.assertEquals(lsblk_uuids['/dev/sda1'], '32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertIn(b'/dev/loop0', lsblk_uuids)
+        self.assertIn(b'/dev/sda1', lsblk_uuids)
+        self.assertEquals(lsblk_uuids[b'/dev/mapper/an-example-mapper with a space in the name'], b'84639acb-013f-4d2f-9392-526a572b4373')
+        self.assertEquals(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
