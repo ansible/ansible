@@ -108,6 +108,7 @@ class VMWareInventory(object):
             if self.args.refresh_cache or not cache_valid:
                 self.do_api_calls_update_cache()
             else:
+                self.debugl('# loading inventory from cache')
                 self.inventory = self.get_inventory_from_cache()
 
     def debugl(self, text):
@@ -284,7 +285,6 @@ class VMWareInventory(object):
             kwargs['sslContext'] = context
 
         instances = self._get_instances(kwargs)
-        self.debugl("### INSTANCES RETRIEVED")
         return instances
 
 
@@ -294,7 +294,8 @@ class VMWareInventory(object):
 
         instances = []
         si = SmartConnect(**inkwargs)
-            
+
+        self.debugl('# retrieving instances')            
         if not si:
             print("Could not connect to the specified host using specified "
                 "username and password")
@@ -314,6 +315,7 @@ class VMWareInventory(object):
                 if len(instances) >= (self.args.max_instances):
                     break
             instances.append(child)
+        self.debugl("# total instances retrieved %s" % len(instances))
 
         instance_tuples = []    
         for instance in sorted(instances):    
@@ -377,14 +379,14 @@ class VMWareInventory(object):
             inventory['all']['hosts'].remove(k)
             inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('PREFILTER_HOSTS:')
+        self.debugl('# pre-filtered hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl(i)
+            self.debugl('#   * %s' % i)
         # Apply host filters
         for hf in self.host_filters:
             if not hf:
                 continue
-            self.debugl('FILTER: %s' % hf)
+            self.debugl('# filter: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
             for k,v in filter_map.iteritems():
                 if not v:
@@ -392,9 +394,9 @@ class VMWareInventory(object):
                     inventory['all']['hosts'].remove(k)
                     inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('POSTFILTER_HOSTS:')
+        self.debugl('# post-filter hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl(i)
+            self.debugl('#   * %s' % i)
 
         # Create groups
         for gbp in self.groupby_patterns:
@@ -446,7 +448,7 @@ class VMWareInventory(object):
 
         if level == 0:
             try:
-                self.debugl("# get %s facts" % vobj.name)
+                self.debugl("# get facts: %s" % vobj.name)
             except Exception as e:
                 self.debugl(e)
 
