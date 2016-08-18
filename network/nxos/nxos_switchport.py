@@ -60,7 +60,8 @@ options:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk.
-        aliases: trunk_add_vlans
+        aliases:
+          - trunk_add_vlans
         required: false
         default: null
     state:
