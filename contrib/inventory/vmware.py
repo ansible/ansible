@@ -497,6 +497,12 @@ def main():
     else:
         inventory = vmware_inventory.get_inventory(options.meta_hostvars)
 
+    # Attempt to close the client connection
+    try:
+        vmware_inventory.client.logout()
+    except:
+        pass
+
     json_kwargs = {}
     if options.pretty:
         json_kwargs.update({'indent': 4, 'sort_keys': True})
