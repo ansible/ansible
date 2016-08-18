@@ -285,6 +285,10 @@ class CloudFormsInventory(object):
                     print "Skipping %s because power_state = %s" % (host['name'], host['power_state'])
                 continue
 
+            # purge actions
+            if self.cloudforms_purge_actions and 'actions' in host:
+                del host['actions']
+
             # Create ansible groups for tags
             if 'tags' in host:
 
