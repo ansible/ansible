@@ -168,6 +168,11 @@ class CloudFormsInventory(object):
         else:
             self.cloudforms_clean_group_keys = True
 
+        if config.has_option('cloudforms', 'nest_tags'):
+            self.cloudforms_nest_tags = config.getboolean('cloudforms', 'nest_tags')
+        else:
+            self.cloudforms_nest_tags = False
+
         # Ansible related
         try:
             group_patterns = config.get('ansible', 'group_patterns')
@@ -282,12 +287,62 @@ class CloudFormsInventory(object):
 
             # Create ansible groups for tags
             if 'tags' in host:
-                for group in host['tags']:
-                    safe_key = self.to_safe(group['name'])
-                    self.push(self.inventory, safe_key, host['name'])
 
-                    if self.args.debug:
-                        print "Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key)
+                # Create top-level group
+                if 'tags' not in self.inventory:
+                    self.inventory['tags'] = dict(children=[], vars={}, hosts=[])
+
+                if not self.cloudforms_nest_tags:
+                    # don't expand tags, just use them in a safe way
+                    for group in host['tags']:
+                        # Add sub-group, as a child of top-level
+                        safe_key = self.to_safe(group['name'])
+                        if safe_key:
+                            if self.args.debug:
+                                print "Adding sub-group '%s' to parent 'tags'" % safe_tag_name
+
+                            if safe_key not in self.inventory['tags']['children']:
+                                self.push(self.inventory['tags'], 'children', safe_key)
+
+                            self.push(self.inventory, safe_key, host['name'])
+
+                            if self.args.debug:
+                                print "Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key)
+                else:
+                    # expand the tags into nested groups / sub-groups
+                    # Create nested groups for tags
+                    safe_parent_tag_name = 'tags'
+                    for tag in host['tags']:
+                        tag_hierarchy = tag['name'][1:].split('/')
+
+                        if self.args.debug:
+                            print "Working on list %s" % tag_hierarchy
+
+                        for tag_name in tag_hierarchy:
+                            if self.args.debug:
+                                print "Working on tag_name = %s" % tag_name
+
+                            safe_tag_name = self.to_safe(tag_name)
+                            if self.args.debug:
+                                print "Using sanitized name %s" % safe_tag_name
+
+                            # Create sub-group
+                            if safe_tag_name not in self.inventory:
+                                self.inventory[safe_tag_name] = dict(children=[], vars={}, hosts=[])
+
+                            # Add sub-group, as a child of top-level
+                            if safe_parent_tag_name:
+                                if self.args.debug:
+                                    print "Adding sub-group '%s' to parent '%s'" % (safe_tag_name, safe_parent_tag_name)
+
+                                if safe_tag_name not in self.inventory[safe_parent_tag_name]['children']:
+                                    self.push(self.inventory[safe_parent_tag_name], 'children', safe_tag_name)
+
+                            # Make sure the next one uses this one as it's parent
+                            safe_parent_tag_name = safe_tag_name
+
+                        # Add the host to the last tag
+                        self.push(self.inventory[safe_parent_tag_name], 'hosts', host['name'])
 
             # Set ansible_ssh_host to the first available ip address
             if 'ipaddresses' in host and host['ipaddresses'] and isinstance(host['ipaddresses'], list):
