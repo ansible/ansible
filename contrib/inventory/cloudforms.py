@@ -303,7 +303,7 @@ class CloudFormsInventory(object):
                         safe_key = self.to_safe(group['name'])
                         if safe_key:
                             if self.args.debug:
-                                print "Adding sub-group '%s' to parent 'tags'" % safe_tag_name
+                                print "Adding sub-group '%s' to parent 'tags'" % safe_key
 
                             if safe_key not in self.inventory['tags']['children']:
                                 self.push(self.inventory['tags'], 'children', safe_key)
