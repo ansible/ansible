@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: lxd_container
 short_description: Manage LXD Containers
-version_added: 2.2.0
+version_added: "2.2"
 description:
   - Management of LXD containers
 author: "Hiroaki Nakamura (@hnakamur)"
