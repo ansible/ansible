@@ -446,6 +446,11 @@ class VMWareInventory(object):
         # pyvmomi objects are not yet serializable, but may be one day ...
         # https://github.com/vmware/pyvmomi/issues/21
 
+        # WARNING:
+        # Accessing an object attribute will trigger a SOAP call to the remote.
+        # Increasing the attributes collected or the depth of recursion greatly
+        # increases runtime duration and potentially memory+network utilization.
+
         if level == 0:
             try:
                 self.debugl("# get facts: %s" % vobj.name)
