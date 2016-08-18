@@ -73,7 +73,7 @@ options:
     trunk_allowed_vlans:
         description:
             - if C(mode=trunk), these are the only VLANs that will be
-              configured on the trunk, i.e. "2-10,15"
+              configured on the trunk, i.e. "2-10,15".
         required: false
         version_added: 2.2
         default: null
