@@ -34,6 +34,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 class CloudFormsInventory(object):
     def __init__(self):
         """
