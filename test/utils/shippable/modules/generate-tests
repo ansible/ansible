@@ -63,6 +63,8 @@ def main():
                         help='platform to run tests on')
     parser.add_argument('--version', dest='version', default=os.environ.get('VERSION'),
                         help='version of platform to run tests on')
+    parser.add_argument('--output', dest='output', required=True,
+                        help='path to write output script to')
 
     args = parser.parse_args()
 
@@ -80,16 +82,17 @@ def main():
     else:
         raise Exception('job parameters not specified')
 
-    generate_test_commands(args.module_group, targets, script, jobs=jobs, verbose=args.verbose, changes=args.changes)
+    generate_test_commands(args.module_group, targets, script, args.output, jobs=jobs, verbose=args.verbose, changes=args.changes)
 
 
-def generate_test_commands(module_group, targets, script, jobs=None, verbose=False, changes=None):
+def generate_test_commands(module_group, targets, script, output, jobs=None, verbose=False, changes=None):
     """Generate test commands for the given module group and test targets.
 
     Args:
         module_group: The module group (core, extras) to examine.
         targets: The test targets to examine.
         script: The script used to execute the test targets.
+        output: The path to write the output script to.
         jobs: The test jobs to execute, or None to auto-detect.
         verbose: True to write detailed output to stderr.
         changes: Path to file containing list of changed files, or None to query git.
@@ -153,14 +156,16 @@ def generate_test_commands(module_group, targets, script, jobs=None, verbose=Fal
 
     commands = ['TARGET="%s" TEST_FLAGS="-t %s" %s %s' % (target, tags, j, script_path) for j in jobs]
 
-    for command in commands:
-        print(command)
+    with open(output, 'w') as f:
+        f.writelines(commands)
+        f.write('\n')
 
 
 def print_stderr(*args, **kwargs):
     """Print to stderr."""
 
     print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
 
 
 def dump_stderr(label, l):

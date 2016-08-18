@@ -21,8 +21,7 @@ __metaclass__ = type
 
 import os
 
-from collections import defaultdict
-from collections import MutableMapping
+from collections import defaultdict, MutableMapping
 
 from ansible.compat.six import iteritems
 from jinja2.exceptions import UndefinedError
@@ -618,6 +617,20 @@ class VariableManager:
                 self._group_vars_files[name].append(data)
 
         return data
+
+    def clear_playbook_hostgroup_vars_files(self, path):
+        for f in self._host_vars_files.keys():
+            keepers = []
+            for entry in self._host_vars_files[f]:
+                if os.path.dirname(entry.path) != os.path.join(path, 'host_vars'):
+                    keepers.append(entry)
+            self._host_vars_files[f] = keepers
+        for f in self._group_vars_files.keys():
+            keepers = []
+            for entry in self._group_vars_files[f]:
+                if os.path.dirname(entry.path) != os.path.join(path, 'group_vars'):
+                    keepers.append(entry)
+            self._group_vars_files[f] = keepers
 
     def clear_facts(self, hostname):
         '''

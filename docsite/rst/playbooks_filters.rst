@@ -27,7 +27,7 @@ For human readable output, you can use::
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
 
-It's also possible to change the indentation of both::
+It's also possible to change the indentation of both (new in version 2.2)::
 
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}

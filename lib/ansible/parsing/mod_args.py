@@ -114,11 +114,6 @@ class ModuleArgsParser:
         to shell/command being treated special and nothing else
         '''
 
-        # don't handle non shell/command modules in this function
-        # TODO: in terms of the whole app, should 'raw' also fit here?
-        if action not in ['shell', 'command']:
-            return (action, args)
-
         # the shell module really is the command module with an additional
         # parameter
         if action == 'shell':

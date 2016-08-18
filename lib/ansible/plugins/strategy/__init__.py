@@ -39,6 +39,7 @@ from ansible.inventory.group import Group
 from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.unicode import to_unicode
@@ -119,14 +120,18 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts     = dict()
 
-    def run(self, iterator, play_context, result=True):
+    def run(self, iterator, play_context, result=0):
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
         failed_hosts      = iterator.get_failed_hosts()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         display.debug("running handlers")
-        result &= self.run_handlers(iterator, play_context)
+        handler_result = self.run_handlers(iterator, play_context)
+        if isinstance(handler_result, bool) and not handler_result:
+            result |= self._tqm.RUN_ERROR
+        elif not handler_result:
+            result |= handler_result
 
         # now update with the hosts (if any) that failed or were
         # unreachable during the handler execution phase
@@ -140,8 +145,6 @@ class StrategyBase:
             return self._tqm.RUN_UNREACHABLE_HOSTS
         elif len(failed_hosts) > 0:
             return self._tqm.RUN_FAILED_HOSTS
-        elif isinstance(result, bool) and not result:
-            return self._tqm.RUN_ERROR
         else:
             return self._tqm.RUN_OK
 
@@ -163,7 +166,7 @@ class StrategyBase:
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
-        display.debug("entering _queue_task() for %s/%s" % (host, task))
+        display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
         # Add a write lock for tasks.
         # Maybe this should be added somewhere further up the call stack but
@@ -182,9 +185,7 @@ class StrategyBase:
             action_write_locks[task.action] = Lock()
 
         # and then queue the new task
-        display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
-            display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
 
             # create a dummy object with plugin loaders set as an easier
             # way to share them with the forked processes
@@ -198,6 +199,7 @@ class StrategyBase:
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
                     queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
@@ -212,7 +214,7 @@ class StrategyBase:
             # most likely an abort
             display.debug("got an error while queuing: %s" % e)
             return
-        display.debug("exiting _queue_task() for %s/%s" % (host, task))
+        display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def _process_pending_results(self, iterator, one_pass=False):
         '''
@@ -254,9 +256,29 @@ class StrategyBase:
                         continue
             return None
 
-        while not self._final_q.empty() and not self._tqm._terminated:
+        def parent_handler_match(target_handler, handler_name):
+            if target_handler:
+                if isinstance(target_handler, TaskInclude):
+                    try:
+                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=target_handler)
+                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        target_handler_name = templar.template(target_handler.name)
+                        if target_handler_name == handler_name:
+                            return True
+                        else:
+                            target_handler_name = templar.template(target_handler.get_name())
+                            if target_handler_name == handler_name:
+                                return True
+                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                        pass
+                return parent_handler_match(target_handler._parent, handler_name)
+            else:
+                return False
+
+        passes = 0
+        while not self._tqm._terminated:
             try:
-                task_result = self._final_q.get(block=False)
+                task_result = self._final_q.get(timeout=0.001)
                 original_host = get_original_host(task_result._host)
                 original_task = iterator.get_original_task(original_host, task_result._task)
                 task_result._host = original_host
@@ -296,7 +318,11 @@ class StrategyBase:
                         display.debug("marking %s as failed" % original_host.name)
                         if original_task.run_once:
                             # if we're using run_once, we have to fail every host here
-                            [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
+                            for h in self._inventory.get_hosts(iterator._play.hosts):
+                                if h.name not in self._tqm._unreachable_hosts:
+                                    state, _ = iterator.get_next_task_for_host(h, peek=True)
+                                    iterator.mark_host_failed(h)
+                                    state, new_task = iterator.get_next_task_for_host(h, peek=True)
                         else:
                             iterator.mark_host_failed(original_host)
 
@@ -361,15 +387,25 @@ class StrategyBase:
 
                                     else:
                                         target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                                        if target_handler is None:
-                                            raise AnsibleError("The requested handler '%s' was not found in any of the known handlers" % handler_name)
-                                        if target_handler in self._notified_handlers:
+                                        if target_handler is not None:
                                             if original_host not in self._notified_handlers[target_handler]:
                                                 self._notified_handlers[target_handler].append(original_host)
                                                 # FIXME: should this be a callback?
                                                 display.vv("NOTIFIED HANDLER %s" % (handler_name,))
                                         else:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+                                            # As there may be more than one handler with the notified name as the
+                                            # parent, so we just keep track of whether or not we found one at all
+                                            found = False
+                                            for target_handler in self._notified_handlers:
+                                                if parent_handler_match(target_handler, handler_name):
+                                                    self._notified_handlers[target_handler].append(original_host)
+                                                    display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                                    found = True
+
+                                            # and if none were found, then we raise an error
+                                            if not found:
+                                                raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+ 
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
@@ -451,7 +487,9 @@ class StrategyBase:
                 ret_results.append(task_result)
 
             except Queue.Empty:
-                time.sleep(0.005)
+                passes += 1
+                if passes > 2:
+                   break
 
             if one_pass:
                 break
@@ -474,7 +512,6 @@ class StrategyBase:
 
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            time.sleep(0.005)
 
         display.debug("no more pending results, returning what we have")
 
@@ -572,11 +609,28 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
+            ti_copy = included_file._task.copy()
+            temp_vars = ti_copy.vars.copy()
+            temp_vars.update(included_file._args)
+            # pop tags out of the include args, if they were specified there, and assign
+            # them to the include. If the include already had tags specified, we raise an
+            # error so that users know not to specify them both ways
+            tags = included_file._task.vars.pop('tags', [])
+            if isinstance(tags, string_types):
+                tags = tags.split(',')
+            if len(tags) > 0:
+                if len(included_file._task.tags) > 0:
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                            obj=included_file._task._ds)
+                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
+                included_file._task.tags = tags
+            ti_copy.vars = temp_vars
+
             block_list = load_list_of_blocks(
                 data,
                 play=iterator._play,
                 parent_block=None,
-                task_include=None,
+                task_include=ti_copy,
                 role=included_file._task._role,
                 use_handlers=is_handler,
                 loader=self._loader,
@@ -599,26 +653,6 @@ class StrategyBase:
                 self._tqm.send_callback('v2_runner_on_failed', tr)
             return []
 
-        # set the vars for this task from those specified as params to the include
-        for b in block_list:
-            # first make a copy of the including task, so that each has a unique copy to modify
-            b._parent = included_file._task.copy()
-            # then we create a temporary set of vars to ensure the variable reference is unique
-            temp_vars = b._parent.vars.copy()
-            temp_vars.update(included_file._args.copy())
-            # pop tags out of the include args, if they were specified there, and assign
-            # them to the include. If the include already had tags specified, we raise an
-            # error so that users know not to specify them both ways
-            tags = temp_vars.pop('tags', [])
-            if isinstance(tags, string_types):
-                tags = tags.split(',')
-            if len(tags) > 0:
-                if len(b._parent.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                            obj=included_file._task._ds)
-                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
-                b._parent.tags = tags
-            b._parent.vars = temp_vars
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)
@@ -630,7 +664,7 @@ class StrategyBase:
         Runs handlers on those hosts which have been notified.
         '''
 
-        result = True
+        result = self._tqm.RUN_OK
 
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
@@ -670,7 +704,7 @@ class StrategyBase:
 
         host_results = []
         for host in notified_hosts:
-            if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or play_context.force_handlers):
+            if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
                 task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)

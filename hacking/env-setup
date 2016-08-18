@@ -16,9 +16,9 @@ if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=$(dirname "$BASH_SOURCE")
 elif [ $(basename -- "$0") = "env-setup" ]; then
     HACKING_DIR=$(dirname "$0")
-# Works with ksh93 but not pdksh
+# Works with ksh93 but not pdksh, have to eval to keep ash happy...
 elif [ -n "$KSH_VERSION" ] && echo $KSH_VERSION | grep -qv '^@(#)PD KSH'; then
-    HACKING_DIR=$(dirname "${.sh.file}")
+    eval "HACKING_DIR=\$(dirname \"\${.sh.file}\")"
 else
     HACKING_DIR="$PWD/hacking"
 fi
@@ -57,10 +57,10 @@ fi
 	cd "$ANSIBLE_HOME"
 	if [ "$verbosity" = silent ] ; then
 	    gen_egg_info > /dev/null 2>&1
-            find . -type f -name "*.pyc" -exec rm {} \; > /dev/null 2>&1
+            find . -type f -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
 	else
 	    gen_egg_info
-            find . -type f -name "*.pyc" -exec rm {} \;
+            find . -type f -name "*.pyc" -exec rm -f {} \;
 	fi
 	cd "$current_dir"
 )

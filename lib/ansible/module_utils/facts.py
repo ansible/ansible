@@ -961,6 +961,12 @@ class Hardware(Facts):
     platform = 'Generic'
 
     def __new__(cls, *arguments, **keyword):
+        # When Hardware is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Hardware:
+            return super(Hardware, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
@@ -2052,6 +2058,12 @@ class Network(Facts):
                    '80' : 'organization' }
 
     def __new__(cls, *arguments, **keyword):
+        # When Network is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Network:
+            return super(Network, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
@@ -2836,6 +2848,12 @@ class Virtual(Facts):
     """
 
     def __new__(cls, *arguments, **keyword):
+        # When Virtual is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Virtual:
+            return super(Virtual, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
@@ -2859,6 +2877,7 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
+        # old lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
                 if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
@@ -2866,6 +2885,14 @@ class LinuxVirtual(Virtual):
                     self.facts['virtualization_role'] = 'guest'
                     return
                 if re.search('/lxc/', line):
+                    self.facts['virtualization_type'] = 'lxc'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+
+        # newer lxc does not appear in cgroups anymore but sets 'container=lxc' environment var
+        if os.path.exists('/proc/1/environ'):
+            for line in get_file_lines('/proc/1/environ'):
+                if re.search('container=lxc', line):
                     self.facts['virtualization_type'] = 'lxc'
                     self.facts['virtualization_role'] = 'guest'
                     return

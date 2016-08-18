@@ -97,6 +97,7 @@ options:
         without first checking if already configured.
     required: false
     default: false
+    version_added: "2.2"
     choices: ['yes', 'no']
   running_config:
     description:
@@ -109,6 +110,7 @@ options:
         config for comparision.
     required: false
     default: null
+    version_added: "2.2"
     aliases: ['config']
   save_config:
     description:
@@ -117,5 +119,6 @@ options:
         persistent if the device is restarted.
     required: false
     default: null
+    version_added: "2.2"
     aliases: ['save']
 """

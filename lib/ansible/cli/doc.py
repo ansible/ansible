@@ -275,17 +275,16 @@ class DocCLI(CLI):
             text.append("%s %s" % (opt_leadin, o))
 
             if isinstance(opt['description'], list):
-                desc = " ".join(opt['description'])
+                for entry in opt['description']:
+                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
-                desc = opt['description']
+                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
             if 'choices' in opt:
-                choices = ", ".join(str(i) for i in opt['choices'])
-                desc = desc + " (Choices: " + choices + ")"
+                choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
             if 'default' in opt or not required:
-                default = str(opt.get('default', '(null)'))
-                desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                default = "[Default: " +  str(opt.get('default', '(null)')) + "]"
+            text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
