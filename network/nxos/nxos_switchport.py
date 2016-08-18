@@ -18,7 +18,6 @@
 
 DOCUMENTATION = '''
 ---
-
 module: nxos_switchport
 version_added: "2.1"
 short_description: Manages Layer 2 switchport interfaces
@@ -61,6 +60,8 @@ options:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk.
+        aliases:
+          - trunk_add_vlans
         required: false
         default: null
     state:
@@ -69,6 +70,13 @@ options:
         required: false
         default:  present
         choices: ['present','absent', 'unconfigured']
+    trunk_allowed_vlans:
+        description:
+            - if C(mode=trunk), these are the only VLANs that will be
+              configured on the trunk, i.e. "2-10,15".
+        required: false
+        version_added: 2.2
+        default: null
 
 '''
 EXAMPLES = '''
@@ -77,6 +85,9 @@ EXAMPLES = '''
 
 # ENSURE Eth1/5 is configured for access vlan 20
 - nxos_switchport: interface=eth1/5 mode=access access_vlan=20 host={{ inventory_hostname }}
+
+# ENSURE Eth1/5 only has vlans 5-10 as trunk vlans
+- nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=5-10 host={{ inventory_hostname }}
 
 # Ensure eth1/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
 - nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=2-50 host={{ inventory_hostname }}
@@ -264,7 +275,7 @@ def get_switchport(port, module):
         return {}
 
 
-def remove_switchport_config_commands(interface, existing, proposed):
+def remove_switchport_config_commands(interface, existing, proposed, module):
     mode = proposed.get('mode')
     commands = []
     command = None
@@ -277,14 +288,12 @@ def remove_switchport_config_commands(interface, existing, proposed):
     elif mode == 'trunk':
         tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
         if not tv_check:
-            vlans_to_remove = False
-            for vlan in proposed.get('trunk_vlans_list'):
-                if vlan in existing.get('trunk_vlans_list'):
-                    vlans_to_remove = True
-                    break
+            existing_vlans = existing.get('trunk_vlans_list')
+            proposed_vlans = proposed.get('trunk_vlans_list')
+            vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
             if vlans_to_remove:
                 command = 'switchport trunk allowed vlan remove {0}'.format(
-                    proposed.get('trunk_vlans'))
+                    proposed.get('trunk_vlans', proposed.get('trunk_allowed_vlans')))
                 commands.append(command)
         native_check = existing.get(
             'native_vlan') == proposed.get('native_vlan')
@@ -297,7 +306,7 @@ def remove_switchport_config_commands(interface, existing, proposed):
     return commands
 
 
-def get_switchport_config_commands(interface, existing, proposed):
+def get_switchport_config_commands(interface, existing, proposed, module):
     """Gets commands required to config a given switchport interface
     """
 
@@ -323,14 +332,16 @@ def get_switchport_config_commands(interface, existing, proposed):
     elif proposed_mode == 'trunk':
         tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
         if not tv_check:
-            vlans_to_add = False
-            for vlan in proposed.get('trunk_vlans_list'):
-                if vlan not in existing.get('trunk_vlans_list'):
-                    vlans_to_add = True
-                    break
-            if vlans_to_add:
-                command = 'switchport trunk allowed vlan add {0}'.format(proposed.get('trunk_vlans'))
+            if proposed.get('allowed'):
+                command = 'switchport trunk allowed vlan {0}'.format(proposed.get('trunk_allowed_vlans'))
                 commands.append(command)
+            else:
+                existing_vlans = existing.get('trunk_vlans_list')
+                proposed_vlans = proposed.get('trunk_vlans_list')
+                vlans_to_add = set(proposed_vlans).difference(existing_vlans)
+                if vlans_to_add:
+                    command = 'switchport trunk allowed vlan add {0}'.format(proposed.get('trunk_vlans'))
+                    commands.append(command)
 
         native_check = existing.get(
             'native_vlan') == proposed.get('native_vlan')
@@ -508,13 +519,15 @@ def main():
         mode=dict(choices=['access', 'trunk'], required=False),
         access_vlan=dict(type='str', required=False),
         native_vlan=dict(type='str', required=False),
-        trunk_vlans=dict(type='str', required=False),
+        trunk_vlans=dict(type='str', aliases=['trunk_add_vlans'], required=False),
+        trunk_allowed_vlans=dict(type='str', required=False),
         state=dict(choices=['absent', 'present', 'unconfigured'],
                    default='present')
     )
     module = get_module(argument_spec=argument_spec,
                         mutually_exclusive=[['access_vlan', 'trunk_vlans'],
-                                            ['access_vlan', 'native_vlan']],
+                                            ['access_vlan', 'native_vlan'],
+                                            ['access_vlan', 'trunk_allowed_vlans']],
                         supports_check_mode=True)
 
     interface = module.params['interface']
@@ -523,9 +536,11 @@ def main():
     state = module.params['state']
     trunk_vlans = module.params['trunk_vlans']
     native_vlan = module.params['native_vlan']
+    trunk_allowed_vlans = module.params['trunk_allowed_vlans']
 
     args = dict(interface=interface, mode=mode, access_vlan=access_vlan,
-                native_vlan=native_vlan, trunk_vlans=trunk_vlans)
+                native_vlan=native_vlan, trunk_vlans=trunk_vlans,
+                trunk_allowed_vlans=trunk_allowed_vlans)
 
     proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
@@ -572,8 +587,12 @@ def main():
                              ' on an interface that\ndoes not exist on the '
                              ' switch yet!', vlan=native_vlan)
 
-    if trunk_vlans:
-        trunk_vlans_list = vlan_range_to_list(trunk_vlans)
+    if trunk_vlans or trunk_allowed_vlans:
+        if trunk_vlans:
+            trunk_vlans_list = vlan_range_to_list(trunk_vlans)
+        elif trunk_allowed_vlans:
+            trunk_vlans_list = vlan_range_to_list(trunk_allowed_vlans)
+            proposed['allowed'] = True
 
         existing_trunks_list = vlan_range_to_list(
             (existing['trunk_vlans'])
@@ -585,9 +604,8 @@ def main():
     changed = False
 
     commands = []
-
     if state == 'present':
-        command = get_switchport_config_commands(interface, existing, proposed)
+        command = get_switchport_config_commands(interface, existing, proposed, module)
         commands.append(command)
     elif state == 'unconfigured':
         is_default = is_switchport_default(existing)
@@ -595,11 +613,11 @@ def main():
             command = default_switchport_config(interface)
             commands.append(command)
     elif state == 'absent':
-        command = remove_switchport_config_commands(interface,
-                                                    existing, proposed)
+        command = remove_switchport_config_commands(interface, existing,
+                                                    proposed, module)
         commands.append(command)
 
-    if trunk_vlans:
+    if trunk_vlans or trunk_allowed_vlans:
         existing.pop('trunk_vlans_list')
         proposed.pop('trunk_vlans_list')
 
