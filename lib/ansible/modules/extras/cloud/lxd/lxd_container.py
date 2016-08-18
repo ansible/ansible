@@ -246,7 +246,7 @@ actions:
 '''
 
 import os
-from ansible.modules.extras.cloud.lxd import LXDClient, LXDClientException
+from ansible.module_utils.lxd import LXDClient, LXDClientException
 
 # LXD_ANSIBLE_STATES is a map of states that contain values of methods used
 # when a particular state is evoked.
