@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: lxd_profile
 short_description: Manage LXD profiles
-version_added: 2.2.0
+version_added: "2.2"
 description:
   - Management of LXD profiles
 author: "Hiroaki Nakamura (@hnakamur)"
