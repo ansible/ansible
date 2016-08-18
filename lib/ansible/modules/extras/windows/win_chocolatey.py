@@ -80,6 +80,18 @@ options:
     require: false
     default: null
     version_added: '2.1'
+  allow_empty_checksums:
+    description:
+      - Allow empty Checksums to be used 
+    require: false
+    default: false
+    version_added: '2.2'
+  ignore_checksums:
+    description:
+      - Ignore Checksums 
+    require: false
+    default: false
+    version_added: '2.2'      
   ignore_dependencies:
     description:
       - Ignore dependencies, only install/upgrade the package itself
