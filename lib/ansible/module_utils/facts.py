@@ -32,6 +32,10 @@ import datetime
 import getpass
 import pwd
 
+from ansible.module_utils.basic import get_all_subclasses
+from ansible.module_utils.six import PY3, iteritems
+
+# py2 vs py3; replace with six via ansiballz
 try:
     # python2
     import ConfigParser as configparser
@@ -39,10 +43,6 @@ except ImportError:
     # python3
     import configparser
 
-from ansible.module_utils.basic import get_all_subclasses
-from ansible.module_utils.six import PY3
-
-# py2 vs py3; replace with six via ansiballz
 try:
     # python2
     from StringIO import StringIO
@@ -50,24 +50,12 @@ except ImportError:
     # python3
     from io import StringIO
 
-
 try:
     # python2
     from string import maketrans
 except ImportError:
     # python3
     maketrans = str.maketrans # TODO: is this really identical?
-
-try:
-    dict.iteritems
-except AttributeError:
-    # Python 3
-    def iteritems(d):
-        return d.items()
-else:
-    # Python 2
-    def iteritems(d):
-        return d.iteritems()
 
 try:
     # Python 2
@@ -280,6 +268,13 @@ class Facts(object):
                 # if that fails read it with ConfigParser
                 # if that fails, skip it
                 rc, out, err = self.module.run_command(fn)
+                try:
+                    out = out.decode('utf-8', 'strict')
+                except UnicodeError:
+                    fact = 'error loading fact - output of running %s was not utf-8' % fn
+                    local[fact_base] = fact
+                    self.facts['local'] = local
+                    return
             else:
                 out = get_file_content(fn, default='')
 
@@ -406,6 +401,7 @@ class Facts(object):
         if lsb_path:
             rc, out, err = self.module.run_command([lsb_path, "-a"])
             if rc == 0:
+                out = out.decode('utf-8', 'replace')
                 self.facts['lsb'] = {}
                 for line in out.split('\n'):
                     if len(line) < 1 or ':' not in line:
@@ -476,6 +472,7 @@ class Facts(object):
         capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
             rc, out, err = self.module.run_command([capsh_path, "--print"])
+            out = out.decode('utf-8', 'replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.split('\n'):
@@ -1139,10 +1136,23 @@ class LinuxHardware(Hardware):
                 self.facts['processor_threads_per_core'] = 1
                 self.facts['processor_vcpus'] = i
             else:
-                self.facts['processor_count'] = sockets and len(sockets) or i
-                self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-                self.facts['processor_threads_per_core'] = ((cores.values() and
-                    cores.values()[0] or 1) / self.facts['processor_cores'])
+                if sockets:
+                    self.facts['processor_count'] = len(sockets)
+                else:
+                    self.facts['processor_count'] = i
+
+                socket_values = list(sockets.values())
+                if socket_values:
+                    self.facts['processor_cores'] = socket_values[0]
+                else:
+                    self.facts['processor_cores'] = 1
+
+                core_values = list(cores.values())
+                if core_values:
+                    self.facts['processor_threads_per_core'] = core_values[0] // self.facts['processor_cores']
+                else:
+                    self.facts['processor_threads_per_core'] = 1 // self.facts['processor_cores']
+
                 self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
                     self.facts['processor_count'] * self.facts['processor_cores'])
 
@@ -1270,6 +1280,7 @@ class LinuxHardware(Hardware):
         rc, out, err = self._run_findmnt(findmnt_path)
         if rc != 0:
             return bind_mounts
+        out = out.decode('utf-8', 'replace')
 
         # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
         for line in out.splitlines():
@@ -1349,6 +1360,7 @@ class LinuxHardware(Hardware):
         lspci = self.module.get_bin_path('lspci')
         if lspci:
             rc, pcidata, err = self.module.run_command([lspci, '-D'])
+            pcidata = pcidata.decode('utf-8', 'replace')
         else:
             pcidata = None
 
@@ -2191,6 +2203,7 @@ class LinuxNetwork(Network):
             if v == 'v6' and not socket.has_ipv6:
                 continue
             rc, out, err = self.module.run_command(command[v])
+            out = out.decode('utf-8', 'replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -2357,11 +2370,11 @@ class LinuxNetwork(Network):
 
             args = [ip_path, 'addr', 'show', 'primary', device]
             rc, stdout, stderr = self.module.run_command(args)
-            primary_data = stdout
+            primary_data = stdout.decode('utf-8', 'replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
             rc, stdout, stderr = self.module.run_command(args)
-            secondary_data = stdout
+            secondary_data = stdout.decode('utf-8', 'decode')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
@@ -2384,6 +2397,7 @@ class LinuxNetwork(Network):
         if ethtool_path:
             args = [ethtool_path, '-k', device]
             rc, stdout, stderr = self.module.run_command(args)
+            stdout = stdout.decode('utf-8', 'replace')
             if rc == 0:
                 for line in stdout.strip().split('\n'):
                     if not line or line.endswith(":"):
