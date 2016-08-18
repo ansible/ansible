@@ -20,6 +20,7 @@
 # -- Josh Preston <jpreston@redhat.com>
 #
 
+from __future__ import print_function
 import argparse
 import ConfigParser
 import os
@@ -61,7 +62,7 @@ class CloudFormsInventory(object):
         # Data to print
         if self.args.host:
             if self.args.debug:
-                print "Fetching host [%s]" % self.args.host
+                print("Fetching host [%s]" % self.args.host)
             data_to_print += self.get_host_info(self.args.host)
         else:
             self.inventory['_meta'] = {'hostvars': {}}
@@ -82,7 +83,7 @@ class CloudFormsInventory(object):
         Determines if the cache files have expired, or if it is still valid
         """
         if self.args.debug:
-            print "Determining if cache [%s] is still valid (< %s seconds old)" % (self.cache_path_hosts, self.cache_max_age)
+            print("Determining if cache [%s] is still valid (< %s seconds old)" % (self.cache_path_hosts, self.cache_max_age))
 
         if os.path.isfile(self.cache_path_hosts):
             mod_time = os.path.getmtime(self.cache_path_hosts)
@@ -90,11 +91,11 @@ class CloudFormsInventory(object):
             if (mod_time + self.cache_max_age) > current_time:
                 if os.path.isfile(self.cache_path_inventory):
                     if self.args.debug:
-                        print "Cache is still valid!"
+                        print("Cache is still valid!")
                     return True
 
         if self.args.debug:
-            print "Cache is stale or does not exist."
+            print("Cache is stale or does not exist.")
 
         return False
 
@@ -114,7 +115,7 @@ class CloudFormsInventory(object):
 
         if self.args.debug:
             for config_path in config_paths:
-                print "Reading from configuration file [%s]" % config_path
+                print("Reading from configuration file [%s]" % config_path)
 
         config.read(config_paths)
 
@@ -192,18 +193,18 @@ class CloudFormsInventory(object):
         self.cache_max_age = config.getint('cache', 'max_age')
 
         if self.args.debug:
-            print "CloudForms settings:"
-            print "cloudforms_url               = %s" % self.cloudforms_url
-            print "cloudforms_username          = %s" % self.cloudforms_username
-            print "cloudforms_pw                = %s" % self.cloudforms_pw
-            print "cloudforms_ssl_verify        = %s" % self.cloudforms_ssl_verify
-            print "cloudforms_version           = %s" % self.cloudforms_version
-            print "cloudforms_limit             = %s" % self.cloudforms_limit
-            print "cloudforms_purge_actions     = %s" % self.cloudforms_purge_actions
-            print "Cache settings:"
-            print "cache_max_age        = %s" % self.cache_max_age
-            print "cache_path_hosts     = %s" % self.cache_path_hosts
-            print "cache_path_inventory = %s" % self.cache_path_inventory
+            print("CloudForms settings:")
+            print("cloudforms_url               = %s" % self.cloudforms_url)
+            print("cloudforms_username          = %s" % self.cloudforms_username)
+            print("cloudforms_pw                = %s" % self.cloudforms_pw)
+            print("cloudforms_ssl_verify        = %s" % self.cloudforms_ssl_verify)
+            print("cloudforms_version           = %s" % self.cloudforms_version)
+            print("cloudforms_limit             = %s" % self.cloudforms_limit)
+            print("cloudforms_purge_actions     = %s" % self.cloudforms_purge_actions)
+            print("Cache settings:")
+            print("cache_max_age        = %s" % self.cache_max_age)
+            print("cache_path_hosts     = %s" % self.cache_path_hosts)
+            print("cache_path_inventory = %s" % self.cache_path_inventory)
 
     def parse_cli_args(self):
         """
@@ -237,13 +238,13 @@ class CloudFormsInventory(object):
             results = {}
 
         if self.args.debug:
-            print "======================================================================="
-            print "======================================================================="
-            print "======================================================================="
-            print ret.text
-            print "======================================================================="
-            print "======================================================================="
-            print "======================================================================="
+            print("=======================================================================")
+            print("=======================================================================")
+            print("=======================================================================")
+            print(ret.text)
+            print("=======================================================================")
+            print("=======================================================================")
+            print("=======================================================================")
 
         return results
 
@@ -276,13 +277,13 @@ class CloudFormsInventory(object):
         self.hosts = dict()
 
         if self.args.debug:
-            print "Updating cache..."
+            print("Updating cache...")
 
         for host in self._get_hosts():
             # Ignore VMs that are not powered on
             if host['power_state'] != 'on':
                 if self.args.debug:
-                    print "Skipping %s because power_state = %s" % (host['name'], host['power_state'])
+                    print("Skipping %s because power_state = %s" % (host['name'], host['power_state']))
                 continue
 
             # purge actions
@@ -303,7 +304,7 @@ class CloudFormsInventory(object):
                         safe_key = self.to_safe(group['name'])
                         if safe_key:
                             if self.args.debug:
-                                print "Adding sub-group '%s' to parent 'tags'" % safe_key
+                                print("Adding sub-group '%s' to parent 'tags'" % safe_key)
 
                             if safe_key not in self.inventory['tags']['children']:
                                 self.push(self.inventory['tags'], 'children', safe_key)
@@ -311,7 +312,7 @@ class CloudFormsInventory(object):
                             self.push(self.inventory, safe_key, host['name'])
 
                             if self.args.debug:
-                                print "Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key)
+                                print("Found tag [%s] for host which will be mapped to [%s]" % (group['name'], safe_key))
                 else:
                     # expand the tags into nested groups / sub-groups
                     # Create nested groups for tags
@@ -320,15 +321,15 @@ class CloudFormsInventory(object):
                         tag_hierarchy = tag['name'][1:].split('/')
 
                         if self.args.debug:
-                            print "Working on list %s" % tag_hierarchy
+                            print("Working on list %s" % tag_hierarchy)
 
                         for tag_name in tag_hierarchy:
                             if self.args.debug:
-                                print "Working on tag_name = %s" % tag_name
+                                print("Working on tag_name = %s" % tag_name)
 
                             safe_tag_name = self.to_safe(tag_name)
                             if self.args.debug:
-                                print "Using sanitized name %s" % safe_tag_name
+                                print("Using sanitized name %s" % safe_tag_name)
 
                             # Create sub-group
                             if safe_tag_name not in self.inventory:
@@ -337,7 +338,7 @@ class CloudFormsInventory(object):
                             # Add sub-group, as a child of top-level
                             if safe_parent_tag_name:
                                 if self.args.debug:
-                                    print "Adding sub-group '%s' to parent '%s'" % (safe_tag_name, safe_parent_tag_name)
+                                    print("Adding sub-group '%s' to parent '%s'" % (safe_tag_name, safe_parent_tag_name))
 
                                 if safe_tag_name not in self.inventory[safe_parent_tag_name]['children']:
                                     self.push(self.inventory[safe_parent_tag_name], 'children', safe_tag_name)
@@ -376,7 +377,7 @@ class CloudFormsInventory(object):
             self.push(self.inventory, 'all', host['name'])
 
         if self.args.debug:
-            print "Saving cached data"
+            print("Saving cached data")
 
         self.write_to_cache(self.hosts, self.cache_path_hosts)
         self.write_to_cache(self.inventory, self.cache_path_inventory)
@@ -391,14 +392,14 @@ class CloudFormsInventory(object):
 
         if host not in self.hosts:
             if self.args.debug:
-                print "[%s] not found in cache." % host
+                print("[%s] not found in cache." % host)
 
             # try updating the cache
             self.update_cache()
 
             if host not in self.hosts:
                 if self.args.debug:
-                    print "[%s] does not exist after cache update." % host
+                    print("[%s] does not exist after cache update." % host)
                 # host might not exist anymore
                 return self.json_format_dict({}, self.args.pretty)
 
