@@ -141,6 +141,7 @@ Target: September 2016
 
   - **CI Performance**
       Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
+      **Done:** Most tests have been migrated from Travis to Shippable.
   - **Core Module Test Organization**
       Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
   - **Documentation**
@@ -149,4 +150,7 @@ Target: September 2016
       Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
     - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
     - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
+      **Done:** Windows integration tests now run on Shippable.
+    - FreeBSD - Include FreeBSD in CI coverage. Not originally on the roadmap, this is an intermediary step for CI coverage for OS X.
+      **Done:** FreeBSD integration tests now run on Shippable.
     - OS X - Include OS X in CI coverage.
