@@ -60,6 +60,7 @@ options:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk.
+        aliases: trunk_add_vlans
         required: false
         default: null
     state:
@@ -70,8 +71,8 @@ options:
         choices: ['present','absent', 'unconfigured']
     trunk_allowed_vlans:
         description:
-            - if mode=trunk, these are the only VLANs that should be
-              configured on the trunk
+            - if C(mode=trunk), these are the only VLANs that will be
+              configured on the trunk, i.e. "2-10,15"
         required: false
         version_added: 2.2
         default: null
@@ -289,7 +290,6 @@ def remove_switchport_config_commands(interface, existing, proposed, module):
             existing_vlans = existing.get('trunk_vlans_list')
             proposed_vlans = proposed.get('trunk_vlans_list')
             vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
-            # module.exit_json(ex=existing, pr=proposed, vlans_to_remove=list(vlans_to_remove))
             if vlans_to_remove:
                 command = 'switchport trunk allowed vlan remove {0}'.format(
                     proposed.get('trunk_vlans', proposed.get('trunk_allowed_vlans')))
@@ -331,7 +331,6 @@ def get_switchport_config_commands(interface, existing, proposed, module):
     elif proposed_mode == 'trunk':
         tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
         if not tv_check:
-            # module.exit_json(aaaa=existing, tvtv=tv_check, pr=proposed)
             if proposed.get('allowed'):
                 command = 'switchport trunk allowed vlan {0}'.format(proposed.get('trunk_allowed_vlans'))
                 commands.append(command)
@@ -605,7 +604,6 @@ def main():
 
     commands = []
     if state == 'present':
-        # module.exit_json(ex=existing, pr=proposed)
         command = get_switchport_config_commands(interface, existing, proposed, module)
         commands.append(command)
     elif state == 'unconfigured':
