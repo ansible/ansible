@@ -28,7 +28,6 @@ import atexit
 import datetime
 import getpass
 import jinja2
-import json
 import os
 import six
 import ssl
