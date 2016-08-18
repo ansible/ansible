@@ -161,7 +161,7 @@ class CloudFormsInventory(object):
         if config.has_option('cloudforms', 'purge_actions'):
             self.cloudforms_purge_actions = config.getboolean('cloudforms', 'purge_actions')
         else:
-            self.cloudforms_purge_actions = False
+            self.cloudforms_purge_actions = True
 
         if config.has_option('cloudforms', 'clean_group_keys'):
             self.cloudforms_clean_group_keys = config.getboolean('cloudforms', 'clean_group_keys')
