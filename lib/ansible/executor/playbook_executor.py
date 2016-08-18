@@ -157,21 +157,18 @@ class PlaybookExecutor:
                             # batch failed
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
                                                  (previously_failed + previously_unreachable)
-                            if new_play.max_fail_percentage is not None and \
-                               int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
+
+                            if len(batch) == failed_hosts_count:
                                 break_play = True
                                 break
-                            elif len(batch) == failed_hosts_count:
-                                break_play = True
-                                break
+
+                            # update the previous counts so they don't accumulate incorrectly
+                            # over multiple serial batches
+                            previously_failed += len(self._tqm._failed_hosts) - previously_failed
+                            previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
 
                             # save the unreachable hosts from this batch
                             self._unreachable_hosts.update(self._tqm._unreachable_hosts)
-
-                            # if the last result wasn't zero or 3 (some hosts were unreachable),
-                            # break out of the serial batch loop
-                            if result not in (self._tqm.RUN_OK, self._tqm.RUN_UNREACHABLE_HOSTS):
-                                break
 
                         if break_play:
                             break
