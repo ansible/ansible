@@ -228,7 +228,7 @@ class CloudFormsInventory(object):
         try:
             results = json.loads(ret.text)
         except ValueError:
-            warnings.warn("Unexpected response from {0} ({1}): {2}".format(self.cloudforms_url, r.status_code, r.reason))
+            warnings.warn("Unexpected response from {0} ({1}): {2}".format(self.cloudforms_url, ret.status_code, ret.reason))
             results = {}
 
         if self.args.debug:
