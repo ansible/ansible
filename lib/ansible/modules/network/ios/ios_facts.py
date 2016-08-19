@@ -118,9 +118,17 @@ ansible_net_memtotal_mb:
 import re
 
 from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcmd import CommandRunner
+from ansible.module_utils.netcli import CommandRunner, AddCommandError
 from ansible.module_utils.ios import NetworkModule
 
+
+def add_command(runner, command):
+    try:
+        runner.add_command(command)
+    except AddCommandError:
+        # AddCommandError is raised for any issue adding a command to
+        # the runner.  Silently ignore the exception in this case
+        pass
 
 class FactsBase(object):
 
@@ -133,7 +141,7 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def commands(self):
-        self.runner.add_command('show version')
+        add_command(self.runner, 'show version')
 
     def populate(self):
         data = self.runner.get_command('show version')
@@ -173,9 +181,9 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     def commands(self):
-        self.runner.add_command('dir all-filesystems | include Directory')
-        self.runner.add_command('show version')
-        self.runner.add_command('show memory statistics | include Processor')
+        add_command(self.runner, 'dir all-filesystems | include Directory')
+        add_command(self.runner, 'show version')
+        add_command(self.runner, 'show memory statistics | include Processor')
 
     def populate(self):
         data = self.runner.get_command('dir all-filesystems | include Directory')
@@ -194,7 +202,7 @@ class Hardware(FactsBase):
 class Config(FactsBase):
 
     def commands(self):
-        self.runner.add_command('show running-config')
+        add_command(self.runner, 'show running-config')
 
     def populate(self):
         self.facts['config'] = self.runner.get_command('show running-config')
@@ -203,10 +211,10 @@ class Config(FactsBase):
 class Interfaces(FactsBase):
 
     def commands(self):
-        self.runner.add_command('show interfaces')
-        self.runner.add_command('show ipv6 interface')
-        self.runner.add_command('show lldp')
-        self.runner.add_command('show lldp neighbors detail')
+        add_command(self.runner, 'show interfaces')
+        add_command(self.runner, 'show ipv6 interface')
+        add_command(self.runner, 'show lldp')
+        add_command(self.runner, 'show lldp neighbors detail')
 
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
@@ -417,7 +425,7 @@ def main():
     for key in runable_subsets:
         instances.append(FACT_SUBSETS[key](runner))
 
-    runner.run_commands()
+    runner.run()
 
     try:
         for inst in instances:
@@ -436,4 +444,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
