@@ -32,6 +32,22 @@ else
     test_auth="remote"
 fi
 
+case "${test_platform}" in
+    "windows")
+        ci_endpoint="https://14blg63h2i.execute-api.us-east-1.amazonaws.com"
+        ;;
+    "freebsd")
+        ci_endpoint="https://14blg63h2i.execute-api.us-east-1.amazonaws.com"
+        ;;
+    "osx")
+        ci_endpoint="https://osx.testing.ansible.com"
+        ;;
+    *)
+        echo "unsupported platform: ${test_platform}"
+        exit 1
+        ;;
+esac
+
 env
 
 case "${test_platform}" in
@@ -56,7 +72,7 @@ function cleanup
     fi
 
     if [ "${keep_instance}" = '' ]; then
-        "${source_root}/test/utils/shippable/ansible-core-ci" -v stop "${instance_id}"
+        "${source_root}/test/utils/shippable/ansible-core-ci" --endpoint "${ci_endpoint}" -v stop "${instance_id}"
     fi
 
     echo "instance_id: ${instance_id}"
@@ -66,7 +82,7 @@ trap cleanup EXIT INT TERM
 
 if [ ${start_instance} ]; then
     # shellcheck disable=SC2086
-    "${source_root}/test/utils/shippable/ansible-core-ci" -v \
+    "${source_root}/test/utils/shippable/ansible-core-ci" --endpoint "${ci_endpoint}" -v \
         start --id "${instance_id}" "${test_auth}" "${test_platform}" "${test_version}" ${args}
 fi
 
@@ -94,7 +110,7 @@ case "${test_platform}" in
         ;;
 esac
 
-"${source_root}/test/utils/shippable/ansible-core-ci" -v \
+"${source_root}/test/utils/shippable/ansible-core-ci" --endpoint "${ci_endpoint}" -v \
     get "${instance_id}" \
     --template "${inventory_template}" \
     > "${inventory_file}" \
@@ -123,13 +139,17 @@ test_windows() {
 }
 
 test_remote() {
-    endpoint=$("${source_root}/test/utils/shippable/ansible-core-ci" get \
+    endpoint=$("${source_root}/test/utils/shippable/ansible-core-ci" --endpoint "${ci_endpoint}" get \
         "${instance_id}" \
         --template <(echo "@ansible_user@@ansible_host"))
+    ssh_port=$("${source_root}/test/utils/shippable/ansible-core-ci" --endpoint "${ci_endpoint}" get \
+        "${instance_id}" \
+        --template <(echo "@ansible_port"))
 
 (
 cat <<EOF
 env \
+PLATFORM='${test_platform}' \
 REPOSITORY_URL='${REPOSITORY_URL:-}' \
 REPO_NAME='${REPO_NAME:-}' \
 PULL_REQUEST='${PULL_REQUEST:-}' \
@@ -147,16 +167,24 @@ cat <<EOF
 put "${source_root}/test/utils/shippable/remote-integration.sh" "/tmp/remote-integration.sh"
 put "/tmp/remote-script.sh" "/tmp/remote-script.sh"
 EOF
-) | sftp -b - -o StrictHostKeyChecking=no "${endpoint}"
+) | sftp -b - -o StrictHostKeyChecking=no -P "${ssh_port}" "${endpoint}"
 
     pre_cleanup=test_remote_cleanup
 
-    ssh "${endpoint}" \
-        "su -l root -c 'chmod +x /tmp/remote-script.sh; /tmp/remote-script.sh'"
+    case "${test_platform}" in
+        "osx")
+            become="sudo -i PATH=/usr/local/bin:\$PATH"
+            ;;
+        *)
+            become="su -l root -c"
+            ;;
+    esac
+
+    ssh -p "${ssh_port}" "${endpoint}" "${become}" "'chmod +x /tmp/remote-script.sh; /tmp/remote-script.sh'"
 }
 
 test_remote_cleanup() {
-    scp -r "${endpoint}:/tmp/shippable" "${source_root}"
+    scp -r -P "${ssh_port}" "${endpoint}:/tmp/shippable" "${source_root}"
 }
 
 "${test_function}"
