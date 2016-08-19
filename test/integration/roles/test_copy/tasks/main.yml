@@ -19,6 +19,10 @@
 - name: record the output directory
   set_fact: output_file={{output_dir}}/foo.txt
 
+- name: locate sha1sum/shasum
+  shell: which sha1sum || which shasum
+  register: sha1sum
+
 - name: initiate a basic copy, and also test the mode
   copy: src=foo.txt dest={{output_file}} mode=0444
   register: copy_result
@@ -247,7 +251,7 @@
     - stat_link_result.stat.islnk
 
 - name: get the checksum of the link target
-  shell: sha1sum {{output_dir}}/follow_test | cut -f1 -sd ' '
+  shell: "{{ sha1sum.stdout }} {{output_dir}}/follow_test | cut -f1 -sd ' '"
   register: target_file_result
 
 - name: assert that the link target was updated
