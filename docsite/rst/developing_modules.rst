@@ -355,12 +355,11 @@ how the command module is implemented.
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
 will still be shown in Ansible, but the command will not succeed.
 
-Don't write to files directly, use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move into place.
-This prevents data corruption and ensures keeping the correct context for the file.
+Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
 
-Avoid createng a module that does the work of other modules, this is what Plays and Roles are for, modules should be the building blocks. This leads to code duplication and divergence, making things less uniform, unpredictable and harder to maintain.
+Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
 
-Avoid creating 'caches', Ansible is designed w/o a central server or authority, you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (bastion/cm/ci server, tower, etc), do not try to build it into modules.
+Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
