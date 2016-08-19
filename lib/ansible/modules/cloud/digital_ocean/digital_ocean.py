@@ -86,6 +86,13 @@ options:
     version_added: "2.0"
     required: false
     default: None
+  ipv6:
+    description:
+      - Optional, Boolean, enable IPv6 for your droplet.
+    version_added: "2.2"
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -242,10 +249,11 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None):
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None, ipv6=False):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower,user_data)
+        ipv6_lower = str(ipv6).lower()
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower,user_data, ipv6_lower)
         droplet = cls(json)
         return droplet
 
@@ -349,6 +357,7 @@ def core(module):
                     private_networking=module.params['private_networking'],
                     backups_enabled=module.params['backups_enabled'],
                     user_data=module.params.get('user_data'),
+                    ipv6=module.params['ipv6'],
                 )
 
             if droplet.is_powered_on():
@@ -412,6 +421,7 @@ def main():
             id = dict(aliases=['droplet_id'], type='int'),
             unique_name = dict(type='bool', default='no'),
             user_data = dict(default=None),
+            ipv6 = dict(type='bool', default='no'),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
