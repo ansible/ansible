@@ -140,6 +140,13 @@ options:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+    umask:
+        required: false
+        default: null
+        version_added: "2.2"
+        description:
+            - The umask to set before doing any checkouts, or any other
+              repository maintenance.
 
     recursive:
         required: false
@@ -208,6 +215,8 @@ import os
 import re
 import tempfile
 from distutils.version import LooseVersion
+
+from ansible.module_utils.six import string_types
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
     '''Extract the head reference'''
@@ -813,6 +822,7 @@ def main():
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
+            umask=dict(default=None, type='raw'),
         ),
         supports_check_mode=True
     )
@@ -832,8 +842,20 @@ def main():
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
     key_file  = module.params['key_file']
     ssh_opts  = module.params['ssh_opts']
+    umask  = module.params['umask']
 
     result = dict( warnings=list() )
+
+    # evaluate and set the umask before doing anything else
+    if umask != None:
+        if not isinstance(umask, string_types):
+            module.fail_json(msg="umask must be defined as a quoted octal integer")
+        try:
+            umask = int(umask, 8)
+        except:
+            module.fail_json(msg="umask must be an octal integer",
+                             details=str(sys.exc_info()[1]))
+        os.umask(umask)
 
     # Certain features such as depth require a file:/// protocol for path based urls
     # so force a protocal here ...
