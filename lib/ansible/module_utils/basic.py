@@ -182,7 +182,7 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils.pycompat24 import get_exception
 
-_NUMBERTYPES = list(integer_types) + [float]
+_NUMBERTYPES = tuple(list(integer_types) + [float])
 
 # Deprecated compat.  Only kept in case another module used these names  Using
 # ansible.module_utils.six is preferred
