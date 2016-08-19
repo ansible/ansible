@@ -47,21 +47,6 @@ pip install \
     virtualenv \
     jmespath
 
-# FIXME: tests assume bash is in /bin/bash
-if [ ! -f /bin/bash ]; then
-    ln -s /usr/local/bin/bash /bin/bash
-fi
-
-# FIXME: tests assume true is in /bin/true
-if [ ! -f /bin/true ]; then
-    ln -s /usr/bin/true /bin/true
-fi
-
-# FIXME: tests assume sha1sum is available (some platforms have shasum instead)
-if [ ! -f /usr/local/bin/sha1sum ]; then
-    ln -s /usr/local/bin/shasum /usr/local/bin/sha1sum
-fi
-
 # Tests assume loopback addresses other than 127.0.0.1 will work.
 # Add aliases for loopback addresses used by tests.
 
