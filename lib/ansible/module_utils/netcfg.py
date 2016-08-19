@@ -33,10 +33,45 @@ import shlex
 import itertools
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.network import to_list
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
+
+def to_list(val):
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def invoke(self, method, *args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+        except AttributeError:
+            exc = get_exception()
+            raise NetworkError('undefined method "%s"' % method.__name__, exc=str(exc))
+        except NotImplementedError:
+            raise NetworkError('method not supported "%s"' % method.__name__)
+
+    def __call__(self, commands):
+        lines = to_list(commands)
+        return self.invoke(self.connection.configure, commands)
+
+    def load_config(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.invoke(self.connection.load_config, commands, **kwargs)
+
+    def get_config(self, **kwargs):
+        return self.invoke(self.connection.get_config, **kwargs)
+
+    def save_config(self):
+        return self.invoke(self.connection.save_config)
 
 class ConfigLine(object):
 
