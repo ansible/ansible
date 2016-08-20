@@ -45,6 +45,11 @@ only function with newer Python.
     forwards-compat features of Python-2.6 so porting and maintainance of
     Python-2/Python-3 code will be easier after that.
 
+.. note:: Ubuntu 16 LTS ships with Python 3.5
+
+    We have ongoing discussions now about taking Python3-3.5 as our minimum
+    Python3 version.
+
 Supporting only Python-2 or only Python-3
 =========================================
 
@@ -82,6 +87,12 @@ there's other things as well.  1 requires that we port all modules to work
 with python3 syntax but only the code path to get to the library import being
 attempted and then a fail_json() being called because the libraries are
 unavailable needs to actually work.
+
+.. note:: Metadata proposal in progress
+
+    A metadata specification is being created to address module
+    maintainership.  In the future we will likely extend this to record that a module
+    works with Python2 and 3, Python2 only, or Python3 only.
 
 Tips, tricks, and idioms to adopt
 =================================
@@ -157,3 +168,61 @@ which should not be tested (because we know that they are older modules which
 have not yet been ported to pass the Python-3 syntax checks.  To get another
 old module to compile with Python-3, remove the entry for it from the list.
 The goal is to have the LIST be empty.
+
+String Model
+------------
+
+One of the big differences between Python2 and Python3 is the string model.
+In Python2, most APIs take byte strings (the Python2 ``str`` type).  Using the
+text type (in Python2, this is the ``unicode`` type) often leads to tracebacks
+because the strings need to be converted to bytes and Python fails to do that
+correctly.  In Python3, the situation is somewhat reversed.  Most APIs take
+text strings (this is **Python3's** ``str`` type).  When you have byte strings
+(the Python3 ``bytes`` type) you sometimes get errors when attempting to
+combine those with text strings.  Note, however, that under the hood, Python
+still has to convert text to bytes to interface operating system libraries and
+system calls.  This means that you can still get tracebacks when passing
+text to APIs which call those OS level facilities.
+
+For module_utils, code we've decided to make the environment work with "native
+strings".  This means that on Python2, things should work if you use the byte
+string type.  In Python3, code should work if you give it text strings.  The
+reason for this is so that third party modules written for Python2 don't start
+issuing UnicodeError exceptions once we've ported module_utils to work under
+Python3.  We'll need to gather experience to see if this is going to work out
+well for modules as well or if we should give the module_utils API explicit
+switches so that modules can choose to operate with text type all of the time.
+
+
+================================
+Porting Core Ansible to Python 3
+================================
+
+The Ansible code which runs controller-side is easier to port to Python3 in
+one important way:  We do not have to support Python-2.4 on the controller.
+We only have to support Python-2.6 and above.  However, this doesn't eliminate
+the work that has to be done.  The controller is a much more complicated piece
+of code than any individual module.  Making it Python2 and Python3 compatible
+is a much more complex task.
+
+String Model
+------------
+
+By and large, the controller uses the standard best practice of storing
+everything internally as text type and converting to and from bytes at the
+borders.  In many places we hardcode these byte values as utf-8.  Thus yaml
+and inventory files are encoded in utf-8.  Filenames are also utf-8.  This may
+not be the right answer forever but it is sufficient for now.  If there's
+demand from users to handle encodings other than utf-8 after the code works on
+Python3 we can look into what strategy to take for supporting other encodings.
+
+In some cases, storing values as a byte string is not necessarily a choice
+without drawbacks.  For instance, filenames and environment variables on POSIX
+systems are a sequence of bytes.  By using text to represent filenames we
+prevent filenames that are undecodable in utf-8 and filenames that are not
+text at all from working.  We made the choice to represent these as text for
+now due to code paths that handle filenames not being able to handle bytes
+end-to-end.  PyYAML on Python3 and jinja2 on both Python2 and Python3, for
+instance, are meant to work with text.  Any decision to allow filenames to be
+byte values will have to address how we deal with those pieves of the code as
+well.
