@@ -16,7 +16,6 @@ except:
         pass
 
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class AptExpandPkgspecTestCase(unittest.TestCase):
 
     def setUp(self):
