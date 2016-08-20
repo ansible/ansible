@@ -39,8 +39,8 @@ from ansible.module_utils.basic import get_exception
 ANSI_RE = re.compile(r'(\x1b\[\?1h\x1b=)')
 
 CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_]*[>|#|%](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_]*\(.+\)#(?:\s*)$')
 ]
 
 CLI_ERRORS_RE = [
