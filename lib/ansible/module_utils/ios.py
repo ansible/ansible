@@ -20,60 +20,18 @@
 import re
 
 from ansible.module_utils.basic import json
-from ansible.module_utils.network import NetCli, NetworkError, ModuleStub
+from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.netcli import NetCli
+from ansible.module_utils.netcmd import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
-def argument_spec():
-    return dict(
-        running_config=dict(aliases=['config']),
-        save_config=dict(default=False, aliases=['save']),
-        force=dict(type='bool', default=False)
-    )
-ios_argument_spec = argument_spec()
-
-def get_config(module, include_defaults=False):
-    contents = module.params['running_config']
-    if not contents:
-        if not include_defaults:
-            contents = module.config.get_config()
-        else:
-            contents = module.cli('show running-config all')[0]
-        module.params['running_config'] = contents
-    return NetworkConfig(indent=1, contents=contents)
-
-def load_candidate(module, candidate, nodiff=False):
-    if nodiff:
-        updates = str(candidate)
-    else:
-        config = get_config(module)
-        updates = candidate.difference(config)
-
-    result = dict(changed=False, saved=False)
-
-    if updates:
-        if not module.check_mode:
-            module.config(updates)
-        result['changed'] = True
-
-    if not module.check_mode and module.params['save_config'] is True:
-        module.config.save_config()
-        result['saved'] = True
-
-    result['updates'] = updates
-    return result
-
-def load_config(module, commands, nodiff=False):
-    contents = '\n'.join(to_list(commands))
-    candidate = NetworkConfig(contents=contents, indent=1)
-    return load_candidate(module, candidate, nodiff)
-
 
 class Cli(NetCli):
+
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     CLI_PROMPTS_RE = [
@@ -96,21 +54,26 @@ class Cli(NetCli):
         self.shell.send('terminal length 0')
         self._connected = True
 
-    ### Cli methods ###
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.run_commands(
+            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        )
+
+    ### implementation of netcmd.Cli ###
 
     def run_commands(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.execute([str(c) for c in commands])
+        return self.execute(to_list(commands))
 
-    ### Config methods ###
+    ### implementation of netcfg.Config ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
-        cmds.append('end')
-
+        if cmds[-1] != 'end':
+            cmds.append('end')
         responses = self.execute(cmds)
-        return responses[1:-1]
+        return responses[1:]
 
     def get_config(self, include_defaults=False, **kwargs):
         cmd = 'show running-config'
@@ -118,20 +81,12 @@ class Cli(NetCli):
             cmd += ' all'
         return self.run_commands(cmd)[0]
 
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
-
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
 
     def save_config(self):
         self.execute(['copy running-config startup-config'])
+
 Cli = register_transport('cli', default=True)(Cli)
 
 
@@ -224,7 +179,7 @@ class Restconf(object):
         return self.request('DELETE', path, data, headers)
 
 
-    ### implementation of Cli ###
+    ### implementation of netcmd.Cli ###
 
     def run_commands(self, commands):
         responses = list()
@@ -240,7 +195,7 @@ class Restconf(object):
         return response['results']
 
 
-    ### implementation of Config ###
+    ### implementation of netcfg.Config ###
 
     def configure(self, commands):
         config = list()
@@ -250,18 +205,13 @@ class Restconf(object):
         self.put('global/cli', data=data)
 
     def load_config(self, commands, **kwargs):
-        raise NotImplementedError
+        return self.configure(commands)
 
     def get_config(self, **kwargs):
         hdrs = {'Content-type': 'text/plain', 'Accept': 'text/plain'}
         return self.get('global/running-config', headers=hdrs)
 
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
-
     def save_config(self):
         self.put('/api/v1/global/save-config')
+
 Restconf = register_transport('restconf')(Restconf)
