@@ -22,8 +22,8 @@ import re
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.netcli import NetCli
-from ansible.module_utils.netcmd import Command
+from ansible.module_utils.shell import NetCli
+from ansible.module_utils.netcli import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
 
 add_argument('use_ssl', dict(default=True, type='bool'))
@@ -60,7 +60,7 @@ class Cli(NetCli):
             Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
         )
 
-    ### implementation of netcmd.Cli ###
+    ### implementation of netcli.Cli ###
 
     def run_commands(self, commands, **kwargs):
         return self.execute(to_list(commands))
@@ -179,7 +179,7 @@ class Restconf(object):
         return self.request('DELETE', path, data, headers)
 
 
-    ### implementation of netcmd.Cli ###
+    ### implementation of netcli.Cli ###
 
     def run_commands(self, commands):
         responses = list()
