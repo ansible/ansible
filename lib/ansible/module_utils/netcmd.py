@@ -33,6 +33,149 @@ import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 
+def to_list(val):
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
+
+class FailedConditionsError(Exception):
+    def __init__(self, msg, failed_conditions):
+        super(FailedConditionsError, self).__init__(msg)
+        self.failed_conditions = failed_conditions
+
+class AddCommandError(Exception):
+    def __init__(self, msg, command):
+        super(AddCommandError, self).__init__(msg)
+        self.command = command
+
+class Cli(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+        self.default_output = connection.default_output or 'text'
+        self._commands = list()
+
+    @property
+    def commands(self):
+        return [str(c) for c in self._commands]
+
+    def __call__(self, commands, output=None):
+        objects = list()
+        for cmd in commands:
+            objects.append(self.to_command(cmd, output))
+        return self.connection.run_commands(objects)
+
+    def to_command(self, command, output=None, prompt=None, response=None):
+        output = output or self.default_output
+        if isinstance(command, Command):
+            return command
+        elif isinstance(command, dict):
+            output = cmd.get('output') or output
+            cmd = cmd['command']
+        if isinstance(prompt, basestring):
+            prompt = re.compile(re.escape(prompt))
+        return Command(command, output, prompt=prompt, response=response)
+
+    def add_commands(self, commands, output=None, **kwargs):
+        for cmd in commands:
+            self._commands.append(self.to_command(cmd, output, **kwargs))
+
+    def run_commands(self):
+        responses = self.connection.run_commands(self._commands)
+        for resp, cmd in itertools.izip(responses, self._commands):
+            cmd.response = resp
+
+        # wipe out the commands list to avoid issues if additional
+        # commands are executed later
+        self._commands = list()
+
+        return responses
+
+class Command(object):
+
+    def __init__(self, command, output=None, prompt=None, is_reboot=False,
+                 response=None, delay=0):
+
+        self.command = command
+        self.output = output
+
+        self.prompt = prompt
+        self.response = response
+
+        self.is_reboot = is_reboot
+        self.delay = delay
+
+    def __str__(self):
+        return self.command
+
+class CommandRunner(object):
+
+    def __init__(self, module):
+        self.module = module
+
+        self.items = list()
+        self.conditionals = set()
+
+        self.commands = list()
+
+        self.retries = 10
+        self.interval = 1
+
+        self.match = 'all'
+
+        self._cache = dict()
+        self._default_output = module.connection.default_output
+
+
+    def add_command(self, command, output=None, prompt=None, response=None):
+        if command in [str(c) for c in self.commands]:
+            raise AddCommandError('duplicated command detected', command=command)
+        cmd = self.module.cli.to_command(command, output=output, prompt=prompt,
+                                         response=response)
+        self.commands.append(cmd)
+
+    def get_command(self, command, output=None):
+        output = output or self._default_output
+        try:
+            cmdobj = self._cache[(command, output)]
+            return cmdobj.response
+        except KeyError:
+            for cmd in self.commands:
+                if str(cmd) == command and cmd.output == output:
+                    self._cache[(command, output)] = cmd
+                    return cmd.response
+        raise ValueError("command '%s' not found" % command)
+
+    def get_responses(self):
+        return [cmd.response for cmd in self.commands]
+
+    def add_conditional(self, condition):
+        self.conditionals.add(Conditional(condition))
+
+    def run(self):
+        while self.retries > 0:
+            self.module.cli.add_commands(self.commands)
+            responses = self.module.cli.run_commands()
+
+            for item in list(self.conditionals):
+                if item(responses):
+                    if self.match == 'any':
+                        return item
+                    self.conditionals.remove(item)
+
+            if not self.conditionals:
+                break
+
+            time.sleep(self.interval)
+            self.retries -= 1
+        else:
+            failed_conditions = [item.raw for item in self.conditionals]
+            errmsg = 'One or more conditional statements have not be satisfied'
+            raise FailedConditionsError(errmsg, failed_conditions)
+
 class Conditional(object):
     """Used in command modules to evaluate waitfor conditions
     """
@@ -153,63 +296,4 @@ class Conditional(object):
     def matches(self, value):
         match = re.search(value, self.value, re.M)
         return match is not None
-
-
-class FailedConditionsError(Exception):
-
-    def __init__(self, msg, failed_conditions):
-        super(FailedConditionsError, self).__init__(msg)
-        self.failed_conditions = failed_conditions
-
-class CommandRunner(object):
-
-    def __init__(self, module):
-        self.module = module
-
-        self.items = list()
-        self.conditionals = set()
-
-        self.retries = 10
-        self.interval = 1
-
-        self._cache = dict()
-
-    def add_command(self, command, output=None):
-        self.module.cli.add_commands(command, output=output)
-
-    def get_command(self, command):
-        try:
-            cmdobj = self._cache[command]
-            return cmdobj.response
-        except KeyError:
-            for cmd in self.module.cli.commands:
-                if str(cmd) == command:
-                    self._cache[command] = cmd
-                    return cmd.response
-        raise ValueError("command '%s' not found" % command)
-
-
-    def add_conditional(self, condition):
-        self.conditionals.add(Conditional(condition))
-
-    def run_commands(self):
-        responses = self.module.cli.run_commands()
-        self.items = responses
-
-    def run(self):
-        while self.retries > 0:
-            self.run_commands()
-
-            for item in list(self.conditionals):
-                if item(self.items):
-                    self.conditionals.remove(item)
-
-            if not self.conditionals:
-                break
-
-            time.sleep(self.interval)
-            self.retries -= 1
-        else:
-            failed_conditions = [item.raw for item in self.conditionals]
-            raise FailedConditionsError('timeout waiting for value', failed_conditions)
 
