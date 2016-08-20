@@ -30,7 +30,7 @@ import itertools
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
-from ansible.module_utils.netcmd import Cli, Command
+from ansible.module_utils.netcli import Cli, Command
 from ansible.module_utils.netcfg import Config
 from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 
