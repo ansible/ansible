@@ -307,9 +307,12 @@ class CronTab(object):
             if rc != 0:
                 self.module.fail_json(msg=err)
 
+    def do_comment(self, name):
+        return "%s%s" % (self.ansible, name)
+
     def add_job(self, name, job):
         # Add the comment
-        self.lines.append("%s%s" % (self.ansible, name))
+        self.lines.append(self.do_comment(name))
 
         # Add the job
         self.lines.append("%s" % (job))
@@ -370,7 +373,8 @@ class CronTab(object):
         except:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
-    def find_job(self, name):
+    def find_job(self, name, job=None):
+        # attempt to find job by 'Ansible:' header comment
         comment = None
         for l in self.lines:
             if comment is not None:
@@ -380,6 +384,19 @@ class CronTab(object):
                     comment = None
             elif re.match( r'%s' % self.ansible, l):
                 comment = re.sub( r'%s' % self.ansible, '', l)
+
+        # failing that, attempt to find job by exact match
+        if job:
+            for i, l in enumerate(self.lines):
+                if l == job:
+                    # if no leading ansible header, insert one
+                    if not re.match( r'%s' % self.ansible, self.lines[i-1]):
+                        self.lines.insert(i, self.do_comment(name))
+                        return [self.lines[i], l, True]
+                    # if a leading blank ansible header AND job has a name, update header
+                    elif name and self.lines[i-1] == self.do_comment(None):
+                        self.lines[i-1] = self.do_comment(name)
+                        return [self.lines[i-1], l, True]
 
         return []
 
@@ -431,7 +448,7 @@ class CronTab(object):
         return envnames
 
     def _update_job(self, name, job, addlinesfunction):
-        ansiblename = "%s%s" % (self.ansible, name)
+        ansiblename = self.do_comment(name)
         newlines = []
         comment = None
 
@@ -652,17 +669,22 @@ def main():
                 crontab.remove_env(name)
                 changed = True
     else:
-        old_job = crontab.find_job(name)
-
         if do_install:
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
+            old_job = crontab.find_job(name, job)
+
             if len(old_job) == 0:
                 crontab.add_job(name, job)
                 changed = True
             if len(old_job) > 0 and old_job[1] != job:
                 crontab.update_job(name, job)
                 changed = True
+            if len(old_job) > 2:
+                crontab.update_job(name, job)
+                changed = True
         else:
+            old_job = crontab.find_job(name)
+
             if len(old_job) > 0:
                 crontab.remove_job(name)
                 changed = True
