@@ -580,17 +580,6 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
                 self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
 
-    def test_module_utils_basic_ansible_module_to_filesystem_str(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
-
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
 
@@ -653,7 +642,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -670,7 +659,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
