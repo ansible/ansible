@@ -784,6 +784,8 @@ class AnsibleModule(object):
         '''
         if isinstance(path, text_type):
             path = path.encode("utf-8")
+        if isinstance(path, bytes):
+            path = path.decode("utf-8")
         return path
 
     # If selinux fails to find a default, return an array of None
