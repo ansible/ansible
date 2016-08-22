@@ -50,13 +50,13 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         may be specified. On Python3 this defaults to 'surrogateescape'.  On
         Python2, this defaults to 'replace'.
     :kwarg nonstring: The strategy to use if a nonstring is specified in
-        ``obj``.  Valid values are:
+        ``obj``.  Default is 'simplerepr'.  Valid values are:
 
         :simplerepr: The default.  This takes the ``str`` of the object and
             then returns the bytes version of that string.
         :empty: Return an empty byte string
         :passthru: Return the object passed in
-        :none: Return None
+        :strict: Raise a :exc:`TypeError`
 
     :returns: Typically this returns a byte string.  If a nonstring object is
         passed in this may be a different type depending on the strategy
@@ -89,10 +89,10 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     elif nonstring == 'empty':
         # python2.4 doesn't have b''
         return to_bytes('')
-    elif nonstring == 'none':
-        return None
+    elif nonstring == 'strict':
+        raise TypeError('obj must be a string type')
     else:
-        raise ValueError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
+        raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
 
     return to_bytes(value, encoding, errors)
 
@@ -111,13 +111,13 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         may be specified. On Python3 this defaults to 'surrogateescape'.  On
         Python2, this defaults to 'replace'.
     :kwarg nonstring: The strategy to use if a nonstring is specified in
-        ``obj``.  Valid values are:
+        ``obj``.  Default is 'simplerepr'.  Valid values are:
 
         :simplerepr: The default.  This takes the ``str`` of the object and
             then returns the text version of that string.
         :empty: Return an empty text string
         :passthru: Return the object passed in
-        :none: Return None
+        :strict: Raise a :exc:`TypeError`
 
     :returns: Typically this returns a text string.  If a nonstring object is
         passed in this may be a different type depending on the strategy
@@ -143,10 +143,10 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         return obj
     elif nonstring == 'empty':
         return u''
-    elif nonstring == 'none':
-        return None
+    elif nonstring == 'strict':
+        raise TypeError('obj must be a string type')
     else:
-        raise ValueError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
+        raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
 
     return to_text(value, encoding, errors)
 
