@@ -236,7 +236,10 @@ class VariableManager:
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task and task._role is not None:
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task._block.get_dep_chain()))
+                dep_chain = []
+                if task._block:
+                    dep_chain = task._block.get_dep_chain()
+                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=dep_chain))
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
@@ -333,7 +336,10 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task._block._dep_chain, include_params=False))
+                dep_chain = []
+                if task._block:
+                    dep_chain = task._block.get_dep_chain()
+                all_vars = combine_vars(all_vars, task._role.get_vars(dep_chain=dep_chain, include_params=False))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         # next, we merge in the vars cache (include vars) and nonpersistent
@@ -345,7 +351,10 @@ class VariableManager:
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
+                dep_chain = []
+                if task._block:
+                    dep_chain = task._block.get_dep_chain()
+                all_vars = combine_vars(all_vars, task._role.get_role_params(dep_chain=dep_chain))
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
