@@ -153,7 +153,7 @@ def rpc_args(args):
         key, value = arg.split('=')
         if str(value).upper() in ['TRUE', 'FALSE']:
             kwargs[key] = bool(value)
-        elif re.match(r'\d+', value):
+        elif re.match(r'^[0-9]+$', value):
             kwargs[key] = int(value)
         else:
             kwargs[key] = str(value)
