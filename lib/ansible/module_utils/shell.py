@@ -238,3 +238,5 @@ class CliBase(object):
             exc = get_exception()
             raise NetworkError(exc.message, commands=commands)
 
+    def run_commands(self, commands, **kwargs):
+        return self.execute(to_list(commands))
