@@ -129,7 +129,7 @@ And here's an example showing some specific version downloads from multiple sour
    # from GitLab or other git-based scm   
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
-      version: 0.1.0
+      version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as. 
