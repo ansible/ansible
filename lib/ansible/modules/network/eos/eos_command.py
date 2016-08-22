@@ -48,6 +48,18 @@ options:
     default: null
     aliases: ['waitfor']
     version_added: "2.2"
+  match:
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the I(wait_for) must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    required: false
+    default: all
+    choices: ['any', 'all']
+    version_added: "2.2"
   retries:
     description:
       - Specifies the number of retries a command should be tried
@@ -67,26 +79,49 @@ options:
 """
 
 EXAMPLES = """
-- eos_command:
-    commands:
-        - show interface {{ item }}
-  with_items: interfaces
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: admin
+    password: admin
+    transport: cli
 
-- eos_command:
+- name: run show verion on remote devices
+  eos_command:
+    commands: show version
+    provider "{{ cli }}"
+
+- name: run show version and check to see if output contains Arista
+  eos_command:
+    commands: show version
+    wait_for: result[0] contains Arista
+    provider: "{{ cli }}"
+
+- name: run multiple commands on remote nodes
+   eos_command:
     commands:
       - show version
-    waitfor:
-      - "result[0] contains 4.15.0F"
+      - show interfaces
+    provider: "{{ cli }}"
 
-- eos_command:
-  commands:
-    - show version | json
-    - show interfaces | json
-    - show version
-  waitfor:
-    - "result[2] contains '4.15.0F'"
-    - "result[1].interfaces.Management1.interfaceAddress[0].primaryIp.maskLen eq 24"
-    - "result[0].modelName == 'vEOS'"
+- name: run multiple commands and evalute the output
+  eos_command:
+    commands:
+      - show version
+      - show interfaces
+    wait_for:
+      - result[0] contains Arista
+      - result[1] contains Loopback0
+    provider: "{{ cli }}"
+
+- name: run commands and specify the output format
+  eos_command:
+    commands:
+      - command: show version
+        output: json
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -109,9 +144,11 @@ failed_conditions:
   sample: ['...', '...']
 """
 from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcmd import CommandRunner, FailedConditionsError
-from ansible.module_utils.network import NetworkError
-from ansible.module_utils.eos import get_module
+from ansible.module_utils.netcli import CommandRunner
+from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
+from ansible.module_utils.eos import NetworkModule, NetworkError
+
+VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
@@ -119,18 +156,36 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
+def parse_commands(module):
+    for cmd in module.params['commands']:
+        if isinstance(cmd, basestring):
+            cmd = dict(command=cmd, output=None)
+        elif 'command' not in cmd:
+            module.fail_json(msg='command keyword argument is required')
+        elif cmd.get('output') not in [None, 'text', 'json']:
+            module.fail_json(msg='invalid output specified for command')
+        elif not set(cmd.keys()).issubset(VALID_KEYS):
+            module.fail_json(msg='unknown command keyword specified.  Valid '
+                                 'values are %s' % ', '.join(VALID_KEYS))
+        yield cmd
+
 def main():
     spec = dict(
+        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
+
         wait_for=dict(type='list', aliases=['waitfor']),
+        match=dict(default='all', choices=['all', 'any']),
+
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
 
-    module = get_module(argument_spec=spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec,
+                           connect_on_load=False,
+                           supports_check_mode=True)
 
-    commands = module.params['commands']
+    commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
     warnings = list()
@@ -138,17 +193,26 @@ def main():
     runner = CommandRunner(module)
 
     for cmd in commands:
-        if module.check_mode and not cmd.startswith('show'):
+        if module.check_mode and not cmd['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd)
+                            'check mode, not executing `%s`' % cmd['command'])
         else:
-            runner.add_command(cmd)
+            if cmd['command'].startswith('conf'):
+                module.fail_json(msg='eos_command does not support running '
+                                     'config mode commands.  Please use '
+                                     'eos_config instead')
+            try:
+                runner.add_command(**cmd)
+            except AddCommandError:
+                exc = get_exception()
+                warnings.append('duplicate command detected: %s' % cmd)
 
     for item in conditionals:
         runner.add_conditional(item)
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
+    runner.match = module.params['match']
 
     try:
         runner.run()
@@ -159,21 +223,16 @@ def main():
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result = dict(changed=False)
+    result = dict(changed=False, stdout=list())
 
-    result['stdout'] = list()
     for cmd in commands:
         try:
-            output = runner.get_command(cmd)
-            if cmd.endswith('json'):
-                output = module.from_json(output)
+            output = runner.get_command(cmd['command'], cmd.get('output'))
         except ValueError:
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
 
-
     result['warnings'] = warnings
-    result['connected'] = module.connected
     result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)
