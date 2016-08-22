@@ -22,7 +22,7 @@ import re
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.shell import NetCli
+from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
 
@@ -30,7 +30,7 @@ add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
 
-class Cli(NetCli):
+class Cli(CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
