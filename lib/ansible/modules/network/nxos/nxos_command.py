@@ -98,7 +98,7 @@ vars:
     commands: show version
     provider "{{ cli }}"
 
-- name: run show version and check to see if output contains Arista
+- name: run show version and check to see if output contains Cisco
   nxos_command:
     commands: show version
     wait_for: result[0] contains Cisco
