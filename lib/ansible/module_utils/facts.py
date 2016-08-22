@@ -2973,19 +2973,19 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
-        # old lxc/docker
+        # lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
                 if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
                     self.facts['virtualization_type'] = 'docker'
                     self.facts['virtualization_role'] = 'guest'
                     return
-                if re.search('/lxc/', line):
+                if re.search('/lxc/', line) or re.search('/machine.slice/machine-lxc', line):
                     self.facts['virtualization_type'] = 'lxc'
                     self.facts['virtualization_role'] = 'guest'
                     return
 
-        # newer lxc does not appear in cgroups anymore but sets 'container=lxc' environment var
+        # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
         if os.path.exists('/proc/1/environ'):
             for line in get_file_lines('/proc/1/environ'):
                 if re.search('container=lxc', line):
