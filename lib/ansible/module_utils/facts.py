@@ -3119,7 +3119,20 @@ class LinuxVirtual(Virtual):
                 modules.append(data[0])
 
             if 'kvm' in modules:
-                self.facts['virtualization_type'] = 'kvm'
+                
+                # Build a list of process-names (to detect vdsm running on RHEV)
+                proc_list = []
+                for f in glob.glob('/proc/[0-9]*/comm'):
+                    try:
+                        proc_list.append(open(f).read().rstrip())
+                    except:
+                        pass
+                
+                # Check whether this is a RHEV hypervisor
+                if 'vdsm' in proc_list and os.path.isdir('/rhev/'):
+                    self.facts['virtualization_type'] = 'rhev'
+                else:
+                    self.facts['virtualization_type'] = 'kvm'
                 self.facts['virtualization_role'] = 'host'
                 return
 
