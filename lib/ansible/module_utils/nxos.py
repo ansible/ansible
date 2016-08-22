@@ -18,53 +18,18 @@
 #
 
 import re
+import collections
 
-from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
-from ansible.module_utils.network import NetCli, NetworkError, ModuleStub
+from ansible.module_utils.basic import json, get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.netcli import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
 
 add_argument('use_ssl', dict(default=False, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
-
-def argument_spec():
-    return dict(
-        # config options
-        running_config=dict(aliases=['config']),
-        save_config=dict(type='bool', default=False, aliases=['save']),
-    )
-nxos_argument_spec = argument_spec()
-
-def get_config(module):
-    config = module.params['running_config']
-    if not config:
-        config = module.config.get_config(include_defaults=True)
-    return NetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save_config']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            module.config(commands)
-            if save_config:
-                module.config.save_config()
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
 
 
 class Nxapi(object):
@@ -85,7 +50,9 @@ class Nxapi(object):
 
     def _error(self, msg, **kwargs):
         self._nxapi_auth = None
-        raise NetworkError(msg, url=self.url)
+        if 'url' not in kwargs:
+            kwargs['url'] = self.url
+        raise NetworkError(msg, **kwargs)
 
     def _get_body(self, commands, output, version='1.0', chunk='0', sid=None):
         """Encodes a NXAPI JSON request message
@@ -106,7 +73,7 @@ class Nxapi(object):
             'chunk': chunk,
             'sid': sid,
             'input': commands,
-            'output_format': output
+            'output_format': 'json'
         }
 
         return dict(ins_api=msg)
@@ -136,43 +103,79 @@ class Nxapi(object):
         self._connected = False
 
     def execute(self, commands, output=None, **kwargs):
-        """Send commands to the device.
-        """
-        commands = to_list(commands)
+        commands = collections.deque(commands)
         output = output or self.default_output
 
-        data = self._get_body(commands, output)
-        data = self._jsonify(data)
+        # only 10 commands can be encoded in each request
+        # messages sent to the remote device
+        stack = list()
+        requests = list()
+
+        while commands:
+            stack.append(commands.popleft())
+            if len(stack) == 10:
+                data = self._get_body(stack, output)
+                data = self._jsonify(data)
+                requests.append(data)
+                stack = list()
+
+        if stack:
+            data = self._get_body(stack, output)
+            data = self._jsonify(data)
+            requests.append(data)
 
         headers = {'Content-Type': 'application/json'}
-        if self._nxapi_auth:
-            headers['Cookie'] = self._nxapi_auth
-
-        response, headers = fetch_url(
-            self.url_args, self.url, data=data, headers=headers, method='POST'
-        )
-        self._nxapi_auth = headers.get('set-cookie')
-
-        if headers['status'] != 200:
-            self._error(**headers)
-
-        try:
-            response = json.loads(response.read())
-        except ValueError:
-            raise NetworkError(msg='unable to load repsonse from device')
-
         result = list()
 
-        output = response['ins_api']['outputs']['output']
-        for item in to_list(output):
-            if item['code'] != '200':
-                self._error(**item)
-            else:
-                result.append(item['body'])
+        for req in requests:
+            if self._nxapi_auth:
+                headers['Cookie'] = self._nxapi_auth
+
+            response, headers = fetch_url(
+                self.url_args, self.url, data=data, headers=headers, method='POST'
+            )
+            self._nxapi_auth = headers.get('set-cookie')
+
+            if headers['status'] != 200:
+                self._error(**headers)
+
+            try:
+                response = json.loads(response.read())
+            except ValueError:
+                raise NetworkError(msg='unable to load response from device')
+
+            output = response['ins_api']['outputs']['output']
+            for item in to_list(output):
+                if item['code'] != '200':
+                    self._error(output=output, **item)
+                else:
+                    result.append(item['body'])
 
         return result
 
-    ### implemented by network.Config ###
+    ### implemention of netcli.Cli ###
+
+    def run_commands(self, commands):
+        output = None
+        cmds = list()
+        responses = list()
+
+        for cmd in commands:
+            if output and output != cmd.output:
+                responses.extend(self.execute(cmds, output=output))
+                cmds = list()
+            output = cmd.output
+            cmds.append(str(cmd))
+
+        if cmds:
+            responses.extend(self.execute(cmds, output=output))
+
+        return responses
+
+
+    ### end of netcli.Cli ###
+
+    ### implemention of netcfg.Config ###
 
     def configure(self, commands):
         commands = to_list(commands)
@@ -184,17 +187,13 @@ class Nxapi(object):
             cmd += ' all'
         return self.execute([cmd], output='text')[0]
 
-    def load_config(self, **kwargs):
-        raise NotImplementedError
+    def load_config(self, config, **kwargs):
+        return self.configure(config)
 
-    def replace_config(self, **kwargs):
-        raise NotImplementedError
+    def save_config(self, **kwargs):
+        self.execute(['copy running-config startup-config'])
 
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
+    ### end netcfg.Config ###
 
     def _jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
@@ -210,10 +209,12 @@ class Nxapi(object):
             except UnicodeDecodeError:
                 continue
         self._error(msg='Invalid unicode encoding encountered')
+
 Nxapi = register_transport('nxapi')(Nxapi)
 
 
-class Cli(NetCli):
+class Cli(CliBase):
+
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     CLI_PROMPTS_RE = [
@@ -238,7 +239,7 @@ class Cli(NetCli):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
 
-    ### implementation of network.Cli ###
+    ### implementation of netcli.Cli ###
 
     def run_commands(self, commands):
         cmds = list(prepare_commands(commands))
@@ -254,13 +255,7 @@ class Cli(NetCli):
                     )
         return responses
 
-    ### implemented by network.Config ###
-
-    def get_config(self, **kwargs):
-        cmd = 'show running-config'
-        if kwargs.get('include_defaults'):
-            cmd += ' all'
-        return self.execute([cmd])[0]
+    ### implemented by netcfg.Config ###
 
     def configure(self, commands, **kwargs):
         commands = prepare_config(commands)
@@ -268,20 +263,18 @@ class Cli(NetCli):
         responses.pop(0)
         return responses
 
-    def load_config(self):
-        raise NotImplementedError
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if kwargs.get('include_defaults'):
+            cmd += ' all'
+        return self.execute([cmd])[0]
 
-    def replace_config(self, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self):
-        raise NotImplementedError
-
-    def abort_config(self):
-        raise NotImplementedError
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
 
     def save_config(self):
         self.execute(['copy running-config startup-config'])
+
 Cli = register_transport('cli', default=True)(Cli)
 
 def prepare_config(commands):
@@ -290,12 +283,9 @@ def prepare_config(commands):
     commands.append('end')
     return commands
 
-
 def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
     for cmd in to_list(commands):
         if cmd.output == 'json':
-            cmd = jsonify(cmd)
-        else:
-            cmd = str(cmd)
+            cmd.command = jsonify(cmd)
         yield cmd
