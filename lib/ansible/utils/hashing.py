@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import binascii
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
@@ -95,3 +96,6 @@ def md5(filename):
     if not _md5:
         raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash(filename, _md5)
+
+def crc32_s(data):
+    return binascii.crc32(data) & 0xffffffff

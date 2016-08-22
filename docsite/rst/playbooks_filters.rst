@@ -248,6 +248,10 @@ To get the md5 hash of a string::
 
     {{ 'test1'|hash('md5') }}
 
+To get the crc32 hash of a string::
+
+    {{ 'test'|crc32('crc32') }}
+
 Get a string checksum::
 
     {{ 'test2'|checksum }}

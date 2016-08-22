@@ -50,7 +50,7 @@ from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import reduce
 from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils.hashing import md5s, checksum_s, crc32_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
 from ansible.vars.hostvars import HostVars
@@ -470,9 +470,11 @@ class FilterModule(object):
             'quote': quote,
 
             # hash filters
+            # crc32 digest of string
+            'crc32': crc32_s,
             # md5 hex digest of string
             'md5': md5s,
-            # sha1 hex digeset of string
+            # sha1 hex digest of string
             'sha1': checksum_s,
             # checksum of string as used by ansible for checksuming files
             'checksum': checksum_s,
