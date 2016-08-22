@@ -19,176 +19,85 @@
 #
 
 import re
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(default=22, type='int'),
-    show_command=dict(default='show running-config', choices=['show running-config', 'more system:running-config']),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
-    context=dict(required=False),
-    provider=dict(),
-    timeout=dict(default=10, type='int')
-)
+# temporary fix until modules are update.  to be removed before 2.2 final
+from ansible.module_utils.network import get_module
 
-CLI_PROMPTS_RE = [
-    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-]
-
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"is not valid", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-]
+add_argument('show_command', dict(default='show running-config', choices=['show running-config', 'more system:running-config']))
+add_argument('context', dict(required=False))
 
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+class Cli(CliBase):
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
 
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"is not valid", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
 
-class Cli(object):
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+    def __init__(self, *args, **kwargs):
+        super(Cli, self).__init__(*args, **kwargs)
+        self.filter = None
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.execute('no terminal pager')
 
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
-        timeout = self.module.params['timeout']
+        if params['context']:
+            self.change_context(params, **kwargs)
 
-        try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
-                    errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, timeout=timeout)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
-
-    def change_context(self):
-        context = self.module.params['command']
+    def change_context(self, params, **kwargs):
+        context = params['context']
         if context == 'system':
             command = 'changeto system'
         else:
             command = 'changeto context %s' % context
 
-        self.send(Command(command))
+        self.execute(command)
 
-    def authorize(self):
-        passwd = self.module.params['auth_pass']
-        self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
-
-    def send(self, commands):
-        return self.shell.send(commands)
-
-
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
-        self.filter = None
-
-    @property
-    def connected(self):
-        return self._connected
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        self.connection = Cli(self)
-        self.connection.connect()
-        if self.params['authorize']:
-            self.connection.authorize()
-        self.connection.send('no terminal pager')
-
-        if self.params['context']:
-            if self.params['context'] == 'system':
-                self.connection.send('changeto system')
-            else:
-                self.connection.send('changeto context %s' % self.params['context'])
-
-        self._connected = True
+    ### Config methods ###
 
     def configure(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure terminal')
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        responses = self.execute(cmds)
+        return responses[1:]
 
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=1)
-
-    def get_config(self):
+    def get_config(self, params, **kwargs):
         if self.filter:
             cmd = 'show running-config %s ' % self.filter
         else:
-            cmd = self.params['show_command']
-        if self.params.get('include_defaults'):
+            cmd = params['show_command']
+        if params.get('include_defaults'):
             cmd += ' all'
-        return self.execute(cmd)[0]
+        return self.execute(cmd)
 
+    def load_config(self, commands, **kwargs):
+        raise NotImplementedError
 
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
+    def replace_config(self, commands, **kwargs):
+        raise NotImplementedError
 
-    module = NetworkModule(**kwargs)
+    def commit_config(self, **kwargs):
+        raise NotImplementedError
 
-    # HAS_PARAMIKO is set by module_utils/shell.py
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
+    def abort_config(self, **kwargs):
+        raise NotImplementedError
 
-    return module
+    def save_config(self):
+        raise NotImplementedError
+Cli = register_transport('cli', default=True)(Cli)
