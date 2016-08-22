@@ -493,7 +493,7 @@ class VaultFile(object):
     # VaultFile a context manager instead (implement __enter__ and __exit__)
     def __del__(self):
         self.filehandle.close()
-        os.unlink(self.tmplfile)
+        os.unlink(self.tmpfile)
 
     def is_encrypted(self):
         peak = self.filehandle.readline()
