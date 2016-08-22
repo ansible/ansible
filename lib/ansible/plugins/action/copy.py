@@ -27,7 +27,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
-from ansible.utils.unicode import to_bytes, to_str
+from ansible.utils.unicode import to_bytes, to_str, to_unicode
 
 
 class ActionModule(ActionBase):
@@ -96,7 +96,7 @@ class ActionModule(ActionBase):
                 source = self._find_needle('files', source)
             except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_str(e)
+                result['msg'] = to_unicode(e)
                 return result
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
@@ -111,7 +111,7 @@ class ActionModule(ActionBase):
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
             # Walk the directory and append the file tuples to source_files.
-            for base_path, sub_folders, files in os.walk(source):
+            for base_path, sub_folders, files in os.walk(to_bytes(source)):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
