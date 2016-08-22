@@ -19,8 +19,9 @@
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.network import NetCli, NetworkError
-from ansible.module_utils.network import get_exception, register_transport, to_list
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.network import NetworkError, register_transport, to_list
+from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
 
 # temporary fix until modules are update.  to be removed before 2.2 final
@@ -56,6 +57,7 @@ def xml_to_json(val):
         return jxmlease.parse(val)
     else:
         return jxmlease.parse_etree(val)
+
 
 def xml_to_string(val):
     return etree.tostring(val)
@@ -95,20 +97,28 @@ class Netconf(object):
             self._error('unable to connect to %s: %s' % (host, str(exc)))
 
         self.config = Config(self.device)
+        self._connected = True
+
+    def disconnect(self):
+        if self.device:
+            self.device.close()
+        self._connected = False
+
+    ### Command methods ###
 
     def run_commands(self, commands, **kwargs):
-        response = list()
-        fmt = kwargs.get('format') or 'xml'
+        output = kwargs.get('format') or 'xml'
+        return self.execute(to_list(commands), format=output)
 
-        for cmd in to_list(commands):
-            try:
-                resp = self.device.cli(command=cmd, format=fmt)
-                response.append(resp)
-            except (ValueError, RpcError):
-                exc = get_exception()
-                self._error('Unable to get cli output: %s' % str(exc))
+    def execute(self, commands, format='xml', **kwargs):
+        '''Send commands to the device.'''
+        try:
+            return self.device.cli(commands, format=format)
+        except (ValueError, RpcError):
+            exc = get_exception()
+            self._error('Unable to get cli output: %s' % str(exc))
 
-        return response
+    ### Config methods ###
 
     def unlock_config(self):
         try:
@@ -179,10 +189,6 @@ class Netconf(object):
         self.unlock_config()
         return diff
 
-    def disconnect(self):
-        if self.device:
-            self.device.close()
-
     def get_facts(self, refresh=True):
         if refresh:
             self.device.facts_refresh()
@@ -206,7 +212,7 @@ class Netconf(object):
 Netconf = register_transport('netconf')(Netconf)
 
 
-class Cli(NetCli):
+class Cli(CliBase):
     CLI_PROMPTS_RE = None
 
     CLI_ERRORS_RE = None
@@ -215,17 +221,11 @@ class Cli(NetCli):
         super(Cli, self).connect(params, **kwargs)
 
         if self.shell._matched_prompt.strip().endswith('%'):
-            self.shell.send('cli')
-        self.shell.send('set cli screen-length 0')
+            self.execute('cli')
+        self.execute('set cli screen-length 0')
 
     def authorize(self, params, **kwargs):
         raise NotImplementedError
-
-    ### Cli methods ###
-
-    def run_commands(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.execute([str(c) for c in commands])
 
     ### Config methods ###
 
