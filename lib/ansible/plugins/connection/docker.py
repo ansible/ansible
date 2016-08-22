@@ -4,6 +4,7 @@
 # (c) 2014, Lorin Hochstein
 # (c) 2015, Leendert Brouwer
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2016, Gian Perrone
 #
 # Maintainer: Leendert Brouwer (https://github.com/objectified)
 #
@@ -68,15 +69,20 @@ class Connection(ConnectionBase):
         # root.
 
         if 'docker_command' in kwargs:
-            self.docker_cmd = kwargs['docker_command']
+            self.docker_cmd = [kwargs['docker_command']]
         else:
-            self.docker_cmd = distutils.spawn.find_executable('docker')
+            self.docker_cmd = [distutils.spawn.find_executable('docker')]
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
+
+        if self._play_context.docker_extra_args:
+            self.docker_cmd += self._play_context.docker_extra_args.split(' ')
 
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
+        self.docker_env = os.environ.copy()
+        self.docker_env["DOCKER_API_VERSION"] = docker_version
 
         # The remote user we will request from docker (if supported)
         self.remote_user = None
@@ -106,33 +112,37 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd]
-
-        if self._play_context.docker_extra_args:
-            cmd += self._play_context.docker_extra_args.split(' ')
-
+        cmd = list(self.docker_cmd)
         cmd += ['version']
 
-        cmd_output = subprocess.check_output(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, cmd_error = p.communicate()
+
+        if p.returncode != 0:
+            match = re.search('^Error response from daemon: client is newer than server (?:.+?)server API version: (.+?)\)$',
+                             cmd_error, re.MULTILINE)
+            if match:
+                return self._sanitize_version(match.group(1))
+            else:
+                raise subprocess.CalledProcessError(p.returncode, cmd)
 
         for line in cmd_output.split('\n'):
             if line.startswith('Server version:'):  # old docker versions
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
-            'version', '--format', "'{{.Server.Version}}'"
-        ]
+        cmd += ['--format', "'{{.Server.Version}}'"]
 
-        cmd_output = subprocess.check_output(new_docker_cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, cmd_error = p.communicate()
 
         return self._sanitize_version(cmd_output)
 
     def _get_docker_remote_user(self):
         """ Get the default user configured in the docker container """
-        p = subprocess.Popen([self.docker_cmd, 'inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = list(self.docker_cmd)
+        cmd += ['inspect', '--format', '{{.Config.User}}', self._play_context.remote_addr]
+        p = subprocess.Popen(cmd, env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = p.communicate()
 
@@ -150,11 +160,7 @@ class Connection(ConnectionBase):
             version we are using, it will be provided to docker exec.
         """
 
-        local_cmd = [self.docker_cmd]
-
-        if self._play_context.docker_extra_args:
-            local_cmd += self._play_context.docker_extra_args.split(' ')
-
+        local_cmd = list(self.docker_cmd)
         local_cmd += ['exec']
 
         if self.remote_user is not None:
@@ -183,7 +189,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
         local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
@@ -222,7 +228,7 @@ class Connection(ConnectionBase):
         with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError:
                 raise AnsibleError("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
@@ -240,11 +246,12 @@ class Connection(ConnectionBase):
         # file path
         out_dir = os.path.dirname(out_path)
 
-        args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = list(self.docker_cmd)
+        args += [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
         args = [to_bytes(i, errors='strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             env=self.docker_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
         # Rename if needed
