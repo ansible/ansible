@@ -181,6 +181,7 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -773,26 +774,13 @@ class AnsibleModule(object):
             context.append(None)
         return context
 
-    def _to_filesystem_str(self, path):
-        '''Returns filesystem path as a str, if it wasn't already.
-
-        Used in selinux interactions because it cannot accept unicode
-        instances, and specifying complex args in a playbook leaves
-        you with unicode instances.  This method currently assumes
-        that your filesystem encoding is UTF-8.
-
-        '''
-        if isinstance(path, text_type):
-            path = path.encode("utf-8")
-        return path
-
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = self.selinux_initial_context()
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.matchpathcon(self._to_filesystem_str(path), mode)
+            ret = selinux.matchpathcon(to_native(path, 'strict'), mode)
         except OSError:
             return context
         if ret[0] == -1:
@@ -807,7 +795,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.lgetfilecon_raw(self._to_filesystem_str(path))
+            ret = selinux.lgetfilecon_raw(to_native(path, 'strict'))
         except OSError:
             e = get_exception()
             if e.errno == errno.ENOENT:
@@ -895,7 +883,7 @@ class AnsibleModule(object):
             try:
                 if self.check_mode:
                     return True
-                rc = selinux.lsetfilecon(self._to_filesystem_str(path),
+                rc = selinux.lsetfilecon(to_native(path),
                                          str(':'.join(new_context)))
             except OSError:
                 e = get_exception()
