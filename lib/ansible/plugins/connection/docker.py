@@ -104,28 +104,43 @@ class Connection(ConnectionBase):
     def _sanitize_version(version):
         return re.sub('[^0-9a-zA-Z\.]', '', version)
 
+    def _old_docker_version(self):
+        cmd_args = []
+        if self._play_context.docker_extra_args:
+            cmd_args += self._play_context.docker_extra_args.split(' ')
+
+        old_version_subcommand = ['version']
+
+        old_docker_cmd = [self.docker_cmd] + cmd_args + old_version_subcommand
+        p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
+
+        return old_docker_cmd, cmd_output, err, p.returncode
+
+    def _new_docker_version(self):
+        # no result yet, must be newer Docker version
+        cmd_args = []
+        if self._play_context.docker_extra_args:
+            cmd_args += self._play_context.docker_extra_args.split(' ')
+
+        new_version_subcommand = ['version', '--format', "'{{.Server.Version}}'"]
+
+        new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
+        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
+        return new_docker_cmd, cmd_output, err, p.returncode
+
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd]
+        cmd, cmd_output, err, returncode = self._old_docker_version()
+        if returncode == 0:
+            for line in cmd_output.split('\n'):
+                if line.startswith('Server version:'):  # old docker versions
+                    return self._sanitize_version(line.split()[2])
 
-        if self._play_context.docker_extra_args:
-            cmd += self._play_context.docker_extra_args.split(' ')
-
-        cmd += ['version']
-
-        cmd_output = subprocess.check_output(cmd)
-
-        for line in cmd_output.split('\n'):
-            if line.startswith('Server version:'):  # old docker versions
-                return self._sanitize_version(line.split()[2])
-
-        # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
-            'version', '--format', "'{{.Server.Version}}'"
-        ]
-
-        cmd_output = subprocess.check_output(new_docker_cmd)
+        cmd, cmd_output, err, returncode = self._new_docker_version()
+        if returncode:
+            raise AnsibleError('Docker version check (%s) failed: %s' % (cmd, err))
 
         return self._sanitize_version(cmd_output)
 
