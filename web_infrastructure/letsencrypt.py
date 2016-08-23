@@ -74,7 +74,7 @@ options:
       - "URI to a terms of service document you agree to when using the
          ACME service at C(acme_directory)."
     required: false
-    default: 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf'
+    default: 'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf'
   challenge:
     description: The challenge to be performed.
     required: false
@@ -750,7 +750,7 @@ def main():
             account_key    = dict(required=True, type='str'),
             account_email  = dict(required=False, default=None, type='str'),
             acme_directory = dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            agreement      = dict(required=False, default='https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf', type='str'),
+            agreement      = dict(required=False, default='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', type='str'),
             challenge      = dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr            = dict(required=True, aliases=['src'], type='str'),
             data           = dict(required=False, no_log=True, default=None, type='dict'),
