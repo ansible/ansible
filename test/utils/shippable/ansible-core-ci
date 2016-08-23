@@ -285,6 +285,7 @@ def make_inventory(inventory_template, connection, instance_id):
     inventory = template\
         .replace('@instance_id', instance_id)\
         .replace('@ansible_host', connection['hostname'])\
+        .replace('@ansible_port', str(connection.get('port', 22)))\
         .replace('@ansible_user', connection['username'])\
         .replace('@ansible_password', connection.get('password', ''))
 
@@ -331,7 +332,7 @@ class HttpRequest:
         return self.request('PUT', url, data, headers)
 
     def request(self, method, url, data=None, headers=None):
-        args = ['/usr/bin/curl', '-s', '-i', '-X', method]
+        args = ['/usr/bin/curl', '-s', '-S', '-i', '-X', method]
 
         if headers is not None:
             for header in headers:

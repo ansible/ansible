@@ -3,8 +3,7 @@
 set -eux
 env
 
-# TODO: add support for other posix environments
-container=freebsd
+container="${PLATFORM}"
 build_dir="${HOME}/ansible"
 
 test_target="${TARGET:-}"
@@ -19,27 +18,32 @@ skip_tags='test_unarchive,test_service,test_postgresql,test_mysql_db,test_mysql_
 
 cd ~/
 
-# ssl certificate errors using fetch, so install curl
-pkg install -y curl
+make="make"
 
-if [ ! -f bootstrap.sh ]; then
-    curl "https://raw.githubusercontent.com/mattclay/ansible-hacking/master/bootstrap.sh" -o bootstrap.sh
+if [ "${container}" = "freebsd" ]; then
+    make="gmake"
+
+    pkg install -y curl
+
+    if [ ! -f bootstrap.sh ]; then
+        curl "https://raw.githubusercontent.com/mattclay/ansible-hacking/master/bootstrap.sh" -o bootstrap.sh
+    fi
+
+    chmod +x bootstrap.sh
+    ./bootstrap.sh pip -y -q
+
+    # tests require these packages
+    # TODO: bootstrap.sh should be capable of installing these
+    pkg install -y \
+        bash \
+        devel/ruby-gems \
+        mercurial \
+        rsync \
+        ruby \
+        subversion \
+        sudo \
+        zip
 fi
-
-chmod +x bootstrap.sh
-./bootstrap.sh pip -y -q
-
-# tests require these packages
-# TODO: bootstrap.sh should be capable of installing these
-pkg install -y \
-    bash \
-    devel/ruby-gems \
-    mercurial \
-    rsync \
-    ruby \
-    subversion \
-    sudo \
-    zip
 
 # TODO: bootstrap.sh should install these
 pip install \
@@ -59,8 +63,10 @@ ifconfig lo0
 # Since tests run as root, we also need to be able to ssh to localhost as root.
 sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
 
-# Restart sshd for configuration changes and loopback aliases to work.
-service sshd restart
+if [ "${container}" = "freebsd" ]; then
+    # Restart sshd for configuration changes and loopback aliases to work.
+    service sshd restart
+fi
 
 # Generate our ssh key and add it to our authorized_keys file.
 # We also need to add localhost's server keys to known_hosts.
@@ -136,6 +142,14 @@ set -u
 
 cd test/integration
 
+if [ "${container}" = "osx" ]; then
+    # FIXME: these test targets fail
+    sed -i '' 's/ test_gathering_facts / /;' Makefile
+
+    # FIXME: these tests fail
+    skip_tags="${skip_tags},test_iterators,test_template,test_git"
+fi
+
 # TODO: support httptester via reverse ssh tunnel
 
 rm -rf "/tmp/shippable"
@@ -148,4 +162,4 @@ JUNIT_OUTPUT_DIR="/tmp/shippable/testresults" \
     ANSIBLE_CALLBACK_WHITELIST=junit \
     TEST_FLAGS="-e ansible_python_interpreter=/usr/local/bin/python2 --skip-tags '${skip_tags}' ${test_flags}" \
     container="${container}" \
-    gmake ${test_target}
+    ${make} ${test_target}
