@@ -2408,6 +2408,7 @@ class LinuxNetwork(Network):
                     features[key.strip().replace('-','_')] = value.strip()
         return features
 
+
 class GenericBsdIfconfigNetwork(Network):
     """
     This is a generic BSD subclass of Network using the ifconfig command.
@@ -2415,9 +2416,6 @@ class GenericBsdIfconfigNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
-    It currently does not define
-    - default_ipv4 and default_ipv6
-    - type, mtu and network on interfaces
     """
     platform = 'Generic_BSD_Ifconfig'
 
@@ -2532,7 +2530,7 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['flags']  = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
 
-        if len(words) >= 5 : # Newer FreeBSD versions
+        if len(words) >= 5 :  # Newer FreeBSD versions
             current_if['metric'] = words[3]
             current_if['mtu'] = words[5]
         else:
@@ -2629,6 +2627,7 @@ class GenericBsdIfconfigNetwork(Network):
         if len(ifinfo[ip_type]) > 0:
             for item in ifinfo[ip_type][0].keys():
                 defaults[item] = ifinfo[ip_type][0][item]
+
 
 class HPUXNetwork(Network):
     """
