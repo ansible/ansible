@@ -228,7 +228,7 @@ def main():
     if len(commands) < 1:
         module.fail_json(msg="Not any of the command arguments %s given" % commands)
 
-    if('interface' in params and params['direction'] is None):
+    if(params['interface'] is not None and params['direction'] is None):
       module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
