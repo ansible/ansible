@@ -38,38 +38,6 @@ notes:
 requirements:
   - bigsuds
 options:
-  server:
-    description:
-      - BIG-IP host
-    required: true
-    default: null
-  server_port:
-    description:
-      - BIG-IP server port
-    required: false
-    default: 443
-    version_added: "2.2"
-  user:
-    description:
-      - BIG-IP username
-    required: true
-    default: null
-  password:
-    description:
-      - BIG-IP password
-    required: true
-    default: null
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites.  Prior to 2.0, this module would always
-        validate on python >= 2.7.9 and never validate on python <= 2.7.8
-    required: false
-    default: 'yes'
-    choices:
-      - yes
-      - no
-    version_added: 2.0
   state:
     description:
       - Monitor state
@@ -153,6 +121,7 @@ options:
         from the node. The default API setting is 0.
     required: false
     default: none
+extends_documentation_fragment: f5
 '''
 
 EXAMPLES = '''
