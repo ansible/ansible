@@ -85,19 +85,4 @@ class Cli(CliBase):
         if params.get('include_defaults'):
             cmd += ' all'
         return self.execute(cmd)
-
-    def load_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
-
-    def save_config(self):
-        raise NotImplementedError
 Cli = register_transport('cli', default=True)(Cli)
