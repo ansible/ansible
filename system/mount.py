@@ -233,6 +233,9 @@ def mount(module, **kwargs):
     if get_platform().lower() == 'freebsd':
         cmd += [ '-F', args['fstab'], ]
 
+    if get_platform().lower() == 'linux':
+        cmd += [ '-T', args['fstab'], ]
+
     cmd += [ name, ]
 
     rc, out, err = module.run_command(cmd)
