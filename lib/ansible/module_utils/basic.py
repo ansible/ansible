@@ -457,6 +457,8 @@ def heuristic_log_sanitize(data, no_log_values=None):
     # prev_begin: where in the overall string to start a search for
     #   a passwd
     # sep_search_end: where in the string to end a search for the sep
+    data = to_native(data)
+
     output = []
     begin = len(data)
     prev_begin = begin
