@@ -22,7 +22,7 @@ import glob
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleFileNotFound
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 class LookupModule(LookupBase):
 
