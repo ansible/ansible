@@ -89,7 +89,7 @@ options:
       - The datacenter location. Use only if you want to create the Datacenter or else this value is ignored.
     required: false
     default: us/las
-    choices: [ "us/las", "us/lasdev", "de/fra", "de/fkb" ]
+    choices: [ "us/las", "de/fra", "de/fkb" ]
   assign_public_ip:
     description:
       - This will assign the machine to the public LAN. If no LAN exists with public Internet access it is created.
@@ -205,8 +205,7 @@ except ImportError:
 
 LOCATIONS = ['us/las',
              'de/fra',
-             'de/fkb',
-             'us/lasdev']
+             'de/fkb']
 
 uuid_match = re.compile(
     '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)

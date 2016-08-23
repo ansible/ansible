@@ -35,7 +35,7 @@ options:
       - The datacenter location.
     required: false
     default: us/las
-    choices: [ "us/las", "us/lasdev", "de/fra", "de/fkb" ]
+    choices: [ "us/las", "de/fra", "de/fkb" ]
   subscription_user:
     description:
       - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
@@ -94,8 +94,7 @@ except ImportError:
 
 LOCATIONS = ['us/las',
              'de/fra',
-             'de/fkb',
-             'us/lasdev']
+             'de/fkb']
 
 uuid_match = re.compile(
     '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
@@ -206,7 +205,7 @@ def main():
         argument_spec=dict(
             name=dict(),
             description=dict(),
-            location=dict(choices=LOCATIONS, default='us/lasdev'),
+            location=dict(choices=LOCATIONS, default='us/las'),
             subscription_user=dict(),
             subscription_password=dict(),
             wait=dict(type='bool', default=True),
