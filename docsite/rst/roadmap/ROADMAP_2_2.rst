@@ -154,3 +154,4 @@ Target: September 2016
     - FreeBSD - Include FreeBSD in CI coverage. Not originally on the roadmap, this is an intermediary step for CI coverage for OS X.
       **Done:** FreeBSD integration tests now run on Shippable.
     - OS X - Include OS X in CI coverage.
+      **Done:** OS X integration tests now run on Shippable.
