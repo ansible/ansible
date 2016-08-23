@@ -25,17 +25,22 @@ import re
 import shlex
 import traceback
 import json
-import xmltodict
+
 
 from ansible.compat.six.moves.urllib.parse import urlunsplit
-
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
+
 try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
 except ImportError:
     raise AnsibleError("winrm is not installed")
+
+try:
+    import xmltodict
+except ImportError:
+    raise AnsibleError("xmltodict is not installed")
 
 HAVE_KERBEROS = False
 try:
@@ -49,14 +54,12 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode, to_str
-from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -148,7 +151,7 @@ class Connection(ConnectionBase):
 
                 # open the shell from connect so we know we're able to talk to the server
                 if not self.shell_id:
-                    self.shell_id = protocol.open_shell(codepage=65001) # UTF-8
+                    self.shell_id = protocol.open_shell(codepage=65001)  # UTF-8
                     display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
 
                 return protocol
@@ -182,7 +185,7 @@ class Connection(ConnectionBase):
         stream['#text'] = base64.b64encode(to_bytes(stdin))
         if eof:
             stream['@End'] = 'true'
-        rs = protocol.send_message(xmltodict.unparse(rq))
+        protocol.send_message(xmltodict.unparse(rq))
 
     def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
         if not self.protocol:
@@ -195,7 +198,7 @@ class Connection(ConnectionBase):
         command_id = None
         try:
             stdin_push_failed = False
-            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator == None))
+            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator is None))
 
             # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that comes from this)
             try:
@@ -220,9 +223,9 @@ class Connection(ConnectionBase):
                 display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             else:
                 display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
+
             display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
             display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
-
 
             if stdin_push_failed:
                 raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
@@ -239,7 +242,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def _reset(self): # used by win_reboot (and any other action that might need to bounce the state)
+    def _reset(self):  # used by win_reboot (and any other action that might need to bounce the state)
         self.protocol = None
         self.shell_id = None
         self._connect()
@@ -308,7 +311,7 @@ class Connection(ConnectionBase):
                 # cough up the data, as well as an indicator if this is the last chunk so winrm_send knows to set the End signal
                 yield b64_data, (in_file.tell() == in_size)
 
-            if offset == 0: # empty file, return an empty buffer + eof to close it
+            if offset == 0:  # empty file, return an empty buffer + eof to close it
                 yield "", True
 
     def put_file(self, in_path, out_path):
@@ -367,13 +370,12 @@ class Connection(ConnectionBase):
         if not remote_sha1 == local_sha1:
             raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_str(remote_sha1), to_str(local_sha1)))
 
-
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
         display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
-        buffer_size = 2**19 # 0.5MB chunks
+        buffer_size = 2**19  # 0.5MB chunks
         makedirs_safe(os.path.dirname(out_path))
         out_file = None
         try:
