@@ -49,10 +49,12 @@ options:
     description:
       - Password set for the administrative user.
     required: false
+    version_added: '2.2'
   ssh_keys:
     description:
       - Public SSH keys allowing access to the virtual machine.
     required: false
+    version_added: '2.2'
   disk_type:
     description:
       - The disk type of the volume.
