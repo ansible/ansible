@@ -682,45 +682,23 @@ class LxcContainerManagement(object):
         else:
             return return_dict
 
-    def _run_command(self, build_command, unsafe_shell=False, timeout=600):
+    def _run_command(self, build_command, unsafe_shell=False):
         """Return information from running an Ansible Command.
 
         This will squash the build command list into a string and then
         execute the command via Ansible. The output is returned to the method.
         This output is returned as `return_code`, `stdout`, `stderr`.
 
-        Prior to running the command the method will look to see if the LXC
-        lockfile is present. If the lockfile "/var/lock/subsys/lxc" the method
-        will wait upto 10 minutes for it to be gone; polling every 5 seconds.
-
         :param build_command: Used for the command and all options.
         :type build_command: ``list``
         :param unsafe_shell: Enable or Disable unsafe sell commands.
         :type unsafe_shell: ``bol``
-        :param timeout: Time before the container create process quites.
-        :type timeout: ``int``
         """
 
-        lockfile = '/var/lock/subsys/lxc'
-
-        for _ in xrange(timeout):
-            if os.path.exists(lockfile):
-                time.sleep(1)
-            else:
-                return self.module.run_command(
-                    ' '.join(build_command),
-                    use_unsafe_shell=unsafe_shell
-                )
-        else:
-            message = (
-                'The LXC subsystem is locked and after 5 minutes it never'
-                ' became unlocked. Lockfile [ %s ]' % lockfile
-            )
-            self.failure(
-                error='LXC subsystem locked',
-                rc=0,
-                msg=message
-            )
+        return self.module.run_command(
+            ' '.join(build_command),
+            use_unsafe_shell=unsafe_shell
+        )
 
     def _config(self):
         """Configure an LXC container.
