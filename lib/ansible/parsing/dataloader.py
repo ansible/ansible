@@ -36,7 +36,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
-from ansible.utils.unicode import to_unicode, to_bytes
+from ansible.utils.unicode import to_unicode, to_bytes, to_str
 
 try:
     from __main__ import display
@@ -279,45 +279,56 @@ class DataLoader():
     def path_dwim_relative_stack(self, paths, dirname, source):
         '''
         find one file in first path in stack taking roles into account and adding play basedir as fallback
+
+        :arg paths: A list of text strings which are the paths to look for the filename in.
+        :arg dirname: A text string representing a directory.  The directory
+            is prepended to the source to form the path to search for.
+        :arg source: A text string which is the filename to search for
+        :rtype: A text string
+        :returns: An absolute path to the filename ``source``
         '''
+        b_dirname = to_bytes(dirname)
+        b_source = to_bytes(source)
+
         result = None
         if not source:
            display.warning('Invalid request to find a file that matches an empty string or "null" value')
         elif source.startswith('~') or source.startswith(os.path.sep):
             # path is absolute, no relative needed, check existence and return source
-            test_path = to_bytes(unfrackpath(source),errors='strict')
-            if os.path.exists(test_path):
+            test_path = unfrackpath(b_source)
+            if os.path.exists(to_bytes(test_path, errors='strict')):
                 result = test_path
         else:
             search = []
             for path in paths:
                 upath = unfrackpath(path)
-                mydir = os.path.dirname(upath)
+                b_upath = to_bytes(upath, errors='strict')
+                b_mydir = os.path.dirname(b_upath)
 
                 # if path is in role and 'tasks' not there already, add it into the search
-                if upath.endswith('tasks') and os.path.exists(to_bytes(os.path.join(upath,'main.yml'), errors='strict')) \
-                    or os.path.exists(to_bytes(os.path.join(upath,'tasks/main.yml'), errors='strict')) \
-                    or os.path.exists(to_bytes(os.path.join(os.path.dirname(upath),'tasks/main.yml'), errors='strict')):
-                    if mydir.endswith('tasks'):
-                        search.append(os.path.join(os.path.dirname(mydir), dirname, source))
-                        search.append(os.path.join(mydir, source))
+                if b_upath.endswith(b'tasks') and os.path.exists(os.path.join(b_upath, b'main.yml')) \
+                    or os.path.exists(os.path.join(b_upath, b'tasks/main.yml')) \
+                    or os.path.exists(os.path.join(b_mydir, b'tasks/main.yml')):
+                    if b_mydir.endswith(b'tasks'):
+                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
+                        search.append(os.path.join(b_mydir, b_source))
                     else:
-                        search.append(os.path.join(upath, dirname, source))
-                        search.append(os.path.join(upath, 'tasks', source))
-                elif dirname not in source.split('/'):
+                        search.append(os.path.join(b_upath, b_dirname, b_source))
+                        search.append(os.path.join(b_upath, b'tasks', b_source))
+                elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
-                    search.append(os.path.join(upath, dirname, source))
-                    search.append(os.path.join(upath, source))
+                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                    search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
-            search.append(os.path.join(self.get_basedir(), dirname, source))
-            search.append(os.path.join(self.get_basedir(), source))
+            search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
 
-            display.debug('search_path:\n\t' + '\n\t'.join(search))
-            for candidate in search:
-                display.vvvvv('looking for "%s" at "%s"' % (source, candidate))
-                if os.path.exists(to_bytes(candidate, errors='strict')):
-                    result = candidate
+            display.debug(u'search_path:\n\t%s' % to_unicode(b'\n\t'.join(search), errors='replace'))
+            for b_candidate in search:
+                display.vvvvv(u'looking for "%s" at "%s"' % (source, to_unicode(b_candidate)))
+                if os.path.exists(b_candidate):
+                    result = to_unicode(b_candidate)
                     break
 
         return result
@@ -370,10 +381,11 @@ class DataLoader():
         """
 
         if not file_path or not isinstance(file_path, string_types):
-            raise AnsibleParserError("Invalid filename: '%s'" % str(file_path))
+            raise AnsibleParserError("Invalid filename: '%s'" % to_str(file_path))
 
-        if not self.path_exists(file_path) or not self.is_file(file_path):
-            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_path)
+        b_file_path = to_bytes(file_path, errors='strict')
+        if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
+            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_str(file_path))
 
         if not self._vault:
             self._vault = VaultLib(password="")
@@ -398,7 +410,7 @@ class DataLoader():
             return real_path
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (real_path, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_str(real_path), to_str(e)))
 
     def cleanup_tmp_file(self, file_path):
         """
