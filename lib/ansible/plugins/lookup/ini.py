@@ -30,6 +30,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.unicode import to_bytes
 
 
 def _parse_params(term):
