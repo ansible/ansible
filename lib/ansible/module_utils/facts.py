@@ -2271,6 +2271,10 @@ class LinuxNetwork(Network):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
             if os.path.exists(os.path.join(path,'device')):
                 interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
+            if os.path.exists(os.path.join(path, 'speed')):
+                speed = get_file_content(os.path.join(path, 'speed'))
+                if speed is not None:
+                    interfaces[device]['speed'] = int(speed)
 
             # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
