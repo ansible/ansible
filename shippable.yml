@@ -8,6 +8,8 @@ matrix:
   exclude:
     - env: TEST=none
   include:
+    - env: TEST=remote TARGET=all PLATFORM=osx VERSION=10.11
+
     - env: TEST=remote TARGET=all PLATFORM=freebsd VERSION=10.3-STABLE
 
     - env: TEST=remote TARGET=ci_win1 PLATFORM=windows VERSION=2012-R2_RTM
