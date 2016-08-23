@@ -68,7 +68,7 @@ class CallbackBase:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
+            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
