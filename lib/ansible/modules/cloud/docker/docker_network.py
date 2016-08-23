@@ -51,11 +51,10 @@ options:
 
   force:
     description:
-      - >
-        With state 'absent' forces disconnecting all containers from the
-        network prior to deleting the network. With state 'present' will
+      - With state I(absent) forces disconnecting all containers from the
+        network prior to deleting the network. With state I(present) will
         disconnect all containers, delete the network and re-create the
-        network.  This option is required if you have changed the ipam or
+        network.  This option is required if you have changed the IPAM or
         driver options and want an existing network to be updated to use the
         new options.
     default: false
@@ -63,7 +62,7 @@ options:
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
-        Use 'appends' to leave existing containers connected.
+        Use C(appends) to leave existing containers connected.
     default: false
     aliases:
       - incremental
@@ -80,17 +79,15 @@ options:
 
   state:
     description:
-      - >
-        "absent" deletes the network. If a network has connected containers, it
-        cannot be deleted. Use the force option to disconnect all containers
+      - I(absent) deletes the network. If a network has connected containers, it
+        cannot be deleted. Use the C(force) option to disconnect all containers
         and delete the network.
-      - >
-        "present" creates the network, if it does not already exist with the
+      - I(present) creates the network, if it does not already exist with the
         specified parameters, and connects the list of containers provided via
-        the connected parameter. Containers not on the list will be
-        disconnected. An empty list will leave no containers connected to the
-        network. Use the appends option to leave existing containers
-        connected. Use the force options to force re-creation of the network.
+        the connected parameter. Containers not on the list will be disconnected.
+        An empty list will leave no containers connected to the network. Use the
+        C(appends) option to leave existing containers connected. Use the C(force)
+        options to force re-creation of the network.
     default: present
     choices:
       - absent
