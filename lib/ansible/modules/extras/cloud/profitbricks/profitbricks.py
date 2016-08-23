@@ -39,10 +39,12 @@ options:
     description:
       - Password set for the administrative user.
     required: false
+    version_added: '2.2'
   ssh_keys:
     description:
       - Public SSH keys allowing access to the virtual machine.
     required: false
+    version_added: '2.2'
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
@@ -64,6 +66,7 @@ options:
     required: false
     default: AMD_OPTERON
     choices: [ "AMD_OPTERON", "INTEL_XEON" ]
+    version_added: '2.2'
   volume_size:
     description:
       - The size in GB of the boot volume.
