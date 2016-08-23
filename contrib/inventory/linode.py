@@ -185,20 +185,14 @@ class LinodeInventory(object):
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
         except chube_api.linode_api.ApiError as e:
-            print("Looks like Linode's API is down:")
-            print("")
-            print(e)
-            sys.exit(1)
+            sys.exit("Looks like Linode's API is down:\n %s" % e)
 
     def get_node(self, linode_id):
         """Gets details about a specific node."""
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            print("Looks like Linode's API is down:")
-            print("")
-            print(e)
-            sys.exit(1)
+            sys.exit("Looks like Linode's API is down:\n%" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
