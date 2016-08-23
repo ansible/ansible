@@ -32,6 +32,8 @@ DOCUMENTATION = '''
 ---
 module: cloudflare_dns
 author: "Michael Gruener (@mgruener)"
+requirements:
+   - "python >= 2.6"
 version_added: "2.1"
 short_description: manage Cloudflare DNS records
 description:
