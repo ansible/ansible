@@ -126,6 +126,7 @@ be used to access the machine.
 import os
 import re
 import argparse
+import sys
 from time import time
 import sys
 import ConfigParser
@@ -191,9 +192,8 @@ except ImportError:
 try:
   import consul
 except ImportError as e:
-  print("""failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'""")
-  sys.exit(1)
+  sys.exit("""failed=True msg='python-consul required for this module.
+See http://python-consul.readthedocs.org/en/latest/#installation'""")
 
 from six import iteritems
 
