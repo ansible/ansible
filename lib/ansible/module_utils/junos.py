@@ -244,18 +244,6 @@ class Cli(CliBase):
     def get_config(self, include_defaults=False, **kwargs):
         raise NotImplementedError
 
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
-
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
-
     def save_config(self):
         self.execute(['copy running-config startup-config'])
 Cli = register_transport('cli', default=True)(Cli)
