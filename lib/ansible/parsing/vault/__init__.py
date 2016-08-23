@@ -103,9 +103,17 @@ def check_prereqs():
 class VaultLib:
 
     def __init__(self, password):
-        self.b_password = to_bytes(password, errors='strict', encoding='utf-8')
+        self.b_password = self.split_password(password)
         self.cipher_name = None
         self.b_version = b'1.1'
+
+    def split_password(self, password):
+        passwords = []
+        if password:
+            for _password in password.split('\n'):
+                b_password = to_bytes(_password, errors='strict', encoding='utf-8')
+                passwords.append(b_password)
+        return passwords
 
     def is_encrypted(self, data):
         """ Test if this is vault encrypted data
@@ -185,14 +193,17 @@ class VaultLib:
             raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
         # try to unencrypt data
-        b_data = this_cipher.decrypt(b_data, self.b_password)
-        if b_data is None:
+        n_data = None
+        for b_password in self.b_password:
+            n_data = this_cipher.decrypt(b_data, b_password)
+            if n_data:
+                break
+        if n_data is None:
             msg = "Decryption failed"
             if filename:
                 msg += " on %s" % filename
             raise AnsibleError(msg)
-
-        return b_data
+        return n_data
 
     def _format_output(self, b_data):
         """ Add header and format to 80 columns
