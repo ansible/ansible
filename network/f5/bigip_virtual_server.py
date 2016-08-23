@@ -35,33 +35,6 @@ notes:
 requirements:
   - bigsuds
 options:
-  server:
-    description:
-      - BIG-IP host
-    required: true
-  server_port:
-    description:
-      - BIG-IP server port
-    required: false
-    default: 443
-    version_added: "2.2"
-  user:
-    description:
-      - BIG-IP username
-    required: true
-  password:
-    description:
-      - BIG-IP password
-    required: true
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
-    required: false
-    default: 'yes'
-    choices:
-      - yes
-      - no
   state:
     description:
       - Virtual Server state
@@ -133,6 +106,7 @@ options:
       - Virtual server description
     required: false
     default: None
+extends_documentation_fragment: f5
 '''
 
 EXAMPLES = '''
