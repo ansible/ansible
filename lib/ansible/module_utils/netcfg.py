@@ -50,28 +50,19 @@ class Config(object):
     def __init__(self, connection):
         self.connection = connection
 
-    def invoke(self, method, *args, **kwargs):
-        try:
-            return method(*args, **kwargs)
-        except AttributeError:
-            exc = get_exception()
-            raise NetworkError('undefined method "%s"' % method.__name__, exc=str(exc))
-        except NotImplementedError:
-            raise NetworkError('method not supported "%s"' % method.__name__)
-
     def __call__(self, commands):
         lines = to_list(commands)
-        return self.invoke(self.connection.configure, commands)
+        return self.connection.configure(commands)
 
     def load_config(self, commands, **kwargs):
         commands = to_list(commands)
-        return self.invoke(self.connection.load_config, commands, **kwargs)
+        return self.connection.load_config(commands, **kwargs)
 
     def get_config(self, **kwargs):
-        return self.invoke(self.connection.get_config, **kwargs)
+        return self.connection.get_config(**kwargs)
 
     def save_config(self):
-        return self.invoke(self.connection.save_config)
+        return self.connection.save_config()
 
 class ConfigLine(object):
 
