@@ -147,7 +147,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         # copy over all field attributes, except for when and tags, which
         # are special cases and need to preserve pre-existing values
-        for (attr_name, _) in iteritems(self._get_base_attributes()):
+        for (attr_name, _) in iteritems(self._valid_attrs):
             if attr_name not in ('when', 'tags'):
                 setattr(self, attr_name, getattr(role_include, attr_name))
 
