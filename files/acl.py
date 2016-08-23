@@ -152,8 +152,10 @@ def split_entry(entry):
     return [d, t, e, p]
 
 
-def build_entry(etype, entity, permissions=None):
+def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
+    if use_nfsv4_acls:
+        return ':'.join([etype, entity, permissions, 'allow'])
     if permissions:
         return etype + ':' + entity + ':' + permissions
     else:
@@ -171,14 +173,18 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
     else:  # mode == 'get'
         cmd = [module.get_bin_path('getfacl', True)]
         # prevents absolute path warnings and removes headers
-        cmd.append('--omit-header')
-        cmd.append('--absolute-names')
+        if get_platform().lower() == 'linux':
+            cmd.append('--omit-header')
+            cmd.append('--absolute-names')
 
     if recursive:
         cmd.append('--recursive')
 
     if not follow:
-        cmd.append('--physical')
+        if get_platform().lower() == 'linux':
+            cmd.append('--physical')
+        elif get_platform().lower() == 'freebsd':
+            cmd.append('-h')
 
     if default:
         if(mode == 'rm'):
@@ -192,6 +198,10 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
 
 def acl_changed(module, cmd):
     '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
+    # FreeBSD do not have a --test flag, so by default, it is safer to always say "true"
+    if get_platform().lower() == 'freebsd':
+        return True
+
     cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
     cmd.insert(1, '--test')
     lines = run_acl(module, cmd)
@@ -210,7 +220,11 @@ def run_acl(module, cmd, check_rc=True):
         e = get_exception()
         module.fail_json(msg=e.strerror)
 
-    lines = out.splitlines()
+    lines = []
+    for l in out.splitlines():
+        if not l.startswith('#'):
+            lines.append(l.strip())
+
     if lines and not lines[-1].split():
         # trim last line only when it is empty
         return lines[:-1]
@@ -239,12 +253,13 @@ def main():
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
             recursive=dict(required=False, type='bool', default=False),
+            use_nfsv4_acls=dict(required=False, type='bool', default=False)
         ),
         supports_check_mode=True,
     )
 
-    if get_platform().lower() != 'linux':
-        module.fail_json(msg="The acl module is only available for Linux distributions.")
+    if get_platform().lower() not in ['linux', 'freebsd']:
+        module.fail_json(msg="The acl module is not available on this system.")
 
     path = module.params.get('name')
     entry = module.params.get('entry')
@@ -255,6 +270,7 @@ def main():
     follow = module.params.get('follow')
     default = module.params.get('default')
     recursive = module.params.get('recursive')
+    use_nfsv4_acls = module.params.get('use_nfsv4_acls')
 
     if not os.path.exists(path):
         module.fail_json(msg="Path not found or not accessible.")
@@ -289,11 +305,15 @@ def main():
         if default_flag != None:
             default = default_flag
 
+    if get_platform().lower() == 'freebsd':
+        if recursive:
+            module.fail_json(msg="recursive is not supported on that platform.")
+
     changed = False
     msg = ""
 
     if state == 'present':
-        entry = build_entry(etype, entity, permissions)
+        entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
             default, recursive, entry
@@ -305,7 +325,7 @@ def main():
         msg = "%s is present" % entry
 
     elif state == 'absent':
-        entry = build_entry(etype, entity)
+        entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
             default, recursive, entry
