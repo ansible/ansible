@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.release import __version__
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.utils.unicode import to_bytes, to_str, to_unicode
 
 try:
     from __main__ import display
@@ -844,7 +844,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
 
         if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % needle)
+            raise AnsibleError("Unable to find '%s' in expected paths." % to_str(needle))
 
         return result
 

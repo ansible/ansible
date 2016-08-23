@@ -18,10 +18,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import pipes
 import random
 
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
+from ansible.compat.six import iteritems
 from ansible.utils.unicode import to_unicode
 
 class ActionModule(ActionBase):

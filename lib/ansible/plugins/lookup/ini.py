@@ -58,13 +58,13 @@ class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
         config = StringIO()
-        config.write(u'[java_properties]\n' + open(filename).read())
+        config.write(u'[java_properties]\n' + open(to_bytes(filename, errors='strict')).read())
         config.seek(0, os.SEEK_SET)
         self.cp.readfp(config)
         return self.get_value(key, 'java_properties', dflt, is_regexp)
 
     def read_ini(self, filename, key, section, dflt, is_regexp):
-        self.cp.readfp(open(filename))
+        self.cp.readfp(open(to_bytes(filename, errors='strict')))
         return self.get_value(key, section, dflt, is_regexp)
 
     def get_value(self, key, section, dflt, is_regexp):

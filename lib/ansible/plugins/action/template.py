@@ -93,19 +93,20 @@ class ActionModule(ActionBase):
             dest = os.path.join(dest, base)
 
         # template the source data locally & get ready to transfer
+        b_source = to_bytes(source)
         try:
-            with open(source, 'r') as f:
+            with open(b_source, 'r') as f:
                 template_data = to_unicode(f.read())
 
             try:
-                template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
+                template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
             except:
-                template_uid = os.stat(source).st_uid
+                template_uid = os.stat(b_source).st_uid
 
             temp_vars = task_vars.copy()
             temp_vars['template_host']     = os.uname()[1]
             temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
+            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
             temp_vars['template_uid']      = template_uid
             temp_vars['template_fullpath'] = os.path.abspath(source)
             temp_vars['template_run_date'] = datetime.datetime.now()
@@ -118,7 +119,7 @@ class ActionModule(ActionBase):
             )
             temp_vars['ansible_managed'] = time.strftime(
                 managed_str,
-                time.localtime(os.path.getmtime(source))
+                time.localtime(os.path.getmtime(b_source))
             )
 
             # Create a new searchpath list to assign to the templar environment's file
