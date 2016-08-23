@@ -37,24 +37,6 @@ notes:
 requirements:
     - bigsuds
 options:
-    server:
-        description:
-            - BIG-IP host
-        required: true
-    server_port:
-        description:
-            - BIG-IP server port
-        required: false
-        default: 443
-        version_added: "2.2"
-    user:
-        description:
-            - BIG-IP username
-        required: true
-    password:
-        description:
-            - BIG-IP password
-        required: true
     lb_method:
         description:
             - LB method of wide ip
@@ -64,17 +46,11 @@ options:
                       'vs_capacity', 'least_conn', 'lowest_rtt', 'lowest_hops',
                       'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
                       'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score']
-    validate_certs:
-        description:
-            - If C(no), SSL certificates will not be validated. This should only be
-              used on personally controlled sites using self-signed certificates.
-        required: false
-        default: true
-        version_added: "2.2"
     wide_ip:
         description:
             - Wide IP name
         required: true
+extends_documentation_fragment: f5
 '''
 
 EXAMPLES = '''
