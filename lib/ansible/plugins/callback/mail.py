@@ -24,6 +24,7 @@ import os
 import smtplib
 import json
 
+from ansible.compat.six import string_types
 from ansible.utils.unicode import to_bytes
 from ansible.plugins.callback import CallbackBase
 
@@ -108,7 +109,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:
@@ -123,7 +124,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:

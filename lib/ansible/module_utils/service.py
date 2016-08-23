@@ -34,6 +34,8 @@ import select
 import subprocess
 import json
 
+from ansible.module_utils.six import text_type, binary_type
+
 class Service(object):
     """
     This is the generic Service manipulation class that is subclassed based on system.
@@ -112,7 +114,7 @@ class Service(object):
                 os._exit(0)
 
             # Start the command
-            if isinstance(cmd, basestring):
+            if isinstance(cmd, (text_type, binary_type)):
                 cmd = shlex.split(cmd)
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
             stdout = ""

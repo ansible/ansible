@@ -3,16 +3,18 @@ import mock
 import os
 import re
 
+
 from nose.tools import eq_
 try:
     from nose.tools import assert_raises_regexp
 except ImportError:
+    from ansible.compat.six import string_types
     # Python < 2.7
     def assert_raises_regexp(expected, regexp, callable, *a, **kw):
         try:
             callable(*a, **kw)
         except expected as e:
-            if isinstance(regexp, basestring):
+            if isinstance(regexp, string_types):
                 regexp = re.compile(regexp)
             if not regexp.search(str(e)):
                 raise Exception('"%s" does not match "%s"' %

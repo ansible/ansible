@@ -20,8 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_bytes
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
@@ -40,12 +38,16 @@ except ImportError:
         # Assume we're running in FIPS mode here
         _md5 = None
 
+from ansible.compat.six import string_types
+from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_bytes
+
 def secure_hash_s(data, hash_func=sha1):
     ''' Return a secure hash hex digest of data. '''
 
     digest = hash_func()
     try:
-        if not isinstance(data, basestring):
+        if not isinstance(data, string_types):
             data = "%s" % data
         digest.update(data)
     except UnicodeEncodeError:

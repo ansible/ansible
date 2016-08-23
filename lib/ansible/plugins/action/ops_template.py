@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import json
 
+from ansible.compat.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.net_template import ActionModule as NetActionModule
 
@@ -32,7 +33,7 @@ class ActionModule(NetActionModule, ActionBase):
 
         result = dict(changed=False)
 
-        if isinstance(self._task.args['src'], basestring):
+        if isinstance(self._task.args['src'], string_types):
             self._handle_template()
 
         result.update(self._execute_module(module_name=self._task.action,

@@ -37,9 +37,6 @@ _LATIN1_ALIASES = frozenset(('latin-1', 'LATIN-1', 'latin1', 'LATIN1',
 
 # EXCEPTION_CONVERTERS is defined below due to using to_unicode
 
-if PY3:
-    basestring = (str, bytes)
-
 def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
     '''Convert an object into a :class:`unicode` string
 
@@ -93,9 +90,9 @@ def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
     '''
     # Could use isbasestring/isunicode here but we want this code to be as
     # fast as possible
-    if isinstance(obj, basestring):
-        if isinstance(obj, text_type):
-            return obj
+    if isinstance(obj, text_type):
+        return obj
+    if isinstance(obj, binary_type):
         if encoding in _UTF8_ALIASES:
             return text_type(obj, 'utf-8', errors)
         if encoding in _LATIN1_ALIASES:
@@ -202,9 +199,9 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
     '''
     # Could use isbasestring, isbytestring here but we want this to be as fast
     # as possible
-    if isinstance(obj, basestring):
-        if isinstance(obj, binary_type):
-            return obj
+    if isinstance(obj, binary_type):
+        return obj
+    if isinstance(obj, text_type):
         return obj.encode(encoding, errors)
     if not nonstring:
         nonstring = 'simplerepr'

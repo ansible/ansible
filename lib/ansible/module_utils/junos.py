@@ -22,6 +22,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
 from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
 from ansible.module_utils.netcfg import parse
+from ansible.module_utils.six import string_types
 
 try:
     from jnpr.junos import Device
@@ -70,7 +71,7 @@ def to_list(val):
 
 
 def xml_to_json(val):
-    if isinstance(val, basestring):
+    if isinstance(val, string_types):
         return jxmlease.parse(val)
     else:
         return jxmlease.parse_etree(val)
