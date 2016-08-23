@@ -220,7 +220,7 @@ class Task(Base, Conditional, Taggable, Become):
                 # top level of the task, so we move those into the 'vars' dictionary
                 # here, and show a deprecation message as we will remove this at
                 # some point in the future.
-                if action == 'include' and k not in self._get_base_attributes() and k not in self.DEPRECATED_ATTRIBUTES:
+                if action == 'include' and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                             " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                             " for currently supported syntax regarding included files and variables")
