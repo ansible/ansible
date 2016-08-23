@@ -166,8 +166,7 @@ try:
     import pyrax
     from pyrax.utils import slugify
 except ImportError:
-    print('pyrax is required for this module')
-    sys.exit(1)
+    sys.exit('pyrax is required for this module')
 
 from time import time
 
@@ -402,10 +401,9 @@ def setup():
         if os.path.isfile(default_creds_file):
             creds_file = default_creds_file
         elif not keyring_username:
-            sys.stderr.write('No value in environment variable %s and/or no '
-                             'credentials file at %s\n'
-                             % ('RAX_CREDS_FILE', default_creds_file))
-            sys.exit(1)
+            sys.exit('No value in environment variable %s and/or no '
+                     'credentials file at %s'
+                     % ('RAX_CREDS_FILE', default_creds_file))
 
     identity_type = pyrax.get_setting('identity_type')
     pyrax.set_setting('identity_type', identity_type or 'rackspace')
@@ -418,8 +416,7 @@ def setup():
         else:
             pyrax.set_credential_file(creds_file, region=region)
     except Exception as e:
-        sys.stderr.write("%s: %s\n" % (e, e.message))
-        sys.exit(1)
+        sys.exit("%s: %s" % (e, e.message))
 
     regions = []
     if region:
@@ -433,8 +430,7 @@ def setup():
                 regions = pyrax.regions
                 break
             elif region not in pyrax.regions:
-                sys.stderr.write('Unsupported region %s' % region)
-                sys.exit(1)
+                sys.exit('Unsupported region %s' % region)
             elif region not in regions:
                 regions.append(region)
 
