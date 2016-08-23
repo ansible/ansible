@@ -27,7 +27,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
-from ansible.utils.unicode import to_str
+from ansible.utils.unicode import to_str, to_unicode
 
 
 class ActionModule(ActionBase):
@@ -42,10 +42,10 @@ class ActionModule(ActionBase):
         delimit_me = False
         add_newline = False
 
-        for f in sorted(os.listdir(src_path)):
+        for f in (to_unicode(p, errors='strict') for p in sorted(os.listdir(src_path))):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
-            fragment = "%s/%s" % (src_path, f)
+            fragment = u"%s/%s" % (src_path, f)
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
@@ -119,7 +119,7 @@ class ActionModule(ActionBase):
 
         if not os.path.isdir(src):
             result['failed'] = True
-            result['msg'] = "Source (%s) is not a directory" % src
+            result['msg'] = u"Source (%s) is not a directory" % src
             return result
 
         _re = None

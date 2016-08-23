@@ -43,7 +43,7 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
-                with open(lookupfile, 'r') as f:
+                with open(to_bytes(lookupfile, errors='strict'), 'r') as f:
                     template_data = to_unicode(f.read())
 
                     # set jinja2 internal search path for includes
