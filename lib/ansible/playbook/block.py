@@ -202,7 +202,7 @@ class Block(Base, Become, Conditional, Taggable):
         '''
 
         data = dict()
-        for attr in self._get_base_attributes():
+        for attr in self._valid_attrs:
             if attr not in ('block', 'rescue', 'always'):
                 data[attr] = getattr(self, attr)
 
@@ -229,7 +229,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         # we don't want the full set of attributes (the task lists), as that
         # would lead to a serialize/deserialize loop
-        for attr in self._get_base_attributes():
+        for attr in self._valid_attrs:
             if attr in data and attr not in ('block', 'rescue', 'always'):
                 setattr(self, attr, data.get(attr))
 
@@ -324,15 +324,7 @@ class Block(Base, Become, Conditional, Taggable):
         return value
 
     def _get_attr_environment(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        environment = self._attributes['environment']
-        parent_environment = self._get_parent_attribute('environment', extend=True)
-        if parent_environment is not None:
-            environment = self._extend_value(environment, parent_environment)
-
-        return environment
+        return self._get_parent_attribute('environment')
 
     def _get_attr_any_errors_fatal(self):
         '''
