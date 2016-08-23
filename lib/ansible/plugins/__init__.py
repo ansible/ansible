@@ -123,15 +123,18 @@ class PluginLoader:
             PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE[self.class_name],
         )
 
-    def print_paths(self):
+    def format_paths(self, paths):
         ''' Returns a string suitable for printing of the search path '''
 
         # Uses a list to get the order right
         ret = []
-        for i in self._get_paths():
+        for i in paths:
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
+
+    def print_paths(self):
+        return self.format_paths(self._get_paths())
 
     def _all_directories(self, dir):
         results = []
@@ -201,7 +204,6 @@ class PluginLoader:
         # cache and return the result
         self._paths = reordered_paths
         return reordered_paths
-
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
@@ -322,6 +324,7 @@ class PluginLoader:
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
+        found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         if name in self.aliases:
             name = self.aliases[name]
@@ -331,6 +334,7 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source('.'.join([self.package, name]), path)
+            found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
         if self.base_class:
@@ -345,16 +349,31 @@ class PluginLoader:
             if not issubclass(obj, plugin_class):
                 return None
 
+        self._display_plugin_load(self.class_name, name, self._searched_paths, path,
+                                  found_in_cache=found_in_cache, class_only=class_only)
         if not class_only:
             obj = obj(*args, **kwargs)
 
         return obj
+
+    def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
+        searched_msg = 'Searching for plugin type %s named \'%s\' in paths: %s' % (class_name, name, self.format_paths(searched_paths))
+        loading_msg = 'Loading plugin type %s named \'%s\' from %s' % (class_name, name, path)
+
+        if found_in_cache or class_only:
+            extra_msg = 'found_in_cache=%s, class_only=%s' % (found_in_cache, class_only)
+            display.debug('%s %s' % (searched_msg, extra_msg))
+            display.debug('%s %s' % (loading_msg, extra_msg))
+        else:
+            display.vvvv(searched_msg)
+            display.vvv(loading_msg)
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
 
         class_only = kwargs.pop('class_only', False)
         all_matches = []
+        found_in_cache = True
 
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
@@ -366,6 +385,7 @@ class PluginLoader:
 
             if path not in self._module_cache:
                 self._module_cache[path] = self._load_module_source(name, path)
+                found_in_cache = False
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
@@ -385,6 +405,8 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                    continue
 
+            self._display_plugin_load(self.class_name, name, self._searched_paths, path,
+                                      found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 obj = obj(*args, **kwargs)
 
