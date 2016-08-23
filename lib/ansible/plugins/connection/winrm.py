@@ -26,7 +26,7 @@ import shlex
 import traceback
 import json
 
-
+from ansible.compat.six import string_types
 from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 
@@ -106,7 +106,7 @@ class Connection(ConnectionBase):
         else:
             self._winrm_transport = transport_selector
         self._winrm_transport = hostvars.get('ansible_winrm_transport', self._winrm_transport)
-        if isinstance(self._winrm_transport, basestring):
+        if isinstance(self._winrm_transport, string_types):
             self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
 
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)

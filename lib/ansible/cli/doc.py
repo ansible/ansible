@@ -24,7 +24,7 @@ import os
 import traceback
 import textwrap
 
-from ansible.compat.six import iteritems
+from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -309,13 +309,13 @@ class DocCLI(CLI):
 
         maintainers = set()
         if 'author' in doc:
-            if isinstance(doc['author'], basestring):
+            if isinstance(doc['author'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])
 
         if 'maintainers' in doc:
-            if isinstance(doc['maintainers'], basestring):
+            if isinstance(doc['maintainers'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])

@@ -33,6 +33,7 @@ import shlex
 import itertools
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six import string_types
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
@@ -197,7 +198,7 @@ class NetworkConfig(object):
         self.load(open(filename).read())
 
     def get(self, path):
-        if isinstance(path, basestring):
+        if isinstance(path, string_types):
             path = [path]
         for item in self._config:
             if item.text == path[-1]:
