@@ -506,7 +506,7 @@ def main():
                         if not module.check_mode:
                             set_member_session_enabled_state(api, pool, address, port, session_state)
                         result = {'changed': True}
-                    elif session_state == 'disabled' and session_status != 'force_disabled':
+                    elif session_state == 'disabled' and session_status != 'forced_disabled':
                         if not module.check_mode:
                             set_member_session_enabled_state(api, pool, address, port, session_state)
                         result = {'changed': True}
