@@ -466,9 +466,11 @@ try:
     from compose.cli.command import project_from_options
     from compose.service import ConvergenceStrategy
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
+    from compose.const import DEFAULT_TIMEOUT
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
+    DEFAULT_TIMEOUT = 10
 
 from ansible.module_utils.docker_common import *
 
@@ -653,7 +655,8 @@ class ContainerManager(DockerBaseClass):
                     strategy=converge,
                     do_build=do_build,
                     detached=detached,
-                    remove_orphans=self.remove_orphans)
+                    remove_orphans=self.remove_orphans,
+                    timeout=self.timeout)
             except Exception as exc:
                 self.client.fail("Error starting project - %s" % str(exc))
 
@@ -828,7 +831,7 @@ class ContainerManager(DockerBaseClass):
 
         if not self.check_mode and result['changed']:
             try:
-                self.project.stop(service_names=service_names)
+                self.project.stop(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
                 self.client.fail("Error stopping services for %s - %s" % (self.project.name, str(exc)))
 
@@ -855,7 +858,7 @@ class ContainerManager(DockerBaseClass):
 
         if not self.check_mode and result['changed']:
             try:
-                self.project.restart(service_names=service_names)
+                self.project.restart(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
                 self.client.fail("Error restarting services for %s - %s" % (self.project.name, str(exc)))
 
@@ -903,7 +906,8 @@ def main():
         dependencies=dict(type='bool', default=True),
         pull=dict(type='bool', default=False),
         nocache=dict(type='bool', default=False),
-        debug=dict(type='bool', default=False)
+        debug=dict(type='bool', default=False),
+        timeout=dict(type='int', default=DEFAULT_TIMEOUT)
     )
 
     mutually_exclusive = [
