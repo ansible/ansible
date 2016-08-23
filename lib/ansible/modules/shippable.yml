@@ -23,6 +23,8 @@ matrix:
     - env: TEST=integration PLATFORM=windows VERSION=2012-R2_RTM
 
     - env: TEST=integration PLATFORM=freebsd VERSION=10.3-STABLE
+
+    - env: TEST=integration PLATFORM=osx VERSION=10.11
 build:
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
