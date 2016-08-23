@@ -32,6 +32,7 @@ import itertools
 import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six import string_types
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -75,7 +76,7 @@ class Cli(object):
         elif isinstance(command, dict):
             output = cmd.get('output') or output
             cmd = cmd['command']
-        if isinstance(prompt, basestring):
+        if isinstance(prompt, string_types):
             prompt = re.compile(re.escape(prompt))
         return Command(command, output, prompt=prompt, response=response)
 

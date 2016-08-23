@@ -49,6 +49,7 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
+from ansible.module_utils.six import string_types
 
 class AnsibleAWSError(Exception):
     pass
@@ -343,7 +344,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     filters_list = []
     for k,v in filters_dict.iteritems():
         filter_dict = {'Name': k}
-        if isinstance(v, basestring):
+        if isinstance(v, string_types):
             filter_dict['Values'] = [v]
         else:
             filter_dict['Values'] = v
@@ -438,7 +439,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     sec_group_id_list = []
 
-    if isinstance(sec_group_list, basestring):
+    if isinstance(sec_group_list, string_types):
         sec_group_list = [sec_group_list]
 
     # Get all security groups

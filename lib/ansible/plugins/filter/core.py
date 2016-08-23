@@ -126,8 +126,7 @@ def fileglob(pathname):
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
 
-    if not isinstance(value, basestring):
-        value = str(value)
+    value = to_unicode(value, errors='strict', nonstring='simplerepr')
 
     if ignorecase:
         flags = re.I

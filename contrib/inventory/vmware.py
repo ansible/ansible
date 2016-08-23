@@ -40,7 +40,7 @@ import sys
 import time
 import ConfigParser
 
-from six import text_type
+from six import text_type, string_types
 
 # Disable logging message trigged by pSphere/suds.
 try:
@@ -160,7 +160,7 @@ class VMwareInventory(object):
             if isinstance(v, collections.MutableMapping):
                 items.extend(self._flatten_dict(v, new_key, sep).items())
             elif isinstance(v, (list, tuple)):
-                if all([isinstance(x, basestring) for x in v]):
+                if all([isinstance(x, string_types) for x in v]):
                     items.append((new_key, v))
             else:
                 items.append((new_key, v))
@@ -208,7 +208,7 @@ class VMwareInventory(object):
                 if obj_info != ():
                     l.append(obj_info)
             return l
-        elif isinstance(obj, (type(None), bool, int, long, float, basestring)):
+        elif isinstance(obj, (type(None), bool, int, long, float, string_types)):
             return obj
         else:
             return ()
