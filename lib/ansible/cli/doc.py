@@ -280,6 +280,7 @@ class DocCLI(CLI):
             else:
                 text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
+            choices = ''
             if 'choices' in opt:
                 choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
             if 'default' in opt or not required:
