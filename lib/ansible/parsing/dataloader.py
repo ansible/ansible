@@ -292,7 +292,7 @@ class DataLoader():
 
         result = None
         if not source:
-           display.warning('Invalid request to find a file that matches an empty string or "null" value')
+            display.warning('Invalid request to find a file that matches an empty string or "null" value')
         elif source.startswith('~') or source.startswith(os.path.sep):
             # path is absolute, no relative needed, check existence and return source
             test_path = unfrackpath(b_source)
