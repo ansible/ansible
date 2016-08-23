@@ -30,6 +30,7 @@ from functools import wraps
 from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.plugins import shell_loader
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -248,7 +249,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     def check_password_prompt(self, output):
         if self._play_context.prompt is None:
             return False
-        elif isinstance(self._play_context.prompt, basestring):
+        elif isinstance(self._play_context.prompt, string_types):
             return output.startswith(self._play_context.prompt)
         else:
             return self._play_context.prompt(output)

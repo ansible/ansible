@@ -133,54 +133,10 @@ except ImportError:
     except ImportError:
         pass
 
-try:
-    # Python 2.6+
-    from ast import literal_eval
-except ImportError:
-    # a replacement for literal_eval that works with python 2.4. from:
-    # https://mail.python.org/pipermail/python-list/2009-September/551880.html
-    # which is essentially a cut/paste from an earlier (2.6) version of python's
-    # ast.py
-    from compiler import ast, parse
-
-    def literal_eval(node_or_string):
-        """
-        Safely evaluate an expression node or a string containing a Python
-        expression.  The string or node provided may only consist of the  following
-        Python literal structures: strings, numbers, tuples, lists, dicts,  booleans,
-        and None.
-        """
-        _safe_names = {'None': None, 'True': True, 'False': False}
-        # Okay to use basestring and long here because this is only for
-        # python 2.4 and 2.5
-        if isinstance(node_or_string, basestring):
-            node_or_string = parse(node_or_string, mode='eval')
-        if isinstance(node_or_string, ast.Expression):
-            node_or_string = node_or_string.node
-
-        def _convert(node):
-            if isinstance(node, ast.Const) and isinstance(node.value, (basestring, int, float, long, complex)):
-                return node.value
-            elif isinstance(node, ast.Tuple):
-                return tuple(map(_convert, node.nodes))
-            elif isinstance(node, ast.List):
-                return list(map(_convert, node.nodes))
-            elif isinstance(node, ast.Dict):
-                return dict((_convert(k), _convert(v)) for k, v in node.items())
-            elif isinstance(node, ast.Name):
-                if node.name in _safe_names:
-                    return _safe_names[node.name]
-            elif isinstance(node, ast.UnarySub):
-                return -_convert(node.expr)
-            raise ValueError('malformed string')
-        return _convert(node_or_string)
-
-_literal_eval = literal_eval
-
+from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_native
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
@@ -212,6 +168,8 @@ try:
 except NameError:
     # Python 3
     basestring = string_types
+
+_literal_eval = literal_eval
 
 # End of deprecated names
 
