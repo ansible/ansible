@@ -92,7 +92,28 @@ ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WR
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import os.path
 import sys
+import __main__
+
+# For some distros and python versions we pick up this script in the temporary
+# directory.  This leads to problems when the ansible module masks a python
+# library that another import needs.  We have not figured out what about the
+# specific distros and python versions causes this to behave differently.
+#
+# Tested distros:
+# Fedora23 with python3.4  Works
+# Ubuntu15.10 with python2.7  Works
+# Ubuntu15.10 with python3.4  Fails without this
+# Ubuntu16.04.1 with python3.5  Fails without this
+scriptdir = None
+try:
+    scriptdir = os.path.dirname(os.path.abspath(__main__.__file__))
+except AttributeError:
+    pass
+if scriptdir is not None:
+    sys.path = [p for p in sys.path if p != scriptdir]
+
 import base64
 import shutil
 import zipfile
