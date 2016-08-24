@@ -3169,8 +3169,47 @@ class OpenBSDVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        self.facts['virtualization_type'] = ''
-        self.facts['virtualization_role'] = ''
+        rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.product")
+        if rc != 0:
+          self.facts['virtualization_type'] = ''
+          self.facts['virtualization_role'] = ''
+          return
+        elif re.match('(KVM|Bochs|SmartDC).*', out):
+          self.facts['virtualization_type'] = 'kvm'
+          self.facts['virtualization_role'] = 'guest'
+          return
+        elif re.match('.*VMware.*', out):
+          self.facts['virtualization_type'] = 'VMware'
+          self.facts['virtualization_role'] = 'guest'
+          return
+        elif out.rstrip() == 'VirtualBox':
+          self.facts['virtualization_type'] = 'virtualbox'
+          self.facts['virtualization_role'] = 'guest'
+          return
+        elif out.rstrip() == 'HVM domU':
+          self.facts['virtualization_type'] = 'xen'
+          self.facts['virtualization_role'] = 'guest'
+          return
+        elif out.rstrip() == 'Parallels':
+          self.facts['virtualization_type'] = 'parallels'
+          self.facts['virtualization_role'] = 'guest'
+          return
+        elif out.rstrip() == 'RHEV Hypervisor':
+          self.facts['virtualization_type'] = 'RHEV'
+          self.facts['virtualization_role'] = 'guest'
+          return
+
+        # Try harder and see if hw.vendor has anything we could use.
+        rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.vendor")
+        if rc != 0:
+          self.facts['virtualization_type'] = ''
+          self.facts['virtualization_role'] = ''
+          return
+        elif out.rstrip() == 'QEMU':
+          self.facts['virtualization_type'] = 'kvm'
+          self.facts['virtualization_role'] = 'guest'
+          return
+
 
 class HPUXVirtual(Virtual):
     """
