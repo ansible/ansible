@@ -26,14 +26,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import itertools
 import re
-import time
-import itertools
 import shlex
-import itertools
+import time
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import zip_longest
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
@@ -98,7 +98,7 @@ def ignore_line(text, tokens=None):
 def get_next(iterable):
     item, next_item = itertools.tee(iterable, 2)
     next_item = itertools.islice(next_item, 1, None)
-    return itertools.izip_longest(item, next_item)
+    return zip_longest(item, next_item)
 
 def parse(lines, indent, comment_tokens=None):
     toplevel = re.compile(r'\S')

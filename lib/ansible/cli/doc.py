@@ -218,7 +218,7 @@ class DocCLI(CLI):
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
         pad = 31
-        subdent = ''.join([" " for a in xrange(pad)])
+        subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
