@@ -124,7 +124,7 @@ class InventoryParser(object):
                     del pending_declarations[groupname]
 
                 continue
-            elif line.startswith('['):
+            elif line.startswith('[') and line.endswith(']'):
                 self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + \
                                   "in the section entry, and that there are no other invalid characters")
 
