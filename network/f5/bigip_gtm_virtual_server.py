@@ -37,23 +37,6 @@ notes:
 requirements:
     - bigsuds
 options:
-    server:
-        description:
-            - BIG-IP host
-        required: true
-    server_port:
-        description:
-            - BIG-IP server port
-        required: false
-        default: 443
-    user:
-        description:
-            - BIG-IP username
-        required: true
-    password:
-        description:
-            - BIG-IP password
-        required: true
     state:
         description:
             - Virtual server state
@@ -79,6 +62,7 @@ options:
             - Virtual server port
         required: false
         default: None
+extends_documentation_fragment: f5
 '''
 
 EXAMPLES = '''
