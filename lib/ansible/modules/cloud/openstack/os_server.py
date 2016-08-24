@@ -289,7 +289,6 @@ EXAMPLES = '''
   tasks:
   - name: launch an instance with a string
     os_server:
-      name: vm1
       auth:
          auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
          username: admin
