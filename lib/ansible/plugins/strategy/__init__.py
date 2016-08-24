@@ -405,7 +405,6 @@ class StrategyBase:
                                             # and if none were found, then we raise an error
                                             if not found:
                                                 raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
- 
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
@@ -423,7 +422,7 @@ class StrategyBase:
 
                             item = result_item.get(loop_var, None)
 
-                            if original_task.action == 'include_vars':
+                            if original_task.action == 'include_vars' or original_task.action == 'include_vars_dir':
                                 for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                     # find the host we're actually refering too here, which may
                                     # be a host that is not really in inventory at all
