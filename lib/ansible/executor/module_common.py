@@ -103,9 +103,9 @@ import __main__
 #
 # Tested distros:
 # Fedora23 with python3.4  Works
-# Ubuntu15 with python2.7  Works
-# Ubuntu15 with python3.4  Fails
-# Ubuntu16 with python3.5  Fails
+# Ubuntu15.10 with python2.7  Works
+# Ubuntu15.10 with python3.4  Fails without this
+# Ubuntu16.04.1 with python3.5  Fails without this
 scriptdir = None
 try:
     scriptdir = os.path.dirname(os.path.abspath(__main__.__file__))
