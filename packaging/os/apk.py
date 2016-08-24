@@ -52,6 +52,8 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+notes:
+  - '"name" and "upgrade" are mutually exclusive.'
 '''
 
 EXAMPLES = '''
@@ -209,6 +211,7 @@ def main():
             upgrade = dict(default='no', type='bool'),
         ),
         required_one_of = [['name', 'update_cache', 'upgrade']],
+        mutually_exclusive = [['name', 'upgrade']],
         supports_check_mode = True
     )
 
