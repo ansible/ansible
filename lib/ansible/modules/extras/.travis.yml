@@ -102,13 +102,10 @@ env:
       network/nmcli.py
       network/openvswitch_bridge.py
       network/openvswitch_port.py
-      notification/hipchat.py
       notification/irc.py
       notification/jabber.py
       notification/mail.py
-      notification/mqtt.py
-      notification/sns.py
-      notification/typetalk.py"
+      notification/mqtt.py"
 before_install:
   - git config user.name "ansible"
   - git config user.email "ansible@ansible.com"
