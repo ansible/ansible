@@ -89,7 +89,7 @@ class WorkerProcess(multiprocessing.Process):
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
                     pass
-        except AttributeError, ValueError:
+        except (AttributeError, ValueError):
             # couldn't get stdin's fileno, so we just carry on
             pass
 
