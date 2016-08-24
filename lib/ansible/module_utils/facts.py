@@ -3200,6 +3200,10 @@ class OpenBSDVirtual(Virtual):
             elif out.rstrip() == 'QEMU':
                 self.facts['virtualization_type'] = 'kvm'
                 self.facts['virtualization_role'] = 'guest'
+            else:
+                # Set empty values if we find no match at all.
+                self.facts['virtualization_type'] = ''
+                self.facts['virtualization_role'] = ''
 
 
 class HPUXVirtual(Virtual):
