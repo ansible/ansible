@@ -157,7 +157,7 @@ class PlaybookExecutor:
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
                                                  (previously_failed + previously_unreachable)
                             if new_play.max_fail_percentage is not None and \
-                               int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
+                               new_play.max_fail_percentage < float(failed_hosts_count * 100) / len(batch):
                                 break_play = True
                                 break
                             elif len(batch) == failed_hosts_count:
