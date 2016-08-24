@@ -102,13 +102,15 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 loader=loader,
             )
         elif 'include_role' in task_ds:
-            t = IncludeRole.load(
+            task_list.extend(
+                IncludeRole.load(
                     task_ds,
                     block=block,
                     role=role,
                     task_include=None,
                     variable_manager=variable_manager,
                     loader=loader
+                )
             )
         else:
             if 'include' in task_ds or 'include_role' in task_ds:

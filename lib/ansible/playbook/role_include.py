@@ -74,6 +74,7 @@ class IncludeRole(Task):
 
         ri = RoleInclude.load(data['include_role'], play=self._block._play, variable_manager=variable_manager, loader=loader)
 
-        myrole = self._included_role.load(ri, self._block._play, parent_role=self._parent_role)
+        #myrole = self._included_role.load(ri, self._block._play, parent_role=self._parent_role) # need to figure out why bad parent
+        myrole = self._included_role.load(ri, self._block._play, parent_role=None)
 
         return myrole.compile(play=self._block._play) # returns list of blocks
