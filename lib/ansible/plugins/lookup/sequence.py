@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from re import compile as re_compile, IGNORECASE
 
+from ansible.compat.six.moves import xrange
 from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
