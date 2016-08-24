@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -17,15 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-import copy
-import sys
-import datetime
-import glob
-import traceback
-import re
-import shlex
-import os
 
 DOCUMENTATION = '''
 ---
@@ -103,6 +95,15 @@ EXAMPLES = '''
     creates: /path/to/database
 '''
 
+import datetime
+import glob
+import re
+import shlex
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import b
+
 # Dict of options and their defaults
 OPTIONS = {'chdir': None,
            'creates': None,
@@ -164,10 +165,10 @@ def main():
         argument_spec=dict(
           _raw_params = dict(),
           _uses_shell = dict(type='bool', default=False),
-          chdir = dict(),
+          chdir = dict(type='path'),
           executable = dict(),
-          creates = dict(),
-          removes = dict(),
+          creates = dict(type='path'),
+          removes = dict(type='path'),
           warn = dict(type='bool', default=True),
         )
     )
@@ -184,18 +185,17 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
-        chdir = os.path.abspath(os.path.expanduser(chdir))
+        chdir = os.path.abspath(chdir)
         os.chdir(chdir)
 
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(creates)
-        if glob.glob(v):
+        if glob.glob(creates):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s exists" % v,
+                stdout="skipped, since %s exists" % creates,
                 changed=False,
                 stderr=False,
                 rc=0
@@ -205,11 +205,10 @@ def main():
     # do not run the command if the line contains removes=filename
     # and the filename does not exist.  This allows idempotence
     # of command executions.
-        v = os.path.expanduser(removes)
-        if not glob.glob(v):
+        if not glob.glob(removes):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s does not exist" % v,
+                stdout="skipped, since %s does not exist" % removes,
                 changed=False,
                 stderr=False,
                 rc=0
@@ -229,14 +228,14 @@ def main():
     delta = endd - startd
 
     if out is None:
-        out = ''
+        out = b('')
     if err is None:
-        err = ''
+        err = b('')
 
     module.exit_json(
         cmd      = args,
-        stdout   = out.rstrip("\r\n"),
-        stderr   = err.rstrip("\r\n"),
+        stdout   = out.rstrip(b("\r\n")),
+        stderr   = err.rstrip(b("\r\n")),
         rc       = rc,
         start    = str(startd),
         end      = str(endd),
@@ -245,8 +244,5 @@ def main():
         warnings = warnings
     )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.splitter import *
-
-main()
+if __name__ == '__main__':
+    main()
