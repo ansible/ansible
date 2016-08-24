@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 ###Minor Changes:
 * Fix a bug with async's poll keyword not making use of ansible_python_interpreter to run (and thus breaking when /usr/bin/python is not present on the remote machine.)
+* Fix a bug where hosts that started with a range in inventory were being treated as an invalid section header.
 
 ## 2.1.1 "The Song Remains the Same" - 07-28-2016
 
