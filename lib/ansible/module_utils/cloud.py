@@ -67,7 +67,7 @@ class CloudRetry(object):
         pass
 
     @classmethod
-    def backoff(cls, tries=10, delay=3, backoff=2):
+    def backoff(cls, tries=10, delay=3, backoff=1.1):
         """ Retry calling the Cloud decorated function using an exponential backoff.
         Kwargs:
             tries (int): Number of times to try (not retry) before giving up
