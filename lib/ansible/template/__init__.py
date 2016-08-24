@@ -227,7 +227,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from a string '''
 
-        if not isinstance(orig_data, string_types):
+        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
             return orig_data
 
         with contextlib.closing(StringIO(orig_data)) as data:
@@ -281,7 +281,7 @@ class Templar:
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
-        before being sent through the template engine. 
+        before being sent through the template engine.
         '''
 
         if fail_on_undefined is None:
@@ -304,7 +304,6 @@ class Templar:
                 result = variable
 
                 if self._contains_vars(variable):
-
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -438,7 +437,6 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
-
         # For preserving the number of input newlines in the output (used
         # later in this method)
         data_newlines = _count_newlines_from_end(data)
@@ -517,7 +515,6 @@ class Templar:
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += '\n' * (data_newlines - res_newlines)
-
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:

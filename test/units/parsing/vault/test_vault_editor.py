@@ -22,13 +22,8 @@ __metaclass__ = type
 #!/usr/bin/env python
 
 import sys
-import getpass
 import os
-import shutil
-import time
 import tempfile
-from binascii import unhexlify
-from binascii import hexlify
 from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
