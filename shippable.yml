@@ -43,6 +43,8 @@ matrix:
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1404
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1604
 
+    - env: TEST=integration TARGET=all IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1
+
     - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py24
       python: 2.7
     - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py26
