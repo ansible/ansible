@@ -231,6 +231,8 @@ class CliBase(object):
     def authorize(self, params, **kwargs):
         pass
 
+    ### Command methods ###
+
     def execute(self, commands, **kwargs):
         try:
             return self.shell.send(commands)
@@ -238,3 +240,16 @@ class CliBase(object):
             exc = get_exception()
             raise NetworkError(exc.message, commands=commands)
 
+    def run_commands(self, commands, **kwargs):
+        return self.execute(to_list(commands))
+
+    ### Config methods ###
+
+    def load_config(self, commands, **kwargs):
+        raise NotImplementedError
+
+    def replace_config(self, commands, **kwargs):
+        raise NotImplementedError
+
+    def save_config(self):
+        raise NotImplementedError
