@@ -475,7 +475,7 @@ def bytes_to_human(size, isbits=False, unit=None):
         base = 'bits'
     suffix = ''
 
-    for suffix, limit in sorted(SIZE_RANGES.iteritems(), key=lambda item: -item[1]):
+    for suffix, limit in sorted(iteritems(SIZE_RANGES), key=lambda item: -item[1]):
         if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
             break
 
