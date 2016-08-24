@@ -24,6 +24,8 @@ from yaml.nodes import MappingNode
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.vars.unsafe_proxy import wrap_var
 
+named_warnings = set(['duplicate-key'])
+
 try:
     from __main__ import display
 except ImportError:
@@ -32,8 +34,29 @@ except ImportError:
 
 
 class AnsibleConstructor(Constructor):
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, fatal_warnings=None, ignore_warnings=None):
         self._ansible_file_name = file_name
+
+        if fatal_warnings is None:
+            self._fatal_warnings = set()
+        else:
+            fatal_warnings = set(fatal_warnings)
+            unknown_warnings = fatal_warnings - named_warnings
+            if unknown_warnings:
+                display.warning('Ignoring unknown fatal warnings: %s' % (
+                    ', '.join(unknown_warnings)))
+            self._fatal_warnings = fatal_warnings
+
+        if ignore_warnings is None:
+            self._ignore_warnings = set()
+        else:
+            ignore_warnings = set(ignore_warnings)
+            unknown_warnings = ignore_warnings - named_warnings
+            if unknown_warnings:
+                display.warning('Ignoring unknown ignore warnings: %s' % (
+                    ', '.join(unknown_warnings)))
+            self._ignore_warnings = ignore_warnings
+
         super(AnsibleConstructor, self).__init__()
 
     def construct_yaml_map(self, node):
@@ -66,7 +89,11 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
+                if 'duplicate-key' in self._fatal_warnings:
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "found duplicate key (%s)" % key, key_node.start_mark)
+                elif 'duplicate-key' not in self._ignore_warnings:
+                    display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value

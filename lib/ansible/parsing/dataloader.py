@@ -63,10 +63,12 @@ class DataLoader():
         ds = dl.load_from_file('/path/to/file')
     '''
 
-    def __init__(self):
+    def __init__(self, fatal_warnings=None, ignore_warnings=None):
         self._basedir = '.'
         self._FILE_CACHE = dict()
         self._tempfiles = set()
+        self._fatal_warnings=fatal_warnings
+        self._ignore_warnings=ignore_warnings
 
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
@@ -149,7 +151,9 @@ class DataLoader():
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        loader = AnsibleLoader(stream, file_name)
+        loader = AnsibleLoader(stream, file_name,
+                               fatal_warnings=self._fatal_warnings,
+                               ignore_warnings=self._ignore_warnings)
         try:
             return loader.get_single_data()
         finally:

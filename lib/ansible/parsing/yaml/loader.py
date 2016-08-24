@@ -31,9 +31,11 @@ from ansible.parsing.yaml.constructor import AnsibleConstructor
 
 if HAVE_PYYAML_C:
     class AnsibleLoader(CParser, AnsibleConstructor, Resolver):
-        def __init__(self, stream, file_name=None):
+        def __init__(self, stream, file_name=None, fatal_warnings=None, ignore_warnings=None):
             CParser.__init__(self, stream)
-            AnsibleConstructor.__init__(self, file_name=file_name)
+            AnsibleConstructor.__init__(self, file_name=file_name,
+                                        fatal_warnings=fatal_warnings,
+                                        ignore_warnings=ignore_warnings)
             Resolver.__init__(self)
 else:
     from yaml.composer import Composer
@@ -42,10 +44,12 @@ else:
     from yaml.parser import Parser
 
     class AnsibleLoader(Reader, Scanner, Parser, Composer, AnsibleConstructor, Resolver):
-        def __init__(self, stream, file_name=None):
+        def __init__(self, stream, file_name=None, fatal_warnings=None):
             Reader.__init__(self, stream)
             Scanner.__init__(self)
             Parser.__init__(self)
             Composer.__init__(self)
-            AnsibleConstructor.__init__(self, file_name=file_name)
+            AnsibleConstructor.__init__(self, file_name=file_name,
+                                        fatal_warnings=fatal_warnings,
+                                        ignore_warnings=ignore_warnings)
             Resolver.__init__(self)
