@@ -30,9 +30,9 @@ from ansible.playbook.taggable import Taggable
 
 class Block(Base, Become, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list', default=[])
-    _rescue = FieldAttribute(isa='list', default=[])
-    _always = FieldAttribute(isa='list', default=[])
+    _block  = FieldAttribute(isa='list', default=[], inherit=False)
+    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
+    _always = FieldAttribute(isa='list', default=[], inherit=False)
     _delegate_to = FieldAttribute(isa='list')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
     _any_errors_fatal = FieldAttribute(isa='bool')
