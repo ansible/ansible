@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
 import re
 import socket
 import time
@@ -70,12 +71,22 @@ class Shell(object):
         self.prompts = prompts_re or list()
         self.errors = errors_re or list()
 
-    def open(self, host, port=22, username=None, password=None,
-            timeout=10, key_filename=None, pkey=None, look_for_keys=None,
-            allow_agent=False):
+    def open(self, host, port=22, username=None, password=None, timeout=10,
+             key_filename=None, pkey=None, look_for_keys=None,
+             allow_agent=False, key_policy="loose"):
 
         self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        if key_policy != "ignore":
+            self.ssh.load_system_host_keys()
+            try:
+                self.ssh.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+            except IOError:
+                pass
+
+        if key_policy == "strict":
+            self.ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
+        else:
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # unless explicitly set, disable look for keys if a password is
         # present. this changes the default search order paramiko implements
@@ -83,9 +94,11 @@ class Shell(object):
             look_for_keys = password is None
 
         try:
-            self.ssh.connect(host, port=port, username=username, password=password,
-                        timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
-                        key_filename=key_filename, allow_agent=allow_agent)
+            self.ssh.connect(
+                host, port=port, username=username, password=password,
+                timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
+                key_filename=key_filename, allow_agent=allow_agent,
+            )
 
             self.shell = self.ssh.invoke_shell()
             self.shell.settimeout(timeout)
