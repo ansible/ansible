@@ -21,8 +21,13 @@ __metaclass__ = type
 
 from yaml.constructor import Constructor, ConstructorError
 from yaml.nodes import MappingNode
+
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
 from ansible.vars.unsafe_proxy import wrap_var
+from ansible.parsing.vault import VaultLib
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -32,9 +37,12 @@ except ImportError:
 
 
 class AnsibleConstructor(Constructor):
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, vault_password=None):
+        self._vault_password = vault_password
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
+        self._vaults = {}
+        self._vaults['default'] = VaultLib(password=self._vault_password)
 
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
@@ -86,6 +94,20 @@ class AnsibleConstructor(Constructor):
 
         return ret
 
+    def construct_vault_encrypted_unicode(self, node):
+        value = self.construct_scalar(node)
+        ciphertext_data = to_bytes(value)
+
+        if self._vault_password is None:
+            raise ConstructorError(None, None,
+                    "found vault but no vault password provided", node.start_mark)
+
+        # could pass in a key id here to choose the vault to associate with
+        vault = self._vaults['default']
+        ret = AnsibleVaultEncryptedUnicode(ciphertext_data)
+        ret.vault = vault
+        return ret
+
     def construct_yaml_seq(self, node):
         data = AnsibleSequence()
         yield data
@@ -108,6 +130,7 @@ class AnsibleConstructor(Constructor):
         datasource = self._ansible_file_name or node.start_mark.name
 
         return (datasource, line, column)
+
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
@@ -132,3 +155,7 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!unsafe',
     AnsibleConstructor.construct_yaml_unsafe)
+
+AnsibleConstructor.add_constructor(
+    u'!vault-encrypted',
+    AnsibleConstructor.construct_vault_encrypted_unicode)
