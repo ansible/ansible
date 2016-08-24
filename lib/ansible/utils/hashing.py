@@ -38,21 +38,18 @@ except ImportError:
         # Assume we're running in FIPS mode here
         _md5 = None
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes
+
 
 def secure_hash_s(data, hash_func=sha1):
     ''' Return a secure hash hex digest of data. '''
 
     digest = hash_func()
-    try:
-        if not isinstance(data, string_types):
-            data = "%s" % data
-        digest.update(data)
-    except UnicodeEncodeError:
-        digest.update(data.encode('utf-8'))
+    data = to_bytes(data, errors='strict')
+    digest.update(data)
     return digest.hexdigest()
+
 
 def secure_hash(filename, hash_func=sha1):
     ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
@@ -76,6 +73,8 @@ def secure_hash(filename, hash_func=sha1):
 checksum = secure_hash
 checksum_s = secure_hash_s
 
+
+#
 # Backwards compat functions.  Some modules include md5s in their return values
 # Continue to support that for now.  As of ansible-1.8, all of those modules
 # should also return "checksum" (sha1 for now)
@@ -84,14 +83,15 @@ checksum_s = secure_hash_s
 # 2) Compliance with a third party protocol
 #
 # MD5 will not work on systems which are FIPS-140-2 compliant.
+#
 
 def md5s(data):
     if not _md5:
         raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash_s(data, _md5)
 
+
 def md5(filename):
     if not _md5:
         raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash(filename, _md5)
-
