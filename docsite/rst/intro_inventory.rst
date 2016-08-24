@@ -80,6 +80,23 @@ You can also select the connection type and user on a per host basis:
 As mentioned above, setting these in the inventory file is only a shorthand, and we'll discuss how to store them in individual files
 in the 'host_vars' directory a bit later on.
 
+Extending long lines
+~~~~~~~~~~~~~~~~~~~~
+
+Long lines can be extended using the INI-style convention of indenting
+subsequent lines, so the above could also be written like this::
+
+   [targets]
+
+   localhost
+     ansible_connection=local
+   other1.example.com
+     ansible_connection=ssh
+     ansible_user=mpdehaan
+   other2.example.com
+     ansible_connection=ssh
+     ansible_user=mdehaan
+
 .. _host_variables:
 
 Host Variables
