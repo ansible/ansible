@@ -125,16 +125,16 @@ class TaskExecutor:
                 res['changed'] = False
 
             def _clean_res(res):
-                if isinstance(res, dict):
-                    for k in res.keys():
+                if isinstance(res, UnsafeProxy):
+                    return res._obj
+                elif isinstance(res, binary_type):
+                    return to_unicode(res, errors='strict')
+                elif isinstance(res, dict):
+                    for k in res:
                         res[k] = _clean_res(res[k])
                 elif isinstance(res, list):
                     for idx,item in enumerate(res):
                         res[idx] = _clean_res(item)
-                elif isinstance(res, UnsafeProxy):
-                    return res._obj
-                elif isinstance(res, binary_type):
-                    return to_unicode(res, errors='strict')
                 return res
 
             display.debug("dumping result to json")
@@ -166,7 +166,7 @@ class TaskExecutor:
         self._play_context.update_vars(play_context_vars)
 
         old_vars = dict()
-        for k in play_context_vars.keys():
+        for k in play_context_vars:
             if k in self._job_vars:
                 old_vars[k] = self._job_vars[k]
             self._job_vars[k] = play_context_vars[k]
@@ -206,7 +206,7 @@ class TaskExecutor:
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
         # the old variables dictionary
-        for k in play_context_vars.keys():
+        for k in play_context_vars:
             if k in old_vars:
                 self._job_vars[k] = old_vars[k]
             else:
@@ -616,7 +616,7 @@ class TaskExecutor:
         if self._task.delegate_to is not None:
             # since we're delegating, we don't want to use interpreter values
             # which would have been set for the original target host
-            for i in variables.keys():
+            for i in list(variables.keys()):
                 if isinstance(i, string_types) and i.startswith('ansible_') and i.endswith('_interpreter'):
                     del variables[i]
             # now replace the interpreter values with those that may have come
