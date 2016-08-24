@@ -31,6 +31,8 @@ BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
 BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
+SIZE_RANGES = { 'Y': 1<<80, 'Z': 1<<70, 'E': 1<<60, 'P': 1<<50, 'T': 1<<40, 'G': 1<<30, 'M': 1<<20, 'K': 1<<10, 'B': 1 }
+
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here can
 # be used to do many common tasks
@@ -465,6 +467,72 @@ def heuristic_log_sanitize(data, no_log_values=None):
     if no_log_values:
         output = remove_values(output, no_log_values)
     return output
+
+def bytes_to_human(size, isbits=False, unit=None):
+
+    base = 'Bytes'
+    if isbits:
+        base = 'bits'
+    suffix = ''
+
+    for suffix, limit in sorted(iteritems(SIZE_RANGES), key=lambda item: -item[1]):
+        if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
+            break
+
+    if limit != 1:
+        suffix += base[0]
+    else:
+        suffix = base
+
+    return '%.2f %s' % (float(size)/ limit, suffix)
+
+def human_to_bytes(number, default_unit=None, isbits=False):
+
+    '''
+    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument
+    ex:
+      human_to_bytes('10M') <=> human_to_bytes(10, 'M')
+    '''
+    m = re.search('^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
+    if m is None:
+        raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
+    try:
+        num = float(m.group(1))
+    except:
+        raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
+
+    unit = m.group(2)
+    if unit is None:
+        unit = default_unit
+
+    if unit is None:
+        ''' No unit given, returning raw number '''
+        return int(round(num))
+    range_key = unit[0].upper()
+    try:
+        limit = SIZE_RANGES[range_key]
+    except:
+        raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
+
+    # default value
+    unit_class = 'B'
+    unit_class_name = 'byte'
+    # handling bits case
+    if isbits:
+        unit_class = 'b'
+        unit_class_name = 'bit'
+    # check unit value if more than one character (KB, MB)
+    if len(unit) > 1:
+        expect_message = 'expect %s%s or %s' % (range_key, unit_class, range_key)
+        if range_key == 'B':
+            expect_message = 'expect %s or %s' % (unit_class, unit_class_name)
+
+        if unit_class_name in unit.lower():
+            pass
+        elif unit[1] != unit_class:
+            raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
+
+    return int(round(num * limit))
 
 def is_executable(path):
     '''is the given path executable?
@@ -1468,7 +1536,7 @@ class AnsibleModule(object):
 
     def _check_type_bits(self, value):
         try:
-            self.human_to_bytes(value, bits=True)
+            self.human_to_bytes(value, isbits=True)
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
@@ -2181,53 +2249,13 @@ class AnsibleModule(object):
         fh.close()
 
     def bytes_to_human(self, size):
-
-        ranges = (
-                (1 << 70, 'ZB'),
-                (1 << 60, 'EB'),
-                (1 << 50, 'PB'),
-                (1 << 40, 'TB'),
-                (1 << 30, 'GB'),
-                (1 << 20, 'MB'),
-                (1 << 10, 'KB'),
-                (1, 'Bytes')
-            )
-        for limit, suffix in ranges:
-            if size >= limit:
-                break
-        return '%.2f %s' % (float(size)/ limit, suffix)
+        return bytes_to_human(size)
 
     # for backwards compatibility
     pretty_bytes = bytes_to_human
 
-    def human_to_bytes(number, bits=False):
-
-        result = None
-        suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
-        full = 'Bytes'
-
-        if bits:
-            suffixes = [ x.replace('B', 'b') for x in suffixes ]
-            full = 'Bits'
-
-        if number is None:
-            result = 0
-        elif isinstance(number, int):
-            result = number
-        elif number.isdigit():
-            result = int(number)
-        elif full in number:
-            result = int(number.replace(full,''))
-        else:
-            for i, suffix in enumerate(suffixes):
-                if suffix in number:
-                    result = int(number.replace(suffix ,'')) * (1024 ** i)
-                    break
-
-        if result is None:
-            raise ValueError("Failed to convert %s. The suffix must be one of %s or %s" % (number, full, ', '.join(suffixes)))
-
-        return result
+    def human_to_bytes(self, number, isbits=False):
+        return human_to_bytes(number, isbits)
 
     #
     # Backwards compat
