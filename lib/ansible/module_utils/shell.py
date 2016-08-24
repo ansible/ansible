@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
 import re
 import socket
 import time
@@ -72,14 +73,14 @@ class Shell(object):
 
     def open(self, host, port=22, username=None, password=None, timeout=10,
              key_filename=None, pkey=None, look_for_keys=None,
-             allow_agent=False, key_policy="ignore"):
+             allow_agent=False, key_policy="loose"):
 
         self.ssh = paramiko.SSHClient()
         if key_policy != "ignore":
             self.ssh.load_system_host_keys()
             try:
-                self.ssh.load_host_keys('~/.ssh/known_hosts')
-            except:
+                self.ssh.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+            except IOError:
                 pass
 
         if key_policy == "strict":
