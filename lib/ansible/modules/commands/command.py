@@ -104,38 +104,6 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
 
-# Dict of options and their defaults
-OPTIONS = {'chdir': None,
-           'creates': None,
-           'executable': None,
-           'NO_LOG': None,
-           'removes': None,
-           'warn': True,
-           }
-
-# This is a pretty complex regex, which functions as follows:
-#
-# 1. (^|\s)
-# ^ look for a space or the beginning of the line
-# 2. ({options_list})=
-# ^ expanded to (chdir|creates|executable...)=
-#   look for a valid param, followed by an '='
-# 3. (?P<quote>[\'"])?
-# ^ look for an optional quote character, which can either be
-#   a single or double quote character, and store it for later
-# 4. (.*?)
-# ^ match everything in a non-greedy manner until...
-# 5. (?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)
-# ^ a non-escaped space or a non-escaped quote of the same kind
-#   that was matched in the first 'quote' is found, or the end of
-#   the line is reached
-OPTIONS_REGEX = '|'.join(OPTIONS.keys())
-PARAM_REGEX = re.compile(
-    r'(^|\s)(' + OPTIONS_REGEX +
-    r')=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)'
-)
-
-
 def check_command(commandline):
     arguments = { 'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
                   'ln': 'state=link', 'mkdir': 'state=directory',
