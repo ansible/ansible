@@ -97,6 +97,15 @@ EXAMPLES = '''
 #
 
 import urllib
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
 
 DEFAULT_URI = "https://api.hipchat.com/v1"
 
@@ -104,10 +113,10 @@ MSG_URI_V1 = "/rooms/message"
 
 NOTIFY_URI_V2 = "/room/{id_or_name}/notification"
 
+
 def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False, api=MSG_URI_V1):
+                color='yellow', notify=False, api=MSG_URI_V1):
     '''sending message to hipchat v1 server'''
-    print "Sending message to v1 server"
 
     params = {}
     params['room_id'] = room
@@ -133,11 +142,10 @@ def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
 
 
 def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False, api=NOTIFY_URI_V2):
+                color='yellow', notify=False, api=NOTIFY_URI_V2):
     '''sending message to hipchat v2 server'''
-    print "Sending message to v2 server"
 
-    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+    headers = {'Authorization': 'Bearer %s' % token, 'Content-Type': 'application/json'}
 
     body = dict()
     body['message'] = msg
@@ -200,14 +208,12 @@ def main():
             send_msg_v2(module, token, room, msg_from, msg, msg_format, color, notify, api)
         else:
             send_msg_v1(module, token, room, msg_from, msg, msg_format, color, notify, api)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to send msg: %s" % e)
 
     changed = True
     module.exit_json(changed=changed, room=room, msg_from=msg_from, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-
-main()
+if __name__ == '__main__':
+    main()

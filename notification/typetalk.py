@@ -57,6 +57,11 @@ except ImportError:
     except ImportError:
         json = None
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url, ConnectionError
+
 
 def do_request(module, url, params, headers=None):
     data = urllib.urlencode(params)
@@ -71,6 +76,7 @@ def do_request(module, url, params, headers=None):
         exc.code = info['status']
         raise exc
     return r
+
 
 def get_access_token(module, client_id, client_secret):
     params = {
@@ -95,7 +101,8 @@ def send_message(module, client_id, client_secret, topic, msg):
         }
         do_request(module, url, {'message': msg}, headers)
         return True, {'access_token': access_token}
-    except ConnectionError, e:
+    except ConnectionError:
+        e = get_exception()
         return False, e
 
 
@@ -126,8 +133,5 @@ def main():
     module.exit_json(changed=True, topic=topic, msg=msg)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
