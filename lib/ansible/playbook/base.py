@@ -47,19 +47,28 @@ except ImportError:
 
 
 def _generic_g(prop_name, self):
+    try:
+        return self._attributes[prop_name]
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+def _generic_g_method(prop_name, self):
     method = "_get_attr_%s" % prop_name
     try:
-        value = getattr(self, method)()
-    except AttributeError:
-        try:
-            value = self._attributes[prop_name]
-            if value is None and not self._finalized:
-                try:
-                    value = self._get_parent_attribute(prop_name)
-                except AttributeError:
-                    pass
-        except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        return getattr(self, method)()
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+def _generic_g_parent(prop_name, self):
+    try:
+        value = self._attributes[prop_name]
+        if value is None and not self._finalized:
+            try:
+                value = self._get_parent_attribute(prop_name)
+            except AttributeError:
+                pass
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
     return value
 
@@ -71,8 +80,19 @@ def _generic_d(prop_name, self):
 
 class BaseMeta(type):
 
+    """
+    Metaclass for the Base object, which is used to construct the class
+    attributes based on the FieldAttributes available.
+    """
+
     def __new__(cls, name, parents, dct):
         def _create_attrs(src_dict, dst_dict):
+            '''
+            Helper method which creates the attributes based on those in the
+            source dictionary of attributes. This also populates the other
+            attributes used to keep track of these attributes and via the
+            getter/setter/deleter methods.
+            '''
             keys = list(src_dict.keys())
             for attr_name in keys:
                 value = src_dict[attr_name]
@@ -80,8 +100,19 @@ class BaseMeta(type):
                     if attr_name.startswith('_'):
                         attr_name = attr_name[1:]
 
-                    getter  = partial(_generic_g, attr_name)
-                    setter  = partial(_generic_s, attr_name)
+                    # here we selectively assign the getter based on a few
+                    # things, such as whether we have a _get_attr_<name>
+                    # method, or if the attribute is marked as not inheriting
+                    # its value from a parent object
+                    method = "_get_attr_%s" % attr_name
+                    if method in src_dict or method in dst_dict:
+                        getter = partial(_generic_g_method, attr_name)
+                    elif ('_get_parent_attribute' in src_dict or '_get_parent_attribute' in dst_dict)  and value.inherit:
+                        getter = partial(_generic_g_parent, attr_name)
+                    else:
+                        getter = partial(_generic_g, attr_name)
+
+                    setter = partial(_generic_s, attr_name)
                     deleter = partial(_generic_d, attr_name)
 
                     dst_dict[attr_name] = property(getter, setter, deleter)
@@ -89,14 +120,21 @@ class BaseMeta(type):
                     dst_dict['_attributes'][attr_name] = value.default
 
         def _process_parents(parents, dst_dict):
+            '''
+            Helper method which creates attributes from all parent objects
+            recursively on through grandparent objects
+            '''
             for parent in parents:
                 if hasattr(parent, '__dict__'):
                     _create_attrs(parent.__dict__, dst_dict)
                     _process_parents(parent.__bases__, dst_dict)
 
+        # create some additional class attributes
         dct['_attributes'] = dict()
         dct['_valid_attrs'] = dict()
 
+        # now create the attributes based on the FieldAttributes
+        # available, including from parent (and grandparent) objects
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
@@ -140,10 +178,10 @@ class Base(with_metaclass(BaseMeta, object)):
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
 
-        # initialize the default field attribute values
-        #self._attributes = dict()
-        #for (name, attr) in iteritems(self._valid_attrs):
-        #    self._attributes[name] = attr.default
+        # we create a copy of the attributes here due to the fact that
+        # it was intialized as a class param in the meta class, so we
+        # need a unique object here (all members contained within are
+        # unique already).
         self._attributes = self._attributes.copy()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
