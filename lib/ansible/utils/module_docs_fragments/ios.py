@@ -89,36 +89,4 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-    required: false
-    default: false
-    version_added: "2.2"
-    choices: ['yes', 'no']
-  running_config:
-    description:
-      - The module, by default, will connect to the remote device and
-        retrieve the current running-config to use as a base for comparing
-        against the contents of source.  There are times when it is not
-        desirable to have the task get the current running-config for
-        every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
-        config for comparision.
-    required: false
-    default: null
-    version_added: "2.2"
-    aliases: ['config']
-  save_config:
-    description:
-      - Specifies the current C(running-config) should be saved to
-        non-volatile memory so that configuration changes are
-        persistent if the device is restarted.
-    required: false
-    default: null
-    version_added: "2.2"
-    aliases: ['save']
 """
