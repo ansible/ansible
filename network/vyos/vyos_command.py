@@ -48,6 +48,17 @@ options:
     required: false
     default: null
     aliases: ['waitfor']
+  match:
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the wait_for must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    required: false
+    default: all
+    choices: ['any', 'all']
   retries:
     description:
       - Specifies the number of retries a command should be tried
@@ -78,7 +89,7 @@ vars:
 
 - vyos_command:
     commands:
-        - show interfaces ethernet {{ item }}
+      - show interfaces ethernet {{ item }}
     provider: "{{ cli }}"
   with_items:
     - eth0
@@ -115,11 +126,12 @@ warnings:
   type: list
   sample: ['...', '...']
 """
-
-from ansible.module_utils.netcmd import CommandRunner, FailedConditionsError
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcli import CommandRunner
+from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
 from ansible.module_utils.vyos import NetworkModule, NetworkError
-from ansible.module_utils.vyos import vyos_argument_spec, get_exception
 
+VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
@@ -127,23 +139,35 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
+def parse_commands(module):
+    for cmd in module.params['commands']:
+        if isinstance(cmd, basestring):
+            cmd = dict(command=cmd, output=None)
+        elif 'command' not in cmd:
+            module.fail_json(msg='command keyword argument is required')
+        elif cmd.get('output') not in [None, 'text']:
+            module.fail_json(msg='invalid output specified for command')
+        elif not set(cmd.keys()).issubset(VALID_KEYS):
+            module.fail_json(msg='unknown keyword specified')
+        yield cmd
 
 def main():
-    """Main entry point for Ansible module execution
-    """
-    argument_spec = dict(
-        commands=dict(type='list'),
+    spec = dict(
+        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
+        commands=dict(type='list', required=True),
+
         wait_for=dict(type='list', aliases=['waitfor']),
+        match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = NetworkModule(argument_spec=spec,
                            connect_on_load=False,
                            supports_check_mode=True)
 
-    commands = module.params['commands']
+    commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
     warnings = list()
@@ -151,21 +175,26 @@ def main():
     runner = CommandRunner(module)
 
     for cmd in commands:
-        if module.check_mode and not cmd.startswith('show'):
+        if module.check_mode and not cmd['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd)
+                            'check mode, not executing `%s`' % cmd['command'])
         else:
-            if cmd.startswith('conf'):
+            if cmd['command'].startswith('conf'):
                 module.fail_json(msg='vyos_command does not support running '
                                      'config mode commands.  Please use '
                                      'vyos_config instead')
-            runner.add_command(cmd)
+            try:
+                runner.add_command(**cmd)
+            except AddCommandError:
+                exc = get_exception()
+                warnings.append('duplicate command detected: %s' % cmd)
 
     for item in conditionals:
         runner.add_conditional(item)
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
+    runner.match = module.params['match']
 
     try:
         runner.run()
@@ -176,12 +205,11 @@ def main():
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False, stdout=list())
 
-    result['stdout'] = list()
     for cmd in commands:
         try:
-            output = runner.get_command(cmd)
+            output = runner.get_command(cmd['command'])
         except ValueError:
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
@@ -194,3 +222,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
