@@ -3171,44 +3171,35 @@ class OpenBSDVirtual(Virtual):
     def get_virtual_facts(self):
         rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.product")
         if rc != 0:
-          self.facts['virtualization_type'] = ''
-          self.facts['virtualization_role'] = ''
-          return
+            self.facts['virtualization_type'] = ''
+            self.facts['virtualization_role'] = ''
         elif re.match('(KVM|Bochs|SmartDC).*', out):
-          self.facts['virtualization_type'] = 'kvm'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
         elif re.match('.*VMware.*', out):
-          self.facts['virtualization_type'] = 'VMware'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'VMware'
+            self.facts['virtualization_role'] = 'guest'
         elif out.rstrip() == 'VirtualBox':
-          self.facts['virtualization_type'] = 'virtualbox'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'virtualbox'
+            self.facts['virtualization_role'] = 'guest'
         elif out.rstrip() == 'HVM domU':
-          self.facts['virtualization_type'] = 'xen'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
         elif out.rstrip() == 'Parallels':
-          self.facts['virtualization_type'] = 'parallels'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'parallels'
+            self.facts['virtualization_role'] = 'guest'
         elif out.rstrip() == 'RHEV Hypervisor':
-          self.facts['virtualization_type'] = 'RHEV'
-          self.facts['virtualization_role'] = 'guest'
-          return
-
-        # Try harder and see if hw.vendor has anything we could use.
-        rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.vendor")
-        if rc != 0:
-          self.facts['virtualization_type'] = ''
-          self.facts['virtualization_role'] = ''
-          return
-        elif out.rstrip() == 'QEMU':
-          self.facts['virtualization_type'] = 'kvm'
-          self.facts['virtualization_role'] = 'guest'
-          return
+            self.facts['virtualization_type'] = 'RHEV'
+            self.facts['virtualization_role'] = 'guest'
+        else:
+            # Try harder and see if hw.vendor has anything we could use.
+            rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.vendor")
+            if rc != 0:
+                self.facts['virtualization_type'] = ''
+                self.facts['virtualization_role'] = ''
+            elif out.rstrip() == 'QEMU':
+                self.facts['virtualization_type'] = 'kvm'
+                self.facts['virtualization_role'] = 'guest'
 
 
 class HPUXVirtual(Virtual):
