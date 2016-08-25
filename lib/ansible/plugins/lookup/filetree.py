@@ -23,6 +23,8 @@ import grp
 import stat
 
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.unicode import to_str
+
 from __main__ import display
 warning = display.warning
 
@@ -33,25 +35,15 @@ try:
 except ImportError:
     pass
 
-def _to_filesystem_str(path):
-    '''Returns filesystem path as a str, if it wasn't already.
-
-    Used in selinux interactions because it cannot accept unicode
-    instances, and specifying complex args in a playbook leaves
-    you with unicode instances.  This method currently assumes
-    that your filesystem encoding is UTF-8.
-
-    '''
-    if isinstance(path, unicode):
-        path = path.encode("utf-8")
-    return path
 
 # If selinux fails to find a default, return an array of None
 def selinux_context(path):
     context = [None, None, None, None]
     if HAVE_SELINUX and selinux.is_selinux_enabled():
         try:
-            ret = selinux.lgetfilecon_raw(_to_filesystem_str(path))
+            # note: the selinux module uses byte strings on python2 and text
+            # strings on python3
+            ret = selinux.lgetfilecon_raw(to_str(path))
         except OSError:
             return context
         if ret[0] != -1:
@@ -59,6 +51,7 @@ def selinux_context(path):
             # may contain ':' characters
             context = ret[1].split(':', 3)
     return context
+
 
 def file_props(root, path):
     ''' Returns dictionary with file properties, or return None on failure '''
@@ -94,7 +87,7 @@ def file_props(root, path):
         ret['group'] = grp.getgrgid(st.st_gid).gr_name
     except KeyError:
         ret['group'] = st.st_gid
-    ret['mode'] = str(oct(stat.S_IMODE(st.st_mode)))
+    ret['mode'] = '0%03o' % (stat.S_IMODE(st.st_mode))
     ret['size'] = st.st_size
     ret['mtime'] = st.st_mtime
     ret['ctime'] = st.st_ctime
