@@ -68,7 +68,7 @@ EXAMPLES = '''
         password: vcenter_password
         portgroup_name: Management
         switch_name: dvSwitch
-        vlan_id: 123 
+        vlan_id: 123
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
@@ -93,7 +93,7 @@ class VMwareDvsPortgroup(object):
         self.dv_switch = None
         self.state = self.module.params['state']
         self.content = connect_to_api(module)
-        
+
     def process_state(self):
         try:
             dvspg_states = {
@@ -143,7 +143,7 @@ class VMwareDvsPortgroup(object):
         result = None
 
         if not self.module.check_mode:
-            task = dvs_portgroup.Destroy_Task()
+            task = self.dvs_portgroup.Destroy_Task()
             changed, result = wait_for_task(task)
         self.module.exit_json(changed=changed, result=str(result))
 
