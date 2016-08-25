@@ -213,8 +213,12 @@ class Role(Base, Become, Conditional, Taggable):
             os.path.join(basepath, '%s.yml' % main),
             os.path.join(basepath, '%s.yaml' % main),
             os.path.join(basepath, '%s.json' % main),
-            os.path.join(basepath, main),
         )
+
+        if self._tasks_from:
+            possible_mains = (os.path.join(basepath, main),) + possible_mains
+        else:
+            possible_mains = possible_mains + (os.path.join(basepath, main),)
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
             raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
