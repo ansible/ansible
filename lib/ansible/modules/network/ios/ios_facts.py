@@ -58,62 +58,70 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_net_config:
-  description: The running-config from the device
-  returned: when config is configured
-  type: str
-ansible_net_interfaces:
-  description: The interfaces on the device
-  returned: when interfaces is configured
-  type: dict
-ansible_net_filesystems:
-  description: A list of the filesystems on the device
-  returned: when hardware is configured
+ansible_net_gather_subset:
+  description: The list of fact subsets collected from the device
+  returned: always
   type: list
-ansible_net_hostname:
-  description: The configured system hostname
-  returned: always
-  type: str
-ansible_net_image:
-  description: The image the system booted from
-  returned: always
-  type: str
-ansible_net_module:
-  description: The device model string
+
+# default
+ansible_net_model:
+  description: The model name returned from the device
   returned: always
   type: str
 ansible_net_serialnum:
-  description: The serial number of the device
+  description: The serial number of the remote device
   returned: always
   type: str
 ansible_net_version:
-  description: The version of the software running
+  description: The operating system version running on the remote device
   returned: always
   type: str
-ansible_net_gather_subset:
-  description: The list of subsets gathered by the module
+ansible_net_hostname:
+  description: The configured hostname of the device
   returned: always
-  type: list
-ansible_net_all_ipv4_addresses:
-  description: The list of all IPv4 addresses configured on the device
-  returned: when interface is configured
-  type: list
-ansible_net_all_ipv6_addresses:
-  description: The list of all ipv6 addresses configured on the device
-  returned: when interface is configured
-  type: list
-ansible_net_neighbors:
-  description: The set of LLDP neighbors
-  returned: when interface is configured
+  type: string
+ansible_net_image:
+  description: The image file the device is running
+  returned: always
+  type: string
+
+# hardware
+ansible_net_filesystems:
+  description: All file system names availabe on the device
+  returned: when hardware is configured
   type: list
 ansible_net_memfree_mb:
-  description: The amount of free processor memory
+  description: The available free memory on the remote device in Mb
   returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total amount of available processor memory
+  description: The total memory on the remote device in Mb
   returned: when hardware is configured
   type: int
+
+# config
+ansible_net_config:
+  description: The current active config from the device
+  returned: when config is configured
+  type: str
+
+# interfaces
+ansible_net_all_ipv4_addresses:
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
+  type: list
+ansible_net_all_ipv6_addresses:
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
+  type: list
+ansible_net_interfaces:
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
+  type: dict
+ansible_net_neighbors:
+  description: The list of LLDP neighbors from the remote device
+  returned: when interfaces is configured
+  type: dict
 """
 import re
 
