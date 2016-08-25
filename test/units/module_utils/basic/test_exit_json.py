@@ -32,7 +32,6 @@ from ansible.module_utils import basic
 
 empty_invocation = {u'module_args': {}}
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitJson(unittest.TestCase):
     def setUp(self):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
@@ -90,7 +89,6 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset = (

@@ -19,7 +19,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-#!/usr/bin/env python
 
 import sys
 import os
@@ -103,12 +102,13 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertTrue(os.path.exists(tmp_file.name))
 
+    @unittest.skipIf(sys.version_info[0] >= 3, "VaultAES still needs to be ported to Python 3")
     def test_decrypt_1_0(self):
         """
         Skip testing decrypting 1.0 files if we don't have access to AES, KDF or
         Counter, or we are running on python3 since VaultAES hasn't been backported.
         """
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or sys.version > '3':
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
@@ -163,12 +163,13 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
 
+    @unittest.skipIf(sys.version_info[0] >= 3, "VaultAES still needs to be ported to Python 3")
     def test_rekey_migration(self):
         """
         Skip testing rekeying files if we don't have access to AES, KDF or
         Counter, or we are running on python3 since VaultAES hasn't been backported.
         """
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or sys.version > '3':
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
