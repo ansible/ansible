@@ -131,6 +131,29 @@ modules should create their octals like this::
     # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
     EXECUTABLE_PERMS = int('0755', 8)
 
+Outputting octal numbers may also need to be changed.  In python2 we often did
+this to return file permissions::
+
+    mode = int('0775', 8)
+    result['mode'] = oct(mode)
+
+This would give the user ``result['mode'] == '0755'`` in their playbook.  In
+python3, :func:`oct` returns the format with the lowercase ``o`` in it like:
+``result['mode'] == '0o755'``.  If a user had a conditional in their playbook
+or was using the mode in a template the new format might break things.  We
+need to return the old form of mode for backwards compatibility.  You can do
+it like this::
+
+    mode = int('0775', 8)
+    result['mode'] = '0%03o' % mode
+
+You should use this wherever backwards compatibility is a concern or you are
+dealing with file permissions.  (With file permissions a user may be feeding
+the mode into another program or to another module which doesn't understand
+the python syntax for octal numbers.  ``[zero][digit][digit][digit]`` is
+understood by most everything and therefore the right way to express octals in
+these cisrcumstances.
+
 Bundled six
 -----------
 
