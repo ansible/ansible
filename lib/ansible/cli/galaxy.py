@@ -39,7 +39,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -193,7 +193,7 @@ class GalaxyCLI(CLI):
             os.makedirs(role_path)
         readme_path = os.path.join(role_path, "README.md")
         f = open(readme_path, "wb")
-        f.write(self.galaxy.default_readme)
+        f.write(to_bytes(self.galaxy.default_readme))
         f.close()
 
         # create default .travis.yml
