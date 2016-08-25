@@ -105,6 +105,7 @@ class Role(Base, Become, Conditional, Taggable):
                 params['when'] = role_include.when
             if role_include.tags is not None:
                 params['tags'] = role_include.tags
+            params['tasks_from'] = tasks_from
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
