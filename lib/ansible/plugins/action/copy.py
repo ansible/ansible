@@ -113,7 +113,7 @@ class ActionModule(ActionBase):
             # Walk the directory and append the file tuples to source_files.
             for base_path, sub_folders, files in os.walk(to_bytes(source)):
                 for file in files:
-                    full_path = os.path.join(base_path, file)
+                    full_path = to_unicode(os.path.join(base_path, file), errors='strict')
                     rel_path = full_path[sz:]
                     if rel_path.startswith('/'):
                         rel_path = rel_path[1:]

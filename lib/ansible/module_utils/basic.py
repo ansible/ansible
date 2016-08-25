@@ -1197,7 +1197,7 @@ class AnsibleModule(object):
             kwargs['owner'] = user
             kwargs['group'] = group
             st = os.lstat(path)
-            kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
+            kwargs['mode'] = '0%03o' % stat.S_IMODE(st[stat.ST_MODE])
             # secontext not yet supported
             if os.path.islink(path):
                 kwargs['state'] = 'link'
