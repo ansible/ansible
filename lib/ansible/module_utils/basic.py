@@ -1013,10 +1013,10 @@ class AnsibleModule(object):
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
-                diff['before']['mode'] = oct(prev_mode)
+                diff['before']['mode'] = '0%03o' % prev_mode
                 if 'after' not in diff:
                     diff['after'] = {}
-                diff['after']['mode'] = oct(mode)
+                diff['after']['mode'] = '0%03o' % mode
 
             if self.check_mode:
                 return True
