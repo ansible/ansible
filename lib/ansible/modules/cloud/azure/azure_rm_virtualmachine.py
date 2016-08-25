@@ -241,8 +241,8 @@ EXAMPLES = '''
     storage_account: testaccount001
     admin_username: adminUser
     ssh_public_keys:
-      path: /home/adminUser/.ssh/authorized_keys
-      key_data: < insert yor ssh public key here... >
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
     network_interfaces: testvm001
     image:
       offer: CentOS
