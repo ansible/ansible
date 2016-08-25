@@ -28,7 +28,7 @@ version_added: "2.0"
 short_description: This module manages rabbitMQ bindings
 description:
   - This module uses rabbitMQ Rest API to create/delete bindings
-requirements: [ python requests ]
+requirements: [ "requests >= 1.0.0" ]
 options:
     state:
         description:
