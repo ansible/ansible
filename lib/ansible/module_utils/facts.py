@@ -3169,7 +3169,7 @@ class OpenBSDVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        sysctl_path = self.module.get_bin_path('sysctl')
+        sysctl_path = self.module.get_bin_path('sysctl', required=True)
 
         rc, out, err = self.module.run_command("%s -n hw.product" % sysctl_path)
         if rc != 0:
