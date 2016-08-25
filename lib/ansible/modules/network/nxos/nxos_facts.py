@@ -16,253 +16,521 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: nxos_facts
 version_added: "2.1"
 short_description: Gets facts about NX-OS switches
 description:
-    - Offers ability to extract facts from device
+  - Collects facts from Cisco Nexus devices running the NX-OS operating
+    system.  Fact collection is supported over both Cli and Nxapi
+    transports.  This module prepends all of the base network fact keys
+    with C(ansible_net_<fact>).  The facts module will always collect a
+    base set of facts from the device and can enable or disable
+    collection of additional facts.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
-'''
-
-EXAMPLES = '''
-# retrieve facts
-- nxos_facts: host={{ inventory_hostname }}
-'''
-
-RETURN = '''
-facts:
+options:
+  gather_subset:
     description:
-        - Show multiple information about device.
-          These include interfaces, vlans, module and environment information.
-    returned: always
-    type: dict
-    sample: {"fan_info": [{"direction":"front-to-back","hw_ver": "--",
-            "model":"N9K-C9300-FAN2","name":"Fan1(sys_fan1)","status":"Ok"}],
-            "hostname": "N9K2","interfaces": ["mgmt0","Ethernet1/1"],
-            "kickstart": "6.1(2)I3(1)","module": [{"model": "N9K-C9396PX",
-            "ports": "48","status": "active *"}],"os": "6.1(2)I3(1)",
-            "platform": "Nexus9000 C9396PX Chassis","power_supply_info": [{
-            "actual_output": "0 W","model": "N9K-PAC-650W","number": "1",
-            "status":"Shutdown"}],"rr":"Reset Requested by CLI command reload",
-            "vlan_list":[{"admin_state":"noshutdown","interfaces":["Ethernet1/1"],
-            "name": "default","state": "active","vlan_id": "1"}]}
-'''
+      - When supplied, this argument will restrict the facts collected
+        to a given subset.  Possible values for this argument include
+        all, hardware, config, legacy, and interfaces.  Can specify a
+        list of values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected.
+    required: false
+    default: '!config'
+    version_added: "2.2"
+"""
+
+EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: admin
+    password: admin
+    transport: cli
+
+- nxos_facts:
+    gather_subset: all
+
+# Collect only the config and default facts
+- nxos_facts:
+    gather_subset:
+      - config
+
+# Do not collect hardware facts
+- nxos_facts:
+    gather_subset:
+      - "!hardware"
+"""
+
+RETURN = """
+ansible_net_gather_subset:
+  description: The list of fact subsets collected from the device
+  returned: always
+  type: list
+
+# default
+ansible_net_model:
+  description: The model name returned from the device
+  returned: always
+  type: str
+ansible_net_serialnum:
+  description: The serial number of the remote device
+  returned: always
+  type: str
+ansible_net_version:
+  description: The operating system version running on the remote device
+  returned: always
+  type: str
+ansible_net_hostname:
+  description: The configured hostname of the device
+  returned: always
+  type: string
+ansible_net_image:
+  description: The image file the device is running
+  returned: always
+  type: string
+
+# hardware
+ansible_net_filesystems:
+  description: All file system names availabe on the device
+  returned: when hardware is configured
+  type: list
+ansible_net_memfree_mb:
+  description: The available free memory on the remote device in Mb
+  returned: when hardware is configured
+  type: int
+ansible_net_memtotal_mb:
+  description: The total memory on the remote device in Mb
+  returned: when hardware is configured
+  type: int
+
+# config
+ansible_net_config:
+  description: The current active config from the device
+  returned: when config is configured
+  type: str
+
+# interfaces
+ansible_net_all_ipv4_addresses:
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
+  type: list
+ansible_net_all_ipv6_addresses:
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
+  type: list
+ansible_net_interfaces:
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
+  type: dict
+ansible_net_neighbors:
+  description: The list of LLDP neighbors from the remote device
+  returned: when interfaces is configured
+  type: dict
+
+# legacy (pre Ansible 2.2)
+fan_info:
+  description: A hash of facts about fans in the remote device
+  returned: when legacy is configured
+  type: dict
+hostname:
+  description: The configured hostname of the remote device
+  returned: when legacy is configured
+  type: dict
+interfaces_list:
+  description: The list of interface names on the remote device
+  returned: when legacy is configured
+  type: dict
+kickstart:
+  description: The software version used to boot the system
+  returned: when legacy is configured
+  type: str
+module:
+  description: A hash of facts about the modules in a remote device
+  returned: when legacy is configured
+  type: dict
+platform:
+  description: The hardware platform reported by the remote device
+  returned: when legacy is configured
+  type: str
+power_supply_info:
+  description: A hash of facts about the power supplies in the remote device
+  returned: when legacy is configured
+  type: str
+vlan_list:
+  description: The list of VLAN IDs configured on the remote device
+  returned: when legacy is configured
+  type: list
+"""
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcli import CommandRunner, AddCommandError
+from ansible.module_utils.nxos import NetworkModule, NetworkError
 
 
-def get_cli_body_ssh(command, response, module):
-    if 'xml' in response[0]:
-        body = []
-    else:
-        body = [json.loads(response[0])]
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
+def add_command(runner, command, output=None):
     try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
+        runner.add_command(command, output)
+    except AddCommandError:
+        # AddCommandError is raised for any issue adding a command to
+        # the runner.  Silently ignore the exception in this case
+        pass
+
+class FactsBase(object):
+
+    def __init__(self, module, runner):
+        self.module = module
+        self.runner = runner
+        self.facts = dict()
+        self.commands()
+
+
+class Default(FactsBase):
+
+    SYSTEM_MAP = {
+        'sys_ver_str': 'version',
+        'proc_board_id': 'serialnum',
+        'chassis_id': 'model',
+        'isan_file_name': 'image',
+        'host_name': 'hostname'
+    }
+
+    def commands(self):
+        add_command(self.runner, 'show version', output='json')
+
+    def populate(self):
+        data = self.runner.get_command('show version', output='json')
+        for key, value in self.SYSTEM_MAP.iteritems():
+            if key in data:
+                self.facts[value] = data[key]
+
+class Config(FactsBase):
+
+    def commands(self):
+        add_command(self.runner, 'show running-config')
+
+    def populate(self):
+        self.facts['config'] = self.runner.get_command('show running-config')
+
+
+class Hardware(FactsBase):
+
+    def commands(self):
+        add_command(self.runner, 'dir', output='text')
+        add_command(self.runner, 'show system resources', output='json')
+
+    def populate(self):
+        data = self.runner.get_command('dir', 'text')
+        self.facts['filesystems'] = self.parse_filesystems(data)
+
+        data = self.runner.get_command('show system resources', output='json')
+        self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
+        self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
+
+    def parse_filesystems(self, data):
+        return re.findall(r'^Usage for (\S+)//', data, re.M)
+
+
+class Interfaces(FactsBase):
+
+    INTERFACE_MAP = {
+        'state': 'state',
+        'desc': 'description',
+        'eth_bw': 'bandwidth',
+        'eth_duplex': 'duplex',
+        'eth_speed': 'speed',
+        'eth_mode': 'mode',
+        'eth_ip_addr': 'address',
+        'eth_ip_mask': 'masklen',
+        'eth_hw_addr': 'macaddress',
+        'eth_mtu': 'mtu',
+        'eth_hw_desc': 'type'
+    }
+
+    INTERFACE_IPV4_MAP = {
+        'eth_ip_addr': 'address',
+        'eth_ip_mask': 'masklen'
+    }
+
+    INTERFACE_IPV6_MAP = {
+        'addr': 'address',
+        'prefix': 'subnet'
+    }
+
+    def commands(self):
+        add_command(self.runner, 'show interface', output='json')
+
+        resp = self.module.cli(['show ipv6 interface | wc lines'])
+        if int(resp[0]) > 1:
+            add_command(self.runner, 'show ipv6 interface', output='json')
+            self.ipv6 = True
         else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(command),
-                         error=str(clie))
-    return response
+            self.ipv6 = False
+
+        try:
+            self.module.cli(['show lldp neighbors'])
+            add_command(self.runner, 'show lldp neighbors', output='json')
+            self.lldp_enabled = True
+        except NetworkError:
+            self.lldp_enabled = False
+
+    def populate(self):
+        self.facts['all_ipv4_addresses'] = list()
+        self.facts['all_ipv6_addresses'] = list()
+
+        data = self.runner.get_command('show interface', 'json')
+        self.facts['interfaces'] = self.populate_interfaces(data)
+
+        if self.ipv6:
+            data = self.runner.get_command('show ipv6 interface', 'json')
+            if data:
+                self.parse_ipv6_interfaces(data)
+
+        if self.lldp_enabled:
+            data = self.runner.get_command('show lldp neighbors', 'json')
+            self.facts['neighbors'] = self.populate_neighbors(data)
+
+    def populate_interfaces(self, data):
+        interfaces = dict()
+        for item in data['TABLE_interface']['ROW_interface']:
+            intf = dict()
+            name = item['interface']
+
+            for key, value in self.INTERFACE_MAP.iteritems():
+                if key in item:
+                    intf[value] = item[key]
+
+            if 'eth_ip_addr' in item:
+                intf['ipv4'] = dict()
+                for key, value in self.INTERFACE_IPV4_MAP.iteritems():
+                    if key in item:
+                        intf['ipv4'][value] = item[key]
+                self.facts['all_ipv4_addresses'].append(item['eth_ip_addr'])
+
+            interfaces[name] = intf
+
+        return interfaces
+
+    def populate_neighbors(self, data):
+        data = data['TABLE_nbor']
+        if isinstance(data, dict):
+            data = [data]
+
+        objects = dict()
+        for item in data:
+            local_intf = item['ROW_nbor']['l_port_id']
+            if local_intf not in objects:
+                objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['ROW_nbor']['port_id']
+            nbor['host'] = item['ROW_nbor']['chassis_id']
+            objects[local_intf].append(nbor)
+        return objects
+
+    def parse_ipv6_interfaces(self, data):
+        data = data['TABLE_intf']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            name = item['ROW_intf']['intf-name']
+            intf = self.facts['interfaces'][name]
+
+            intf['ipv6'] = dict()
+            for key, value in self.INTERFACE_IPV6_MAP.iteritems():
+                intf['ipv6'][value] = item['ROW_intf'][key]
+
+            self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+
+class Legacy(FactsBase):
+    # facts from nxos_facts 2.1
+
+    def commands(self):
+        add_command(self.runner, 'show version', output='json')
+        add_command(self.runner, 'show module', output='json')
+        add_command(self.runner, 'show environment', output='json')
+        add_command(self.runner, 'show interface', output='json')
+        add_command(self.runner, 'show vlan brief', output='json')
+
+    def populate(self):
+        data = self.runner.get_command('show version', 'json')
+        self.facts['_hostname'] = data['host_name']
+        self.facts['_kickstart'] = data['kickstart_ver_str']
+        self.facts['_platform'] = data['chassis_id']
+
+        if 'rr_sys_ver' in data:
+            self.facts['_os'] = data['rr_sys_ver']
+
+        if 'rr_reason' in data:
+            self.facts['_rr'] = data['rr_reason']
+
+        data = self.runner.get_command('show interface', 'json')
+        self.facts['_interfaces_list'] = self.parse_interfaces(data)
+
+        data = self.runner.get_command('show vlan brief', 'json')
+        self.facts['_vlan_list'] = self.parse_vlans(data)
+
+        data = self.runner.get_command('show module', 'json')
+        self.facts['_module'] = self.parse_module(data)
+
+        data = self.runner.get_command('show environment', 'json')
+        self.facts['_fan_info'] = self.parse_fan_info(data)
+        self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+
+    def parse_interfaces(self, data):
+        objects = list()
+        for item in data['TABLE_interface']['ROW_interface']:
+            objects.append(item['interface'])
+        return objects
+
+    def parse_vlans(self, data):
+        objects = list()
+        data = data['TABLE_vlanbriefxbrief']['ROW_vlanbriefxbrief']
+        if isinstance(data, dict):
+            objects.append(data['vlanshowbr-vlanid-utf'])
+        elif isinstance(data, list):
+            for item in data:
+                objects.append(item['vlanshowbr-vlanid-utf'])
+        return objects
+
+    def parse_module(self, data):
+        modules = list()
+        for item in data['TABLE_modinfo']['ROW_modinfo']:
+            mod = dict()
+            mod['model'] = item['model']
+            mod['type'] = item['modtype']
+            mod['ports'] = item['ports']
+            mod['status'] = item['status']
+            modules.append(mod)
+        return modules
+
+    def parse_fan_info(self, data):
+        objects = list()
+        for item in data['fandetails']['TABLE_faninfo']['ROW_faninfo']:
+            obj = dict()
+            obj['name'] = item['fanname']
+            obj['model'] = item['fanmodel']
+            if 'fanhwver' in item:
+                obj['hw_ver'] = item['fanhwver']
+            if 'fandir' in item:
+                obj['direction'] = item['fandir']
+            if 'fanstatus' in item:
+                obj['status'] = item['fanstatus']
+            objects.append(obj)
+        return objects
+
+    def parse_power_supply_info(self, data):
+        objects = list()
+        for item in data['powersup']['TABLE_psinfo']['ROW_psinfo']:
+            obj = dict()
+            obj['model'] = item['psmodel']
+            obj['number'] = item['psnum']
+            obj['status'] = item['ps_status']
+            if 'actual_out' in item:
+                obj['actual_output'] = item['actual_out']
+            if 'actual_in' in item:
+                obj['actual_in'] = item['actual_in']
+            if 'total_capa' in item:
+                obj['total_capacity'] = item['total_capa']
+            objects.append(obj)
+        return objects
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
 
-    return body
+FACT_SUBSETS = dict(
+    default=Default,
+    legacy=Legacy,
+    hardware=Hardware,
+    interfaces=Interfaces,
+    config=Config,
+)
 
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
-
-def get_show_version_facts(module):
-    command = 'show version'
-    body = execute_show_command(command, module)[0]
-
-    key_map = {
-                "rr_sys_ver": "os",
-                "kickstart_ver_str": "kickstart",
-                "chassis_id": "platform",
-                "host_name": "hostname",
-                "rr_reason": "rr"
-            }
-
-    mapped_show_version_facts = apply_key_map(key_map, body)
-    return mapped_show_version_facts
-
-
-def get_interface_facts(module):
-    command = 'show interface status'
-    body = execute_show_command(command, module)[0]
-
-    interface_list = []
-    interface_table = body['TABLE_interface']['ROW_interface']
-
-    if isinstance(interface_table, dict):
-        interface_table = [interface_table]
-
-    for each in interface_table:
-        interface = str(each.get('interface', None))
-        if interface:
-            interface_list.append(interface)
-    return interface_list
-
-
-def get_show_module_facts(module):
-    command = 'show module'
-    body = execute_show_command(command, module)[0]
-
-    module_facts = []
-    module_table = body['TABLE_modinfo']['ROW_modinfo']
-
-    key_map = {
-                "ports": "ports",
-                "type": "type",
-                "model": "model",
-                "status": "status"
-            }
-
-    if isinstance(module_table, dict):
-        module_table = [module_table]
-
-    for each in module_table:
-        mapped_module_facts = apply_key_map(key_map, each)
-        module_facts.append(mapped_module_facts)
-    return module_facts
-
-
-def get_environment_facts(module):
-    command = 'show environment'
-    body = execute_show_command(command, module)[0]
-
-    powersupply = get_powersupply_facts(body)
-    fan = get_fan_facts(body)
-
-    return (powersupply, fan)
-
-
-def get_powersupply_facts(body):
-    powersupply_facts = []
-    powersupply_table = body['powersup']['TABLE_psinfo']['ROW_psinfo']
-
-    key_map = {
-                "psnum": "number",
-                "psmodel": "model",
-                "actual_out": "actual_output",
-                "actual_in": "actual_input",
-                "total_capa": "total_capacity",
-                "ps_status": "status"
-            }
-
-    if isinstance(powersupply_table, dict):
-        powersupply_table = [powersupply_table]
-
-    for each in powersupply_table:
-        mapped_powersupply_facts = apply_key_map(key_map, each)
-        powersupply_facts.append(mapped_powersupply_facts)
-    return powersupply_facts
-
-
-def get_fan_facts(body):
-    fan_facts = []
-    fan_table = body['fandetails']['TABLE_faninfo']['ROW_faninfo']
-
-    key_map = {
-                "fanname": "name",
-                "fanmodel": "model",
-                "fanhwver": "hw_ver",
-                "fandir": "direction",
-                "fanstatus": "status"
-            }
-
-    if isinstance(fan_table, dict):
-        fan_table = [fan_table]
-
-    for each in fan_table:
-        mapped_fan_facts = apply_key_map(key_map, each)
-        fan_facts.append(mapped_fan_facts)
-    return fan_facts
-
-
-def get_vlan_facts(module):
-    command = 'show vlan brief'
-    body = execute_show_command(command, module)[0]
-
-    vlan_list = []
-    vlan_table = body['TABLE_vlanbriefxbrief']['ROW_vlanbriefxbrief']
-
-    if isinstance(vlan_table, dict):
-        vlan_table = [vlan_table]
-
-    for each in vlan_table:
-        vlan = str(each.get('vlanshowbr-vlanid-utf', None))
-        if vlan:
-            vlan_list.append(vlan)
-    return vlan_list
-
+VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 def main():
-    argument_spec = dict()
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    spec = dict(
+        gather_subset=dict(default=['!config'], type='list')
+    )
 
-    # Get 'show version' facts.
-    show_version = get_show_version_facts(module)
+    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
 
-    # Get interfaces facts.
-    interfaces_list = get_interface_facts(module)
+    gather_subset = module.params['gather_subset']
 
-    # Get module facts.
-    show_module = get_show_module_facts(module)
+    runable_subsets = set()
+    exclude_subsets = set()
 
-    # Get environment facts.
-    powersupply, fan = get_environment_facts(module)
+    for subset in gather_subset:
+        if subset == 'all':
+            runable_subsets.update(VALID_SUBSETS)
+            continue
 
-    # Get vlans facts.
-    vlan = get_vlan_facts(module)
+        if subset.startswith('!'):
+            subset = subset[1:]
+            if subset == 'all':
+                exclude_subsets.update(VALID_SUBSETS)
+                continue
+            exclude = True
+        else:
+            exclude = False
 
-    facts = dict(
-        interfaces_list=interfaces_list,
-        module=show_module,
-        power_supply_info=powersupply,
-        fan_info=fan,
-        vlan_list=vlan)
+        if subset not in VALID_SUBSETS:
+            module.fail_json(msg='Bad subset')
 
-    facts.update(show_version)
+        if exclude:
+            exclude_subsets.add(subset)
+        else:
+            runable_subsets.add(subset)
 
-    module.exit_json(ansible_facts=facts)
+    if not runable_subsets:
+        runable_subsets.update(VALID_SUBSETS)
+
+    runable_subsets.difference_update(exclude_subsets)
+    runable_subsets.add('default')
+
+    facts = dict()
+    facts['gather_subset'] = list(runable_subsets)
+
+    runner = CommandRunner(module)
+
+    instances = list()
+    for key in runable_subsets:
+        instances.append(FACT_SUBSETS[key](module, runner))
+
+    try:
+        runner.run()
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
+
+    try:
+        for inst in instances:
+            inst.populate()
+            facts.update(inst.facts)
+    except Exception:
+        raise
+        module.exit_json(out=module.from_json(runner.items))
+
+    ansible_facts = dict()
+    for key, value in facts.iteritems():
+        # this is to maintain capability with nxos_facts 2.1
+        if key.startswith('_'):
+            ansible_facts[key[1:]] = value
+        else:
+            key = 'ansible_net_%s' % key
+            ansible_facts[key] = value
+
+    module.exit_json(ansible_facts=ansible_facts)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
     main()
