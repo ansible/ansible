@@ -38,6 +38,15 @@ You can also use parentheses to group conditions::
         when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
               (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
 
+Multiple conditions that all need to be true (a logical 'and') can also be specified as a list::
+
+    tasks:
+      - name: "shut down CentOS 6 systems"
+        command: /sbin/shutdown -t now
+        when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "6"
+
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then
 decide to do something conditionally based on success or failure::
