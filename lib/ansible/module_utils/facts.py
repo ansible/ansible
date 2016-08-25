@@ -3169,7 +3169,9 @@ class OpenBSDVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.product")
+        sysctl_path = self.module.get_bin_path('sysctl')
+
+        rc, out, err = self.module.run_command("%s -n hw.product" % sysctl_path)
         if rc != 0:
             self.facts['virtualization_type'] = ''
             self.facts['virtualization_role'] = ''
@@ -3193,7 +3195,7 @@ class OpenBSDVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
         else:
             # Try harder and see if hw.vendor has anything we could use.
-            rc, out, err = self.module.run_command("/usr/sbin/sysctl -n hw.vendor")
+            rc, out, err = self.module.run_command("%s -n hw.vendor" % sysctl_path)
             if rc != 0:
                 self.facts['virtualization_type'] = ''
                 self.facts['virtualization_role'] = ''
