@@ -30,6 +30,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 # the module we are actually testing
+import ansible.module_utils.facts as facts
 
 
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
@@ -621,7 +622,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 
 ]
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
+
 def test_distribution_version():
     """tests the distribution parsing code of the Facts class
 
@@ -633,9 +634,6 @@ def test_distribution_version():
     * the output of pythons platform.dist()
     * results for the ansible variables distribution*
     """
-
-    # needs to be in here, because the import fails with python3 still
-    import ansible.module_utils.facts as facts
 
     from ansible.module_utils import basic
 

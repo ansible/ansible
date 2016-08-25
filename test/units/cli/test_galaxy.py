@@ -25,7 +25,6 @@ import tarfile
 import tempfile
 
 from mock import patch
-from nose.plugins.skip import SkipTest
 
 from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
@@ -34,12 +33,8 @@ from mock import patch, call
 import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
-from nose.plugins.skip import SkipTest
-
-if PY3:
-    raise SkipTest('galaxy is not ported to be py3 compatible yet')
-
 from ansible.cli.galaxy import GalaxyCLI
+
 
 class TestGalaxy(unittest.TestCase):
     @classmethod

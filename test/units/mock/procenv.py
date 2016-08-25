@@ -54,7 +54,10 @@ def swap_stdout():
     context manager that temporarily replaces stdout for tests that need to verify output
     """
     old_stdout = sys.stdout
-    fake_stream = BytesIO()
+    if PY3:
+        fake_stream = StringIO()
+    else:
+        fake_stream = BytesIO()
     sys.stdout = fake_stream
     yield fake_stream
     sys.stdout = old_stdout
