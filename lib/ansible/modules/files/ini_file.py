@@ -78,6 +78,14 @@ options:
      required: false
      default: false
      version_added: "2.1"
+  create:
+     required: false
+     choices: [ "yes", "no" ]
+     default: "no"
+     description:
+       - If specified, the file will be created if it does not already exist.
+         By default it will fail if the file is missing.
+     version_added: "2.2"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -122,10 +130,16 @@ def match_active_opt(option, line):
 # ==============================================================
 # do_ini
 
-def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False, no_extra_spaces=False):
+def do_ini(module, filename, section=None, option=None, value=None,
+        state='present', backup=False, no_extra_spaces=False, create=False):
 
 
     if not os.path.exists(filename):
+        if not create:
+            module.fail_json(rc=257, msg='Destination %s does not exist !' % filename)
+        destpath = os.path.dirname(filename)
+        if not os.path.exists(destpath) and not module.check_mode:
+            os.makedirs(destpath)
         ini_lines = []
     else:
         ini_file = open(filename, 'r')
@@ -225,7 +239,8 @@ def main():
             value = dict(required=False),
             backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent']),
-            no_extra_spaces = dict(required=False, default=False, type='bool')
+            no_extra_spaces = dict(required=False, default=False, type='bool'),
+            create=dict(default=False, type='bool')
         ),
         add_file_common_args = True,
         supports_check_mode = True
@@ -238,8 +253,9 @@ def main():
     state = module.params['state']
     backup = module.params['backup']
     no_extra_spaces = module.params['no_extra_spaces']
+    create = module.params['create']
 
-    (changed,backup_file) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces)
+    (changed,backup_file) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces, create)
 
     if not module.check_mode and os.path.exists(dest):
         file_args = module.load_file_common_arguments(module.params)
