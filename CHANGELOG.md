@@ -50,6 +50,7 @@ Ansible Changes By Release
 - openstack
   * os_keystone_service
   * os_recordset
+  * os_server_group
   * os_stack
   * os_zone
 - rocketchat
