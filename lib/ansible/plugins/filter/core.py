@@ -363,7 +363,10 @@ def extract(item, container, morekeys=None):
         if not isinstance(morekeys, list):
             morekeys = [morekeys]
 
-        value = reduce(lambda d, k: d[k], morekeys, value)
+        try:
+            value = reduce(lambda d, k: d[k], morekeys, value)
+        except KeyError:
+            value = Undefined()
 
     return value
 
