@@ -22,13 +22,13 @@
 DOCUMENTATION = '''
 ---
 module: rabbitmq_queue
-author: "Manuel Sousa (@manuel-sousa)" 
+author: "Manuel Sousa (@manuel-sousa)"
 version_added: "2.0"
 
 short_description: This module manages rabbitMQ queues
 description:
   - This module uses rabbitMQ Rest API to create/delete queues
-requirements: [ python requests ]
+requirements: [ "requests >= 1.0.0" ]
 options:
     name:
         description:
@@ -152,7 +152,7 @@ def main():
         urllib.quote(module.params['vhost'],''),
         module.params['name']
     )
-    
+
     # Check if queue already exists
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
 
