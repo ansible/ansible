@@ -33,6 +33,7 @@ notes:
   - F5 developed module 'bigsuds' required (see http://devcentral.f5.com)
   - Best run as a local_action in your playbook
   - Tested with manager and above account privilege level
+  - C(provision) facts were added in 2.2
 requirements:
   - bigsuds
 options:
@@ -59,6 +60,7 @@ options:
       - key
       - node
       - pool
+      - provision
       - rule
       - self_ip
       - software
@@ -72,7 +74,7 @@ options:
   filter:
     description:
       - Shell-style glob matching string used to filter fact keys. Not
-        applicable for software and system_info fact categories.
+        applicable for software, provision, and system_info fact categories.
     required: false
     default: null
     choices: []
@@ -1340,6 +1342,35 @@ class SystemInfo(object):
         return self.api.System.SystemInfo.get_uptime()
 
 
+class ProvisionInfo(object):
+    """Provision information class.
+
+    F5 BIG-IP provision information class.
+
+    Attributes:
+        api: iControl API instance.
+    """
+
+    def __init__(self, api):
+        self.api = api
+
+    def get_list(self):
+        result = []
+        list = self.api.Management.Provision.get_list()
+        for item in list:
+            item = item.lower().replace('tmos_module_', '')
+            result.append(item)
+        return result
+
+    def get_provisioned_list(self):
+        result = []
+        list = self.api.Management.Provision.get_provisioned_list()
+        for item in list:
+            item = item.lower().replace('tmos_module_', '')
+            result.append(item)
+        return result
+
+
 def generate_dict(api_obj, fields):
     result_dict = {}
     lists = []
@@ -1570,6 +1601,12 @@ def generate_software_list(f5):
     return software_list
 
 
+def generate_provision_dict(f5):
+    provisioned = ProvisionInfo(f5.get_api())
+    fields = ['list', 'provisioned_list']
+    return generate_simple_dict(provisioned, fields)
+
+
 def main():
     argument_spec = f5_argument_spec()
 
@@ -1607,9 +1644,9 @@ def main():
     include = map(lambda x: x.lower(), module.params['include'])
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
                       'device', 'device_group', 'interface', 'key', 'node',
-                      'pool', 'rule', 'self_ip', 'software', 'system_info',
-                      'traffic_group', 'trunk', 'virtual_address',
-                      'virtual_server', 'vlan')
+                      'pool', 'provision', 'rule', 'self_ip', 'software',
+                      'system_info', 'traffic_group', 'trunk',
+                      'virtual_address', 'virtual_server', 'vlan')
     include_test = map(lambda x: x in valid_includes, include)
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
@@ -1638,6 +1675,8 @@ def main():
                 facts['virtual_server'] = generate_vs_dict(f5, regex)
             if 'pool' in include:
                 facts['pool'] = generate_pool_dict(f5, regex)
+            if 'provision' in include:
+                facts['provision'] = generate_provision_dict(f5)
             if 'device' in include:
                 facts['device'] = generate_device_dict(f5, regex)
             if 'device_group' in include:
