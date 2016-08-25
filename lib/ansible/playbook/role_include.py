@@ -57,41 +57,22 @@ class IncludeRole(Task):
         self.block = block
         self.parent_role = None
 
-        import q
-        q(block)
-        q(role)
-        q(task_include)
-
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
-
-        import q
-        q(data)
-        q(block)
-        q(role)
-        q(task_include)
 
         try:
             r = IncludeRole(block=block, role=data['include_role']['name'] , task_include=task_include)
         except TypeError:
             raise AnsibleError("Not a valid role to include: %s" % data)
 
-        try:
-            r.load_data(data, variable_manager=variable_manager, loader=loader)
-            q('loaded role include')
+        r.load_data(data, variable_manager=variable_manager, loader=loader)
 
-            ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
-            q(ri)
+        ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
 
-            r.role = Role.load(ri, block._play, parent_role=None)
-            q(r.role)
+        r.role = Role.load(ri, block._play, parent_role=None)
 
-            data_copy = data.copy()
-            del data_copy['include_role']
-            x = r.role.load_data(data_copy, variable_manager=variable_manager, loader=loader)
-            q(x)
-        except Exception as e:
-            q(e)
-            raise
+        data_copy = data.copy()
+        del data_copy['include_role']
+        r.role.load_data(data_copy, variable_manager=variable_manager, loader=loader)
 
         return r.role.compile(play=block._play)
