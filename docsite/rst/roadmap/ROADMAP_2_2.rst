@@ -149,7 +149,9 @@ Target: September 2016
       Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
   - **Test Coverage**
       Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
+      **Done:** Module PRs now run integration tests for the module(s) being changed.
     - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
+      **Done:** Integration tests now run on Shippable using a Ubuntu 16.04 docker image with only Python 3 installed.
     - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
       **Done:** Windows integration tests now run on Shippable.
     - FreeBSD - Include FreeBSD in CI coverage. Not originally on the roadmap, this is an intermediary step for CI coverage for OS X.
