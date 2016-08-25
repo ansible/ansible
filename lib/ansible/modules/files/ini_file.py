@@ -126,17 +126,16 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
 
     if not os.path.exists(filename):
-      try:
-        open(filename,'w').close()
-      except:
-        module.fail_json(msg="Destination file %s not writable" % filename)
-    ini_file = open(filename, 'r')
-    try:
-        ini_lines = ini_file.readlines()
-        # append a fake section line to simplify the logic
-        ini_lines.append('[')
-    finally:
-        ini_file.close()
+        ini_lines = []
+    else:
+        ini_file = open(filename, 'r')
+        try:
+            ini_lines = ini_file.readlines()
+        finally:
+            ini_file.close()
+
+    # append a fake section line to simplify the logic
+    ini_lines.append('[')
 
     within_section = not section
     section_start = 0
@@ -242,8 +241,9 @@ def main():
 
     (changed,backup_file) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces)
 
-    file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_fs_attributes_if_different(file_args, changed)
+    if not module.check_mode and os.path.exists(dest):
+        file_args = module.load_file_common_arguments(module.params)
+        changed = module.set_fs_attributes_if_different(file_args, changed)
 
     results = { 'changed': changed, 'msg': "OK", 'dest': dest }
     if backup_file is not None:
