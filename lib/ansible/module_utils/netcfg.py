@@ -75,8 +75,7 @@ class ConfigLine(object):
 
     @property
     def line(self):
-        line = ['set']
-        line.extend([p.text for p in self.parents])
+        line = [p.text for p in self.parents]
         line.append(self.text)
         return ' '.join(line)
 
@@ -84,8 +83,7 @@ class ConfigLine(object):
         return self.raw
 
     def __eq__(self, other):
-        if self.text == other.text:
-            return self.parents == other.parents
+        return self.line == other.line
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -183,7 +181,13 @@ class NetworkConfig(object):
         return dumps(self.expand_line(self.items))
 
     def load(self, contents):
-        self._config = parse(contents, indent=self.indent)
+        # Going to start adding device profiles post 2.2
+        tokens = list(DEFAULT_COMMENT_TOKENS)
+        if self._device_os == 'sros':
+            tokens.append('echo')
+            self._config = parse(contents, indent=4, comment_tokens=tokens)
+        else:
+            self._config = parse(contents, indent=self.indent)
 
     def load_from_file(self, filename):
         self.load(open(filename).read())
