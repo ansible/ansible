@@ -3,8 +3,6 @@ test_apt
 test_assemble
 test_async
 test_authorized_key
-test_copy
-test_file
 test_filters
 test_gem
 test_get_url
