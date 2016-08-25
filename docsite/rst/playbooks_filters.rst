@@ -210,6 +210,26 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
+Add a number (since version 2.X)::
+
+    {{ myvar | add(2) }}
+
+Subtract a number (since version 2.X)::
+
+    {{ myvar | subtract(2) }}
+
+Multiply by a number (since version 2.X)::
+
+    {{ myvar | multiply(2) }}
+
+Divide by a number (since version 2.X)::
+
+    {{ myvar | divide(2) }}
+
+Modulo operation (from version 2.X)::
+
+    {{ myvar | modulo(7) }}
+
 Note that jinja2 already provides some like abs() and round().
 
 .. _ipaddr_filter:
