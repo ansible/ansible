@@ -81,7 +81,8 @@ Target: September 2016
   - Network facts modules 
   - Support for VyOS network operating system
   - Add support for NetConf / RestConf for IOS/XE
-  - Quagga modules 
+  - Add support for Nokia SR OS modules
+  - Quagga modules (stretch)
   - Bird modules (stretch)
   - GoBGP modules (stretch)
   - Support for Dell Networking operating systems (OS9, OS6, OS10)
