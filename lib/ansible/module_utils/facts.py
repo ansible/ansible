@@ -34,6 +34,7 @@ import pwd
 
 from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.six import PY3, iteritems
+from ansible.module_utils._text import to_text
 
 # py2 vs py3; replace with six via ansiballz
 try:
@@ -357,6 +358,7 @@ class Facts(object):
             proc_1 = os.path.basename(proc_1)
 
         if proc_1 is not None:
+            proc_1 = to_text(proc_1)
             proc_1 = proc_1.strip()
 
         if proc_1 == 'init' or proc_1.endswith('sh'):

@@ -25,12 +25,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-import urllib
-
-from urllib2 import quote as urlquote, HTTPError
 
 import ansible.constants as C
 from ansible.compat.six import string_types
+from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
+from ansible.compat.six.moves.urllib.error import HTTPError
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.galaxy.token import GalaxyToken
@@ -134,7 +133,7 @@ class GalaxyAPI(object):
         Retrieve an authentication token
         """
         url = '%s/tokens/' % self.baseurl
-        args = urllib.urlencode({"github_token": github_token})
+        args = urlencode({"github_token": github_token})
         resp = open_url(url, data=args, validate_certs=self._validate_certs, method="POST")
         data = json.load(resp)
         return data
@@ -145,7 +144,7 @@ class GalaxyAPI(object):
         Post an import request
         """
         url = '%s/imports/' % self.baseurl
-        args = urllib.urlencode({
+        args = urlencode({
             "github_user": github_user,
             "github_repo": github_repo,
             "github_reference": reference if reference else ""
@@ -271,7 +270,7 @@ class GalaxyAPI(object):
     @g_connect
     def add_secret(self, source, github_user, github_repo, secret):
         url = "%s/notification_secrets/" % self.baseurl
-        args = urllib.urlencode({
+        args = urlencode({
             "source": source,
             "github_user": github_user,
             "github_repo": github_repo,
