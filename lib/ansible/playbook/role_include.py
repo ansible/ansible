@@ -52,36 +52,20 @@ class IncludeRole(Task):
     _static = FieldAttribute(isa='bool', default=False)
     _private = FieldAttribute(isa='bool', default=True)
 
-    def __init__(self, block=None, role=None, task_include=None):
-
-        super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
-
-        self.role = None
-        self.role_name = role
-        self.block = block
-
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
-        try:
-            r = IncludeRole(block=block, role=data['include_role']['name'] , task_include=task_include)
-        except TypeError:
-            raise AnsibleError("Not a valid role to include: %s" % data)
+        r = IncludeRole().load_data(data, variable_manager=variable_manager, loader=loader)
+        args = r.preprocess_data(data).get('args', dict())
 
-        r.load_data(data, variable_manager=variable_manager, loader=loader)
+        ri = RoleInclude.load(args.get('name'), play=block._play, variable_manager=variable_manager, loader=loader)
 
-        ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
+        actual_role = Role.load(ri, block._play, parent_role=role, tasks_from=args.get('tasks_from'))
 
-        tasks_from = data['include_role'].get('tasks_from')
-        r.role = Role.load(ri, block._play, parent_role=role, tasks_from=tasks_from)
-
-        data_copy = data.copy()
-        del data_copy['include_role'] # remove data the role will not use
-        r.role.load_data(data_copy, variable_manager=variable_manager, loader=loader)
-
-        tasks = r.role.compile(play=block._play)
+        # compile role
+        tasks = actual_role.compile(play=block._play)
 
         # updated available handlers in play
-        block._play.handlers = r.role.get_handler_blocks(play=block._play) + block._play.handlers
+        block._play.handlers = actual_role.get_handler_blocks(play=block._play) + block._play.handlers
 
         return tasks
