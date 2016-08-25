@@ -182,6 +182,7 @@ backwards-compatible improvements.  Code developed for Ansible needs to support 
 while code in modules must run under Python 2.4 or higher.  Please also use a 4-space indent
 and no tabs, we do not enforce 80 column lines, we are fine with 120-140. We do not take 'style only'
 requests unless the code is nearly unreadable, we are "PEP8ish", but not strictly compliant.
+The exception to this is new modules, whos standard is defined at `module development checklist <http://docs.ansible.com/developing_modules.html#module-checklist>`_.
 
 You can also contribute by testing and revising other requests, specially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a

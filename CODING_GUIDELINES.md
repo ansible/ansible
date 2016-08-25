@@ -20,6 +20,7 @@ PEP8 and basic style checks
   * PEP8 is a great Python style guide, which you should read.
   * PEP8 must not be strictly followed in all aspects, but most of it is good advice
   * In particular, we don't really care about line lengths.  Buy a bigger monitor!
+  * New modules must be "PEP8ish" - See https://docs.ansible.com/ansible/developing_modules.html#module-checklist
   * To run checks for things we care about, run "make pep8"
   * Similarly, additional checks can be made with "make pyflakes"
   * There is no need to submit code changes for pep8 and pyflake fixes, as these break attribution history.  Project leadership will make these periodically.
