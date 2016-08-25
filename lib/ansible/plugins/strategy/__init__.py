@@ -478,7 +478,7 @@ class StrategyBase:
 
                 # If this is a role task, mark the parent role as being run (if
                 # the task was ok or failed, but not skipped or unreachable)
-                if original_task._role is not None and role_ran:
+                if original_task._role is not None and role_ran and original_task.action != 'include_role':
                     # lookup the role in the ROLE_CACHE to make sure we're dealing
                     # with the correct object and mark it as executed
                     for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
