@@ -210,23 +210,23 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
-Add a number (since version 2.X)::
+Add a number (since version 2.2)::
 
     {{ myvar | add(2) }}
 
-Subtract a number (since version 2.X)::
+Subtract a number (since version 2.2)::
 
     {{ myvar | subtract(2) }}
 
-Multiply by a number (since version 2.X)::
+Multiply by a number (since version 2.2)::
 
     {{ myvar | multiply(2) }}
 
-Divide by a number (since version 2.X)::
+Divide by a number (since version 2.2)::
 
     {{ myvar | divide(2) }}
 
-Modulo operation (from version 2.X)::
+Modulo operation (from version 2.2)::
 
     {{ myvar | modulo(7) }}
 
