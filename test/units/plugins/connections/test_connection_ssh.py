@@ -121,42 +121,42 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         mock_select.side_effect = _mock_select
 
-        mock_popen_res.stdout.read.side_effect = ["some data", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # test with a password set to trigger the sshpass write
         pc.password = '12345'
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run(["ssh", "is", "a", "cmd"], "this is more data")
 
         # test with password prompting enabled
         pc.password = None
         pc.prompt = True
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # test with some become settings
         pc.prompt = False
         pc.become = True
         pc.success_key = 'BECOME-SUCCESS-abcdefg'
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # simulate no data input
         mock_openpty.return_value = (98, 99)
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "")
 
         # simulate no data input but Popen using new pty's fails
         mock_Popen.return_value = None
         mock_Popen.side_effect = [OSError(), mock_popen_res]
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "")
 
     def test_plugins_connection_ssh__examine_output(self):
@@ -171,22 +171,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.check_missing_password   = MagicMock()
 
         def _check_password_prompt(line):
-            if 'foo' in line:
+            if b'foo' in line:
                 return True
             return False
 
         def _check_become_success(line):
-            if 'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz' in line:
+            if b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz' in line:
                 return True
             return False
 
         def _check_incorrect_password(line):
-            if 'incorrect password' in line:
+            if b'incorrect password' in line:
                 return True
             return False
 
         def _check_missing_password(line):
-            if 'bad password' in line:
+            if b'bad password' in line:
                 return True
             return False
 
@@ -204,9 +204,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = True
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
-        self.assertEqual(output, 'line 1\nline 2\nline 3\n')
-        self.assertEqual(unprocessed, 'this should be the remainder')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
+        self.assertEqual(output, b'line 1\nline 2\nline 3\n')
+        self.assertEqual(unprocessed, b'this should be the remainder')
         self.assertTrue(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
@@ -221,10 +221,10 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = False
-        pc.success_key = 'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nBECOME-SUCCESS-abcdefghijklmnopqrstuvxyz\nline 3\n', False)
-        self.assertEqual(output, 'line 1\nline 2\nline 3\n')
-        self.assertEqual(unprocessed, '')
+        pc.success_key = u'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nBECOME-SUCCESS-abcdefghijklmnopqrstuvxyz\nline 3\n', False)
+        self.assertEqual(output, b'line 1\nline 2\nline 3\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertTrue(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
@@ -240,9 +240,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         pc.success_key = None
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nincorrect password\n', True)
-        self.assertEqual(output, 'line 1\nline 2\nincorrect password\n')
-        self.assertEqual(unprocessed, '')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nincorrect password\n', True)
+        self.assertEqual(output, b'line 1\nline 2\nincorrect password\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertTrue(conn._flags['become_error'])
@@ -258,9 +258,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         pc.success_key = None
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nbad password\n', True)
-        self.assertEqual(output, 'line 1\nbad password\n')
-        self.assertEqual(unprocessed, '')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nbad password\n', True)
+        self.assertEqual(output, b'line 1\nbad password\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])

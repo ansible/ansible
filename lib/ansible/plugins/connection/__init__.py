@@ -240,27 +240,29 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, output):
-        for line in output.splitlines(True):
-            if self._play_context.success_key == line.rstrip():
+    def check_become_success(self, b_output):
+        b_success_key = to_bytes(self._play_context.success_key)
+        for b_line in b_output.splitlines(True):
+            if b_success_key == b_line.rstrip():
                 return True
         return False
 
-    def check_password_prompt(self, output):
+    def check_password_prompt(self, b_output):
         if self._play_context.prompt is None:
             return False
         elif isinstance(self._play_context.prompt, string_types):
-            return output.startswith(self._play_context.prompt)
+            b_prompt = to_bytes(self._play_context.prompt)
+            return b_output.startswith(b_prompt)
         else:
             return self._play_context.prompt(output)
 
-    def check_incorrect_password(self, output):
-        incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
-        return incorrect_password and incorrect_password in output
+    def check_incorrect_password(self, b_output):
+        b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
+        return b_incorrect_password and b_incorrect_password in b_output
 
-    def check_missing_password(self, output):
-        missing_password = gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method])
-        return missing_password and missing_password in output
+    def check_missing_password(self, b_output):
+        b_missing_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method]))
+        return b_missing_password and b_missing_password in b_output
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd
