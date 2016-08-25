@@ -47,15 +47,18 @@ class IncludeRole(Task):
 
     _name   = FieldAttribute(isa='string', default=None)
     _tasks_from = FieldAttribute(isa='string', default=None)
-    _static = FieldAttribute(isa='bool', default=None)
-#    _private = FieldAttribute(isa='bool', default=None)
+
+    # these should not be changeable?
+    _static = FieldAttribute(isa='bool', default=False)
+    _private = FieldAttribute(isa='bool', default=True)
 
     def __init__(self, block=None, role=None, task_include=None):
+
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
+
         self.role = None
         self.role_name = role
         self.block = block
-        self.parent_role = None
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
@@ -70,10 +73,15 @@ class IncludeRole(Task):
         ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
 
         tasks_from = data['include_role'].get('tasks_from')
-        r.role = Role.load(ri, block._play, parent_role=None, tasks_from=tasks_from)
+        r.role = Role.load(ri, block._play, parent_role=role, tasks_from=tasks_from)
 
         data_copy = data.copy()
-        del data_copy['include_role']
+        del data_copy['include_role'] # remove data the role will not use
         r.role.load_data(data_copy, variable_manager=variable_manager, loader=loader)
 
-        return r.role.compile(play=block._play)
+        tasks = r.role.compile(play=block._play)
+
+        # updated available handlers in play
+        block._play.handlers = r.role.get_handler_blocks(play=block._play) + block._play.handlers
+
+        return tasks
