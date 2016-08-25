@@ -66,7 +66,7 @@ class Role(Base, Become, Conditional, Taggable):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None):
+    def __init__(self, play=None, tasks_from=None):
         self._role_name        = None
         self._role_path        = None
         self._role_params      = dict()
@@ -82,6 +82,7 @@ class Role(Base, Become, Conditional, Taggable):
         self._role_vars        = dict()
         self._had_task_run     = dict()
         self._completed        = dict()
+        self._tasks_from       = tasks_from
 
         super(Role, self).__init__()
 
@@ -92,7 +93,7 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None):
+    def load(role_include, play, parent_role=None, tasks_from=None):
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
             # containing another dictionary corresponding to a set of parameters
@@ -112,7 +113,7 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role(play=play)
+            r = Role(play=play, tasks_from=tasks_from)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
@@ -200,11 +201,18 @@ class Role(Base, Become, Conditional, Taggable):
 
     def _resolve_main(self, basepath):
         ''' flexibly handle variations in main filenames '''
+
+        # allow override if set, otherwise use default
+        if self._tasks_from is None:
+            main = 'main'
+        else:
+            main = self._tasks_from
+
         possible_mains = (
-            os.path.join(basepath, 'main.yml'),
-            os.path.join(basepath, 'main.yaml'),
-            os.path.join(basepath, 'main.json'),
-            os.path.join(basepath, 'main'),
+            os.path.join(basepath, '%s.yml' % main),
+            os.path.join(basepath, '%s.yaml' % main),
+            os.path.join(basepath, '%s.json' % main),
+            os.path.join(basepath, main),
         )
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:

@@ -69,7 +69,8 @@ class IncludeRole(Task):
 
         ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
 
-        r.role = Role.load(ri, block._play, parent_role=None)
+        tasks_from = data['include_role'].get('tasks_from')
+        r.role = Role.load(ri, block._play, parent_role=None, tasks_from=tasks_from)
 
         data_copy = data.copy()
         del data_copy['include_role']
