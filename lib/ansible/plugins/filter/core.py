@@ -370,6 +370,30 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def pyformat(fmt, *args, **kwargs):
+    '''
+    Format a string using python name placeholders or other fancy stuff
+    Check https://pyformat.info/ for more fancy !
+    '''
+    variables = {}
+    for arg in args:
+        # Supports dictionaries
+        if isinstance(arg, dict):
+            variables.update(arg)
+
+    # And supports key-value pairs
+    variables.update(kwargs)
+
+    # Attempt to use new-style formatting (Python 2.7 or Python 3+)
+    if hasattr(str, 'format'):
+        result = fmt.format(**variables)
+        if result != fmt:
+            return result
+
+    # Perform old-style formatting using name placeholders (keywords)
+    return fmt % variables
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -447,4 +471,7 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # format python style
+            'pyformat': pyformat,
         }
