@@ -278,6 +278,9 @@ class Block(Base, Become, Conditional, Taggable):
             for dep in dep_chain:
                 dep.set_loader(loader)
 
+    def _get_attr_environment(self):
+        return self._get_parent_attribute('environment', extend=True)
+
     def _get_parent_attribute(self, attr, extend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
@@ -288,49 +291,49 @@ class Block(Base, Become, Conditional, Taggable):
             value = self._attributes[attr]
 
             if self._parent and (value is None or extend):
-                parent_value = getattr(self._parent, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
-            if self._role and (value is None or extend) and hasattr(self._role, attr):
-                parent_value = getattr(self._role, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
+                try:
+                    parent_value = getattr(self._parent, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value)
+                    else:
+                        value = parent_value
+                except AttributeError:
+                    pass
+            if self._role and (value is None or extend):
+                try:
+                    parent_value = getattr(self._role, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value)
+                    else:
+                        value = parent_value
 
-                dep_chain = self.get_dep_chain()
-                if dep_chain and (value is None or extend):
-                    dep_chain.reverse()
-                    for dep in dep_chain:
-                        dep_value = getattr(dep, attr, None)
-                        if extend:
-                            value = self._extend_value(value, dep_value)
-                        else:
-                            value = dep_value
+                    dep_chain = self.get_dep_chain()
+                    if dep_chain and (value is None or extend):
+                        dep_chain.reverse()
+                        for dep in dep_chain:
+                            dep_value = getattr(dep, attr, None)
+                            if extend:
+                                value = self._extend_value(value, dep_value)
+                            else:
+                                value = dep_value
 
-                        if value is not None and not extend:
-                            break
-            if self._play and (value is None or extend) and hasattr(self._play, attr):
-                parent_value = getattr(self._play, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
+                            if value is not None and not extend:
+                                break
+                except AttributeError:
+                    pass
+            if self._play and (value is None or extend):
+                try:
+                    parent_value = getattr(self._play, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value)
+                    else:
+                        value = parent_value
+                except AttributeError:
+                    pass
         except KeyError as e:
             pass
 
         return value
-
-    def _get_attr_environment(self):
-        return self._get_parent_attribute('environment')
-
-    def _get_attr_any_errors_fatal(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('any_errors_fatal')
 
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
