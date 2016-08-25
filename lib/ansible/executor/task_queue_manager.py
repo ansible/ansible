@@ -224,10 +224,10 @@ class TaskQueueManager:
         num_hosts = len(self._inventory.get_hosts(new_play.hosts))
 
         max_serial = 0
-        if play.serial:
+        if new_play.serial:
             # the play has not been post_validated here, so we may need
             # to convert the scalar value to a list at this point
-            serial_items = play.serial
+            serial_items = new_play.serial
             if not isinstance(serial_items, list):
                 serial_items = [serial_items]
             max_serial = max([pct_to_int(x, num_hosts) for x in serial_items])
