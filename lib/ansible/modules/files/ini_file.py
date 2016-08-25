@@ -161,6 +161,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
     within_section = not section
     section_start = 0
     changed = False
+    msg = 'OK'
     if no_extra_spaces:
         assignment_format = '%s=%s\n'
     else:
@@ -178,11 +179,13 @@ def do_ini(module, filename, section=None, option=None, value=None,
                         # search backwards for previous non-blank or non-comment line
                         if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
                             ini_lines.insert(i, assignment_format % (option, value))
+                            msg = 'option added'
                             changed = True
                             break
                 elif state == 'absent' and not option:
                     # remove the entire section
                     del ini_lines[section_start:index]
+                    msg = 'section removed'
                     changed = True
                 break
         else:
@@ -192,6 +195,8 @@ def do_ini(module, filename, section=None, option=None, value=None,
                     if match_opt(option, line):
                         newline = assignment_format % (option, value)
                         changed = ini_lines[index] != newline
+                        if changed:
+                            msg = 'option changed'
                         ini_lines[index] = newline
                         if changed:
                             # remove all possible option occurrences from the rest of the section
@@ -210,6 +215,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
                     if match_active_opt(option, line):
                         del ini_lines[index]
                         changed = True
+                        msg = 'option changed'
                         break
 
     # remove the fake section line
@@ -219,6 +225,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_lines.append('[%s]\n' % section)
         ini_lines.append(assignment_format % (option, value))
         changed = True
+        msg = 'section and option added'
 
     if module._diff:
         diff['after'] = ''.join(ini_lines)
@@ -233,7 +240,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
         finally:
             ini_file.close()
 
-    return (changed, backup_file, diff)
+    return (changed, backup_file, diff, msg)
 
 # ==============================================================
 # main
@@ -264,13 +271,13 @@ def main():
     no_extra_spaces = module.params['no_extra_spaces']
     create = module.params['create']
 
-    (changed,backup_file,diff) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces, create)
+    (changed,backup_file,diff,msg) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces, create)
 
     if not module.check_mode and os.path.exists(dest):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    results = { 'changed': changed, 'msg': "OK", 'dest': dest, 'diff': diff }
+    results = { 'changed': changed, 'msg': msg, 'dest': dest, 'diff': diff }
     if backup_file is not None:
         results['backup_file'] = backup_file
 
