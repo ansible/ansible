@@ -24,7 +24,7 @@ import itertools
 import operator
 import uuid
 
-from copy import deepcopy
+from copy import copy as shallowcopy, deepcopy
 from functools import partial
 from inspect import getmembers
 
@@ -53,8 +53,10 @@ def _generic_g(prop_name, self):
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
 def _generic_g_method(prop_name, self):
-    method = "_get_attr_%s" % prop_name
     try:
+        if self._squashed:
+            return self._attributes[prop_name]
+        method = "_get_attr_%s" % prop_name
         return getattr(self, method)()
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
@@ -62,7 +64,7 @@ def _generic_g_method(prop_name, self):
 def _generic_g_parent(prop_name, self):
     try:
         value = self._attributes[prop_name]
-        if value is None and not self._finalized:
+        if value is None and not self._squashed and not self._finalized:
             try:
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
@@ -106,10 +108,13 @@ class BaseMeta(type):
                     # its value from a parent object
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
+                        #print("^ assigning generic_g_method to %s" % attr_name)
                         getter = partial(_generic_g_method, attr_name)
-                    elif ('_get_parent_attribute' in src_dict or '_get_parent_attribute' in dst_dict)  and value.inherit:
+                    elif '_get_parent_attribute' in dst_dict and value.inherit:
+                        #print("^ assigning generic_g_parent to %s" % attr_name)
                         getter = partial(_generic_g_parent, attr_name)
                     else:
+                        #print("^ assigning generic_g to %s" % attr_name)
                         getter = partial(_generic_g, attr_name)
 
                     setter = partial(_generic_s, attr_name)
@@ -135,6 +140,7 @@ class BaseMeta(type):
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
+        #print("creating class %s" % name)
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
@@ -148,7 +154,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _remote_user         = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', priority=100)
+    _vars                = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
@@ -173,6 +179,7 @@ class Base(with_metaclass(BaseMeta, object)):
 
         # other internal params
         self._validated = False
+        self._squashed  = False
         self._finalized = False
 
         # every object gets a random uuid:
@@ -297,6 +304,22 @@ class Base(with_metaclass(BaseMeta, object)):
 
         self._validated = True
 
+    def squash(self):
+        '''
+        Evaluates all attributes and sets them to the evaluated version,
+        so that all future accesses of attributes do not need to evaluate
+        parent attributes.
+        '''
+        if not self._squashed:
+            for name in self._valid_attrs.keys():
+                getter = partial(_generic_g, name)
+                setter = partial(_generic_s, name)
+                deleter = partial(_generic_d, name)
+
+                self._attributes[name] = getattr(self, name)
+                #print("squashed attr %s: %s" % (name, self._attributes[name]))
+            self._squashed = True
+
     def copy(self):
         '''
         Create a copy of this object and return it.
@@ -305,13 +328,7 @@ class Base(with_metaclass(BaseMeta, object)):
         new_me = self.__class__()
 
         for name in self._valid_attrs.keys():
-            attr_val = getattr(self, name)
-            if isinstance(attr_val, collections.Sequence):
-                setattr(new_me, name, attr_val[:])
-            elif isinstance(attr_val, collections.Mapping):
-                setattr(new_me, name, attr_val.copy())
-            else:
-                setattr(new_me, name, attr_val)
+            new_me._attributes[name] = shallowcopy(self._attributes[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager

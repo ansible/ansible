@@ -72,6 +72,8 @@ class TaskExecutor:
         self._connection        = None
         self._rslt_q            = rslt_q
 
+        self._task.squash()
+
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified

@@ -79,9 +79,9 @@ class Task(Base, Conditional, Taggable, Become):
     _delegate_facts       = FieldAttribute(isa='bool', default=False)
     _failed_when          = FieldAttribute(isa='list', default=[])
     _first_available_file = FieldAttribute(isa='list')
-    _loop                 = FieldAttribute(isa='string', private=True)
-    _loop_args            = FieldAttribute(isa='list', private=True)
-    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl)
+    _loop                 = FieldAttribute(isa='string', private=True, inherit=False)
+    _loop_args            = FieldAttribute(isa='list', private=True, inherit=False)
+    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _name                 = FieldAttribute(isa='string', default='')
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
@@ -401,10 +401,10 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
+
         value = None
         try:
             value = self._attributes[attr]
-
             if self._parent and (value is None or extend):
                 parent_value = getattr(self._parent, attr, None)
                 if extend:
@@ -420,23 +420,7 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        environment = self._attributes['environment']
-        parent_environment = self._get_parent_attribute('environment', extend=True)
-        if parent_environment is not None:
-            environment = self._extend_value(environment, parent_environment)
-        return environment
-
-    def _get_attr_any_errors_fatal(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('any_errors_fatal')
-
-    def _get_attr_loop(self):
-        return self._attributes['loop']
-
-    def _get_attr_loop_control(self):
-        return self._attributes['loop_control']
+        return self._get_parent_attribute('environment', extend=True)
 
     def get_dep_chain(self):
         if self._parent:
