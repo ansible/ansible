@@ -52,29 +52,46 @@ class IncludeRole(Task):
 
     def __init__(self, block=None, role=None, task_include=None):
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
-        self._included_role = Role(block._play)
-        self._role_meta = None
-        self._role_name = task_include
-        self._block = block
-        self._parent_role = role
+        self.role = None
+        self.role_name = role
+        self.block = block
+        self.parent_role = None
+
+        import q
+        q(block)
+        q(role)
+        q(task_include)
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
+        import q
+        q(data)
+        q(block)
+        q(role)
+        q(task_include)
+
         try:
-            r = IncludeRole(block=block, role=data['include_role']['name'] , task_include=None)
+            r = IncludeRole(block=block, role=data['include_role']['name'] , task_include=task_include)
         except TypeError:
             raise AnsibleError("Not a valid role to include: %s" % data)
 
-        return r.load_data(data, variable_manager=variable_manager, loader=loader)
+        try:
+            r.load_data(data, variable_manager=variable_manager, loader=loader)
+            q('loaded role include')
 
-    def load_data(self, data, variable_manager=None, loader=None):
+            ri = RoleInclude.load(r.role_name, play=block._play, variable_manager=variable_manager, loader=loader)
+            q(ri)
 
-        super(IncludeRole, self).load_data(data, variable_manager=variable_manager, loader=loader)
+            r.role = Role.load(ri, block._play, parent_role=None)
+            q(r.role)
 
-        ri = RoleInclude.load(data['include_role'], play=self._block._play, variable_manager=variable_manager, loader=loader)
+            data_copy = data.copy()
+            del data_copy['include_role']
+            x = r.role.load_data(data_copy, variable_manager=variable_manager, loader=loader)
+            q(x)
+        except Exception as e:
+            q(e)
+            raise
 
-        #myrole = self._included_role.load(ri, self._block._play, parent_role=self._parent_role) # need to figure out why bad parent
-        myrole = self._included_role.load(ri, self._block._play, parent_role=None)
-
-        return myrole.compile(play=self._block._play) # returns list of blocks
+        return r.role.compile(play=block._play)
