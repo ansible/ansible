@@ -133,6 +133,10 @@ def match_active_opt(option, line):
 def do_ini(module, filename, section=None, option=None, value=None,
         state='present', backup=False, no_extra_spaces=False, create=False):
 
+    diff = {'before': '',
+            'after': '',
+            'before_header': '%s (content)' % filename,
+            'after_header': '%s (content)' % filename}
 
     if not os.path.exists(filename):
         if not create:
@@ -147,6 +151,9 @@ def do_ini(module, filename, section=None, option=None, value=None,
             ini_lines = ini_file.readlines()
         finally:
             ini_file.close()
+
+    if module._diff:
+        diff['before'] = ''.join(ini_lines)
 
     # append a fake section line to simplify the logic
     ini_lines.append('[')
@@ -213,6 +220,8 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_lines.append(assignment_format % (option, value))
         changed = True
 
+    if module._diff:
+        diff['after'] = ''.join(ini_lines)
 
     backup_file = None
     if changed and not module.check_mode:
@@ -224,7 +233,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
         finally:
             ini_file.close()
 
-    return (changed, backup_file)
+    return (changed, backup_file, diff)
 
 # ==============================================================
 # main
@@ -255,13 +264,13 @@ def main():
     no_extra_spaces = module.params['no_extra_spaces']
     create = module.params['create']
 
-    (changed,backup_file) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces, create)
+    (changed,backup_file,diff) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces, create)
 
     if not module.check_mode and os.path.exists(dest):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    results = { 'changed': changed, 'msg': "OK", 'dest': dest }
+    results = { 'changed': changed, 'msg': "OK", 'dest': dest, 'diff': diff }
     if backup_file is not None:
         results['backup_file'] = backup_file
 
