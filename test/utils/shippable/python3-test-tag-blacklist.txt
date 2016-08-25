@@ -3,8 +3,6 @@ test_apt
 test_assemble
 test_async
 test_authorized_key
-test_become
-test_binary
 test_copy
 test_file
 test_filters
@@ -22,9 +20,7 @@ test_pip
 test_postgresql
 test_service
 test_subversion
-test_sudo
 test_synchronize
 test_template
 test_unarchive
 test_uri
-test_var_blending
