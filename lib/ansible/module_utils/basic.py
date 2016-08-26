@@ -1944,55 +1944,59 @@ class AnsibleModule(object):
                 dest_dir = os.path.dirname(dest)
                 dest_file = os.path.basename(dest)
                 try:
-                    tmp_dest = tempfile.NamedTemporaryFile(
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
                         prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (dest_dir, e))
 
-                try: # leaves tmp file behind when sudo and  not root
-                    if switched_user and os.getuid() != 0:
-                        # cleanup will happen by 'rm' of tempdir
-                        # copy2 will preserve some metadata
-                        shutil.copy2(src, tmp_dest.name)
-                    else:
-                        shutil.move(src, tmp_dest.name)
-                    if self.selinux_enabled():
-                        self.set_context_if_different(
-                            tmp_dest.name, context, False)
+                try:
                     try:
-                        tmp_stat = os.stat(tmp_dest.name)
-                        if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                            os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
-                    except OSError:
-                        e = get_exception()
-                        if e.errno != errno.EPERM:
-                            raise
-                    os.rename(tmp_dest.name, dest)
-                except (shutil.Error, OSError, IOError):
-                    e = get_exception()
-                    # sadly there are some situations where we cannot ensure atomicity, but only if
-                    # the user insists and we get the appropriate error we update the file unsafely
-                    if unsafe_writes and e.errno == errno.EBUSY:
-                        #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+                        # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
+                        os.close(tmp_dest_fd)
+                        # leaves tmp file behind when sudo and  not root
+                        if switched_user and os.getuid() != 0:
+                            # cleanup will happen by 'rm' of tempdir
+                            # copy2 will preserve some metadata
+                            shutil.copy2(src, tmp_dest_name)
+                        else:
+                            shutil.move(src, tmp_dest_name)
+                        if self.selinux_enabled():
+                            self.set_context_if_different(
+                                tmp_dest_name, context, False)
                         try:
-                            try:
-                                out_dest = open(dest, 'wb')
-                                in_src = open(src, 'rb')
-                                shutil.copyfileobj(in_src, out_dest)
-                            finally: # assuring closed files in 2.4 compatible way
-                                if out_dest:
-                                    out_dest.close()
-                                if in_src:
-                                    in_src.close()
-                        except (shutil.Error, OSError, IOError):
+                            tmp_stat = os.stat(tmp_dest_name)
+                            if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                os.chown(tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                        except OSError:
                             e = get_exception()
-                            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+                            if e.errno != errno.EPERM:
+                                raise
+                        os.rename(tmp_dest_name, dest)
+                    except (shutil.Error, OSError, IOError):
+                        e = get_exception()
+                        # sadly there are some situations where we cannot ensure atomicity, but only if
+                        # the user insists and we get the appropriate error we update the file unsafely
+                        if unsafe_writes and e.errno == errno.EBUSY:
+                            #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+                            try:
+                                try:
+                                    out_dest = open(dest, 'wb')
+                                    in_src = open(src, 'rb')
+                                    shutil.copyfileobj(in_src, out_dest)
+                                finally: # assuring closed files in 2.4 compatible way
+                                    if out_dest:
+                                        out_dest.close()
+                                    if in_src:
+                                        in_src.close()
+                            except (shutil.Error, OSError, IOError):
+                                e = get_exception()
+                                self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
 
-                    else:
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-
-                    self.cleanup(tmp_dest.name)
+                        else:
+                            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                finally:
+                    self.cleanup(tmp_dest_name)
 
         if creating:
             # make sure the file has the correct permissions
