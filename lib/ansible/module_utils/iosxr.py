@@ -55,7 +55,8 @@ class Cli(CliBase):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+        self.shell.send(['terminal length 0',
+                         'terminal exec prompt no-timestamp'])
 
     ### implementation of netcli.Cli ###
 
