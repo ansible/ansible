@@ -283,6 +283,7 @@ class DocCLI(CLI):
             choices = ''
             if 'choices' in opt:
                 choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
+            default = ''
             if 'default' in opt or not required:
                 default = "[Default: " +  str(opt.get('default', '(null)')) + "]"
             text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
