@@ -289,8 +289,9 @@ class DocCLI(CLI):
             text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Notes:")
+            for note in doc['notes']:
+                text.append(textwrap.fill(CLI.tty_ify(note), limit-6, initial_indent="  * ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
