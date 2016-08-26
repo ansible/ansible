@@ -23,7 +23,6 @@ import json
 import time
 import zlib
 from collections import defaultdict
-from multiprocessing import Lock
 
 from jinja2.exceptions import UndefinedError
 
@@ -32,11 +31,9 @@ from ansible.compat.six import iteritems, text_type, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -56,41 +53,6 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
-if 'action_write_locks' not in globals():
-    # Do not initialize this more than once because it seems to bash
-    # the existing one.  multiprocessing must be reloading the module
-    # when it forks?
-    action_write_locks = dict()
-
-    # Below is a Lock for use when we weren't expecting a named module.
-    # It gets used when an action plugin directly invokes a module instead
-    # of going through the strategies.  Slightly less efficient as all
-    # processes with unexpected module names will wait on this lock
-    action_write_locks[None] = Lock()
-
-    # These plugins are called directly by action plugins (not going through
-    # a strategy).  We precreate them here as an optimization
-    mods = set(p['name'] for p in Facts.PKG_MGRS)
-    mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))
-    for mod_name in mods:
-        action_write_locks[mod_name] = Lock()
-
-# TODO: this should probably be in the plugins/__init__.py, with
-#       a smarter mechanism to set all of the attributes based on
-#       the loaders created there
-class SharedPluginLoaderObj:
-    '''
-    A simple object to make pass the various plugin loaders to
-    the forked processes over the queue easier
-    '''
-    def __init__(self):
-        self.action_loader = action_loader
-        self.connection_loader = connection_loader
-        self.filter_loader = filter_loader
-        self.test_loader   = test_loader
-        self.lookup_loader = lookup_loader
-        self.module_loader = module_loader
-
 
 class StrategyBase:
 
@@ -102,7 +64,6 @@ class StrategyBase:
     def __init__(self, tqm):
         self._tqm               = tqm
         self._inventory         = tqm.get_inventory()
-        self._workers           = tqm.get_workers()
         self._notified_handlers = tqm._notified_handlers
         self._listening_handlers = tqm._listening_handlers
         self._variable_manager  = tqm.get_variable_manager()
@@ -115,7 +76,6 @@ class StrategyBase:
 
         # internal counters
         self._pending_results   = 0
-        self._cur_worker        = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
@@ -166,58 +126,10 @@ class StrategyBase:
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
+        self._tqm.queue_task(host, task, task_vars, play_context)
+        self._pending_results += 1
 
-        display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
-
-        # Add a write lock for tasks.
-        # Maybe this should be added somewhere further up the call stack but
-        # this is the earliest in the code where we have task (1) extracted
-        # into its own variable and (2) there's only a single code path
-        # leading to the module being run.  This is called by three
-        # functions: __init__.py::_do_handler_run(), linear.py::run(), and
-        # free.py::run() so we'd have to add to all three to do it there.
-        # The next common higher level is __init__.py::run() and that has
-        # tasks inside of play_iterator so we'd have to extract them to do it
-        # there.
-
-        global action_write_locks
-        if task.action not in action_write_locks:
-            display.debug('Creating lock for %s' % task.action)
-            action_write_locks[task.action] = Lock()
-
-        # and then queue the new task
-        try:
-
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
-
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker][0] = worker_prc
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
-                    queued = True
-                self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
-                    self._cur_worker = 0
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
-
-            self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
-            # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
-            return
-        display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
-
-    def _process_pending_results(self, iterator, one_pass=False):
+    def _process_pending_results(self, iterator, one_pass=False, timeout=0.001):
         '''
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
@@ -276,10 +188,10 @@ class StrategyBase:
             else:
                 return False
 
-        passes = 0
-        while not self._tqm._terminated:
+        passes = 1
+        while not self._tqm._terminated and passes < 3:
             try:
-                task_result = self._final_q.get(timeout=0.001)
+                task_result = self._final_q.get(timeout=timeout)
                 original_host = get_original_host(task_result._host)
                 original_task = iterator.get_original_task(original_host, task_result._task)
                 task_result._host = original_host
@@ -489,8 +401,6 @@ class StrategyBase:
 
             except Queue.Empty:
                 passes += 1
-                if passes > 2:
-                   break
 
             if one_pass:
                 break
@@ -506,13 +416,17 @@ class StrategyBase:
         ret_results = []
 
         display.debug("waiting for pending results...")
+        dead_check = 10
         while self._pending_results > 0 and not self._tqm._terminated:
-
-            if self._tqm.has_dead_workers():
-                raise AnsibleError("A worker was found in a dead state")
 
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
+
+            dead_check -= 1
+            if dead_check == 0:
+                if self._pending_results > 0 and self._tqm.has_dead_workers():
+                    raise AnsibleError("A worker was found in a dead state")
+                dead_check = 10
 
         display.debug("no more pending results, returning what we have")
 

@@ -37,7 +37,7 @@ from ansible.utils.unicode import to_bytes, to_unicode
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
-from ansible.plugins import strategy
+from ansible.executor import action_write_locks
 
 try:
     from __main__ import display
@@ -596,16 +596,16 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
             zipdata = open(cached_module_filename, 'rb').read()
         else:
-            if module_name in strategy.action_write_locks:
+            if module_name in action_write_locks.action_write_locks:
                 display.debug('ANSIBALLZ: Using lock for %s' % module_name)
-                lock = strategy.action_write_locks[module_name]
+                lock = action_write_locks.action_write_locks[module_name]
             else:
                 # If the action plugin directly invokes the module (instead of
                 # going through a strategy) then we don't have a cross-process
                 # Lock specifically for this module.  Use the "unexpected
                 # module" lock instead
                 display.debug('ANSIBALLZ: Using generic lock for %s' % module_name)
-                lock = strategy.action_write_locks[None]
+                lock = action_write_locks.action_write_locks[None]
 
             display.debug('ANSIBALLZ: Acquiring lock')
             with lock:
