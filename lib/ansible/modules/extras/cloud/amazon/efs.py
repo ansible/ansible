@@ -29,21 +29,25 @@ options:
     state:
         description:
             - Allows to create, search and destroy Amazon EFS file system
-        required: true
+        required: false
+        default: 'present'
         choices: ['present', 'absent']
-        aliases: []
     name:
         description:
-            - Creation Token of Amazon EFS file system. Required for create. Either name or ID required for delete. It can be omitted for 'list' (unless you want to find EFS with certain name).
+            - Creation Token of Amazon EFS file system. Required for create. Either name or ID required for delete.
         required: false
         default: None
-        aliases: []
     id:
         description:
             - ID of Amazon EFS. Either name or ID required for delete.
         required: false
         default: None
-        aliases: []
+    performance_mode:
+        description:
+            - File system's performance mode to use. Only takes effect during creation.
+        required: false
+        default: 'general_purpose'
+        choices: ['general_purpose', 'max_io']
     tags:
         description:
             - |
@@ -51,18 +55,16 @@ options:
                 In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data.
         required: false
         default: None
-        aliases: []
     targets:
         description:
             - |
                 List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
-                    - SubnetId - Mandatory. The ID of the subnet to add the mount target in.
-                    - IpAddress - Optional. A valid IPv4 address within the address range of the specified subnet.
-                    - SecurityGroups - Optional. List of security group IDs, of the form "sg-xxxxxxxx". These must be for the same VPC as subnet specified
+                    - subnet_id - Mandatory. The ID of the subnet to add the mount target in.
+                    - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
+                    - security_groups - Optional. List of security group IDs, of the form "sg-xxxxxxxx". These must be for the same VPC as subnet specified
                 This data may be modified for existing EFS using state 'present' and new list of mount targets.
         required: false
         default: None
-        aliases: []
     wait:
         description:
             - |
@@ -71,13 +73,11 @@ options:
         required: false
         default: "no"
         choices: ["yes", "no"]
-        aliases: []
     wait_timeout:
         description:
             - How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
         required: false
         default: 0
-        aliases: []
 extends_documentation_fragment:
     - aws
 '''
@@ -88,116 +88,111 @@ EXAMPLES = '''
     state: present
     name: myTestEFS
     tags:
-        Name: myTestNameTag
-        Purpose: file-storage
+        name: myTestNameTag
+        purpose: file-storage
     targets:
-        - SubnetId: subnet-748c5d03
-          SecurityGroups: [ "sg-1a2b3c4d" ]
+        - subnet_id: subnet-748c5d03
+          security_groups: [ "sg-1a2b3c4d" ]
 
 # Modifying EFS data
 - efs:
     state: present
     name: myTestEFS
     tags:
-        Name: myAnotherTestTag
+        name: myAnotherTestTag
     targets:
-        - SubnetId: subnet-7654fdca
-          SecurityGroups: [ "sg-4c5d6f7a" ]
+        - subnet_id: subnet-7654fdca
+          security_groups: [ "sg-4c5d6f7a" ]
 
 # Deleting EFS
 - efs:
     state: absent
     name: myTestEFS
-
-# Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
-- efs:
-    state: list
-    tags:
-        Name: myTestNameTag
-    targets:
-        - subnet-1a2b3c4d
-        - sg-4d3c2b1a
-
 '''
 
 RETURN = '''
-CreationTime:
+creation_time:
     description: timestamp of creation date
     returned:
     type: datetime
     sample: 2015-11-16 07:30:57-05:00
-CreationToken:
+creation_token:
     description: EFS creation token
     returned:
     type: UUID
     sample: console-88609e04-9a0e-4a2e-912c-feaa99509961
-FileSystemId:
+file_system_id:
     description: ID of the file system
     returned:
     type: unique ID
     sample: fs-xxxxxxxx
-LifeCycleState:
+life_cycle_state:
     description: state of the EFS file system
     returned:
     type: str
     sample: creating, available, deleting, deleted
-MountPoint:
+mount_point:
     description: url of file system
     returned:
     type: str
     sample: .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
-MountTargets:
+mount_targets:
     description: list of mount targets
     returned:
     type: list of dicts
     sample:
         [
             {
-                "FileSystemId": "fs-a7ad440e",
-                "IpAddress": "172.31.17.173",
-                "LifeCycleState": "available",
-                "MountTargetId": "fsmt-d8907871",
-                "NetworkInterfaceId": "eni-6e387e26",
-                "OwnerId": "740748460359",
-                "SecurityGroups": [
+                "file_system_id": "fs-a7ad440e",
+                "ip_address": "172.31.17.173",
+                "life_cycle_state": "available",
+                "mount_target_id": "fsmt-d8907871",
+                "network_interface_id": "eni-6e387e26",
+                "owner_id": "740748460359",
+                "security_groups": [
                     "sg-a30b22c6"
                 ],
-                "SubnetId": "subnet-e265c895"
+                "subnet_id": "subnet-e265c895"
             },
             ...
         ]
-Name:
+name:
     description: name of the file system
     returned:
     type: str
     sample: my-efs
-NumberOfMountTargets:
+number_of_mount_targets:
     description: the number of targets mounted
     returned:
     type: int
     sample: 3
-OwnerId:
+owner_id:
     description: AWS account ID of EFS owner
     returned:
     type: str
     sample: XXXXXXXXXXXX
-SizeInBytes:
+size_in_bytes:
     description: size of the file system in bytes as of a timestamp
     returned:
     type: dict
     sample:
         {
-            "Timestamp": "2015-12-21 13:59:59-05:00",
-            "Value": 12288
+            "timestamp": "2015-12-21 13:59:59-05:00",
+            "value": 12288
         }
-Tags:
+performance_mode:
+    description: performance mode of the file system
+    returned:
+    type: str
+    sample: "generalPurpose"
+tags:
     description: tags on the efs instance
     returned:
     type: dict
     sample:
         {
-            "Name": "my-efs",
-            "Key": "Value"
+            "name": "my-efs",
+            "key": "Value"
         }
 
 '''
@@ -209,7 +204,7 @@ from collections import defaultdict
 
 try:
     from botocore.exceptions import ClientError
-    from boto3.session import Session
+    import boto3
     HAS_BOTO3 = True
 except ImportError as e:
     HAS_BOTO3 = False
@@ -226,15 +221,11 @@ class EFSConnection(object):
 
     def __init__(self, module, region, **aws_connect_params):
         try:
-            session = Session(
-                aws_access_key_id=aws_connect_params['aws_access_key_id'],
-                aws_secret_access_key=aws_connect_params['aws_secret_access_key'],
-                aws_session_token=aws_connect_params['aws_session_token'],
-                region_name=region
-            )
-            self.connection = session.client('efs')
+            self.connection = boto3_conn(module, conn_type='client',
+                                         resource='efs', region=region,
+                                         **aws_connect_params)
         except Exception as e:
-            module.fail_json(msg=repr(e))
+            module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
 
         self.region = region
         self.wait = module.params.get('wait')
@@ -345,7 +336,7 @@ class EFSConnection(object):
 
         return list(targets)
 
-    def create_file_system(self, name):
+    def create_file_system(self, name, performance_mode):
         """
          Creates new filesystem with selected name
         """
@@ -356,7 +347,7 @@ class EFSConnection(object):
                 lambda: self.get_file_system_state(name),
                 self.STATE_DELETED
             )
-            self.connection.create_file_system(CreationToken=name)
+            self.connection.create_file_system(CreationToken=name, PerformanceMode=performance_mode)
             changed = True
 
         # we always wait for the state to be available when creating.
@@ -507,7 +498,7 @@ def iterate_all(attr, map_method, **kwargs):
     """
      Method creates iterator from boto result set
     """
-    args = dict((key, value) for (key, value) in kwargs.iteritems() if value is not None)
+    args = dict((key, value) for (key, value) in kwargs.items() if value is not None)
     wait = 1
     while True:
         try:
@@ -539,42 +530,12 @@ def dict_diff(dict1, dict2, by_key=False):
     """
      Helper method to calculate difference of two dictionaries
     """
-    keys1 = set(dict1.keys() if by_key else dict1.iteritems())
-    keys2 = set(dict2.keys() if by_key else dict2.iteritems())
+    keys1 = set(dict1.keys() if by_key else dict1.items())
+    keys2 = set(dict2.keys() if by_key else dict2.items())
 
     intersection = keys1 & keys2
 
     return keys2 ^ intersection, intersection, keys1 ^ intersection
-
-
-def group_list_of_dict(array):
-    """
-     Helper method to group list of dict to dict with all possible values
-    """
-    result = defaultdict(list)
-    for item in array:
-        for key, value in item.iteritems():
-            result[key] += value if isinstance(value, list) else [value]
-    return result
-
-
-def prefix_to_attr(attr_id):
-    """
-     Helper method to convert ID prefix to mount target attribute
-    """
-    attr_by_prefix = {
-        'fsmt-': 'MountTargetId',
-        'subnet-': 'SubnetId',
-        'eni-': 'NetworkInterfaceId',
-        'sg-': 'SecurityGroups'
-    }
-    prefix = first_or_default(filter(
-        lambda pref: str(attr_id).startswith(pref),
-        attr_by_prefix.keys()
-    ))
-    if prefix:
-        return attr_by_prefix[prefix]
-    return 'IpAddress'
 
 
 def first_or_default(items, default=None):
@@ -584,27 +545,6 @@ def first_or_default(items, default=None):
     for item in items:
         return item
     return default
-
-
-def has_tags(available, required):
-    """
-    Helper method to determine if tag requested already exists
-    """
-    for key, value in required.iteritems():
-        if key not in available or value != available[key]:
-            return False
-    return True
-
-
-def has_targets(available, required):
-    """
-    Helper method to determine if mount tager requested already exists
-    """
-    grouped = group_list_of_dict(available)
-    for (value, field) in required:
-        if field not in grouped or value not in grouped[field]:
-            return False
-    return True
 
 
 def wait_for(callback, value, timeout=EFSConnection.DEFAULT_WAIT_TIMEOUT_SECONDS):
@@ -628,11 +568,12 @@ def main():
     """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, type='str', choices=["present", "absent"]),
+        state=dict(required=False, type='str', choices=["present", "absent"], default="present"),
         id=dict(required=False, type='str', default=None),
         name=dict(required=False, type='str', default=None),
         tags=dict(required=False, type="dict", default={}),
         targets=dict(required=False, type="list", default=[]),
+        performance_mode=dict(required=False, type='str', choices=["general_purpose", "max_io"], default="general_purpose"),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
     ))
@@ -648,7 +589,17 @@ def main():
     name = module.params.get('name')
     fs_id = module.params.get('id')
     tags = module.params.get('tags')
-    targets = module.params.get('targets')
+    target_translations = {
+        'ip_address': 'IpAddress',
+        'security_groups': 'SecurityGroups',
+        'subnet_id': 'SubnetId'
+    }
+    targets = [dict((target_translations[key], value) for (key, value) in x.items()) for x in module.params.get('targets')]
+    performance_mode_translations = {
+        'general_purpose': 'generalPurpose',
+        'max_io': 'maxIO'
+    }
+    performance_mode = performance_mode_translations[module.params.get('performance_mode')]
     changed = False
 
     state = str(module.params.get('state')).lower()
@@ -657,7 +608,7 @@ def main():
         if not name:
             module.fail_json(msg='Name parameter is required for create')
 
-        changed = connection.create_file_system(name)
+        changed = connection.create_file_system(name, performance_mode)
         changed = connection.converge_file_system(name=name, tags=tags, targets=targets) or changed
         result = first_or_default(connection.get_file_systems(CreationToken=name))
 
@@ -667,7 +618,8 @@ def main():
 
         changed = connection.delete_file_system(name, fs_id)
         result = None
-
+    if result:
+        result = camel_dict_to_snake_dict(result)
     module.exit_json(changed=changed, efs=result)
 
 from ansible.module_utils.basic import *
