@@ -67,9 +67,13 @@ class IncludeRole(Task):
         actual_role = Role.load(ri, block._play, parent_role=role, from_files=from_files)
 
         # compile role
-        tasks = actual_role.compile(play=block._play)
+        blocks = actual_role.compile(play=block._play)
+
+        # set parent to ensure proper inheritance
+        for b in blocks:
+            b._parent = block
 
         # updated available handlers in play
-        block._play.handlers = actual_role.get_handler_blocks(play=block._play) + block._play.handlers
+        block._play.handlers = block._play.handlers + actual_role.get_handler_blocks(play=block._play)
 
-        return tasks
+        return blocks
