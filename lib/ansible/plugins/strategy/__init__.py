@@ -40,6 +40,7 @@ from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
+from ansible.playbook.role_include import IncludeRole
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.unicode import to_unicode
@@ -258,7 +259,7 @@ class StrategyBase:
 
         def parent_handler_match(target_handler, handler_name):
             if target_handler:
-                if isinstance(target_handler, TaskInclude):
+                if isinstance(target_handler, (TaskInclude, IncludeRole)):
                     try:
                         handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=target_handler)
                         templar = Templar(loader=self._loader, variables=handler_vars)
@@ -477,7 +478,7 @@ class StrategyBase:
 
                 # If this is a role task, mark the parent role as being run (if
                 # the task was ok or failed, but not skipped or unreachable)
-                if original_task._role is not None and role_ran:
+                if original_task._role is not None and role_ran and original_task.action != 'include_role':
                     # lookup the role in the ROLE_CACHE to make sure we're dealing
                     # with the correct object and mark it as executed
                     for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):

@@ -22,8 +22,7 @@ import os
 
 from ansible import constants as C
 from ansible.compat.six import string_types
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleSequence
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleError
 
 try:
     from __main__ import display
@@ -81,6 +80,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
     from ansible.playbook.task_include import TaskInclude
+    from ansible.playbook.role_include import IncludeRole
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
 
@@ -172,7 +172,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     if not found:
                         try:
                             include_target = templar.template(t.args['_raw_params'])
-                        except AnsibleUndefinedVariable as e:
+                        except AnsibleUndefinedVariable:
                             raise AnsibleParserError(
                                       "Error when evaluating variable in include name: %s.\n\n" \
                                       "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
@@ -198,7 +198,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # because the recursive nature of helper methods means we may be loading
                         # nested includes, and we want the include order printed correctly
                         display.display("statically included: %s" % include_file, color=C.COLOR_SKIP)
-                    except AnsibleFileNotFound as e:
+                    except AnsibleFileNotFound:
                         if t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
@@ -258,11 +258,24 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         task_list.extend(included_blocks)
                 else:
                     task_list.append(t)
+
+            elif 'include_role' in task_ds:
+                task_list.extend(
+                    IncludeRole.load(
+                        task_ds,
+                        block=block,
+                        role=role,
+                        task_include=None,
+                        variable_manager=variable_manager,
+                        loader=loader
+                    )
+                )
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
                 else:
                     t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+
                 task_list.append(t)
 
     return task_list

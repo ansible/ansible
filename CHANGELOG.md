@@ -39,6 +39,7 @@ Ansible Changes By Release
 - ipmi
   * ipmi_boot
   * ipmi_power
+- include_role
 - letsencrypt
 - logicmonitor
 - logicmonitor_facts
