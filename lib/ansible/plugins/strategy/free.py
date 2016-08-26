@@ -26,7 +26,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.compat.six import text_type
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -109,7 +109,7 @@ class StrategyModule(StrategyBase):
                         display.debug("done getting variables")
 
                         try:
-                            task.name = text_type(templar.template(task.name, fail_on_undefined=False))
+                            task.name = to_unicode(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                             display.debug("done templating")
                         except:
                             # just ignore any errors during task name templating,
