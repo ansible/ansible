@@ -101,19 +101,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 variable_manager=variable_manager,
                 loader=loader,
             )
-        elif 'include_role' in task_ds:
-            task_list.extend(
-                IncludeRole.load(
-                    task_ds,
-                    block=block,
-                    role=role,
-                    task_include=None,
-                    variable_manager=variable_manager,
-                    loader=loader
-                )
-            )
+            task_list.append(t)
         else:
-            if 'include' in task_ds or 'include_role' in task_ds:
+            if 'include' in task_ds:
                 if use_handlers:
                     include_class = HandlerTaskInclude
                 else:
@@ -266,14 +256,24 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             task_list.extend(b.block)
                     else:
                         task_list.extend(included_blocks)
-                t = None # unset t to not append again on end
+
+            elif 'include_role' in task_ds:
+                task_list.extend(
+                    IncludeRole.load(
+                        task_ds,
+                        block=block,
+                        role=role,
+                        task_include=None,
+                        variable_manager=variable_manager,
+                        loader=loader
+                    )
+                )
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
                 else:
                     t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
 
-            if t and not task_list:
                 task_list.append(t)
 
     return task_list
