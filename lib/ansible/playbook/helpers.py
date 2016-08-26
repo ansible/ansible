@@ -191,7 +191,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if data is None:
                             return []
                         elif not isinstance(data, list):
-                            raise AnsibleError("included task files must contain a list of tasks", obj=data)
+                            raise AnsibleParserError("included task files must contain a list of tasks", obj=data)
 
                         # since we can't send callbacks here, we display a message directly in
                         # the same fashion used by the on_include callback. We also do it here,
