@@ -57,7 +57,7 @@ class IncludeRole(Task):
         args = r.preprocess_data(data).get('args', dict())
 
         ri = RoleInclude.load(args.get('name'), play=block._play, variable_manager=variable_manager, loader=loader)
-        ri.vars.update(data.get('vars',{}))
+        ri.vars.update(r.vars)
 
         # build options for roles
         from_files = {}
