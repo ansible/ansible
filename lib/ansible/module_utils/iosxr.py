@@ -64,7 +64,7 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses
 
-    ### immplementation of netcfg.Config ###
+    ### implementation of netcfg.Config ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
@@ -81,7 +81,7 @@ class Cli(CliBase):
                 cmd += ' %s' % flags
         return self.execute([cmd])[0]
 
-    def load_config(self, config, replace=False, commit=False, **kwargs):
+    def load_config(self, config, commit=False, replace=False, comment=None):
         commands = ['configure terminal']
         commands.extend(config)
 
@@ -94,19 +94,22 @@ class Cli(CliBase):
             if commit:
                 if replace:
                     prompt = re.compile(r'\[no\]:\s$')
-                    cmd = Command('commit replace', prompt=prompt,
-                                  response='yes')
+                    commit = 'commit replace'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    cmd = Command(commit, prompt=prompt, response='yes')
                     self.execute([cmd, 'end'])
                 else:
-                    self.execute(['commit', 'end'])
+                    commit = 'commit'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    self.execute([commit, 'end'])
+            else:
+                self.execute(['abort'])
         except NetworkError:
             self.execute(['abort'])
             diff = None
             raise
         return diff[0]
-
-    def save_config(self):
-        raise NotImplementedError
-
 
 Cli = register_transport('cli', default=True)(Cli)
