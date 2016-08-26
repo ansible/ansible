@@ -32,7 +32,10 @@ notes:
     - Only basic roles have been tested for now, some things might not work as expected.
     - Handlers are made available to the whole play.
     - Currently role variables are not pushed up to the play.
-    - "Things not tested (yet): loops, plugin overrides, nesting includes, role dependencies, used as handler, other stuff I did not think of when I wrote this."
+    - simple dependencies seem to work fine.
+    - Role search paths work (implicit vars/ templates/ files/ etc)
+    - loops don't work.
+    - "Things not tested (yet): plugin overrides, nesting includes, used as handler, other stuff I did not think of when I wrote this."
 '''
 
 EXAMPLES = """
