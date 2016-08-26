@@ -115,13 +115,15 @@ responses:
   type: list
   sample: ['...', '...']
 """
-
 import re
+
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.eos import NetworkModule
 
 def get_config(module):
     config = module.params.get('config')
     if not config and not module.params['force']:
-        config = module.config
+        config = module.config.get_config()
     return config
 
 def filter_exit(commands):
@@ -163,9 +165,9 @@ def main():
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     replace = module.params['replace']
 
@@ -188,24 +190,20 @@ def main():
 
         if not module.params['force']:
             commands = candidate.difference((running or list()))
+            commands = dumps(commands, 'commands').split('\n')
+            commands = [str(c) for c in commands if c]
         else:
             commands = str(candidate).split('\n')
 
     commands = filter_exit(commands)
     if commands:
         if not module.check_mode:
-            commands = [str(c).strip() for c in commands]
-            response = module.configure(commands, replace=replace)
+            response = module.config(commands, replace=replace)
             result['responses'] = response
         result['changed'] = True
 
     result['updates'] = commands
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.eos import *
 if __name__ == '__main__':
     main()
