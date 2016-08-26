@@ -102,6 +102,7 @@ class Command(object):
 
         self.command = command
         self.output = output
+        self.command_string = command
 
         self.prompt = prompt
         self.response = response
@@ -110,7 +111,7 @@ class Command(object):
         self.delay = delay
 
     def __str__(self):
-        return self.command
+        return self.command_string
 
 class CommandRunner(object):
 
@@ -145,7 +146,7 @@ class CommandRunner(object):
             return cmdobj.response
         except KeyError:
             for cmd in self.commands:
-                if str(cmd) == command and cmd.output == output:
+                if cmd.command == command and cmd.output == output:
                     self._cache[(command, output)] = cmd
                     return cmd.response
         raise ValueError("command '%s' not found" % command)
