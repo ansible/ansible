@@ -108,30 +108,32 @@ responses:
   type: list
   sample: ['...', '...']
 """
-
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.nxos import NetworkModule, NetworkError
 
 def get_config(module):
     config = module.params['config'] or dict()
     if not config and not module.params['force']:
-        config = module.config
+        config = module.config.get_config()
     return config
 
-
 def main():
+    """ main entry point for module execution
+    """
 
     argument_spec = dict(
         src=dict(),
         force=dict(default=False, type='bool'),
-        include_defaults=dict(default=False, type='bool'),
+        include_defaults=dict(default=True, type='bool'),
         backup=dict(default=False, type='bool'),
-        config=dict()
+        config=dict(),
     )
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     result = dict(changed=False)
 
@@ -140,27 +142,24 @@ def main():
     contents = get_config(module)
     if contents:
         config = NetworkConfig(contents=contents, indent=2)
-        result['_backup'] = contents
+        result['_backup'] = str(contents)
 
     if not module.params['force']:
         commands = candidate.difference(config)
+        commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c) for c in commands if c]
     else:
         commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
-            commands = [str(c).strip() for c in commands]
-            response = module.configure(commands)
+            response = module.config(commands)
             result['responses'] = response
         result['changed'] = True
 
     result['updates'] = commands
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
+
 if __name__ == '__main__':
     main()
