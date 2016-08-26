@@ -64,7 +64,8 @@ class ActionModule(ActionBase):
         remote_checksum = None
         if not self._play_context.become:
             # calculate checksum for the remote file, don't bother if using become as slurp will be used
-            remote_checksum = self._remote_checksum(source, all_vars=task_vars)
+            # Force remote_checksum to follow symlinks because fetch always follows symlinks
+            remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
 
         # use slurp if permissions are lacking or privilege escalation is needed
         remote_data = None
