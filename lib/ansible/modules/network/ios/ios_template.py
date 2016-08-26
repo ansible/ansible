@@ -148,16 +148,16 @@ def main():
     contents = get_config(module)
     if contents:
         config = NetworkConfig(contents=contents, indent=1)
-        result['_backup'] = contents
+        result['_backup'] = str(contents)
 
-    commands = list()
     if not module.params['force']:
-        commands = dumps(candidate.difference(config), 'commands')
+        commands = candidate.difference(config)
+        commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c) for c in commands if c]
     else:
-        commands = str(candidate)
+        commands = str(candidate).split('\n')
 
     if commands:
-        commands = commands.split('\n')
         if not module.check_mode:
             response = module.config(commands)
             result['responses'] = response
@@ -169,4 +169,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
