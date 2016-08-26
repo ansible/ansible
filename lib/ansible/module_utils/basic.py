@@ -139,7 +139,7 @@ from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -2039,13 +2039,13 @@ class AnsibleModule(object):
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
-        elif isinstance(args, string_types):
+        elif isinstance(args, (binary_type, text_type)):
             # On python2.6 and below, shlex has problems with text type
             # On python3, shlex needs a text type.
-            if PY2 and isinstance(args, text_type):
-                args = args.encode('utf-8')
-            elif PY3 and isinstance(args, binary_type):
-                args = args.decode('utf-8', errors='surrogateescape')
+            if PY2:
+                args = to_bytes(args)
+            elif PY3:
+                args = to_text(args, errors='surrogateescape')
             args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
@@ -2055,9 +2055,9 @@ class AnsibleModule(object):
         if prompt_regex:
             if isinstance(prompt_regex, text_type):
                 if PY3:
-                    prompt_regex = prompt_regex.encode('utf-8', errors='surrogateescape')
+                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
                 elif PY2:
-                    prompt_regex = prompt_regex.encode('utf-8')
+                    prompt_regex = to_bytes(prompt_regex)
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -2065,7 +2065,7 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args if x is not None ]
+            args = [ os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None ]
 
         rc = 0
         msg = None
