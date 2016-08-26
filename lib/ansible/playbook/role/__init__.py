@@ -85,7 +85,6 @@ class Role(Base, Become, Conditional, Taggable):
 
         if from_files is None:
             from_files = {}
-
         self._tasks_from       = from_files.get('tasks')
 
         super(Role, self).__init__()
@@ -112,7 +111,10 @@ class Role(Base, Become, Conditional, Taggable):
                 params['when'] = role_include.when
             if role_include.tags is not None:
                 params['tags'] = role_include.tags
-            params['tasks_from'] = from_files.get('tasks')
+            if from_files is not None:
+                params['from_files'] = from_files
+            if role_include.vars:
+                params['vars'] = role_include.vars
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
@@ -296,6 +298,7 @@ class Role(Base, Become, Conditional, Taggable):
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
+        all_vars = combine_vars(all_vars, self.vars)
         all_vars = combine_vars(all_vars, self._role_vars)
         if include_params:
             all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
