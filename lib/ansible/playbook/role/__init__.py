@@ -218,9 +218,9 @@ class Role(Base, Become, Conditional, Taggable):
         )
 
         if post:
-            possible_mains = (bare_main,) + possible_mains
-        else:
             possible_mains = possible_mains + (bare_main,)
+        else:
+            possible_mains = (bare_main,) + possible_mains
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
             raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
