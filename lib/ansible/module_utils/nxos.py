@@ -251,7 +251,7 @@ class Cli(CliBase):
                 except ValueError:
                     raise NetworkError(
                         msg='unable to load response from device',
-                        response=responses[index]
+                        response=responses[index], command=str(cmd)
                     )
         return responses
 
@@ -287,5 +287,5 @@ def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
     for cmd in to_list(commands):
         if cmd.output == 'json':
-            cmd.command = jsonify(cmd)
+            cmd.command_string = jsonify(cmd)
         yield cmd
