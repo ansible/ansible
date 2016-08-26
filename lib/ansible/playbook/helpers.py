@@ -256,6 +256,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             task_list.extend(b.block)
                     else:
                         task_list.extend(included_blocks)
+                else:
+                    task_list.append(t)
 
             elif 'include_role' in task_ds:
                 task_list.extend(
