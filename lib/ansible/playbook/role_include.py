@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from os.path import basename
+
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 from ansible.playbook.role import Role
@@ -62,7 +64,7 @@ class IncludeRole(Task):
         # build options for roles
         from_files = {}
         if  args.get('tasks_from'):
-            from_files['tasks'] = args.get('tasks_from')
+            from_files['tasks'] = basename(args.get('tasks_from'))
 
         #build role
         actual_role = Role.load(ri, block._play, parent_role=role, from_files=from_files)
