@@ -24,8 +24,6 @@ from ansible.playbook.task import Task
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 
-from ansible.errors import AnsibleError
-
 try:
     from __main__ import display
 except ImportError:
@@ -60,7 +58,13 @@ class IncludeRole(Task):
 
         ri = RoleInclude.load(args.get('name'), play=block._play, variable_manager=variable_manager, loader=loader)
 
-        actual_role = Role.load(ri, block._play, parent_role=role, tasks_from=args.get('tasks_from'))
+        # build options for roles
+        from_files = {}
+        if  args.get('tasks_from'):
+            from_files['tasks'] = args.get('tasks_from')
+
+        #build role
+        actual_role = Role.load(ri, block._play, parent_role=role, from_files=from_files)
 
         # compile role
         tasks = actual_role.compile(play=block._play)

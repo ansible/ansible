@@ -66,7 +66,7 @@ class Role(Base, Become, Conditional, Taggable):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, tasks_from=None):
+    def __init__(self, play=None, from_files=None):
         self._role_name        = None
         self._role_path        = None
         self._role_params      = dict()
@@ -82,7 +82,11 @@ class Role(Base, Become, Conditional, Taggable):
         self._role_vars        = dict()
         self._had_task_run     = dict()
         self._completed        = dict()
-        self._tasks_from       = tasks_from
+
+        if from_files is None:
+            from_files = {}
+
+        self._tasks_from       = from_files.get('tasks')
 
         super(Role, self).__init__()
 
@@ -93,7 +97,10 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, tasks_from=None):
+    def load(role_include, play, parent_role=None, from_files=None):
+
+        if from_files is None:
+            from_files = {}
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
             # containing another dictionary corresponding to a set of parameters
@@ -105,7 +112,7 @@ class Role(Base, Become, Conditional, Taggable):
                 params['when'] = role_include.when
             if role_include.tags is not None:
                 params['tags'] = role_include.tags
-            params['tasks_from'] = tasks_from
+            params['tasks_from'] = from_files.get('tasks')
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
@@ -114,7 +121,7 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role(play=play, tasks_from=tasks_from)
+            r = Role(play=play, from_files=from_files)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
