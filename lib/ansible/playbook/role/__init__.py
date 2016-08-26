@@ -165,7 +165,7 @@ class Role(Base, Become, Conditional, Taggable):
         else:
             self._metadata = RoleMetadata()
 
-        task_data = self._load_role_yaml('tasks')
+        task_data = self._load_role_yaml('tasks', main=self._tasks_from)
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
@@ -192,22 +192,24 @@ class Role(Base, Become, Conditional, Taggable):
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-    def _load_role_yaml(self, subdir):
+    def _load_role_yaml(self, subdir, main=None):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            main_file = self._resolve_main(file_path)
+            main_file = self._resolve_main(file_path, main)
             if self._loader.path_exists(main_file):
                 return self._loader.load_from_file(main_file)
         return None
 
-    def _resolve_main(self, basepath):
+    def _resolve_main(self, basepath, main=None):
         ''' flexibly handle variations in main filenames '''
 
+        post = False
         # allow override if set, otherwise use default
-        if self._tasks_from is None:
+        if main is None:
             main = 'main'
-        else:
-            main = self._tasks_from
+            post = True
+
+        bare_main = os.path.join(basepath, main)
 
         possible_mains = (
             os.path.join(basepath, '%s.yml' % main),
@@ -215,10 +217,10 @@ class Role(Base, Become, Conditional, Taggable):
             os.path.join(basepath, '%s.json' % main),
         )
 
-        if self._tasks_from:
-            possible_mains = (os.path.join(basepath, main),) + possible_mains
+        if post:
+            possible_mains = (bare_main,) + possible_mains
         else:
-            possible_mains = possible_mains + (os.path.join(basepath, main),)
+            possible_mains = possible_mains + (bare_main,)
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
             raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
