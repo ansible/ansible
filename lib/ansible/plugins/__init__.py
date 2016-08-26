@@ -357,16 +357,15 @@ class PluginLoader:
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
-        searched_msg = 'Searching for plugin type %s named \'%s\' in paths: %s' % (class_name, name, self.format_paths(searched_paths))
-        loading_msg = 'Loading plugin type %s named \'%s\' from %s' % (class_name, name, path)
+        msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
+        
+        if len(searched_paths) > 1:
+            msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
 
         if found_in_cache or class_only:
-            extra_msg = 'found_in_cache=%s, class_only=%s' % (found_in_cache, class_only)
-            display.debug('%s %s' % (searched_msg, extra_msg))
-            display.debug('%s %s' % (loading_msg, extra_msg))
-        else:
-            display.vvvv(searched_msg)
-            display.vvv(loading_msg)
+            msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
+
+        display.debug(msg)
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
