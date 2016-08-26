@@ -66,7 +66,7 @@ class Role(Base, Become, Conditional, Taggable):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None):
+    def __init__(self, play=None, from_files=None):
         self._role_name        = None
         self._role_path        = None
         self._role_params      = dict()
@@ -83,6 +83,10 @@ class Role(Base, Become, Conditional, Taggable):
         self._had_task_run     = dict()
         self._completed        = dict()
 
+        if from_files is None:
+            from_files = {}
+        self._tasks_from       = from_files.get('tasks')
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -92,7 +96,10 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None):
+    def load(role_include, play, parent_role=None, from_files=None):
+
+        if from_files is None:
+            from_files = {}
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
             # containing another dictionary corresponding to a set of parameters
@@ -104,6 +111,10 @@ class Role(Base, Become, Conditional, Taggable):
                 params['when'] = role_include.when
             if role_include.tags is not None:
                 params['tags'] = role_include.tags
+            if from_files is not None:
+                params['from_files'] = from_files
+            if role_include.vars:
+                params['vars'] = role_include.vars
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
@@ -112,7 +123,7 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role(play=play)
+            r = Role(play=play, from_files=from_files)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
@@ -163,7 +174,7 @@ class Role(Base, Become, Conditional, Taggable):
         else:
             self._metadata = RoleMetadata()
 
-        task_data = self._load_role_yaml('tasks')
+        task_data = self._load_role_yaml('tasks', main=self._tasks_from)
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
@@ -190,22 +201,35 @@ class Role(Base, Become, Conditional, Taggable):
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-    def _load_role_yaml(self, subdir):
+    def _load_role_yaml(self, subdir, main=None):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            main_file = self._resolve_main(file_path)
+            main_file = self._resolve_main(file_path, main)
             if self._loader.path_exists(main_file):
                 return self._loader.load_from_file(main_file)
         return None
 
-    def _resolve_main(self, basepath):
+    def _resolve_main(self, basepath, main=None):
         ''' flexibly handle variations in main filenames '''
+
+        post = False
+        # allow override if set, otherwise use default
+        if main is None:
+            main = 'main'
+            post = True
+
+        bare_main = os.path.join(basepath, main)
+
         possible_mains = (
-            os.path.join(basepath, 'main.yml'),
-            os.path.join(basepath, 'main.yaml'),
-            os.path.join(basepath, 'main.json'),
-            os.path.join(basepath, 'main'),
+            os.path.join(basepath, '%s.yml' % main),
+            os.path.join(basepath, '%s.yaml' % main),
+            os.path.join(basepath, '%s.json' % main),
         )
+
+        if post:
+            possible_mains = possible_mains + (bare_main,)
+        else:
+            possible_mains = (bare_main,) + possible_mains
 
         if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
             raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
@@ -274,6 +298,7 @@ class Role(Base, Become, Conditional, Taggable):
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
+        all_vars = combine_vars(all_vars, self.vars)
         all_vars = combine_vars(all_vars, self._role_vars)
         if include_params:
             all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
