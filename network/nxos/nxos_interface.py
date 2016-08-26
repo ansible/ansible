@@ -157,33 +157,6 @@ def is_default_interface(interface, module):
         return 'DNE'
 
 
-def get_available_features(feature, module):
-    available_features = {}
-    command = 'show feature'
-    body = execute_show_command(command, module)
-
-    try:
-        body = body[0]['TABLE_cfcFeatureCtrlTable']['ROW_cfcFeatureCtrlTable']
-    except (TypeError, IndexError):
-        return available_features
-
-    for each_feature in body:
-        feature = each_feature['cfcFeatureCtrlName2']
-        state = each_feature['cfcFeatureCtrlOpStatus2']
-
-        if 'enabled' in state:
-            state = 'enabled'
-
-        if feature not in available_features.keys():
-            available_features[feature] = state
-        else:
-            if (available_features[feature] == 'disabled' and
-                    state == 'enabled'):
-                available_features[feature] = state
-
-    return available_features
-
-
 def get_interface_type(interface):
     """Gets the type of interface
 
@@ -625,15 +598,6 @@ def main():
 
     if normalized_interface == 'Vlan1' and state == 'absent':
         module.fail_json(msg='ERROR: CANNOT REMOVE VLAN 1!')
-
-    if intf_type == 'svi':
-        feature = 'interface-vlan'
-        available_features = get_available_features(feature, module)
-        svi_state = available_features[feature]
-        if svi_state == 'disabled':
-            module.fail_json(
-                msg='SVI (interface-vlan) feature needs to be enabled first',
-            )
 
     if intf_type == 'unknown':
         module.fail_json(
