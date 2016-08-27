@@ -426,10 +426,10 @@ EXAMPLES = '''
       register: ec2
     - name: Add new instance to host group
       add_host: hostname={{ item.public_ip }} groupname=launched
-      with_items: ec2.instances
+      with_items: '{{ec2.instances}}'
     - name: Wait for SSH to come up
       wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
-      with_items: ec2.instances
+      with_items: '{{ec2.instances}}'
 
 - name: Configure instance(s)
   hosts: launched
