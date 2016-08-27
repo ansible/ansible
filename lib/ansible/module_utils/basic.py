@@ -808,7 +808,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.matchpathcon(to_native(path, 'strict'), mode)
+            ret = selinux.matchpathcon(to_native(path, errors='strict'), mode)
         except OSError:
             return context
         if ret[0] == -1:
@@ -823,7 +823,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.lgetfilecon_raw(to_native(path, 'strict'))
+            ret = selinux.lgetfilecon_raw(to_native(path, errors='strict'))
         except OSError:
             e = get_exception()
             if e.errno == errno.ENOENT:
@@ -984,8 +984,9 @@ class AnsibleModule(object):
         return changed
 
     def set_mode_if_different(self, path, mode, changed, diff=None):
-        path = os.path.expanduser(path)
-        path_stat = os.lstat(path)
+        b_path = to_bytes(path)
+        b_path = os.path.expanduser(b_path)
+        path_stat = os.lstat(b_path)
 
         if mode is None:
             return changed
@@ -1024,22 +1025,22 @@ class AnsibleModule(object):
             # every time
             try:
                 if hasattr(os, 'lchmod'):
-                    os.lchmod(path, mode)
+                    os.lchmod(b_path, mode)
                 else:
-                    if not os.path.islink(path):
-                        os.chmod(path, mode)
+                    if not os.path.islink(b_path):
+                        os.chmod(b_path, mode)
                     else:
                         # Attempt to set the perms of the symlink but be
                         # careful not to change the perms of the underlying
                         # file while trying
-                        underlying_stat = os.stat(path)
-                        os.chmod(path, mode)
-                        new_underlying_stat = os.stat(path)
+                        underlying_stat = os.stat(b_path)
+                        os.chmod(b_path, mode)
+                        new_underlying_stat = os.stat(b_path)
                         if underlying_stat.st_mode != new_underlying_stat.st_mode:
-                            os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
+                            os.chmod(b_path, stat.S_IMODE(underlying_stat.st_mode))
             except OSError:
                 e = get_exception()
-                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                if os.path.islink(b_path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
                 elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
                     pass
@@ -1049,7 +1050,7 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
-            path_stat = os.lstat(path)
+            path_stat = os.lstat(b_path)
             new_mode = stat.S_IMODE(path_stat.st_mode)
 
             if new_mode != prev_mode:
@@ -1902,11 +1903,13 @@ class AnsibleModule(object):
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
         dest_stat = None
-        if os.path.exists(dest):
+        b_src = to_bytes(src)
+        b_dest = to_bytes(dest)
+        if os.path.exists(b_dest):
             try:
-                dest_stat = os.stat(dest)
-                os.chmod(src, dest_stat.st_mode & PERM_BITS)
-                os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
+                dest_stat = os.stat(b_dest)
+                os.chmod(b_src, dest_stat.st_mode & PERM_BITS)
+                os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
             except OSError:
                 e = get_exception()
                 if e.errno != errno.EPERM:
@@ -1917,7 +1920,7 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
 
-        creating = not os.path.exists(dest)
+        creating = not os.path.exists(b_dest)
 
         try:
             login_name = os.getlogin()
@@ -1933,7 +1936,7 @@ class AnsibleModule(object):
 
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
-            os.rename(src, dest)
+            os.rename(b_src, b_dest)
         except (IOError, OSError):
             e = get_exception()
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
@@ -1941,14 +1944,20 @@ class AnsibleModule(object):
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
             else:
-                dest_dir = os.path.dirname(dest)
-                dest_file = os.path.basename(dest)
+                b_dest_dir = os.path.dirname(b_dest)
+                # Converting from bytes so that if py3, it will be
+                # surrogateescaped.  If py2, it wil be a noop.  Converting
+                # from text strings could mangle filenames on py2)
+                native_dest_dir = to_native(b_dest_dir)
+                native_suffix = to_native(os.path.basename(b_dest))
+                native_prefix = '.ansible_tmp'
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
-                        prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+                        prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
-                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (dest_dir, e))
+                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
+                b_tmp_dest_name = to_bytes(tmp_dest_name)
 
                 try:
                     try:
@@ -1958,21 +1967,21 @@ class AnsibleModule(object):
                         if switched_user and os.getuid() != 0:
                             # cleanup will happen by 'rm' of tempdir
                             # copy2 will preserve some metadata
-                            shutil.copy2(src, tmp_dest_name)
+                            shutil.copy2(b_src, b_tmp_dest_name)
                         else:
-                            shutil.move(src, tmp_dest_name)
+                            shutil.move(b_src, b_tmp_dest_name)
                         if self.selinux_enabled():
                             self.set_context_if_different(
-                                tmp_dest_name, context, False)
+                                b_tmp_dest_name, context, False)
                         try:
-                            tmp_stat = os.stat(tmp_dest_name)
+                            tmp_stat = os.stat(b_tmp_dest_name)
                             if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                os.chown(tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
                         except OSError:
                             e = get_exception()
                             if e.errno != errno.EPERM:
                                 raise
-                        os.rename(tmp_dest_name, dest)
+                        os.rename(b_tmp_dest_name, b_dest)
                     except (shutil.Error, OSError, IOError):
                         e = get_exception()
                         # sadly there are some situations where we cannot ensure atomicity, but only if
@@ -1981,8 +1990,8 @@ class AnsibleModule(object):
                             #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
                             try:
                                 try:
-                                    out_dest = open(dest, 'wb')
-                                    in_src = open(src, 'rb')
+                                    out_dest = open(b_dest, 'wb')
+                                    in_src = open(b_src, 'rb')
                                     shutil.copyfileobj(in_src, out_dest)
                                 finally: # assuring closed files in 2.4 compatible way
                                     if out_dest:
@@ -1996,16 +2005,16 @@ class AnsibleModule(object):
                         else:
                             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
                 finally:
-                    self.cleanup(tmp_dest_name)
+                    self.cleanup(b_tmp_dest_name)
 
         if creating:
             # make sure the file has the correct permissions
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, DEFAULT_PERM & ~umask)
+            os.chmod(b_dest, DEFAULT_PERM & ~umask)
             if switched_user:
-                os.chown(dest, os.getuid(), os.getgid())
+                os.chown(b_dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
