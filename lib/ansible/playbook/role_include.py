@@ -63,8 +63,10 @@ class IncludeRole(Task):
 
         # build options for roles
         from_files = {}
-        if  args.get('tasks_from'):
-            from_files['tasks'] = basename(args.get('tasks_from'))
+        for key in ['tasks', 'vars', 'defaults']:
+            from_key = key + '_from'
+            if  args.get(from_key):
+                from_files[key] = basename(args.get(from_key))
 
         #build role
         actual_role = Role.load(ri, block._play, parent_role=role, from_files=from_files)
