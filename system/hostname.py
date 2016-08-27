@@ -49,6 +49,7 @@ from distutils.version import LooseVersion
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.facts import *
+from ansible.module_utils._text import to_bytes, to_native
 
 
 class UnimplementedStrategy(object):
@@ -135,7 +136,7 @@ class GenericStrategy(object):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out.strip()
+        return to_native(out).strip()
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, name]
@@ -297,7 +298,7 @@ class SystemdStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out.strip()
+        return to_native(out).strip()
 
     def set_current_hostname(self, name):
         if len(name) > 64:
@@ -314,7 +315,7 @@ class SystemdStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out.strip()
+        return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         if len(name) > 64:
@@ -442,7 +443,7 @@ class SolarisStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out.strip()
+        return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         cmd = [self.hostname_cmd, name]
