@@ -2028,7 +2028,7 @@ class AnsibleModule(object):
         :kw path_prefix: If given, additional path to find the command in.
             This adds to the PATH environment vairable so helper commands in
             the same directory can also be found
-        :kw cwd: iIf given, working directory to run the command inside
+        :kw cwd: If given, working directory to run the command inside
         :kw use_unsafe_shell: See `args` parameter.  Default False
         :kw prompt_regex: Regex string (not a compiled regex) which can be
             used to detect prompts in the stdout which would otherwise cause
