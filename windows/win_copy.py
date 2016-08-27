@@ -72,7 +72,7 @@ src:
     type: string
     sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
 checksum:
-    description: checksum of the file after running copy
+    description: sha1 checksum of the file after running copy
     returned: success
     type: string
     sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
