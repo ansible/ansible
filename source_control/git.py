@@ -46,8 +46,9 @@ options:
         default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
-              full 40-character I(SHA-1) hash, the literal string C(HEAD), a
-              branch name, or a tag name.
+              the literal string C(HEAD), a branch name, a tag name. 
+              It can also be a I(SHA-1) hash, in which case C(refspec) needs 
+              to be specified if the given revision is not already available.
     accept_hostkey:
         required: false
         default: "no"
