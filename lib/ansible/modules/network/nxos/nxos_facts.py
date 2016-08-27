@@ -193,25 +193,34 @@ class FactsBase(object):
         self.facts = dict()
         self.commands()
 
+    def transform_dict(self, data, keymap):
+        transform = dict()
+        for key, fact in keymap:
+            if key in data:
+                transform[fact] = data[key]
+        return transform
+
+    def transform_iterable(self, iterable, keymap):
+        for item in iterable:
+            yield self.transform_dict(item, keymap)
+
 
 class Default(FactsBase):
 
-    SYSTEM_MAP = {
-        'sys_ver_str': 'version',
-        'proc_board_id': 'serialnum',
-        'chassis_id': 'model',
-        'isan_file_name': 'image',
-        'host_name': 'hostname'
-    }
+    VERSION_MAP = frozenset([
+        ('sys_ver_str', 'version'),
+        ('proc_board_id', 'serialnum'),
+        ('chassis_id', 'model'),
+        ('isan_file_name', 'image'),
+        ('host_name', 'hostname')
+    ])
 
     def commands(self):
         add_command(self.runner, 'show version', output='json')
 
     def populate(self):
         data = self.runner.get_command('show version', output='json')
-        for key, value in self.SYSTEM_MAP.iteritems():
-            if key in data:
-                self.facts[value] = data[key]
+        self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
 class Config(FactsBase):
 
@@ -242,29 +251,27 @@ class Hardware(FactsBase):
 
 class Interfaces(FactsBase):
 
-    INTERFACE_MAP = {
-        'state': 'state',
-        'desc': 'description',
-        'eth_bw': 'bandwidth',
-        'eth_duplex': 'duplex',
-        'eth_speed': 'speed',
-        'eth_mode': 'mode',
-        'eth_ip_addr': 'address',
-        'eth_ip_mask': 'masklen',
-        'eth_hw_addr': 'macaddress',
-        'eth_mtu': 'mtu',
-        'eth_hw_desc': 'type'
-    }
+    INTERFACE_MAP = frozenset([
+        ('state', 'state'),
+        ('desc', 'description'),
+        ('eth_bw', 'bandwidth'),
+        ('eth_duplex','duplex'),
+        ('eth_speed', 'speed'),
+        ('eth_mode', 'mode'),
+        ('eth_hw_addr', 'macaddress'),
+        ('eth_mtu', 'mtu'),
+        ('eth_hw_desc', 'type')
+    ])
 
-    INTERFACE_IPV4_MAP = {
-        'eth_ip_addr': 'address',
-        'eth_ip_mask': 'masklen'
-    }
+    INTERFACE_IPV4_MAP = frozenset([
+        ('eth_ip_addr', 'address'),
+        ('eth_ip_mask', 'masklen')
+    ])
 
-    INTERFACE_IPV6_MAP = {
-        'addr': 'address',
-        'prefix': 'subnet'
-    }
+    INTERFACE_IPV6_MAP = frozenset([
+        ('addr', 'address'),
+        ('prefix', 'subnet')
+    ])
 
     def commands(self):
         add_command(self.runner, 'show interface', output='json')
@@ -302,18 +309,13 @@ class Interfaces(FactsBase):
     def populate_interfaces(self, data):
         interfaces = dict()
         for item in data['TABLE_interface']['ROW_interface']:
-            intf = dict()
             name = item['interface']
 
-            for key, value in self.INTERFACE_MAP.iteritems():
-                if key in item:
-                    intf[value] = item[key]
+            intf = dict()
+            intf.update(self.transform_dict(item, self.INTERFACE_MAP))
 
             if 'eth_ip_addr' in item:
-                intf['ipv4'] = dict()
-                for key, value in self.INTERFACE_IPV4_MAP.iteritems():
-                    if key in item:
-                        intf['ipv4'][value] = item[key]
+                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
                 self.facts['all_ipv4_addresses'].append(item['eth_ip_addr'])
 
             interfaces[name] = intf
@@ -338,22 +340,46 @@ class Interfaces(FactsBase):
 
     def parse_ipv6_interfaces(self, data):
         data = data['TABLE_intf']
-
         if isinstance(data, dict):
             data = [data]
-
         for item in data:
             name = item['ROW_intf']['intf-name']
             intf = self.facts['interfaces'][name]
-
-            intf['ipv6'] = dict()
-            for key, value in self.INTERFACE_IPV6_MAP.iteritems():
-                intf['ipv6'][value] = item['ROW_intf'][key]
-
+            intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
             self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
 
 class Legacy(FactsBase):
     # facts from nxos_facts 2.1
+
+    VERSION_MAP = frozenset([
+        ('host_name', '_hostname'),
+        ('kickstart_ver_str', '_os'),
+        ('chassis_id', '_platform')
+    ])
+
+    MODULE_MAP = frozenset([
+        ('model', 'model'),
+        ('modtype', 'type'),
+        ('ports', 'ports'),
+        ('status', 'status')
+    ])
+
+    FAN_MAP = frozenset([
+        ('fanname', 'name'),
+        ('fanmodel', 'model'),
+        ('fanhwver', 'hw_ver'),
+        ('fandir', 'direction'),
+        ('fanstatus', 'status')
+    ])
+
+    POWERSUP_MAP = frozenset([
+        ('psmodel', 'model'),
+        ('psnum', 'number'),
+        ('ps_status', 'status'),
+        ('actual_out', 'actual_output'),
+        ('actual_in', 'actual_in'),
+        ('total_capa', 'total_capacity')
+    ])
 
     def commands(self):
         add_command(self.runner, 'show version', output='json')
@@ -364,15 +390,7 @@ class Legacy(FactsBase):
 
     def populate(self):
         data = self.runner.get_command('show version', 'json')
-        self.facts['_hostname'] = data['host_name']
-        self.facts['_kickstart'] = data['kickstart_ver_str']
-        self.facts['_platform'] = data['chassis_id']
-
-        if 'rr_sys_ver' in data:
-            self.facts['_os'] = data['rr_sys_ver']
-
-        if 'rr_reason' in data:
-            self.facts['_rr'] = data['rr_reason']
+        self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
         data = self.runner.get_command('show interface', 'json')
         self.facts['_interfaces_list'] = self.parse_interfaces(data)
@@ -404,47 +422,19 @@ class Legacy(FactsBase):
         return objects
 
     def parse_module(self, data):
-        modules = list()
-        for item in data['TABLE_modinfo']['ROW_modinfo']:
-            mod = dict()
-            mod['model'] = item['model']
-            mod['type'] = item['modtype']
-            mod['ports'] = item['ports']
-            mod['status'] = item['status']
-            modules.append(mod)
-        return modules
+        data = data['TABLE_modinfo']['ROW_modinfo']
+        objects = list(self.transform_iterable(data, self.MODULE_MAP))
+        return objects
 
     def parse_fan_info(self, data):
-        objects = list()
-        for item in data['fandetails']['TABLE_faninfo']['ROW_faninfo']:
-            obj = dict()
-            obj['name'] = item['fanname']
-            obj['model'] = item['fanmodel']
-            if 'fanhwver' in item:
-                obj['hw_ver'] = item['fanhwver']
-            if 'fandir' in item:
-                obj['direction'] = item['fandir']
-            if 'fanstatus' in item:
-                obj['status'] = item['fanstatus']
-            objects.append(obj)
+        data = data['fandetails']['TABLE_faninfo']['ROW_faninfo']
+        objects = list(self.transform_iterable(data, self.FAN_MAP))
         return objects
 
     def parse_power_supply_info(self, data):
-        objects = list()
-        for item in data['powersup']['TABLE_psinfo']['ROW_psinfo']:
-            obj = dict()
-            obj['model'] = item['psmodel']
-            obj['number'] = item['psnum']
-            obj['status'] = item['ps_status']
-            if 'actual_out' in item:
-                obj['actual_output'] = item['actual_out']
-            if 'actual_in' in item:
-                obj['actual_in'] = item['actual_in']
-            if 'total_capa' in item:
-                obj['total_capacity'] = item['total_capa']
-            objects.append(obj)
+        data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
+        objects = list(self.transform_iterable(data, self.POWERSUP_MAP))
         return objects
-
 
 
 FACT_SUBSETS = dict(
