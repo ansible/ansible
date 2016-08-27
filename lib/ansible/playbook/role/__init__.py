@@ -85,7 +85,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         if from_files is None:
             from_files = {}
-        self._tasks_from       = from_files.get('tasks')
+        self._from_files = from_files
 
         super(Role, self).__init__()
 
@@ -174,7 +174,7 @@ class Role(Base, Become, Conditional, Taggable):
         else:
             self._metadata = RoleMetadata()
 
-        task_data = self._load_role_yaml('tasks', main=self._tasks_from)
+        task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
@@ -189,13 +189,13 @@ class Role(Base, Become, Conditional, Taggable):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
 
         # vars and default vars are regular dictionaries
-        self._role_vars  = self._load_role_yaml('vars')
+        self._role_vars  = self._load_role_yaml('vars', main=self._from_files.get('vars'))
         if self._role_vars is None:
             self._role_vars = dict()
         elif not isinstance(self._role_vars, dict):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        self._default_vars = self._load_role_yaml('defaults')
+        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'))
         if self._default_vars is None:
             self._default_vars = dict()
         elif not isinstance(self._default_vars, dict):
