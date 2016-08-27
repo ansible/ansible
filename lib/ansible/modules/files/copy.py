@@ -137,7 +137,7 @@ md5sum:
     type: string
     sample: "2a5aeecc61dc98c4d780b14b330e3282"
 checksum:
-    description: checksum of the file after running copy
+    description: sha1 checksum of the file after running copy
     returned: success
     type: string
     sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
