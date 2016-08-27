@@ -27,6 +27,16 @@ options:
       - "File to load from a Role's tasks/ directory."
     required: False
     default: 'main'
+  vars_from:
+    description:
+      - "File to load from a Role's vars/ directory."
+    required: False
+    default: 'main'
+  defaults_from:
+    description:
+      - "File to load from a Role's defaults/ directory."
+    required: False
+    default: 'main'
 notes:
     - THIS IS EARLY PREVIEW, THINGS MAY CHANGE
     - Only basic roles have been tested for now, some things might not work as expected.
