@@ -69,12 +69,9 @@ class ActionModule(ActionBase):
                 'message': '{0} must be a list'.format(self.ignore_files)
             }
 
-        self.ignore_files.extend(self.IGNORE_FILES)
-
     def _set_args(self):
         """ Set instance variables based on the arguments that were passed
         """
-        self.IGNORE_FILES = ['.*.md', '.*.py', '.*.pyc']
         self.VALID_DIR_ARGUMENTS = [
             'dir', 'depth', 'files_matching', 'ignore_files'
         ]
@@ -105,6 +102,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
+        self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', '.json']
         if not task_vars:
             task_vars = dict()
 
@@ -126,7 +124,7 @@ class ActionModule(ActionBase):
                         break
             else:
                 failed = True
-                err_msg= (
+                err_msg = (
                     '{0} directory does not exist'.format(self.source_dir)
                 )
         else:
@@ -139,6 +137,7 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
 
             except AnsibleError as e:
+                err_msg = to_str(e)
                 raise AnsibleError(err_msg)
 
         if self.return_results_as_name:
@@ -211,10 +210,40 @@ class ActionModule(ActionBase):
                 raise AnsibleError(err_msg)
         return False
 
+    def _is_valid_file_ext(self, source_file):
+        """ Verify if source file has a valid extension
+        Args:
+            source_file (str): The full path of source file or source file.
+
+        Returns:
+            Bool
+        """
+        success = False
+        file_ext = source_file.split('.')
+        if len(file_ext) >= 1:
+            if file_ext[-1] in self.VALID_FILE_EXTENSIONS:
+                success = True
+                return success
+        return success
+
     def _load_files(self, filename):
+        """ Loads a file and converts the output into a valid Python dict.
+        Args:
+            filename (str): The source file.
+
+        Returns:
+            Tuple (bool, str, dict)
+        """
         results = dict()
         failed = False
         err_msg = ''
+        if not self._is_valid_file_ext(filename):
+            failed = True
+            err_msg = (
+                '{0} does not have a valid extension: {1}'
+                .format(filename, ', '.join(self.VALID_FILE_EXTENSIONS))
+            )
+            return failed, err_msg, results
 
         data, show_content = self._loader._get_file_contents(filename)
         self.show_content = show_content

@@ -184,6 +184,27 @@ class TestIncludeVarsPlugin(unittest.TestCase):
         results = action_base.run()
         self.assertEqual(results['failed'], True)
 
+    def test_fail_invalid_extension(self):
+        mock_task = MagicMock()
+        mock_task.action = "include_vars"
+        base_path = (
+            os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
+        )
+        vars_file = os.path.join(base_path, "vars/all.py")
+        mock_task.args = dict(dir=vars_file)
+        mock_connection = MagicMock()
+        play_context = PlayContext()
+        mock_task.async = None
+        loader = DataLoader()
+        action_base = (
+            ActionModule(
+                mock_task, mock_connection, play_context, loader, None, None
+            )
+        )
+        action_base._task._role = None
+        results = action_base.run()
+        self.assertEqual(results['failed'], True)
+
 
 def main():
     unittest.main()
