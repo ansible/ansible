@@ -210,27 +210,34 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
-Add a number (since version 2.2)::
-
-    {{ myvar | add(2) }}
-
-Subtract a number (since version 2.2)::
-
-    {{ myvar | subtract(2) }}
-
-Multiply by a number (since version 2.2)::
-
-    {{ myvar | multiply(2) }}
-
-Divide by a number (since version 2.2)::
-
-    {{ myvar | divide(2) }}
-
-Modulo operation (from version 2.2)::
-
-    {{ myvar | modulo(7) }}
-
 Note that jinja2 already provides some like abs() and round().
+
+Since version 2.2 Ansible also includes some basic arithmetic filters. They are useful only in advanced cases (like a map() call). Normally, you can use the standard arithmetic operators (+, -, *, /, %).
+
+Add a number::
+
+    # only useful in a map() call, otehrwise use '+'
+    {{ myvar | map('add', 2) }}
+
+Subtract a number::
+
+    # only useful in a map() call, otehrwise use '-'
+    {{ myvar | map('subtract', 2) }}
+
+Multiply by a number::
+
+    # only useful in a map() call, otehrwise use '*'
+    {{ myvar | map('multiply' ,2) }}
+
+Divide by a number::
+
+    # only useful in a map() call, otehrwise use '/'
+    {{ myvar | map('divide', 2) }}
+
+Modulo operation::
+
+    # only useful in a map() call, otehrwise use '%'
+    {{ myvar | map('modulo', 7) }}
 
 .. _ipaddr_filter:
 
