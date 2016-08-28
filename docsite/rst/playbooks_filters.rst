@@ -217,27 +217,27 @@ Since version 2.2 Ansible also includes some basic arithmetic filters. They are 
 Add a number::
 
     # only useful in a map() call, otehrwise use '+'
-    {{ myvar | map('add', 2) }}
+    {{ mylist | map('add', 2) | list }}
 
 Subtract a number::
 
     # only useful in a map() call, otehrwise use '-'
-    {{ myvar | map('subtract', 2) }}
+    {{ mylist | map('subtract', 2) | list }}
 
 Multiply by a number::
 
     # only useful in a map() call, otehrwise use '*'
-    {{ myvar | map('multiply' ,2) }}
+    {{ mylist | map('multiply' ,2) | list }}
 
 Divide by a number::
 
     # only useful in a map() call, otehrwise use '/'
-    {{ myvar | map('divide', 2) }}
+    {{ mylist | map('divide', 2) | list }}
 
 Modulo operation::
 
     # only useful in a map() call, otehrwise use '%'
-    {{ myvar | map('modulo', 7) }}
+    {{ mylist | map('modulo', 7) | list }}
 
 .. _ipaddr_filter:
 
