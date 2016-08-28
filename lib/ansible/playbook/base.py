@@ -312,12 +312,7 @@ class Base(with_metaclass(BaseMeta, object)):
         '''
         if not self._squashed:
             for name in self._valid_attrs.keys():
-                getter = partial(_generic_g, name)
-                setter = partial(_generic_s, name)
-                deleter = partial(_generic_d, name)
-
                 self._attributes[name] = getattr(self, name)
-                #print("squashed attr %s: %s" % (name, self._attributes[name]))
             self._squashed = True
 
     def copy(self):
@@ -516,7 +511,9 @@ class Base(with_metaclass(BaseMeta, object)):
             repr[name] = getattr(self, name)
 
         # serialize the uuid field
-        repr['uuid'] = getattr(self, '_uuid')
+        repr['uuid'] = self._uuid
+        repr['finalized'] = self._finalized
+        repr['squashed'] = self._squashed
 
         return repr
 
@@ -538,4 +535,6 @@ class Base(with_metaclass(BaseMeta, object)):
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
+        self._finalized = data.get('finalized', False)
+        self._squashed = data.get('squashed', False)
 
