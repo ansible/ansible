@@ -342,12 +342,13 @@ class Task(Base, Conditional, Taggable, Become):
     def serialize(self):
         data = super(Task, self).serialize()
 
-        if self._parent:
-            data['parent'] = self._parent.serialize()
-            data['parent_type'] = self._parent.__class__.__name__
+        if not self._squashed and not self._finalized:
+            if self._parent:
+                data['parent'] = self._parent.serialize()
+                data['parent_type'] = self._parent.__class__.__name__
 
-        if self._role:
-            data['role'] = self._role.serialize()
+            if self._role:
+                data['role'] = self._role.serialize()
 
         return data
 
