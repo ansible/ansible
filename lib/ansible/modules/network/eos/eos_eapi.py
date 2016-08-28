@@ -21,8 +21,8 @@ DOCUMENTATION = """
 ---
 module: eos_eapi
 version_added: "2.1"
-author: "Chris Houseknecht (@chouseknecht)"
-short_description: Manage and configure eAPI.
+author: "Peter Sprygada (@privateip)"
+short_description: Manage and configure Arista EOS eAPI.
 requirements:
   - "EOS v4.12 or greater"
 description:
@@ -35,259 +35,335 @@ description:
   - Requires EOS v4.12 or greater.
 extends_documentation_fragment: eos
 options:
-    state:
-        description:
-            - A state of I(started) will
-              enable eAPI access, and a state of I(stopped) will
-              disable or shutdown all eAPI access.
-        choices:
-            - started
-            - stopped
-        required: false
-        default: started
-    http_port:
-        description:
-            - Port on which the HTTP server will listen.
-        required: false
-        default: 80
-    https_port:
-        description:
-            - Port on which the HTTPS server will listen.
-        required: false
-        default: 443
-    local_http_port:
-        description:
-            - Port on which the local HTTP server will listen.
-        required: false
-        default: 8080
-    http:
-        description:
-            - Enable HTTP server access.
-        required: false
-        default: true
-        choices:
-            - yes
-            - no
-        aliases:
-            - enable_http
-    https:
-        description:
-            - Enable HTTPS server access.
-        required: false
-        default: true
-        choices:
-            - yes
-            - no
-        aliases:
-            - enable_https
-    local_http:
-        description:
-            - Enable local HTTP server access.
-        required: false
-        default: false
-        choices:
-            - yes
-            - no
-        aliases:
-            - enable_local_http
-    socket:
-        description:
-            - Enable Unix socket server access.
-        required: false
-        default: false
-        choices:
-            - yes
-            - no
-        aliases:
-            - enable_socket
+  http:
+    description:
+      - The C(http) argument controls the operating state of the HTTP
+        transport protocol when eAPI is present in the running-config.
+        When the value is set to True, the HTTP protocol is enabled and
+        when the value is set to False, the HTTP protocol is disabled.
+        By default, when eAPI is first configured, the HTTP protocol is
+        disabled.
+    required: false
+    default: yes
+    choices: ['yes', 'no']
+    aliases: ['enable_http']
+  http_port:
+    description:
+      - Configures the HTTP port that will listen for connections when
+        the HTTP transport protocol is enabled.  This argument accepts
+        integer values in the valid range of 1 to 65535.
+    required: false
+    default: 80
+  https:
+    description:
+      - The C(https) argument controls the operating state of the HTTPS
+        transport protocol when eAPI is present in the running-config.
+        When the value is set to True, the HTTPS protocol is enabled and
+        when the value is set to False, the HTTPS protocol is disabled.
+        By default, when eAPI is first configured, the HTTPS protocol is
+        enabled.
+    required: false
+    default: yes
+    choices: ['yes', 'no']
+    aliases: ['enable_http']
+  https_port:
+    description:
+      - Configures the HTTP port that will listen for connections when
+        the HTTP transport protocol is enabled.  This argument accepts
+        integer values in the valid range of 1 to 65535.
+    required: false
+    default: 443
+  local_http:
+    description:
+      - The C(local_http) argument controls the operating state of the
+        local HTTP transport protocol when eAPI is present in the
+        running-config.  When the value is set to True, the HTTP protocol
+        is enabled and restricted to connections from localhost only.  When
+        the value is set to False, the HTTP local protocol is disabled.
+      - Note is value is independent of the C(http) argument
+    required: false
+    default: false
+    choices: ['yes', 'no']
+    aliases: ['enable_local_http']
+  local_http_port:
+    description:
+      - Configures the HTTP port that will listen for connections when
+        the HTTP transport protocol is enabled.  This argument accepts
+        integer values in the valid range of 1 to 65535.
+    required: false
+    default: 8080
+  socket:
+    description:
+      - The C(socket) argument controls the operating state of the UNIX
+        Domain Socket used to receive eAPI requests.  When the value
+        of this argument is set to True, the UDS will listen for eAPI
+        requests.  When the value is set to False, the UDS will not be
+        available to handle requests.  By default when eAPI is first
+        configured, the UDS is disabled.
+    required: false
+    default: false
+    choices: ['yes', 'no']
+    aliases: ['enable_socket']
+  vrf:
+    description:
+      - The C(vrf) argument will configure eAPI to listen for connections
+        in the specified VRF.  By default, eAPI transports will listen
+        for connections in the global table.  This value requires the
+        VRF to already be created otherwise the task will fail.
+    required: false
+    default: default
+    version_added: "2.2"
+  qos:
+    description:
+      - The C(qos) argument configures the IP DSCP value to assign to
+        eAPI response packets.  This argument accepts integer values
+        in the valid IP DSCP range of 0 to 63.
+    required: false
+    default: 0
+    version_added: "2.2"
+  config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source.  There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison.
+    required: false
+    default: nul
+    version_added: "2.2"
+  state:
+    description:
+      - The C(state) argument controls the operational state of eAPI
+        on the remote device.  When this argument is set to C(started),
+        eAPI is enabled to receive requests and when this argument is
+        C(stopped), eAPI is disabled and will not receive requests.
+    required: false
+    default: started
+    choices: ['started', 'stopped']
 """
 
 EXAMPLES = """
-    - name: Enable eAPI access with default configuration
-      eos_eapi:
-          state: started
-          provider: {{ provider }}
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: admin
+    password: admin
 
-    - name: Enable eAPI with no HTTP, HTTPS at port 9443, local HTTP at port 80, and socket enabled
-      eos_eapi:
-          state: started
-          http: false
-          https_port: 9443
-          local_http: yes
-          local_http_port: 80
-          socket: yes
-          provider: {{ provider }}
+- name: Enable eAPI access with default configuration
+  eos_eapi:
+    state: started
+    provider: {{ cli }}
 
-    - name: Shutdown eAPI access
-      eos_eapi:
-          state: stopped
-          provider: {{ provider }}
+- name: Enable eAPI with no HTTP, HTTPS at port 9443, local HTTP at port 80, and socket enabled
+  eos_eapi:
+    state: started
+    http: false
+    https_port: 9443
+    local_http: yes
+    local_http_port: 80
+    socket: yes
+    provider: {{ cli }}
+
+- name: Shutdown eAPI access
+  eos_eapi:
+    state: stopped
+    provider: {{ cli }}
 """
 
 RETURN = """
-changed:
-    description:
-        - Indicates if commands were sent to the device.
-    returned: always
-    type: boolean
-    sample: false
-
-commands:
-    description:
-        - Set of commands to be executed on remote device
-    returned: always
-    type: list
-    sample: [
-        'management api http-commands',
-        'shutdown'
-    ]
-
-_config:
-    description:
-       - Configuration found on the device prior to executing any commands.
-    returned: always
-    type: object
-    sample: {...}
+updates:
+  description:
+    - Set of commands to be executed on remote device
+  returned: always
+  type: list
+  sample: ['management api http-commands', 'shutdown']
+urls:
+  description: Hash of URL endpoints eAPI is listening on per interface
+  returned: when eAPI is started
+  type: dict
+  sample: {'Management1': ['http://172.26.10.1:80']}
 """
+import re
+import time
+
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.eos import NetworkModule, NetworkError
+from ansible.module_utils.basic import get_exception
+
+PRIVATE_KEYS_RE = re.compile('__.+__')
 
 
-def http_commands(protocol, port, enable, config):
+def invoke(name, *args, **kwargs):
+    func = globals().get(name)
+    if func:
+        return func(*args, **kwargs)
 
-    started_config = config['{0}Server'.format(protocol)]
-    commands = []
-    changed = False
+def started(module, commands):
+    commands.append('no shutdown')
+    setters = set()
+    for key, value in module.argument_spec.iteritems():
+        if module.params[key] is not None:
+            setter = value.get('setter') or 'set_%s' % key
+            if setter not in setters:
+                setters.add(setter)
+            invoke(setter, module, commands)
 
-    if started_config.get('running'):
-        if not enable:
-            # turn off server
-            commands.append('no protocol {0}'.format(protocol))
-            changed = True
-        elif started_config.get('port') != port:
-            # update the port
-            commands.append('protocol {0} port {1}'.format(protocol, port))
-            changed = True
-    elif not started_config.get('running') and enable:
-        # turn on server
-        commands.append('protocol {0} port {1}'.format(protocol, port))
-        changed = True
+def stopped(module, commands):
+    commands.append('shutdown')
 
-    return commands, changed
+def set_protocol_http(module, commands):
+    port = module.params['http_port']
+    if not 1 <= port <= 65535:
+        module.fail_json(msg='http_port must be between 1 and 65535')
+    elif module.params['http'] is True:
+        commands.append('protocol http port %s' % port)
+    elif module.params['http'] is False:
+        commands.append('no protocol http')
 
+def set_protocol_https(module, commands):
+    port = module.params['https_port']
+    if not 1 <= port <= 65535:
+        module.fail_json(msg='https_port must be between 1 and 65535')
+    elif module.params['https'] is True:
+        commands.append('protocol https port %s' % port)
+    elif module.params['https'] is False:
+        commands.append('no protocol https')
 
-def execute_commands(module, commands):
+def set_local_http(module, commands):
+    port = module.params['local_http_port']
+    if not 1 <= port <= 65535:
+        module.fail_json(msg='local_http_port must be between 1 and 65535')
+    elif module.params['local_http'] is True:
+        commands.append('protocol http localhost port %s' % port)
+    elif module.params['local_http'] is False:
+        commands.append('no protocol http localhost port 8080')
 
-    if not module.params.get('check_mode'):
-        module.configure(commands)
-
-
-def config_server(module):
-
-    state = module.params.get('state')
-    local_http_port = module.params.get('local_http_port')
-    socket= module.params.get('socket')
-    local_http = module.params.get('local_http')
-    config = module.from_json(module.execute(['show management api http-commands | json'])[0])
-    result = dict(changed=False, _config=config, commands=[])
-    commands = [
-        'management api http-commands'
-    ]
-
-    if not config.get('enabled'):
-        if state == 'started':
-            # turn on eAPI access
-            commands.append('no shutdown')
-            result['changed'] = True
-        else:
-            # state is stopped. nothing to do
-            return result
-
-    if config.get('enabled') and state == 'stopped':
-        # turn off eAPI access and exit
-        commands.append('shutdown')
-        result['changed'] = True
-        result['commands'] = commands
-        execute_commands(module, commands)
-        return result
-
-    # http and https
-    for protocol in ['http', 'https']:
-        cmds, chg = http_commands(protocol, module.params['{0}_port'.format(protocol)],
-                                  module.params['{0}'.format(protocol)], config)
-        if chg:
-            commands += cmds
-            result['changed'] = True
-
-    # local HTTP
-    if config.get('localHttpServer').get('running'):
-        if not local_http:
-            # turn off local http server
-            commands.append('no protocol http localhost')
-            result['changed'] = True
-        elif config.get('localHttpServer').get('port') != local_http_port:
-            # update the local http port
-            commands.append('protocol http localhost port {0}'.format(local_http_port))
-            result['changed'] = True
-
-    if not config.get('localHttpServer').get('running') and local_http:
-        # turn on local http server
-        commands.append('protocol http localhost port {0}'.format(local_http_port))
-        result['changed'] = True
-
-    # socket server
-    if config.get('unixSocketServer').get('running') and not socket:
-        # turn off unix socket
-        commands.append('no protocol unix-socket')
-        result['changed'] = True
-
-    if not config.get('unixSocketServer').get('running') and socket:
-        # turn on unix socket
+def set_socket(module, commands):
+    if module.params['socket'] is True:
         commands.append('protocol unix-socket')
-        result['changed'] = True
+    elif module.params['socket'] is False:
+        commands.append('no protocol unix-socket')
 
-    if len(commands) > 1:
-        # something requires change
-        execute_commands(module, commands)
-        result['commands'] = commands
+def set_vrf(module, commands):
+    vrf = module.params['vrf']
+    if vrf != 'default':
+        resp = module.cli(['show vrf'])
+        if vrf not in resp[0]:
+            module.fail_json(msg="vrf '%s' is not configured" % vrf)
+    commands.append('vrf %s' % vrf)
 
-    return result
+def set_qos(module, commands):
+    if not 0 <= module.params['qos'] <= 63:
+        module.fail_json(msg='qos must be between 0 and 63')
+    commands.append('qos dscp %s' % module.params['qos'])
 
-def check_version(module):
-    config = module.from_json(module.execute(['show version | json'])[0])
-    versions = config['version'].split('.')
-    if int(versions[0]) < 4 or int(versions[1]) < 12:
-        module.fail_json(msg="Device version {0} does not support eAPI. eAPI was introduced in EOS 4.12.")
+def get_config(module):
+    contents = module.params['config']
+    if not contents:
+        cmd = 'show running-config all section management api http-commands'
+        contents = module.cli([cmd])
+    config = NetworkConfig(indent=3, contents=contents[0])
+    return config
+
+def load_config(module, commands, result):
+    session = 'ansible_%s' % int(time.time())
+    commit = not module.check_mode
+
+    diff = module.config.load_config(commands, session=session, commit=commit)
+
+    # once the configuration is done, remove the config session and
+    # remove the session name from the result
+    module.cli(['no configure session %s' % session])
+
+    result['diff'] = dict(prepared=diff)
+    result['changed'] = diff is not None
+
+def load(module, commands, result):
+    candidate = NetworkConfig(indent=3)
+    candidate.add(commands, parents=['management api http-commands'])
+
+    config = get_config(module)
+    configobjs = candidate.difference(config)
+
+    if configobjs:
+        commands = dumps(configobjs, 'commands').split('\n')
+        result['updates'] = commands
+        load_config(module, commands, result)
+
+def clean_result(result):
+    # strip out any keys that have two leading and two trailing
+    # underscore characters
+    for key in result.keys():
+        if PRIVATE_KEYS_RE.match(key):
+            del result[key]
+
+def collect_facts(module, result):
+    resp = module.cli(['show management api http-commands'], output='json')
+    facts = dict(eos_eapi_urls=dict())
+    for each in resp[0]['urls']:
+        intf, url = each.split(' : ')
+        key = str(intf).strip()
+        if  key not in facts['eos_eapi_urls']:
+            facts['eos_eapi_urls'][key] = list()
+        facts['eos_eapi_urls'][key].append(str(url).strip())
+    result['ansible_facts'] = facts
+
 
 def main():
     """ main entry point for module execution
     """
 
     argument_spec = dict(
-        state=dict(default='started', choices=['stopped','started']),
-        http_port=dict(default=80, type='int'),
-        https_port=dict(default=443, type='int'),
-        local_http_port=dict(default=8080, type='int'),
-        http=dict(aliases=['enable_http'], default=True, type='bool'),
-        https=dict(aliases=['enable_https'], default=True, type='bool'),
+        http=dict(aliases=['enable_http'], default=False, type='bool', setter='set_protocol_http'),
+        http_port=dict(default=80, type='int', setter='set_protocol_http'),
+
+        https=dict(aliases=['enable_https'], default=True, type='bool', setter='set_protocol_https'),
+        https_port=dict(default=443, type='int', setter='set_protocol_https'),
+
+        local_http=dict(aliases=['enable_local_http'], default=False, type='bool', setter='set_local_http'),
+        local_http_port=dict(default=8080, type='int', setter='set_local_http'),
+
         socket=dict(aliases=['enable_socket'], default=False, type='bool'),
-        local_http=dict(aliases=['enable_local_http'], default=False, type='bool'),
+
+        vrf=dict(default='default'),
+        qos=dict(default=0, type='int'),
+
+        config=dict(),
 
         # Only allow use of transport cli when configuring eAPI
-        transport=dict(required=True, choices=['cli'])
+        transport=dict(required=True, choices=['cli']),
+
+        state=dict(default='started', choices=['stopped', 'started']),
     )
 
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           connect_on_load=False,
+                           supports_check_mode=True)
 
-    check_version(module)
+    state = module.params['state']
 
-    result = config_server(module)
+    warnings = list()
 
-    return module.exit_json(**result)
+    result = dict(changed=False, warnings=warnings)
 
+    commands = list()
+    invoke(state, module, commands)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.eos import *
+    try:
+        load(module, commands, result)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
+
+    collect_facts(module, result)
+    clean_result(result)
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
