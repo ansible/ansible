@@ -254,7 +254,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             b_prompt = to_bytes(self._play_context.prompt)
             return b_output.startswith(b_prompt)
         else:
-            return self._play_context.prompt(output)
+            return self._play_context.prompt(b_output)
 
     def check_incorrect_password(self, b_output):
         b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
