@@ -231,12 +231,12 @@ class Eapi(EosConfigMixin):
         return response['result']
 
     def get_config(self, **kwargs):
-        return self.run_commands(['show running-config'], format='text')[0]
+        return self.execute(['show running-config'], format='text')[0]['output']
 
 Eapi = register_transport('eapi')(Eapi)
 
 
-class Cli(CliBase, EosConfigMixin):
+class Cli(EosConfigMixin, CliBase):
 
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
