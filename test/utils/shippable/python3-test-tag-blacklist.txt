@@ -9,7 +9,6 @@ test_get_url
 test_git
 test_hg
 test_iterators
-test_lineinfile
 test_lookups
 test_mysql_db
 test_mysql_user
