@@ -106,6 +106,11 @@ class Shell(object):
             raise ShellError("unable to resolve host name")
         except AuthenticationException:
             raise ShellError('Unable to authenticate to remote device')
+        except socket.error:
+            exc = get_exception()
+            if exc.errno == 60:
+                raise ShellError('timeout trying to connect to host')
+            raise
 
         if self.kickstart:
             self.shell.sendall("\n")
