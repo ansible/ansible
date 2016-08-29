@@ -145,17 +145,17 @@ options:
       -  The KMS key identifier for an encrypted DB cluster. The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption key.
     required: false
     default: default encryption key for the account
-  SkipFinalSnapshot
+  SkipFinalSnapshot:
     description:
       -  Boolean value that determines whether a final DB cluster snapshot is created before the DB cluster is deleted. Used when commad=delete.
     required: false
     default: false
-  FinalDBSnapshotIdentifier
+  FinalDBSnapshotIdentifier:
     description:
       -  The DB cluster snapshot identifier of the new DB cluster snapshot created when SkipFinalSnapshot is set to false.
     required: True if SkipFinalSnapshot is set to false.
     default: null      
-  SnapshotIdentifier
+  SnapshotIdentifier:
     description:
       -  The identifier for the DB cluster snapshot to restore from. Used only when command=restore.
     required: false
