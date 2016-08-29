@@ -218,6 +218,7 @@ import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes, to_native
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
     '''Extract the head reference'''
@@ -332,7 +333,7 @@ def get_version(module, git_path, dest, ref="HEAD"):
 
     cmd = "%s rev-parse %s" % (git_path, ref)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
-    sha = stdout.rstrip('\n')
+    sha = to_native(stdout).rstrip('\n')
     return sha
 
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
@@ -405,7 +406,7 @@ def has_local_mods(module, git_path, dest, bare):
     cmd = "%s status --porcelain" % (git_path)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
     lines = stdout.splitlines()
-    lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
+    lines = list(filter(lambda c: not re.search('^\\?\\?.*$', c), lines))
 
     return len(lines) > 0
 
@@ -465,6 +466,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
 
+    out = to_native(out)
+
     if tag:
     # Find the dereferenced tag if this is an annotated tag.
         for tag in out.split('\n'):
@@ -480,7 +483,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
 def is_remote_tag(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if version in out:
+    if to_bytes(version) in out:
         return True
     else:
         return False
@@ -502,7 +505,7 @@ def get_tags(git_path, module, dest):
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
-    for line in out.split('\n'):
+    for line in to_native(out).split('\n'):
         if line.strip():
             tags.append(line.strip())
     return tags
@@ -510,7 +513,7 @@ def get_tags(git_path, module, dest):
 def is_remote_branch(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if version in out:
+    if to_bytes(version) in out:
         return True
     else:
         return False
@@ -572,7 +575,7 @@ def get_remote_url(git_path, module, dest, remote):
         # There was an issue getting remote URL, most likely
         # command is not available in this version of Git.
         return None
-    return out.rstrip('\n')
+    return to_native(out).rstrip('\n')
 
 def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
@@ -794,7 +797,7 @@ def git_version(git_path, module):
     if rc != 0:
         # one could fail_json here, but the version info is not that important, so let's try to fail only on actual git commands
         return None
-    rematch = re.search('git version (.*)$', out)
+    rematch = re.search('git version (.*)$', to_native(out))
     if not rematch:
         return None
     return LooseVersion(rematch.groups()[0])
