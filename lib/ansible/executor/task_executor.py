@@ -255,7 +255,8 @@ class TaskExecutor:
             # pause between loop iterations
             if loop_pause and ran_once:
                 time.sleep(loop_pause)
-            ran_once = True
+            else:
+                ran_once = True
 
             try:
                 tmp_task = self._task.copy(exclude_parent=True, exclude_tasks=True)
