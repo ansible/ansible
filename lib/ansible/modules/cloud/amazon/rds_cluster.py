@@ -124,7 +124,7 @@ options:
       - The identifier of the DB cluster snapshot. Used with command=snapshot
     required: false
     default: null
-  ReplicationSourceIdentifier
+  ReplicationSourceIdentifier:
     description:
       -  The Amazon Resource Name (ARN) of the source DB cluster if this DB cluster is created as a Read Replica.
     required: false
@@ -261,189 +261,189 @@ EXAMPLES = '''
 RETURN = '''
 
 DBClusters:
-  AllocatedStorage
+  AllocatedStorage:
     description: Specifies the allocated storage size in gigabytes (GB).
     returned: when command==create, modify, restore.
     type: integer
     sample: 123
-  AvailabilityZones
+  AvailabilityZones:
     description: Provides the list of EC2 Availability Zones that instances in the DB cluster can be created in.
     returned: when command==create, modify, restore.
     type: list
     sample: ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"]
-  BackupRetentionPeriod
+  BackupRetentionPeriod:
     description: Specifies the number of days for which automatic DB snapshots are retained.
     returned: when command==create, modify, restore.
     type: integer
     sample: 1
-  DBClusterIdentifier
+  DBClusterIdentifier:
     description: Contains a user-supplied DB cluster identifier. This identifier is the unique key that identifies a DB cluster
     returned: when command==create, modify, restore.
     type: string
     sample: "test-aurora-cluster" 
-  DBClusterMembers
+  DBClusterMembers:
     description: Contains a user-supplied DB cluster identifier. This identifier is the unique key that identifies a DB cluster
     returned: when command==create, modify, restore.
     type: list
     sample: []
-  DBClusterParameterGroup
+  DBClusterParameterGroup:
     description: Specifies the name of the DB cluster parameter group for the DB cluster.
     returned: when command==create, restore.
     type: string
     sample: "test-aurora-param-group"
-  DBSubnetGroup
+  DBSubnetGroup:
     description: A DB subnet group to associate with this DB cluster.
     returned: when command==create, restore.
     type: string
     sample: "abc-sbg-prod"
-  DbClusterResourceId
+  DbClusterResourceId:
     description: The region-unique, immutable identifier for the DB cluster.
     returned: when command==create, modify, restore.
     type: string
     sample: "cluster-4XWMT2UOFW6AKGF3BKYH27FXT"
-  EarliestRestorableTime
+  EarliestRestorableTime:
     description: Specifies the earliest time to which a database can be restored with point-in-time restore.
     returned: when command==create, modify, restore.
     type: datetime
     sample: "2016-08-27T02:21:04.538000+00:00"
-  Endpoint
+  Endpoint:
     description: Specifies the connection endpoint for the primary instance of the DB cluster.
     returned: when command==create, restore.
     type: string
     sample: "test-aurora-cluster.cluster-c4nb0jta2bug.ap-southeast-2.rds.amazonaws.com"
-  Engine
+  Engine:
     description: Provides the name of the database engine to be used for this DB cluster.
     returned: when command==create, modify, restore.
     type: string
     sample: "aurora"
-  EngineVersion
+  EngineVersion:
     description: Indicates the database engine version.
     returned: when command==create, modify, restore.
     type: string
     sample: "5.6.10a"  
-  HostedZoneId
+  HostedZoneId:
     description: Specifies the ID that Amazon Route 53 assigns when you create a hosted zone.
     returned: when command==create, modify, restore.
     type: string
     sample: "Z32T0VRHXEXS0V" 
-  KmsKeyId
+  KmsKeyId:
     description: If StorageEncrypted is true, the KMS key identifier for the encrypted DB cluster.
     returned: when command==create, modify, restore.
     type: string
     sample: "arn:aws:kms:ap-southeast-2:123456789765:key/1b184ef4-e416-4004-a0f0-d5120a9f8e65"
-  LatestRestorableTime
+  LatestRestorableTime:
     description: Specifies the latest time to which a database can be restored with point-in-time restore
     returned: when command==create, restore.
     type: datetime
     sample: "2016-08-27T02:21:04.538000+00:00"
-  MasterUsername
+  MasterUsername:
     description: Contains the master username for the DB cluster.
     returned: when command==create, modify, restore.
     type: string
     sample: "testuser"  
-  Port
+  Port:
     description: Specifies the port that the database engine is listening on.
     returned: when command==create, modify, restore.
     type: integer
     sample: 3306 
-  PreferredBackupWindow
+  PreferredBackupWindow:
     description: Specifies the daily time range during which automated backups are created if automated backups are enabled.
     returned: when command==create, modify, restore.
     type: string
     sample: "18:14-18:44" 
-  PreferredMaintenanceWindow
+  PreferredMaintenanceWindow:
     description: Specifies the weekly time range during which system maintenance can occur, in Universal Coordinated Time (UTC).
     returned: when command==create, modify, restore.
     type: string
     sample: "tue:16:58-tue:17:28" 
-  Status
+  Status:
     description: Specifies the current state of this DB cluster.
     returned: when command==create, modify, restore.
     type: string
     sample: "available"           
-  StorageEncrypted
+  StorageEncrypted:
     description: Specifies whether the DB cluster is encrypted.
     returned: when command==create, modify, restore.
     type: boolean
     sample: true   
-  VpcSecurityGroups
+  VpcSecurityGroups:
     description: Provides a list of VPC security groups that the DB cluster belongs 
     returned: when command==create, modify, restore.
     type: list
     sample: [{"Status": "active", "VpcSecurityGroupId": "sg-d188c7b5"}]
 
 DBClusterSnapshots:
-  AllocatedStorage
+  AllocatedStorage:
     description: Specifies the allocated storage size in gigabytes (GB).
     returned: when command==snapshot
     type: integer
     sample: 123
-  AvailabilityZones
+  AvailabilityZones:
     description: Provides the list of EC2 Availability Zones that instances in the DB cluster snapshot can be restored in.
     returned: when command==snapshot
     type: list
     sample: ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"]
-  ClusterCreateTime
+  ClusterCreateTime:
     description: Specifies the DB cluster identifier of the DB cluster that this DB cluster snapshot was created from
     returned: when command==snapshot
     type: datetime
     sample: "2016-08-28T23:23:56.228000+00:00"
-  DBClusterIdentifier
+  DBClusterIdentifier:
     description: Specifies the DB cluster identifier of the DB cluster that this DB cluster snapshot was created from.
     returned: when command==snapshot
     type: string
     sample: "test-aurora-cluster" 
-  DBClusterSnapshotIdentifier
+  DBClusterSnapshotIdentifier:
     description: Specifies the identifier for the DB cluster snapshot.
     returned: when command==snapshot
     type: string
     sample: "test-aurora-cluster-snapshot" 
-  Engine
+  Engine:
     description: Provides the name of the database engine to be used for this DB cluster.
     returned: when command==snapshot
     type: string
     sample: "aurora"
-  KmsKeyId
+  KmsKeyId:
     description: If StorageEncrypted is true, the KMS key identifier for the encrypted DB cluster snapshot.
     returned: when command==snapshot
     type: string
     sample: "arn:aws:kms:ap-southeast-2:123456789765:key/1b184ef4-e416-4004-a0f0-d5120a9f8e65" 
-  LicenseModel
+  LicenseModel:
     description: Provides the license model information for this DB cluster snapshot.
     returned: when command==snapshot
     type: string
     sample: "aurora"
-  PercentProgress
+  PercentProgress:
     description: Specifies the percentage of the estimated data that has been transferred.
     returned: when command==snapshot
     type: integer
     sample: 100
-  Port
+  Port:
     description: Specifies the port that the DB cluster was listening on at the time of the snapshot.
     returned: when command==snapshot
     type: integer
     sample: 3306 
-  SnapshotCreateTime
+  SnapshotCreateTime:
     description: Provides the time when the snapshot was taken, in Universal Coordinated Time (UTC).
     returned: when command==snapshot
     type: datetime
     sample: "2016-08-28T23:34:03.088000+00:00"
-  SnapshotType
+  SnapshotType:
     description: Provides the type of the DB cluster snapshot.
     returned: when command==snapshot
     type: string
     sample: "manual" 
-  Status
+  Status:
     description: Specifies the status of this DB cluster snapshot.
     returned: when command==snapshot
     type: string
     sample: "available"
-  StorageEncrypted
+  StorageEncrypted:
     description: Specifies whether the DB cluster snapshot is encrypted.
     returned: when command==snapshot
     type: boolean
     sample: true
-  VpcId 
+  VpcId:
     description: Provides the VPC ID associated with the DB cluster snapshot.
     returned: when command==snapshot
     type: string
