@@ -264,7 +264,8 @@ class ModuleArgsParser:
         if 'action' in self._task_ds:
             # an old school 'action' statement
             thing = self._task_ds['action']
-            action, args = self._normalize_parameters(thing, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+
 
         # local_action
         if 'local_action' in self._task_ds:
@@ -273,19 +274,20 @@ class ModuleArgsParser:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
-            action, args = self._normalize_parameters(thing, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
         # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item == 'meta' or item == 'include':
+            if item in module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
                 action = item
                 thing = value
-                action, args = self._normalize_parameters(value, action=action, additional_args=additional_args)
+                action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:

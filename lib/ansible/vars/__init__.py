@@ -232,11 +232,11 @@ class VariableManager:
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-            # if we have a task in this context, and that task has a role, make
-            # sure it sees its defaults above any other roles, as we previously
-            # (v1) made sure each task had a copy of its roles default vars
-            if task and task._role is not None:
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
+        # if we have a task in this context, and that task has a role, make
+        # sure it sees its defaults above any other roles, as we previously
+        # (v1) made sure each task had a copy of its roles default vars
+        if task and task._role is not None and (play or task.action == 'include_role'):
+            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
