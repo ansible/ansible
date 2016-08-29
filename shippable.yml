@@ -51,8 +51,6 @@ matrix:
       python: 2.6
     - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py27
       python: 2.7
-    - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py34
-      python: 3.4
     - env: TEST=sanity INSTALL_DEPS=1 TOXENV=py35
       python: 3.5
 
