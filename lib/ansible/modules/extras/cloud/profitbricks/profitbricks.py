@@ -98,6 +98,10 @@ options:
       - This will assign the machine to the public LAN. If no LAN exists with public Internet access it is created.
     required: false
     default: false
+  nic_name:
+    description:
+      - The name of the default NIC.
+    required: false
   lan:
     description:
       - The ID of the LAN you wish to add the servers to.
