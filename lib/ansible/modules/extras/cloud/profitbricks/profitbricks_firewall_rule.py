@@ -20,7 +20,7 @@ module: profitbricks_firewall_rule
 short_description: Create or remove a firewall rule.
 description:
      - This module allows you to create or remove a firewlal rule. This module has a dependency on profitbricks >= 1.0.0
-version_added: "2.0"
+version_added: "2.2"
 options:
   datacenter:
     description:
@@ -45,7 +45,7 @@ options:
     required: true
   mac_source:
     description:
-      - Only traffic originating from the respective MAC address is allowed. Valid format: aa:bb:cc:dd:ee:ff. No value allows all source MAC addresses.
+      - Only traffic originating from the respective MAC address is allowed. No value allows all source MAC addresses.
     required: false
   source_ip:
     description:
