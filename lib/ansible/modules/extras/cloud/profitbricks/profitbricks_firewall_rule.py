@@ -38,36 +38,36 @@ options:
     description:
       - The name or UUID of the firewall rule.
     required: false
-  protocol
+  protocol:
     description:
       - The protocol for the firewall rule.
     choices: [ "TCP", "UDP", "ICMP" ]
     required: true
-  mac_source
+  mac_source:
     description:
       - Only traffic originating from the respective MAC address is allowed. Valid format: aa:bb:cc:dd:ee:ff. No value allows all source MAC addresses.
     required: false
-  source_ip
+  source_ip:
     description:
       - Only traffic originating from the respective IPv4 address is allowed. No value allows all source IPs.
     required: false
-  target_ip
+  target_ip:
     description:
       - In case the target NIC has multiple IP addresses, only traffic directed to the respective IP address of the NIC is allowed. No value allows all target IPs.
     required: false
-  port_range_start
+  port_range_start:
     description:
       - Defines the start range of the allowed port (from 1 to 65534) if protocol TCP or UDP is chosen. Leave value empty to allow all ports.
     required: false
-  port_range_end
+  port_range_end:
     description:
       - Defines the end range of the allowed port (from 1 to 65534) if the protocol TCP or UDP is chosen. Leave value empty to allow all ports.
     required: false
-  icmp_type
+  icmp_type:
     description:
       - Defines the allowed type (from 0 to 254) if the protocol ICMP is chosen. No value allows all types.
     required: false
-  icmp_code
+  icmp_code:
     description:
       - Defines the allowed code (from 0 to 254) if protocol ICMP is chosen. No value allows all codes.
     required: false
