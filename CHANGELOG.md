@@ -7,7 +7,7 @@ Ansible Changes By Release
 
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Added support for binary modules
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary. 
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 * Several Windows facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
   - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
@@ -32,6 +32,11 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- f5:
+  * bigip_device_dns
+  * bigip_device_ntp
+  * bigip_device_sshd
+  * bigip_irule
 - github_key
 - google
   * gcdns_record
@@ -40,6 +45,7 @@ Ansible Changes By Release
   * ipmi_boot
   * ipmi_power
 - include_role
+- jenkins_plugin
 - letsencrypt
 - logicmonitor
 - logicmonitor_facts
@@ -60,6 +66,8 @@ Ansible Changes By Release
   * smartos_image_facts
 - systemd
 - telegram
+- univention
+  * udm_user
 - vmware
   * vmware_guest
   * vmware_local_user_manager
