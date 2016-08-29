@@ -367,6 +367,17 @@ class Templar:
             else:
                 return variable
 
+    def templatable(self, data):
+        '''
+        returns True if the data can be templated w/o errors
+        '''
+        templatable = True
+        try:
+            self.template(data)
+        except:
+           templatable = False
+        return templatable
+
     def _contains_vars(self, data):
         '''
         returns True if the data contains a variable pattern

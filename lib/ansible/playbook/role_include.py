@@ -45,40 +45,59 @@ class IncludeRole(Task):
     # =================================================================================
     # ATTRIBUTES
 
-    _name   = FieldAttribute(isa='string', default=None)
-    _tasks_from = FieldAttribute(isa='string', default=None)
+    # private as this is a 'module options' vs a task property
+    _static = FieldAttribute(isa='bool', default=None, private=True)
+    _private = FieldAttribute(isa='bool', default=None, private=True)
 
-    # these should not be changeable?
-    _static = FieldAttribute(isa='bool', default=False)
-    _private = FieldAttribute(isa='bool', default=True)
+    def __init__(self, block, role, task_include=None):
+
+        super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
+
+        self._role_name = None
+        self.statically_loaded = False
+        self._from_files = {}
+        self._block = block
+        self._parent_role = role
+        #self.requires_templating = False
+
+
+    def get_block_list(self, variable_manager=None, loader=None):
+
+        ri = RoleInclude.load(self._role_name, play=self._block._play, variable_manager=variable_manager, loader=loader)
+        ri.vars.update(self.vars)
+
+        #build role
+        actual_role = Role.load(ri, self._block._play, parent_role=self._parent_role, from_files=self._from_files)
+
+        # compile role
+        blocks = actual_role.compile(play=self._block._play)
+
+        # set parent to ensure proper inheritance
+        for b in blocks:
+            b._parent = self._block
+
+        # updated available handlers in play
+        self._block._play.handlers = self._block._play.handlers + actual_role.get_handler_blocks(play=self._block._play)
+
+        return blocks
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
-        r = IncludeRole().load_data(data, variable_manager=variable_manager, loader=loader)
+        r = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
         args = r.preprocess_data(data).get('args', dict())
 
-        ri = RoleInclude.load(args.get('name'), play=block._play, variable_manager=variable_manager, loader=loader)
-        ri.vars.update(r.vars)
+        #TODO: use more automated list: for builtin in r.get_attributes():
+        # set built in's
+        r._role_name =  args.get('name')
+        for builtin in ['static', 'private']:
+            if args.get(builtin):
+                setattr(r, builtin, args.get(builtin))
 
         # build options for roles
-        from_files = {}
         for key in ['tasks', 'vars', 'defaults']:
             from_key = key + '_from'
             if  args.get(from_key):
-                from_files[key] = basename(args.get(from_key))
+                r._from_files[key] = basename(args.get(from_key))
 
-        #build role
-        actual_role = Role.load(ri, block._play, parent_role=role, from_files=from_files)
-
-        # compile role
-        blocks = actual_role.compile(play=block._play)
-
-        # set parent to ensure proper inheritance
-        for b in blocks:
-            b._parent = block
-
-        # updated available handlers in play
-        block._play.handlers = block._play.handlers + actual_role.get_handler_blocks(play=block._play)
-
-        return blocks
+        return r.load_data(data, variable_manager=variable_manager, loader=loader)
