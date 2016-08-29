@@ -135,12 +135,12 @@ options:
       - Used with command=create, command=restore. 
     required: false
     default: null
-  StorageEncrypted
+  StorageEncrypted:
     description:
       -  Specifies whether the DB cluster is encrypted.
     required: false
     default: false
-  KmsKeyId
+  KmsKeyId:
     description:
       -  The KMS key identifier for an encrypted DB cluster. The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption key.
     required: false
