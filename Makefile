@@ -93,7 +93,7 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
-NOSETESTS3 ?= nosetests-3.4
+NOSETESTS3 ?= nosetests-3.5
 
 ########################################################
 
