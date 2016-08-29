@@ -102,6 +102,7 @@ options:
     description:
       - The name of the default NIC.
     required: false
+    version_added: '2.2'
   lan:
     description:
       - The ID of the LAN you wish to add the servers to.
@@ -114,7 +115,7 @@ options:
     default: null
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - The ProfitBricks password. Overrides the PB_PASSWORD environement variable.
     required: false
     default: null
   wait:
