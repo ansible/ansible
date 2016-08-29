@@ -43,7 +43,7 @@ options:
       - The protocol for the firewall rule.
     choices: [ "TCP", "UDP", "ICMP" ]
     required: true
-  mac_source:
+  source_mac:
     description:
       - Only traffic originating from the respective MAC address is allowed. No value allows all source MAC addresses.
     required: false
@@ -101,7 +101,6 @@ author: Ethan Devenport (ethand@stackpointcloud.com)
 '''
 
 EXAMPLES = '''
-
 # Create a firewall rule
 - name: Create SSH firewall rule
   profitbricks_firewall_rule:
@@ -135,6 +134,60 @@ EXAMPLES = '''
     nic: aa6c261b9c
     name: Allow Ping
     state: absent
+'''
+
+RETURN = '''
+---
+id:
+  description: UUID of the firewall rule.
+  returned: success
+  type: string
+  sample: be60aa97-d9c7-4c22-bebe-f5df7d6b675d
+name:
+  description: Name of the firwall rule.
+  returned: success
+  type: string
+  sample: Allow SSH
+protocol:
+  description: Protocol of the firewall rule.
+  returned: success
+  type: string
+  sample: TCP
+source_mac:
+  description: MAC address of the firewall rule.
+  returned: success
+  type: string
+  sample: 02:01:97:d7:ed:49
+source_ip:
+  description: Source IP of the firewall rule.
+  returned: success
+  type: string
+  sample: tcp
+target_ip:
+  description: Target IP of the firewal rule.
+  returned: success
+  type: string
+  sample: 10.0.0.1
+port_range_start:
+  description: Start port of the firewall rule.
+  returned: success
+  type: int
+  sample: 80
+port_range_end:
+  description: End port of the firewall rule.
+  returned: success
+  type: int
+  sample: 80
+icmp_type:
+  description: ICMP type of the firewall rule.
+  returned: success
+  type: int
+  sample: 8
+icmp_code:
+  description: ICMP code of the firewall rule.
+  returned: success
+  type: int
+  sample: 0
 '''
 
 # import uuid
@@ -218,7 +271,7 @@ def create_firewall_rule(module, profitbricks):
     f = FirewallRule(
         name=name,
         protocol=protocol,
-        mac_source=source_mac,
+        source_mac=source_mac,
         source_ip=source_ip,
         target_ip=target_ip,
         port_range_start=port_range_start,
