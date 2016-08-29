@@ -86,7 +86,7 @@ options:
     default: null
   PreferredMaintenanceWindow:
     description:
-      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify.
+      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
     required: false
     default: random
   PreferredBackupWindow:
@@ -96,7 +96,7 @@ options:
     default: random
   BackupRetentionPeriod:
     description:
-      - The number of days for which automated backups are retained. You must specify a minimum value of 1. Valid range: 1-35. Used only when command=create or command=modify.
+      - "The number of days for which automated backups are retained. You must specify a minimum value of 1. Valid range: 1-35. Used only when command=create or command=modify."
     required: false
     default: 1
   AvailabilityZones:
@@ -153,7 +153,7 @@ options:
   FinalDBSnapshotIdentifier:
     description:
       -  The DB cluster snapshot identifier of the new DB cluster snapshot created when SkipFinalSnapshot is set to false.
-    required: True if SkipFinalSnapshot is set to false.
+    required: false
     default: null      
   SnapshotIdentifier:
     description:
