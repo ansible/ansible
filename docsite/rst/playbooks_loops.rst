@@ -571,6 +571,8 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
         - b
         - c
 
+.. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
+
 .. versionadded: 2.2
 Another option to loop control is c(pause), which allows you to control the time (in seconds) between execution of items in a task loop.::
 
@@ -582,9 +584,6 @@ Another option to loop control is c(pause), which allows you to control the time
         - server2
      loop_control:
         pause: 3
-
-
-.. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
 
 
 .. _loops_and_includes_2.0:
