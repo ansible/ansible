@@ -173,17 +173,15 @@ class Nxapi(object):
         return responses
 
 
-    ### end of netcli.Cli ###
-
     ### implemention of netcfg.Config ###
 
     def configure(self, commands):
         commands = to_list(commands)
         return self.execute(commands, output='config')
 
-    def get_config(self, **kwargs):
+    def get_config(self, include_defaults=False):
         cmd = 'show running-config'
-        if kwargs.get('include_defaults'):
+        if include_defaults:
             cmd += ' all'
         return self.execute([cmd], output='text')[0]
 
@@ -263,9 +261,9 @@ class Cli(CliBase):
         responses.pop(0)
         return responses
 
-    def get_config(self, include_defaults=False, **kwargs):
+    def get_config(self, include_defaults=False):
         cmd = 'show running-config'
-        if kwargs.get('include_defaults'):
+        if include_defaults:
             cmd += ' all'
         return self.execute([cmd])[0]
 
