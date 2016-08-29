@@ -195,23 +195,21 @@ EXAMPLES = '''
 
 '''
 
-import re
 import uuid
 import time
 
 HAS_PB_SDK = True
 
 try:
-    from profitbricks.client import ProfitBricksService, Volume, Server, Datacenter, NIC, LAN
+    from profitbricks.client import (
+        ProfitBricksService, Volume, Server, Datacenter, NIC, LAN
+    )
 except ImportError:
     HAS_PB_SDK = False
 
 LOCATIONS = ['us/las',
              'de/fra',
              'de/fkb']
-
-uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -223,9 +221,9 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
             request_id=promise['requestId'],
             status=True)
 
-        if operation_result['metadata']['status'] == "DONE":
+        if operation_result['metadata']['status'] == 'DONE':
             return
-        elif operation_result['metadata']['status'] == "FAILED":
+        elif operation_result['metadata']['status'] == 'FAILED':
             raise Exception(
                 'Request failed to complete ' + msg + ' "' + str(
                     promise['requestId']) + '" to complete.')
@@ -245,6 +243,7 @@ def _create_machine(module, profitbricks, datacenter, name):
     image_password = module.params.get('image_password')
     ssh_keys = module.params.get('ssh_keys')
     bus = module.params.get('bus')
+    nic_name = module.params.get('nic_name')
     lan = module.params.get('lan')
     assign_public_ip = module.params.get('assign_public_ip')
     subscription_user = module.params.get('subscription_user')
@@ -284,6 +283,7 @@ def _create_machine(module, profitbricks, datacenter, name):
         bus=bus)
 
     n = NIC(
+        name=nic_name,
         lan=int(lan)
         )
 
@@ -311,6 +311,7 @@ def _create_machine(module, profitbricks, datacenter, name):
     except Exception as e:
         module.fail_json(msg="failed to create the new server: %s" % str(e))
     else:
+        server_response['nic'] = server_response['entities']['nics']['items'][0]
         return server_response
 
 
@@ -373,7 +374,7 @@ def create_virtual_machine(module, profitbricks):
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = _get_resource_id(datacenter_list, datacenter)
     if datacenter_id:
         datacenter_found = True
 
@@ -409,14 +410,13 @@ def create_virtual_machine(module, profitbricks):
     server_list = profitbricks.list_servers(datacenter_id)
     for name in names:
         # Skip server creation if the server already exists.
-        if _get_server_id(server_list, name):
+        if _get_resource_id(server_list, name):
             continue
 
         create_response = _create_machine(module, profitbricks, str(datacenter_id), name)
-        nics = profitbricks.list_nics(datacenter_id, create_response['id'])
-        for n in nics['items']:
-            if lan == n['properties']['lan']:
-                create_response.update({'public_ip': n['properties']['ips'][0]})
+        for nic in create_response['entities']['nics']['items']:
+            if lan == nic['properties']['lan']:
+                create_response.update({'public_ip': nic['properties']['ips'][0]})
 
         virtual_machines.append(create_response)
 
@@ -458,7 +458,7 @@ def remove_virtual_machine(module, profitbricks):
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = _get_resource_id(datacenter_list, datacenter)
     if not datacenter_id:
         module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
@@ -466,7 +466,7 @@ def remove_virtual_machine(module, profitbricks):
     server_list = profitbricks.list_servers(datacenter_id)
     for instance in instance_ids:
         # Locate UUID for server if referenced by name.
-        server_id = _get_server_id(server_list, instance)
+        server_id = _get_resource_id(server_list, instance)
         if server_id:
             # Remove the server's boot volume
             if remove_boot_volume:
@@ -517,7 +517,7 @@ def startstop_machine(module, profitbricks, state):
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = _get_resource_id(datacenter_list, datacenter)
     if not datacenter_id:
         module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
@@ -525,7 +525,7 @@ def startstop_machine(module, profitbricks, state):
     server_list = profitbricks.list_servers(datacenter_id)
     for instance in instance_ids:
         # Locate UUID of server if referenced by name.
-        server_id = _get_server_id(server_list, instance)
+        server_id = _get_resource_id(server_list, instance)
         if server_id:
             _startstop_machine(module, profitbricks, datacenter_id, server_id)
             changed = True
@@ -554,23 +554,14 @@ def startstop_machine(module, profitbricks, state):
     return (changed)
 
 
-def _get_datacenter_id(datacenters, identity):
+def _get_resource_id(resources, identity):
     """
-    Fetch and return datacenter UUID by datacenter name if found.
+    Fetch and return the UUID of a resource regardless of whether the name or
+    UUID is passed.
     """
-    for datacenter in datacenters['items']:
-        if identity in (datacenter['properties']['name'], datacenter['id']):
-            return datacenter['id']
-    return None
-
-
-def _get_server_id(servers, identity):
-    """
-    Fetch and return server UUID by server name if found.
-    """
-    for server in servers['items']:
-        if identity in (server['properties']['name'], server['id']):
-            return server['id']
+    for resource in resources['items']:
+        if identity in (resource['properties']['name'], resource['id']):
+            return resource['id']
     return None
 
 
@@ -588,7 +579,8 @@ def main():
             image_password=dict(default=None),
             ssh_keys=dict(type='list', default=[]),
             bus=dict(default='VIRTIO'),
-            lan=dict(default=1),
+            nic_name=dict(default=str(uuid.uuid4()).replace('-', '')[:10]),
+            lan=dict(type='int', default=1),
             count=dict(type='int', default=1),
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
