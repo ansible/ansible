@@ -94,11 +94,31 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-full_name:
-    description: Full name of the user
+module:
+    description: The module that the iRule was added to
     returned: changed and success
     type: string
-    sample: "John Doe"
+    sample: "gtm"
+src:
+    description: The filename that included the iRule source
+    returned: changed and success, when provided
+    type: string
+    sample: "/opt/src/irules/example1.tcl"
+name:
+    description: The name of the iRule that was managed
+    returned: changed and success
+    type: string
+    sample: "my-irule"
+content:
+    description: The content of the iRule that was managed
+    returned: changed and success
+    type: string
+    sample: "when LB_FAILED { set wipHost [LB::server addr] }"
+partition:
+    description: The partition in which the iRule was managed
+    returned: changed and success
+    type: string
+    sample: "Common"
 '''
 
 try:
@@ -255,9 +275,14 @@ class BigIpiRule(object):
             changed = True
             params['name'] = name
             params['partition'] = partition
+            self.cparams = camel_dict_to_snake_dict(params)
+            if 'api_anonymous' in self.cparams:
+                self.cparams['content'] = self.cparams.pop('api_anonymous')
+            if self.params['src']:
+                self.cparams['src'] = self.params['src']
+
             if check_mode:
                 return changed
-            self.cparams = camel_dict_to_snake_dict(params)
         else:
             return changed
 
@@ -297,6 +322,11 @@ class BigIpiRule(object):
         params['partition'] = partition
 
         self.cparams = camel_dict_to_snake_dict(params)
+        if 'api_anonymous' in self.cparams:
+            self.cparams['content'] = self.cparams.pop('api_anonymous')
+        if self.params['src']:
+            self.cparams['src'] = self.params['src']
+
         if check_mode:
             return True
 
