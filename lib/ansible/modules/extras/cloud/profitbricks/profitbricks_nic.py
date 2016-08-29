@@ -84,22 +84,17 @@ EXAMPLES = '''
     name: 7341c2454f
     wait_timeout: 500
     state: absent
-
 '''
 
-import re
 import uuid
 import time
 
 HAS_PB_SDK = True
 
 try:
-    from profitbricks.client import ProfitBricksService, NIC
+    from profitbricks.client import ProfitBricksService, NIC, FirewallRule
 except ImportError:
     HAS_PB_SDK = False
-
-uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -111,9 +106,9 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
             request_id=promise['requestId'],
             status=True)
 
-        if operation_result['metadata']['status'] == "DONE":
+        if operation_result['metadata']['status'] == 'DONE':
             return
-        elif operation_result['metadata']['status'] == "FAILED":
+        elif operation_result['metadata']['status'] == 'FAILED':
             raise Exception(
                 'Request failed to complete ' + msg + ' "' + str(
                     promise['requestId']) + '" to complete.')
@@ -122,6 +117,7 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
             ) + '" to complete.')
+
 
 def create_nic(module, profitbricks):
     """
@@ -141,28 +137,22 @@ def create_nic(module, profitbricks):
     wait_timeout = module.params.get('wait_timeout')
 
     # Locate UUID for Datacenter
-    if not (uuid_match.match(datacenter)):
-        datacenter_list = profitbricks.list_datacenters()
-        for d in datacenter_list['items']:
-            dc = profitbricks.get_datacenter(d['id'])
-            if datacenter == dc['properties']['name']:
-                datacenter = d['id']
-                break
+    datacenter_list = profitbricks.list_datacenters()
+    datacenter_id = _get_resource_id(datacenter_list, datacenter)
+    if not datacenter_id:
+        module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
     # Locate UUID for Server
-    if not (uuid_match.match(server)):
-        server_list = profitbricks.list_servers(datacenter)
-        for s in server_list['items']:
-            if server == s['properties']['name']:
-                server = s['id']
-                break
-    try:
-        n = NIC(
-            name=name,
-            lan=lan
-        )
+    server_list = profitbricks.list_servers(datacenter_id)
+    server_id = _get_resource_id(server_list, server)
 
-        nic_response = profitbricks.create_nic(datacenter, server, n)
+    n = NIC(
+        name=name,
+        lan=lan
+    )
+
+    try:
+        nic_response = profitbricks.create_nic(datacenter_id, server_id, n)
 
         if wait:
             _wait_for_completion(profitbricks, nic_response,
@@ -172,6 +162,7 @@ def create_nic(module, profitbricks):
 
     except Exception as e:
         module.fail_json(msg="failed to create the NIC: %s" % str(e))
+
 
 def delete_nic(module, profitbricks):
     """
@@ -188,53 +179,44 @@ def delete_nic(module, profitbricks):
     name = module.params.get('name')
 
     # Locate UUID for Datacenter
-    if not (uuid_match.match(datacenter)):
-        datacenter_list = profitbricks.list_datacenters()
-        for d in datacenter_list['items']:
-            dc = profitbricks.get_datacenter(d['id'])
-            if datacenter == dc['properties']['name']:
-                datacenter = d['id']
-                break
+    datacenter_list = profitbricks.list_datacenters()
+    datacenter_id = _get_resource_id(datacenter_list, datacenter)
+    if not datacenter_id:
+        module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
     # Locate UUID for Server
-    server_found = False
-    if not (uuid_match.match(server)):
-        server_list = profitbricks.list_servers(datacenter)
-        for s in server_list['items']:
-            if server == s['properties']['name']:
-                server_found = True
-                server = s['id']
-                break
-
-        if not server_found:
-            return False
+    server_list = profitbricks.list_servers(datacenter_id)
+    server_id = _get_resource_id(server_list, server)
 
     # Locate UUID for NIC
-    nic_found = False
-    if not (uuid_match.match(name)):
-        nic_list = profitbricks.list_nics(datacenter, server)
-        for n in nic_list['items']:
-            if name == n['properties']['name']:
-                nic_found = True
-                name = n['id']
-                break
-
-        if not nic_found:
-            return False
+    nic_list = profitbricks.list_nics(datacenter_id, server_id)
+    nic_id = _get_resource_id(nic_list, name)
 
     try:
-        nic_response = profitbricks.delete_nic(datacenter, server, name)
+        nic_response = profitbricks.delete_nic(datacenter_id, server_id, nic_id)
         return nic_response
     except Exception as e:
         module.fail_json(msg="failed to remove the NIC: %s" % str(e))
+
+
+def _get_resource_id(resource_list, identity):
+    """
+    Fetch and return the UUID of a resource regardless of whether the name or
+    UUID is passed.
+    """
+    for resource in resource_list['items']:
+        if identity in (resource['properties']['name'], resource['id']):
+            return resource['id']
+    return None
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             datacenter=dict(),
             server=dict(),
-            name=dict(default=str(uuid.uuid4()).replace('-','')[:10]),
-            lan=dict(),
+            name=dict(default=str(uuid.uuid4()).replace('-', '')[:10]),
+            lan=dict(type='int'),
             subscription_user=dict(),
             subscription_password=dict(),
             wait=dict(type='bool', default=True),
@@ -254,7 +236,6 @@ def main():
         module.fail_json(msg='datacenter parameter is required')
     if not module.params.get('server'):
         module.fail_json(msg='server parameter is required')
-
 
     subscription_user = module.params.get('subscription_user')
     subscription_password = module.params.get('subscription_password')
@@ -281,7 +262,7 @@ def main():
 
         try:
             (nic_dict) = create_nic(module, profitbricks)
-            module.exit_json(nics=nic_dict)
+            module.exit_json(nic=nic_dict)
         except Exception as e:
             module.fail_json(msg='failed to set nic state: %s' % str(e))
 
