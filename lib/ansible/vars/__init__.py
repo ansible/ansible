@@ -393,10 +393,9 @@ class VariableManager:
         if host:
             variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
 
-            if self._inventory is not None:
-                variables['groups']  = dict()
-                for (group_name, group) in iteritems(self._inventory.groups):
-                    variables['groups'][group_name] = [h.name for h in group.get_hosts()]
+            if self._inventory:
+                variables['groups']  = self._inventory.get_group_dict()
+
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 

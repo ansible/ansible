@@ -25,7 +25,7 @@ import sys
 import re
 import itertools
 
-from ansible.compat.six import string_types
+from ansible.compat.six import string_types, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -63,11 +63,12 @@ class Inventory(object):
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
 
-        self._vars_per_host  = {}
-        self._vars_per_group = {}
-        self._hosts_cache    = {}
-        self._pattern_cache  = {}
-        self._vars_plugins   = []
+        self._vars_per_host    = {}
+        self._vars_per_group   = {}
+        self._hosts_cache      = {}
+        self._pattern_cache    = {}
+        self._group_dict_cache = {}
+        self._vars_plugins     = []
 
         self._basedir = self.basedir()
 
@@ -88,6 +89,7 @@ class Inventory(object):
         # clear the cache here, which is only useful if more than
         # one Inventory objects are created when using the API directly
         self.clear_pattern_cache()
+        self.clear_group_dict_cache()
 
         self.parse_inventory(host_list)
 
@@ -220,7 +222,7 @@ class Inventory(object):
                     hosts = [ h for h in hosts if h in subset ]
 
                 # exclude hosts mentioned in any restriction (ex: failed hosts)
-                if self._restriction is not None:
+                if self._restriction:
                     hosts = [ h for h in hosts if h.name in self._restriction ]
 
             seen = set()
@@ -502,6 +504,10 @@ class Inventory(object):
         HOSTS_PATTERNS_CACHE = {}
         self._pattern_cache = {}
 
+    def clear_group_dict_cache(self):
+        ''' called exclusively by the add_host and group_by plugins '''
+        self._group_dict_cache = {}
+
     def groups_for_host(self, host):
         if host in self._hosts_cache:
             return self._hosts_cache[host].get_groups()
@@ -567,6 +573,20 @@ class Inventory(object):
         vars = combine_vars(vars, self.get_group_vars(group))
 
         return vars
+
+    def get_group_dict(self):
+        """
+        In get_vars() we merge a 'magic' dictionary 'groups' with group name
+        keys and hostname list values into every host variable set.
+
+        Cache the creation of this structure here
+        """
+
+        if not self._group_dict_cache:
+            for (group_name, group) in iteritems(self.groups):
+                self._group_dict_cache[group_name] = [h.name for h in group.get_hosts()]
+
+        return self._group_dict_cache
 
     def get_vars(self, hostname, update_cached=False, vault_password=None):
 
@@ -829,6 +849,7 @@ class Inventory(object):
     def refresh_inventory(self):
 
         self.clear_pattern_cache()
+        self.clear_group_dict_cache()
 
         self._hosts_cache    = {}
         self._vars_per_host  = {}
