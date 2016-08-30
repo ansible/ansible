@@ -137,9 +137,9 @@ class VMwareLocalUserManager(object):
             task = self.content.accountManager.CreateUser(account_spec)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
-            module.fail_json(msg=runtime_fault.msg)
+            self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
-            module.fail_json(msg=method_fault.msg)
+            self.module.fail_json(msg=method_fault.msg)
 
     def state_update_user(self):
         account_spec = self.create_account_spec()
@@ -148,9 +148,9 @@ class VMwareLocalUserManager(object):
             task = self.content.accountManager.UpdateUser(account_spec)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
-            module.fail_json(msg=runtime_fault.msg)
+            self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
-            module.fail_json(msg=method_fault.msg)
+            self.module.fail_json(msg=method_fault.msg)
 
 
     def state_remove_user(self):
@@ -158,9 +158,9 @@ class VMwareLocalUserManager(object):
             task = self.content.accountManager.RemoveUser(self.local_user_name)
             self.module.exit_json(changed=True)
         except vmodl.RuntimeFault as runtime_fault:
-            module.fail_json(msg=runtime_fault.msg)
+            self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
-            module.fail_json(msg=method_fault.msg)
+            self.module.fail_json(msg=method_fault.msg)
 
 
     def state_exit_unchanged(self):
