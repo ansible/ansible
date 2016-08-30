@@ -46,6 +46,7 @@ from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 from ansible.utils.vars import merge_hash
 from ansible.vars.hostvars import HostVars
+from ansible.compat.six.moves import reduce
 
 try:
     import passlib.hash
