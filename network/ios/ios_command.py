@@ -144,7 +144,7 @@ from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
 from ansible.module_utils.ios import NetworkModule, NetworkError
 
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+VALID_KEYS = ['command', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
@@ -158,15 +158,13 @@ def parse_commands(module):
             cmd = dict(command=cmd, output=None)
         elif 'command' not in cmd:
             module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text', 'json']:
-            module.fail_json(msg='invalid output specified for command')
         elif not set(cmd.keys()).issubset(VALID_KEYS):
             module.fail_json(msg='unknown keyword specified')
         yield cmd
 
 def main():
     spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
+        # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
