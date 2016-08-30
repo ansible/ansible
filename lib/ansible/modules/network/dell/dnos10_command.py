@@ -20,7 +20,7 @@ DOCUMENTATION = """
 ---
 module: dnos10_command
 version_added: "2.2"
-author: "Senthil Kumar Ganesan (@skg_net)
+author: "Senthil Kumar Ganesan (@skg_net)"
 short_description: Run commands on remote devices running Dell OS10
 description:
   - Sends arbitrary commands to an Dell OS10 node and returns the results
