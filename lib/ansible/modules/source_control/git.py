@@ -490,7 +490,7 @@ def is_remote_tag(git_path, module, dest, remote, version):
 
 def get_branches(git_path, module, dest):
     branches = []
-    cmd = '%s branch -a' % (git_path,)
+    cmd = '%s branch --no-color -a' % (git_path,)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out, stdout=out, stderr=err)
