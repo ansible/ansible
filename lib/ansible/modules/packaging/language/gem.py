@@ -63,6 +63,12 @@ options:
     - Override the path to the gem executable
     required: false
     version_added: "1.4"
+  env_shebang:
+    description:
+      - Rewrite the shebang line on installed scripts to use /usr/bin/env.
+    required: false
+    default: "no"
+    version_added: "2.2"
   version:
     description:
       - Version of the gem to be installed/removed.
@@ -201,6 +207,8 @@ def install(module):
             cmd.append('--no-ri')
         else:
             cmd.append('--no-document')
+    if module.params['env_shebang']:
+        cmd.append('--env-shebang')
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
         cmd.extend([ '--', module.params['build_flags'] ])
@@ -218,7 +226,8 @@ def main():
             state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
             pre_release          = dict(required=False, default=False, type='bool'),
-            include_doc         = dict(required=False, default=False, type-'bool'),
+            include_doc          = dict(required=False, default=False, type='bool'),
+            env_shebang          = dict(required=False, default=False, type='bool'),
             version              = dict(required=False, type='str'),
             build_flags          = dict(required=False, type='str'),
         ),
