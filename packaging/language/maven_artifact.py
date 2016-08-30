@@ -235,7 +235,7 @@ class MavenDownloader:
         parsed_url = urlparse(url)
         if parsed_url.scheme=='s3':
                 parsed_url = urlparse(url)
-                bucket_name = parsed_url.netloc[:parsed_url.netloc.find('.')]
+                bucket_name = parsed_url.netloc
                 key_name = parsed_url.path[1:]
                 client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
                 url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
