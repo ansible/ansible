@@ -63,7 +63,7 @@ options:
         required: False
    hardware:
         description:
-            - Attributes such as cpus, memroy, osid, and disk controller
+            - Attributes such as cpus, memory, osid, and disk controller
         required: False
    disk:
         description:
