@@ -1548,12 +1548,13 @@ class DarwinUser(User):
         else:
             target = set([])
 
-        for remove in current - target:
-            (_rc, _err, _out) = self.__modify_group(remove, 'delete')
-            rc += rc
-            out += _out
-            err += _err
-            changed = True
+        if self.append is False:
+            for remove in current - target:
+                (_rc, _err, _out) = self.__modify_group(remove, 'delete')
+                rc += rc
+                out += _out
+                err += _err
+                changed = True
 
         for add in target - current:
             (_rc, _err, _out) = self.__modify_group(add, 'add')
