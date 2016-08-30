@@ -178,7 +178,7 @@ def main():
                                            'evacuateAllData',
                                            'noAction']),
         evacuate=dict(required=False, type='bool', default=False),
-        timeout=dict(required=False, default=0),
+        timeout=dict(required=False, default=0, type='int'),
         state=dict(required=False,
                    default='present',
                    choices=['present', 'absent'])))
