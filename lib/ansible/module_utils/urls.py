@@ -845,7 +845,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     # add the custom agent header, to help prevent issues
     # with sites that block the default urllib agent string
-    request.add_header('User-agent', http_agent)
+    if http_agent:
+        request.add_header('User-agent', http_agent)
 
     # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
