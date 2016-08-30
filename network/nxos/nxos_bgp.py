@@ -23,14 +23,16 @@ version_added: "2.2"
 short_description: Manages BGP configuration
 description:
     - Manages BGP configurations on NX-OS switches
-author: Jason Edelman (@jedelman8), Gabriele Gerbino (@GGabriele)
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - State 'absent' removes the whole BGP ASN configuration when VRF is
-      'default' or the whole VRF instance within the BGP process when using
+    - I(state)=absent removes the whole BGP ASN configuration when VRF is
+      C(default) or the whole VRF instance within the BGP process when using
       a different VRF.
-    - 'default', when supported, restores params default value.
-    - Configuring global parmas is only permitted if VRF is 'default'.
+    - C(default) when supported restores params default value.
+    - Configuring global parmas is only permitted if VRF is C(default).
 options:
     asn:
         description:
@@ -280,9 +282,76 @@ EXAMPLES = '''
 # configure a simple asn
 - nxos_bgp:
       asn=65535
-      vrf=default
+      vrf=test
+      router_id=1.1.1.1
       state=present
-      transport=cli
+      username: "{{ un }}"
+      password: "{{ pwd }}"
+      host: "{{ inventory_hostname }}"
+'''
+
+RETURN = '''
+proposed:
+    description: k/v pairs of parameters passed into module
+    returned: always
+    type: dict
+    sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
+existing:
+    description: k/v pairs of existing BGP configuration
+    type: dict
+    sample: {"asn": "65535", "bestpath_always_compare_med": false,
+            "bestpath_aspath_multipath_relax": false,
+            "bestpath_compare_neighborid": false,
+            "bestpath_compare_routerid": false,
+            "bestpath_cost_community_ignore": false,
+            "bestpath_med_confed": false,
+            "bestpath_med_missing_as_worst": false,
+            "bestpath_med_non_deterministic": false, "cluster_id": "",
+            "confederation_id": "", "confederation_peers": "",
+            "graceful_restart": true, "graceful_restart_helper": false,
+            "graceful_restart_timers_restart": "120",
+            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
+            "log_neighbor_changes": false, "maxas_limit": "",
+            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
+            "router_id": "11.11.11.11", "suppress_fib_pending": false,
+            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
+            "timer_bgp_keepalive": "60", "vrf": "test"}
+end_state:
+    description: k/v pairs of BGP configuration after module execution
+    returned: always
+    type: dict
+    sample: {"asn": "65535", "bestpath_always_compare_med": false,
+            "bestpath_aspath_multipath_relax": false,
+            "bestpath_compare_neighborid": false,
+            "bestpath_compare_routerid": false,
+            "bestpath_cost_community_ignore": false,
+            "bestpath_med_confed": false,
+            "bestpath_med_missing_as_worst": false,
+            "bestpath_med_non_deterministic": false, "cluster_id": "",
+            "confederation_id": "", "confederation_peers": "",
+            "graceful_restart": true, "graceful_restart_helper": false,
+            "graceful_restart_timers_restart": "120",
+            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
+            "log_neighbor_changes": false, "maxas_limit": "",
+            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
+            "router_id": "1.1.1.1",  "suppress_fib_pending": false,
+            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
+            "timer_bgp_keepalive": "60", "vrf": "test"}
+state:
+    description: state as sent in from the playbook
+    returned: always
+    type: string
+    sample: "present"
+updates:
+    description: commands sent to the device
+    returned: always
+    type: list
+    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+changed:
+    description: check to see if a change was made on the device
+    returned: always
+    type: boolean
+    sample: true
 '''
 
 # COMMON CODE FOR MIGRATION
