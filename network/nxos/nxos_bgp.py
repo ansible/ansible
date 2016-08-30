@@ -654,7 +654,10 @@ class CustomNetworkConfig(object):
 
         for item in self.items:
             for regexp in patterns:
-                string = item.text if ignore_whitespace is True else item.raw
+                if ignore_whitespace is True:
+                    string = item.text
+                else:
+                    string = item.raw
                 if regexp.search(item.text):
                     if item.text != replace:
                         if parents == [p.text for p in item.parents]:
