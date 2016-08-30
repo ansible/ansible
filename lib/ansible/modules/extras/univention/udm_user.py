@@ -21,6 +21,8 @@
 #
 
 
+from datetime import date
+import crypt
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.univention_umc import (
     umc_module_for_add,
@@ -28,9 +30,7 @@ from ansible.module_utils.univention_umc import (
     ldap_search,
     base_dn,
 )
-from datetime import date
 from dateutil.relativedelta import relativedelta
-import crypt
 
 
 DOCUMENTATION = '''
@@ -40,7 +40,8 @@ version_added: "2.2"
 author: "Tobias Rueetschi (@2-B)"
 short_description: Manage posix users on a univention corporate server
 description:
-    - "This module allows to manage posix users on a univention corporate server (UCS).
+    - "This module allows to manage posix users on a univention corporate
+       server (UCS).
        It uses the python API of the UCS to create a new object or edit it."
 requirements:
     - Python >= 2.6
@@ -268,8 +269,8 @@ options:
         required: false
         default: ''
         description:
-            - "Define the whole position of users object inside the LDAP tree, e.g.
-               C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
+            - "Define the whole position of users object inside the LDAP tree,
+               e.g. C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
     ou:
         required: false
         default: ''
@@ -314,7 +315,7 @@ RETURN = '''# '''
 
 
 def main():
-    expiry = date.strftime(date.today()+relativedelta(years=1), "%Y-%m-%d")
+    expiry = date.strftime(date.today() + relativedelta(years=1), "%Y-%m-%d")
     module = AnsibleModule(
         argument_spec = dict(
             birthday                = dict(default=None,
@@ -449,25 +450,25 @@ def main():
             else:
                 obj = umc_module_for_edit('users/user', user_dn)
 
-            if module.params['displayName'] == None:
+            if module.params['displayName'] is None:
                 module.params['displayName'] = '{} {}'.format(
                     module.params['firstname'],
                     module.params['lastname']
                 )
-            if module.params['unixhome'] == None:
+            if module.params['unixhome'] is None:
                 module.params['unixhome'] = '/home/{}'.format(
                     module.params['username']
                 )
             for k in obj.keys():
                 if (k != 'password' and
-                    k != 'groups' and
-                    module.params.has_key(k) and
-                    module.params[k] != None):
+                        k != 'groups' and
+                        k in module.params and
+                        module.params[k] is not None):
                     obj[k] = module.params[k]
             # handle some special values
             obj['e-mail'] = module.params['email']
             password = module.params['password']
-            if obj['password'] == None:
+            if obj['password'] is None:
                 obj['password'] = password
             else:
                 old_password = obj['password'].split('}', 2)[1]
@@ -488,12 +489,17 @@ def main():
                     obj.modify()
         except:
             module.fail_json(
-                msg="Creating/editing user {} in {} failed".format(username, container)
+                msg="Creating/editing user {} in {} failed".format(
+                    username,
+                    container
+                )
             )
         try:
             groups = module.params['groups']
             if groups:
-                filter = '(&(objectClass=posixGroup)(|(cn={})))'.format(')(cn='.join(groups))
+                filter = '(&(objectClass=posixGroup)(|(cn={})))'.format(
+                    ')(cn='.join(groups)
+                )
                 group_dns = list(ldap_search(filter, attr=['dn']))
                 for dn in group_dns:
                     grp = umc_module_for_edit('groups/group', dn[0])
