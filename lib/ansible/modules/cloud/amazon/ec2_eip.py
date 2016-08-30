@@ -17,10 +17,11 @@
 DOCUMENTATION = '''
 ---
 module: ec2_eip
-short_description: associate an EC2 elastic IP with an instance.
+short_description: manages EC2 elastic IP (EIP) addresses.
 description:
-    - This module associates AWS EC2 elastic IP addresses with instances
-version_added: 1.4
+    - This module can allocate or release an EIP.
+    - This module can associate/disassociate an EIP with instances or network interfaces.
+version_added: "1.4"
 options:
   device_id:
     description:
@@ -30,13 +31,15 @@ options:
     version_added: "2.0"
   public_ip:
     description:
-      - The elastic IP address to associate with the instance.
-      - If absent, allocate a new address
+      - The IP address of a previously allocated EIP.
+      - If present and device is specified, the EIP is associated with the device.
+      - If absent and device is specified, the EIP is disassociated from the device.
     required: false
+    aliases: [ ip ]
   state:
     description:
-      - If present, associate the IP with the instance.
-      - If absent, disassociate the IP with the instance.
+      - If present, allocate an EIP or associate an existing EIP with a device.
+      - If absent, disassociate the EIP from the device and optionally release it.
     required: false
     choices: ['present', 'absent']
     default: present
@@ -54,8 +57,7 @@ options:
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
-      - Reuse an EIP that is not associated to an instance (when available),'''
-''' instead of allocating a new one.
+      - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
     required: false
     default: false
     version_added: "1.6"
@@ -71,8 +73,8 @@ extends_documentation_fragment:
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - This module will return C(public_ip) on success, which will contain the
-     public IP address associated with the instance.
-   - There may be a delay between the time the Elastic IP is assigned and when
+     public IP address associated with the device.
+   - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
      pause to delay further playbook execution until the instance is reachable,
      if necessary.
@@ -100,7 +102,7 @@ EXAMPLES = '''
 - name: another way of allocating an elastic IP without associating it to anything
   ec2_eip: state='present'
 - name: provision new instances with ec2
-  ec2: keypair=mykey instance_type=c1.medium image=emi-40603AD1 wait=yes'''
+  ec2: keypair=mykey instance_type=c1.medium image=ami-40603AD1 wait=yes'''
 ''' group=webserver count=3
   register: ec2
 - name: associate new elastic IPs with each of the instances
