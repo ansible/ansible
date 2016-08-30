@@ -41,7 +41,6 @@ options:
    password:
      description:
         - Password for the user
-        - Required when I(state) is present
      required: false
      default: None
    email:
@@ -149,9 +148,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(
         argument_spec,
-        required_if=[
-            ('state', 'present', ['password'])
-        ],
         **module_kwargs)
 
     if not HAS_SHADE:
