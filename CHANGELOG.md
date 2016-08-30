@@ -73,6 +73,9 @@ Ansible Changes By Release
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
+- Dell Networking
+  * dnos10_command
+  * dnos10_config
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
