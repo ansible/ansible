@@ -28,7 +28,6 @@ from ansible.module_utils.univention_umc import (
     ldap_search,
     base_dn,
 )
-import socket
 
 
 DOCUMENTATION = '''
@@ -453,9 +452,9 @@ def main():
                                                    default=[]),
             nfsCustomSettings               = dict(type='list',
                                                    default=[]),
-            state           = dict(default='present',
-                                   choices=['present', 'absent'],
-                                   type='str')
+            state                           = dict(default='present',
+                                                   choices=['present', 'absent'],
+                                                   type='str')
         ),
         supports_check_mode=True,
         required_if = ([
@@ -484,9 +483,9 @@ def main():
 
             module.params['printablename'] = '{} ({})'.format(name, module.params['host'])
             for k in obj.keys():
-                if module.params[k] == True:
+                if module.params[k] is True:
                     module.params[k] = '1'
-                elif module.params[k] == False:
+                elif module.params[k] is False:
                     module.params[k] = '0'
                 obj[k] = module.params[k]
 
@@ -494,17 +493,21 @@ def main():
             if exists:
                 for k in obj.keys():
                     if obj.hasChanged(k):
-                        changed=True
+                        changed = True
             else:
-                changed=True
+                changed = True
             if not module.check_mode:
                 if not exists:
                     obj.create()
                 elif changed:
                     obj.modify()
-        except Exception as e:
+        except BaseException as err:
             module.fail_json(
-                msg='Creating/editing share {} in {} failed: {}'.format(name, container, e)
+                msg='Creating/editing share {} in {} failed: {}'.format(
+                    name,
+                    container,
+                    err,
+                )
             )
 
     if state == 'absent' and exists:
@@ -513,9 +516,13 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except:
+        except BaseException as err:
             module.fail_json(
-                msg='Removing share {} in {} failed: {}'.format(name, container, e)
+                msg='Removing share {} in {} failed: {}'.format(
+                    name,
+                    container,
+                    err,
+                )
             )
 
     module.exit_json(
