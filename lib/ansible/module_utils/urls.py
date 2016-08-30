@@ -848,13 +848,14 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if http_agent:
         request.add_header('User-agent', http_agent)
 
-    # if we're ok with getting a 304, set the timestamp in the
-    # header, otherwise make sure we don't get a cached copy
-    if last_mod_time and not force:
+    # Cache control
+    # Either we directly force a cache refresh
+    if force:
+        request.add_header('cache-control', 'no-cache')
+    # or we do it if the original is more recent than our copy
+    elif last_mod_time:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
-    else:
-        request.add_header('cache-control', 'no-cache')
 
     # user defined headers now, which may override things we've set above
     if headers:
