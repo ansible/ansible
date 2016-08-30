@@ -81,7 +81,7 @@ import json
 
 try:
     import botocore
-    import boto3   
+    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -128,7 +128,7 @@ def list_dhcp_options(client, module):
     snaked_dhcp_options_array = []
     for dhcp_option in all_dhcp_options_array:
          snaked_dhcp_options_array.append(camel_dict_to_snake_dict(dhcp_option))
-     
+
     module.exit_json(dhcp_options=snaked_dhcp_options_array)
 
 
@@ -151,12 +151,12 @@ def main():
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
     # call your function here
     results = list_dhcp_options(connection, module)
-    
+
     module.exit_json(result=results)
 
 # import module snippets
