@@ -29,6 +29,7 @@ env:
       cloud/amazon/ec2_vpc_route_table.py
       cloud/amazon/ec2_vpc_subnet_facts.py
       cloud/amazon/ec2_vpc_subnet.py
+      cloud/amazon/ec2_vpc_dhcp_options_facts.py
       cloud/amazon/ecs_cluster.py
       cloud/amazon/ecs_service_facts.py
       cloud/amazon/ecs_service.py
