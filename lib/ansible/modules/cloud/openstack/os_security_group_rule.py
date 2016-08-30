@@ -40,7 +40,7 @@ options:
    protocol:
       description:
         - IP protocol
-      choices: ['tcp', 'udp', 'icmp', None]
+      choices: ['tcp', 'udp', 'icmp', 112, None]
       default: None
    port_range_min:
       description:
@@ -123,6 +123,12 @@ EXAMPLES = '''
     security_group: foo
     protocol: tcp
     remote_ip_prefix: 0.0.0.0/0
+
+# Create a rule for VRRP with numbered protocol 112
+- os_security_group_rule:
+    security_group: loadbalancer_sg
+    protocol: 112
+    remote_group: loadbalancer-node_sg
 '''
 
 RETURN = '''
@@ -254,7 +260,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol         = dict(default=None,
-                                choices=[None, 'tcp', 'udp', 'icmp']),
+                                choices=[None, 'tcp', 'udp', 'icmp', 112]),
         port_range_min   = dict(required=False, type='int'),
         port_range_max   = dict(required=False, type='int'),
         remote_ip_prefix = dict(required=False, default=None),
