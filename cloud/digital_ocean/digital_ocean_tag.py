@@ -27,6 +27,7 @@ options:
     description:
      - The name of the tag. The supported characters for names include
        alphanumeric characters, dashes, and underscores.
+    required: true
   resource_id:
     description:
     - The ID of the resource to operate on.
