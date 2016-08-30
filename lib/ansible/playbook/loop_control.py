@@ -29,6 +29,7 @@ from ansible.playbook.base import Base
 class LoopControl(Base):
 
     _loop_var = FieldAttribute(isa='str')
+    _label    = FieldAttribute(isa='str')
 
     def __init__(self):
         super(LoopControl, self).__init__()

@@ -234,9 +234,11 @@ class TaskExecutor:
         task_vars = self._job_vars
 
         loop_var = 'item'
+        label = None
         if self._task.loop_control:
             # the value may be 'None', so we still need to default it back to 'item' 
             loop_var = self._task.loop_control.loop_var or 'item'
+            label = self._task.loop_control.label or ('{{' + loop_var + '}}')
 
         if loop_var in task_vars:
             display.warning("The loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions and unexpected behavior." % loop_var)
@@ -265,6 +267,10 @@ class TaskExecutor:
             # to the list of results
             res[loop_var] = item
             res['_ansible_item_result'] = True
+
+            if not label is None:
+                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+                res['_ansible_item_label'] = templar.template(label, fail_on_undefined=False)
 
             self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
             results.append(res)
