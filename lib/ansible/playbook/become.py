@@ -35,6 +35,7 @@ class Become:
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
+    _become_flags        = FieldAttribute(isa='string')
 
     def __init__(self):
         return super(Become, self).__init__()
