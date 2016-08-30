@@ -198,7 +198,6 @@ options:
         description:
             - Local AS number to be used within a VRF instance.
         required: false
-        choices: string
         default: null
     log_neighbor_changes:
         description:
