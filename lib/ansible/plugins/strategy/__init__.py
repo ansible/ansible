@@ -475,6 +475,9 @@ class StrategyBase:
         # patterns may have referenced the group
         self._inventory.clear_pattern_cache()
 
+        # clear cache of group dict, which is used in magic host variables
+        self._inventory.clear_group_dict_cache()
+
         # also clear the hostvar cache entry for the given play, so that
         # the new hosts are available if hostvars are referenced
         self._variable_manager.invalidate_hostvars_cache(play=iterator._play)
@@ -495,6 +498,9 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         new_group = self._inventory.get_group(group_name)
         if not new_group:
+            # clear cache of group dict, which is used in magic host variables
+            self._inventory.clear_group_dict_cache()
+
             # create the new group and add it to inventory
             new_group = Group(name=group_name)
             self._inventory.add_group(new_group)
