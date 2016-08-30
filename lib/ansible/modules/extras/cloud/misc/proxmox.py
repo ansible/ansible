@@ -214,8 +214,8 @@ VZ_TYPE=None
 def get_instance(proxmox, vmid):
   return [ vm for vm in proxmox.cluster.resources.get(type='vm') if vm['vmid'] == int(vmid) ]
 
-def content_check(proxmox, node, ostemplate, storage):
-  return [ True for cnt in proxmox.nodes(node).storage(storage).content.get() if cnt['volid'] == ostemplate ]
+def content_check(proxmox, node, ostemplate, template_store):
+  return [ True for cnt in proxmox.nodes(node).storage(template_store).content.get() if cnt['volid'] == ostemplate ]
 
 def node_check(proxmox, node):
   return [ True for nd in proxmox.nodes.get() if nd['node'] == node ]
@@ -339,6 +339,8 @@ def main():
   memory = module.params['memory']
   swap = module.params['swap']
   storage = module.params['storage']
+  if module.params['ostemplate'] is not None:
+    template_store = module.params['ostemplate'].split(":")[0]
   timeout = module.params['timeout']
 
   # If password not set get it from PROXMOX_PASSWORD env
@@ -364,9 +366,9 @@ def main():
         module.fail_json(msg='node, hostname, password and ostemplate are mandatory for creating vm')
       elif not node_check(proxmox, node):
         module.fail_json(msg="node '%s' not exists in cluster" % node)
-      elif not content_check(proxmox, node, module.params['ostemplate'], storage):
+      elif not content_check(proxmox, node, module.params['ostemplate'], template_store):
         module.fail_json(msg="ostemplate '%s' not exists on node %s and storage %s"
-                         % (module.params['ostemplate'], node, storage))
+                         % (module.params['ostemplate'], node, template_store))
 
       create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
                       password = module.params['password'],
