@@ -115,6 +115,7 @@ except ImportError:
 
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+from ansible.module_utils.six import b
 
 try:
     # python3
@@ -606,11 +607,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
                         try:
-                            cert_file = open(full_path, 'r')
+                            cert_file = open(full_path, 'rb')
                             os.write(tmp_fd, cert_file.read())
-                            os.write(tmp_fd, '\n')
+                            os.write(tmp_fd, b('\n'))
                             cert_file.close()
-                        except:
+                        except (OSError, IOError):
                             pass
 
         return (tmp_path, paths_checked)
