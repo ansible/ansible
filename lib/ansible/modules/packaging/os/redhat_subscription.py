@@ -459,6 +459,8 @@ class RhsmPools(object):
         for product in self.products:
             if r.search(product._name):
                 yield product
+            if r.search(product.PoolID):
+                yield product
 
 
 def main():
