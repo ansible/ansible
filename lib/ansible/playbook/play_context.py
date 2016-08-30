@@ -122,6 +122,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_user',
     'become_pass',
     'become_method',
+    'become_flags',
     'connection',
     'docker_extra_args',
     'delegate_to',

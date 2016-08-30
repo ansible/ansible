@@ -31,6 +31,9 @@ become_user
 become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`
 
+become_flags
+    (at play or task level) permit to use specific flags for the tasks or role. One common use is to change user to nobody when the shell is set to no login
+
 For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
 
     - name: Ensure the httpd service is running
@@ -45,6 +48,15 @@ To run a command as the ``apache`` user::
       command: somecommand
       become: true
       become_user: apache
+
+To do something as the ``nobody`` user when the shell is nologin::
+
+    - name: Run a command as nobody
+      command: somecommand
+      become: true
+      become_method: su
+      become_user: nobody
+      become_flags: '-s /bin/sh'
 
 Connection variables
 --------------------
