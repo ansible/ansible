@@ -253,7 +253,9 @@ class Droplet(JsonfyMixIn):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
         ipv6_lower = str(ipv6).lower()
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower,user_data, ipv6_lower)
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id,
+            ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
+            backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
         droplet = cls(json)
         return droplet
 
