@@ -184,6 +184,16 @@ options:
         default: None
         description:
             - Organisation
+    overridePWHistory:
+        required: false
+        default: False
+        description:
+            - Override password history
+    overridePWLength:
+        required: false
+        default: False
+        description:
+            - Override password check
     pager_telephonenumber:
         required: false
         default: []
@@ -390,6 +400,10 @@ def main():
                                            aliases=['mobileTelephoneNumber']),
             organisation            = dict(default=None,
                                            type='str'),
+            overridePWHistory       = dict(default=False,
+                                           type='bool'),
+            overridePWLength        = dict(default=False,
+                                           type='bool'),
             pager_telephonenumber   = dict(default=[],
                                            type='list',
                                            aliases=['pagerTelephonenumber']),
@@ -496,6 +510,7 @@ def main():
             for k in obj.keys():
                 if (k != 'password' and
                         k != 'groups' and
+                        k != 'overridePWHistory' and
                         k in module.params and
                         module.params[k] is not None):
                     obj[k] = module.params[k]
@@ -507,6 +522,8 @@ def main():
             else:
                 old_password = obj['password'].split('}', 2)[1]
                 if crypt.crypt(password, old_password) != old_password:
+                    obj['overridePWHistory'] = module.params['overridePWHistory']
+                    obj['overridePWLength']  = module.params['overridePWLength']
                     obj['password'] = password
 
             diff = obj.diff()
