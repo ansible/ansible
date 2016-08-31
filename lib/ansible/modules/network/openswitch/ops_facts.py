@@ -22,10 +22,16 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Collect device specific facts from OpenSwitch
 description:
-  - This module collects additional device fact information from a
-    remote device running OpenSwitch using either the CLI or REST
-    interfaces.  It provides optional arguments for collecting fact
-    information.
+  - Collects facts from devices running the OpenSwitch operating
+    system.  Fact collection is supported over both Cli and Rest
+    transports.  This module prepends all of the base network fact keys
+    with C(ansible_net_<fact>).  The facts module will always collect a
+    base set of facts from the device and can enable or disable
+    collection of additional facts.
+  - The facts collected from pre Ansible 2.2 are still available and
+    are collected for backwards compatibility; however, these facts
+    should be considered deprecated and will be removed in a future
+    release.
 extends_documentation_fragment: openswitch
 options:
   config:
@@ -47,129 +53,362 @@ options:
         valid when the C(transport=rest).
     required: false
     default: null
-notes:
-  - The use of the REST transport is still experimental until it is
-    fully implemented.
+  gather_subset:
+    description:
+      - When supplied, this argument will restrict the facts collected
+        to a given subset.  Possible values for this argument include
+        all, hardware, config, legacy, and interfaces.  Can specify a
+        list of values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected.
+    required: false
+    default: '!config'
+    version_added: "2.2"
 """
 
 EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: netop
+    password: netop
+    transport: cli
+  rest:
+    host: "{{ inventory_hostname }}"
+    username: netop
+    password: netop
+    transport: rest
+
+- ops_facts:
+    gather_subset: all
+    provider: "{{ rest }}"
+
+# Collect only the config and default facts
+- ops_facts:
+    gather_subset: config
+    provider: "{{ cli }}"
+
+# Do not collect config facts
+- ops_facts:
+    gather_subset:
+      - "!config"
+    provider: "{{ cli }}"
+
 - name: collect device facts
   ops_facts:
+    provider: "{{ cli }}"
 
 - name: include the config
   ops_facts:
     config: yes
+    provider: "{{ rest }}"
 
 - name: include a set of rest endpoints
   ops_facts:
     endpoints:
       - /system/interfaces/1
       - /system/interfaces/2
+    provider: "{{ rest }}"
 """
 
 RETURN = """
+ansible_net_gather_subset:
+  description: The list of fact subsets collected from the device
+  returned: always
+  type: list
+
+# default
+ansible_net_model:
+  description: The model name returned from the device
+  returned: when transport is cli
+  type: str
+ansible_net_serialnum:
+  description: The serial number of the remote device
+  returned: when transport is cli
+  type: str
+ansible_net_version:
+  description: The operating system version running on the remote device
+  returned: always
+  type: str
+ansible_net_hostname:
+  description: The configured hostname of the device
+  returned: always
+  type: string
+ansible_net_image:
+  description: The image file the device is running
+  returned: when transport is cli
+  type: string
+
+# config
+ansible_net_config:
+  description: The current active config from the device
+  returned: when config is enabled
+  type: str
+
+# legacy (pre Ansible 2.2)
 config:
   description: The current system configuration
   returned: when enabled
   type: string
   sample: '....'
-
 hostname:
   description: returns the configured hostname
   returned: always
   type: string
   sample: ops01
-
 version:
   description: The current version of OpenSwitch
   returned: always
   type: string
   sample: '0.3.0'
-
 endpoints:
   description: The JSON response from the URL endpoint
-  returned: when endpoints argument is defined
+  returned: when endpoints argument is defined and transport is rest
   type: list
   sample: [{....}, {....}]
 """
 import re
 
-
-def get(module, url, expected_status=200):
-    response = module.connection.get(url)
-    if response.headers['status'] != expected_status:
-        module.fail_json(**response.headers)
-    return response
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcli import CommandRunner, AddCommandError
+from ansible.module_utils.openswitch import NetworkModule
 
 
-def get_config(module):
-    if module.params['transport'] == 'ssh':
-        rc, out, err = module.run_command('vtysh -c "show running-config"')
-        return out
-    elif module.params['transport'] == 'rest':
-        response = get(module, '/system/full-configuration')
-        return response.json
-    elif module.params['transport'] == 'cli':
-        response = module.connection.send('show running-config')
-        return response[0]
+def add_command(runner, command):
+    try:
+        runner.add_command(command)
+    except AddCommandError:
+        # AddCommandError is raised for any issue adding a command to
+        # the runner.  Silently ignore the exception in this case
+        pass
 
 
-def get_facts(module):
-    if module.params['transport'] == 'rest':
-        response = get(module, '/system')
+class FactsBase(object):
+
+    def __init__(self, module, runner):
+        self.module = module
+        self.transport = module.params['transport']
+        self.runner = runner
+        self.facts = dict()
+
+        if self.transport == 'cli':
+            self.commands()
+
+    def populate(self):
+        getattr(self, self.transport)()
+
+    def cli(self):
+        pass
+
+    def rest(self):
+        pass
+
+
+class Default(FactsBase):
+
+    def commands(self):
+        add_command(self.runner, 'show system')
+        add_command(self.runner, 'show hostname')
+
+    def rest(self):
+        self.facts.update(self.get_system())
+
+    def cli(self):
+        data = self.runner.get_command('show system')
+
+        self.facts['version'] = self.parse_version(data)
+        self.facts['serialnum'] = self.parse_serialnum(data)
+        self.facts['model'] = self.parse_model(data)
+        self.facts['image'] = self.parse_image(data)
+
+        self.facts['hostname'] = self.runner.get_command('show hostname')
+
+    def parse_version(self, data):
+        match = re.search(r'OpenSwitch Version\s+: (\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_model(self, data):
+        match = re.search(r'Platform\s+:\s(\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_image(self, data):
+        match = re.search(r'\(Build: (\S+)\)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_serialnum(self, data):
+        match = re.search(r'Serial Number\s+: (\S+)', data)
+        if match:
+            return match.group(1)
+
+    def get_system(self):
+        response = self.module.connection.get('/system')
         return dict(
             hostname=response.json['configuration']['hostname'],
             version=response.json['status']['switch_version']
         )
-    elif module.params['transport'] == 'cli':
-        response = module.connection.send(['show system', 'show hostname'])
-        facts = dict()
-        facts['hostname'] = response[1]
-        match = re.search(r'OpenSwitch Version\s*:\s*(.*)$', response[0], re.M)
-        if match:
-            facts['version'] = match.group(1)
-        return facts
-    return dict()
 
+
+class Config(FactsBase):
+
+    def commands(self):
+        add_command(self.runner, 'show running-config')
+
+    def cli(self):
+        self.facts['config'] = self.runner.get_command('show running-config')
+
+class Legacy(FactsBase):
+    # facts from ops_facts 2.1
+
+    def commands(self):
+        add_command(self.runner, 'show system')
+        add_command(self.runner, 'show hostname')
+
+        if self.module.params['config']:
+            add_command(self.runner, 'show running-config')
+
+    def rest(self):
+        self.facts['_endpoints'] = self.get_endpoints()
+        self.facts.update(self.get_system())
+
+        if self.module.params['config']:
+            self.facts['_config'] = self.get_config()
+
+    def cli(self):
+        self.facts['_hostname'] = self.runner.get_command('show hostname')
+
+        data = self.runner.get_command('show system')
+        self.facts['_version'] = self.parse_version(data)
+
+        if self.module.params['config']:
+            self.facts['_config'] = self.runner.get_command('show running-config')
+
+    def parse_version(self, data):
+        match = re.search(r'OpenSwitch Version\s+: (\S+)', data)
+        if match:
+            return match.group(1)
+
+    def get_endpoints(self):
+        responses = list()
+        urls = self.module.params['endpoints'] or list()
+        for ep in urls:
+            response = self.module.connection.get(ep)
+            if response.headers['status'] != 200:
+                self.module.fail_json(msg=response.headers['msg'])
+            responses.append(response.json)
+        return responses
+
+    def get_system(self):
+        response = self.module.connection.get('/system')
+        return dict(
+            _hostname=response.json['configuration']['hostname'],
+            _version=response.json['status']['switch_version']
+        )
+
+    def get_config(self):
+        response = self.module.connection.get('/system/full-configuration')
+        return response.json
+
+def check_args(module, warnings):
+    if module.params['transport'] != 'rest' and module.params['endpoints']:
+        warnings.append('Endpoints can only be collected when transport is '
+                        'set to "rest".  Endpoints will not be collected')
+
+
+FACT_SUBSETS = dict(
+    default=Default,
+    config=Config,
+    legacy=Legacy
+)
+
+VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 def main():
-    """ main entry point for module execution
-    """
-
     spec = dict(
-        endpoints=dict(type='list'),
+        gather_subset=dict(default=['!config'], type='list'),
+
+        # the next two arguments are legacy from pre 2.2 ops_facts
+        # these will be deprecated and ultimately removed
         config=dict(default=False, type='bool'),
+        endpoints=dict(type='list'),
+
         transport=dict(default='cli', choices=['cli', 'rest'])
     )
 
-    module = get_module(argument_spec=spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
 
-    endpoints = module.params['endpoints'] or list()
-    if endpoints and not module.params['transport'] == 'rest':
-        module.fail_json(msg="endpoints argument can only be used "
-                "with transport `rest`")
+    gather_subset = module.params['gather_subset']
 
-    result = dict(changed=False)
+    warnings = list()
+    check_args(module, warnings)
 
-    facts = get_facts(module)
+    runable_subsets = set()
+    exclude_subsets = set()
 
-    if module.params['config']:
-        facts['config'] = get_config(module)
+    for subset in gather_subset:
+        if subset == 'all':
+            runable_subsets.update(VALID_SUBSETS)
+            continue
 
-    responses = list()
-    for ep in endpoints:
-        response = get(module, ep)
-        responses.append(response.json)
+        if subset.startswith('!'):
+            subset = subset[1:]
+            if subset == 'all':
+                exclude_subsets.update(VALID_SUBSETS)
+                continue
+            exclude = True
+        else:
+            exclude = False
 
-    if responses:
-        facts['endpoints'] = responses
+        if subset not in VALID_SUBSETS:
+            module.fail_json(msg='Bad subset')
 
-    result['ansible_facts'] = facts
-    module.exit_json(**result)
+        if exclude:
+            exclude_subsets.add(subset)
+        else:
+            runable_subsets.add(subset)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openswitch import *
+    if not runable_subsets:
+        runable_subsets.update(VALID_SUBSETS)
+
+    runable_subsets.difference_update(exclude_subsets)
+    runable_subsets.add('default')
+    runable_subsets.add('legacy')
+
+    facts = dict()
+    facts['gather_subset'] = list(runable_subsets)
+
+    runner = CommandRunner(module)
+
+    instances = list()
+    for key in runable_subsets:
+        instances.append(FACT_SUBSETS[key](module, runner))
+
+    if module.params['transport'] == 'cli':
+        runner.run()
+
+    try:
+        for inst in instances:
+            inst.populate()
+            facts.update(inst.facts)
+    except Exception:
+        raise
+        module.exit_json(out=module.from_json(runner.items))
+
+    ansible_facts = dict()
+    for key, value in facts.iteritems():
+        # this is to maintain capability with ops_facts 2.1
+        if key.startswith('_'):
+            ansible_facts[key[1:]] = value
+        else:
+            key = 'ansible_net_%s' % key
+            ansible_facts[key] = value
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
+
 
 if __name__ == '__main__':
     main()
