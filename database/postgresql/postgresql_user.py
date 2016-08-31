@@ -170,6 +170,7 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+from ansible.module_utils.six import iteritems
 
 _flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
@@ -433,7 +434,7 @@ def revoke_privileges(cursor, user, privs):
 
     changed = False
     for type_ in privs:
-        for name, privileges in privs[type_].iteritems():
+        for name, privileges in iteritems(privs[type_]):
             # Check that any of the privileges requested to be removed are
             # currently granted to the user
             differences = check_funcs[type_](cursor, user, name, privileges)
@@ -451,7 +452,7 @@ def grant_privileges(cursor, user, privs):
 
     changed = False
     for type_ in privs:
-        for name, privileges in privs[type_].iteritems():
+        for name, privileges in iteritems(privs[type_]):
             # Check that any of the privileges requested for the user are
             # currently missing
             differences = check_funcs[type_](cursor, user, name, privileges)
@@ -595,7 +596,7 @@ def main():
         "port":"port",
         "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+    kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" )
 
     # If a login_unix_socket is specified, incorporate it here.
