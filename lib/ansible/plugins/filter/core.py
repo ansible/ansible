@@ -34,6 +34,7 @@ import hashlib
 import string
 from functools import partial
 from random import SystemRandom, shuffle
+from datetime import datetime
 import uuid
 
 import yaml
@@ -115,6 +116,10 @@ def to_bool(a):
         return True
     else:
         return False
+
+def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
+    return datetime.strptime(string, format)
+
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
@@ -392,6 +397,9 @@ class FilterModule(object):
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': yaml.safe_load,
+
+            #date
+            'to_datetime': to_datetime,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
