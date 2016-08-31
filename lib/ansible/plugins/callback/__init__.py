@@ -174,6 +174,8 @@ class CallbackBase:
     def _get_item(self, result):
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
+        elif result.get('_ansible_item_label', False):
+            item = result.get('_ansible_item_label')
         else:
             item = result.get('item', None)
 
