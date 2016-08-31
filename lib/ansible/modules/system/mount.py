@@ -88,6 +88,7 @@ EXAMPLES = '''
 - mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' fstype=xfs opts=noatime state=present
 '''
 
+from ansible.module_utils.six import iteritems
 
 def write_fstab(lines, dest):
 
@@ -122,7 +123,7 @@ def set_mount(module, **kwargs):
     to_write = []
     exists = False
     changed = False
-    escaped_args = dict([(k, _escape_fstab(v)) for k, v in args.iteritems()])
+    escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args)])
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
