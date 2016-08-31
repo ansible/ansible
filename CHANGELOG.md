@@ -6,8 +6,8 @@ Ansible Changes By Release
 ###Major Changes:
 
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
+* Major performance improvements.
 * Added support for binary modules
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
 * Several Windows facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
   - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
@@ -18,6 +18,7 @@ Ansible Changes By Release
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * `meta` tasks can now use conditionals.
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 
 ####New Modules:
 - archive
