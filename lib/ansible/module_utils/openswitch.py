@@ -57,6 +57,7 @@ def get_opsidl():
 
     return (extschema, opsidl)
 
+
 class Response(object):
 
     def __init__(self, resp, hdrs):
@@ -76,6 +77,7 @@ class Response(object):
             return None
 
 class Rest(object):
+
     def __init__(self):
         self.url = None
         self.url_args = ModuleStub(url_argument_spec(), self._error)
@@ -229,4 +231,27 @@ class Cli(CliBase):
     def save_config(self):
         self.execute(['copy running-config startup-config'])
 
-Cli = register_transport('cli', default=True)(Cli)
+Cli = register_transport('cli')(Cli)
+
+class Ssh(object):
+
+    def __init__(self):
+        if not HAS_OPS:
+            msg = 'ops.dc lib is required but does not appear to be available'
+            raise NetworkError(msg)
+        self._opsidl = None
+
+    def configure(self, config):
+        if not self._opsidl:
+            (self._extschema, self._opsidl) = get_opsidl()
+        return ops.dc.write(self._extschema, self._opsidl)
+
+    def get_config(self):
+        if not self._opsidl:
+            (self._extschema, self._opsidl) = get_opsidl()
+        return ops.dc.read(self._extschema, self._opsidl)
+
+    def load_config(self, config):
+        return self.configure(config)
+
+Ssh = register_transport('ssh', default=True)(Ssh)
