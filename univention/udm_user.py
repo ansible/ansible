@@ -21,6 +21,8 @@
 #
 
 
+from datetime import date
+import crypt
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.univention_umc import (
     umc_module_for_add,
@@ -28,9 +30,7 @@ from ansible.module_utils.univention_umc import (
     ldap_search,
     base_dn,
 )
-from datetime import date
 from dateutil.relativedelta import relativedelta
-import crypt
 
 
 DOCUMENTATION = '''
@@ -40,7 +40,8 @@ version_added: "2.2"
 author: "Tobias Rueetschi (@2-B)"
 short_description: Manage posix users on a univention corporate server
 description:
-    - "This module allows to manage posix users on a univention corporate server (UCS).
+    - "This module allows to manage posix users on a univention corporate
+       server (UCS).
        It uses the python API of the UCS to create a new object or edit it."
 requirements:
     - Python >= 2.6
@@ -84,36 +85,40 @@ options:
         default: None
         description:
             - Country of users business address.
-    departmentNumber:
+    department_number:
         required: false
         default: None
         description:
             - Department number of users business address.
+        aliases: [ departmentNumber ]
     description:
         required: false
         default: None
         description:
             - Description (not gecos)
-    displayName:
+    display_name:
         required: false
         default: None
         description:
             - Display name (not gecos)
+        aliases: [ displayName ]
     email:
         required: false
         default: ['']
         description:
             - A list of e-mail addresses.
-    employeeNumber:
+    employee_number:
         required: false
         default: None
         description:
             - Employee number
-    employeeType:
+        aliases: [ employeeNumber ]
+    employee_type:
         required: false
         default: None
         description:
             - Employee type
+        aliases: [ employeeType ]
     gecos:
         required: false
         default: None
@@ -126,57 +131,65 @@ options:
             - "POSIX groups, the LDAP DNs of the groups will be found with the
                LDAP filter for each group as $GROUP:
                C((&(objectClass=posixGroup)(cn=$GROUP)))."
-    homeShare:
+    home_share:
         required: false
         default: None
         description:
             - "Home NFS share. Must be a LDAP DN, e.g.
                C(cn=home,cn=shares,ou=school,dc=example,dc=com)."
-    homeSharePath:
+        aliases: [ homeShare ]
+    home_share_path:
         required: false
         default: None
         description:
             - Path to home NFS share, inside the homeShare.
-    homeTelephoneNumber:
+        aliases: [ homeSharePath ]
+    home_telephone_number:
         required: false
         default: []
         description:
             - List of private telephone numbers.
+        aliases: [ homeTelephoneNumber ]
     homedrive:
         required: false
         default: None
         description:
             - Windows home drive, e.g. C("H:").
-    mailAlternativeAddress:
+    mail_alternative_address:
         required: false
         default: []
         description:
             - List of alternative e-mail addresses.
-    mailHomeServer:
+        aliases: [ mailAlternativeAddress ]
+    mail_home_server:
         required: false
         default: None
         description:
             - FQDN of mail server
-    mailPrimaryAddress:
+        aliases: [ mailHomeServer ]
+    mail_primary_address:
         required: false
         default: None
         description:
             - Primary e-mail address
-    mobileTelephoneNumber:
+        aliases: [ mailPrimaryAddress ]
+    mobile_telephone_number:
         required: false
         default: []
         description:
             - Mobile phone number
+        aliases: [ mobileTelephoneNumber ]
     organisation:
         required: false
         default: None
         description:
             - Organisation
-    pagerTelephonenumber:
+    pager_telephonenumber:
         required: false
         default: []
         description:
             - List of pager telephone numbers.
+        aliases: [ pagerTelephonenumber ]
     phone:
         required: false
         default: []
@@ -187,38 +200,43 @@ options:
         default: None
         description:
             - Postal code of users business address.
-    primaryGroup:
+    primary_group:
         required: false
         default: cn=Domain Users,cn=groups,$LDAP_BASE_DN
         description:
             - Primary group. This must be the group LDAP DN.
+        aliases: [ primaryGroup ]
     profilepath:
         required: false
         default: None
         description:
             - Windows profile directory
-    pwdChangeNextLogin:
+    pwd_change_next_login:
         required: false
         default: None
         choices: [ '0', '1' ]
         description:
             - Change password on next login.
-    roomNumber:
+        aliases: [ pwdChangeNextLogin ]
+    room_number:
         required: false
         default: None
         description:
             - Room number of users business address.
-    sambaPrivileges:
+        aliases: [ roomNumber ]
+    samba_privileges:
         required: false
         default: []
         description:
             - "Samba privilege, like allow printer administration, do domain
                join."
-    sambaUserWorkstations:
+        aliases: [ sambaPrivileges ]
+    samba_user_workstations:
         required: false
         default: []
         description:
             - Allow the authentication only on this Microsoft Windows host.
+        aliases: [ sambaUserWorkstations ]
     sambahome:
         required: false
         default: None
@@ -268,8 +286,8 @@ options:
         required: false
         default: ''
         description:
-            - "Define the whole position of users object inside the LDAP tree, e.g.
-               C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
+            - "Define the whole position of users object inside the LDAP tree,
+               e.g. C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
     ou:
         required: false
         default: ''
@@ -314,7 +332,7 @@ RETURN = '''# '''
 
 
 def main():
-    expiry = date.strftime(date.today()+relativedelta(years=1), "%Y-%m-%d")
+    expiry = date.strftime(date.today() + relativedelta(years=1), "%Y-%m-%d")
     module = AnsibleModule(
         argument_spec = dict(
             birthday                = dict(default=None,
@@ -323,46 +341,58 @@ def main():
                                            type='str'),
             country                 = dict(default=None,
                                            type='str'),
-            departmentNumber        = dict(default=None,
-                                           type='str'),
+            department_number       = dict(default=None,
+                                           type='str',
+                                           aliases=['departmentNumber']),
             description             = dict(default=None,
                                            type='str'),
-            displayName             = dict(default=None,
-                                           type='str'),
+            display_name            = dict(default=None,
+                                           type='str',
+                                           aliases=['displayName']),
             email                   = dict(default=[''],
                                            type='list'),
-            employeeNumber          = dict(default=None,
-                                           type='str'),
-            employeeType            = dict(default=None,
-                                           type='str'),
+            employee_number         = dict(default=None,
+                                           type='str',
+                                           aliases=['employeeNumber']),
+            employee_type           = dict(default=None,
+                                           type='str',
+                                           aliases=['employeeType']),
             firstname               = dict(default=None,
                                            type='str'),
             gecos                   = dict(default=None,
                                            type='str'),
             groups                  = dict(default=[],
                                            type='list'),
-            homeShare               = dict(default=None,
-                                           type='str'),
-            homeSharePath           = dict(default=None,
-                                           type='str'),
-            homeTelephoneNumber     = dict(default=[],
-                                           type='list'),
+            home_share              = dict(default=None,
+                                           type='str',
+                                           aliases=['homeShare']),
+            home_share_path         = dict(default=None,
+                                           type='str',
+                                           aliases=['homeSharePath']),
+            home_telephone_number   = dict(default=[],
+                                           type='list',
+                                           aliases=['homeTelephoneNumber']),
             homedrive               = dict(default=None,
                                            type='str'),
             lastname                = dict(default=None,
                                            type='str'),
-            mailAlternativeAddress  = dict(default=[],
-                                           type='list'),
-            mailHomeServer          = dict(default=None,
-                                           type='str'),
-            mailPrimaryAddress      = dict(default=None,
-                                           type='str'),
-            mobileTelephoneNumber   = dict(default=[],
-                                           type='list'),
+            mail_alternative_address= dict(default=[],
+                                           type='list',
+                                           aliases=['mailAlternativeAddress']),
+            mail_home_server        = dict(default=None,
+                                           type='str',
+                                           aliases=['mailHomeServer']),
+            mail_primary_address    = dict(default=None,
+                                           type='str',
+                                           aliases=['mailPrimaryAddress']),
+            mobile_telephone_number = dict(default=[],
+                                           type='list',
+                                           aliases=['mobileTelephoneNumber']),
             organisation            = dict(default=None,
                                            type='str'),
-            pagerTelephonenumber    = dict(default=[],
-                                           type='list'),
+            pager_telephonenumber   = dict(default=[],
+                                           type='list',
+                                           aliases=['pagerTelephonenumber']),
             password                = dict(default=None,
                                            type='str',
                                            no_log=True),
@@ -370,19 +400,24 @@ def main():
                                            type='list'),
             postcode                = dict(default=None,
                                            type='str'),
-            primaryGroup            = dict(default=None,
-                                           type='str'),
+            primary_group           = dict(default=None,
+                                           type='str',
+                                           aliases=['primaryGroup']),
             profilepath             = dict(default=None,
                                            type='str'),
-            pwdChangeNextLogin      = dict(default=None,
+            pwd_change_next_login   = dict(default=None,
                                            type='str',
-                                           choices=['0', '1']),
-            roomNumber              = dict(default=None,
-                                           type='str'),
-            sambaPrivileges         = dict(default=[],
-                                           type='list'),
-            sambaUserWorkstations   = dict(default=[],
-                                           type='list'),
+                                           choices=['0', '1'],
+                                           aliases=['pwdChangeNextLogin']),
+            room_number             = dict(default=None,
+                                           type='str',
+                                           aliases=['roomNumber']),
+            samba_privileges        = dict(default=[],
+                                           type='list',
+                                           aliases=['sambaPrivileges']),
+            samba_user_workstations = dict(default=[],
+                                           type='list',
+                                           aliases=['sambaUserWorkstations']),
             sambahome               = dict(default=None,
                                            type='str'),
             scriptpath              = dict(default=None,
@@ -449,25 +484,25 @@ def main():
             else:
                 obj = umc_module_for_edit('users/user', user_dn)
 
-            if module.params['displayName'] == None:
+            if module.params['displayName'] is None:
                 module.params['displayName'] = '{} {}'.format(
                     module.params['firstname'],
                     module.params['lastname']
                 )
-            if module.params['unixhome'] == None:
+            if module.params['unixhome'] is None:
                 module.params['unixhome'] = '/home/{}'.format(
                     module.params['username']
                 )
             for k in obj.keys():
                 if (k != 'password' and
-                    k != 'groups' and
-                    module.params.has_key(k) and
-                    module.params[k] != None):
+                        k != 'groups' and
+                        k in module.params and
+                        module.params[k] is not None):
                     obj[k] = module.params[k]
             # handle some special values
             obj['e-mail'] = module.params['email']
             password = module.params['password']
-            if obj['password'] == None:
+            if obj['password'] is None:
                 obj['password'] = password
             else:
                 old_password = obj['password'].split('}', 2)[1]
@@ -488,12 +523,17 @@ def main():
                     obj.modify()
         except:
             module.fail_json(
-                msg="Creating/editing user {} in {} failed".format(username, container)
+                msg="Creating/editing user {} in {} failed".format(
+                    username,
+                    container
+                )
             )
         try:
             groups = module.params['groups']
             if groups:
-                filter = '(&(objectClass=posixGroup)(|(cn={})))'.format(')(cn='.join(groups))
+                filter = '(&(objectClass=posixGroup)(|(cn={})))'.format(
+                    ')(cn='.join(groups)
+                )
                 group_dns = list(ldap_search(filter, attr=['dn']))
                 for dn in group_dns:
                     grp = umc_module_for_edit('groups/group', dn[0])
