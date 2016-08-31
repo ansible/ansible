@@ -35,7 +35,8 @@ options:
         - "C(noop) (added in 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use."
         - "C(clear_facts) (added in 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared, including the fact cache."
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
-    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors']
+        - "C(end_play) (added in 2.2) causes the play to end without failing the host."
+    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play']
     required: true
     default: null
 notes:
