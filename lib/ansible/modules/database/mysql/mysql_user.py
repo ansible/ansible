@@ -166,6 +166,7 @@ except ImportError:
     mysqldb_found = False
 else:
     mysqldb_found = True
+from ansible.module_utils.six import iteritems
 
 VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'LOCK TABLES', 'REFERENCES', 'EVENT', 'ALTER',
@@ -234,9 +235,8 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     else:
         cursor.execute("CREATE USER %s@%s", (user,host))
-
     if new_priv is not None:
-        for db_table, priv in new_priv.iteritems():
+        for db_table, priv in iteritems(new_priv):
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
@@ -309,7 +309,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
 
             # If the user has privileges on a db.table that doesn't appear at all in
             # the new specification, then revoke all privileges on it.
-            for db_table, priv in curr_priv.iteritems():
+            for db_table, priv in iteritems(curr_priv):
                 # If the user has the GRANT OPTION on a db.table, revoke it first.
                 if "GRANT" in priv:
                     grant_option = True
@@ -322,7 +322,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
 
             # If the user doesn't currently have any privileges on a db.table, then
             # we can perform a straight grant operation.
-            for db_table, priv in new_priv.iteritems():
+            for db_table, priv in iteritems(new_priv):
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
