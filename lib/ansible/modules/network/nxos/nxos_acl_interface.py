@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 module: nxos_acl_interface
 version_added: "2.2"
 short_description: Manages applying ACLs to interfaces.
-description
+description:
     - Manages applying ACLs to interfaces.
 extends_documentation_fragment: nxos
 author:
