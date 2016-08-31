@@ -85,36 +85,40 @@ options:
         default: None
         description:
             - Country of users business address.
-    departmentNumber:
+    department_number:
         required: false
         default: None
         description:
             - Department number of users business address.
+        aliases: [ departmentNumber ]
     description:
         required: false
         default: None
         description:
             - Description (not gecos)
-    displayName:
+    display_name:
         required: false
         default: None
         description:
             - Display name (not gecos)
+        aliases: [ displayName ]
     email:
         required: false
         default: ['']
         description:
             - A list of e-mail addresses.
-    employeeNumber:
+    employee_number:
         required: false
         default: None
         description:
             - Employee number
-    employeeType:
+        aliases: [ employeeNumber ]
+    employee_type:
         required: false
         default: None
         description:
             - Employee type
+        aliases: [ employeeType ]
     gecos:
         required: false
         default: None
@@ -127,57 +131,65 @@ options:
             - "POSIX groups, the LDAP DNs of the groups will be found with the
                LDAP filter for each group as $GROUP:
                C((&(objectClass=posixGroup)(cn=$GROUP)))."
-    homeShare:
+    home_share:
         required: false
         default: None
         description:
             - "Home NFS share. Must be a LDAP DN, e.g.
                C(cn=home,cn=shares,ou=school,dc=example,dc=com)."
-    homeSharePath:
+        aliases: [ homeShare ]
+    home_share_path:
         required: false
         default: None
         description:
             - Path to home NFS share, inside the homeShare.
-    homeTelephoneNumber:
+        aliases: [ homeSharePath ]
+    home_telephone_number:
         required: false
         default: []
         description:
             - List of private telephone numbers.
+        aliases: [ homeTelephoneNumber ]
     homedrive:
         required: false
         default: None
         description:
             - Windows home drive, e.g. C("H:").
-    mailAlternativeAddress:
+    mail_alternative_address:
         required: false
         default: []
         description:
             - List of alternative e-mail addresses.
-    mailHomeServer:
+        aliases: [ mailAlternativeAddress ]
+    mail_home_server:
         required: false
         default: None
         description:
             - FQDN of mail server
-    mailPrimaryAddress:
+        aliases: [ mailHomeServer ]
+    mail_primary_address:
         required: false
         default: None
         description:
             - Primary e-mail address
-    mobileTelephoneNumber:
+        aliases: [ mailPrimaryAddress ]
+    mobile_telephone_number:
         required: false
         default: []
         description:
             - Mobile phone number
+        aliases: [ mobileTelephoneNumber ]
     organisation:
         required: false
         default: None
         description:
             - Organisation
-    pagerTelephonenumber:
+    pager_telephonenumber:
         required: false
         default: []
         description:
             - List of pager telephone numbers.
+        aliases: [ pagerTelephonenumber ]
     phone:
         required: false
         default: []
@@ -188,38 +200,43 @@ options:
         default: None
         description:
             - Postal code of users business address.
-    primaryGroup:
+    primary_group:
         required: false
         default: cn=Domain Users,cn=groups,$LDAP_BASE_DN
         description:
             - Primary group. This must be the group LDAP DN.
+        aliases: [ primaryGroup ]
     profilepath:
         required: false
         default: None
         description:
             - Windows profile directory
-    pwdChangeNextLogin:
+    pwd_change_next_login:
         required: false
         default: None
         choices: [ '0', '1' ]
         description:
             - Change password on next login.
-    roomNumber:
+        aliases: [ pwdChangeNextLogin ]
+    room_number:
         required: false
         default: None
         description:
             - Room number of users business address.
-    sambaPrivileges:
+        aliases: [ roomNumber ]
+    samba_privileges:
         required: false
         default: []
         description:
             - "Samba privilege, like allow printer administration, do domain
                join."
-    sambaUserWorkstations:
+        aliases: [ sambaPrivileges ]
+    samba_user_workstations:
         required: false
         default: []
         description:
             - Allow the authentication only on this Microsoft Windows host.
+        aliases: [ sambaUserWorkstations ]
     sambahome:
         required: false
         default: None
