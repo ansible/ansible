@@ -412,7 +412,7 @@ Other Useful Filters
 
 To add quotes for shell usage::
 
-    - shell: echo {{ string_value | quote }} 
+    - shell: echo {{ string_value | quote }}
 
 To use one value on true and another on false (new in version 1.9)::
 
@@ -510,6 +510,11 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
+To get date object from string use the `to_datetime` filter, (new in version in 2.2):
+
+    # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
+    {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
@@ -536,5 +541,3 @@ to be added to core so everyone can make use of them.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
