@@ -41,7 +41,7 @@ options:
     required: false
     default: VIRTIO
     choices: [ "IDE", "VIRTIO"]
-  image: 
+  image:
     description:
       - The system image ID for the volume, e.g. a3eae284-a2fe-11e4-b187-5f1f641608c8. This can also be a snapshot image ID.
     required: true
@@ -63,13 +63,13 @@ options:
     choices: [ "HDD", "SSD" ]
   licence_type:
     description:
-      - The licence type for the volume. This is used when the image is non-standard. 
+      - The licence type for the volume. This is used when the image is non-standard.
     required: false
     default: UNKNOWN
     choices: ["LINUX", "WINDOWS", "UNKNOWN" , "OTHER"]
   count:
     description:
-      - The number of volumes you wish to create. 
+      - The number of volumes you wish to create.
     required: false
     default: 1
   auto_increment:
@@ -170,6 +170,7 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
             promise['requestId']
             ) + '" to complete.')
 
+
 def _create_volume(module, profitbricks, datacenter, name):
     size = module.params.get('size')
     bus = module.params.get('bus')
@@ -201,8 +202,9 @@ def _create_volume(module, profitbricks, datacenter, name):
 
     except Exception as e:
         module.fail_json(msg="failed to create the volume: %s" % str(e))
-    
+
     return volume_response
+
 
 def _delete_volume(module, profitbricks, datacenter, volume):
     try:
@@ -210,11 +212,12 @@ def _delete_volume(module, profitbricks, datacenter, volume):
     except Exception as e:
         module.fail_json(msg="failed to remove the volume: %s" % str(e))
 
+
 def create_volume(module, profitbricks):
     """
     Creates a volume.
 
-    This will create a volume in a datacenter. 
+    This will create a volume in a datacenter.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.
@@ -256,7 +259,7 @@ def create_volume(module, profitbricks):
             else:
                 module.fail_json(msg=e.message)
 
-        number_range = xrange(count_offset,count_offset + count + len(numbers))
+        number_range = xrange(count_offset, count_offset + count + len(numbers))
         available_numbers = list(set(number_range).difference(numbers))
         names = []
         numbers_to_use = available_numbers[:count]
@@ -265,7 +268,7 @@ def create_volume(module, profitbricks):
     else:
         names = [name] * count
 
-    for name in names: 
+    for name in names:
         create_response = _create_volume(module, profitbricks, str(datacenter), name)
         volumes.append(create_response)
         _attach_volume(module, profitbricks, datacenter, create_response['id'])
@@ -282,11 +285,12 @@ def create_volume(module, profitbricks):
 
     return results
 
+
 def delete_volume(module, profitbricks):
     """
     Removes a volume.
 
-    This will create a volume in a datacenter. 
+    This will create a volume in a datacenter.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.
@@ -324,6 +328,7 @@ def delete_volume(module, profitbricks):
 
     return changed
 
+
 def _attach_volume(module, profitbricks, datacenter, volume):
     """
     Attaches a volume.
@@ -339,12 +344,12 @@ def _attach_volume(module, profitbricks, datacenter, volume):
     server = module.params.get('server')
 
     # Locate UUID for Server
-    if server: 
+    if server:
         if not (uuid_match.match(server)):
             server_list = profitbricks.list_servers(datacenter)
             for s in server_list['items']:
                 if server == s['properties']['name']:
-                    server= s['id']
+                    server = s['id']
                     break
 
         try:
@@ -352,18 +357,19 @@ def _attach_volume(module, profitbricks, datacenter, volume):
         except Exception as e:
             module.fail_json(msg='failed to attach volume: %s' % str(e))
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             datacenter=dict(),
             server=dict(),
             name=dict(),
-            size=dict(default=10),
+            size=dict(type='int', default=10),
             bus=dict(default='VIRTIO'),
             image=dict(),
             image_password=dict(default=None),
             ssh_keys=dict(type='list', default=[]),
-            disk_type=dict(default='HDD'),
+            disk_type=dict(choices=['HDD', 'SSD'], default='HDD'),
             licence_type=dict(default='UNKNOWN'),
             count=dict(type='int', default=1),
             auto_increment=dict(type='bool', default=True),
