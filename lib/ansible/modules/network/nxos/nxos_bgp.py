@@ -39,7 +39,7 @@ options:
         required: true
     vrf:
         description:
-            - Name of the VRF. The name 'default' is a valid VRF representing the global bgp.
+            - Name of the VRF. The name 'default' is a valid VRF representing the global BGP.
         required: false
         default: null
     bestpath_always_compare_med:
