@@ -583,7 +583,9 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         if spec.endswith('.rpm') and '://' not in spec:
             # get the pkg name-v-r.arch
             if not os.path.exists(spec):
-                res['msg'] += "No Package file matching '%s' found on system" % spec
+                res['msg'] += "No RPM file matching '%s' found on system" % spec
+                res['results'].append("No RPM file matching '%s' found on system" % spec)
+                res['rc'] = 127 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
             nvra = local_nvra(module, spec)
@@ -619,11 +621,13 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 if installed_pkgs:
                     res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], spec))
                     continue
-            
+
             # look up what pkgs provide this
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
-                res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
+                res['msg'] += "No package matching '%s' found available, installed or updated" % spec
+                res['results'].append("No package matching '%s' found available, installed or updated" % spec)
+                res['rc'] = 126 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
             # if any of the packages are involved in a transaction, fail now
@@ -631,6 +635,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             conflicts = transaction_exists(pkglist)
             if len(conflicts) > 0:
                 res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
+                res['rc'] = 125 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
             # if any of them are installed
@@ -685,8 +690,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             for spec in items:
                 # Fail on invalid urls:
                 if ('://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
-                    err = 'Package at %s could not be installed' % spec
-                    module.fail_json(changed=False,msg=err,rc=1)
+                    module.fail_json(msg='Package at %s could not be installed' % spec, rc=1, changed=False)
         if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
             # this may happen with an URL spec.
@@ -758,7 +762,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # of the process
 
         # at this point we should check to see if the pkg is no longer present
-        
+
         for pkg in pkgs:
             if not pkg.startswith('@'): # we can't sensibly check for a group being uninstalled reliably
                 # look to see if the pkg shows up from is_installed. If it doesn't
@@ -834,7 +838,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             # FIXME..? may not be desirable to throw an exception here if a single package is missing
             if not pkglist:
-                res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
+                res['msg'] += "No package matching '%s' found available, installed or updated" % spec
+                res['results'].append("No package matching '%s' found available, installed or updated" % spec)
+                res['rc'] = 126 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
             nothing_to_do = True
@@ -866,6 +872,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             conflicts = transaction_exists(pkglist)
             if len(conflicts) > 0:
                 res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
+                res['results'].append("The following packages have pending transactions: %s" % ", ".join(conflicts))
+                res['rc'] = 128 # Ensure the task fails in with-loop
                 module.fail_json(**res)
 
     # check_mode output
