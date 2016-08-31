@@ -30,23 +30,23 @@ options:
     required: true
     default: None
     choices: [ 'create', 'delete', 'modify', 'snapshot', 'restore' ]
-  DBClusterIdentifier:
+  db_cluster_identifier:
     description:
       - Database cluster identifier. Required except when using command=delete on just a snapshot
     required: false
     default: null
-  Engine:
+  engine:
     description:
       - The type of database.  Used only when command=create.
     required: false
     default: null
     choices: ['aurora']
-  MasterUsername:
+  master_username:
     description:
       - Master database username. Used only when command=create.
     required: false
     default: null
-  MasterUserPassword:
+  master_user_password:
     description:
       - Password for the master database username. Used only when command=create or command=modify.
     required: false
@@ -55,107 +55,107 @@ options:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: true
-  DatabaseName:
+  database_name:
     description:
       - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
     required: false
     default: null
-  EngineVersion:
+  engine_version:
     description:
       - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon Aurora engine version is used.
     required: false
     default: null
-  DBClusterParameterGroupName:
+  db_cluster_parameter_group_name:
     description:
       - Name of the DB Cluster parameter group to associate with this instance.  If omitted then the RDS default DBClusterParameterGroupName will be used. Used only when command=create or command=modify.
     required: false
-  VpcSecurityGroupIds:
+  vpc_security_group_ids:
     description:
       - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
     required: false
     default: null
-  Port:
+  port:
     description:
       - The port number on which the instances in the DB cluster accept connections. Used only when command=create
     required: false
     default: 3306 for Aurora
-  OptionGroupName:
+  option_group_name:
     description:
       - A value that indicates that the DB cluster should be associated with the specified option group.  If not specified then the default option group is used. Used only when command=create or command=modify.
     required: false
     default: null
-  PreferredMaintenanceWindow:
+  preferred_maintenance_window:
     description:
       - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
     required: false
     default: random
-  PreferredBackupWindow:
+  preferred_backup_window:
     description:
       - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
     required: false
     default: random
-  BackupRetentionPeriod:
+  backup_retention_period:
     description:
       - "The number of days for which automated backups are retained. You must specify a minimum value of 1. Valid range: 1-35. Used only when command=create or command=modify."
     required: false
     default: 1
-  AvailabilityZones:
+  availability_zones:
     description:
       - A list of EC2 Availability Zones that instances in the DB cluster can be created in.  Used only when command=create or command=restore.
     required: false
     default: null
-  DBSubnetGroupName:
+  db_subnet_group_name:
     description:
       - A DB subnet group to associate with this DB cluster. Used only when command=create.
     required: false
     default: null
-  CharacterSetName:
+  character_set_name:
     description:
       - Associate the DB cluster with a specified character set. Used with command=create.
     required: false
     default: null
-  ApplyImmediately:
+  apply_immediately:
     description:
       - Boolean value to enable/disable ApplyImmediately. If enabled modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
     required: false
     default: false
-  DBClusterSnapshotIdentifier:
+  db_cluster_snapshot_identifer:
     description:
       - The identifier of the DB cluster snapshot. Used with command=snapshot
     required: false
     default: null
-  ReplicationSourceIdentifier:
+  replication_source_identifier:
     description:
       -  The Amazon Resource Name (ARN) of the source DB cluster if this DB cluster is created as a Read Replica.
     required: false
     default: null
-  Tags:
+  tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }." 
       - Used with command=create, command=restore. 
     required: false
     default: null
-  StorageEncrypted:
+  storage_encrypted:
     description:
       -  Specifies whether the DB cluster is encrypted.
     required: false
     default: false
-  KmsKeyId:
+  kms_key_id:
     description:
       -  The KMS key identifier for an encrypted DB cluster. The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption key.
     required: false
     default: default encryption key for the account
-  SkipFinalSnapshot:
+  skip_final_snapshot:
     description:
       -  Boolean value that determines whether a final DB cluster snapshot is created before the DB cluster is deleted. Used when commad=delete.
     required: false
     default: false
-  FinalDBSnapshotIdentifier:
+  final_db_snapshot_identifier:
     description:
       -  The DB cluster snapshot identifier of the new DB cluster snapshot created when SkipFinalSnapshot is set to false.
     required: false
     default: null      
-  SnapshotIdentifier:
+  snapshot_identifer:
     description:
       -  The identifier for the DB cluster snapshot to restore from. Used only when command=restore.
     required: false
@@ -182,17 +182,17 @@ EXAMPLES = '''
     region: ap-southeast-2
     profile: production
     command: create
-    DBClusterIdentifier: test-aurora-cluster
-    Engine: aurora 
-    EngineVersion: 5.6.10a
-    MasterUsername: testuser
-    MasterUserPassword: password
-    DBClusterParameterGroupName: test-aurora-param-group
-    VpcSecurityGroupIds: 
+    db_cluster_identifier: test-aurora-cluster
+    engine: aurora 
+    engine_version: 5.6.10a
+    master_username: testuser
+    master_user_password: password
+    db_cluster_parameter_group_name: test-aurora-param-group
+    vpc_security_group_ids: 
       - sg-d155a6c1
-    DBSubnetGroupName: abc-sbg-prod
-    StorageEncrypted: true
-    Tags: 
+    db_subnet_group_name: abc-sbg-prod
+    storage_encrypted: true
+    tags: 
       Role: Aurora
     wait: yes
     wait_timeout: 720
@@ -204,9 +204,9 @@ EXAMPLES = '''
     region: ap-southeast-2
     profile: production
     command: modify
-    DBClusterIdentifier: test-aurora-cluster
-    ApplyImmediately: True
-    DBClusterParameterGroupName: test-aurora-param-group-2
+    db_cluster_identifier: test-aurora-cluster
+    apply_immediately: True
+    db_cluster_parameter_group_name: test-aurora-param-group-2
     wait: yes
     wait_timeout: 720
   register: modified_aurora_rds_cluster
@@ -217,8 +217,8 @@ EXAMPLES = '''
     region: ap-southeast-2
     profile: production
     command: snapshot
-    DBClusterSnapshotIdentifier : test-aurora-cluster-snapshot-1
-    DBClusterIdentifier : test-aurora-cluster
+    db_cluster_snapshot_identifier : test-aurora-cluster-snapshot-1
+    db_cluster_identifier : test-aurora-cluster
     Tags: 
       Role: Aurora-cluster-snapshot
     wait: yes
@@ -231,8 +231,8 @@ EXAMPLES = '''
     region: ap-southeast-2
     profile: production
     command: delete
-    SkipFinalSnapshot: true      
-    DBClusterIdentifier: test-aurora-cluster
+    skip_final_snapshot: true      
+    db_cluster_identifier: test-aurora-cluster
     wait: yes
     wait_timeout: 720
   register: deleted_aurora_rds_cluster
@@ -244,14 +244,14 @@ EXAMPLES = '''
     profile: production
     command: restore
     SnapshotIdentifier: test-aurora-cluster-snapshot-1
-    DBClusterIdentifier: test-aurora-cluster
-    Engine: aurora 
-    EngineVersion: 5.6.10a
-    DBSubnetGroupName: abc-sbg-prod
-    Port: 3306
-    VpcSecurityGroupIds: 
+    db_cluster_identifier: test-aurora-cluster
+    engine: aurora 
+    engine_version: 5.6.10a
+    db_subnet_group_name: abc-sbg-prod
+    port: 3306
+    vpc_security_group_ids: 
       - sg-d155a6c1  
-    Tags: 
+    tags: 
       Role: Aurora-cluster
     wait: yes
     wait_timeout: 720
