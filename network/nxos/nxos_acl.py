@@ -178,7 +178,7 @@ options:
             - Match packets with given dscp value
         required: false
         default: null
-        choices: ['af11, 'af12, 'af13, 'af21', 'af22', 'af23','af31','af32',
+        choices: ['af11', 'af12', 'af13', 'af21', 'af22', 'af23','af31','af32',
                   'af33', 'af41', 'af42', 'af43', 'cs1', 'cs2', 'cs3', 'cs4',
                   'cs5', 'cs6', 'cs7', 'default', 'ef']
     state:
