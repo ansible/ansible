@@ -203,6 +203,40 @@ EXAMPLES = '''
     provider: "{{ nxos_provider }}"
 '''
 
+RETURN = '''
+proposed:
+    description: k/v pairs of parameters passed into module.
+    returned: always
+    type: dict
+    sample: {"action": "permit", "dest": "any", "name": "ANSIBLE",
+            "proto": "tcp", "seq": "10", "src": "1.1.1.1/24"}
+existing:
+    description: k/v pairs of existing ACL entries.
+    type: dict
+    sample: {}
+end_state:
+    description: k/v pairs of ACL entries after module execution.
+    returned: always
+    type: dict
+    sample: {"action": "permit", "dest": "any", "name": "ANSIBLE",
+            "proto": "tcp", "seq": "10", "src": "1.1.1.1/24"}
+state:
+    description: state as sent in from the playbook
+    returned: always
+    type: string
+    sample: "present"
+updates:
+    description: commands sent to the device
+    returned: always
+    type: list
+    sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
+changed:
+    description: check to see if a change was made on the device
+    returned: always
+    type: boolean
+    sample: true
+'''
+
 
 # COMMON CODE FOR MIGRATION
 
@@ -980,7 +1014,7 @@ def main():
         else:
             execute_config_command(cmds, module)
             changed = True
-            existing_core, end_state, seqs = get_acl(module, name, seq)
+            new_existing_core, end_state, seqs = get_acl(module, name, seq)
 
     results['proposed'] = proposed
     results['existing'] = existing_core
