@@ -421,6 +421,8 @@
   register: remote_url
   args:
     chdir: '{{ checkout_dir }}'
+  environment:
+    LC_ALL: C
 
 - assert:
     that: 
