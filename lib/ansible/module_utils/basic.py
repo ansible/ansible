@@ -1505,7 +1505,7 @@ class AnsibleModule(object):
         if isinstance(value, float):
             return value
 
-        if isinstance(value, string_types):
+        if isinstance(value, (binary_type, text_type, int)):
             return float(value)
 
         raise TypeError('%s cannot be converted to a float' % type(value))
