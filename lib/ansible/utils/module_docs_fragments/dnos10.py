@@ -1,5 +1,4 @@
-# This file is part of Ansible
-#
+# This file is part of Ansible #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -27,43 +26,40 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
-        device.  The port value will default to the well known SSH port
-        of 22
+      - Specifies the port to use when building the connection to the remote
+        device.
     required: false
     default: 22
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
-        the SSH session. If the value is not specified in the task, the
+      - This value I(username) is used to authenticate the SSH session to the
+        remote device. If the value is not specified in the task, the
         value of environment variable ANSIBLE_NET_USERNAME will be used instead.
     required: false
   password:
     description:
-      - Specifies the password to use to authenticate the connection to
-        the remote device.   The value of I(password) is used to authenticate
-        the SSH session. If the value is not specified in the task, the
+      - This value I(password) is used to authenticate the SSH session to 
+        the remote device. If the value is not specified in the task, the
         value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
-      - Specifies the SSH key to use to authenticate the connection to
-        the remote device.   The value of I(ssh_keyfile) is the path to the
-        key used to authenticate the SSH session. If the value is not specified
+      - This value I(ssh_keyfile) is the path to the key used to authenticate 
+        the SSH session to the remote device.  If the value is not specified
         in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
         will be used instead.
     required: false
   timeout:
     description:
-      - Specifies idle timeout for the connection. Useful if the console
-        freezes before continuing. For example when saving configurations.
+      - Specifies idle timeout (in seconds) for the connection. Useful if the
+        console freezes before continuing. For example when saving
+        configurations.
     required: false
     default: 10
   provider:
     description:
-      - Convience method that allows all M(dnos10) arguments to be passed as
+      - Convenience method that allows all M(dnos10) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
