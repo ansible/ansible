@@ -314,8 +314,6 @@ You may check the registered variable's string contents for emptiness::
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
-       Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
