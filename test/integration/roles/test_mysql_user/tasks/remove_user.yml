@@ -23,3 +23,21 @@
 
 - name: assert output message mysql user was removed
   assert: { that: "result.changed == true" }
+
+# ============================================================
+- name: create blank mysql user to be removed later
+  mysql_user: name="" state=present
+
+- name: remove blank mysql user with hosts=all (expect changed)
+  mysql_user: user="" host_all=true state=absent
+  register: result
+
+- name: assert changed is true for removing all blank users
+  assert: { that: "result.changed == true" }
+
+- name: remove blank mysql user with hosts=all (expect ok)
+  mysql_user: user="" host_all=true state=absent
+  register: result
+
+- name: assert changed is true for removing all blank users
+  assert: { that: "result.changed == false" }
