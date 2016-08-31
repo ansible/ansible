@@ -56,6 +56,18 @@ options:
     default: null
     description:
       - Stripe count for volume
+  disperses:
+    required: false
+    default: null
+    description:
+      - Disperse count for volume
+    version_added: "2.2"
+  redundancies:
+    required: false
+    default: null
+    description:
+      - Redundancy count for volume
+    version_added: "2.2"
   transport:
     required: false
     choices: [ 'tcp', 'rdma', 'tcp,rdma' ]
@@ -272,7 +284,7 @@ def probe_all_peers(hosts, peers, myhostname):
         if host not in peers:
             probe(host, myhostname)
 
-def create_volume(name, stripe, replica, transport, hosts, bricks, force):
+def create_volume(name, stripe, replica, disperse, redundancy, transport, hosts, bricks, force):
     args = [ 'volume', 'create' ]
     args.append(name)
     if stripe:
@@ -281,6 +293,12 @@ def create_volume(name, stripe, replica, transport, hosts, bricks, force):
     if replica:
         args.append('replica')
         args.append(str(replica))
+    if disperse:
+        args.append('disperse')
+        args.append(str(disperse))
+    if redundancy:
+        args.append('redundancy')
+        args.append(str(redundancy))
     args.append('transport')
     args.append(transport)
     for brick in bricks:
@@ -328,6 +346,8 @@ def main():
             host=dict(required=False, default=None),
             stripes=dict(required=False, default=None, type='int'),
             replicas=dict(required=False, default=None, type='int'),
+            disperses=dict(required=False, default=None, type='int'),
+            redundancies=dict(required=False, default=None, type='int'),
             transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
             bricks=dict(required=False, default=None, aliases=['brick']),
             start_on_create=dict(required=False, default=True, type='bool'),
@@ -350,6 +370,8 @@ def main():
     brick_paths = module.params['bricks']
     stripes = module.params['stripes']
     replicas = module.params['replicas']
+    disperses = module.params['disperses']
+    redundancies = module.params['redundancies']
     transport = module.params['transport']
     myhostname = module.params['host']
     start_on_create = module.boolean(module.params['start_on_create'])
@@ -397,7 +419,7 @@ def main():
 
         # create if it doesn't exist
         if volume_name not in volumes:
-            create_volume(volume_name, stripes, replicas, transport, cluster, brick_paths, force)
+            create_volume(volume_name, stripes, replicas, disperses, redundancies, transport, cluster, brick_paths, force)
             volumes = get_volumes()
             changed = True
 
