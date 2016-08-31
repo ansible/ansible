@@ -21,7 +21,7 @@ DOCUMENTATION = """
 module: eos_command
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Run arbitrary commands on EOS device
+short_description: Run arbitrary commands on an Arista EOS device
 description:
   - Sends an arbitrary set of commands to an EOS node and returns the results
     read from the device.  This module includes an
