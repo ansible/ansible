@@ -365,7 +365,7 @@ def main():
             server=dict(),
             name=dict(),
             size=dict(type='int', default=10),
-            bus=dict(default='VIRTIO'),
+            bus=dict(choices=['VIRTIO', 'IDE'], default='VIRTIO'),
             image=dict(),
             image_password=dict(default=None),
             ssh_keys=dict(type='list', default=[]),
