@@ -20,7 +20,9 @@
 
 import os
 import re
-from ansible.module_utils.six import iteritems, iterkeys
+from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six import iteritems
+
 
 DOCUMENTATION = '''
 ---
@@ -111,7 +113,7 @@ class Timezone(object):
         # Initially there's only info of "planned" phase, but the
         # `self.check()` function will fill out it.
         self.value = dict()
-        for key in iterkeys(module.argument_spec):
+        for key in module.argument_spec:
             value = module.params[key]
             if value is not None:
                 self.value[key] = dict(planned=value)
@@ -455,8 +457,6 @@ def main():
     else:
         module.exit_json(changed=changed, diff=diff)
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
