@@ -82,6 +82,8 @@ Ansible Changes By Release
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
+* loop_control now has a label option to allow fine grained control what gets displayed per item
+* loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
 
 ## 2.1 "The Song Remains the Same"
 

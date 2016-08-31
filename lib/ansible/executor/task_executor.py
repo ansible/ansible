@@ -237,17 +237,26 @@ class TaskExecutor:
 
         loop_var = 'item'
         label = None
+        loop_pause = 0
         if self._task.loop_control:
             # the value may be 'None', so we still need to default it back to 'item' 
             loop_var = self._task.loop_control.loop_var or 'item'
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
+            loop_pause = self._task.loop_control.pause or 0
 
         if loop_var in task_vars:
             display.warning("The loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
+        ran_once = False
         items = self._squash_items(items, loop_var, task_vars)
         for item in items:
             task_vars[loop_var] = item
+
+            # pause between loop iterations
+            if loop_pause and ran_once:
+                time.sleep(loop_pause)
+            else:
+                ran_once = True
 
             try:
                 tmp_task = self._task.copy(exclude_parent=True, exclude_tasks=True)
