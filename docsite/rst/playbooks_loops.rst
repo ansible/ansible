@@ -573,6 +573,36 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
 
 .. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
 
+.. versionadded: 2.2
+When using complex data structures for looping the display might get a bit too "busy", this is where the c(label) directive comes to help::
+
+    - name: create servers
+      digital_ocean: name={{item.name}} state=present ....
+     with_items:
+        - name: server1
+          disks: 3gb
+          ram: 15Gb
+          netowrk:
+            nic01: 100Gb
+            nic02: 10Gb
+            ...
+      loop_control:
+        label: "{{item.name}}"
+
+This will now display just the 'label' field instead of the whole structure per 'item', it defaults to '"{{item}}"' to display things as usual.
+
+.. versionadded: 2.2
+Another option to loop control is c(pause), which allows you to control the time (in seconds) between execution of items in a task loop.::
+
+    # main.yml
+    - name: create servers, pause 3s before creating next
+      digital_ocean: name={{item}} state=present ....
+     with_items:
+        - server1
+        - server2
+     loop_control:
+        pause: 3
+
 
 .. _loops_and_includes_2.0:
 
