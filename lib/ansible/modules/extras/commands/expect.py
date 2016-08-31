@@ -224,7 +224,7 @@ def main():
         changed=True,
     )
 
-    if rc:
+    if rc is not None:
         module.exit_json(**ret)
     else:
         ret['msg'] = 'command exceeded timeout'
