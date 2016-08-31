@@ -3,11 +3,118 @@ Developing Plugins
 
 .. contents:: Topics
 
-Ansible is pluggable in a lot of other ways separate from inventory scripts and callbacks.  Many of these features are there to cover fringe use cases and are infrequently needed, and others are pluggable simply because they are there to implement core features
-in ansible and were most convenient to be made pluggable.
+Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
 
-This section will explore these features, though they are generally not common in terms of things people would look to extend quite
-as often.
+The following types of plugins are available:
+
+- *Callback* plugins enable you to hook into Ansible events for display or logging purposes.
+- *Connection* plugins define how to communicate with inventory hosts.
+- *Lookup* plugins are used to pull data from an external source.
+- *Vars* plugins inject additional variable data into Ansible runs that did not come from an inventory, playbook, or the command line. 
+
+This section describes the various types of plugins and how to implement them.
+
+
+.. _developing_callbacks:
+
+Callback Plugins
+----------------
+
+Callback plugins enable adding new behaviors to Ansible when responding to events.
+
+.. _callback_examples:
+
+Example Callback Plugins
+++++++++++++++++++++++++
+
+Ansible comes with a number of callback plugins that you can look at for examples. These can be found in `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_.
+
+The `log_plays
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/log_plays.py>`_
+callback is an example of how to intercept playbook events to a log
+file, and the `mail
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/mail.py>`_
+callback sends email when playbooks complete.
+
+The `osx_say
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/osx_say.py>`_
+callback provided is particularly entertaining -- it will respond with
+computer synthesized speech on OS X in relation to playbook events,
+and is guaranteed to entertain and/or annoy coworkers.
+
+.. _configuring_callbacks:
+
+Configuring Callback Plugins
+++++++++++++++++++++++++++++
+
+To activate a callback, drop it in a callback directory as configured in `ansible.cfg`. 
+
+Plugins are loaded in alphanumeric order; for example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
+
+Callbacks need to be whitelisted in your `ansible.cfg` file in order to function. For example::
+  
+  #callback_whitelist = timer, mail, myplugin
+
+.. _callback_development:
+
+Developing Callback Plugins
++++++++++++++++++++++++++++
+
+Callback plugins are created by creating a new class with the Base(Callbacks) class as the parent::
+
+  from ansible.plugins.callback import CallbackBase
+  from ansible import constants as C
+  
+  class CallbackModule(CallbackBase): 
+
+From there, override the specific methods from the CallbackBase that you want to provide a callback for. For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with `v2`. For a complete list of methods that you can override, please see ``__init__.py`` in the `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
+
+
+The following example shows how Ansible's timer plugin is implemented::
+
+  # Make coding more python3-ish
+  from __future__ import (absolute_import, division, print_function)
+  __metaclass__ = type
+
+  from datetime import datetime
+
+  from ansible.plugins.callback import CallbackBase
+
+
+  class CallbackModule(CallbackBase):
+      """
+      This callback module tells you how long your plays ran for.
+      """
+      CALLBACK_VERSION = 2.0
+      CALLBACK_TYPE = 'aggregate'
+      CALLBACK_NAME = 'timer'
+      CALLBACK_NEEDS_WHITELIST = True
+  
+      def __init__(self):
+  
+          super(CallbackModule, self).__init__()
+  
+          self.start_time = datetime.now()
+  
+      def days_hours_minutes_seconds(self, runtime):
+          minutes = (runtime.seconds // 60) % 60
+          r_seconds = runtime.seconds - (minutes * 60)
+          return runtime.days, runtime.seconds // 3600, minutes, r_seconds
+  
+      def playbook_on_stats(self, stats):
+          self.v2_playbook_on_stats(stats)
+  
+      def v2_playbook_on_stats(self, stats):
+          end_time = datetime.now()
+          runtime = end_time - self.start_time
+          self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
+
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
+
+  #stdout_callback = mycallbackplugin
+
+
+
 
 .. _developing_connection_type_plugins:
 
@@ -55,48 +162,6 @@ Filter Plugins
 If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, we'll just include them in 'core.py' instead.
 
 Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
-
-.. _developing_callbacks:
-
-Callbacks
----------
-
-Callbacks are one of the more interesting plugin types.  Adding additional callback plugins to Ansible allows for adding new behaviors when responding to events.
-
-.. _callback_examples:
-
-Examples
-++++++++
-
-Example callbacks are shown in `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_.
-
-The `log_plays
-<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/log_plays.py>`_
-callback is an example of how to intercept playbook events to a log
-file, and the `mail
-<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/mail.py>`_
-callback sends email when playbooks complete.
-
-The `osx_say
-<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/osx_say.py>`_
-callback provided is particularly entertaining -- it will respond with
-computer synthesized speech on OS X in relation to playbook events,
-and is guaranteed to entertain and/or annoy coworkers.
-
-.. _configuring_callbacks:
-
-Configuring
-+++++++++++
-
-To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`. Plugin load order is alphanumeric in nature. If you have a plugin you want to run first consider naming it `1_first.py`, or if you have a plugin you want to run last consider naming it `z_last.py`. 
-
-.. _callback_development:
-
-Development
-+++++++++++
-
-More information will come later, though see the source of any of the existing callbacks and you should be able to get started quickly.
-They should be reasonably self-explanatory.
 
 .. _distributing_plugins:
 
