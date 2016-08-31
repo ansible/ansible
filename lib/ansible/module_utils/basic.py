@@ -1484,31 +1484,28 @@ class AnsibleModule(object):
         raise TypeError('%s cannot be converted to a dict' % type(value))
 
     def _check_type_bool(self, value):
-        if isinstance(value, bool):
-            return value
-
-        if isinstance(value, string_types) or isinstance(value, int):
-            return self.boolean(value)
-
-        raise TypeError('%s cannot be converted to a bool' % type(value))
+        if not isinstance(value, bool):
+            try:
+                return self.boolean(value)
+            except:
+                raise TypeError('%s cannot be converted to a bool' % type(value))
+        return value
 
     def _check_type_int(self, value):
-        if isinstance(value, int):
-            return value
-
-        if isinstance(value, string_types):
-            return int(value)
-
-        raise TypeError('%s cannot be converted to an int' % type(value))
+        if not isinstance(value, int):
+            try:
+                return int(value)
+            except:
+                raise TypeError('%s cannot be converted to an int' % type(value))
+        return value
 
     def _check_type_float(self, value):
-        if isinstance(value, float):
-            return value
-
-        if isinstance(value, string_types):
-            return float(value)
-
-        raise TypeError('%s cannot be converted to a float' % type(value))
+        if not isinstance(value, float):
+            try:
+                return float(value)
+            except:
+                raise TypeError('%s cannot be converted to a float' % type(value))
+        return value
 
     def _check_type_path(self, value):
         value = self._check_type_str(value)
