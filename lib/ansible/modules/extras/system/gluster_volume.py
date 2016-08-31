@@ -181,16 +181,24 @@ def get_peers():
     hostname = None
     uuid = None
     state = None
+    shortNames = False
     for row in out.split('\n'):
         if ': ' in row:
             key, value = row.split(': ')
             if key.lower() == 'hostname':
                 hostname = value
+                shortNames = False
             if key.lower() == 'uuid':
                 uuid = value
             if key.lower() == 'state':
                 state = value
                 peers[hostname] = [ uuid, state ]
+        elif row.lower() == 'other names:':
+            shortNames = True
+        elif row != '' and shortNames == True:
+            peers[row] = [ uuid, state ]
+        elif row == '':
+            shortNames = False
     return peers
 
 def get_volumes():
