@@ -90,3 +90,24 @@ Define Windows inventory:
 
 Run the tests:
     make test_winrm
+
+Tests in Docker containers
+==========================
+
+It is possible to run tests in Docker containers.
+
+For example, to run test `test_ping` from non_destructive suite on Ubuntu 14.04 container:
+
+- go to the repository root
+- and execute `TARGET=ubuntu1404 MAKE_TARGET=non_destructive TEST_FLAGS='--tags test_ping' ./test/utils/run_tests.sh`
+
+Available targets (containers):
+
+  - centos6
+  - centos7
+  - fedora-rawhide
+  - fedora23
+  - opensuseleap
+  - ubuntu1204
+  - ubuntu1404
+  - ubuntu1604
