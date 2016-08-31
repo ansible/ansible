@@ -217,6 +217,7 @@ status:
 import os
 import glob
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native
 
 # ===========================================
 # Main control flow
@@ -260,7 +261,7 @@ def main():
     # load return of systemctl show into dictionary for easy access and return
     k = None
     multival = []
-    for line in out.split('\n'): # systemd can have multiline values delimited with {}
+    for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
         if line.strip():
             if k is None:
                 if '=' in line:
