@@ -115,6 +115,7 @@ except ImportError:
 
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+from ansible.module_utils.six import b
 
 try:
     # python3
@@ -606,11 +607,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
                         try:
-                            cert_file = open(full_path, 'r')
+                            cert_file = open(full_path, 'rb')
                             os.write(tmp_fd, cert_file.read())
-                            os.write(tmp_fd, '\n')
+                            os.write(tmp_fd, b('\n'))
                             cert_file.close()
-                        except:
+                        except (OSError, IOError):
                             pass
 
         return (tmp_path, paths_checked)
@@ -844,7 +845,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     # add the custom agent header, to help prevent issues
     # with sites that block the default urllib agent string
-    request.add_header('User-agent', http_agent)
+    if http_agent:
+        request.add_header('User-agent', http_agent)
 
     # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
