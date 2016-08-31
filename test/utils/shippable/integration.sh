@@ -94,11 +94,12 @@ if [ "${test_python3}" ]; then
     test_flags="--skip-tags ${skip_tags} ${test_flags}"
 fi
 
-docker exec "${container_id}" pip install jmespath
-
 if [ "${copy_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
 fi
+
+docker exec "${container_id}" \
+    pip install -r "${test_ansible_dir}/test/utils/shippable/integration-requirements.txt" --upgrade
 
 if [ "${test_python3}" ]; then
     docker exec "${container_id}" sed -i -f \
