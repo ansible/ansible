@@ -214,7 +214,7 @@ def get_mode(cursor):
 
 def user_exists(cursor, user, host, host_all):
     if host_all:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s", user)
+        cursor.execute("SELECT count(*) FROM user WHERE user = %s", ([user]))
     else:
         cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
 
@@ -252,7 +252,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
     grant_option = False
 
     if host_all:
-        hostnames = user_get_hostnames(cursor, user)
+        hostnames = user_get_hostnames(cursor, [user])
     else:
         hostnames = [host]
 
@@ -342,7 +342,7 @@ def user_delete(cursor, user, host, host_all, check_mode):
         return True
 
     if host_all:
-        hostnames = user_get_hostnames(cursor, user)
+        hostnames = user_get_hostnames(cursor, [user])
 
         for hostname in hostnames:
             cursor.execute("DROP USER %s@%s", (user, hostname))
