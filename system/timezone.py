@@ -20,6 +20,7 @@
 
 import os
 import re
+from ansible.module_utils.six import iteritems, iterkeys
 
 DOCUMENTATION = '''
 ---
@@ -110,7 +111,7 @@ class Timezone(object):
         # Initially there's only info of "planned" phase, but the
         # `self.check()` function will fill out it.
         self.value = dict()
-        for key in module.argument_spec.iterkeys():
+        for key in iterkeys(module.argument_spec):
             value = module.params[key]
             if value is not None:
                 self.value[key] = dict(planned=value)
@@ -162,7 +163,7 @@ class Timezone(object):
                 `--diff` option of ansible-playbook.
         """
         diff = {phase1: {}, phase2: {}}
-        for key, value in self.value.iteritems():
+        for key, value in iteritems(self.value):
             diff[phase1][key] = value[phase1]
             diff[phase2][key] = value[phase2]
         return diff
@@ -178,12 +179,12 @@ class Timezone(object):
         """
         if phase == 'planned':
             return
-        for key, value in self.value.iteritems():
+        for key, value in iteritems(self.value):
             value[phase] = self.get(key, phase)
 
     def change(self):
         """Make the changes effect based on `self.value`."""
-        for key, value in self.value.iteritems():
+        for key, value in iteritems(self.value):
             if value['before'] != value['planned']:
                 self.set(key, value['planned'])
 
