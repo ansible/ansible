@@ -61,7 +61,7 @@ end_state:
     sample: {"nv_overlay_evpn": true}
 updates:
     description: commands sent to the device
-    returned: when I(m_facts)=true
+    returned: always
     type: list
     sample: ["nv overlay evpn"]
 changed:
