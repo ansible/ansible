@@ -18,13 +18,14 @@
 #
 
 import re
+import urlparse
 
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
-from ansible.module_utils.urls import fetch_url, url_argument_spec, urlparse
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
@@ -56,18 +57,17 @@ class Cli(CliBase):
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
-        self.run_commands(
-            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        )
+        cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        self.execute([cmd])
 
     ### implementation of netcli.Cli ###
 
-    def run_commands(self, commands, **kwargs):
+    def run_commands(self, commands):
         return self.execute(to_list(commands))
 
     ### implementation of netcfg.Config ###
 
-    def configure(self, commands, **kwargs):
+    def configure(self, commands):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         if cmds[-1] != 'end':
@@ -183,7 +183,8 @@ class Restconf(object):
 
     def run_commands(self, commands):
         responses = list()
-        for cmd in to_list(commands):
+        commands = [str(c) for c in commands]
+        for cmd in commands:
             if str(cmd).startswith('show '):
                 cmd = str(cmd)[4:]
             responses.append(self.execute(str(cmd)))
