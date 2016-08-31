@@ -221,6 +221,7 @@ import grp
 import platform
 import socket
 import time
+from ansible.module_utils._text import to_native
 
 try:
     import spwd
@@ -402,7 +403,7 @@ class User(object):
         helpout = data1 + data2
 
         # check if --append exists
-        lines = helpout.split('\n')
+        lines = to_native(helpout).split('\n')
         for line in lines:
             if line.strip().startswith('-a, --append'):
                 return True
