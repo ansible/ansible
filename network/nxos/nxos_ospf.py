@@ -71,7 +71,7 @@ end_state:
     sample: {"ospf": ["1", "2"]}
 updates:
     description: commands sent to the device
-    returned: when I(m_facts)=true
+    returned: always
     type: list
     sample: ["router ospf 1"]
 changed:
