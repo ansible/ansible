@@ -175,4 +175,3 @@ def get_module(*args, **kwargs):
     # until the modules are updated.  This function *will* be removed
     # before 2.2 final
     return NetworkModule(*args, **kwargs)
-
