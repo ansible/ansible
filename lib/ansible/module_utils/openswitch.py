@@ -29,8 +29,9 @@ except ImportError:
     HAS_OPS = False
 
 from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
-from ansible.module_utils.network import ModuleStub, NetCli, NetworkError
+from ansible.module_utils.network import NetworkModule, ModuleStub, NetworkError
 from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 # temporary fix until modules are update.  to be removed before 2.2 final
@@ -79,6 +80,7 @@ class Rest(object):
         self.url = None
         self.url_args = ModuleStub(url_argument_spec(), self._error)
         self.headers = dict({'Content-Type': 'application/json', 'Accept': 'application/json'})
+        self.default_output = 'json'
         self._connected = False
 
     def _error(self, msg):
@@ -111,7 +113,7 @@ class Rest(object):
 
         # Update the base url for the rest of the operations.
         self.url = '%s/rest/v1' % (baseurl)
-        self.headers['Cookie'] = resp.headers.get('Set-Cookie')
+        self.headers['Cookie'] = hdrs['set-cookie']
 
     def disconnect(self, **kwargs):
         self.url = None
@@ -149,22 +151,19 @@ class Rest(object):
     def delete(self, path, data=None, headers=None):
         return self.request('DELETE', path, data, headers)
 
+    def run_commands(self, commands):
+        raise NotImplementedError
+
     def configure(self, commands):
         path = '/system/full-configuration'
         return self.put(path, data=commands)
 
     def load_config(self, commands, **kwargs):
-        raise NotImplementedError
+        return self.configure(commands)
 
     def get_config(self, **kwargs):
         resp = self.get('/system/full-configuration')
         return resp.json
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
 
     def save_config(self):
         raise NotImplementedError
@@ -183,42 +182,51 @@ class Rest(object):
             except UnicodeDecodeError:
                 continue
         self._error(msg='Invalid unicode encoding encountered')
+
 Rest = register_transport('rest')(Rest)
 
 
-class Cli(NetCli):
-    CLI_PROMPTS_RE = None
-
-    CLI_ERRORS_RE = None
+class Cli(CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
+
+    ### implementation of netcli.Cli
+
+    def run_commands(self, commands):
+        return self.execute(to_list(commands))
+
+    ### implementation of netcfg.Config
+
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
-
+        if cmds[-1] != 'end':
+            cmds.append('end')
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self, params, **kwargs):
+    def get_config(self):
         return self.execute('show running-config')[0]
 
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
-
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def commit_config(self, **kwargs):
-        raise NotImplementedError
-
-    def abort_config(self, **kwargs):
-        raise NotImplementedError
+    def load_config(self, commands):
+        return self.configure(commands)
 
     def save_config(self):
-        raise NotImplementedError
+        self.execute(['copy running-config startup-config'])
 
-    def run_commands(self, commands):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        return responses
 Cli = register_transport('cli', default=True)(Cli)
