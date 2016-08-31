@@ -19,6 +19,7 @@
 import re
 import shlex
 
+import re
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
