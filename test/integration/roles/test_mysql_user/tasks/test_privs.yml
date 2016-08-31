@@ -54,6 +54,22 @@
 - name: assert database was not created
   assert: { that: "'{{ db_name }}' not in result.stdout" }
 
+# ============================================================
+- name: Add privs to a specific table (expect changed)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed == true" }
+
+- name: Add privs to a specific table (expect ok)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  register: result
+
+- name: Assert that priv did not change
+  assert: { that: "result.changed == false" }
+
+# ============================================================
 - name: update user with all privileges 
   mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:ALL state=present
 
@@ -61,12 +77,11 @@
 
 - name: create database using user
   mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
-  register: result
 
 - name: run command to test database was created using user new privileges
   command: mysql "-e SHOW CREATE DATABASE {{ db_name }};" 
 
-- name: drop database using using user
+- name: drop database using user
   mysql_db: name={{ db_name }} state=absent login_user={{ user_name_2 }} login_password={{ user_password_2 }}
 
 - name: remove username
