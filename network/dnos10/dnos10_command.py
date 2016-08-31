@@ -23,7 +23,7 @@ version_added: "2.2"
 author: "Senthil Kumar Ganesan (@skg_net)"
 short_description: Run commands on remote devices running Dell OS10
 description:
-  - Sends arbitrary commands to an Dell OS10 node and returns the results
+  - Sends arbitrary commands to a Dell OS10 node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -44,11 +44,10 @@ options:
       - List of conditions to evaluate against the output of the
         command. The task will wait for each condition to be true
         before moving forward. If the conditional is not true
-        within the configured number of retries, the task fails.
+        within the configured number of I(retries), the task fails.
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
   retries:
     description:
       - Specifies the number of retries a command should by tried
@@ -145,7 +144,7 @@ def to_lines(stdout):
 def main():
     spec = dict(
         commands=dict(type='list', required=True),
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
