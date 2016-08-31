@@ -170,6 +170,7 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+from ansible.module_utils.six import iteritems
 
 _flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
@@ -421,15 +422,13 @@ def revoke_privileges(cursor, user, privs):
 
     changed = False
     for type_ in privs:
-        revoke_func = {
-            'table':revoke_table_privilege,
-            'database':revoke_database_privilege
-        }[type_]
-        for name, privileges in privs[type_].iteritems():
-            for privilege in privileges:
-                changed = revoke_func(cursor, user, name, privilege)\
-                        or changed
-
+        for name, privileges in iteritems(privs[type_]):
+            # Check that any of the privileges requested to be removed are
+            # currently granted to the user
+            differences = check_funcs[type_](cursor, user, name, privileges)
+            if differences[0]:
+                revoke_funcs[type_](cursor, user, name, privileges)
+                changed = True
     return changed
 
 def grant_privileges(cursor, user, privs):
@@ -441,15 +440,13 @@ def grant_privileges(cursor, user, privs):
 
     changed = False
     for type_ in privs:
-        grant_func = {
-            'table':grant_table_privilege,
-            'database':grant_database_privilege
-        }[type_]
-        for name, privileges in privs[type_].iteritems():
-            for privilege in privileges:
-                changed = grant_func(cursor, user, name, privilege)\
-                        or changed
-
+        for name, privileges in iteritems(privs[type_]):
+            # Check that any of the privileges requested for the user are
+            # currently missing
+            differences = check_funcs[type_](cursor, user, name, privileges)
+            if differences[2]:
+                grant_funcs[type_](cursor, user, name, privileges)
+                changed = True
     return changed
 
 def parse_role_attrs(role_attr_flags):
@@ -574,7 +571,7 @@ def main():
         "port":"port",
         "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+    kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" )
 
     # If a login_unix_socket is specified, incorporate it here.
