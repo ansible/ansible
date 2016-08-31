@@ -16,6 +16,8 @@ Ansible Changes By Release
   - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
+* Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
+* `meta` tasks can now use conditionals.
 
 ####New Modules:
 - archive
