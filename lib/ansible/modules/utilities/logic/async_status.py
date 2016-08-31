@@ -50,6 +50,7 @@ author:
 
 import datetime
 import traceback
+from ansible.module_utils.six import iteritems
 
 def main():
 
@@ -95,7 +96,7 @@ def main():
         data['finished'] = 0
 
     # Fix error: TypeError: exit_json() keywords must be strings
-    data = dict([(str(k), v) for k, v in data.iteritems()])
+    data = dict([(str(k), v) for k, v in iteritems(data)])
 
     module.exit_json(**data)
 
