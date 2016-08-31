@@ -65,7 +65,7 @@ class Cli(object):
 
     def __call__(self, commands, output=None):
         objects = list()
-        for cmd in commands:
+        for cmd in to_list(commands):
             objects.append(self.to_command(cmd, output))
         return self.connection.run_commands(objects)
 
