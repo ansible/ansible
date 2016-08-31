@@ -59,6 +59,9 @@ def main():
     parser.add_argument('--privileged', dest='privileged', action='store_true',
                         default=os.environ.get('PRIVILEGED') == 'true',
                         help='run container in privileged mode')
+    parser.add_argument('--python3', dest='python3', action='store_true',
+                        default=os.environ.get('PYTHON3', '') != '',
+                        help='run tests using python3')
     parser.add_argument('--platform', dest='platform', default=os.environ.get('PLATFORM'),
                         help='platform to run tests on')
     parser.add_argument('--version', dest='version', default=os.environ.get('VERSION'),
@@ -72,7 +75,12 @@ def main():
 
     if args.image is not None:
         script = 'integration'
-        jobs = ['IMAGE=%s%s' % (args.image, ' PRIVILEGED=true' if args.privileged else '')]
+        options = ''
+        if args.privileged:
+            options += ' PRIVILEGED=true'
+        if args.python3:
+            options += ' PYTHON3=1'
+        jobs = ['IMAGE=%s%s' % (args.image, options)]
     elif args.platform is not None and args.version is not None:
         script = 'remote'
         jobs = ['PLATFORM=%s VERSION=%s' % (args.platform, args.version)]
