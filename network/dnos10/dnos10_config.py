@@ -188,8 +188,8 @@ saved:
   sample: True
 
 """
-from ansible.module_utils.netcfg import NetworkConfig, dumps, ConfigLine
-from ansible.module_utils.dnos10 import NetworkModule
+from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.dnos10 import get_config, get_sublevel_config 
 
 def get_candidate(module):

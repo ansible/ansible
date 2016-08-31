@@ -131,9 +131,11 @@ warnings:
   type: list
   sample: ['...', '...']
 """
+
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, FailedConditionsError
-from ansible.module_utils.dnos10 import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkModule, NetworkError
+import ansible.module_utils.dnos10
 
 def to_lines(stdout):
     for item in stdout:
