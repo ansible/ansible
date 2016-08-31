@@ -729,6 +729,12 @@ The following  checklist items are important guidelines for people who want to c
   playbooks which conditionalize based on fact information will only
   conditionalize correctly in check_mode if the facts are returned in
   check_mode).
+* Basic auth: module_utils.api has some helpers for doing basic auth with
+  module_utils.urls.fetch_url().  If you use those you may find you also want
+  to fallback on environment variables for default values.  If you do that,
+  be sure to use non-generic environment variables (like
+  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 `````````````````````````
