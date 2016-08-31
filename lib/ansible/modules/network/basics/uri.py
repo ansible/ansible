@@ -390,7 +390,7 @@ def main():
 
     # Grab all the http headers. Need this hack since passing multi-values is
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
-    for key, value in module.params.iteritems():
+    for key, value in six.iteritems(module.params):
         if key.startswith("HEADER_"):
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
@@ -434,7 +434,7 @@ def main():
     # Transmogrify the headers, replacing '-' with '_', since variables dont
     # work with dashes.
     uresp = {}
-    for key, value in resp.iteritems():
+    for key, value in six.iteritems(resp):
         ukey = key.replace("-", "_")
         uresp[ukey] = value
 
