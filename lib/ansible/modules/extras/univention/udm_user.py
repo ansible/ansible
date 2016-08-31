@@ -184,16 +184,18 @@ options:
         default: None
         description:
             - Organisation
-    overridePWHistory:
+    override_pw_history:
         required: false
         default: False
         description:
             - Override password history
-    overridePWLength:
+        aliases: [ overridePWHistory ]
+    override_pw_length:
         required: false
         default: False
         description:
             - Override password check
+        aliases: [ overridePWLength ]
     pager_telephonenumber:
         required: false
         default: []
@@ -401,9 +403,11 @@ def main():
             organisation            = dict(default=None,
                                            type='str'),
             overridePWHistory       = dict(default=False,
-                                           type='bool'),
+                                           type='bool',
+                                           aliases=['override_pw_history']),
             overridePWLength        = dict(default=False,
-                                           type='bool'),
+                                           type='bool',
+                                           aliases=['override_pw_length']),
             pager_telephonenumber   = dict(default=[],
                                            type='list',
                                            aliases=['pagerTelephonenumber']),
