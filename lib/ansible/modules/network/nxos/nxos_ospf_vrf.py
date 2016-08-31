@@ -26,8 +26,8 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - 'default' restores params default value, if any. Otherwise it removes
-      the existing param configuration.
+    - Value I(default) restores params default value, if any.
+      Otherwise it removes the existing param configuration.
 options:
     vrf:
         description:
