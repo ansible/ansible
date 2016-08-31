@@ -321,7 +321,7 @@ class TimeoutError(Exception):
 
 def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id):
     """Finds a zone by name or zone_id"""
-    for zone in conn.get_zones():
+    for zone in invoke_with_throttling_retries(conn.get_zones):
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
@@ -329,7 +329,8 @@ def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id
             if want_vpc_id:
                 # NOTE: These details aren't available in other boto methods, hence the necessary
                 # extra API call
-                zone_details = conn.get_hosted_zone(zone.id)['GetHostedZoneResponse']
+                hosted_zone = invoke_with_throttling_retries(conn.get_hosted_zone, zone.id)
+                zone_details = hosted_zone['GetHostedZoneResponse']
                 # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
                 if isinstance(zone_details['VPCs'], dict):
                     if zone_details['VPCs']['VPC']['VPCId'] == want_vpc_id:
@@ -373,11 +374,11 @@ def commit(changes, retry_interval, wait, wait_timeout):
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES=5
-def invoke_with_throttling_retries(function_ref, *argv):
+def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
     retries=0
     while True:
         try:
-            retval=function_ref(*argv)
+            retval=function_ref(*argv, **kwargs)
             return retval
         except boto.exception.BotoServerError as e:
             if e.code != IGNORE_CODE or retries==MAX_RETRIES:
@@ -506,7 +507,8 @@ def main():
         else:
             wanted_rset.add_value(v)
 
-    sets = conn.get_all_rrsets(zone.id, name=record_in, type=type_in, identifier=identifier_in)
+    sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
+                                          type=type_in, identifier=identifier_in)
     for rset in sets:
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
@@ -554,7 +556,8 @@ def main():
             ns = record['values']
         else:
             # Retrieve name servers associated to the zone.
-            ns = conn.get_zone(zone_in).get_nameservers()
+            z = invoke_with_throttling_retries(conn.get_zone, zone_in)
+            ns = invoke_with_throttling_retries(z.get_nameservers)
 
         module.exit_json(changed=False, set=record, nameservers=ns)
 
