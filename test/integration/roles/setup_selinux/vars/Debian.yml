@@ -1,0 +1,5 @@
+selinux_packages:
+  2:
+  - python-selinux
+  3:
+  - python3-selinux
