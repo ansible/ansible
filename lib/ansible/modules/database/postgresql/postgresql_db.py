@@ -214,7 +214,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return True
 
-def db_dump(module, target, db, host, user, port):
+def db_dump(module, target, db=None, host=None, user=None, port=None):
     if db:
       flags = ' --dbname={0}'.format(pipes.quote(db))
     if host:
@@ -250,7 +250,7 @@ def db_dump(module, target, db, host, user, port):
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stderr, stdout
 
-def db_import(module, target, db, host, user, port):
+def db_import(module, target, db=None, host=None, user=None, port=None):
     # set initial flags. These are the same in pg_restore as psql
     flags = []
     if db:
