@@ -28,7 +28,7 @@
 
 import re
 
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkError
 from ansible.module_utils.network import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.network import register_transport, to_list
@@ -55,17 +55,9 @@ class Cli(CliBase):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send(['terminal length 0',
-                         'terminal exec prompt no-timestamp'])
+        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
 
-    ### implementation of netcli.Cli ###
-
-    def run_commands(self, commands):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        return responses
-
-    ### implementation of netcfg.Config ###
+    ### Config methods ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
