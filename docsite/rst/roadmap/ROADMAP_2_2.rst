@@ -145,6 +145,7 @@ Target: September 2016
       **Done:** Most tests have been migrated from Travis to Shippable.
   - **Core Module Test Organization**
       Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
+      **Deferred:** Relocation of core module tests has been deferred due to proposed changes in `modules management <https://github.com/ansible/proposals/blob/master/modules-management.md>`_.
   - **Documentation**
       Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
   - **Test Coverage**
