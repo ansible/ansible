@@ -1,17 +1,27 @@
-# This file is part of Ansible
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 import re
@@ -22,24 +32,16 @@ from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 
-add_argument('use_ssl', dict(default=True, type='bool'))
-add_argument('validate_certs', dict(default=True, type='bool'))
 
-def argument_spec():
-    return dict(
-        running_config=dict(aliases=['config']),
-        save_config=dict(default=False, aliases=['save']),
-        force=dict(type='bool', default=False)
-    )
-dnos10_argument_spec = argument_spec()
+def get_config(module):
+    contents = module.params['config']
 
-def get_config(module, include_defaults=False):
-    contents = module.params['running_config']
     if not contents:
         contents = module.config.get_config()
-        module.params['running_config'] = contents
+        module.params['config'] = contents
 
     return NetworkConfig(indent=1, contents=contents[0])
+
 
 def get_sublevel_config(running_config, module):
     contents = list()
@@ -79,17 +81,11 @@ class Cli(CliBase):
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
-        self._connected = True
 
-    def disconnect(self):
-        self._connected = False
-
-    def run_commands(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.execute([c for c in commands])
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
@@ -101,22 +97,25 @@ class Cli(CliBase):
         responses.pop(0)
         return responses
 
-    def get_config(self, include_defaults=False, **kwargs):
+
+    def get_config(self, **kwargs):
         return self.execute(['show running-configuration'])
+
 
     def load_config(self, commands, **kwargs):
         return self.configure(commands)
 
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
 
     def commit_config(self, **kwargs):
         self.execute(['commit'])
 
+
     def abort_config(self, **kwargs):
         self.execute(['discard'])
 
+
     def save_config(self):
         self.execute(['copy running-config startup-config'])
+
 
 Cli = register_transport('cli', default=True)(Cli)
