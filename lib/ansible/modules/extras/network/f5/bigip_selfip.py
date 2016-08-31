@@ -28,6 +28,12 @@ options:
     description:
       - The IP addresses for the new self IP. This value is ignored upon update
         as addresses themselves cannot be changed after they are created.
+  allow_service:
+    description:
+      - Configure port lockdown for the Self IP. By default, the Self IP has a
+        "default deny" policy. This can be changed to allow TCP and UDP ports
+        as well as specific protocols. This list should contain C(protocol):C(port)
+        values.
   name:
     description:
       - The self IP to create.
@@ -90,9 +96,76 @@ EXAMPLES = '''
       user: "admin"
       validate_certs: "no"
   delegate_to: localhost
+
+- name: Allow management web UI to be accessed on this Self IP
+  bigip_selfip:
+      name: "self1"
+      password: "secret"
+      server: "lb.mydomain.com"
+      state: "absent"
+      user: "admin"
+      validate_certs: "no"
+      allow_service:
+          - "tcp:443"
+  delegate_to: localhost
+
+- name: Allow HTTPS and SSH access to this Self IP
+  bigip_selfip:
+      name: "self1"
+      password: "secret"
+      server: "lb.mydomain.com"
+      state: "absent"
+      user: "admin"
+      validate_certs: "no"
+      allow_service:
+          - "tcp:443"
+          - "tpc:22"
+  delegate_to: localhost
+
+- name: Allow all services access to this Self IP
+  bigip_selfip:
+      name: "self1"
+      password: "secret"
+      server: "lb.mydomain.com"
+      state: "absent"
+      user: "admin"
+      validate_certs: "no"
+      allow_service:
+          - all
+  delegate_to: localhost
+
+- name: Allow only GRE and IGMP protocols access to this Self IP
+  bigip_selfip:
+      name: "self1"
+      password: "secret"
+      server: "lb.mydomain.com"
+      state: "absent"
+      user: "admin"
+      validate_certs: "no"
+      allow_service:
+          - gre:0
+          - igmp:0
+  delegate_to: localhost
+
+- name: Allow all TCP, but no other protocols access to this Self IP
+  bigip_selfip:
+      name: "self1"
+      password: "secret"
+      server: "lb.mydomain.com"
+      state: "absent"
+      user: "admin"
+      validate_certs: "no"
+      allow_service:
+          - tcp:0
+  delegate_to: localhost
 '''
 
 RETURN = '''
+allow_service:
+    description: Services that allowed via this Self IP
+    returned: changed
+    type: list
+    sample: ['igmp:0','tcp:22','udp:53']
 address:
     description: The address for the Self IP
     returned: created
@@ -144,6 +217,8 @@ except ImportError:
 
 FLOAT = ['enabled', 'disabled']
 DEFAULT_TG = 'traffic-group-local-only'
+ALLOWED_PROTOCOLS = ['eigrp', 'egp', 'gre', 'icmp', 'igmp', 'igp', 'ipip',
+                     'l2tp', 'ospf', 'pim', 'tcp', 'udp']
 
 
 class BigIpSelfIp(object):
@@ -188,6 +263,9 @@ class BigIpSelfIp(object):
         Therefore, this method will transform the data from the BIG-IP into a
         format that is more easily consumable by the rest of the class and the
         parameters that are supported by the module.
+
+        :return: List of values currently stored in BIG-IP, formatted for use
+        in this class.
         """
         p = dict()
         name = self.params['name']
@@ -207,16 +285,97 @@ class BigIpSelfIp(object):
             p['traffic_group'] = str(r.trafficGroup)
         if hasattr(r, 'vlan'):
             p['vlan'] = str(r.vlan)
+        if hasattr(r, 'allowService'):
+            if r.allowService == 'all':
+                p['allow_service'] = set(['all'])
+            else:
+                p['allow_service'] = set([str(x) for x in r.allowService])
+        else:
+            p['allow_service'] = set(['none'])
         p['name'] = name
         return p
 
+    def verify_services(self):
+        """Verifies that a supplied service string has correct format
+
+        The string format for port lockdown is PROTOCOL:PORT. This method
+        will verify that the provided input matches the allowed protocols
+        and the port ranges before submitting to BIG-IP.
+
+        The only allowed exceptions to this rule are the following values
+
+          * all
+          * default
+          * none
+
+        These are special cases that are handled differently in the API.
+        "all" is set as a string, "default" is set as a one item list, and
+        "none" removes the key entirely from the REST API.
+
+        :raises F5ModuleError:
+        """
+        result = []
+        for svc in self.params['allow_service']:
+            if svc in ['all', 'none', 'default']:
+                result = [svc]
+                break
+
+            tmp = svc.split(':')
+            if tmp[0] not in ALLOWED_PROTOCOLS:
+                raise F5ModuleError(
+                    "The provided protocol '%s' is invalid" % (tmp[0])
+                )
+            try:
+                port = int(tmp[1])
+            except Exception:
+                raise F5ModuleError(
+                    "The provided port '%s' is not a number" % (tmp[1])
+                )
+
+            if port < 0 or port > 65535:
+                raise F5ModuleError(
+                    "The provided port '%s' must be between 0 and 65535"
+                    % (port)
+                )
+            else:
+                result.append(svc)
+        return set(result)
+
+    def fmt_services(self, services):
+        """Returns services formatted for consumption by f5-sdk update
+
+        The BIG-IP endpoint for services takes different values depending on
+        what you want the "allowed services" to be. It can be any of the
+        following
+
+            - a list containing "protocol:port" values
+            - the string "all"
+            - a null value, or None
+
+        This is a convenience function to massage the values the user has
+        supplied so that they are formatted in such a way that BIG-IP will
+        accept them and apply the specified policy.
+
+        :param services: The services to format. This is always a Python set
+        :return:
+        """
+        result = list(services)
+        if result[0] == 'all':
+            return 'all'
+        elif result[0] == 'none':
+            return None
+        else:
+            return list(services)
+
     def update(self):
         changed = False
+        svcs = []
         params = dict()
         current = self.read()
 
         check_mode = self.params['check_mode']
         address = self.params['address']
+        allow_service = self.params['allow_service']
         name = self.params['name']
         netmask = self.params['netmask']
         partition = self.params['partition']
@@ -278,6 +437,14 @@ class BigIpSelfIp(object):
                     'The specified VLAN was not found'
                 )
 
+        if allow_service is not None:
+            svcs = self.verify_services()
+            if 'allow_service' in current:
+                if svcs != current['allow_service']:
+                    params['allowService'] = self.fmt_services(svcs)
+            else:
+                params['allowService'] = self.fmt_services(svcs)
+
         if params:
             changed = True
             params['name'] = name
@@ -285,6 +452,8 @@ class BigIpSelfIp(object):
             if check_mode:
                 return changed
             self.cparams = camel_dict_to_snake_dict(params)
+            if svcs:
+                self.cparams['allow_service'] = list(svcs)
         else:
             return changed
 
@@ -298,6 +467,25 @@ class BigIpSelfIp(object):
         return True
 
     def get_vlans(self):
+        """Returns formatted list of VLANs
+
+        The VLAN values stored in BIG-IP are done so using their fully
+        qualified name which includes the partition. Therefore, "correct"
+        values according to BIG-IP look like this
+
+            /Common/vlan1
+
+        This is in contrast to the formats that most users think of VLANs
+        as being stored as
+
+            vlan1
+
+        To provide for the consistent user experience while not turfing
+        BIG-IP, we need to massage the values that are provided by the
+        user so that they include the partition.
+
+        :return: List of vlans formatted with preceeding partition
+        """
         partition = self.params['partition']
         vlans = self.api.tm.net.vlans.get_collection()
         return [str("/" + partition + "/" + x.name) for x in vlans]
@@ -305,8 +493,10 @@ class BigIpSelfIp(object):
     def create(self):
         params = dict()
 
+        svcs = []
         check_mode = self.params['check_mode']
         address = self.params['address']
+        allow_service = self.params['allow_service']
         name = self.params['name']
         netmask = self.params['netmask']
         partition = self.params['partition']
@@ -353,10 +543,17 @@ class BigIpSelfIp(object):
                 'The specified VLAN was not found'
             )
 
+        if allow_service is not None:
+            svcs = self.verify_services()
+            params['allowService'] = self.fmt_services(svcs)
+
         params['name'] = name
         params['partition'] = partition
 
         self.cparams = camel_dict_to_snake_dict(params)
+        if svcs:
+            self.cparams['allow_service'] = list(svcs)
+
         if check_mode:
             return True
 
@@ -416,6 +613,7 @@ def main():
 
     meta_args = dict(
         address=dict(required=False, default=None),
+        allow_service=dict(type='list', default=None),
         name=dict(required=True),
         netmask=dict(required=False, default=None),
         traffic_group=dict(required=False, default=None),
