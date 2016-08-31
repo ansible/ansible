@@ -23,8 +23,8 @@ version_added: "2.2"
 author: "Senthil Kumar Ganesan (@skg_net)"
 short_description: Manage Dell OS10 configuration sections
 description:
-  - Dell OS10 configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - Dell OS10 configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with Dell OS10 configuration sections in
     a deterministic way.
 extends_documentation_fragment: dnos10
@@ -35,7 +35,7 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser.
+        device config parser. This argument is mutually exclusive with O(src).
     required: false
     default: null
     aliases: ['commands']
@@ -62,7 +62,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
@@ -93,20 +93,39 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct
+        line is not correct.
     required: false
     default: line
     choices: ['line', 'block']
-  update_config:
+  update:
     description:
-      - This arugment will either cause or prevent the changed commands
-        from being sent to the remote device.  The set to true, the
-        remote Dell OS10 device will be configured with the updated commands
-        and when set to false, the remote device will not be updated.
+      - The I(update) argument controls how the configuration statements
+        are processed on the remote device.  Valid choices for the I(update)
+        argument are I(merge) and I(check).  When the argument is set to
+        I(merge), the configuration changes are merged with the current
+        device running configuration.  When the argument is set to I(check)
+        the configuration updates are determined but not actually configured
+        on the remote device.
     required: false
-    default: yes
+    default: merge
+    choices: ['merge', 'check']
+  save:
+    description:
+      - The C(save) argument instructs the module to save the running-
+        config to the startup-config at the conclusion of the module
+        running.  If check mode is specified, this argument is ignored.
+    required: false
+    default: no
     choices: ['yes', 'no']
-  backup_config:
+  config:
+    description:
+      - The C(config) argument allows the playbook desginer to supply
+        the base configuration to be used to validate configuration
+        changes necessary.  If this argument is provided, the module
+        will not download the running-config from the remote node.
+    required: false
+    default: null
+  backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
@@ -121,7 +140,7 @@ options:
 EXAMPLES = """
 - dnos10_config:
     lines: ['hostname {{ inventory_hostname }}']
-    force: yes
+    provider: "{{ cli }}"
 
 - dnos10_config:
     lines:
@@ -130,9 +149,10 @@ EXAMPLES = """
       - 30 permit ip host 3.3.3.3 any log
       - 40 permit ip host 4.4.4.4 any log
       - 50 permit ip host 5.5.5.5 any log
-    parents: ['ip access-list extended test']
-    before: ['no ip access-list extended test']
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
     match: exact
+    provider: "{{ cli }}"
 
 - dnos10_config:
     lines:
@@ -140,15 +160,10 @@ EXAMPLES = """
       - 20 permit ip host 2.2.2.2 any log
       - 30 permit ip host 3.3.3.3 any log
       - 40 permit ip host 4.4.4.4 any log
-    parents: ['ip access-list extended test']
-    before: ['no ip access-list extended test']
-    replace: block
-
-- dnos10_config:
-    commands: "{{lookup('file', 'datcenter1.txt')}}"
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     replace: block
+    provider: "{{ cli }}"
 
 """
 
@@ -164,9 +179,17 @@ responses:
   retured: when not check_mode
   type: list
   sample: ['...', '...']
+
+saved:
+  description: Returns whether the configuration is saved to the startup 
+               configuration or not.
+  retured: when not check_mode
+  type: bool
+  sample: True
+
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps, ConfigLine
-from ansible.module_utils.dnos10 import NetworkModule, dnos10_argument_spec
+from ansible.module_utils.dnos10 import NetworkModule
 from ansible.module_utils.dnos10 import get_config, get_sublevel_config 
 
 def get_candidate(module):
@@ -194,10 +217,11 @@ def main():
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
 
-        update_config=dict(type='bool', default=True),
-        backup_config=dict(type='bool', default=False)
+        update=dict(choices=['merge', 'check'], default='merge'),
+        save=dict(type='bool', default=False),
+        config=dict(),
+        backup =dict(type='bool', default=False)
     )
-    argument_spec.update(dnos10_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -206,18 +230,15 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    module.check_mode = not module.params['update_config']
-
     parents = module.params['parents'] or list()
 
     match = module.params['match']
     replace = module.params['replace']
-    before = module.params['before']
     result = dict(changed=False, saved=False)
 
     candidate = get_candidate(module)
 
-    if module.params['match'] != 'none':
+    if match != 'none':
         config = get_config(module)
         if parents:
             contents = get_sublevel_config(config, module)
@@ -227,7 +248,7 @@ def main():
     else:
         configobjs = candidate.items
 
-    if module.params['backup_config']:
+    if module.params['backup']:
         result['__backup__'] = module.cli('show running-config')[0]
 
     commands = list()
@@ -241,18 +262,17 @@ def main():
         if module.params['after']:
             commands.extend(module.params['after'])
 
-        if not module.check_mode:
+        if not module.check_mode and module.params['update'] == 'merge':
             response = module.config.load_config(commands)
             result['responses'] = response
 
-            if module.params['save_config']:
+            if module.params['save']:
                 module.config.save_config()
                 result['saved'] = True
 
         result['changed'] = True
 
     result['updates'] = commands
-    result['connected'] = module.connected
 
     module.exit_json(**result)
 
