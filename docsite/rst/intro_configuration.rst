@@ -74,6 +74,22 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
+
+.. _allow_world_readable_tmpfiles:
+
+allow_world_readable_tmpfiles
+=============================
+
+.. versionadded:: 2.1
+This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task. 
+
+It is useful when becoming an unprivileged user::
+
+  allow_world_readable_tmpfiles=True
+
+
+
+
 .. _ansible_managed:
 
 ansible_managed
