@@ -5,10 +5,8 @@ test_async
 test_authorized_key
 test_filters
 test_gem
-test_get_url
 test_git
 test_hg
-test_iterators
 test_lookups
 test_mysql_db
 test_mysql_user
@@ -18,6 +16,5 @@ test_postgresql
 test_service
 test_subversion
 test_synchronize
-test_template
 test_unarchive
 test_uri
