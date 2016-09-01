@@ -19,6 +19,7 @@ Ansible Changes By Release
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
+* New privilege escalation become method `ksu`
 
 ####New Modules:
 - archive
