@@ -51,12 +51,12 @@ options:
     choices: [ 'present', 'absent' ]
   wait:
     description:
-      - Wait for operation to complete before returning
+      - Wait for operation to complete before returning.
     required: false
     default: true
   wait_timeout:
     description:
-      - How many seconds to wait for an operation to complete before timing out
+      - How many seconds to wait for an operation to complete before timing out.
     required: false
     default: 300
   tags:
@@ -158,6 +158,7 @@ import datetime
 import time
 from functools import reduce
 
+
 def convert_to_lower(data):
     """Convert all uppercase keys in dict with lowercase_
     Args:
@@ -195,6 +196,7 @@ def convert_to_lower(data):
                 results[key] = val
     return results
 
+
 def make_tags_in_proper_format(tags):
     """Take a dictionary of tags and convert them into the AWS Tags format.
     Args:
@@ -215,6 +217,7 @@ def make_tags_in_proper_format(tags):
         formatted_tags[tag.get('Key')] = tag.get('Value')
 
     return formatted_tags
+
 
 def make_tags_in_aws_format(tags):
     """Take a dictionary of tags and convert them into the AWS Tags format.
@@ -246,6 +249,7 @@ def make_tags_in_aws_format(tags):
         })
 
     return formatted_tags
+
 
 def get_tags(client, stream_name, check_mode=False):
     """Retrieve the tags for a Kinesis Stream.
@@ -288,6 +292,7 @@ def get_tags(client, stream_name, check_mode=False):
         err_msg = str(e)
 
     return success, err_msg, results
+
 
 def find_stream(client, stream_name, check_mode=False):
     """Retrieve a Kinesis Stream.
@@ -337,6 +342,7 @@ def find_stream(client, stream_name, check_mode=False):
         err_msg = str(e)
 
     return success, err_msg, results
+
 
 def wait_for_status(client, stream_name, status, wait_timeout=300,
                     check_mode=False):
@@ -398,6 +404,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
 
     return status_achieved, err_msg, stream
 
+
 def tags_action(client, stream_name, tags, action='create', check_mode=False):
     """Create or delete multiple tags from a Kinesis Stream.
     Args:
@@ -451,6 +458,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
 
     return success, err_msg
 
+
 def recreate_tags_from_list(list_of_tags):
     """Recreate tags from a list of tuples into the Amazon Tag format.
     Args:
@@ -482,6 +490,7 @@ def recreate_tags_from_list(list_of_tags):
             }
         )
     return tags
+
 
 def update_tags(client, stream_name, tags, check_mode=False):
     """Update tags for an amazon resource.
@@ -562,6 +571,7 @@ def update_tags(client, stream_name, tags, check_mode=False):
 
     return success, changed, err_msg
 
+
 def stream_action(client, stream_name, shard_count=1, action='create',
                   timeout=300, check_mode=False):
     """Create or Delete an Amazon Kinesis Stream.
@@ -614,6 +624,7 @@ def stream_action(client, stream_name, shard_count=1, action='create',
         err_msg = str(e)
 
     return success, err_msg
+
 
 def retention_action(client, stream_name, retention_period=24,
                      action='increase', check_mode=False):
@@ -677,6 +688,7 @@ def retention_action(client, stream_name, retention_period=24,
         err_msg = str(e)
 
     return success, err_msg
+
 
 def update(client, current_stream, stream_name, retention_period=None,
            tags=None, wait=False, wait_timeout=300, check_mode=False):
@@ -804,6 +816,7 @@ def update(client, current_stream, stream_name, retention_period=None,
         err_msg = 'Kinesis Stream {0} did not changed.'.format(stream_name)
 
     return success, changed, err_msg
+
 
 def create_stream(client, stream_name, number_of_shards=1, retention_period=None,
                   tags=None, wait=False, wait_timeout=300, check_mode=False):
@@ -941,6 +954,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
 
     return success, changed, err_msg, results
 
+
 def delete_stream(client, stream_name, wait=False, wait_timeout=300,
                   check_mode=False):
     """Delete an Amazon Kinesis Stream.
@@ -1001,17 +1015,18 @@ def delete_stream(client, stream_name, wait=False, wait_timeout=300,
 
     return success, changed, err_msg, results
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(default=None, required=True),
-            shards = dict(default=None, required=False, type='int'),
-            retention_period = dict(default=None, required=False, type='int'),
-            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
-            wait = dict(default=True, required=False, type='bool'),
-            wait_timeout = dict(default=300, required=False, type='int'),
-            state = dict(default='present', choices=['present', 'absent']),
+            name=dict(default=None, required=True),
+            shards=dict(default=None, required=False, type='int'),
+            retention_period=dict(default=None, required=False, type='int'),
+            tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            wait=dict(default=True, required=False, type='bool'),
+            wait_timeout=dict(default=300, required=False, type='int'),
+            state=dict(default='present', choices=['present', 'absent']),
         )
     )
     module = AnsibleModule(
