@@ -522,6 +522,13 @@ class PlayContext(Base):
                 prompt='assword:'
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
+            elif self.become_method == 'ksu':
+                def detect_ksu_prompt(data):
+                    return re.match("Kerberos password for .*@.*:", data)
+
+                prompt = detect_ksu_prompt
+                becomecmd = '%s %s %s -e %s' % (exe, self.become_user, flags, command)
+
             elif self.become_method == 'pfexec':
 
                 # No user as it uses it's own exec_attr to figure it out
