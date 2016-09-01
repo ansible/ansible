@@ -678,7 +678,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', 0, -1)
+            m.assert_called_with(b'/path/to/file', 0, -1)
 
             def _mock_getpwnam(*args, **kwargs):
                 mock_pw = MagicMock()
@@ -688,7 +688,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             m.reset_mock()
             with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
                 self.assertEqual(am.set_owner_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', 0, -1)
+                m.assert_called_with(b'/path/to/file', 0, -1)
 
             with patch('pwd.getpwnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
@@ -717,7 +717,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', -1, 0)
+            m.assert_called_with(b'/path/to/file', -1, 0)
 
             def _mock_getgrnam(*args, **kwargs):
                 mock_gr = MagicMock()
@@ -727,7 +727,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             m.reset_mock()
             with patch('grp.getgrnam', side_effect=_mock_getgrnam):
                 self.assertEqual(am.set_group_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', -1, 0)
+                m.assert_called_with(b'/path/to/file', -1, 0)
 
             with patch('grp.getgrnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
