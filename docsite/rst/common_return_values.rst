@@ -5,15 +5,18 @@ Common Return Values
 
 .. contents:: Topics
 
-Ansible modules normally return a data structure that can be registered into a variable, or seen directly when using
-the `ansible` program as output. Here we document the values common to all modules, each module can optionally document
-its own unique returns. If these docs exist they will be visible through ansible-doc and https://docs.ansible.com.
-Some of these keys might be set by Ansible itself once it processes the module's return information.
+Ansible modules normally return a data structure that can be registered into a variable, or seen directly when output by 
+the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and https://docs.ansible.com).
+
+This document covers return values common to all modules. 
+
+.. note:: Some of these keys might be set by Ansible itself once it processes the module's return information.
+
 
 
 changed
 ```````
-A boolean that indicates if the task had to effect changes or not.
+A boolean indicating if the task had to make changes.
 
 failed
 ``````
@@ -25,7 +28,7 @@ Information on how the module was invoked.
 
 msg
 ```
-A string with a generic message relayed to user.
+A string with a generic message relayed to the user.
 
 rc
 ``
@@ -49,15 +52,15 @@ When c(stderr) is returned we also always provide this field which is a list of 
 
 stdout
 ``````
-Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains the normal output of these utilities.
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc). This field contains the normal output of these utilities.
 
 stdout_lines
 ````````````
-When c(stdout) is returned we also always provide this field which is a list of strings, one item per line from the original.
+When c(stdout) is returned, Ansible always provides a list of strings, each containing one item per line from the original output.
 
 Internal use
 ============
-These keys can be added by modules but will be removed from registered variables, they are 'consumed' by Ansible itself.
+These keys can be added by modules but will be removed from registered variables; they are 'consumed' by Ansible itself.
 
 ansible_facts
 `````````````
@@ -65,7 +68,7 @@ This key should contain a dictionary which will be appended to the facts assigne
 
 exception
 `````````
-This key can contain traceback information caused by an exception in a module, it will only be displayed on high verbosity (-vvv).
+This key can contain traceback information caused by an exception in a module. It will only be displayed on high verbosity (-vvv).
 
 warnings
 ````````
