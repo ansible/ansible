@@ -8,7 +8,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ``````
 Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
-privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, and others.
+privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu` and others.
 
 
 .. note:: Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
@@ -29,7 +29,7 @@ become_user
     set to user with desired privileges — the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`
 
 become_flags
     (at play or task level) permit to use specific flags for the tasks or role. One common use is to change user to nobody when the shell is set to no login
@@ -89,7 +89,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
