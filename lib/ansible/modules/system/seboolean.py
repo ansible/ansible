@@ -182,6 +182,11 @@ def main():
     result = {}
     result['name'] = name
 
+    if hasattr(selinux, 'selinux_boolean_sub'):
+        # selinux_boolean_sub allows sites to rename a boolean and alias the old name
+        # Feature only available in selinux library since 2012.
+        name = selinux.selinux_boolean_sub(name)
+
     if not has_boolean_value(module, name):
         module.fail_json(msg="SELinux boolean %s does not exist." % name)
 
