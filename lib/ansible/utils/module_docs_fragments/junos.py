@@ -30,14 +30,15 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
+      - Specifies the port to use when building the connection to the remote
         device.  The port value will default to the well known SSH port
         of 22 (for C(transport=cli)) or port 830 (for C(transport=netconf))
+        device.
     required: false
     default: 22
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
+      - Configures the username to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable ANSIBLE_NET_USERNAME will be used instead.
@@ -60,7 +61,7 @@ options:
     required: false
   provider:
     description:
-      - Convience method that allows all M(ios) arguments to be passed as
+      - Convenience method that allows all I(ios) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
