@@ -45,7 +45,7 @@ Some modules execute command line utilities or are geared for executing commands
 
 stderr_lines
 ````````````
-When c(stderr) is returned we also always provide this field wich is a list of strings, one item per line from the original.
+When c(stderr) is returned we also always provide this field which is a list of strings, one item per line from the original.
 
 stdout
 ``````
@@ -53,7 +53,7 @@ Some modules execute command line utilities or are geared for executing commands
 
 stdout_lines
 ````````````
-When c(stdout) is returned we also always provide this field wich is a list of strings, one item per line from the original.
+When c(stdout) is returned we also always provide this field which is a list of strings, one item per line from the original.
 
 Internal use
 ============
