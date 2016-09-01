@@ -131,6 +131,8 @@ class TestPlayContext(unittest.TestCase):
         pfexec_flags = ''
         doas_exe    = 'doas'
         doas_flags  = ' -n  -u foo '
+        ksu_exe = 'ksu'
+        ksu_flags = ''
         dzdo_exe   = 'dzdo'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
@@ -163,6 +165,10 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_method = 'doas'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
+
+        play_context.become_method = 'ksu'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags, default_exe, play_context.success_key, default_cmd))
 
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
