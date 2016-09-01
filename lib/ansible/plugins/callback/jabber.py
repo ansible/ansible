@@ -94,5 +94,5 @@ class CallbackModule(CallbackBase):
             self.send_msg("%s: Failures detected \n%s \nHost: %s\n Failed at:\n%s" % (name, self.task, h, out))
         else:
             out = self.debug
-            self.send_msg("Great! \n Playbook %s complited:\n%s \n Last task debug:\n %s" % (name,s, out))
+            self.send_msg("Great! \n Playbook %s completed:\n%s \n Last task debug:\n %s" % (name,s, out))
 
