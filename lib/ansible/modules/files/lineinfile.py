@@ -163,13 +163,15 @@ def write_changes(module, b_lines, dest):
     if validate:
         if "%s" not in validate:
             module.fail_json(msg="validate must contain %%s: %s" % (validate))
-        (rc, out, err) = module.run_command(to_bytes(validate % tmpfile))
+        (rc, out, err) = module.run_command(to_bytes(validate % tmpfile, errors='surrogate_or_strict'))
         valid = rc == 0
         if rc != 0:
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc, err))
     if valid:
-        module.atomic_move(tmpfile, os.path.realpath(dest), unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile,
+                to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
+                unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):
@@ -193,7 +195,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    b_dest = to_bytes(dest)
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
@@ -210,12 +212,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         diff['before'] = to_native(b('').join(b_lines))
 
     if regexp is not None:
-        bre_m = re.compile(to_bytes(regexp))
+        bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
 
     if insertafter not in (None, 'BOF', 'EOF'):
-        bre_ins = re.compile(to_bytes(insertafter))
+        bre_ins = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
     elif insertbefore not in (None, 'BOF'):
-        bre_ins = re.compile(to_bytes(insertbefore))
+        bre_ins = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
     else:
         bre_ins = None
 
@@ -223,7 +225,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # index[1] is the line num where insertafter/inserbefore has been found
     index = [-1, -1]
     m = None
-    b_line = to_bytes(line)
+    b_line = to_bytes(line, errors='surrogate_or_strict')
     for lineno, b_cur_line in enumerate(b_lines):
         if regexp is not None:
             match_found = bre_m.search(b_cur_line)
@@ -243,7 +245,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     msg = ''
     changed = False
     # Regexp matched a line in the file
-    b_linesep = to_bytes(os.linesep)
+    b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
@@ -309,7 +311,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
 def absent(module, dest, regexp, line, backup):
 
-    b_dest = to_bytes(dest)
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         module.exit_json(changed=False, msg="file not present")
 
@@ -327,10 +329,10 @@ def absent(module, dest, regexp, line, backup):
         diff['before'] = to_native(b('').join(b_lines))
 
     if regexp is not None:
-        bre_c = re.compile(to_bytes(regexp))
+        bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
     found = []
 
-    b_line = to_bytes(line)
+    b_line = to_bytes(line, errors='surrogate_or_strict')
     def matcher(b_cur_line):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)
@@ -391,7 +393,7 @@ def main():
     backrefs = params['backrefs']
     dest = params['dest']
 
-    b_dest = to_bytes(dest)
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if os.path.isdir(b_dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
 
