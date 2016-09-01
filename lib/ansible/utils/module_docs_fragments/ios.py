@@ -30,14 +30,13 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
-        device.  The port value will default to the well known SSH port
-        of 22
+      - Specifies the port to use when buiding the connection to the remote.
+        device.
     required: false
     default: 22
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
+      - Configures the username to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable ANSIBLE_NET_USERNAME will be used instead.
@@ -60,9 +59,9 @@ options:
     required: false
   authorize:
     description:
-      - Instructs the module to enter priviledged mode on the remote device
+      - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode. If the value
+        attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         ANSIBLE_NET_AUTHORIZE will be used instead.
     required: false

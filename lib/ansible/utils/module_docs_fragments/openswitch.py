@@ -31,21 +31,21 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
-        device.  This value applies to either I(cli) or I().  The port
-        value will default to the approriate transport common port if
+      - Specifies the port to use when building the connection to the remote
+        device.  This value applies to either I(cli) or I(rest).  The port
+        value will default to the appropriate transport common port if
         none is provided in the task.  (cli=22, http=80, https=443).  Note
         this argument does not affect the SSH transport.
     required: false
     default: 0 (use common port)
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
+      - Configures the username to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
         either the CLI login or the eAPI authentication depending on which
         transport is used. Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_USERNAME will be used instead.
+        environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
@@ -53,7 +53,7 @@ options:
         the remote device.  This is a common argument used for either I(cli)
         or I(rest) transports.  Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_PASSWORD will be used instead.
+        environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
   ssh_keyfile:
@@ -61,7 +61,7 @@ options:
       - Specifies the SSH key to use to authenticate the connection to
         the remote device.  This argument is only used for the I(cli)
         transports. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+        environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
     required: false
   transport:
     description:
@@ -75,13 +75,13 @@ options:
     description:
       - Configures the I(transport) to use SSL if set to true only when the
         I(transport) argument is configured as rest.  If the transport
-        argument is not rest, this value is ignored
+        argument is not I(rest), this value is ignored.
     required: false
     default: yes
     choices: ['yes', 'no']
   provider:
     description:
-      - Convience method that allows all M(openswitch) arguments to be passed as
+      - Convenience method that allows all I(openswitch) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
