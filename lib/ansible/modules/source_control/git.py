@@ -483,7 +483,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
 def is_remote_tag(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if to_bytes(version) in out:
+    if to_bytes(version, errors='surrogate_or_strict') in out:
         return True
     else:
         return False
@@ -513,7 +513,7 @@ def get_tags(git_path, module, dest):
 def is_remote_branch(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if to_bytes(version) in out:
+    if to_bytes(version, errors='surrogate_or_strict') in out:
         return True
     else:
         return False
