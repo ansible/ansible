@@ -641,13 +641,14 @@ class AnsibleModule(object):
         self.cleanup_files = []
         self._debug = False
         self._diff = False
+        self._tee_output = False
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_tee_output']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1290,6 +1291,9 @@ class AnsibleModule(object):
 
             elif k == '_ansible_module_name':
                 self._name = v
+
+            elif k == '_ansible_tee_output':
+                self._tee_output = self.boolean(v)
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -2186,8 +2190,21 @@ class AnsibleModule(object):
             # of the _communicate() function in ssh.py
 
             stdout = b('')
+            stdoutfile = None
             stderr = b('')
+            stderrfile = None
             rpipes = [cmd.stdout, cmd.stderr]
+
+            if self._tee_output and 'ANSIBLE_TMPDIR' in os.environ:
+                tmpdir = os.environ['ANSIBLE_TMPDIR']
+                try:
+                    stdoutfile = open(os.path.join(tmpdir,'stdout'), 'wb', 0)
+                    stderrfile = open(os.path.join(tmpdir,'stderr'), 'wb', 0)
+                except (OSError, IOError):
+                    e = get_exception()
+                    # TODO Should this be fatal?  How do we properly log this?
+                    stdoutfile = None
+                    stderrfile = None
 
             if data:
                 if not binary_data:
@@ -2202,11 +2219,15 @@ class AnsibleModule(object):
                 if cmd.stdout in rfd:
                     dat = os.read(cmd.stdout.fileno(), 9000)
                     stdout += dat
+                    if stdoutfile:
+                        stdoutfile.write(dat)
                     if dat == b(''):
                         rpipes.remove(cmd.stdout)
                 if cmd.stderr in rfd:
                     dat = os.read(cmd.stderr.fileno(), 9000)
                     stderr += dat
+                    if stderrfile:
+                        stderrfile.write(dat)
                     if dat == b(''):
                         rpipes.remove(cmd.stderr)
                 # if we're checking for prompts, do it now
