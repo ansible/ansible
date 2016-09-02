@@ -20,15 +20,13 @@ DOCUMENTATION = '''
 ---
 module: nxos_overlay_global
 version_added: "2.2"
-short_description: Handles the detection of duplicate IP or MAC addresses
+short_description: Configures anycast gateway MAC of the switch.
 description:
-    - Handles the detection of duplicate IP or MAC addresses based on the
-      number of moves in a given time-interval (seconds). Also configures
-      anycast gateway MAC of the switch.
+    - Configures anycast gateway MAC of the switch.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - 'default' restores params default value
+    - default, where supported, restores params default value
     - Supported MAC address format are "E.E.E", "EE-EE-EE-EE-EE-EE",
       "EE:EE:EE:EE:EE:EE" and "EEEE.EEEE.EEEE"
 options:
