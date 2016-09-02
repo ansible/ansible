@@ -5,6 +5,9 @@
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
 MANPATH=${MANPATH-""}
+PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
+PYTHON_BIN=${PYTHON_BIN-$PYTHON}
+
 verbosity=${1-info} # Defaults to `info' if unspecified
 
 if [ "$verbosity" = -q ]; then
@@ -24,7 +27,7 @@ else
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+FULL_PATH=$($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
@@ -45,7 +48,7 @@ gen_egg_info()
     if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
         \rm -rf "$PREFIX_PYTHONPATH/ansible.egg-info"
     fi
-    python setup.py egg_info
+    $PYTHON_BIN setup.py egg_info
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
