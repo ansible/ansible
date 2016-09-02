@@ -58,26 +58,33 @@ class IncludeRole(Task):
         self._from_files = {}
         self._block = block
         self._parent_role = role
-        #self.requires_templating = False
 
 
-    def get_block_list(self, variable_manager=None, loader=None):
+    def get_block_list(self, play=None, variable_manager=None, loader=None):
 
-        ri = RoleInclude.load(self._role_name, play=self._block._play, variable_manager=variable_manager, loader=loader)
+        # only need play passed in when dynamic
+        if play is None:
+            myplay =  self._block._play
+        else:
+            myplay = play
+            print(play.uuid)
+            print(self._block._play.uuid)
+
+        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
 
         #build role
-        actual_role = Role.load(ri, self._block._play, parent_role=self._parent_role, from_files=self._from_files)
+        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
 
         # compile role
-        blocks = actual_role.compile(play=self._block._play)
+        blocks = actual_role.compile(play=myplay)
 
         # set parent to ensure proper inheritance
         for b in blocks:
             b._parent = self._block
 
         # updated available handlers in play
-        self._block._play.handlers = self._block._play.handlers + actual_role.get_handler_blocks(play=self._block._play)
+        myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
 
         return blocks
 

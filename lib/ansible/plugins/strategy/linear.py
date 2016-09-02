@@ -281,12 +281,12 @@ class StrategyModule(StrategyBase):
                 host_results.extend(results)
 
                 for hr in results:
-                    print(hr._task)
                     # handle include_role
                     if hr._task.action == 'include_role' and not hr.is_skipped():
                         display.debug("generating all_blocks data for role")
+                        print(iterator._play._uuid)
                         for host in hosts_left:
-                            blocks = hr._task.get_block_list(variable_manager=self._variable_manager, loader=self._loader)
+                            blocks = hr._task.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader)
                             iterator.add_tasks(host, blocks)
                         continue
 
