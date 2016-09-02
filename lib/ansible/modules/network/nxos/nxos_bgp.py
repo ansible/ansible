@@ -281,7 +281,68 @@ EXAMPLES = '''
       asn=65535
       vrf=default
       state=present
-      transport=cli
+      username: "{{ un }}"
+      password: "{{ pwd }}"
+      host: "{{ inventory_hostname }}"
+'''
+
+RETURN = '''
+proposed:
+    description: k/v pairs of parameters passed into module
+    returned: always
+    type: dict
+    sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
+existing:
+    description: k/v pairs of existing BGP configuration
+    type: dict
+    sample: {"asn": "65535", "bestpath_always_compare_med": false,
+            "bestpath_aspath_multipath_relax": false,
+            "bestpath_compare_neighborid": false,
+            "bestpath_compare_routerid": false,
+            "bestpath_cost_community_ignore": false,
+            "bestpath_med_confed": false,
+            "bestpath_med_missing_as_worst": false,
+            "bestpath_med_non_deterministic": false, "cluster_id": "",
+            "confederation_id": "", "confederation_peers": "",
+            "graceful_restart": true, "graceful_restart_helper": false,
+            "graceful_restart_timers_restart": "120",
+            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
+            "log_neighbor_changes": false, "maxas_limit": "",
+            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
+            "router_id": "11.11.11.11", "suppress_fib_pending": false,
+            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
+            "timer_bgp_keepalive": "60", "vrf": "test"}
+end_state:
+    description: k/v pairs of BGP configuration after module execution
+    returned: always
+    type: dict
+    sample: {"asn": "65535", "bestpath_always_compare_med": false,
+            "bestpath_aspath_multipath_relax": false,
+            "bestpath_compare_neighborid": false,
+            "bestpath_compare_routerid": false,
+            "bestpath_cost_community_ignore": false,
+            "bestpath_med_confed": false,
+            "bestpath_med_missing_as_worst": false,
+            "bestpath_med_non_deterministic": false, "cluster_id": "",
+            "confederation_id": "", "confederation_peers": "",
+            "graceful_restart": true, "graceful_restart_helper": false,
+            "graceful_restart_timers_restart": "120",
+            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
+            "log_neighbor_changes": false, "maxas_limit": "",
+            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
+            "router_id": "1.1.1.1",  "suppress_fib_pending": false,
+            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
+            "timer_bgp_keepalive": "60", "vrf": "test"}
+updates:
+    description: commands sent to the device
+    returned: always
+    type: list
+    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+changed:
+    description: check to see if a change was made on the device
+    returned: always
+    type: boolean
+    sample: true
 '''
 
 # COMMON CODE FOR MIGRATION
@@ -291,9 +352,13 @@ import time
 import collections
 import itertools
 import shlex
-import itertools
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+from ansible.module_utils.urls import fetch_url
+
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 
@@ -658,14 +723,282 @@ def argument_spec():
     )
 nxos_argument_spec = argument_spec()
 
-def get_config(module):
+
+NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+NET_COMMON_ARGS = dict(
+    host=dict(required=True),
+    port=dict(type='int'),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    transport=dict(default='cli', choices=['cli', 'nxapi']),
+    use_ssl=dict(default=False, type='bool'),
+    validate_certs=dict(default=True, type='bool'),
+    provider=dict(type='dict'),
+    timeout=dict(default=10, type='int')
+)
+
+NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
+
+NXAPI_ENCODINGS = ['json', 'xml']
+
+CLI_PROMPTS_RE = [
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"syntax error"),
+    re.compile(r"unknown command")
+]
+
+
+def to_list(val):
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
+
+
+class Nxapi(object):
+
+    def __init__(self, module):
+        self.module = module
+
+        # sets the module_utils/urls.py req parameters
+        self.module.params['url_username'] = module.params['username']
+        self.module.params['url_password'] = module.params['password']
+
+        self.url = None
+        self._nxapi_auth = None
+
+    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
+        """Encodes a NXAPI JSON request message
+        """
+        if isinstance(commands, (list, set, tuple)):
+            commands = ' ;'.join(commands)
+
+        if encoding not in NXAPI_ENCODINGS:
+            msg = 'invalid encoding, received %s, exceped one of %s' % \
+                    (encoding, ','.join(NXAPI_ENCODINGS))
+            self.module_fail_json(msg=msg)
+
+        msg = {
+            'version': version,
+            'type': command_type,
+            'chunk': chunk,
+            'sid': sid,
+            'input': commands,
+            'output_format': encoding
+        }
+        return dict(ins_api=msg)
+
+    def connect(self):
+        host = self.module.params['host']
+        port = self.module.params['port']
+
+        if self.module.params['use_ssl']:
+            proto = 'https'
+            if not port:
+                port = 443
+        else:
+            proto = 'http'
+            if not port:
+                port = 80
+
+        self.url = '%s://%s:%s/ins' % (proto, host, port)
+
+    def send(self, commands, command_type='cli_show_ascii', encoding='json'):
+        """Send commands to the device.
+        """
+        clist = to_list(commands)
+
+        if command_type not in NXAPI_COMMAND_TYPES:
+            msg = 'invalid command_type, received %s, exceped one of %s' % \
+                    (command_type, ','.join(NXAPI_COMMAND_TYPES))
+            self.module_fail_json(msg=msg)
+
+        data = self._get_body(clist, command_type, encoding)
+        data = self.module.jsonify(data)
+
+        headers = {'Content-Type': 'application/json'}
+        if self._nxapi_auth:
+            headers['Cookie'] = self._nxapi_auth
+
+        response, headers = fetch_url(self.module, self.url, data=data,
+                headers=headers, method='POST')
+
+        self._nxapi_auth = headers.get('set-cookie')
+
+        if headers['status'] != 200:
+            self.module.fail_json(**headers)
+
+        response = self.module.from_json(response.read())
+        result = list()
+
+        output = response['ins_api']['outputs']['output']
+        for item in to_list(output):
+            if item['code'] != '200':
+                self.module.fail_json(**item)
+            else:
+                result.append(item['body'])
+
+        return result
+
+
+class Cli(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.shell = None
+
+    def connect(self, **kwargs):
+        host = self.module.params['host']
+        port = self.module.params['port'] or 22
+
+        username = self.module.params['username']
+        password = self.module.params['password']
+        timeout = self.module.params['timeout']
+        key_filename = self.module.params['ssh_keyfile']
+
+        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
+
+        try:
+            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
+                    errors_re=CLI_ERRORS_RE)
+            self.shell.open(host, port=port, username=username,
+                    password=password, key_filename=key_filename,
+                    allow_agent=allow_agent, timeout=timeout)
+        except ShellError:
+            e = get_exception()
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
+            self.module.fail_json(msg=msg)
+
+    def send(self, commands, encoding='text'):
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            e = get_exception()
+            self.module.fail_json(msg=e.message, commands=commands)
+
+
+class NetworkModule(AnsibleModule):
+
+    def __init__(self, *args, **kwargs):
+        super(NetworkModule, self).__init__(*args, **kwargs)
+        self.connection = None
+        self._config = None
+        self._connected = False
+
+    @property
+    def connected(self):
+        return self._connected
+
+    @property
+    def config(self):
+        if not self._config:
+            self._config = self.get_config()
+        return self._config
+
+    def _load_params(self):
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
+        for key, value in provider.items():
+            if key in NET_COMMON_ARGS:
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
+
+    def connect(self):
+        cls = globals().get(str(self.params['transport']).capitalize())
+        try:
+            self.connection = cls(self)
+        except TypeError:
+            e = get_exception()
+            self.fail_json(msg=e.message)
+
+        self.connection.connect()
+
+        if self.params['transport'] == 'cli':
+            self.connection.send('terminal length 0')
+
+        self._connected = True
+
+    def configure(self, commands):
+        commands = to_list(commands)
+        if self.params['transport'] == 'cli':
+            return self.configure_cli(commands)
+        else:
+            return self.execute(commands, command_type='cli_conf')
+
+    def configure_cli(self, commands):
+        commands = to_list(commands)
+        commands.insert(0, 'configure')
+        responses = self.execute(commands)
+        responses.pop(0)
+        return responses
+
+    def execute(self, commands, **kwargs):
+        if not self.connected:
+            self.connect()
+        return self.connection.send(commands, **kwargs)
+
+    def disconnect(self):
+        self.connection.close()
+        self._connected = False
+
+    def parse_config(self, cfg):
+        return parse(cfg, indent=2)
+
+    def get_config(self):
+        cmd = 'show running-config'
+        if self.params.get('include_defaults'):
+            cmd += ' all'
+        response = self.execute(cmd)
+        return response[0]
+
+
+def get_module(**kwargs):
+    """Return instance of NetworkModule
+    """
+    argument_spec = NET_COMMON_ARGS.copy()
+    if kwargs.get('argument_spec'):
+        argument_spec.update(kwargs['argument_spec'])
+    kwargs['argument_spec'] = argument_spec
+
+    module = NetworkModule(**kwargs)
+
+    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
+        module.fail_json(msg='paramiko is required but does not appear to be installed')
+
+    return module
+
+
+def custom_get_config(module, include_defaults=False):
     config = module.params['running_config']
     if not config:
-        config = module.get_config()
+        cmd = 'show running-config'
+        if module.params['include_defaults']:
+            cmd += ' all'
+        if module.params['transport'] == 'nxapi':
+            config = module.execute([cmd], command_type='cli_show_ascii')[0]
+        else:
+            config = module.execute([cmd])[0]
+
     return CustomNetworkConfig(indent=2, contents=config)
 
 def load_config(module, candidate):
-    config = get_config(module)
+    config = custom_get_config(module)
 
     commands = candidate.difference(config)
     commands = [str(c).strip() for c in commands]
@@ -686,12 +1019,8 @@ def load_config(module, candidate):
     return result
 # END OF COMMON CODE
 
-import re
 
 WARNINGS = []
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
-ACCEPTED = BOOLEANS_TRUE + BOOLEANS_FALSE + ['default']
 BOOL_PARAMS = [
     'bestpath_always_compare_med',
     'bestpath_aspath_multipath_relax',
@@ -805,6 +1134,15 @@ def get_custom_value(config, arg):
                 if REGEX.search(config):
                     value = True
 
+    elif arg == 'enforce_first_as' or arg == 'fast_external_fallover':
+        REGEX = re.compile(r'no\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        value = True
+        try:
+            if REGEX.search(config):
+                value = False
+        except TypeError:
+            value = True
+
     elif arg == 'confederation_peers':
         REGEX = re.compile(r'(?:confederation peers\s)(?P<value>.*)$', re.M)
         value = ''
@@ -837,10 +1175,14 @@ def get_value(arg, config):
         'event_history_detail',
         'confederation_peers',
         'timer_bgp_hold',
-        'timer_bgp_keepalive'
+        'timer_bgp_keepalive',
+        'enforce_first_as',
+        'fast_external_fallover'
     ]
 
-    if arg in BOOL_PARAMS:
+    if arg in custom:
+        value = get_custom_value(config, arg)
+    elif arg in BOOL_PARAMS:
         REGEX = re.compile(r'\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         value = False
         try:
@@ -848,8 +1190,6 @@ def get_value(arg, config):
                 value = True
         except TypeError:
             value = False
-    elif arg in custom:
-        value = get_custom_value(config, arg)
     else:
         REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         value = ''
@@ -860,7 +1200,7 @@ def get_value(arg, config):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = custom_get_config(module)
 
     try:
         asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
@@ -921,6 +1261,7 @@ def state_present(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
+
     for key, value in proposed_commands.iteritems():
         if value is True:
             commands.append(key)
@@ -935,9 +1276,6 @@ def state_present(module, existing, proposed, candidate):
                     commands.append('no {0} {1}'.format(key, ' '.join(existing_value)))
                 else:
                     commands.append('no {0} {1}'.format(key, existing_value))
-            else:
-                if key.replace(' ', '_').replace('-', '_') in BOOL_PARAMS:
-                    commands.append('no {0}'.format(key))
         else:
             if key == 'confederation peers':
                 existing_confederation_peers = existing.get('confederation_peers')
@@ -1028,40 +1366,40 @@ def main():
     argument_spec = dict(
             asn=dict(required=True, type='str'),
             vrf=dict(required=False, type='str', default='default'),
-            bestpath_always_compare_med=dict(required=False, choices=ACCEPTED),
-            bestpath_aspath_multipath_relax=dict(required=False, choices=ACCEPTED),
-            bestpath_compare_neighborid=dict(required=False, choices=ACCEPTED),
-            bestpath_compare_routerid=dict(required=False, choices=ACCEPTED),
-            bestpath_cost_community_ignore=dict(required=False, choices=ACCEPTED),
-            bestpath_med_confed=dict(required=False, choices=ACCEPTED),
-            bestpath_med_missing_as_worst=dict(required=False, choices=ACCEPTED),
-            bestpath_med_non_deterministic=dict(required=False, choices=ACCEPTED),
+            bestpath_always_compare_med=dict(required=False, type='bool'),
+            bestpath_aspath_multipath_relax=dict(required=False, type='bool'),
+            bestpath_compare_neighborid=dict(required=False, type='bool'),
+            bestpath_compare_routerid=dict(required=False, type='bool'),
+            bestpath_cost_community_ignore=dict(required=False, type='bool'),
+            bestpath_med_confed=dict(required=False, type='bool'),
+            bestpath_med_missing_as_worst=dict(required=False, type='bool'),
+            bestpath_med_non_deterministic=dict(required=False, type='bool'),
             cluster_id=dict(required=False, type='str'),
             confederation_id=dict(required=False, type='str'),
             confederation_peers=dict(required=False, type='str'),
-            disable_policy_batching=dict(required=False, choices=ACCEPTED),
+            disable_policy_batching=dict(required=False, type='bool'),
             disable_policy_batching_ipv4_prefix_list=dict(required=False, type='str'),
             disable_policy_batching_ipv6_prefix_list=dict(required=False, type='str'),
-            enforce_first_as=dict(required=False, choices=ACCEPTED),
+            enforce_first_as=dict(required=False, type='bool'),
             event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
             event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
             event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
             event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-            fast_external_fallover=dict(required=False, choices=ACCEPTED),
-            flush_routes=dict(required=False, choices=ACCEPTED),
-            graceful_restart=dict(required=False, choices=ACCEPTED),
-            graceful_restart_helper=dict(required=False, choices=ACCEPTED),
+            fast_external_fallover=dict(required=False, type='bool'),
+            flush_routes=dict(required=False, type='bool'),
+            graceful_restart=dict(required=False, type='bool'),
+            graceful_restart_helper=dict(required=False, type='bool'),
             graceful_restart_timers_restart=dict(required=False, type='str'),
             graceful_restart_timers_stalepath_time=dict(required=False, type='str'),
-            isolate=dict(required=False, choices=ACCEPTED),
+            isolate=dict(required=False, type='bool'),
             local_as=dict(required=False, type='str'),
-            log_neighbor_changes=dict(required=False, choices=ACCEPTED),
+            log_neighbor_changes=dict(required=False, type='bool'),
             maxas_limit=dict(required=False, type='str'),
-            neighbor_down_fib_accelerate=dict(required=False, choices=ACCEPTED),
+            neighbor_down_fib_accelerate=dict(required=False, type='bool'),
             reconnect_interval=dict(required=False, type='str'),
             router_id=dict(required=False, type='str'),
-            shutdown=dict(required=False, choices=ACCEPTED),
-            suppress_fib_pending=dict(required=False, choices=ACCEPTED),
+            shutdown=dict(required=False, type='bool'),
+            suppress_fib_pending=dict(required=False, type='bool'),
             timer_bestpath_limit=dict(required=False, type='str'),
             timer_bgp_hold=dict(required=False, type='str'),
             timer_bgp_keepalive=dict(required=False, type='str'),
@@ -1142,17 +1480,10 @@ def main():
     proposed = {}
     for key, value in proposed_args.iteritems():
         if key != 'asn' and key != 'vrf':
-            if value.lower() == 'true':
-                value = True
-            elif value.lower() == 'false':
-                value = False
-            elif value.lower() == 'default':
+            if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
                 if value is None:
-                    if key in BOOL_PARAMS:
-                        value = False
-                    else:
-                        value = 'default'
+                    value = 'default'
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
 
@@ -1184,10 +1515,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
     main()
