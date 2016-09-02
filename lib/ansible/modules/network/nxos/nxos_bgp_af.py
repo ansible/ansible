@@ -204,7 +204,7 @@ options:
     redistribute:
         description:
             - A list of redistribute directives. Multiple redistribute entries
-              are allowed. The list must be in the form of a nested array:
+              are allowed. The list must be in the form of a nested array.
               the first entry of each array defines the source-protocol to
               redistribute from; the second entry defines a route-map name.
               A route-map is highly advised but may be optional on some
