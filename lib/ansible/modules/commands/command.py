@@ -29,7 +29,7 @@ description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), and C("&") will not work (use the M(shell)
+       like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
 options:
   free_form:
