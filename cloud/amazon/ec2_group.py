@@ -163,6 +163,10 @@ def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip',
                     'group_id', 'group_name', 'group_desc',
                     'proto', 'from_port', 'to_port')
+
+    if not isinstance(rule, dict):
+        module.fail_json(msg='Invalid rule parameter type [%s].' % type(rule))
+
     for k in rule:
         if k not in VALID_PARAMS:
             module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
