@@ -18,12 +18,11 @@
 
 DOCUMENTATION = '''
 ---
-module: nxos_vxlan_vtep_vni
+module: nxos_vrf_af
 version_added: "2.2"
-short_description: Creates a Virtual Network Identifier member (VNI)
+short_description: Manages VRF AF
 description:
-    - Creates a Virtual Network Identifier member (VNI) for an NVE
-      overlay interface.
+    - Manages VRF AF
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
