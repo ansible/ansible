@@ -2237,9 +2237,10 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except (OSError, IOError):
             e = get_exception()
-            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
-        except:
-            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+            self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
+        except Exception:
+            e = get_exception()
+            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings
         for key, val in old_env_vals.items():
