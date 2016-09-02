@@ -82,11 +82,12 @@ Target: September 2016
   - **Done:** Support for VyOS network operating system
   - **Done:** Add support for RestConf for IOS/XE
   - Add support for NetConf for IOS/XE
-  - **Done:** Add support for Nokia SR OS modules
-  - **Deferred:** Quagga modules (stretch)
-  - **Deferred:** Bird modules (stretch)
-  - **Deferred:** GoBGP modules (stretch)
   - **Done:** Support for Dell Networking OS10
+  - **Done:** Add support for Nokia SR OS modules
+  - **Deferred:** (stretch goal) Quagga modules
+  - **Deferred:** (stretch goal) Bird modules
+  - **Deferred:** (stretch goal) GoBGP modules
+  
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
 
