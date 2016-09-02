@@ -49,7 +49,7 @@ class IncludeRole(Task):
     _static = FieldAttribute(isa='bool', default=None, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
 
-    def __init__(self, block, role, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None):
 
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
 

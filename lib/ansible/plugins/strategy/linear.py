@@ -280,13 +280,15 @@ class StrategyModule(StrategyBase):
                 results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
-                # handle include_role
-                if results and results[0]._task == 'include_role':
-                    display.debug("generating all_blocks data for role")
-                    for host in hosts_left:
-                        blocks = results[0]._task. get_block_list(variable_manager=self._variable_manager, loader=self._laoder)
-                        iterator.add_tasks(host, blocks)
-                    continue
+                for hr in results:
+                    print(hr._task)
+                    # handle include_role
+                    if hr._task.action == 'include_role' and not hr.is_skipped():
+                        display.debug("generating all_blocks data for role")
+                        for host in hosts_left:
+                            blocks = hr._task.get_block_list(variable_manager=self._variable_manager, loader=self._loader)
+                            iterator.add_tasks(host, blocks)
+                        continue
 
                 try:
                     included_files = IncludedFile.process_include_results(
