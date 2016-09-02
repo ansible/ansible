@@ -855,10 +855,9 @@ def transfer_file(module, dest):
         else:
             module.fail_json(msg='Could not transfer file. There was an error '
                              'during transfer. Please make sure remote '
-                             'permissions are set.', temp_size=temp_size, file_size=file_size)
-    finally:
-        scp.close()
-
+                             'permissions are set.', temp_size=temp_size,
+                             file_size=file_size)
+    scp.close()
     return True
 
 
