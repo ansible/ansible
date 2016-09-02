@@ -169,7 +169,7 @@ options:
               inject. Each array entry must first specify the inject-map name,
               secondly an exist-map name, and optionally the copy-attributes
               keyword which indicates that attributes should be copied from
-              the aggregate. Example: [['lax_inject_map', 'lax_exist_map'],
+              the aggregate. For example [['lax_inject_map', 'lax_exist_map'],
               ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'],
               ['fsd_inject_map', 'fsd_exist_map']]
         required: false
@@ -978,10 +978,6 @@ def load_config(module, candidate):
 # END OF COMMON CODE
 
 WARNINGS = []
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
-BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
-ACCEPTED = BOOLEANS_TRUE + BOOLEANS_FALSE + ['default']
 BOOL_PARAMS = [
     'additional_paths_install',
     'additional_paths_receive',
