@@ -427,7 +427,7 @@ def main():
         elif state in ['installed', 'present', 'latest']:
             packages_changed, retvals = package_present(module, name, state == 'latest')
 
-    retvals['changed'] = retvals['rc'] == 0 and packages_changed
+    retvals['changed'] = retvals['rc'] == 0 and bool(packages_changed)
 
     if module._diff:
         set_diff(module, retvals, packages_changed)
