@@ -893,8 +893,9 @@ def main():
         try:
             transfer_file(module, dest)
             transfer_status = 'Sent'
-        except Exception as e:
-            module.fail_json(msg=str(e))
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg=str(clie))
 
     if remote_file is None:
         remote_file = os.path.basename(local_file)
