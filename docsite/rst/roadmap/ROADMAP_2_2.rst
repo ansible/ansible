@@ -34,19 +34,21 @@ Target: September 2016
 
   - AWS
 
-    - Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere)
-    - Refactoring ec2.py to be more digestible
-    - Fix inconsistencies with different authentication methods (STS, environment creds, ~/.aws/credentials)
-    - Ryan Brown and Robyn Bergeron work on bug/PR triage to reduce backlog
+    - Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere) (bumped to 2.3)
+    - Refactoring ec2.py to be more digestible (bumped to 2.3)
+    - Fix inconsistencies with different authentication methods (STS, environment creds, ~/.aws/credentials) (done)
+    - AWS Lambda modules (lambda_execute done, others pending)
+    - Ryan Brown and Robyn Bergeron work on bug/PR triage to reduce backlog (reduced - continuing to work on it)
   - Google (Ryan Brown and Tom Melendez)
 
     - Add support for Google Cloud DNS
+    - Add support for Google Cloud managed instance groups (done)
     - Support restoring instances from snapshots
-    - Improved handling of scratch disks on instances
+    - Improved handling of scratch disks on instances (done)
   - External OpenStack (Stretch goal for this release)
 
     - Ryan with some help from David Shrewsbury (Zuul/Openstack at RedHat).
-    - Support Heat stack resources
+    - Support Heat stack resources (done)
     - Support LBaaS load balancers
   - Azure load balancer: Feature parity for AWS ELB (Stretch Goal)
 
