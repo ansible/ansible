@@ -853,7 +853,8 @@ def main():
         try:
             apply_patch(module, commands)
             changed=True
-        except Exception as e:
+        except ShellError:
+            e = get_exception()
             module.fail_json(msg=str(e))
 
     module.exit_json(changed=changed,
