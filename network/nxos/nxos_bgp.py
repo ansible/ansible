@@ -48,48 +48,48 @@ options:
         description:
             - Enable/Disable MED comparison on paths from different autonomous systems.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_aspath_multipath_relax:
         description:
             - Enable/Disable load sharing across the providers with
               different (but equal-length) AS paths.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_compare_routerid:
         description:
             - Enable/Disable comparison of router IDs for identical eBGP paths.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_cost_community_ignore:
         description:
             - Enable/Disable Ignores the cost community for BGP best-path
               calculations.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_med_confed:
         description:
             - Enable/Disable enforcement of bestpath to do a MED comparison
               only between paths originated within a confederation.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_med_missing_as_worst:
         description:
             - Enable/Disable assigns the value of infinity to received routes that
               do not carry the MED attribute, making these routes the least desirable.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     bestpath_med_non_deterministic:
         description:
             - Enable/Disable deterministic selection of the best MED path from among
               the paths from the same autonomous system.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     cluster_id:
         description:
@@ -110,7 +110,7 @@ options:
         description:
             - Enable/Disable the batching evaluation of prefix advertisements to all peers.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     disable_policy_batching_ipv4_prefix_list:
         description:
@@ -128,7 +128,7 @@ options:
               listed in the AS path attribute for eBGP.  On NX-OS, this property is only supported
               in the global BGP context.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     event_history_cli:
         description:
@@ -158,43 +158,43 @@ options:
             - Enable/Disable immediately reset the session if the link to a
               directly connected BGP peer goes down.  Only supported in the global BGP context.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     flush_routes:
         description:
             - Enable/Disable flush routes in RIB upon controlled restart.
               On NX-OS, this property is only supported in the global BGP context.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     graceful_restart:
         description:
             - Enable/Disable graceful restart.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     graceful_restart_helper:
         description:
             - Enable/Disable graceful restart helper mode.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     graceful_restart_timers_restart:
         description:
             - Set maximum time for a restart sent to the BGP peer.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     graceful_restart_timers_stalepath_time:
         description:
             - Set maximum time that BGP keeps the stale routes from the restarting BGP peer.
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     isolate:
         description:
             - Enable/Disable isolate this router from BGP perspective.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     local_as:
         description:
@@ -205,7 +205,7 @@ options:
         description:
             - Enable/Disable message logging for neighbor up/down event.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     maxas_limit:
         description:
@@ -217,7 +217,7 @@ options:
         description:
             - Enable/Disable handle BGP neighbor down event, due to various reasons.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     reconnect_interval:
         description:
@@ -233,13 +233,13 @@ options:
         description:
             - Administratively shutdown the BGP protocol.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     suppress_fib_pending:
         description:
             - Enable/Disable advertise only routes programmed in hardware to peers.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     timer_bestpath_limit:
         description:
@@ -250,7 +250,7 @@ options:
         description:
             - Enable/Disable update-delay-always option.
         required: false
-        choices: ['true','false', 'default']
+        choices: ['true','false']
         default: null
     timer_bgp_hold:
         description:
