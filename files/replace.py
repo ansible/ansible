@@ -131,6 +131,7 @@ def main():
 
     params = module.params
     dest = os.path.expanduser(params['dest'])
+    diff = dict()
 
     if os.path.isdir(dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
