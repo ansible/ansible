@@ -408,7 +408,7 @@ def create_vpc(module, vpc_conn):
         for subnet in subnets:
             add_subnet = True
             subnet_tags_current = True
-            new_subnet_tags = subnet.get('resource_tags', None)
+            new_subnet_tags = subnet.get('resource_tags', {})
             subnet_tags_delete = []
 
             for csn in current_subnets:
@@ -444,7 +444,7 @@ def create_vpc(module, vpc_conn):
             if add_subnet:
                 try:
                     new_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
-                    new_subnet_tags = subnet.get('resource_tags', None)
+                    new_subnet_tags = subnet.get('resource_tags', {})
                     if new_subnet_tags:
                         # Sometimes AWS takes its time to create a subnet and so using new subnets's id
                         # to create tags results in exception.
