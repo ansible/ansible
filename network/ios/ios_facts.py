@@ -124,6 +124,7 @@ ansible_net_neighbors:
   type: dict
 """
 import re
+import itertools
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
