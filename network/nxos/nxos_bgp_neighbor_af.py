@@ -81,7 +81,7 @@ options:
     advertise_map_exist:
         description:
             - Conditional route advertisement. This property requires two
-              route maps: an advertise-map and an exist-map. Valid values are
+              route maps, an advertise-map and an exist-map. Valid values are
               an array specifying both the advertise-map name and the exist-map
               name, or simply 'default' e.g. ['my_advertise_map',
               'my_exist_map']. This command is mutually exclusive with the
@@ -91,7 +91,7 @@ options:
     advertise_map_non_exist:
         description:
             - Conditional route advertisement. This property requires two
-              route maps: an advertise-map and an exist-map. Valid values are
+              route maps, an advertise-map and an exist-map. Valid values are
               an array specifying both the advertise-map name and the
               non-exist-map name, or simply 'default' e.g.
               ['my_advertise_map', 'my_non_exist_map']. This command is mutually
