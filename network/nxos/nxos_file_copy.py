@@ -894,7 +894,7 @@ def main():
             transfer_file(module, dest)
             transfer_status = 'Sent'
         except ShellError:
-            clie = get_exception():
+            clie = get_exception()
             module.fail_json(msg=str(clie))
 
     if remote_file is None:
