@@ -328,6 +328,7 @@ import stat
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_bytes
 
 
 def format_output(module, path, st, follow, get_md5, get_checksum,
@@ -369,7 +370,7 @@ def format_output(module, path, st, follow, get_md5, get_checksum,
         readable=os.access(path, os.R_OK),
         writeable=os.access(path, os.W_OK),
         excutable=os.access(path, os.X_OK),
-        )
+    )
 
     if stat.S_ISLNK(mode):
         output['lnk_source'] = os.path.realpath(path)
@@ -417,6 +418,7 @@ def main():
     )
 
     path = module.params.get('path')
+    b_path = to_bytes(path, errors='surrogate_or_strict')
     follow = module.params.get('follow')
     get_mime = module.params.get('mime')
     get_md5 = module.params.get('get_md5')
@@ -425,9 +427,9 @@ def main():
 
     try:
         if follow:
-            st = os.stat(path)
+            st = os.stat(b_path)
         else:
-            st = os.lstat(path)
+            st = os.lstat(b_path)
     except OSError:
         e = get_exception()
         if e.errno == errno.ENOENT:
