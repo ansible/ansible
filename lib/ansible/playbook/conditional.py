@@ -64,6 +64,10 @@ class Conditional:
             ds = getattr(self, '_ds')
 
         try:
+            # this allows for direct boolean assignments to conditionals "when: False"
+            if isinstance(self.when, bool):
+                return self.when
+
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
