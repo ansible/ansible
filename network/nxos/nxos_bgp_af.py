@@ -190,7 +190,7 @@ options:
             - Networks to configure. Valid value is a list of network
               prefixes to advertise. The list must be in the form of an array.
               Each entry in the array must include a prefix address and an
-              optional route-map. Example: [['10.0.0.0/16', 'routemap_LA'],
+              optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
               ['192.168.1.1', 'Chicago'], ['192.168.2.0/24],
               ['192.168.3.0/24', 'routemap_NYC']]
         required: false
@@ -209,7 +209,7 @@ options:
               redistribute from; the second entry defines a route-map name.
               A route-map is highly advised but may be optional on some
               platforms, in which case it may be omitted from the array list.
-              Example: [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
+              For example [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
         required: false
         default: null
     suppress_inactive:
