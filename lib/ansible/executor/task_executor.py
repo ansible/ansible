@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import json
 import subprocess
 import sys
 import time
@@ -239,7 +238,7 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item' 
+            # the value may be 'None', so we still need to default it back to 'item'
             loop_var = self._task.loop_control.loop_var or 'item'
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
             loop_pause = self._task.loop_control.pause or 0
@@ -664,7 +663,8 @@ class TaskExecutor:
             else:
                 # see if SSH can support ControlPersist if not use paramiko
                 try:
-                    cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
+                    cmd = subprocess.Popen([ssh_executable, '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     (out, err) = cmd.communicate()
                     err = to_unicode(err)
                     if u"Bad configuration option" in err or u"Usage:" in err:
