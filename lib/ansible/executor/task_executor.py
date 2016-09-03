@@ -425,7 +425,7 @@ class TaskExecutor:
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
             include_variables = self._task.args.copy()
-            role = include_variables.pop('name')
+            role = templar.template(self._task._role_name)
             if not role:
                 return dict(failed=True, msg="No role was specified to include")
             return dict(include_role=role, include_variables=include_variables)

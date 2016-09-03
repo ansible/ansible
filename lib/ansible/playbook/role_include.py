@@ -56,7 +56,6 @@ class IncludeRole(Task):
         self._role_name = None
         self.statically_loaded = False
         self._from_files = {}
-        self._block = block
         self._parent_role = role
 
 
@@ -64,14 +63,13 @@ class IncludeRole(Task):
 
         # only need play passed in when dynamic
         if play is None:
-            myplay =  self._block._play
+            myplay =  self._parent._play
         else:
             myplay = play
-            print(play.uuid)
-            print(self._block._play.uuid)
 
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
+        #ri._role_params.update(self.args) # jimi-c cant we avoid this?
 
         #build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
@@ -81,7 +79,7 @@ class IncludeRole(Task):
 
         # set parent to ensure proper inheritance
         for b in blocks:
-            b._parent = self._block
+            b._parent = self._parent
 
         # updated available handlers in play
         myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
@@ -91,20 +89,29 @@ class IncludeRole(Task):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
-        r = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
-        args = r.preprocess_data(data).get('args', dict())
+        ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        #TODO: use more automated list: for builtin in r.get_attributes():
+        #TODO: use more automated list: for builtin in r.get_attributes(): #jimi-c: doing this to avoid using role_params and conflating include_role specific opts with other tasks
         # set built in's
-        r._role_name =  args.get('name')
+        ir._role_name =  ir.args.get('name')
         for builtin in ['static', 'private']:
-            if args.get(builtin):
-                setattr(r, builtin, args.get(builtin))
+            if ir.args.get(builtin):
+                setattr(ir, builtin, ir.args.get(builtin))
 
         # build options for roles
         for key in ['tasks', 'vars', 'defaults']:
             from_key = key + '_from'
-            if  args.get(from_key):
-                r._from_files[key] = basename(args.get(from_key))
+            if  ir.args.get(from_key):
+                ir._from_files[key] = basename(ir.args.get(from_key))
 
-        return r.load_data(data, variable_manager=variable_manager, loader=loader)
+        return ir.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def copy(self, exclude_parent=False, exclude_tasks=False):
+
+        new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+        new_me.statically_loaded = self.statically_loaded
+        new_me._role_name = self._role_name
+        new_me._from_files = self._from_files.copy()
+        new_me._parent_role = self._parent_role
+
+        return new_me
