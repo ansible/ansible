@@ -35,7 +35,7 @@ options:
       - This argument specifies the port the netconf service should
         listen on for SSH connections.  The default port as defined
         in RFC 6242 is 830.
-    required: true
+    required: false
     default: 830
   state:
     description:
@@ -44,25 +44,38 @@ options:
         I(present) the netconf service will be configured.  If the
         I(state) argument is set to I(absent) the netconf service
         will be removed from the configuration.
-    required: true
+    required: false
     default: present
     choices: ['present', 'absent']
 """
 
 EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  netconf:
+    host: "{{ inventory_hostname }}"
+    username: ansible
+    password: Ansible
+    transport: netconf
+
 - name: enable netconf service on port 830
   junos_netconf:
     listens_on: 830
     state: present
+    provider: "{{ netconf }}"
 
 - name: disable netconf service
   junos_netconf:
     state: absent
+    provider: "{{ netconf }}"
 """
 
 RETURN = """
 """
 import re
+
+from ansible.module_utils.junos import NetworkModule
 
 def parse_port(config):
     match = re.search(r'port (\d+)', config)
@@ -88,8 +101,8 @@ def main():
         transport=dict(default='cli', choices=['cli'])
     )
 
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     state = module.params['state']
     port = module.params['listens_on']
@@ -109,14 +122,11 @@ def main():
     if commands:
         if not module.check_mode:
             comment = 'configuration updated by junos_netconf'
-            module.connection.configure(commands, comment=comment)
+            module.config(commands, comment=comment)
         result['changed'] = True
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.junos import *
 
 if __name__ == '__main__':
     main()
