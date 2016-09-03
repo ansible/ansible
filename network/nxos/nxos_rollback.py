@@ -19,10 +19,13 @@
 DOCUMENTATION = '''
 ---
 module: nxos_rollback
+version_added: "2.2"
 short_description: Set a checkpoint or rollback to a checkpoint
 description:
-    - This module offers the ability to set a configuration checkpoint file or rollback
-      to a configuration checkpoint file on Cisco NXOS switches-
+    - This module offers the ability to set a configuration checkpoint
+      file or rollback to a configuration checkpoint file on Cisco NXOS
+      switches
+extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
@@ -31,12 +34,14 @@ notes:
 options:
     checkpoint_file:
         description:
-            - Name of checkpoint file to create. Mutually exclusive with rollback_to.
+            - Name of checkpoint file to create. Mutually exclusive
+              with rollback_to.
         required: false
         default: null
     rollback_to:
         description:
-            - Name of checkpoint file to rollback to. Mutually exclusive with checkpoint_file.
+            - Name of checkpoint file to rollback to. Mutually exclusive
+              with checkpoint_file.
         required: false
         default: null
 '''
