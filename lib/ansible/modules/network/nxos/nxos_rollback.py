@@ -563,7 +563,7 @@ class Nxapi(object):
             headers['Cookie'] = self._nxapi_auth
 
         response, headers = fetch_url(self.module, self.url, data=data,
-                headers=headers, method='POST')
+                headers=headers, method='POST', timeout=20)
 
         self._nxapi_auth = headers.get('set-cookie')
 
