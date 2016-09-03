@@ -120,7 +120,7 @@ def _run_module(wrapped_cmd, jid, job_path):
 ####################
 if __name__ == '__main__':
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 5:
         print(json.dumps({
             "failed" : True,
             "msg"    : "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile>.  Humans, do not call directly!"
@@ -130,8 +130,9 @@ if __name__ == '__main__':
     jid = "%s.%d" % (sys.argv[1], os.getpid())
     time_limit = sys.argv[2]
     wrapped_module = sys.argv[3]
-    if len(sys.argv) >= 5:
-        argsfile = sys.argv[4]
+    argsfile = sys.argv[4]
+    # consider underscore as no argsfile so we can support passing of additional positional parameters
+    if argsfile != '_':
         cmd = "%s %s" % (wrapped_module, argsfile)
     else:
         cmd = wrapped_module
