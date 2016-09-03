@@ -20,15 +20,17 @@
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
 # Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
+# Updated by Nicolas Simond <contact@nicolas-simond.com>
 #
 # Version 1.0 - July 6th, 2014
 # Version 1.1 - November 11th, 2014
 # Version 1.2 - May 15th, 2015
 # Version 1.3 - April 4th, 2016
+# Version 1.4 - September 3rd, 2016
 
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
-    [int]$CertValidityDays = 365,
+    [int]$CertValidityDays = 1095,
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert
@@ -38,7 +40,7 @@ Function New-LegacySelfSignedCert
 {
     Param (
         [string]$SubjectName,
-        [int]$ValidDays = 365
+        [int]$ValidDays = 1095
     )
 
     $name = New-Object -COM "X509Enrollment.CX500DistinguishedName.1"
@@ -47,7 +49,7 @@ Function New-LegacySelfSignedCert
     $key = New-Object -COM "X509Enrollment.CX509PrivateKey.1"
     $key.ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
     $key.KeySpec = 1
-    $key.Length = 1024
+    $key.Length = 4096
     $key.SecurityDescriptor = "D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)"
     $key.MachineContext = 1
     $key.Create()
