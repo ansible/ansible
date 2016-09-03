@@ -21,15 +21,12 @@ DOCUMENTATION = """
 module: junos_config
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage configuration on remote devices running Junos
+short_description: Manage configuration on devices running Juniper JUNOS
 description:
-  - Provides an abstraction for working
-    with the configuration running on remote Junos devices.  It can perform
-    operations that influence the configuration state.
-  - This module provides an implementation for configuring Juniper
-    JUNOS devices.  The configuration statements must start with either
-    `set` or `delete` and are compared against the current device
-    configuration and only changes are pushed to the device.
+  - This module provides an implementation for working with the active
+    configuration running on Juniper JUNOS devices.  It provides a set
+    of arguments for loading configuration, performing rollback operations
+    and zeroing the active configuration on the device.
 extends_documentation_fragment: junos
 options:
   lines:
@@ -40,6 +37,38 @@ options:
         file in role or playbook root folder in templates directory.
     required: false
     default: null
+  src:
+    description:
+      - The I(src) argument provides a path to the configuration file
+        to load into the remote system.  The path can either be a full
+        system path to the configuration file if the value starts with /
+        or relative to the root of the implemented role or playbook.
+        This arugment is mutually exclusive with the I(lines) and
+        I(parents) arguments.
+    required: false
+    default: null
+    version_added: "2.2"
+  src_format:
+    description:
+      - The I(src_format) argument specifies the format of the configuration
+        found int I(src).  If the I(src_format) argument is not provided,
+        the module will attempt to determine the format of the configuration
+        file specified in I(src).
+    required: false
+    default: null
+    choices: ['xml', 'set', 'text', 'json']
+    version_added: "2.2"
+  update:
+    description:
+      - The I(update) argument controls how the configuration statements
+        are processed on the remote device.  Valid choices for the I(update)
+        argument are I(merge) and I(replace).  When the argument is set to
+        I(merge), the configuration changes are merged with the current
+        device active configuration.
+    required: false
+    default: merge
+    choices: ['merge', 'replace']
+    version_added: "2.2"
   rollback:
     description:
       - The C(rollback) argument instructs the module to rollback the
@@ -82,11 +111,24 @@ options:
         replace the current configuration hierarchy with the one specified
         in the corresponding hierarchy of the source configuration loaded
         from this module.
+      - Note this argument should be considered deprecated.  To achieve
+        the equivalent, set the I(update) argument to C(replace).  This argument
+        will be removed in a future release.
+    required: false
     required: true
-    choices:
-        - yes
-        - no
+    choices: ['yes', 'no']
     default: false
+  backup:
+    description:
+      - This argument will cause the module to create a full backup of
+        the current C(running-config) from the remote device before any
+        changes are made.  The backup file is written to the C(backup)
+        folder in the playbook root directory.  If the directory does not
+        exist, it is created.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
 requirements:
   - junos-eznc
 notes:
@@ -95,118 +137,181 @@ notes:
 """
 
 EXAMPLES = """
-- name: load configuration lines in device
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  netconf:
+    host: "{{ inventory_hostname }}"
+    username: ansible
+    password: Ansible
+
+- name: load configure file into device
   junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname }}
-      - delete interfaces ge-0/0/0 description
+    src: srx.cfg
     comment: update config
+    provider: "{{ netconf }}"
 
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
+    provider: "{{ netconf }}"
 
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
-
-- name: confirm a candidate configuration
-  junos_config:
+    provider: "{{ netconf }}"
 """
 
+RETURN = """
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: path
+  sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+"""
 import re
+import json
+
+from lxml import etree
+
+from ansible.module_utils.junos import NetworkModule, NetworkError
+
 
 DEFAULT_COMMENT = 'configured by junos_config'
 
-def diff_config(candidate, config):
 
-    updates = set()
+def invoke(name, *args, **kwargs):
+    func = globals().get(name)
+    if func:
+        return func(*args, **kwargs)
 
-    for line in candidate:
-        parts = line.split()
-        action = parts[0]
-        cfgline = ' '.join(parts[1:])
+def run(module, result):
+    if module.params['rollback']:
+        action = 'rollback_config'
+    elif module.params['zeroize']:
+        action = 'zeroize_config'
+    else:
+        action = 'load_config'
 
-        if action not in ['set', 'delete']:
-            module.fail_json(msg='line must start with either `set` or `delete`')
+    return invoke(action, module, result)
 
-        elif action == 'set' and cfgline not in config:
-            updates.add(line)
 
-        elif action == 'delete' and not config:
-            updates.add(line)
+def check_args(module, warnings):
+    if module.params['replace'] is True:
+        warnings.append('The replace argument is deprecated, please use '
+                        'update=replace instead.  This argument will be '
+                        'removed in the future')
+    if module.params['lines'] and module.params['update'] == 'replace':
+        module.fail_json(msg='config replace is only allowed when src is specified')
 
-        elif action == 'delete':
-            for cfg in config:
-                if cfg[4:].startswith(cfgline):
-                    updates.add(line)
+def guess_format(config):
+    try:
+        json.loads(config)
+        return 'json'
+    except ValueError:
+        pass
 
-    return list(updates)
+    try:
+        etree.fromstring(config)
+        return 'xml'
+    except etree.XMLSyntaxError:
+        pass
+
+    if config.startswith('set') or config.startswith('delete'):
+        return 'set'
+
+    return 'text'
+
+def backup_config(module, result):
+    result['__backup__'] = module.config.get_config()
+
+def load_config(module, result):
+    comment = module.params['comment']
+    confirm = module.params['confirm']
+
+    update = module.params['update']
+
+    candidate =  module.params['lines'] or module.params['src']
+    commit = not module.check_mode
+
+    config_format = module.params['src_format'] or guess_format(candidate)
+
+    diff = module.config.load_config(candidate, update=update, comment=comment,
+                                     format=config_format, commit=commit,
+                                     confirm=confirm)
+
+    if diff:
+        result['changed'] = True
+        result['diff'] = dict(prepared=diff)
+
+def rollback_config(module, result):
+    rollback = module.params['rollback']
+    comment = module.params['comment']
+
+    commit = not module.check_mode
+
+    diff = module.connection.rollback_config(rollback, commit=commit,
+                                             comment=comment)
+
+    if diff:
+        result['changed'] = True
+        result['diff'] = dict(prepared=diff)
+
+def zeroize_config(module, result):
+    if not module.check_mode:
+        module.cli.run_commands('request system zeroize')
+    result['changed'] = True
+
 
 def main():
 
     argument_spec = dict(
         lines=dict(type='list'),
-        rollback=dict(type='int'),
-        zeroize=dict(default=False, type='bool'),
+
+        src=dict(type='path'),
+        src_format=dict(choices=['xml', 'text', 'set', 'json']),
+
+        # update operations
+        update=dict(default='merge', choices=['merge', 'replace']),
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
+
+        # config operations
+        backup=dict(type='bool', default=False),
+        rollback=dict(type='int'),
+        zeroize=dict(default=False, type='bool'),
+
+        # this argument is deprecated in favor of setting update=replace
+        # and will be removed in a future version
         replace=dict(default=False, type='bool'),
+
         transport=dict(default='netconf', choices=['netconf'])
     )
 
     mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
-                          ('rollback', 'zeroize')]
+                          ('rollback', 'zeroize'), ('lines', 'src'),
+                          ('src', 'zeroize'), ('src', 'rollback')]
 
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
-    rollback = module.params['rollback']
-    zeroize = module.params['zeroize']
+    warnings = list()
+    check_args(module, warnings)
 
-    comment = module.params['comment']
-    confirm = module.params['confirm']
+    if module.params['replace'] is True:
+        module.params['update'] = 'replace'
 
-    if module.params['replace']:
-        action = 'replace'
-    else:
-        action = 'merge'
+    result = dict(changed=False, warnings=warnings)
 
-    lines = module.params['lines']
-    commit = not module.check_mode
+    try:
+        run(module, result)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
 
-    results = dict(changed=False)
+    module.exit_json(**result)
 
-    if lines:
-        config = str(module.get_config(config_format='set')).split('\n')
-        updates = diff_config(lines, config)
-
-        if updates:
-            updates = '\n'.join(updates)
-            diff = module.load_config(updates, action=action, comment=comment,
-                    format='set', commit=commit, confirm=confirm)
-
-            if diff:
-                results['changed'] = True
-                results['diff'] = dict(prepared=diff)
-
-    elif rollback is not None:
-        diff = module.rollback_config(rollback, commit=commit)
-        if diff:
-            results['changed'] = True
-            results['diff'] = dict(prepared=diff)
-
-    elif zeroize:
-        if not module.check_mode:
-            module.run_commands('request system zeroize')
-        results['changed'] = True
-
-    module.exit_json(**results)
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.junos import *
 
 if __name__ == '__main__':
     main()
