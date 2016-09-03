@@ -29,7 +29,7 @@ author:
     - Gabriele Gerbino (@GGabriele)
 notes:
     - When state=default, supported params will be reset to a default state.
-      These include: version, startup_query_interval, startup_query_count,
+      These include version, startup_query_interval, startup_query_count,
       robustness, querier_timeout, query_mrt, query_interval, last_member_qrt,
       last_member_query_count, group_timeout, report_llg, and immediate_leave
     - When state=absent, all configs for oif_prefix, oif_source, and
@@ -40,11 +40,6 @@ notes:
       route-map with 'static-oif'
     - If restart is set to true with other params set, the restart will happen
       last, i.e. after the configuration takes place
-    - While username and password are not required params, they are
-      if you are not using the .netauth file.  .netauth file is recommended
-      as it will clean up the each task in the playbook by not requiring
-      the username and password params for every tasks.
-    - Using the username and password params will override the .netauth file
 options:
     interface:
         description:
