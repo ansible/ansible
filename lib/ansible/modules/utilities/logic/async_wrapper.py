@@ -32,6 +32,8 @@ import signal
 import time
 import syslog
 
+PY3 = sys.version_info[0] == 3
+
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
 
@@ -64,7 +66,7 @@ def daemonize_self():
         e = sys.exc_info()[1]
         sys.exit("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
 
-    dev_null = file('/dev/null','rw')
+    dev_null = open('/dev/null', 'w')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
@@ -85,6 +87,9 @@ def _run_module(wrapped_cmd, jid, job_path):
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, stderr) = script.communicate()
+        if PY3:
+            outdata = outdata.decode('utf-8', 'surrogateescape')
+            stderr = stderr.decode('utf-8', 'surrogateescape')
         result = json.loads(outdata)
         if stderr:
             result['stderr'] = stderr

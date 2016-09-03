@@ -79,7 +79,7 @@ def main():
 
     data = None
     try:
-        data = file(log_path).read()
+        data = open(log_path).read()
         data = json.loads(data)
     except Exception:
         if not data:
