@@ -41,12 +41,8 @@
     src: "testserver.py"
     dest: "{{ output_dir }}/testserver.py"
 
-- name: verify that python2 is installed so this test can continue
-  shell: which python2
-  register: py2
-
 - name: start SimpleHTTPServer
-  shell: cd {{ files_dir }} && {{ py2.stdout }} {{ output_dir}}/testserver.py {{ http_port }}
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
   async: 60 # this test set takes ~15 seconds to run
   poll: 0
 
