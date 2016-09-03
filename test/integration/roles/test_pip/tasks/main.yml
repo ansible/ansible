@@ -37,7 +37,7 @@
     that:
        - "not uninstall_result.changed"
 
-- shell: "python -c 'import {{ pip_test_package }}'"
+- shell: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
   register: absent_result
   ignore_errors: True
 
@@ -58,7 +58,7 @@
     that:
       - "install_result.changed == True"
  
-- shell: "python -c 'import {{ pip_test_package }}'"
+- shell: "{{ ansible_python.executable }} -c 'import {{ pip_test_package }}'"
   register: installed_result
 
 # now remove it to test uninstallation of a package we are sure is installed
