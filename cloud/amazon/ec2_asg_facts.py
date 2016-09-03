@@ -302,7 +302,7 @@ def find_asgs(conn, module, name=None, tags=None):
     name_prog = re.compile(r'^' + name)
     for asg in asgs['AutoScalingGroups']:
         if name:
-            matched_name = name_prog.search(asg['auto_scaling_group_name'])
+            matched_name = name_prog.search(asg['AutoScalingGroupName'])
         else:
             matched_name = True
 
