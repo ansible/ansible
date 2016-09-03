@@ -1947,12 +1947,12 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
             else:
                 b_dest_dir = os.path.dirname(b_dest)
-                # Converting from bytes so that if py3, it will be
-                # surrogateescaped.  If py2, it wil be a noop.  Converting
-                # from text strings could mangle filenames on py2)
-                native_dest_dir = to_native(b_dest_dir)
-                native_suffix = to_native(os.path.basename(b_dest))
-                native_prefix = '.ansible_tmp'
+                # Use bytes here.  In the shippable CI, this fails with
+                # a UnicodeError with surrogateescape'd strings for an unknown
+                # reason (doesn't happen in a local Ubuntu16.04 VM)
+                native_dest_dir = b_dest_dir
+                native_suffix = os.path.basename(b_dest)
+                native_prefix = b('.ansible_tmp')
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
                         prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)

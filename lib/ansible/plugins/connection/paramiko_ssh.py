@@ -40,6 +40,7 @@ from binascii import hexlify
 from ansible.compat.six import iteritems
 
 from ansible import constants as C
+from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
@@ -100,7 +101,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
+            inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
             self.connection.connection_unlock()
@@ -274,9 +275,9 @@ class Connection(ConnectionBase):
 
         cmd = to_bytes(cmd, errors='strict')
 
-        no_prompt_out = ''
-        no_prompt_err = ''
-        become_output = ''
+        no_prompt_out = b''
+        no_prompt_err = b''
+        become_output = b''
 
         try:
             chan.exec_command(cmd)
@@ -317,8 +318,8 @@ class Connection(ConnectionBase):
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
-        stdout = ''.join(chan.makefile('rb', bufsize))
-        stderr = ''.join(chan.makefile_stderr('rb', bufsize))
+        stdout = b''.join(chan.makefile('rb', bufsize))
+        stderr = b''.join(chan.makefile_stderr('rb', bufsize))
 
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
