@@ -1,4 +1,1 @@
 s/ pull / /
-s/ no_log / /
-s/ test_async_conditional / /
-s/ test_binary_modules$/ /

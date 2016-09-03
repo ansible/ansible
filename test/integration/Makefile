@@ -348,4 +348,4 @@ test_async:
 	ANSIBLE_DEBUG=0 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS)
 	# Verify that the warning exists by examining debug output.
 	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS) \
-	| grep -q 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)'
+	| grep 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)' > /dev/null
