@@ -1952,7 +1952,7 @@ class AnsibleModule(object):
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
                 native_dest_dir = b_dest_dir
                 native_suffix = os.path.basename(b_dest)
-                native_prefix = b'.ansible_tmp'
+                native_prefix = b('.ansible_tmp')
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
                         prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
