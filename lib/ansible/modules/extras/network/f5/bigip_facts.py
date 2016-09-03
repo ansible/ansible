@@ -1641,7 +1641,7 @@ def main():
         regex = fnmatch.translate(fact_filter)
     else:
         regex = None
-    include = map(lambda x: x.lower(), module.params['include'])
+    include = [x.lower() for x in module.params['include']]
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
                       'device', 'device_group', 'interface', 'key', 'node',
                       'pool', 'provision', 'rule', 'self_ip', 'software',
