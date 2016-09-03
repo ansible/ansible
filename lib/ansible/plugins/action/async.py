@@ -89,6 +89,9 @@ class ActionModule(ActionBase):
         async_cmd = [env_string, async_module_path, async_jid, async_limit, remote_module_path]
         if argsfile:
             async_cmd.append(argsfile)
+        else:
+            # maintain a fixed number of positional parameters for async_wrapper
+            async_cmd.append('_')
         async_cmd = " ".join([to_unicode(x) for x in async_cmd])
         result.update(self._low_level_execute_command(cmd=async_cmd))
 
