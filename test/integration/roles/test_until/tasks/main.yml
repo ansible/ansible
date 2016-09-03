@@ -1,4 +1,4 @@
-- shell: python -c "import tempfile; print(tempfile.mkstemp()[1])"
+- shell: '{{ ansible_python.executable }} -c "import tempfile; print(tempfile.mkstemp()[1])"'
   register: tempfilepath
 
 - set_fact:
