@@ -42,7 +42,7 @@
 # VERIFY CONTENTS
 
 - name: check what python version ansible is running on
-  command: python -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'
+  command: "{{ ansible_python.executable }} -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'"
   register: pyver
   delegate_to: localhost
 
