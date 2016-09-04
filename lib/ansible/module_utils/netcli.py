@@ -69,7 +69,7 @@ class Cli(object):
             objects.append(self.to_command(cmd, output))
         return self.connection.run_commands(objects)
 
-    def to_command(self, command, output=None, prompt=None, response=None):
+    def to_command(self, command, output=None, prompt=None, response=None, **kwargs):
         output = output or self.default_output
         if isinstance(command, Command):
             return command
@@ -78,7 +78,7 @@ class Cli(object):
             cmd = cmd['command']
         if isinstance(prompt, string_types):
             prompt = re.compile(re.escape(prompt))
-        return Command(command, output, prompt=prompt, response=response)
+        return Command(command, output, prompt=prompt, response=response, **kwargs)
 
     def add_commands(self, commands, output=None, **kwargs):
         for cmd in commands:
@@ -97,8 +97,8 @@ class Cli(object):
 
 class Command(object):
 
-    def __init__(self, command, output=None, prompt=None, is_reboot=False,
-                 response=None, delay=0):
+    def __init__(self, command, output=None, prompt=None, response=None,
+                 **kwargs):
 
         self.command = command
         self.output = output
@@ -107,8 +107,7 @@ class Command(object):
         self.prompt = prompt
         self.response = response
 
-        self.is_reboot = is_reboot
-        self.delay = delay
+        self.args = kwargs
 
     def __str__(self):
         return self.command_string
@@ -132,11 +131,12 @@ class CommandRunner(object):
         self._default_output = module.connection.default_output
 
 
-    def add_command(self, command, output=None, prompt=None, response=None):
+    def add_command(self, command, output=None, prompt=None, response=None,
+                    **kwargs):
         if command in [str(c) for c in self.commands]:
             raise AddCommandError('duplicated command detected', command=command)
         cmd = self.module.cli.to_command(command, output=output, prompt=prompt,
-                                         response=response)
+                                         response=response, **kwargs)
         self.commands.append(cmd)
 
     def get_command(self, command, output=None):
