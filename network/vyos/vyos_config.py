@@ -100,15 +100,6 @@ options:
     required: false
     default: false
     choices: ['yes', 'no']
-  state:
-    description:
-      - The C(state) argument controls the existing state of the config
-        file on disk.  When set to C(present), the configuration should
-        exist on disk and when set to C(absent) the configuration file
-        is removed.  This only applies to the startup configuration.
-    required: false
-    default: present
-    choices: ['present', 'absent']
 """
 
 RETURN = """
@@ -161,11 +152,6 @@ CONFIG_FILTERS = [
     re.compile(r'set system login user \S+ authentication encrypted-password')
 ]
 
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 def check_args(module, warnings):
     if module.params['save'] and module.params['update'] == 'check':
@@ -262,7 +248,7 @@ def load_config(module, commands, result):
         result['changed'] = True
 
 
-def present(module, result):
+def run(module, result):
     # get the current active config from the node or passed in via
     # the config param
     config = get_config(module, result)
@@ -283,12 +269,6 @@ def present(module, result):
                                       'removed, please see the removed key')
 
 
-def absent(module, result):
-    if not module.check_mode:
-        module.cli('rm /config/config.boot')
-    result['changed'] = True
-
-
 def main():
 
     argument_spec = dict(
@@ -304,8 +284,6 @@ def main():
 
         config=dict(),
         save=dict(default=False, type='bool'),
-
-        state=dict(choices=['present', 'absent'], default='present')
     )
 
     mutually_exclusive = [('lines', 'src')]
@@ -314,8 +292,6 @@ def main():
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
-
-    state = module.params['state']
 
     warnings = list()
     check_args(module, warnings)
@@ -326,7 +302,7 @@ def main():
         result['__backup__'] = module.config.get_config()
 
     try:
-        invoke(state, module, result)
+        run(module, result)
     except NetworkError:
         exc = get_exception()
         module.fail_json(msg=str(exc), **exc.kwargs)
