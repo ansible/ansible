@@ -141,15 +141,6 @@ options:
     default: no
     choices: ['yes', 'no']
     version_added: "2.2"
-  state:
-    description:
-      - This argument specifies whether or not the running-config is
-        present on the remote device.  When set to I(absent) the
-        running-config on the remote device is erased.
-    required: false
-    default: no
-    choices: ['yes', 'no']
-    version_added: "2.2"
 """
 
 EXAMPLES = """
@@ -207,11 +198,6 @@ from ansible.module_utils.openswitch import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.netcli import Command
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
 def check_args(module, warnings):
     if module.params['parents']:
         if not module.params['lines'] or module.params['src']:
@@ -253,7 +239,7 @@ def load_config(module, commands, result):
     result['changed'] = module.params['update'] != 'check'
     result['updates'] = commands.split('\n')
 
-def present(module, result):
+def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
 
@@ -282,11 +268,6 @@ def present(module, result):
     if module.params['save'] and not module.check_mode:
         module.config.save_config()
 
-def absent(module, result):
-    if not module.check_mode:
-        module.cli('erase startup-config')
-    result['changed'] = True
-
 def main():
 
     argument_spec = dict(
@@ -313,8 +294,6 @@ def main():
 
         save=dict(type='bool', default=False),
 
-        state=dict(choices=['present', 'absent'], default='present'),
-
         # ops_config is only supported over Cli transport so force
         # the value of transport to be cli
         transport=dict(default='cli', choices=['cli'])
@@ -326,8 +305,6 @@ def main():
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
-
-    state = module.params['state']
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -341,7 +318,7 @@ def main():
         result['__backup__'] = module.config.get_config()
 
     try:
-        invoke(state, module, result)
+        run(module, result)
     except NetworkError:
         exc = get_exception()
         module.fail_json(msg=str(exc))
