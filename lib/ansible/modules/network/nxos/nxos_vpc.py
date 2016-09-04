@@ -141,6 +141,9 @@ changed:
     sample: true
 '''
 
+import json
+import collections
+
 # COMMON CODE FOR MIGRATION
 
 import re
