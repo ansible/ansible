@@ -153,16 +153,6 @@ options:
     required: false
     default: false
     version_added: "2.2"
-  state:
-    description:
-      - The I(state) argument specifies the state of the config
-        file on the device.  When set to present, the configuration
-        is updated based on the values of the module.  When the value
-        is set to absent, the device startup config is erased.
-    required: true
-    default: present
-    choices: ['present', 'absent']
-    version_added: "2.2"
 """
 
 EXAMPLES = """
@@ -209,17 +199,17 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: path
+  sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 """
 import time
 
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.eos import NetworkModule, NetworkError
 from ansible.module_utils.basic import get_exception
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 def check_args(module, warnings):
     if module.params['save'] and module.check_mode:
@@ -278,9 +268,11 @@ def load_config(module, commands, result):
     del result['__session__']
 
     result['diff'] = dict(prepared=diff)
-    result['changed'] = not diff
 
-def present(module, result):
+    if diff:
+        result['changed'] = True
+
+def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
     update = module.params['update']
@@ -311,11 +303,6 @@ def present(module, result):
     if module.params['save'] and not module.check_mode:
         module.config.save_config()
 
-def absent(module, result):
-    if not module.check_mode:
-        module.cli('write erase')
-    result['changed'] = True
-
 def main():
     """ main entry point for module execution
     """
@@ -342,9 +329,7 @@ def main():
         config=dict(),
         defaults=dict(type='bool', default=False),
 
-        save=dict(default=False),
-
-        state=dict(default='present', choices=['absent', 'present'])
+       save=dict(default=False, type='bool'),
     )
 
     mutually_exclusive = [('lines', 'src')]
@@ -353,8 +338,6 @@ def main():
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
-
-    state = module.params['state']
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -368,7 +351,7 @@ def main():
         result['__backup__'] = backup_config(module, result)
 
     try:
-        invoke(state, module, result)
+        run(module, result)
     except NetworkError:
         exc = get_exception()
         module.fail_json(msg=str(exc))
