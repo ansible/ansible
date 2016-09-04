@@ -899,10 +899,10 @@ def main():
             config=dict(),
             save=dict(type='bool', default=False)
     )
-    module = get_module(argument_spec=argument_spec,
-                        required_together=[['timer_bgp_hold',
+    module = get_network_module(argument_spec=argument_spec,
+                                required_together=[['timer_bgp_hold',
                                             'timer_bgp_keepalive']],
-                        supports_check_mode=True)
+                                supports_check_mode=True)
 
     state = module.params['state']
     args =  [
