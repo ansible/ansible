@@ -27,7 +27,7 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. 
       - See U(http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html) for possible filters.
-      - Note: there are no currently supported filters for the DescribeDBInstances API action
+      - Note there are no currently supported filters for the DescribeDBInstances API action
     required: false
     default: null
   db_instance_identifier:
