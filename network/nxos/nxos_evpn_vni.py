@@ -127,6 +127,7 @@ import re
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
 
 try:
     from ansible.module_utils.nxos import get_module
