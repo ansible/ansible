@@ -128,6 +128,8 @@ responses:
   type: list
   sample: ['...', '...']
 """
+from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.asa import NetworkModule
 
 
 def get_config(module):
@@ -166,8 +168,8 @@ def main():
         config=dict()
     )
 
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     lines = module.params['lines']
 
@@ -179,38 +181,22 @@ def main():
 
     module.filter = check_input_acl(lines, module)
     if not module.params['force']:
-        contents = get_config(module)
-        config = NetworkConfig(contents=contents, indent=1)
-
-        candidate = NetworkConfig(indent=1)
-        candidate.add(lines)
-
-        commands = candidate.difference(config, match=match, replace=replace)
+        commands = candidate.difference(config)
+        commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c) for c in commands if c]
     else:
-        commands = []
-        commands.extend(lines)
-
-    result = dict(changed=False)
+        commands = str(candidate).split('\n')
 
     if commands:
-        if before:
-            commands[:0] = before
-
-        if after:
-            commands.extend(after)
-
         if not module.check_mode:
-            commands = [str(c).strip() for c in commands]
-            response = module.configure(commands)
+            response = module.config(commands)
             result['responses'] = response
         result['changed'] = True
 
     result['updates'] = commands
+
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.asa import *
+
 if __name__ == '__main__':
     main()
