@@ -157,16 +157,6 @@ options:
     required: false
     default: false
     version_added: "2.2"
-  state:
-    description:
-      - The I(state) argument specifies the state of the config
-        file on the device.  When set to present, the configuration
-        is updated based on the values of the module.  When the value
-        is set to absent, the device startup config is erased.
-    required: true
-    default: present
-    choices: ['present', 'absent']
-    version_added: "2.2"
 """
 
 
@@ -222,11 +212,6 @@ import time
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.nxos import NetworkModule, NetworkError
 from ansible.module_utils.basic import get_exception
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 def check_args(module, warnings):
     if module.params['save'] and module.check_mode:
@@ -287,7 +272,7 @@ def load_checkpoint(module, result):
         msg = 'unable to rollback configuration'
         module.fail_json(msg=msg, checkpoint=checkpoint, **exc.kwargs)
 
-def present(module, result):
+def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
     update = module.params['update']
@@ -328,11 +313,6 @@ def present(module, result):
         module.config.save_config()
         result['changed'] = True
 
-def absent(module, result):
-    if not module.check_mode:
-        module.cli('write erase')
-    result['changed'] = True
-
 def main():
     """ main entry point for module execution
     """
@@ -360,8 +340,6 @@ def main():
         defaults=dict(type='bool', default=False),
 
         save=dict(type='bool', default=False),
-
-        state=dict(default='present', choices=['absent', 'present'])
     )
 
     mutually_exclusive = [('lines', 'src')]
@@ -370,8 +348,6 @@ def main():
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
-
-    state = module.params['state']
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -382,7 +358,7 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     try:
-        invoke(state, module, result)
+        run(module, result)
     except NetworkError:
         load_checkpoint(module, result)
         exc = get_exception()
