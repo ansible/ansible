@@ -21,7 +21,7 @@ DOCUMENTATION = """
 ---
 module: asa_command
 version_added: "2.2"
-author: "Peter Sprygada (@privateip) & Patrick Ogenstad (@ogenstad)"
+author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
 short_description: Run arbitrary commands on Cisco ASA devices.
 description:
   - Sends arbitrary commands to an ASA node and returns the results
@@ -32,27 +32,39 @@ extends_documentation_fragment: asa
 options:
   commands:
     description:
-      - List of commands to send to the remote ios device over the
+      - List of commands to send to the remote device over the
         configured provider. The resulting output from the command
-        is returned. If the I(waitfor) argument is provided, the
+        is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retires as expired.
     required: true
-  waitfor:
+  wait_for:
     description:
       - List of conditions to evaluate against the output of the
-        command. The task will wait for a each condition to be true
+        command. The task will wait for each condition to be true
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
     required: false
     default: null
+    aliases: ['waitfor']
+  match:
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the wait_for must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    required: false
+    default: all
+    choices: ['any', 'all']
   retries:
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        waitfor conditions.
+        I(wait_for) conditions.
     required: false
     default: 10
   interval:
@@ -63,25 +75,36 @@ options:
         trying the command again.
     required: false
     default: 1
-
 """
 
 EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: cisco
+    password: cisco
+    authorize: yes
+    auth_pass: cisco
+    transport: cli
+
 
 - asa_command:
     commands:
       - show version
-  register: output
+    provider: "{{ cli }}"
 
 - asa_command:
     commands:
       - show asp drop
       - show memory
-    register: output
+    provider: "{{ cli }}"
 
 - asa_command:
     commands:
       - show version
+    provider: "{{ cli }}"
     context: system
 """
 
@@ -104,11 +127,12 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcli import CommandRunner
+from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
+from ansible.module_utils.asa import NetworkModule, NetworkError
 
-import time
-import shlex
-import re
-
+VALID_KEYS = ['command', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
@@ -116,57 +140,85 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
+def parse_commands(module):
+    for cmd in module.params['commands']:
+        if isinstance(cmd, basestring):
+            cmd = dict(command=cmd, output=None)
+        elif 'command' not in cmd:
+            module.fail_json(msg='command keyword argument is required')
+        elif not set(cmd.keys()).issubset(VALID_KEYS):
+            module.fail_json(msg='unknown keyword specified')
+        yield cmd
 
 def main():
     spec = dict(
-        commands=dict(type='list'),
-        waitfor=dict(type='list'),
+        # { command: <str>, prompt: <str>, response: <str> }
+        commands=dict(type='list', required=True),
+
+        wait_for=dict(type='list', aliases=['waitfor']),
+        match=dict(default='all', choices=['all', 'any']),
+
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
 
-    module = get_module(argument_spec=spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec,
+                           connect_on_load=False,
+                           supports_check_mode=True)
 
-    commands = module.params['commands']
+    commands = list(parse_commands(module))
+    conditionals = module.params['wait_for'] or list()
 
-    retries = module.params['retries']
-    interval = module.params['interval']
+    warnings = list()
+
+    runner = CommandRunner(module)
+
+    for cmd in commands:
+        if module.check_mode and not cmd['command'].startswith('show'):
+            warnings.append('only show commands are supported when using '
+                            'check mode, not executing `%s`' % cmd['command'])
+        else:
+            if cmd['command'].startswith('conf'):
+                module.fail_json(msg='asa_command does not support running '
+                                     'config mode commands.  Please use '
+                                     'asa_config instead')
+            try:
+                runner.add_command(**cmd)
+            except AddCommandError:
+                exc = get_exception()
+                warnings.append('duplicate command detected: %s' % cmd)
+
+    for item in conditionals:
+        runner.add_conditional(item)
+
+    runner.retries = module.params['retries']
+    runner.interval = module.params['interval']
+    runner.match = module.params['match']
 
     try:
-        queue = set()
-        for entry in (module.params['waitfor'] or list()):
-            queue.add(Conditional(entry))
-    except AttributeError:
+        runner.run()
+    except FailedConditionsError:
         exc = get_exception()
-        module.fail_json(msg=exc.message)
+        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
-    result = dict(changed=False)
+    result = dict(changed=False, stdout=list())
 
-    while retries > 0:
-        response = module.execute(commands)
-        result['stdout'] = response
+    for cmd in commands:
+        try:
+            output = runner.get_command(cmd['command'])
+        except ValueError:
+            output = 'command not executed due to check_mode, see warnings'
+        result['stdout'].append(output)
 
-        for item in list(queue):
-            if item(response):
-                queue.remove(item)
-
-        if not queue:
-            break
-
-        time.sleep(interval)
-        retries -= 1
-    else:
-        failed_conditions = [item.raw for item in queue]
-        module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
-
+    result['warnings'] = warnings
     result['stdout_lines'] = list(to_lines(result['stdout']))
-    return module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.asa import *
+    module.exit_json(**result)
+
+
 if __name__ == '__main__':
-        main()
+    main()
+
