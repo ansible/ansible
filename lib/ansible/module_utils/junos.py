@@ -16,11 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import re
+import shlex
 
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import NetworkError, register_transport, to_list
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
 
@@ -52,6 +55,9 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 
+SUPPORTED_CONFIG_FORMATS = ['text', 'set', 'json', 'xml']
+
+
 def xml_to_json(val):
     if isinstance(val, string_types):
         return jxmlease.parse(val)
@@ -70,18 +76,14 @@ class Netconf(object):
         self.config = None
         self._locked = False
         self._connected = False
+        self.default_output = 'xml'
 
-    def _error(self, msg):
+    def raise_exc(self, msg):
         if self.device:
             if self._locked:
                 self.config.unlock()
             self.disconnect()
         raise NetworkError(msg)
-
-    def _log(self, msg):
-        # Logging is a complex topic and a discussion will be started after 2.2
-        # is released
-        pass
 
     def connect(self, params, **kwargs):
         host = params['host']
@@ -91,10 +93,12 @@ class Netconf(object):
         passwd = params['password']
 
         try:
-            self.device = Device(host, user=user, passwd=passwd, port=port, gather_facts=False).open()
+            self.device = Device(host, user=user, passwd=passwd, port=port,
+                                 gather_facts=False)
+            self.device.open()
         except ConnectError:
             exc = get_exception()
-            self._error('unable to connect to %s: %s' % (host, str(exc)))
+            self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
 
         self.config = Config(self.device)
         self._connected = True
@@ -106,19 +110,85 @@ class Netconf(object):
 
     ### Command methods ###
 
-    def run_commands(self, commands, **kwargs):
-        output = kwargs.get('format') or 'xml'
-        return self.execute(to_list(commands), format=output)
+    def run_commands(self, commands):
+        responses = list()
 
-    def execute(self, commands, format='xml', **kwargs):
+        for cmd in commands:
+            meth = getattr(self, cmd.args.get('command_type'))
+            responses.append(meth(str(cmd), output=cmd.output))
+
+        for index, cmd in enumerate(commands):
+            if cmd.output == 'xml':
+                responses[index] = etree.tostring(responses[index])
+            elif cmd.args.get('command_type') == 'rpc':
+                responses[index] = str(responses[index].text).strip()
+
+        return responses
+
+    def cli(self, commands, output='xml'):
         '''Send commands to the device.'''
         try:
-            return self.device.cli(commands, format=format)
+            return self.device.cli(commands, format=output, warning=False)
         except (ValueError, RpcError):
             exc = get_exception()
-            self._error('Unable to get cli output: %s' % str(exc))
+            self.raise_exc('Unable to get cli output: %s' % str(exc))
+
+    def rpc(self, command, output='xml'):
+        name, kwargs = rpc_args(command)
+        meth = getattr(self.device.rpc, name)
+        reply = meth({'format': output}, **kwargs)
+        return reply
 
     ### Config methods ###
+
+    def get_config(self, config_format="text"):
+        if config_format not in SUPPORTED_CONFIG_FORMATS:
+            self.raise_exc(msg='invalid config format.  Valid options are '
+                               '%s' % ', '.join(SUPPORTED_CONFIG_FORMATS))
+
+        ele = self.rpc('get_configuration', output=config_format)
+
+        if config_format in ['text', 'set']:
+            return str(ele.text).strip()
+        else:
+            return ele
+
+    def load_config(self, candidate, update='merge', comment=None,
+                    confirm=None, format='text', commit=True):
+
+        merge = update == 'merge'
+        overwrite = update == 'overwrite'
+
+        self.lock_config()
+
+        try:
+            candidate = '\n'.join(candidate)
+            self.config.load(candidate, format=format, merge=merge,
+                             overwrite=overwrite)
+        except ConfigLoadError:
+            exc = get_exception()
+            self.raise_exc('Unable to load config: %s' % str(exc))
+
+        diff = self.config.diff()
+
+        self.check_config()
+
+        if all((commit, diff)):
+            self.commit_config(comment=comment, confirm=confirm)
+
+        self.unlock_config()
+
+        return diff
+
+    def save_config(self):
+        raise NotImplementedError
+
+    ### end of Config ###
+
+    def get_facts(self, refresh=True):
+        if refresh:
+            self.device.facts_refresh()
+        return self.device.facts
 
     def unlock_config(self):
         try:
@@ -126,7 +196,7 @@ class Netconf(object):
             self._locked = False
         except UnlockError:
             exc = get_exception()
-            self._log('unable to unlock config: %s' % str(exc))
+            raise NetworkError('unable to unlock config: %s' % str(exc))
 
     def lock_config(self):
         try:
@@ -134,11 +204,11 @@ class Netconf(object):
             self._locked = True
         except LockError:
             exc = get_exception()
-            self._log('unable to lock config: %s' % str(exc))
+            raise NetworkError('unable to lock config: %s' % str(exc))
 
     def check_config(self):
         if not self.config.commit_check():
-            self._error(msg='Commit check failed')
+            self.raise_exc(msg='Commit check failed')
 
     def commit_config(self, comment=None, confirm=None):
         try:
@@ -148,29 +218,7 @@ class Netconf(object):
             return self.config.commit(**kwargs)
         except CommitError:
             exc = get_exception()
-            self._error('Unable to commit configuration: %s' % str(exc))
-
-    def load_config(self, candidate, action='replace', comment=None, confirm=None, format='text', commit=True):
-
-        merge = action == 'merge'
-        overwrite = action == 'overwrite'
-
-        self.lock_config()
-
-        try:
-            self.config.load(candidate, format=format, merge=merge, overwrite=overwrite)
-        except ConfigLoadError:
-            exc = get_exception()
-            self._error('Unable to load config: %s' % str(exc))
-
-        diff = self.config.diff()
-        self.check_config()
-        if commit and diff:
-            self.commit_config(comment=comment, confirm=confirm)
-
-        self.unlock_config()
-
-        return diff
+            raise NetworkError('unable to commit config: %s' % str(exc))
 
     def rollback_config(self, identifier, commit=True, comment=None):
 
@@ -189,26 +237,6 @@ class Netconf(object):
         self.unlock_config()
         return diff
 
-    def get_facts(self, refresh=True):
-        if refresh:
-            self.device.facts_refresh()
-        return self.device.facts
-
-    def get_config(self, config_format="text"):
-        if config_format not in ['text', 'set', 'xml']:
-            msg = 'invalid config format... must be one of xml, text, set'
-            self._error(msg=msg)
-
-        ele = self.rpc('get_configuration', format=config_format)
-        if config_format in ['text', 'set']:
-            return str(ele.text).strip()
-        elif config_format == "xml":
-            return ele
-
-    def rpc(self, name, format='xml', **kwargs):
-        meth = getattr(self.device.rpc, name)
-        reply = meth({'format': format}, **kwargs)
-        return reply
 Netconf = register_transport('netconf')(Netconf)
 
 
@@ -236,11 +264,6 @@ class Cli(CliBase):
             self.execute('cli')
         self.execute('set cli screen-length 0')
 
-    def authorize(self, params, **kwargs):
-        raise NotImplementedError
-
-    ### Config methods ###
-
     def configure(self, commands, **kwargs):
         cmds = ['configure']
         cmds.extend(to_list(commands))
@@ -253,9 +276,35 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:-1]
 
-    def get_config(self, include_defaults=False, **kwargs):
-        raise NotImplementedError
+    def load_config(self, commands):
+        return self.configure(commands)
 
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
+    def get_config(self, output='block'):
+        cmd = 'show configuration'
+        if output == 'set':
+            cmd += ' | display set'
+        return self.execute([cmd])[0]
+
 Cli = register_transport('cli', default=True)(Cli)
+
+def split(value):
+    lex = shlex.shlex(value)
+    lex.quotes = '"'
+    lex.whitespace_split = True
+    lex.commenters = ''
+    return list(lex)
+
+def rpc_args(args):
+    kwargs = dict()
+    args = split(args)
+    name = args.pop(0)
+    for arg in args:
+        key, value = arg.split('=')
+        if str(value).upper() in ['TRUE', 'FALSE']:
+            kwargs[key] = bool(value)
+        elif re.match(r'^[0-9]+$', value):
+            kwargs[key] = int(value)
+        else:
+            kwargs[key] = str(value)
+    return (name, kwargs)
+
