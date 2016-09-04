@@ -167,7 +167,7 @@ def main():
     cmd_args = [plugin_bin, package_state_map[state], name]
 
     if proxy_host and proxy_port:
-        cmd_args.append("-DproxyHost=%s -DproxyPort=%s" % proxy_host, proxy_port)
+        cmd_args.append("-DproxyHost=%s -DproxyPort=%s" % (proxy_host, proxy_port))
 
     if url:
         cmd_args.append("--url %s" % url)
