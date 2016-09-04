@@ -19,7 +19,6 @@
 
 DOCUMENTATION = '''
 ---
-
 module: nxos_vrrp
 version_added: "2.1"
 short_description: Manages VRRP configuration on NX-OS switches
@@ -28,56 +27,59 @@ description:
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
-     - Gabriele Gerbino (@GGabriele)
+    - Gabriele Gerbino (@GGabriele)
 notes:
-    - VRRP feature needs to be enabled first on the system.
-    - SVIs must exist before using this module.
-    - Interface must be a L3 port before using this module.
-    - C(state=absent) removes the vrrp group if it exists on the device.
-    - VRRP cannot be configured on loopback interfaces.
+    - VRRP feature needs to be enabled first on the system
+    - SVIs must exist before using this module
+    - Interface must be a L3 port before using this module
+    - I(state)=absent removes the vrrp group if it exists on the device
+    - VRRP cannot be configured on loopback interfaces
 options:
     group:
         description:
-            - The VRRP group number.
+            - VRRP group number
         required: true
     interface:
         description:
-            - Full name of interface that is being managed for VRRP.
+            - Full name of interface that is being managed for VRRP
         required: true
     priority:
         description:
-            - VRRP priority.
+            - VRRP priority
         required: false
         default: null
     vip:
         description:
-            - HSRP virtual IP address.
+            - VRRP virtual IP address
         required: false
         default: null
     authentication:
         description:
-            - Clear text authentication string.
+            - clear text authentication string
         required: false
         default: null
+    admin_state:
+        description:
+            - Used to enable or disable the VRRP process
+        required: false
+        choices: ['shutdown', 'no shutdown']
+        default: no shutdown
+        version_added: "2.2"
     state:
         description:
-            - Specify desired state of the resource.
+            - Specify desired state of the resource
         required: false
         default: present
         choices: ['present','absent']
 '''
 
 EXAMPLES = '''
-
 # ensure vrrp group 100 and vip 10.1.100.1 is on vlan10
-- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 host={{ inventory_hostname }}
-
+- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 host=68.170.147.165
 # ensure removal of the vrrp group config # vip is required to ensure the user knows what they are removing
-- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 state=absent host={{ inventory_hostname }}
-
+- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 state=absent host=68.170.147.165
 # re-config with more params
-- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 preempt=false priority=130 authentication=AUTHKEY host={{ inventory_hostname }}
-
+- nxos_vrrp: interface=vlan10 group=100 vip=10.1.100.1 preempt=false priority=130 authentication=AUTHKEY host=68.170.147.165
 '''
 
 RETURN = '''
@@ -85,7 +87,8 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"authentication": "testing", "group": "150", "vip": "10.1.15.1"}
+    sample: {"authentication": "testing", "group": "150", "vip": "10.1.15.1",
+            "admin_state": "no shutdown"}
 existing:
     description: k/v pairs of existing vrrp info on the interface
     type: dict
@@ -95,18 +98,14 @@ end_state:
     returned: always
     type: dict
     sample: {"authentication": "testing", "group": "150", "interval": "1",
-            "preempt": true, "priority": "100", "vip": "10.1.15.1"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
+            "preempt": true, "priority": "100", "vip": "10.1.15.1",
+            "admin_state": "no shutdown"}
 updates:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface vlan10", "vrrp 150", "address 10.1.15.1",
-            "authentication text testing"]
+            "authentication text testing", "no shutdown"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -114,6 +113,162 @@ changed:
     sample: true
 '''
 
+import json
+import collections
+
+# COMMON CODE FOR MIGRATION
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+
+try:
+    from ansible.module_utils.nxos import get_module
+except ImportError:
+    from ansible.module_utils.nxos import NetworkModule
+
+
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
+     else:
+         return list()
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
+
+def get_network_module(**kwargs):
+    try:
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
+
+def get_config(module, include_defaults=False):
+    config = module.params['config']
+    if not config:
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
+    return CustomNetworkConfig(indent=2, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    save_config = module.params['save']
+
+    result = dict(changed=False)
+
+    if commands:
+        if not module.check_mode:
+            try:
+                module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
+            if save_config:
+                try:
+                    module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+# END OF COMMON CODE
 
 def execute_config_command(commands, module):
     try:
@@ -122,6 +277,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def get_cli_body_ssh_vrrp(command, response, module):
@@ -147,6 +311,11 @@ def get_cli_body_ssh_vrrp(command, response, module):
 
 
 def execute_show(cmds, module, command_type=None):
+    command_type_map = {
+        'cli_show': 'json',
+        'cli_show_ascii': 'text'
+    }
+
     try:
         if command_type:
             response = module.execute(cmds, command_type=command_type)
@@ -154,9 +323,23 @@ def execute_show(cmds, module, command_type=None):
             response = module.execute(cmds)
     except ShellError:
         clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(command),
+        module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
+
 
 
 def execute_show_command(command, module, command_type='cli_show'):
@@ -223,19 +406,43 @@ def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
     mode = 'unknown'
+    body = execute_show_command(command, module)[0]
+    interface_table = body['TABLE_interface']['ROW_interface']
+    name = interface_table.get('interface')
 
     if intf_type in ['ethernet', 'portchannel']:
-        body = execute_show_command(command, module)[0]
-        interface_table = body['TABLE_interface']['ROW_interface']
         mode = str(interface_table.get('eth_mode', 'layer3'))
+
         if mode == 'access' or mode == 'trunk':
             mode = 'layer2'
     elif intf_type == 'svi':
         mode = 'layer3'
-    return mode
+
+    return mode, name
 
 
-def get_existing_vrrp(interface, group, module):
+def get_vrr_status(group, module, interface):
+    command = 'show run all | section interface.{0}$'.format(interface)
+    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+    vrf_index = None
+    admin_state = 'shutdown'
+
+    if body:
+        splitted_body = body.splitlines()
+        for index in range(0, len(splitted_body) - 1):
+            if splitted_body[index].strip() == 'vrrp {0}'.format(group):
+                vrf_index = index
+        vrf_section = splitted_body[vrf_index::]
+
+        for line in vrf_section:
+            if line.strip() == 'no shutdown':
+                admin_state = 'no shutdown'
+                break
+
+    return admin_state
+
+
+def get_existing_vrrp(interface, group, module, name):
     command = 'show vrrp detail interface {0}'.format(interface)
     body = execute_show_command(command, module)
     vrrp = {}
@@ -267,6 +474,8 @@ def get_existing_vrrp(interface, group, module):
             parsed_vrrp['preempt'] = True
 
         if parsed_vrrp['group'] == group:
+            parsed_vrrp['admin_state'] = get_vrr_status(group, module, name)
+
             return parsed_vrrp
     return vrrp
 
@@ -287,6 +496,7 @@ def get_commands_config_vrrp(delta, group):
     preempt = delta.get('preempt')
     interval = delta.get('interval')
     auth = delta.get('authentication')
+    admin_state = delta.get('admin_state')
 
     if vip:
         commands.append((CMDS.get('vip')).format(vip))
@@ -300,6 +510,8 @@ def get_commands_config_vrrp(delta, group):
         commands.append((CMDS.get('interval')).format(interval))
     if auth:
         commands.append((CMDS.get('auth')).format(auth))
+    if admin_state:
+        commands.append(admin_state)
 
     commands.insert(0, 'vrrp {0}'.format(group))
 
@@ -340,14 +552,20 @@ def main():
             group=dict(required=True, type='str'),
             interface=dict(required=True),
             priority=dict(required=False, type='str'),
-            preempt=dict(required=False, choices=BOOLEANS, type='bool'),
+            preempt=dict(required=False, type='bool'),
             vip=dict(required=False, type='str'),
+            admin_state=dict(required=False, type='str',
+                                choices=['shutdown', 'no shutdown'],
+                                default='no shutdown'),
             authentication=dict(required=False, type='str'),
             state=dict(choices=['absent', 'present'],
                        required=False, default='present'),
+            include_defaults=dict(default=False),
+            config=dict(),
+            save=dict(type='bool', default=False)
     )
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = get_network_module(argument_spec=argument_spec,
+                                supports_check_mode=True)
 
     state = module.params['state']
     interface = module.params['interface'].lower()
@@ -356,6 +574,7 @@ def main():
     preempt = module.params['preempt']
     vip = module.params['vip']
     authentication = module.params['authentication']
+    admin_state = module.params['admin_state']
 
     transport = module.params['transport']
 
@@ -371,16 +590,17 @@ def main():
             module.fail_json(msg="Loopback interfaces don't support VRRP.",
                              interface=interface)
 
-    mode = get_interface_mode(interface, intf_type, module)
+    mode, name = get_interface_mode(interface, intf_type, module)
     if mode == 'layer2':
         module.fail_json(msg='That interface is a layer2 port.\nMake it '
                              'a layer 3 port first.', interface=interface)
 
     args = dict(group=group, priority=priority, preempt=preempt,
-                vip=vip, authentication=authentication)
+                vip=vip, authentication=authentication,
+                admin_state=admin_state)
 
     proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
-    existing = get_existing_vrrp(interface, group, module)
+    existing = get_existing_vrrp(interface, group, module, name)
 
     changed = False
     end_state = existing
@@ -407,12 +627,11 @@ def main():
         else:
             execute_config_command(cmds, module)
             changed = True
-            end_state = get_existing_vrrp(interface, group, module)
+            end_state = get_existing_vrrp(interface, group, module, name)
 
     results = {}
     results['proposed'] = proposed
     results['existing'] = existing
-    results['state'] = state
     results['updates'] = cmds
     results['changed'] = changed
     results['end_state'] = end_state
@@ -420,10 +639,5 @@ def main():
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
     main()
