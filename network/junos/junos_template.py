@@ -100,6 +100,7 @@ EXAMPLES = """
     src: config.j2
     action: overwrite
 """
+from ansible.module_utils.junos import NetworkModule
 
 DEFAULT_COMMENT = 'configured by junos_template'
 
@@ -115,8 +116,8 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     comment = module.params['comment']
     confirm = module.params['confirm']
@@ -132,9 +133,9 @@ def main():
             "set per junos documentation")
 
     results = dict(changed=False)
-    results['_backup'] = str(module.get_config()).strip()
+    results['_backup'] = str(module.config.get_config()).strip()
 
-    diff = module.load_config(src, action=action, comment=comment,
+    diff = module.config.load_config(src, action=action, comment=comment,
             format=fmt, commit=commit, confirm=confirm)
 
     if diff:
@@ -143,9 +144,6 @@ def main():
 
     module.exit_json(**results)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.junos import *
 
 if __name__ == '__main__':
     main()
