@@ -135,11 +135,7 @@ class Shell(object):
             window = self.strip(recv.read())
 
             if hasattr(cmd, 'prompt') and not handled:
-                if self.handle_prompt(window, prompt=cmd.prompt, response=cmd.response):
-                    handled = True
-                    time.sleep(cmd.delay)
-                    if cmd.is_reboot:
-                        return
+                handled = self.handle_prompt(window, cmd)
 
             try:
                 if self.find_prompt(window):
@@ -167,18 +163,15 @@ class Shell(object):
     def close(self):
         self.shell.close()
 
-    def handle_prompt(self, resp, prompt, response):
-        if not prompt or not response:
-            return
-
-        prompt = to_list(prompt)
-        response = to_list(response)
+    def handle_prompt(self, resp, cmd):
+        prompt = to_list(cmd.prompt)
+        response = to_list(cmd.response)
 
         for pr, ans in zip(prompt, response):
             match = pr.search(resp)
             if match:
-                cmd = '%s\r' % ans
-                self.shell.sendall(cmd)
+                answer = '%s\r' % ans
+                self.shell.sendall(answer)
                 return True
 
     def sanitize(self, cmd, resp):
@@ -215,7 +208,7 @@ class CliBase(object):
         self._connected = False
         self.default_output = 'text'
 
-    def connect(self, params, kickstart=True, **kwargs):
+    def connect(self, params, kickstart=True):
         host = params['host']
         port = params.get('port') or 22
 
@@ -242,7 +235,7 @@ class CliBase(object):
 
         self._connected = True
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         self.shell.close()
         self._connected = False
 
@@ -251,22 +244,25 @@ class CliBase(object):
 
     ### Command methods ###
 
-    def execute(self, commands, **kwargs):
+    def execute(self, commands):
         try:
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
             raise NetworkError(exc.message, commands=commands)
 
-    def run_commands(self, commands, **kwargs):
+    def run_commands(self, commands):
         return self.execute(to_list(commands))
 
     ### Config methods ###
 
-    def load_config(self, commands, **kwargs):
+    def configure(self, commands):
         raise NotImplementedError
 
-    def replace_config(self, commands, **kwargs):
+    def get_config(self, commands):
+        raise NotImplementedError
+
+    def load_config(self, commands):
         raise NotImplementedError
 
     def save_config(self):
