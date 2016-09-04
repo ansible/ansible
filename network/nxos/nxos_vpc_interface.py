@@ -252,7 +252,7 @@ def load_config(module, candidate):
 
 def execute_config_command(commands, module):
     try:
-        module.configure(commands)
+        response = module.configure(commands)
     except ShellError:
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
@@ -261,11 +261,12 @@ def execute_config_command(commands, module):
         try:
             commands.insert(0, 'configure')
             module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
+            response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
             module.fail_json(msg='Error sending CLI commands',
                              error=str(clie), commands=commands)
+    return response
 
 
 def get_cli_body_ssh(command, response, module):
