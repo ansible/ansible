@@ -20,9 +20,9 @@ DOCUMENTATION = '''
 ---
 module: nxos_pim
 version_added: "2.2"
-short_description: Manages configuration of an Protocol Independent Multicast(PIM) instance.
+short_description: Manages configuration of a PIM instance.
 description:
-    - Manages configuration of an Protocol Independent Multicast (PIM) instance.
+    - Manages configuration of a Protocol Independent Multicast (PIM) instance.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 options:
