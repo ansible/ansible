@@ -29,11 +29,10 @@
 
 import re
 
+from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
-
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
+from ansible.module_utils.netcli import Command
 
 add_argument('show_command', dict(default='show running-config', choices=['show running-config', 'more system:running-config']))
 add_argument('context', dict(required=False))
@@ -64,10 +63,19 @@ class Cli(CliBase):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.execute('no terminal pager')
 
         if params['context']:
             self.change_context(params, **kwargs)
+
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        self.execute([cmd, 'no terminal pager'])
+
+    ### Cli methods ###
+
+    def run_commands(self, commands):
+        return self.execute(to_list(commands))
 
     def change_context(self, params, **kwargs):
         context = params['context']
@@ -83,15 +91,21 @@ class Cli(CliBase):
     def configure(self, commands):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
+        if cmds[-1] != 'end':
+            cmds.append('end')
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self, params, **kwargs):
-        if self.filter:
-            cmd = 'show running-config %s ' % self.filter
-        else:
-            cmd = params['show_command']
-        if params.get('include_defaults'):
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if include_defaults:
             cmd += ' all'
-        return self.execute(cmd)
+        return self.run_commands(cmd)[0]
+
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
+
+    def save_config(self):
+        self.execute(['write memory'])
+
 Cli = register_transport('cli', default=True)(Cli)
