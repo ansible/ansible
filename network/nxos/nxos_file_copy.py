@@ -22,14 +22,16 @@ module: nxos_file_copy
 version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:
-    - Copy a file to the flash (or bootflash) remote network device on NXOS devices
+    - Copy a file to the flash (or bootflash) remote network device
+      on NXOS devices.
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
     - The feature must be enabled with feature scp-server.
-    - If the file is already present (md5 sums match), no transfer will take place.
+    - If the file is already present (md5 sums match), no transfer will
+      take place.
     - Check mode will tell you if the file would be copied.
 options:
     local_file:
@@ -45,7 +47,8 @@ options:
     file_system:
         description:
             - The remote file system of the device. If omitted,
-              devices that support a file_system parameter will use their default values.
+              devices that support a file_system parameter will use
+              their default values.
         required: false
         default: null
 '''
