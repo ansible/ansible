@@ -22,7 +22,7 @@ module: nxos_reboot
 version_added: 2.2
 short_description: Reboot a network device.
 description:
-    - Reboot a network device
+    - Reboot a network device.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
