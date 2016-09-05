@@ -20,38 +20,38 @@ DOCUMENTATION = '''
 ---
 module: nxos_ip_interface
 version_added: "2.1"
-short_description: Manages L3 attributes for IPv4 and IPv6 interfaces
+short_description: Manages L3 attributes for IPv4 and IPv6 interfaces.
 description:
-    - Manages Layer 3 attributes for IPv4 and IPv6 interfaces
+    - Manages Layer 3 attributes for IPv4 and IPv6 interfaces.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - Interface must already be a L3 port when using this module
-    - Logical interfaces (po, loop, svi) must be created first
-    - I(mask) must be inserted in decimal format (i.e. 24) for
+    - Interface must already be a L3 port when using this module.
+    - Logical interfaces (po, loop, svi) must be created first.
+    - C(mask) must be inserted in decimal format (i.e. 24) for
       both IPv6 and IPv4.
     - A single interface can have multiple IPv6 configured.
 
 options:
     interface:
         description:
-            - Full name of interface, i.e. Ethernet1/1, vlan10
+            - Full name of interface, i.e. Ethernet1/1, vlan10.
         required: true
     addr:
         description:
-            - IPv4 or IPv6 Address
+            - IPv4 or IPv6 Address.
         required: false
         default: null
     mask:
         description:
-            - Subnet mask for IPv4 or IPv6 Address in decimal format
+            - Subnet mask for IPv4 or IPv6 Address in decimal format.
         required: false
         default: null
     state:
         description:
-            - Specify desired state of the resource
+            - Specify desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']
