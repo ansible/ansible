@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
 
         try:
             self._handle_template()
-        except ValueError as exc:
+        except (ValueError, AttributeError) as exc:
             return dict(failed=True, msg=exc.message)
 
         result.update(self._execute_module(module_name=self._task.action,
@@ -75,9 +75,12 @@ class ActionModule(ActionBase):
 
     def _handle_template(self):
         src = self._task.args.get('src')
+        if not src:
+            raise ValueError('missing required arguments: src')
+
         working_path = self._get_working_path()
 
-        if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
+        if os.path.isabs(src) or urlparse.urlsplit(src).scheme:
             source = src
         else:
             source = self._loader.path_dwim_relative(working_path, 'templates', src)
