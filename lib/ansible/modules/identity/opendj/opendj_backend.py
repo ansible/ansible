@@ -168,13 +168,14 @@ class Backend(object):
         dc = base_dn.split(',dc=')[0]
         dc = dc.split('dc=')[1]
 
-        fd, file_path = tempfile.mkstemp(text=True)
+        fd, file_path = tempfile.mkstemp()
         try:
-            with os.fdopen(fd, 'w') as tmp:
-                os.write(fd, 'dn: ' + base_dn + '\n')
-                os.write(fd, 'objectclass: top\n')
-                os.write(fd, 'objectclass: domain\n')
-                os.write(fd, 'dc: ' + dc + '\n')
+            tmp_file = os.fdopen(fd, "w")
+            tmp_file.write('dn: ' + base_dn + '\n')
+            tmp_file.write('objectclass: top\n')
+            tmp_file.write('objectclass: domain\n')
+            tmp_file.write('dc: ' + dc + '\n')
+            tmp_file.close()
 
             my_command = [
                 opendj_bindir + '/import-ldif',
@@ -342,4 +343,3 @@ def main():
 
 from ansible.module_utils.basic import *
 main()
-
