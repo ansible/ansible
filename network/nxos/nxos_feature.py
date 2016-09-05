@@ -20,9 +20,9 @@ DOCUMENTATION = '''
 ---
 module: nxos_feature
 version_added: "2.1"
-short_description: Manage features in NX-OS switches
+short_description: Manage features in NX-OS switches.
 description:
-    - Offers ability to enable and disable features in NX-OS
+    - Offers ability to enable and disable features in NX-OS.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
