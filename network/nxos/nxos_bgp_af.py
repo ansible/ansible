@@ -20,14 +20,14 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp_af
 version_added: "2.2"
-short_description: Manages BGP Address-family configuration
+short_description: Manages BGP Address-family configuration.
 description:
-    - Manages BGP Address-family configurations on NX-OS switches
+    - Manages BGP Address-family configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - State 'absent' removes the whole BGP ASN configuration
-    - default, where supported, restores params default value
+    - C(state=absent) removes the whole BGP ASN configuration
+    - Default, where supported, restores params default value.
 options:
     asn:
         description:
@@ -41,7 +41,7 @@ options:
         required: true
     afi:
         description:
-            - Address Family Identifie.
+            - Address Family Identifier.
         required: true
         choices: ['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']
     safi:
@@ -52,7 +52,7 @@ options:
     additional_paths_install:
         description:
             - Install a backup path into the forwarding table and provide
-              prefix 'independent convergence (PIC) in case of a PE-CE link
+              prefix independent convergence (PIC) in case of a PE-CE link
               failure.
         required: false
         choices: ['true','false']
@@ -171,7 +171,7 @@ options:
               keyword which indicates that attributes should be copied from
               the aggregate. For example [['lax_inject_map', 'lax_exist_map'],
               ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'],
-              ['fsd_inject_map', 'fsd_exist_map']]
+              ['fsd_inject_map', 'fsd_exist_map']].
         required: false
         default: null
     maximum_paths:
@@ -192,7 +192,7 @@ options:
               Each entry in the array must include a prefix address and an
               optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
               ['192.168.1.1', 'Chicago'], ['192.168.2.0/24],
-              ['192.168.3.0/24', 'routemap_NYC']]
+              ['192.168.3.0/24', 'routemap_NYC']].
         required: false
         default: null
     next_hop_route_map:
@@ -209,7 +209,7 @@ options:
               redistribute from; the second entry defines a route-map name.
               A route-map is highly advised but may be optional on some
               platforms, in which case it may be omitted from the array list.
-              For example [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
+              For example [['direct', 'rm_direct'], ['lisp', 'rm_lisp']].
         required: false
         default: null
     suppress_inactive:
@@ -233,7 +233,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
