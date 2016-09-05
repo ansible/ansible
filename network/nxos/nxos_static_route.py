@@ -25,13 +25,13 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - If no vrf is supplied, vrf is set to default
-    - If I(state)=absent, the route will be removed, regardless of the
+    - If no vrf is supplied, vrf is set to default.
+    - If C(state=absent), the route will be removed, regardless of the
       non-required parameters.
 options:
     prefix:
         description:
-            - Destination prefix of static route
+            - Destination prefix of static route.
         required: true
     next_hop:
         description:
@@ -40,7 +40,7 @@ options:
         required: true
     vrf:
         description:
-            - VRF for static route
+            - VRF for static route.
         required: false
         default: default
     tag:
@@ -55,12 +55,12 @@ options:
         default: null
     pref:
         description:
-            - Preference or administrative difference of route (range 1-255)
+            - Preference or administrative difference of route (range 1-255).
         required: false
         default: null
     state:
         description:
-            - Manage the state of the resource
+            - Manage the state of the resource.
         required: true
         choices: ['present','absent']
 '''
