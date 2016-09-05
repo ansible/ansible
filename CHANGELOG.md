@@ -80,6 +80,7 @@ Ansible Changes By Release
 - Dell Networking
   * dnos10_command
   * dnos10_config
+  * dnos10_template
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
