@@ -26,7 +26,7 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - default, where supported, restores params default value
+    - Default restores params default value
     - Supported MAC address format are "E.E.E", "EE-EE-EE-EE-EE-EE",
       "EE:EE:EE:EE:EE:EE" and "EEEE.EEEE.EEEE"
 options:
