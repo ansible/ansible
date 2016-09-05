@@ -161,8 +161,14 @@ def main():
             prev = {question: prev[question]}
         else:
             prev[question] = ''
+        if module._diff:
+            after = prev.copy()
+            after.update(curr)
+            diffdict = {'before': prev, 'after': after}
+        else:
+            diff_dict = {}
 
-        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev)
+        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev, diff=diff_dict)
 
     module.exit_json(changed=changed, msg=msg, current=prev)
 
