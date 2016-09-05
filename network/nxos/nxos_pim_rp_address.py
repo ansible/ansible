@@ -20,15 +20,14 @@ DOCUMENTATION = '''
 ---
 module: nxos_pim_rp_address
 version_added: "2.2"
-short_description: Manages configuration of an Protocol Independent Multicast
-                   (PIM) static rendezvous point (RP) address instance.
+short_description: Manages configuration of an PIM static RP address instance.
 description:
     - Manages configuration of an Protocol Independent Multicast (PIM) static
       rendezvous point (RP) address instance.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - state=absent remove the whole rp-address configuration, if existing.
+    - C(state=absent) remove the whole rp-address configuration, if existing.
 options:
     rp_address:
         description:
