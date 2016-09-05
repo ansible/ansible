@@ -32,7 +32,8 @@ options:
         required: true
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
@@ -40,7 +41,7 @@ options:
 
 EXAMPLES = '''
 - nxos_ospf:
-    ospf=ntc
+    ospf=1
     state: present
     username: "{{ un }}"
     password: "{{ pwd }}"
