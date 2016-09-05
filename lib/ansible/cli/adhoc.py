@@ -155,6 +155,9 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        if self.options.module_name in C.NON_ADHOC_MODULES:
+            raise AnsibleOptionsError("This module (%s) is not compatible with the adhoc CLI" % self.options.module_name)
+
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
