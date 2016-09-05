@@ -166,12 +166,15 @@ def main():
     value = module.params['value']
     state = module.params['state']
 
-    if password is not None:
+    if module.params["password"] is not None:
         password_method = ['-w', password]
-    elif passwordfile is not None:
+    elif module.params["passwordfile"] is not None:
         password_method = ['-j', passwordfile]
     else:
         module.fail_json(msg="No credentials are given. Use either 'password' or 'passwordfile'")
+
+    if module.params["passwordfile"] and module.params["password"]:
+        module.fail_json(msg="only one of 'password' or 'passwordfile' can be set")
 
     opendj = GlobalConfiguration(module)
     get_value = opendj.get_value(opendj_bindir=opendj_bindir,
@@ -200,4 +203,5 @@ def main():
 
 
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
