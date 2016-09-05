@@ -20,51 +20,51 @@ DOCUMENTATION = '''
 ---
 module: nxos_vlan
 version_added: "2.1"
-short_description: Manages VLAN resources and attributes
+short_description: Manages VLAN resources and attributes.
 description:
-    - Manages VLAN configurations on NX-OS switches
+    - Manages VLAN configurations on NX-OS switches.
 author: Jason Edelman (@jedelman8)
 extends_documentation_fragment: nxos
 options:
     vlan_id:
         description:
-            - single vlan id
+            - Single VLAN ID.
         required: false
         default: null
     vlan_range:
         description:
-            - range of VLANs such as 2-10 or 2,5,10-15, etc.
+            - Range of VLANs such as 2-10 or 2,5,10-15, etc.
         required: false
         default: null
     name:
         description:
-            - name of VLAN
+            - Name of VLAN.
         required: false
         default: null
     vlan_state:
         description:
             - Manage the vlan operational state of the VLAN
-              (equivalent to state {active | suspend} command
+              (equivalent to state {active | suspend} command.
         required: false
         default: active
         choices: ['active','suspend']
     admin_state:
         description:
-            - Manage the vlan admin state of the VLAN equivalent
-              to shut/no shut in vlan config mode
+            - Manage the VLAN administrative state of the VLAN equivalent
+              to shut/no shut in VLAN config mode.
         required: false
         default: up
         choices: ['up','down']
     mapped_vni:
         description:
-            - The Virtual Network Identifier (VNI) id that is mapped to the
+            - The Virtual Network Identifier (VNI) ID that is mapped to the
               VLAN. Valid values are integer and keyword 'default'.
         required: false
         default: null
         version_added: "2.2"
     state:
         description:
-            - Manage the state of the resource
+            - Manage the state of the resource.
         required: false
         default: present
         choices: ['present','absent']
