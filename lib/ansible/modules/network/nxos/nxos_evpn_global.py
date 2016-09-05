@@ -28,7 +28,7 @@ extends_documentation_fragment: nxos
 options:
     nv_overlay_evpn:
         description:
-            - EVPN control plane
+            - EVPN control plane.
         required: true
         choices: ['true', 'false']
     m_facts:
