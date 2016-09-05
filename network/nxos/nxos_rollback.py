@@ -20,17 +20,17 @@ DOCUMENTATION = '''
 ---
 module: nxos_rollback
 version_added: "2.2"
-short_description: Set a checkpoint or rollback to a checkpoint
+short_description: Set a checkpoint or rollback to a checkpoint.
 description:
     - This module offers the ability to set a configuration checkpoint
       file or rollback to a configuration checkpoint file on Cisco NXOS
-      switches
+      switches.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - Sometimes C(transport)=nxapi may cause a timeout error.
+    - Sometimes C(transport=nxapi) may cause a timeout error.
 options:
     checkpoint_file:
         description:
