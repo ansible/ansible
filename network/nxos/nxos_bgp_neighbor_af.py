@@ -20,17 +20,17 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp_neighbor_af
 version_added: "2.2"
-short_description: Manages BGP address-family's neighbors configuration
+short_description: Manages BGP address-family's neighbors configuration.
 description:
-    - Manages BGP address-family's neighbors configurations on NX-OS switches
+    - Manages BGP address-family's neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - State 'absent' removes the whole BGP address-family's
-      neighbor configuration
-    - default, when supported, removes properties
-    - to defaults maximum-prefix configuration, only
-      max_prefix_limit=default is needed
+    - C(state=absent) removes the whole BGP address-family's
+      neighbor configuration.
+    - Default, when supported, removes properties
+    - In order to default maximum-prefix configuration, only
+      C(max_prefix_limit=default) is needed.
 options:
     asn:
         description:
@@ -61,7 +61,7 @@ options:
     additional_paths_receive:
         description:
             - Valid values are enable for basic command enablement; disable
-              for disabling the command at the neighbor_af level
+              for disabling the command at the neighbor af level
               (it adds the disable keyword to the basic command); and inherit
               to remove the command at this level (the command value is
               inherited from a higher BGP layer).
@@ -71,7 +71,7 @@ options:
     additional_paths_send:
         description:
             - Valid values are enable for basic command enablement; disable
-              for disabling the command at the neighbor_af level
+              for disabling the command at the neighbor af level
               (it adds the disable keyword to the basic command); and inherit
               to remove the command at this level (the command value is
               inherited from a higher BGP layer).
@@ -125,7 +125,7 @@ options:
     default_originate_route_map:
         description:
             - Optional route-map for the default_originate property. Can be
-              used independently or in conjunction with default_originate.
+              used independently or in conjunction with C(default_originate).
               Valid values are a string defining a route-map name,
               or 'default'.
         required: false
@@ -244,12 +244,13 @@ options:
         default: null
     weight:
         description:
-            - weight value. Valid values are an integer value or 'default'.
+            - Weight value. Valid values are an integer value or 'default'.
         required: false
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
