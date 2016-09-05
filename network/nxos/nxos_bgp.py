@@ -20,19 +20,19 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp
 version_added: "2.2"
-short_description: Manages BGP configuration
+short_description: Manages BGP configuration.
 description:
-    - Manages BGP configurations on NX-OS switches
+    - Manages BGP configurations on NX-OS switches.
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - I(state)=absent removes the whole BGP ASN configuration when VRF is
-      I(default) or the whole VRF instance within the BGP process when using
-      a different VRF.
-    - I(default) when supported restores params default value.
-    - Configuring global parmas is only permitted if VRF is I(default).
+    - C(state=absent) removes the whole BGP ASN configuration when
+      C(vrf=default) or the whole VRF instance within the BGP process when
+      using a different VRF.
+    - Default when supported restores params default value.
+    - Configuring global parmas is only permitted if C(vrf=default).
 options:
     asn:
         description:
@@ -231,7 +231,8 @@ options:
         default: null
     reconnect_interval:
         description:
-            - The BGP reconnection interval for dropped sessions.  1 - 60.
+            - The BGP reconnection interval for dropped sessions.
+              Valid values are between 1 and 60.
         required: false
         default: null
     router_id:
@@ -266,12 +267,12 @@ options:
         default: null
     timer_bgp_hold:
         description:
-            - Set bgp hold timer
+            - Set BGP hold timer.
         required: false
         default: null
     timer_bgp_keepalive:
         description:
-            - Set bgp keepalive timer.
+            - Set BGP keepalive timer.
         required: false
         default: null
     state:
