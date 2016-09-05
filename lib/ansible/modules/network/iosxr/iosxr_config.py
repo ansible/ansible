@@ -264,7 +264,7 @@ def run(module, result):
         configobjs = candidate.items
 
     if configobjs:
-        commands = dumps(configobjs, 'commands')
+        commands = dumps(configobjs, 'commands').split('\n')
 
         if module.params['before']:
             commands[:0] = module.params['before']
@@ -272,7 +272,7 @@ def run(module, result):
         if module.params['after']:
             commands.extend(module.params['after'])
 
-        result['updates'] = commands.split('\n')
+        result['updates'] = commands
 
         if update != 'check':
             load_config(module, commands, result)

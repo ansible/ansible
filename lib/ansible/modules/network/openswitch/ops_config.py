@@ -237,7 +237,7 @@ def load_config(module, commands, result):
     if not module.check_mode and module.params['update'] != 'check':
         module.config(commands)
     result['changed'] = module.params['update'] != 'check'
-    result['updates'] = commands.split('\n')
+    result['updates'] = commands
 
 def run(module, result):
     match = module.params['match']
@@ -253,7 +253,7 @@ def run(module, result):
         configobjs = candidate.items
 
     if configobjs:
-        commands = dumps(configobjs, 'commands')
+        commands = dumps(configobjs, 'commands').split('\n')
 
         if module.params['before']:
             commands[:0] = module.params['before']
