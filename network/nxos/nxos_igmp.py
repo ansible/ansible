@@ -20,17 +20,18 @@ DOCUMENTATION = '''
 ---
 module: nxos_igmp
 version_added: "2.2"
-short_description: Manages IGMP global configuration
+short_description: Manages IGMP global configuration.
 description:
-    - Manages IGMP global configuration configuration settings
+    - Manages IGMP global configuration configuration settings.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - When state=default, all supported params will be reset to a default state
+    - When C(state=default), all supported params will be reset to a
+      default state.
     - If restart is set to true with other params set, the restart will happen
-      last, i.e. after the configuration takes place
+      last, i.e. after the configuration takes place.
 options:
     flush_routes:
         description:
@@ -42,19 +43,19 @@ options:
     enforce_rtr_alert:
         description:
             - Enables or disables the enforce router alert option check for
-              IGMPv2 and IGMPv3 packets
+              IGMPv2 and IGMPv3 packets.
         required: false
         default: null
         choices: ['true', 'false']
     restart:
         description:
-            - restarts the igmp process (using an exec config command)
+            - Restarts the igmp process (using an exec config command).
         required: false
         default: null
         choices: ['true', 'false']
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: false
         default: present
         choices: ['present', 'default']
