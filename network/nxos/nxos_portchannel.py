@@ -21,38 +21,38 @@ DOCUMENTATION = '''
 
 module: nxos_portchannel
 version_added: "2.2"
-short_description: Manages port-channel interfaces
+short_description: Manages port-channel interfaces.
 description:
-    - Manages port-channel specific configuration parameters
+    - Manages port-channel specific configuration parameters.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - Absent removes the portchannel config and interface if it
+    - C(state=absent) removes the portchannel config and interface if it
       already exists. If members to be removed are not explicitly
       passed, all existing members (if any), are removed.
-    - Members must be a list
-    - LACP needs to be enabled first if active/passive modes are used
+    - Members must be a list.
+    - LACP needs to be enabled first if active/passive modes are used.
 options:
     group:
         description:
-            - channel-group number for the port-channel
+            - Channel-group number for the port-channel.
         required: true
     mode:
         description:
-            - Mode for the port-channel, i.e. on, active, passive
+            - Mode for the port-channel, i.e. on, active, passive.
         required: false
         default: on
         choices: ['active','passive','on']
     min_links:
         description:
-            - min links required to keep portchannel up
+            - Min links required to keep portchannel up.
         required: false
         default: null
     members:
         description:
-            - List of interfaces that will be managed in a given portchannel
+            - List of interfaces that will be managed in a given portchannel.
         required: false
         default: null
     force:
@@ -65,7 +65,7 @@ options:
         default: false
     state:
         description:
-            - Manage the state of the resource
+            - Manage the state of the resource.
         required: false
         default: present
         choices: ['present','absent']
