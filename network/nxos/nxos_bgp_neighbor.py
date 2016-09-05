@@ -20,18 +20,18 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp_neighbor
 version_added: "2.2"
-short_description: Manages BGP neighbors configurations
+short_description: Manages BGP neighbors configurations.
 description:
-    - Manages BGP neighbors configurations on NX-OS switches
+    - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - State 'absent' removes the whole BGP neighbor configuration
-    - default, where supported, restores params default value
+    - C(state=absent) removes the whole BGP neighbor configuration.
+    - Default, where supported, restores params default value.
 options:
     asn:
         description:
-            - BGP autonomous system number. Valid values are String,
+            - BGP autonomous system number. Valid values are string,
               Integer in ASPLAIN or ASDOT notation.
         required: true
     vrf:
@@ -86,7 +86,7 @@ options:
     log_neighbor_changes:
         description:
             - Specify whether or not to enable log messages for neighbor
-             up/down event.
+              up/down event.
         required: false
         choices: ['enable', 'disable', 'inherit']
         default: null
@@ -176,7 +176,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
