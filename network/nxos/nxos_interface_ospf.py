@@ -26,11 +26,11 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - default, where supported, restores params default value
+    - Default, where supported, restores params default value.
     - To remove an existing authentication configuration you should use
-      message_digest_key_id=default plus all other options matching their
+      C(message_digest_key_id=default) plus all other options matching their
       existing values.
-    - State absent remove the whole OSPF interface configuration
+    - C(state=absent) removes the whole OSPF interface configuration.
 options:
     interface:
         description:
@@ -80,7 +80,7 @@ options:
         default: null
     message_digest_key_id:
         description:
-            - md5 authentication key-id associated with the ospf instance.
+            - Md5 authentication key-id associated with the ospf instance.
               If this is present, message_digest_encryption_type,
               message_digest_algorithm_type and message_digest_password are
               mandatory. Valid value is an integer and 'default'.
@@ -107,7 +107,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
