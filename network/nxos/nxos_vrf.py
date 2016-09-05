@@ -20,9 +20,9 @@ DOCUMENTATION = '''
 ---
 module: nxos_vrf
 version_added: "2.1"
-short_description: Manages global VRF configuration
+short_description: Manages global VRF configuration.
 description:
-    - Manages global VRF configuration
+    - Manages global VRF configuration.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
@@ -30,20 +30,20 @@ author:
 notes:
     - Cisco NX-OS creates the default VRF by itself. Therefore,
       you're not allowed to use default as I(vrf) name in this module.
-    - I(vrf) name must be shorter than 32 chars.
+    - C(vrf) name must be shorter than 32 chars.
     - VRF names are not case sensible in NX-OS. Anyway, the name is stored
       just like it's inserted by the user and it'll not be changed again
-      unless the VRF is removed and re-created. i.e. I(vrf=NTC) will create
-      a VRF named NTC, but running it again with I(vrf=ntc) will not cause
+      unless the VRF is removed and re-created. i.e. C(vrf=NTC) will create
+      a VRF named NTC, but running it again with C(vrf=ntc) will not cause
       a configuration change.
 options:
     vrf:
         description:
-            - Name of VRF to be managed
+            - Name of VRF to be managed.
         required: true
     admin_state:
         description:
-            - Administrative state of the VRF
+            - Administrative state of the VRF.
         required: false
         default: up
         choices: ['up','down']
@@ -64,13 +64,13 @@ options:
         version_added: "2.2"
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']
     description:
         description:
-            - Description of the VRF
+            - Description of the VRF.
         required: false
         default: null
 '''
