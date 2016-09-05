@@ -28,11 +28,11 @@ author: Gabriele Gerbino (@GGabriele)
 notes:
     - The module can only activate and commit a package,
       not remove or deactivate it.
-    - Use I(transport)=nxapi to avoid connection timeout
+    - Use C(transport=nxapi) to avoid connection timeout
 options:
     pkg:
         description:
-            - Name of the remote package
+            - Name of the remote package.
         required: true
     file_system:
         description:
