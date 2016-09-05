@@ -29,7 +29,7 @@ author:
     - Gabriele Gerbino (@GGabriele)
 notes:
     - Either vpc or peer_link param is required, but not both.
-    - C(state)=absent removes whatever VPC config is on a port-channel
+    - C(state=absent) removes whatever VPC config is on a port-channel
       if one exists.
     - Re-assigning a vpc or peerlink from one portchannel to another is not
       supported.  The module will force the user to unconfigure an existing
