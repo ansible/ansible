@@ -20,24 +20,24 @@ DOCUMENTATION = '''
 ---
 module: nxos_evpn_vni
 version_added: "2.2"
-short_description: Manages Cisco EVPN VXLAN Network Identifier (VNI)
+short_description: Manages Cisco EVPN VXLAN Network Identifier (VNI).
 description:
     - Manages Cisco Ethernet Virtual Private Network (EVPN) VXLAN Network
       Identifier (VNI) configurations of a Nexus device.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - default, where supported, restores params default value
+    - default, where supported, restores params default value.
     - RD override is not permitted. You should set it to the defalt values
       first and then reconfigure it.
-    - route_target_both, route_target_import and route_target_export valid
-      values are a list of extended communities, (i.e. ['1.2.3.4:5', '33:55'])
-      or the keywords 'auto' or 'default'.
-    - The route_target_both property is discouraged due to the inconsistent
+    - C(route_target_both), C(route_target_import) and
+      C(route_target_export valid) values are a list of extended communities,
+      (i.e. ['1.2.3.4:5', '33:55']) or the keywords 'auto' or 'default'.
+    - The C(route_target_both) property is discouraged due to the inconsistent
       behavior of the property across Nexus platforms and image versions.
-      For this reason it is recommended to use explicit 'route_target_export'
-      and 'route_target_import' properties instead of route_target_both.
-    - RD valid values are a String in one of the route-distinguisher formats,
+      For this reason it is recommended to use explicit C(route_target_export)
+      and C(route_target_import) properties instead of C(route_target_both).
+    - RD valid values are a string in one of the route-distinguisher formats,
       the keyword 'auto', or the keyword 'default'.
 options:
     vni:
@@ -70,7 +70,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
