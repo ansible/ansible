@@ -21,60 +21,60 @@ DOCUMENTATION = '''
 ---
 module: nxos_hsrp
 version_added: "2.2"
-short_description: Manages HSRP configuration on NX-OS switches
+short_description: Manages HSRP configuration on NX-OS switches.
 description:
-    - Manages HSRP configuration on NX-OS switches
+    - Manages HSRP configuration on NX-OS switches.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - HSRP feature needs to be enabled first on the system
-    - SVIs must exist before using this module
-    - Interface must be a L3 port before using this module
-    - HSRP cannot be configured on loopback interfaces
+    - HSRP feature needs to be enabled first on the system.
+    - SVIs must exist before using this module.
+    - Interface must be a L3 port before using this module.
+    - HSRP cannot be configured on loopback interfaces.
     - MD5 authentication is only possible with HSRPv2 while it is ignored if
       HSRPv1 is used instead, while it will not raise any error. Here we allow
       MD5 authentication only with HSRPv2 in order to enforce better practice.
 options:
     group:
         description:
-            - HSRP group number
+            - HSRP group number.
         required: true
     interface:
         description:
-            - Full name of interface that is being managed for HSRP
+            - Full name of interface that is being managed for HSRP.
         required: true
     version:
         description:
-            - HSRP version
+            - HSRP version.
         required: false
         default: 2
         choices: ['1','2']
     priority:
         description:
-            - HSRP priority
+            - HSRP priority.
         required: false
         default: null
     vip:
         description:
-            - HSRP virtual IP address
+            - HSRP virtual IP address.
         required: false
         default: null
     auth_string:
         description:
-            - Authentication string
+            - Authentication string.
         required: false
         default: null
     auth_type:
         description:
-            - Authentication type
+            - Authentication type.
         required: false
         default: null
         choices: ['text','md5']
     state:
         description:
-            - Specify desired state of the resource
+            - Specify desired state of the resource.
         required: false
         choices: ['present','absent']
         default: 'present'
