@@ -28,159 +28,160 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - I(state)=absent removes the ACE if it exists
-    - I(state)=delete_acl deleted the ACL if it exists
-    - for idempotency, use port numbers for the src/dest port
+    - C(state=absent) removes the ACE if it exists.
+    - C(state=delete_acl) deleted the ACL if it exists.
+    - For idempotency, use port numbers for the src/dest port
       params like I(src_port1) and names for the well defined protocols
       for the I(proto) param.
-    - while this module is idempotent in that if the ace as presented in the
-      task is identical to the one on the switch, no changes will be made. If
-      there is any difference, what is in Ansible will be pushed (configured
+    - Although this module is idempotent in that if the ace as presented in
+      the task is identical to the one on the switch, no changes will be made.
+      If there is any difference, what is in Ansible will be pushed (configured
       options will be overridden).  This is to improve security, but at the
       same time remember an ACE is removed, then re-added, so if there is a
-      change, the new ACE will be exacty what params you are sending to the
-      module.
+      change, the new ACE will be exactly what paramaters you are sending to
+      the module.
 options:
     seq:
         description:
-            - sequence number of the entry (ACE)
+            - Sequence number of the entry (ACE).
         required: false
         default: null
     name:
         description:
-            - Case sensitive name of the access list (ACL)
+            - Case sensitive name of the access list (ACL).
         required: true
     action:
         description:
-            - action of the ACE
+            - Action of the ACE.
         required: false
         default: null
         choices: ['permit', 'deny', 'remark']
     remark:
         description:
-            - If action is set to remark, this is the description
+            - If action is set to remark, this is the description.
         required: false
         default: null
     proto:
         description:
-            - port number or protocol (as supported by the switch)
+            - Port number or protocol (as supported by the switch).
         required: false
         default: null
     src:
         description:
-            - src ip and mask using IP/MASK notation and supports keyword 'any'
+            - Source ip and mask using IP/MASK notation and
+              supports keyword 'any'.
         required: false
         default: null
     src_port_op:
         description:
-            - src port operands such as eq, neq, gt, lt, range
+            - Source port operands such as eq, neq, gt, lt, range.
         required: false
         default: null
         choices: ['any', 'eq', 'gt', 'lt', 'neq', 'range']
     src_port1:
         description:
-            - port/protocol and also first (lower) port when using range
-              operand
+            - Port/protocol and also first (lower) port when using range
+              operand.
         required: false
         default: null
     src_port2:
         description:
-            - second (end) port when using range operand
+            - Second (end) port when using range operand.
         required: false
         default: null
     dest:
         description:
-            - dest ip and mask using IP/MASK notation and supports the
-              keyword 'any'
+            - Destination ip and mask using IP/MASK notation and supports the
+              keyword 'any'.
         required: false
         default: null
         default: null
     dest_port_op:
         description:
-            - dest port operands such as eq, neq, gt, lt, range
+            - Destination port operands such as eq, neq, gt, lt, range.
         required: false
         default: null
         choices: ['any', 'eq', 'gt', 'lt', 'neq', 'range']
     dest_port1:
         description:
-            - port/protocol and also first (lower) port when using range
-              operand
+            - Port/protocol and also first (lower) port when using range
+              operand.
         required: false
         default: null
     dest_port2:
         description:
-            - second (end) port when using range operand
+            - Second (end) port when using range operand.
         required: false
         default: null
     log:
         description:
-            - Log matches against this entry
+            - Log matches against this entry.
         required: false
         default: null
         choices: ['enable']
     urg:
         description:
-            - Match on the URG bit
+            - Match on the URG bit.
         required: false
         default: null
         choices: ['enable']
     ack:
         description:
-            - Match on the ACK bit
+            - Match on the ACK bit.
         required: false
         default: null
         choices: ['enable']
     psh:
         description:
-            - Match on the PSH bit
+            - Match on the PSH bit.
         required: false
         default: null
         choices: ['enable']
     rst:
         description:
-            - Match on the RST bit
+            - Match on the RST bit.
         required: false
         default: null
         choices: ['enable']
     syn:
         description:
-            - Match on the SYN bit
+            - Match on the SYN bit.
         required: false
         default: null
         choices: ['enable']
     fin:
         description:
-            - Match on the FIN bit
+            - Match on the FIN bit.
         required: false
         default: null
         choices: ['enable']
     established:
         description:
-            - Match established connections
+            - Match established connections.
         required: false
         default: null
         choices: ['enable']
     fragments:
         description:
-            - Check non-initial fragments
+            - Check non-initial fragments.
         required: false
         default: null
         choices: ['enable']
     time-range:
         description:
-            - Name of time-range to apply
+            - Name of time-range to apply.
         required: false
         default: null
     precedence:
         description:
-            - Match packets with given precedence
+            - Match packets with given precedence.
         required: false
         default: null
         choices: ['critical', 'flash', 'flash-override', 'immediate',
                   'internet', 'network', 'priority', 'routine']
     dscp:
         description:
-            - Match packets with given dscp value
+            - Match packets with given dscp value.
         required: false
         default: null
         choices: ['af11', 'af12', 'af13', 'af21', 'af22', 'af23','af31','af32',
@@ -188,7 +189,7 @@ options:
                   'cs5', 'cs6', 'cs7', 'default', 'ef']
     state:
         description:
-            - Specify desired state of the resource
+            - Specify desired state of the resource.
         required: false
         default: present
         choices: ['present','absent','delete_acl']
