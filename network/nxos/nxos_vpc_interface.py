@@ -37,21 +37,21 @@ notes:
 options:
     portchannel:
         description:
-            - group number of the portchannel that will be configured
+            - Group number of the portchannel that will be configured.
         required: true
     vpc:
         description:
-            - vpc group/id that will be configured on associated portchannel
+            - VPC group/id that will be configured on associated portchannel.
         required: false
         default: null
     peer_link:
         description:
-            - Set to true/false for peer link config on assoicated portchannel
+            - Set to true/false for peer link config on assoicated portchannel.
         required: false
         default: null
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: true
         choices: ['present','absent']
 '''
