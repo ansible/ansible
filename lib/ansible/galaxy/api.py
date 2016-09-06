@@ -127,6 +127,7 @@ class GalaxyAPI(object):
         data = json.load(resp)
         return data
 
+    @g_connect
     def create_import_task(self, github_user, github_repo, reference=None):
         """
         Post an import request
