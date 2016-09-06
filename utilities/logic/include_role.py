@@ -37,14 +37,19 @@ options:
       - "File to load from a Role's defaults/ directory."
     required: False
     default: 'main'
+  static:
+    description:
+      - Gives Ansible a hint if this is a 'static' include or not. If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options.
+    required: False
+    default: None
+  private:
+    description:
+      - If True the variables from defaults/ and vars/ in a role will not be made available to the rest of the play.
+    default: None
 notes:
     - THIS IS EARLY PREVIEW, THINGS MAY CHANGE
-    - Only basic roles have been tested for now, some things might not work as expected.
     - Handlers are made available to the whole play.
-    - Currently role variables are not pushed up to the play.
     - simple dependencies seem to work fine.
-    - Role search paths work (implicit vars/ templates/ files/ etc)
-    - loops don't work.
     - "Things not tested (yet): plugin overrides, nesting includes, used as handler, other stuff I did not think of when I wrote this."
 '''
 
@@ -62,6 +67,19 @@ EXAMPLES = """
   vars:
     rolevar1: 'value from task'
 
+- name: Use role in loop
+  include_role:
+    name: myrole
+  with_items:
+    - '{{roleinput1}}"
+    - '{{roleinput2}}"
+  loop_control:
+    loop_var: roleinputvar
+
+- name: conditional role
+  include_role:
+    name: myrole
+  when: not idontwanttorun
 """
 
 RETURN = """
