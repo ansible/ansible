@@ -33,18 +33,20 @@ from ansible.errors import AnsibleError
 from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.plugins import vars_loader
-from ansible.utils.unicode import to_unicode, to_bytes
-from ansible.utils.vars import combine_vars
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-
-HOSTS_PATTERNS_CACHE = {}
+from ansible.plugins import vars_loader
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+HOSTS_PATTERNS_CACHE = {}
+
 
 class Inventory(object):
     """
@@ -125,7 +127,7 @@ class Inventory(object):
                 try:
                     (host, port) = parse_address(h, allow_ranges=False)
                 except AnsibleError as e:
-                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
+                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
                     host = h
                     port = None
 
@@ -138,7 +140,7 @@ class Inventory(object):
                     self.localhost = new_host
                 all.add_host(new_host)
         elif self._loader.path_exists(host_list):
-            #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
+            # TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
@@ -151,7 +153,7 @@ class Inventory(object):
                 # should never happen, but JIC
                 raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
         else:
-            display.warning("Host file not found: %s" % to_unicode(host_list))
+            display.warning("Host file not found: %s" % to_text(host_list))
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
@@ -191,7 +193,7 @@ class Inventory(object):
         return results
 
     def get_hosts(self, pattern="all", ignore_limits_and_restrictions=False):
-        """ 
+        """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
         or applied subsets
@@ -205,9 +207,9 @@ class Inventory(object):
 
         if not ignore_limits_and_restrictions:
             if self._subset:
-                pattern_hash += u":%s" % to_unicode(self._subset)
+                pattern_hash += u":%s" % to_text(self._subset)
             if self._restriction:
-                pattern_hash += u":%s" % to_unicode(self._restriction)
+                pattern_hash += u":%s" % to_text(self._restriction)
 
         if pattern_hash not in HOSTS_PATTERNS_CACHE:
 
@@ -326,7 +328,7 @@ class Inventory(object):
         return hosts
 
     def _match_one_pattern(self, pattern):
-        """ 
+        """
         Takes a single pattern and returns a list of matching host names.
         Ignores intersection (&) and exclusion (!) specifiers.
 
@@ -426,7 +428,7 @@ class Inventory(object):
         """
         Takes a list of hosts and a (start,end) tuple and returns the subset of
         hosts based on the subscript (which may be None to return all hosts).
-        """ 
+        """
 
         if not hosts or not subscript:
             return hosts
@@ -491,7 +493,8 @@ class Inventory(object):
                 py_interp = sys.executable
                 if not py_interp:
                     # sys.executable is not set in some cornercases.  #13585
-                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. You can correct this by setting ansible_python_interpreter for localhost')
+                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default.'
+                            ' You can correct this by setting ansible_python_interpreter for localhost')
                     py_interp = '/usr/bin/python'
                 new_host.set_variable("ansible_python_interpreter", py_interp)
             self.get_group("ungrouped").add_host(new_host)
@@ -648,7 +651,7 @@ class Inventory(object):
         return sorted(self.groups.keys(), key=lambda x: x)
 
     def restrict_to_hosts(self, restriction):
-        """ 
+        """
         Restrict list operations to the hosts given in restriction.  This is used
         to batch serial operations in main playbook code, don't use this for other
         reasons.
@@ -660,12 +663,12 @@ class Inventory(object):
         self._restriction = [ h.name for h in restriction ]
 
     def subset(self, subset_pattern):
-        """ 
+        """
         Limits inventory results to a subset of inventory that matches a given
         pattern, such as to select a given geographic of numeric slice amongst
-        a previous 'hosts' selection that only select roles, or vice versa.  
+        a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
-        """        
+        """
         if subset_pattern is None:
             self._subset = None
         else:
@@ -781,7 +784,7 @@ class Inventory(object):
         path = os.path.realpath(os.path.join(basedir, 'group_vars'))
         found_vars = set()
         if os.path.exists(path):
-            found_vars = set(os.listdir(to_unicode(path)))
+            found_vars = set(os.listdir(to_text(path)))
         return found_vars
 
     def _find_host_vars_files(self, basedir):
@@ -791,7 +794,7 @@ class Inventory(object):
         path = os.path.realpath(os.path.join(basedir, 'host_vars'))
         found_vars = set()
         if os.path.exists(path):
-            found_vars = set(os.listdir(to_unicode(path)))
+            found_vars = set(os.listdir(to_text(path)))
         return found_vars
 
     def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False, return_results=False):
@@ -832,13 +835,13 @@ class Inventory(object):
             # Before trying to load vars from file, check that the directory contains relvant file names
             if host is None and any(map(lambda ext: group.name + ext in self._group_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # load vars in dir/group_vars/name_of_group
-                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='strict')
+                base_path = to_text(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='surrogate_or_strict')
                 host_results = self._variable_manager.add_group_vars_file(base_path, self._loader)
                 if return_results:
                     results = combine_vars(results, host_results)
             elif group is None and any(map(lambda ext: host.name + ext in self._host_vars_files, C.YAML_FILENAME_EXTENSIONS)):
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='strict')
+                base_path = to_text(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='surrogate_or_strict')
                 group_results = self._variable_manager.add_host_vars_file(base_path, self._loader)
                 if return_results:
                     results = combine_vars(results, group_results)

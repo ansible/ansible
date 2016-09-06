@@ -24,12 +24,10 @@ import difflib
 import warnings
 from copy import deepcopy
 
-from ansible.compat.six import string_types
-
 from ansible import constants as C
-from ansible.vars import strip_internal_keys
+from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_unicode
+from ansible.vars import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -37,13 +35,14 @@ except ImportError:
     from ansible.utils.display import Display
     global_display = Display()
 
-__all__ = ["CallbackBase"]
-
 try:
     from __main__ import cli
 except ImportError:
-    # using API w/o cli 
+    # using API w/o cli
     cli = False
+
+__all__ = ["CallbackBase"]
+
 
 class CallbackBase:
 
@@ -146,8 +145,8 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True),
-                                                      to_unicode(diff['after']).splitlines(True),
+                        differ = difflib.unified_diff(to_text(diff['before']).splitlines(True),
+                                                      to_text(diff['after']).splitlines(True),
                                                       fromfile=before_header,
                                                       tofile=after_header,
                                                       fromfiledate='',
@@ -166,7 +165,7 @@ class CallbackBase:
                         if has_diff:
                             ret.append('\n')
                     if 'prepared' in diff:
-                        ret.append(to_unicode(diff['prepared']))
+                        ret.append(to_text(diff['prepared']))
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
         return u''.join(ret)
@@ -362,4 +361,3 @@ class CallbackBase:
 
     def v2_runner_retry(self, result):
         pass
-

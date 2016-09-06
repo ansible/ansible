@@ -35,7 +35,8 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
+
 
 try:
     # Python 2
@@ -43,7 +44,6 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
-
 
 
 logger = None
@@ -105,7 +105,7 @@ class Display:
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
-        """ 
+        """
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
@@ -124,7 +124,7 @@ class Display:
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+                msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
             if not stderr:
                 fileobj = sys.stdout
@@ -149,7 +149,7 @@ class Display:
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+                msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
             if color == C.COLOR_ERROR:
                 logger.error(msg2)
@@ -279,7 +279,7 @@ class Display:
         if sys.version_info >= (3,):
             # Convert back into text on python3.  We do this double conversion
             # to get rid of characters that are illegal in the user's locale
-            prompt_string = to_unicode(prompt_string)
+            prompt_string = to_text(prompt_string)
 
         if private:
             return getpass.getpass(msg)
@@ -323,7 +323,7 @@ class Display:
             result = do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
-        result = to_unicode(result, errors='strict')
+        result = to_text(result, errors='surrogate_or_strict')
         return result
 
     @staticmethod

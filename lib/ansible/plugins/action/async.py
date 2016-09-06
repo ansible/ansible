@@ -22,9 +22,10 @@ import pipes
 import random
 
 from ansible import constants as C
-from ansible.plugins.action import ActionBase
 from ansible.compat.six import iteritems
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
+from ansible.plugins.action import ActionBase
+
 
 class ActionModule(ActionBase):
 
@@ -76,7 +77,7 @@ class ActionModule(ActionBase):
         elif module_style == 'old':
             args_data = ""
             for k, v in iteritems(module_args):
-                args_data += '%s="%s" ' % (k, pipes.quote(to_unicode(v)))
+                args_data += '%s="%s" ' % (k, pipes.quote(to_text(v)))
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), args_data)
 
         remote_paths = tmp, remote_module_path, remote_async_module_path
@@ -100,7 +101,7 @@ class ActionModule(ActionBase):
         if not self._should_remove_tmp_path(tmp):
             async_cmd.append("-preserve_tmp")
 
-        async_cmd = " ".join([to_unicode(x) for x in async_cmd])
+        async_cmd = " ".join(to_text(x) for x in async_cmd)
         result.update(self._low_level_execute_command(cmd=async_cmd))
 
         result['changed'] = True

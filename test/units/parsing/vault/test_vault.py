@@ -30,11 +30,12 @@ from binascii import hexlify
 from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
-from ansible.utils.unicode import to_bytes, to_unicode
 
 from ansible import errors
 from ansible.parsing.vault import VaultLib
 from ansible.parsing import vault
+from ansible.module_utils._text import to_bytes
+
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
 try:

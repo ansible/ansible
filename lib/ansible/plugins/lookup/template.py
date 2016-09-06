@@ -21,7 +21,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_unicode, to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from __main__ import display
@@ -43,8 +43,8 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
-                with open(to_bytes(lookupfile, errors='strict'), 'r') as f:
-                    template_data = to_unicode(f.read())
+                with open(to_bytes(lookupfile, errors='surrogate_or_strict'), 'rb') as f:
+                    template_data = to_text(f.read(), errors='surrogate_or_strict')
 
                     # set jinja2 internal search path for includes
                     if 'ansible_search_path' in variables:
