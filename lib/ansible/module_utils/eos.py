@@ -31,6 +31,7 @@ import re
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -307,9 +308,12 @@ def prepare_commands(commands):
     :returns: list of dict objects
     """
     jsonify = lambda x: '%s | json' % x
-    for cmd in to_list(commands):
-        if cmd.output == 'json':
+    for item in to_list(commands):
+        if item.output == 'json':
             cmd = jsonify(cmd)
+        elif item.command.endswith('| json'):
+            item.output = 'json'
+            cmd = str(item)
         else:
-            cmd = str(cmd)
+            cmd = str(item)
         yield cmd
