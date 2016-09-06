@@ -381,9 +381,19 @@ tenant_ip: "192.168.200.21/23"
 # import ansible.module_utils.basic
 import os
 import sys
-import dbus
-from gi.repository import NetworkManager, NMClient
+HAVE_DBUS=False
+try:
+    import dbus
+    HAVE_DBUS=True
+except ImportError:
+    pass
 
+HAVE_NM_CLIENT=False
+try:
+    from gi.repository import NetworkManager, NMClient
+    HAVE_NM_CLIENT=True
+except ImportError:
+    pass
 
 class Nmcli(object):
     """
@@ -1009,6 +1019,12 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if not HAVE_DBUS:
+        module.fail_json(msg="This module requires dbus python bindings")
+
+    if not HAVE_NM_CLIENT:
+        module.fail_json(msg="This module requires NetworkManager glib API")
 
     nmcli=Nmcli(module)
 
