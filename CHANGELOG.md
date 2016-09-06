@@ -7,6 +7,19 @@ Ansible Changes By Release
 * Fix a bug with async's poll keyword not making use of ansible_python_interpreter to run (and thus breaking when /usr/bin/python is not present on the remote machine.)
 * Fix a bug where hosts that started with a range in inventory were being treated as an invalid section header.
 * Fix a bug where the fetch module was not idempotent when retrieving the target of a symlink.
+
+###Deprecations:
+
+* Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
+  This change only impacts custom action plugins using `_fixup_perms`.
+
+###Incompatible Changes:
+
+* Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
+  Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
+  Use `_fixup_perms2` if support for previous releases is not required.
+  Otherwise use `_fixup_perms` with `recursive=False`.
+
 ## 2.1.1 "The Song Remains the Same" - 07-28-2016
 
 ###Minor Changes:
