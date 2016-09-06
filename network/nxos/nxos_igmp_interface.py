@@ -20,30 +20,32 @@ DOCUMENTATION = '''
 ---
 module: nxos_igmp_interface
 version_added: "2.2"
-short_description: Manages IGMP interface configuration
+short_description: Manages IGMP interface configuration.
 description:
-    - Manages IGMP interface configuration settings
+    - Manages IGMP interface configuration settings.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - When state=default, supported params will be reset to a default state.
-      These include version, startup_query_interval, startup_query_count,
-      robustness, querier_timeout, query_mrt, query_interval, last_member_qrt,
-      last_member_query_count, group_timeout, report_llg, and immediate_leave
-    - When state=absent, all configs for oif_prefix, oif_source, and
-      oif_routemap will be removed.
-    - PIM must be enabled to use this module
-    - This module is for Layer 3 interfaces
+    - When C(state=default), supported params will be reset to a default state.
+      These include C(version), C(startup_query_interval),
+      C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
+      C(query_interval), C(last_member_qrt), C(last_member_query_count),
+      C(group_timeout), C(report_llg), and C(immediate_leave).
+    - When C(state=absent), all configs for C(oif_prefix), C(oif_source), and
+      C(oif_routemap) will be removed.
+    - PIM must be enabled to use this module.
+    - This module is for Layer 3 interfaces.
     - Route-map check not performed (same as CLI) check when configuring
       route-map with 'static-oif'
     - If restart is set to true with other params set, the restart will happen
-      last, i.e. after the configuration takes place
+      last, i.e. after the configuration takes place.
 options:
     interface:
         description:
-            - The FULL interface name for IGMP configuration.
+            - The full interface name for IGMP configuration.
+              e.g. I(Ethernet1/2).
         required: true
     version:
         description:
@@ -93,7 +95,7 @@ options:
         description:
             - Sets the query interval waited after sending membership reports
               before the software deletes the group state. Values can range
-              from 1 to 25 seconds. The default is 1 second
+              from 1 to 25 seconds. The default is 1 second.
         required: false
         default: null
     last_member_query_count:
@@ -147,13 +149,13 @@ options:
         default: null
     restart:
         description:
-            - Restart IGMP
+            - Restart IGMP.
         required: false
         choices: ['true', 'false']
         default: null
     state:
         description:
-            - Manages desired state of the resource
+            - Manages desired state of the resource.
         required: false
         default: present
         choices: ['present', 'default']
