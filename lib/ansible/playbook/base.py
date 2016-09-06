@@ -108,13 +108,10 @@ class BaseMeta(type):
                     # its value from a parent object
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
-                        #print("^ assigning generic_g_method to %s" % attr_name)
                         getter = partial(_generic_g_method, attr_name)
                     elif '_get_parent_attribute' in dst_dict and value.inherit:
-                        #print("^ assigning generic_g_parent to %s" % attr_name)
                         getter = partial(_generic_g_parent, attr_name)
                     else:
-                        #print("^ assigning generic_g to %s" % attr_name)
                         getter = partial(_generic_g, attr_name)
 
                     setter = partial(_generic_s, attr_name)
@@ -140,7 +137,6 @@ class BaseMeta(type):
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
-        #print("creating class %s" % name)
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
@@ -201,7 +197,6 @@ class Base(with_metaclass(BaseMeta, object)):
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
-            #print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
