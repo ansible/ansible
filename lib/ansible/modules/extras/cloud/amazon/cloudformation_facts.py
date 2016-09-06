@@ -254,8 +254,13 @@ def main():
 
     # Create stack output and stack parameter dictionaries
     if facts['stack_description']:
-        facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')    
-        facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')    
+        facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
+        facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+
+    # normalize stack description API output
+    facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
+    # camel2snake doesn't handle NotificationARNs properly, so let's fix that
+    facts['stack_description']['notification_arns'] = facts['stack_description'].pop('notification_ar_ns', [])
 
     # Create optional stack outputs
     all_facts = module.params.get('all_facts')
