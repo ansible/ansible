@@ -73,9 +73,6 @@ class Cli(object):
         output = output or self.default_output
         if isinstance(command, Command):
             return command
-        elif isinstance(command, dict):
-            output = cmd.get('output') or output
-            cmd = cmd['command']
         if isinstance(prompt, string_types):
             prompt = re.compile(re.escape(prompt))
         return Command(command, output, prompt=prompt, response=response, **kwargs)
