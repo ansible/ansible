@@ -72,11 +72,6 @@ class Cli(CliBase):
         cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
         self.execute([cmd, 'no terminal pager'])
 
-    ### Cli methods ###
-
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
-
     def change_context(self, params, **kwargs):
         context = params['context']
         if context == 'system':
