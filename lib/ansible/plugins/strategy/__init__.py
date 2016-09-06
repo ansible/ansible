@@ -367,7 +367,7 @@ class StrategyBase:
                                     host_list = [original_host]
 
                                 for target_host in host_list:
-                                    if original_task.action == 'set_fact':
+                                    if original_task.action in C.DEFAULT_FACTS_ACTIONS:
                                         self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
                                     else:
                                         self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
