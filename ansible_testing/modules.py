@@ -129,6 +129,7 @@ class ModuleValidator(Validator):
     BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
 
     PS_DOC_BLACKLIST = frozenset((
+        'async_status.ps1',
         'slurp.ps1',
         'setup.ps1'
     ))
