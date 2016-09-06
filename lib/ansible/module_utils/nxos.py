@@ -283,4 +283,6 @@ def prepare_commands(commands):
     for cmd in to_list(commands):
         if cmd.output == 'json':
             cmd.command_string = jsonify(cmd)
+        if cmd.command.endswith('| json'):
+            cmd.output = 'json'
         yield cmd
