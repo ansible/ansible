@@ -489,7 +489,7 @@ class TestActionBase(unittest.TestCase):
         action_base._transfer_data = MagicMock()
         action_base._compute_environment_string = MagicMock()
         action_base._low_level_execute_command = MagicMock()
-        action_base._fixup_perms = MagicMock()
+        action_base._fixup_perms2 = MagicMock()
 
         action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
         action_base._late_needs_tmp_path.return_value = False

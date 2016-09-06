@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
         if argsfile:
             remote_paths += argsfile,
 
-        self._fixup_perms(remote_paths, remote_user, execute=True)
+        self._fixup_perms2(remote_paths, remote_user, execute=True)
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))

@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
         self._transfer_file(source, tmp_src)
 
         # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms((tmp, tmp_src), remote_user, execute=True)
+        self._fixup_perms2((tmp, tmp_src), remote_user, execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()
