@@ -155,6 +155,10 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        # Avoid modules that don't work with ad-hoc
+        if self.options.module_name in ('include', 'include_role'):
+            raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
+
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:

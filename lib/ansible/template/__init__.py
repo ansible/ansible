@@ -367,13 +367,25 @@ class Templar:
             else:
                 return variable
 
+    def templatable(self, data):
+        '''
+        returns True if the data can be templated w/o errors
+        '''
+        templatable = True
+        try:
+            self.template(data)
+        except:
+           templatable = False
+        return templatable
+
     def _contains_vars(self, data):
         '''
         returns True if the data contains a variable pattern
         '''
-        for marker in  [self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string]:
-            if marker in data:
-                return True
+        if isinstance(data, string_types):
+            for marker in [self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string]:
+                if marker in data:
+                    return True
         return False
 
     def _convert_bare_variable(self, variable, bare_deprecated):
