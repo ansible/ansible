@@ -615,7 +615,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path(remote_user)
 
-        if tmp:
+        if tmp and \
+         (module_style != 'new' or \
+         not self._connection.has_pipelining or \
+         not self._play_context.pipelining or \
+         C.DEFAULT_KEEP_REMOTE_FILES or \
+         self._play_context.become_method == 'su'):
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
             if module_style in ('old', 'non_native_want_json', 'binary'):
