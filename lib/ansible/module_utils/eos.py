@@ -28,11 +28,9 @@
 
 import re
 
-from ansible.module_utils.basic import json, get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
+from ansible.module_utils.basic import json
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -41,9 +39,10 @@ EAPI_FORMATS = ['json', 'text']
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
+
 class EosConfigMixin(object):
 
-    ### implementation of netcfg.Config ###
+    ### Config methods ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
@@ -92,8 +91,6 @@ class EosConfigMixin(object):
 
     def save_config(self):
         self.execute(['copy running-config startup-config'])
-
-    ### end netcfg.Config ###
 
     def diff_config(self, session):
         commands = ['configure session %s' % session,
@@ -166,32 +163,9 @@ class Eapi(EosConfigMixin):
         else:
             self.enable = 'enable'
 
+    ### Command methods ###
 
-    ### implementation of network.Cli ###
-
-    def run_commands(self, commands):
-        output = None
-        cmds = list()
-        responses = list()
-
-        for cmd in commands:
-            if output and output != cmd.output:
-                responses.extend(self.execute(cmds, format=output))
-                cmds = list()
-
-            output = cmd.output
-            cmds.append(str(cmd))
-
-        if cmds:
-            responses.extend(self.execute(cmds, format=output))
-
-        for index, cmd in enumerate(commands):
-            if cmd.output == 'text':
-                responses[index] = responses[index].get('output')
-
-        return responses
-
-    def execute(self, commands, format='json', **kwargs):
+    def execute(self, commands, output='json', **kwargs):
         """Send commands to the device.
         """
         if self.url is None:
@@ -199,6 +173,28 @@ class Eapi(EosConfigMixin):
 
         if self.enable is not None:
             commands.insert(0, self.enable)
+
+    def run_commands(self, commands, **kwargs):
+        output = None
+        cmds = list()
+        responses = list()
+
+        for cmd in commands:
+            if output and output != cmd.output:
+                responses.extend(self.execute(cmds, output=output))
+                cmds = list()
+
+            output = cmd.output
+            cmds.append(str(cmd))
+
+        if cmds:
+            responses.extend(self.execute(cmds, output=output))
+
+        for index, cmd in enumerate(commands):
+            if cmd.output == 'text':
+                responses[index] = responses[index].get('output')
+
+        return responses
 
         data = self._get_body(commands, format)
         data = json.dumps(data)
@@ -230,8 +226,10 @@ class Eapi(EosConfigMixin):
 
         return response['result']
 
+    ### Config methods ###
+
     def get_config(self, **kwargs):
-        return self.execute(['show running-config'], format='text')[0]['output']
+        return self.execute(['show running-config'], output='text')[0]['output']
 
 Eapi = register_transport('eapi')(Eapi)
 
@@ -265,7 +263,7 @@ class Cli(EosConfigMixin, CliBase):
         passwd = params['auth_pass']
         self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
 
-    ### implementation of network.Cli ###
+    ### Command methods ###
 
     def run_commands(self, commands):
         """execute the ordered set of commands on the remote host
@@ -299,6 +297,7 @@ def prepare_config(commands):
     commands.insert(0, 'configure terminal')
     commands.append('end')
     return commands
+
 
 def prepare_commands(commands):
     """ transforms a list of Command objects to dict
