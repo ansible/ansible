@@ -341,7 +341,7 @@ class StrategyBase:
                                     # find the host we're actually refering too here, which may
                                     # be a host that is not really in inventory at all
                                     if original_task.delegate_to is not None and original_task.delegate_facts:
-                                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=original_task)
                                         self.add_tqm_variables(task_vars, play=iterator._play)
                                         if item is not None:
                                             task_vars[loop_var] = item
