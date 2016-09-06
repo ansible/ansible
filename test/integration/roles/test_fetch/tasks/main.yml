@@ -69,3 +69,29 @@
     that:
       - "not fetch_dir|changed"
       - "fetch_dir.msg"
+
+- name: create symlink to a file that we can fetch
+  file:
+    path: "{{ output_dir }}/link"
+    src: "{{ output_dir }}/orig"
+    state: "link"
+
+- name: fetch the file via a symlink
+  fetch: src={{ output_dir }}/link dest={{ output_dir }}/fetched-link
+  register: fetched
+
+- debug: var=fetched
+
+# TODO: check the sudo and non-sudo forms of fetch because in one form we'll do
+# the get method of the connection plugin and in the sudo case we'll use the
+# fetch module.
+
+- name: diff what we fetched with the original file
+  shell: diff {{ output_dir }}/orig {{ output_dir }}/fetched-link/{{inventory_hostname}}{{ output_dir | expanduser }}/link
+  register: diff
+
+- name: check the diff to make sure they are the same
+  assert:
+    that:
+      'diff.stdout == ""'
+
