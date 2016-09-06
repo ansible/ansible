@@ -124,7 +124,6 @@ class CommandRunner(object):
 
         self.match = 'all'
 
-        self._cache = dict()
         self._default_output = module.connection.default_output
 
 
@@ -137,15 +136,9 @@ class CommandRunner(object):
         self.commands.append(cmd)
 
     def get_command(self, command, output=None):
-        output = output or self._default_output
-        try:
-            cmdobj = self._cache[(command, output)]
-            return cmdobj.response
-        except KeyError:
-            for cmd in self.commands:
-                if cmd.command == command and cmd.output == output:
-                    self._cache[(command, output)] = cmd
-                    return cmd.response
+        for cmd in self.commands:
+            if cmd.command == command:
+                return cmd.response
         raise ValueError("command '%s' not found" % command)
 
     def get_responses(self):
