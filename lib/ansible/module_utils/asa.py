@@ -29,7 +29,7 @@
 
 import re
 
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
@@ -71,11 +71,6 @@ class Cli(CliBase):
         passwd = params['auth_pass']
         cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
         self.execute([cmd, 'no terminal pager'])
-
-    ### Cli methods ###
-
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
 
     def change_context(self, params, **kwargs):
         context = params['context']

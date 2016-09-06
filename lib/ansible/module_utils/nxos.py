@@ -20,12 +20,10 @@
 import re
 import collections
 
-from ansible.module_utils.basic import json, get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
+from ansible.module_utils.basic import json
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.netcli import Command
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 add_argument('use_ssl', dict(default=False, type='bool'))
@@ -102,6 +100,8 @@ class Nxapi(object):
         self._nxapi_auth = None
         self._connected = False
 
+    ### Command methods ###
+
     def execute(self, commands, output=None, **kwargs):
         commands = collections.deque(commands)
         output = output or self.default_output
@@ -153,9 +153,7 @@ class Nxapi(object):
 
         return result
 
-    ### implemention of netcli.Cli ###
-
-    def run_commands(self, commands):
+    def run_commands(self, commands, **kwargs):
         output = None
         cmds = list()
         responses = list()
@@ -164,6 +162,7 @@ class Nxapi(object):
             if output and output != cmd.output:
                 responses.extend(self.execute(cmds, output=output))
                 cmds = list()
+
             output = cmd.output
             cmds.append(str(cmd))
 
@@ -173,13 +172,13 @@ class Nxapi(object):
         return responses
 
 
-    ### implemention of netcfg.Config ###
+    ### Config methods ###
 
     def configure(self, commands):
         commands = to_list(commands)
         return self.execute(commands, output='config')
 
-    def get_config(self, include_defaults=False):
+    def get_config(self, include_defaults=False, **kwargs):
         cmd = 'show running-config'
         if include_defaults:
             cmd += ' all'
@@ -190,8 +189,6 @@ class Nxapi(object):
 
     def save_config(self, **kwargs):
         self.execute(['copy running-config startup-config'])
-
-    ### end netcfg.Config ###
 
     def _jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
@@ -213,8 +210,6 @@ Nxapi = register_transport('nxapi')(Nxapi)
 
 class Cli(CliBase):
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
     CLI_PROMPTS_RE = [
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
@@ -233,11 +228,13 @@ class Cli(CliBase):
         re.compile(r"unknown command")
     ]
 
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
 
-    ### implementation of netcli.Cli ###
+    ### Command methods ###
 
     def run_commands(self, commands):
         cmds = list(prepare_commands(commands))
@@ -253,7 +250,7 @@ class Cli(CliBase):
                     )
         return responses
 
-    ### implemented by netcfg.Config ###
+    ### Config methods ###
 
     def configure(self, commands, **kwargs):
         commands = prepare_config(commands)
