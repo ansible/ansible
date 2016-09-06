@@ -33,7 +33,6 @@ notes:
     - I(mask) must be inserted in decimal format (i.e. 24) for
       both IPv6 and IPv4.
     - A single interface can have multiple IPv6 configured.
-
 options:
     interface:
         description:
