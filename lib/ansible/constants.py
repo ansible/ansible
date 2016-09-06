@@ -112,7 +112,10 @@ def load_config_file():
         path0 = os.path.expanduser(path0)
         if os.path.isdir(path0):
             path0 += "/ansible.cfg"
-    path1 = os.getcwd() + "/ansible.cfg"
+    try:
+        path1 = os.getcwd() + "/ansible.cfg"
+    except OSError:
+        path1 = None
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
 
