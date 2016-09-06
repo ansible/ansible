@@ -86,6 +86,20 @@ Ansible Changes By Release
 * loop_control now has a label option to allow fine grained control what gets displayed per item
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
 
+## 2.1.2 "The Song Remains the Same"
+
+###Deprecations:
+
+* Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
+  This change only impacts custom action plugins using `_fixup_perms`.
+
+###Incompatible Changes:
+
+* Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
+  Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
+  Use `_fixup_perms2` if support for previous releases is not required.
+  Otherwise use `_fixup_perms` with `recursive=False`.
+
 ## 2.1 "The Song Remains the Same"
 
 ###Major Changes:
