@@ -338,8 +338,13 @@ class ZipArchive(object):
             # Check first and seventh field in order to skip header/footer
             if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
             if len(pcs[6]) != 15: continue
-
-            if pcs[0][0] not in 'dl-?' or not frozenset(pcs[0][1:]).issubset('rwxst-'):
+ 
+            # Possible entries:
+            #   -rw-rws---  1.9 unx    2802 t- defX 11-Aug-91 13:48 perms.2660
+            #   -rw-a--     1.0 hpf    5358 Tl i4:3  4-Dec-91 11:33 longfilename.hpfs
+            #   -r--ahs     1.1 fat    4096 b- i4:2 14-Jul-91 12:58 EA DATA. SF
+            #   --w-------  1.0 mac   17357 bx i8:2  4-May-92 04:02 unzip.macr
+            if pcs[0][0] not in 'dl-?' or not frozenset(pcs[0][1:]).issubset('rwxstah-'):
                 continue
 
             ztype = pcs[0][0]
