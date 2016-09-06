@@ -48,6 +48,7 @@ Function Start-Watchdog {
         using System.Diagnostics;
         using System.Linq;
         using System.Runtime.InteropServices;
+        using System.Threading;
 
         namespace Ansible.Async {
 
@@ -89,7 +90,17 @@ Function Start-Watchdog {
                 {
                     var proc = Process.GetProcessById(pid);
 
-                    foreach(var thread in proc.Threads.OfType<ProcessThread>().Where(t => t.WaitReason == ThreadWaitReason.Suspended))
+                    // wait for at least one suspended thread in the process (this handles possible slow startup race where primary thread of created-suspended process has not yet become runnable)
+                    var retryCount = 0;
+                    while(!proc.Threads.OfType<ProcessThread>().Any(t=>t.ThreadState == System.Diagnostics.ThreadState.Wait && t.WaitReason == ThreadWaitReason.Suspended))
+                    {
+                        proc.Refresh();
+                        Thread.Sleep(50);
+                        if (retryCount > 100)
+                            throw new InvalidOperationException(String.Format("No threads were suspended in target PID {0} after 5s", pid));
+                    }
+
+                    foreach(var thread in proc.Threads.OfType<ProcessThread>().Where(t => t.ThreadState == System.Diagnostics.ThreadState.Wait && t.WaitReason == ThreadWaitReason.Suspended))
                         ResumeThreadById(thread.Id);
                 }
             }
