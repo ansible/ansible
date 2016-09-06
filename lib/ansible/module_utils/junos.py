@@ -19,10 +19,11 @@
 import re
 import shlex
 
+import re
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
@@ -307,4 +308,3 @@ def rpc_args(args):
         else:
             kwargs[key] = str(value)
     return (name, kwargs)
-

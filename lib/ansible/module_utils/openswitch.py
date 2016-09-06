@@ -29,7 +29,7 @@ except ImportError:
     HAS_OPS = False
 
 from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
-from ansible.module_utils.network import NetworkModule, ModuleStub, NetworkError
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -78,12 +78,19 @@ class Response(object):
 
 class Rest(object):
 
+    DEFAULT_HEADERS = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
     def __init__(self):
         self.url = None
         self.url_args = ModuleStub(url_argument_spec(), self._error)
-        self.headers = dict({'Content-Type': 'application/json', 'Accept': 'application/json'})
-        self.default_output = 'json'
+
+        self.headers = self.DEFAULT_HEADERS
+
         self._connected = False
+        self.default_output = 'json'
 
     def _error(self, msg):
         raise NetworkError(msg, url=self.url)
@@ -107,7 +114,7 @@ class Rest(object):
                 port = 80
 
         baseurl = '%s://%s:%s' % (proto, host, port)
-        headers = dict({'Content-Type': 'application/x-www-form-urlencoded'})
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         # Get a cookie and save it the rest of the operations.
         url = '%s/%s' % (baseurl, 'login')
         data = 'username=%s&password=%s' % (params['username'], params['password'])
@@ -123,6 +130,8 @@ class Rest(object):
 
     def authorize(self, params, **kwargs):
         raise NotImplementedError
+
+    ### REST methods ###
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -153,8 +162,12 @@ class Rest(object):
     def delete(self, path, data=None, headers=None):
         return self.request('DELETE', path, data, headers)
 
+    ### Command methods ###
+
     def run_commands(self, commands):
         raise NotImplementedError
+
+    ### Config methods ###
 
     def configure(self, commands):
         path = '/system/full-configuration'
@@ -190,8 +203,6 @@ Rest = register_transport('rest')(Rest)
 
 class Cli(CliBase):
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
@@ -207,12 +218,9 @@ class Cli(CliBase):
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
-    ### implementation of netcli.Cli
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
-
-    ### implementation of netcfg.Config
+    ### Config methods ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
@@ -225,7 +233,7 @@ class Cli(CliBase):
     def get_config(self):
         return self.execute('show running-config')[0]
 
-    def load_config(self, commands):
+    def load_config(self, commands, **kwargs):
         return self.configure(commands)
 
     def save_config(self):

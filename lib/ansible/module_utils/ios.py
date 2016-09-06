@@ -18,76 +18,17 @@
 #
 
 import re
-import urlparse
 
 from ansible.module_utils.basic import json
-from ansible.module_utils.network import NetworkModule, NetworkError, ModuleStub
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcli import Command
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
-
-
-class Cli(CliBase):
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
-        self._connected = True
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        self.execute([cmd])
-
-    ### implementation of netcli.Cli ###
-
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
-
-    ### implementation of netcfg.Config ###
-
-    def configure(self, commands):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        if cmds[-1] != 'end':
-            cmds.append('end')
-        responses = self.execute(cmds)
-        return responses[1:]
-
-    def get_config(self, include_defaults=False, **kwargs):
-        cmd = 'show running-config'
-        if include_defaults:
-            cmd += ' all'
-        return self.run_commands(cmd)[0]
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-Cli = register_transport('cli', default=True)(Cli)
 
 
 class Restconf(object):
@@ -99,7 +40,6 @@ class Restconf(object):
 
     def __init__(self):
         self.url = None
-
         self.url_args = ModuleStub(url_argument_spec(), self._error)
 
         self.token = None
@@ -115,6 +55,7 @@ class Restconf(object):
         host = params['host']
         port = params['port'] or 55443
 
+        # sets the module_utils/urls.py req parameters
         self.url_args.params['url_username'] = params['username']
         self.url_args.params['url_password'] = params['password']
         self.url_args.params['validate_certs'] = params['validate_certs']
@@ -127,13 +68,13 @@ class Restconf(object):
         self.link = response['link']
         self._connected = True
 
-    def disconnect(self):
+    def disconnect(self, **kwargs):
         self.delete(self.link)
+        self.url = None
         self._connected = False
 
-    def authorize(self):
-        pass
-
+    def authorize(self, params, **kwargs):
+        raise NotImplementedError
 
     ### REST methods ###
 
@@ -178,10 +119,9 @@ class Restconf(object):
     def delete(self, path, data=None, headers=None):
         return self.request('DELETE', path, data, headers)
 
+    ### Command methods ###
 
-    ### implementation of netcli.Cli ###
-
-    def run_commands(self, commands):
+    def run_commands(self, commands, **kwargs):
         responses = list()
         commands = [str(c) for c in commands]
         for cmd in commands:
@@ -190,13 +130,12 @@ class Restconf(object):
             responses.append(self.execute(str(cmd)))
         return responses
 
-    def execute(self, command):
+    def execute(self, command, **kwargs):
         data = dict(show=command)
         response = self.put('global/cli', data=data)
         return response['results']
 
-
-    ### implementation of netcfg.Config ###
+    ### Config methods ###
 
     def configure(self, commands):
         config = list()
@@ -216,3 +155,55 @@ class Restconf(object):
         self.put('/api/v1/global/save-config')
 
 Restconf = register_transport('restconf')(Restconf)
+
+
+class Cli(CliBase):
+
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.shell.send('terminal length 0')
+
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+
+    ### Config methods ###
+
+    def configure(self, commands, **kwargs):
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        if cmds[-1] != 'end':
+            cmds.append('end')
+        responses = self.execute(cmds)
+        return responses[1:]
+
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if include_defaults:
+            cmd += ' all'
+        return self.execute([cmd])[0]
+
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
+
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
+
+Cli = register_transport('cli', default=True)(Cli)
