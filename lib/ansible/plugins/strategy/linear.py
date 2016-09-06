@@ -280,6 +280,36 @@ class StrategyModule(StrategyBase):
                 results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
+                all_role_blocks = []
+                for hr in results:
+                    # handle include_role
+                    if hr._task.action == 'include_role':
+                        loop_var = None
+                        if hr._task.loop:
+                            loop_var = 'item'
+                            if hr._task.loop_control:
+                                loop_var = hr._task.loop_control.loop_var or 'item'
+                            include_results = hr._result['results']
+                        else:
+                            include_results = [ hr._result ]
+
+                        for include_result in include_results:
+                            if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
+                                continue
+
+                            role_vars = include_result.get('include_variables', dict())
+                            if loop_var and loop_var in include_result:
+                                role_vars[loop_var] = include_result[loop_var]
+
+                            display.debug("generating all_blocks data for role")
+                            new_ir = hr._task.copy()
+                            new_ir.args.update(role_vars)
+                            all_role_blocks.extend(new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader))
+
+                if len(all_role_blocks) > 0:
+                    for host in hosts_left:
+                        iterator.add_tasks(host, all_role_blocks)
+
                 try:
                     included_files = IncludedFile.process_include_results(
                         host_results,

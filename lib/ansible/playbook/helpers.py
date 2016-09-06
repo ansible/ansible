@@ -22,7 +22,7 @@ import os
 
 from ansible import constants as C
 from ansible.compat.six import string_types
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 
 try:
     from __main__ import display
@@ -260,16 +260,41 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     task_list.append(t)
 
             elif 'include_role' in task_ds:
-                task_list.extend(
-                    IncludeRole.load(
-                        task_ds,
-                        block=block,
-                        role=role,
-                        task_include=None,
-                        variable_manager=variable_manager,
-                        loader=loader
-                    )
-                )
+
+                ir = IncludeRole.load(
+                            task_ds,
+                            block=block,
+                            role=role,
+                            task_include=None,
+                            variable_manager=variable_manager,
+                            loader=loader
+                     )
+
+                #   1. the user has set the 'static' option to false or true
+                #   2. one of the appropriate config options was set
+                if ir.static is not None:
+                    is_static = ir.static
+                else:
+                    display.debug('Determine if include_role is static')
+                    # Check to see if this include is dynamic or static:
+                    all_vars = variable_manager.get_vars(loader=loader, play=play, task=ir)
+                    templar = Templar(loader=loader, variables=all_vars)
+                    needs_templating = False
+                    for param in ir.args:
+                        if templar._contains_vars(ir.args[param]):
+                            if not templar.templatable(ir.args[param]):
+                                needs_templating = True
+                                break
+                    is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
+                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)  or \
+                                (not needs_templating and ir.all_parents_static() and not ir.loop)
+                    display.debug('Determined that if include_role static is %s' % str(is_static))
+                if is_static:
+                    # uses compiled list from object
+                    t = task_list.extend(ir.get_block_list(variable_manager=variable_manager, loader=loader))
+                else:
+                    # passes task object itself for latter generation of list
+                    t = task_list.append(ir)
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)

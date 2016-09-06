@@ -62,7 +62,7 @@ class CallbackModule(CallbackBase):
 
         self._clean_results(result._result, result._task.action)
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action == 'include':
+        if result._task.action in ('include', 'include_role'):
             return
         elif result._result.get('changed', False):
             if delegated_vars:
@@ -158,7 +158,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action == 'include':
+        if result._task.action in ('include', 'include_role'):
             return
         elif result._result.get('changed', False):
             msg = 'changed'
