@@ -156,7 +156,9 @@ class CloudFormationServiceManager:
 
         try:
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            self.client = boto3.client('cloudformation', region_name=region, **aws_connect_kwargs)
+            self.client = boto3_conn(module, conn_type='client',
+                                     resource='cloudformation', region=region,
+                                     endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
@@ -171,7 +173,7 @@ class CloudFormationServiceManager:
             self.module.fail_json(msg="Error describing stack - an empty response was returned")
         except Exception as e:
             self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc(e))
-    
+
     def list_stack_resources(self, stack_name):
         try:
             func = partial(self.client.list_stack_resources,StackName=stack_name)
@@ -195,7 +197,7 @@ class CloudFormationServiceManager:
             return dict()
         except Exception as e:
             self.module.fail_json(msg="Error getting stack policy - " + str(e), exception=traceback.format_exc(e))
-        
+
     def get_template(self, stack_name):
         try:
             response = self.client.get_template(StackName=stack_name)
@@ -229,7 +231,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         stack_name=dict(required=True, type='str' ),
-        all_facts=dict(required=False, default=False, type='bool'), 
+        all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
         stack_resources=dict(required=False, default=False, type='bool'),
@@ -240,11 +242,11 @@ def main():
 
     if not HAS_BOTO3:
       module.fail_json(msg='boto3 is required.')
-    
-    # Describe the stack            
+
+    # Describe the stack
     service_mgr = CloudFormationServiceManager(module)
     stack_name = module.params.get('stack_name')
-    result = { 
+    result = {
         'ansible_facts': { 'cloudformation': { stack_name:{} } }
     }
     facts = result['ansible_facts']['cloudformation'][stack_name]
@@ -268,7 +270,11 @@ def main():
         facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
 
     result['changed'] = False
-    module.exit_json(ansible_facts=result)
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
