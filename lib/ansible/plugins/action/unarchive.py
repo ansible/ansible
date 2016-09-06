@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
 
         if not remote_src:
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms((tmp, tmp_src), remote_user)
+            self._fixup_perms2((tmp, tmp_src), remote_user)
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(
