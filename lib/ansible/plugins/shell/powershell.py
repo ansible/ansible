@@ -22,6 +22,8 @@ import os
 import re
 import shlex
 
+from ansible.compat.six import text_type
+from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes, to_unicode
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
@@ -41,8 +43,29 @@ class ShellModule(object):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    env = dict()
+
+    # We're being overly cautious about which keys to accept (more so than
+    # the Windows environment is capable of doing), since the powershell
+    # env provider's limitations don't appear to be documented.
+    safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
+
+    def assert_safe_env_key(self, key):
+        if not self.safe_envkey.match(key):
+            raise AnsibleError("Invalid PowerShell environment key: %s" % key)
+        return key
+
+    def safe_env_value(self, key, value):
+        if len(value) > 32767:
+            raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
+        # powershell single quoted literals need single-quote doubling as their only escaping
+        value = value.replace("'", "''")
+        return text_type(value)
+
     def env_prefix(self, **kwargs):
-        return ''
+        env = self.env.copy()
+        env.update(kwargs)
+        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
 
     def join_path(self, *args):
         parts = []
@@ -156,6 +179,7 @@ class ShellModule(object):
             Try
             {
                 %s
+                %s
             }
             Catch
             {
@@ -186,7 +210,7 @@ class ShellModule(object):
                 Echo $_obj | ConvertTo-Json -Compress -Depth 99
                 Exit 1
             }
-        ''' % (' '.join(cmd_parts))
+        ''' % (env_string, ' '.join(cmd_parts))
         if rm_tmp:
             rm_tmp = self._escape(self._unquote(rm_tmp))
             rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
