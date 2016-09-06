@@ -39,7 +39,6 @@ import traceback
 
 # for debug
 from multiprocessing import Lock
-debug_lock = Lock()
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
