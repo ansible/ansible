@@ -34,7 +34,7 @@ options:
         required: true
     interface:
         description:
-            - Full name of interface. MUST be the full name.
+            - Full name of interface, e.g. I(Ethernet1/1).
         required: true
     direction:
         description:
