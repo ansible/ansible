@@ -29,7 +29,7 @@
 import re
 
 from ansible.module_utils.basic import json
-from ansible.module_utils.network import NetworkError, ModuleStub
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec

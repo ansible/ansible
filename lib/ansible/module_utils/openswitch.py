@@ -29,7 +29,7 @@ except ImportError:
     HAS_OPS = False
 
 from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
-from ansible.module_utils.network import NetworkModule, ModuleStub, NetworkError
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec

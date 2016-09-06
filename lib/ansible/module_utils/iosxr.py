@@ -28,10 +28,10 @@
 
 import re
 
-from ansible.module_utils.network import NetworkError
-from ansible.module_utils.network import Command
-from ansible.module_utils.shell import CliBase
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
 
 class Cli(CliBase):
