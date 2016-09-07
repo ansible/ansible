@@ -148,6 +148,11 @@ class PlaybookCLI(CLI):
             # Invalid limit
             raise AnsibleError("Specified --limit does not match any hosts")
 
+        # flush fact cache if requested
+        if self.options.flush_cache:
+            for host in inventory.list_hosts():
+                variable_manager.clear_facts(host)
+
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
 
