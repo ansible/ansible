@@ -20,10 +20,10 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
-from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             src = self._find_needle('files', src)
         except AnsibleError as e:
             result['failed'] = True
-            result['msg'] = to_str(e)
+            result['msg'] = to_native(e)
             return result
 
         # create the remote tmp dir if needed, and put the source file there

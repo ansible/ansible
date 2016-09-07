@@ -25,8 +25,9 @@ import smtplib
 import json
 
 from ansible.compat.six import string_types
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
+
 
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
 
@@ -84,7 +85,7 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        attach =  res._task.action
+        attach = res._task.action
         if 'invocation' in res._result:
             attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
 

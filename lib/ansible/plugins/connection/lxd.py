@@ -23,8 +23,8 @@ from distutils.spawn import find_executable
 from subprocess import call, Popen, PIPE
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.unicode import to_bytes, to_unicode
 
 
 class Connection(ConnectionBase):
@@ -61,14 +61,14 @@ class Connection(ConnectionBase):
 
         local_cmd = [self._lxc_cmd, "exec", self._host, "--", self._play_context.executable, "-c", cmd]
 
-        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
-        in_data = to_bytes(in_data, errors='strict', nonstring='passthru')
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
+        in_data = to_bytes(in_data, errors='surrogate_or_strict', nonstring='passthru')
 
         process = Popen(local_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate(in_data)
 
-        stdout = to_unicode(stdout)
-        stderr = to_unicode(stderr)
+        stdout = to_text(stdout)
+        stderr = to_text(stderr)
 
         if stderr == "error: Container is not running.\n":
             raise AnsibleConnectionFailure("container not running: %s" % self._host)
@@ -84,12 +84,12 @@ class Connection(ConnectionBase):
 
         self._display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._host)
 
-        if not os.path.isfile(to_bytes(in_path, errors='strict')):
+        if not os.path.isfile(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("input path is not a file: %s" % in_path)
 
         local_cmd = [self._lxc_cmd, "file", "push", in_path, self._host + "/" + out_path]
 
-        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
 
         call(local_cmd)
 
@@ -101,7 +101,7 @@ class Connection(ConnectionBase):
 
         local_cmd = [self._lxc_cmd, "file", "pull", self._host + "/" + in_path, out_path]
 
-        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
 
         call(local_cmd)
 

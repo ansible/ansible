@@ -22,9 +22,9 @@ import os
 import re
 import shlex
 
-from ansible.compat.six import text_type
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
+
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
@@ -33,6 +33,7 @@ _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy
 _powershell_version = os.environ.get('POWERSHELL_VERSION', None)
 if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
+
 
 class ShellModule(object):
 
@@ -60,7 +61,7 @@ class ShellModule(object):
             raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
         # powershell single quoted literals need single-quote doubling as their only escaping
         value = value.replace("'", "''")
-        return text_type(value)
+        return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
@@ -164,7 +165,7 @@ class ShellModule(object):
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_unicode, cmd_parts)
+        cmd_parts = map(to_text, cmd_parts)
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
@@ -219,7 +220,7 @@ class ShellModule(object):
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''
-        value = to_unicode(value or '')
+        value = to_text(value or '')
         m = re.match(r'^\s*?\'(.*?)\'\s*?$', value)
         if m:
             return m.group(1)
@@ -244,7 +245,7 @@ class ShellModule(object):
 
     def _encode_script(self, script, as_list=False, strict_mode=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
-        script = to_unicode(script)
+        script = to_text(script)
         if strict_mode:
             script = u'Set-StrictMode -Version Latest\r\n%s' % script
         script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])

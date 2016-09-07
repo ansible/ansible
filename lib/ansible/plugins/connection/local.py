@@ -30,8 +30,9 @@ from ansible.compat.six import text_type, binary_type
 import ansible.constants as C
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.unicode import to_bytes, to_str
+
 
 try:
     from __main__ import display
@@ -122,14 +123,14 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
         try:
-            shutil.copyfile(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            shutil.copyfile(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except shutil.Error:
-            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_str(in_path), to_str(out_path)))
+            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
         except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_str(out_path), to_str(e)))
+            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from local to local -- for copatibility '''

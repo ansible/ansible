@@ -29,11 +29,11 @@ import subprocess
 import time
 
 from ansible import constants as C
+from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils.unicode import to_bytes, to_unicode, to_str
-from ansible.compat.six import text_type, binary_type
 
 try:
     from __main__ import display
@@ -107,7 +107,7 @@ class Connection(ConnectionBase):
         explanation of why they were added.
         """
         self._command += args
-        display.vvvvv('SSH: ' + explanation + ': (%s)' % ')('.join(map(to_unicode, args)), host=self._play_context.remote_addr)
+        display.vvvvv('SSH: ' + explanation + ': (%s)' % ')('.join(map(to_text, args)), host=self._play_context.remote_addr)
 
     def _build_command(self, binary, *other_args):
         '''
@@ -222,7 +222,7 @@ class Connection(ConnectionBase):
                 # The directory must exist and be writable.
                 makedirs_safe(b_cpdir, 0o700)
                 if not os.access(b_cpdir, os.W_OK):
-                    raise AnsibleError("Cannot write to ControlPath %s" % to_str(cpdir))
+                    raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
                 args = ("-o", "ControlPath=" + C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=cpdir))
                 self._add_args("found only ControlPersist; added ControlPath", args)
@@ -275,7 +275,7 @@ class Connection(ConnectionBase):
 
         output = []
         for b_line in b_chunk.splitlines(True):
-            display_line = to_unicode(b_line, errors='replace').rstrip('\r\n')
+            display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
             #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
@@ -314,7 +314,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
-        display_cmd = list(map(pipes.quote, map(to_unicode, cmd)))
+        display_cmd = list(map(pipes.quote, map(to_text, cmd)))
         display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
@@ -424,7 +424,7 @@ class Connection(ConnectionBase):
                     if p.poll() is not None:
                         break
                     self._terminate_process(p)
-                    raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_str(b_stdout)))
+                    raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
             # Read whatever output is available on stdout and stderr, and stop
             # listening to the pipe if it's been closed.
@@ -434,14 +434,14 @@ class Connection(ConnectionBase):
                 if b_chunk == b'':
                     rpipes.remove(p.stdout)
                 b_tmp_stdout += b_chunk
-                display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_unicode(b_chunk, errors='replace')))
+                display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
 
             if p.stderr in rfd:
                 b_chunk = p.stderr.read()
                 if b_chunk == b'':
                     rpipes.remove(p.stderr)
                 b_tmp_stderr += b_chunk
-                display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_unicode(b_chunk, errors='replace')))
+                display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
 
             # We examine the output line-by-line until we have negotiated any
             # privilege escalation prompt and subsequent success/error message.
@@ -631,8 +631,8 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
 
         # scp and sftp require square brackets for IPv6 addresses, but
         # accept them for hostnames and IPv4 addresses too.
@@ -649,7 +649,7 @@ class Connection(ConnectionBase):
         (returncode, stdout, stderr) = self._run(cmd, in_data)
 
         if returncode != 0:
-            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(to_str(out_path), to_str(stdout), to_str(stderr)))
+            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(to_native(out_path), to_native(stdout), to_native(stderr)))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''

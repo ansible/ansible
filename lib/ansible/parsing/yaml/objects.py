@@ -22,8 +22,7 @@ __metaclass__ = type
 import yaml
 
 from ansible.compat.six import text_type
-from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 
 
 class AnsibleBaseYAMLObject(object):

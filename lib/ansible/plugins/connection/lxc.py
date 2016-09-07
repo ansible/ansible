@@ -24,10 +24,6 @@ import traceback
 import select
 import fcntl
 import errno
-from ansible import errors
-from ansible import constants as C
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.unicode import to_bytes
 
 HAS_LIBLXC = False
 try:
@@ -35,6 +31,12 @@ try:
     HAS_LIBLXC = True
 except ImportError:
     pass
+
+from ansible import constants as C
+from ansible import errors
+from ansible.module_utils._text import to_bytes
+from ansible.plugins.connection import ConnectionBase
+
 
 class Connection(ConnectionBase):
     ''' Local lxc based connections '''
@@ -102,8 +104,8 @@ class Connection(ConnectionBase):
         ''' run a command on the chroot '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        executable = to_bytes(self._play_context.executable, errors='strict')
-        local_cmd = [executable, '-c', to_bytes(cmd, errors='strict')]
+        executable = to_bytes(self._play_context.executable, errors='surrogate_or_strict')
+        local_cmd = [executable, '-c', to_bytes(cmd, errors='surrogate_or_strict')]
 
         read_stdout, write_stdout = None, None
         read_stderr, write_stderr = None, None
@@ -154,8 +156,8 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to lxc '''
         super(Connection, self).put_file(in_path, out_path)
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.container_name)
-        in_path = to_bytes(in_path, errors='strict')
-        out_path = to_bytes(out_path, errors='strict')
+        in_path = to_bytes(in_path, errors='surrogate_or_strict')
+        out_path = to_bytes(out_path, errors='surrogate_or_strict')
 
         if not os.path.exists(in_path):
             msg = "file or module does not exist: %s" % in_path
@@ -182,8 +184,8 @@ class Connection(ConnectionBase):
         ''' fetch a file from lxc to local '''
         super(Connection, self).fetch_file(in_path, out_path)
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.container_name)
-        in_path = to_bytes(in_path, errors='strict')
-        out_path = to_bytes(out_path, errors='strict')
+        in_path = to_bytes(in_path, errors='surrogate_or_strict')
+        out_path = to_bytes(out_path, errors='surrogate_or_strict')
 
         try:
             dst_file = open(out_path, "wb")

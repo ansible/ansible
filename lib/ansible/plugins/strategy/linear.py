@@ -29,7 +29,8 @@ from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
+
 
 try:
     from __main__ import display
@@ -243,7 +244,7 @@ class StrategyModule(StrategyBase):
                             saved_name = task.name
                             display.debug("done copying, going to template now")
                             try:
-                                task.name = to_unicode(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                                 display.debug("done templating")
                             except:
                                 # just ignore any errors during task name templating,
@@ -368,7 +369,7 @@ class StrategyModule(StrategyBase):
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                            display.error(to_unicode(e), wrap_text=False)
+                            display.error(to_text(e), wrap_text=False)
                             include_failure = True
                             continue
 

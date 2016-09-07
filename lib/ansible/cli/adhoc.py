@@ -27,13 +27,13 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
+from ansible.module_utils._text import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.utils.vars import load_options_vars
-from ansible.utils.unicode import to_unicode
 from ansible.vars import VariableManager
 
 try:
@@ -99,7 +99,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = to_unicode(self.args[0], errors='strict')
+        pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
@@ -169,7 +169,7 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.callback: 
+        if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'

@@ -33,7 +33,7 @@ import subprocess
 from ansible.release import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from __main__ import display
@@ -109,7 +109,7 @@ class CLI(object):
 
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
-                display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
+                display.display(u"Using %s as config file" % to_text(C.CONFIG_FILE))
             else:
                 display.display(u"No config file found; using defaults")
 

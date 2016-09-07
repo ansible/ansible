@@ -24,10 +24,10 @@ import tempfile
 import re
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
-from ansible.utils.unicode import to_str, to_unicode
 
 
 class ActionModule(ActionBase):
@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
         delimit_me = False
         add_newline = False
 
-        for f in (to_unicode(p, errors='strict') for p in sorted(os.listdir(src_path))):
+        for f in (to_text(p, errors='surrogate_or_strict') for p in sorted(os.listdir(src_path))):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
             fragment = u"%s/%s" % (src_path, f)
@@ -114,7 +114,7 @@ class ActionModule(ActionBase):
                 src = self._find_needle('files', src)
             except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_str(e)
+                result['msg'] = to_native(e)
                 return result
 
         if not os.path.isdir(src):

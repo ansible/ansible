@@ -18,11 +18,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.utils.unicode import to_unicode
 from ansible.compat.six.moves.urllib.error import HTTPError, URLError
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
+from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
+from ansible.plugins.lookup import LookupBase
 
 try:
     from __main__ import display
@@ -52,5 +52,5 @@ class LookupModule(LookupBase):
                 raise AnsibleError("Error connecting to %s: %s" % (term, str(e)))
 
             for line in response.read().splitlines():
-                ret.append(to_unicode(line))
+                ret.append(to_text(line))
         return ret

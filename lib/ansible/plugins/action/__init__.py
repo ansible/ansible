@@ -35,9 +35,10 @@ from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
-from ansible.release import __version__
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.utils.unicode import to_bytes, to_str, to_unicode
+from ansible.release import __version__
+
 
 try:
     from __main__ import display
@@ -86,7 +87,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
         # store the module invocation details into the results
-        results =  {}
+        results = {}
         if self._task.async == 0:
             results['invocation'] = dict(
                 module_name = self._task.action,
@@ -146,7 +147,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
+                task_vars=task_vars, module_compression=self._play_context.module_compression)
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -283,10 +285,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'wb')
         try:
-            data = to_bytes(data, errors='strict')
+            data = to_bytes(data, errors='surrogate_or_strict')
             afo.write(data)
         except Exception as e:
-            raise AnsibleError("failure writing module data to temporary file for transfer: %s" % str(e))
+            raise AnsibleError("failure writing module data to temporary file for transfer: %s" % to_native(e))
 
         afo.flush()
         afo.close()
@@ -372,17 +374,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
                 if res['rc'] != 0 and remote_user == 'root':
                     # chown failed even if remove_user is root
-                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.  Unprivileged become user would be unable to read the file.')
+                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.'
+                            '  Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
-                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user which may be insecure. For information on securing this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user.'
+                                ' This may be insecure. For information on securing this, see'
+                                ' https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod(remote_paths, 'a+%s' % mode)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
                     else:
-                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user (rc: {0}, err: {1}). For information on working around this, see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], res['stderr']))
+                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user'
+                                ' (rc: {0}, err: {1}). For information on working around this,'
+                                ' see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], res['stderr']))
         elif execute:
             # Can't depend on the file being transferred with execute
             # permissions.  Only need user perms because no become was
@@ -438,7 +445,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             mystat['stat']['checksum'] = '1'
 
         # happens sometimes when it is a dir and not on bsd
-        if not 'checksum' in mystat['stat']:
+        if 'checksum' not in mystat['stat']:
             mystat['stat']['checksum'] = ''
 
         return mystat['stat']
@@ -453,26 +460,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
         '''
-        x = "0" # unknown error has occured
+        x = "0"  # unknown error has occured
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
-                x = "3" # its a directory not a file
+                x = "3"  # its a directory not a file
             else:
-                x = remote_stat['checksum'] # if 1, file is missing
+                x = remote_stat['checksum']  # if 1, file is missing
         except AnsibleError as e:
-            errormsg = to_unicode(e)
-            if errormsg.endswith('Permission denied'):
-                x = "2" # cannot read file
-            elif errormsg.endswith('MODULE FAILURE'):
-                x = "4" # python not found or module uncaught exception
+            errormsg = to_text(e)
+            if errormsg.endswith(u'Permission denied'):
+                x = "2"  # cannot read file
+            elif errormsg.endswith(u'MODULE FAILURE'):
+                x = "4"  # python not found or module uncaught exception
         finally:
             return x
 
-
     def _remote_expand_user(self, path):
         ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'): # FIXME: Windows paths may start with "~ instead of just ~
+        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
             return path
 
         # FIXME: Can't use os.path.sep for Windows paths.
@@ -681,7 +687,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 tmp_rm_res = self._low_level_execute_command(tmp_rm_cmd, sudoable=False)
                 tmp_rm_data = self._parse_returned_data(tmp_rm_res)
                 if tmp_rm_data.get('rc', 0) != 0:
-                    display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
+                    display.warning('Error deleting remote temporary files (rc: {0}, stderr: {1})'.format(tmp_rm_res.get('rc'),
+                        tmp_rm_res.get('stderr', 'No error string available.')))
 
         # parse the main result
         data = self._parse_returned_data(res)
@@ -709,7 +716,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     data['exception'] = res['stderr']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -758,16 +765,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
         if isinstance(stdout, binary_type):
-            out = to_unicode(stdout, errors=encoding_errors)
+            out = to_text(stdout, errors=encoding_errors)
         elif not isinstance(stdout, text_type):
-            out = to_unicode(b''.join(stdout.readlines()), errors=encoding_errors)
+            out = to_text(b''.join(stdout.readlines()), errors=encoding_errors)
         else:
             out = stdout
 
         if isinstance(stderr, binary_type):
-            err = to_unicode(stderr, errors=encoding_errors)
+            err = to_text(stderr, errors=encoding_errors)
         elif not isinstance(stderr, text_type):
-            err = to_unicode(b''.join(stderr.readlines()), errors=encoding_errors)
+            err = to_text(b''.join(stderr.readlines()), errors=encoding_errors)
         else:
             err = stderr
 
@@ -871,7 +878,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
 
         if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_str(needle))
+            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
 
         return result
-

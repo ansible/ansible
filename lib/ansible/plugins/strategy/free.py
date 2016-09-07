@@ -26,7 +26,8 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
+
 
 try:
     from __main__ import display
@@ -66,8 +67,7 @@ class StrategyModule(StrategyBase):
                 break
 
             work_to_do = False        # assume we have no more work to do
-            starting_host = last_host # save current position so we know when we've
-                                      # looped back around and need to break
+            starting_host = last_host # save current position so we know when we've looped back around and need to break
 
             # try and find an unblocked host with a task to run
             host_results = []
@@ -109,7 +109,7 @@ class StrategyModule(StrategyBase):
                         display.debug("done getting variables")
 
                         try:
-                            task.name = to_unicode(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                             display.debug("done templating")
                         except:
                             # just ignore any errors during task name templating,
@@ -120,10 +120,10 @@ class StrategyModule(StrategyBase):
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
                             if action and getattr(action, 'BYPASS_HOST_LOOP', False):
-                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy " \
+                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
                                                    "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
                             else:
-                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be " \
+                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
                                                 "executed for every host in the inventory list.")
 
                         # check to see if this task should be skipped, due to it being a member of a
@@ -143,7 +143,8 @@ class StrategyModule(StrategyBase):
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
-                                    display.warning("Using any_errors_fatal with the free strategy is not supported, as tasks are executed independently on each host")
+                                    display.warning("Using any_errors_fatal with the free strategy is not supported,"
+                                            " as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 del task_vars

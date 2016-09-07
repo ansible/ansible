@@ -23,8 +23,9 @@ import os
 import time
 import json
 
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
+
 
 # NOTE: in Ansible 1.2 or later general logging is available without
 # this plugin, just set ANSIBLE_LOG_PATH as an environment variable
