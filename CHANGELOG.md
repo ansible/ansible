@@ -79,7 +79,7 @@ Ansible Changes By Release
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
-- Dell Networking
+- dnos Networking
   * dnos10_command
   * dnos10_config
   * dnos10_template
