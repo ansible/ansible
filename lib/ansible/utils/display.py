@@ -101,6 +101,14 @@ class Display:
                 # MacPorts path for cowsay
                 self.cowsay = "/opt/local/bin/cowsay"
 
+    def notice(self, msg, color=None):
+        """ Display a message to the user on stderr
+
+        Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
+        """
+
+        self.display(msg, color=color, stderr=True)
+
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
 
