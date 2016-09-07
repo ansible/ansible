@@ -14,6 +14,10 @@ This document covers return values common to all modules.
 
 
 
+backup_file
+```````````
+For those modules that implement `backup=no|yes` when manipulating files, a path to the backup file created.
+
 changed
 ```````
 A boolean indicating if the task had to make changes.
