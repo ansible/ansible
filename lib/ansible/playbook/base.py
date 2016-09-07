@@ -19,25 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import itertools
 import operator
 import uuid
 
-from copy import copy as shallowcopy, deepcopy
+from copy import copy as shallowcopy
 from functools import partial
-from inspect import getmembers
-
-from ansible.compat.six import iteritems, string_types, with_metaclass
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.compat.six import iteritems, string_types, with_metaclass
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.parsing.dataloader import DataLoader
 from ansible.utils.boolean import boolean
 from ansible.utils.vars import combine_vars, isidentifier
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -52,6 +49,7 @@ def _generic_g(prop_name, self):
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
+
 def _generic_g_method(prop_name, self):
     try:
         if self._squashed:
@@ -60,6 +58,7 @@ def _generic_g_method(prop_name, self):
         return getattr(self, method)()
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
 
 def _generic_g_parent(prop_name, self):
     try:
@@ -74,11 +73,14 @@ def _generic_g_parent(prop_name, self):
 
     return value
 
+
 def _generic_s(prop_name, self, value):
     self._attributes[prop_name] = value
 
+
 def _generic_d(prop_name, self):
     del self._attributes[prop_name]
+
 
 class BaseMeta(type):
 
@@ -141,6 +143,7 @@ class BaseMeta(type):
         _process_parents(parents, dct)
 
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
+
 
 class Base(with_metaclass(BaseMeta, object)):
 
@@ -376,7 +379,7 @@ class Base(with_metaclass(BaseMeta, object)):
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = to_unicode(value)
+                        value = to_text(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
@@ -395,8 +398,8 @@ class Base(with_metaclass(BaseMeta, object)):
                         elif not isinstance(value, list):
                             if isinstance(value, string_types) and attribute.isa == 'barelist':
                                 display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. " \
-                                    "You should instead use the correct YAML syntax for lists. " \
+                                    "Using comma separated values for a list has been deprecated. "
+                                    "You should instead use the correct YAML syntax for lists. "
                                 )
                                 value = value.split(',')
                             else:
@@ -532,4 +535,3 @@ class Base(with_metaclass(BaseMeta, object)):
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
-

@@ -20,8 +20,8 @@ __metaclass__ = type
 
 from ansible.compat.six import string_types
 from ansible.errors import AnsibleUndefinedVariable
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_unicode
 
 
 class ActionModule(ActionBase):
@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
 
                 if isinstance(self._task.args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display
-                    result[to_unicode(type(self._task.args['var']))] = results
+                    result[to_text(type(self._task.args['var']))] = results
                 else:
                     result[self._task.args['var']] = results
             else:

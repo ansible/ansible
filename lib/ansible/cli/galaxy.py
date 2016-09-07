@@ -39,13 +39,14 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class GalaxyCLI(CLI):
 
@@ -64,7 +65,6 @@ class GalaxyCLI(CLI):
             usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
-
 
         self.set_action()
 
@@ -111,7 +111,7 @@ class GalaxyCLI(CLI):
         if self.action in ['init', 'info']:
             self.parser.add_option( '--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
 
-        if not self.action in ("delete","import","init","login","setup"):
+        if self.action not in ("delete","import","init","login","setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
             self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str, default=C.DEFAULT_ROLES_PATH,
@@ -142,7 +142,7 @@ class GalaxyCLI(CLI):
 
     def _display_role_info(self, role_info):
 
-        text = [u"", u"Role: %s" % to_unicode(role_info['name'])]
+        text = [u"", u"Role: %s" % to_text(role_info['name'])]
         text.append(u"\tdescription: %s" % role_info.get('description', ''))
 
         for k in sorted(role_info.keys()):
@@ -340,7 +340,7 @@ class GalaxyCLI(CLI):
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     try:
-                        required_roles =  yaml.safe_load(f.read())
+                        required_roles = yaml.safe_load(f.read())
                     except Exception as e:
                         raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
 
@@ -502,7 +502,7 @@ class GalaxyCLI(CLI):
         if len(self.args):
             terms = []
             for i in range(len(self.args)):
-               terms.append(self.args.pop())
+                terms.append(self.args.pop())
             search = '+'.join(terms[::-1])
 
         if not search and not self.options.platforms and not self.options.tags and not self.options.author:
@@ -578,8 +578,8 @@ class GalaxyCLI(CLI):
         if len(self.args) < 2:
             raise AnsibleError("Expected a github_username and github_repository. Use --help.")
 
-        github_repo = self.args.pop()
-        github_user = self.args.pop()
+        github_repo = to_text(self.args.pop(), errors='surrogate_or_strict')
+        github_user = to_text(self.args.pop(), errors='surrogate_or_strict')
 
         if self.options.check_status:
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
@@ -594,7 +594,8 @@ class GalaxyCLI(CLI):
                 display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
                 for t in task:
                     display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
-                display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo), color=C.COLOR_CHANGED)
+                display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
+                        color=C.COLOR_CHANGED)
                 return 0
             # found a single role as expected
             display.display("Successfully submitted import request %d" % task[0]['id'])

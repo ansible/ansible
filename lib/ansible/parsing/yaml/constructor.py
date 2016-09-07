@@ -22,12 +22,11 @@ __metaclass__ = type
 from yaml.constructor import Constructor, ConstructorError
 from yaml.nodes import MappingNode
 
+from ansible.module_utils._text import to_bytes
+from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-
 from ansible.vars.unsafe_proxy import wrap_var
-from ansible.parsing.vault import VaultLib
-from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -74,7 +73,8 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
+                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
+                u' Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value

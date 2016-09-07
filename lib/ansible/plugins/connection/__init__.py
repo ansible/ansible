@@ -1,4 +1,3 @@
-
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
@@ -32,8 +31,9 @@ from ansible.compat.six import with_metaclass
 from ansible import constants as C
 from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import shell_loader
-from ansible.utils.unicode import to_bytes, to_unicode
+
 
 try:
     from __main__ import display
@@ -138,9 +138,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             # exception, it merely mangles the output:
             # >>> shlex.split(u't e')
             # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
-            return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+            return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
         except AttributeError:
-            return [to_unicode(x.strip()) for x in shlex.split(argstring) if x.strip()]
+            return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
     def transport(self):

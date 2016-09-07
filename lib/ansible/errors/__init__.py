@@ -25,8 +25,7 @@ from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
         YAML_COMMON_UNQUOTED_COLON_ERROR,
         YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
         YAML_COMMON_UNBALANCED_QUOTES_ERROR )
-
-from ansible.utils.unicode import to_unicode, to_str
+from ansible.module_utils._text import to_native, to_text
 
 
 class AnsibleError(Exception):
@@ -54,11 +53,11 @@ class AnsibleError(Exception):
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not suppress_extended_error:
-                self.message = '%s\n\n%s' % (to_str(message), to_str(extended_error))
+                self.message = '%s\n\n%s' % (to_native(message), to_native(extended_error))
             else:
-                self.message = '%s' % to_str(message)
+                self.message = '%s' % to_native(message)
         else:
-            self.message = '%s' % to_str(message)
+            self.message = '%s' % to_native(message)
 
     def __str__(self):
         return self.message
@@ -104,8 +103,8 @@ class AnsibleError(Exception):
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
-                target_line = to_unicode(target_line)
-                prev_line = to_unicode(prev_line)
+                target_line = to_text(target_line)
+                prev_line = to_text(prev_line)
                 if target_line:
                     stripped_line = target_line.replace(" ","")
                     arrow_line    = (" " * (col_number-1)) + "^ here"

@@ -215,6 +215,28 @@ Python3.  We'll need to gather experience to see if this is going to work out
 well for modules as well or if we should give the module_utils API explicit
 switches so that modules can choose to operate with text type all of the time.
 
+Helpers
+~~~~~~~
+
+For converting between bytes, text, and native strings we have three helper
+functions.  These are :func:`ansible.module_utils._text.to_bytes`,
+:func:`ansible.module_utils._text.to_native`, and
+:func:`ansible.module_utils._text.to_text`.  These are similar to using
+``bytes.decode()`` and ``unicode.encode()`` with a few differences.
+
+* By default they try very hard not to traceback.
+* The default encoding is "utf-8"
+* There are two error strategies that don't correspond one-to-one with
+  a python codec error handler.  These are ``surrogate_or_strict`` and
+  ``surrogate_or_replace``.  ``surrogate_or_strict`` will use the ``surrogateescape``
+  error handler if available (mostly on python3) or strict if not.  It is most
+  appropriate to use when dealing with something that needs to round trip its
+  value like file paths database keys, etc.  Without ``surrogateescape`` the best
+  thing these values can do is generate a traceback that our code can catch
+  and decide how to show an error message.  ``surrogate_or_replace`` is for
+  when a value is going to be displayed to the user.  If the
+  ``surrogateescape`` error handler is not present, it will replace
+  undecodable byte sequences with a replacement character.
 
 ================================
 Porting Core Ansible to Python 3

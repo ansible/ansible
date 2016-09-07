@@ -43,7 +43,7 @@ from multiprocessing import Lock
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
 
 
 ########################################
@@ -97,10 +97,10 @@ if __name__ == '__main__':
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
-        display.error(to_unicode(e), wrap_text=False)
+        display.error(to_text(e), wrap_text=False)
         exit_code = 5
     except AnsibleParserError as e:
-        display.error(to_unicode(e), wrap_text=False)
+        display.error(to_text(e), wrap_text=False)
         exit_code = 4
 # TQM takes care of these, but leaving comment to reserve the exit codes
 #    except AnsibleHostUnreachable as e:
@@ -110,16 +110,16 @@ if __name__ == '__main__':
 #        display.error(str(e))
 #        exit_code = 2
     except AnsibleError as e:
-        display.error(to_unicode(e), wrap_text=False)
+        display.error(to_text(e), wrap_text=False)
         exit_code = 1
     except KeyboardInterrupt:
         display.error("User interrupted execution")
         exit_code = 99
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
-        display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
+        display.error("Unexpected Exception: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display(u"the full traceback was:\n\n%s" % to_unicode(traceback.format_exc()))
+            display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()))
         else:
             display.display("to see the full traceback, use -vvv")
         exit_code = 250

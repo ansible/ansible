@@ -31,9 +31,9 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.cache.base import BaseCacheModule
-from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display

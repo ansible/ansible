@@ -28,21 +28,20 @@ import time
 from collections import deque
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.stats import AggregateStats
-from ansible.module_utils.facts import Facts
+from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import action_loader, callback_loader, connection_loader, filter_loader, lookup_loader, module_loader, strategy_loader, test_loader
-from ansible.template import Templar
-from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
+from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
-from ansible.utils.unicode import to_unicode
-from ansible.compat.six import string_types
+from ansible.vars.hostvars import HostVars
 
 try:
     from __main__ import display
@@ -288,7 +287,8 @@ class TaskQueueManager:
                     stdout_callback_loaded = True
                 elif callback_name == 'tree' and self._run_tree:
                     pass
-                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                        C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
             self._callback_plugins.append(callback_plugin())
@@ -336,8 +336,8 @@ class TaskQueueManager:
                 serial_items = [serial_items]
             max_serial = max([pct_to_int(x, num_hosts) for x in serial_items])
 
-        contenders =  [self._options.forks, max_serial, num_hosts]
-        contenders =  [v for v in contenders if v is not None and v > 0]
+        contenders = [self._options.forks, max_serial, num_hosts]
+        contenders = [v for v in contenders if v is not None and v > 0]
         self._initialize_processes(min(contenders))
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
@@ -446,7 +446,7 @@ class TaskQueueManager:
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
             for possible in [method_name, 'v2_on_any']:
-                gotit =  getattr(callback_plugin, possible, None)
+                gotit = getattr(callback_plugin, possible, None)
                 if gotit is None:
                     gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
                 if gotit is not None:
@@ -468,8 +468,8 @@ class TaskQueueManager:
                     else:
                         method(*args, **kwargs)
                 except Exception as e:
-                    #TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_unicode(method_name), to_unicode(callback_plugin), to_unicode(e)))
+                    # TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
                     from traceback import format_tb
                     from sys import exc_info
                     display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))

@@ -22,18 +22,17 @@ import pwd
 import grp
 import stat
 
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_str
-
-from __main__ import display
-warning = display.warning
-
 HAVE_SELINUX=False
 try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
     pass
+
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
+
+from __main__ import display
 
 
 # If selinux fails to find a default, return an array of None
@@ -43,7 +42,7 @@ def selinux_context(path):
         try:
             # note: the selinux module uses byte strings on python2 and text
             # strings on python3
-            ret = selinux.lgetfilecon_raw(to_str(path))
+            ret = selinux.lgetfilecon_raw(to_native(path))
         except OSError:
             return context
         if ret[0] != -1:
@@ -60,7 +59,7 @@ def file_props(root, path):
     try:
         st = os.lstat(abspath)
     except OSError as e:
-        warning('filetree: Error using stat() on path %s (%s)' % (abspath, e))
+        display.warning('filetree: Error using stat() on path %s (%s)' % (abspath, e))
         return None
 
     ret = dict(root=root, path=path)
@@ -74,7 +73,7 @@ def file_props(root, path):
         ret['state'] = 'file'
         ret['src'] = abspath
     else:
-        warning('filetree: Error file type of %s is not supported' % abspath)
+        display.warning('filetree: Error file type of %s is not supported' % abspath)
         return None
 
     ret['uid'] = st.st_uid

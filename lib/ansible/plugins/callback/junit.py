@@ -21,8 +21,8 @@ __metaclass__ = type
 import os
 import time
 
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.unicode import to_bytes
 
 try:
     from junit_xml import TestSuite, TestCase
@@ -39,6 +39,7 @@ except ImportError:
         HAS_ORDERED_DICT = True
     except ImportError:
         HAS_ORDERED_DICT = False
+
 
 class CallbackModule(CallbackBase):
     """
@@ -181,7 +182,7 @@ class CallbackModule(CallbackBase):
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
         with open(output_file, 'wb') as xml:
-            xml.write(to_bytes(report, errors='strict'))
+            xml.write(to_bytes(report, errors='surrogate_or_strict'))
 
     def v2_playbook_on_start(self, playbook):
         self._playbook_path = playbook._file_name

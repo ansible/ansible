@@ -22,7 +22,8 @@ import csv
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_bytes, to_str, to_unicode
+from ansible.module_utils._text import to_bytes, to_native, to_text
+
 
 class CSVRecoder:
     """
@@ -49,7 +50,7 @@ class CSVReader:
 
     def next(self):
         row = self.reader.next()
-        return [to_unicode(s) for s in row]
+        return [to_text(s) for s in row]
 
     def __iter__(self):
         return self
@@ -66,7 +67,7 @@ class LookupModule(LookupBase):
                 if row[0] == key:
                     return row[int(col)]
         except Exception as e:
-            raise AnsibleError("csvfile: %s" % to_str(e))
+            raise AnsibleError("csvfile: %s" % to_native(e))
 
         return dflt
 

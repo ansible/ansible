@@ -28,12 +28,12 @@ import json
 
 import ansible.constants as C
 from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.compat.six.moves.urllib.error import HTTPError
+from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.errors import AnsibleError
-from ansible.module_utils.urls import open_url
 from ansible.galaxy.token import GalaxyToken
-from ansible.utils.unicode import to_str
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 try:
     from __main__ import display
@@ -115,12 +115,12 @@ class GalaxyAPI(object):
         try:
             return_data = open_url(url, validate_certs=self._validate_certs)
         except Exception as e:
-            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_str(e)))
+            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
 
         try:
             data = json.load(return_data)
         except Exception as e:
-            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_str(e)))
+            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
         if 'current_version' not in data:
             raise AnsibleError("missing required 'current_version' from server response (%s)" % url)

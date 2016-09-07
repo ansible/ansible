@@ -32,15 +32,17 @@
     making backwards compatibility guarantees.  The API may change between
     releases.  Do not use this unless you are willing to port your module code.
 """
+import codecs
 
 from ansible.module_utils.six import PY3, text_type, binary_type
 
-import codecs
+
 try:
     codecs.lookup_error('surrogateescape')
     HAS_SURROGATEESCAPE = True
 except LookupError:
     HAS_SURROGATEESCAPE = False
+
 
 def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     """Make sure that a string is a byte string
@@ -109,7 +111,14 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     # Note: We do these last even though we have to call to_bytes again on the
     # value because we're optimizing the common case
     if nonstring == 'simplerepr':
-        value = str(obj)
+        try:
+            value = str(obj)
+        except UnicodeError:
+            try:
+                value = repr(obj)
+            except UnicodeError:
+                # Giving up
+                return to_bytes('')
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
@@ -121,6 +130,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
 
     return to_bytes(value, encoding, errors)
+
 
 def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     """Make sure that a string is a text string
@@ -175,7 +185,14 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     # Note: We do these last even though we have to call to_text again on the
     # value because we're optimizing the common case
     if nonstring == 'simplerepr':
-        value = str(obj)
+        try:
+            value = str(obj)
+        except UnicodeError:
+            try:
+                value = repr(obj)
+            except UnicodeError:
+                # Giving up
+                return u''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
@@ -186,6 +203,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
 
     return to_text(value, encoding, errors)
+
 
 #: :py:func:`to_native`
 #:      Transform a variable into the native str type for the python version

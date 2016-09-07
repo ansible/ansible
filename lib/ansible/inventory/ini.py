@@ -28,9 +28,10 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible.module_utils._text import to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.utils.shlex import shlex_split
-from ansible.utils.unicode import to_unicode
+
 
 class InventoryParser(object):
     """
@@ -56,7 +57,7 @@ class InventoryParser(object):
             (data, private) = loader._get_file_contents(filename)
         else:
             with open(filename) as fh:
-                data = to_unicode(fh.read())
+                data = to_text(fh.read())
         data = data.split('\n')
 
         self._parse(data)
@@ -125,7 +126,7 @@ class InventoryParser(object):
 
                 continue
             elif line.startswith('[') and line.endswith(']'):
-                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + \
+                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line +
                                   "in the section entry, and that there are no other invalid characters")
 
             # It's not a section, so the current state tells us what kind of
@@ -187,7 +188,6 @@ class InventoryParser(object):
         for group in self.groups.values():
             if group.depth == 0 and group.name not in ('all', 'ungrouped'):
                 self.groups['all'].add_child_group(group)
-
 
     def _parse_group_name(self, line):
         '''
@@ -323,7 +323,7 @@ class InventoryParser(object):
             except SyntaxError:
                 # Is this a hash with an equals at the end?
                 pass
-        return to_unicode(v, nonstring='passthru', errors='strict')
+        return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
 
     def get_host_variables(self, host):
         return {}

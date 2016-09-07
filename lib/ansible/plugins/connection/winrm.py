@@ -26,9 +26,21 @@ import shlex
 import traceback
 import json
 
+HAVE_KERBEROS = False
+try:
+    import kerberos
+    HAVE_KERBEROS = True
+except ImportError:
+    pass
+
 from ansible.compat.six import string_types
 from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.plugins.connection import ConnectionBase
+from ansible.utils.hashing import secure_hash
+from ansible.utils.path import makedirs_safe
 
 try:
     import winrm
@@ -42,24 +54,12 @@ try:
 except ImportError:
     raise AnsibleError("xmltodict is not installed")
 
-HAVE_KERBEROS = False
-try:
-    import kerberos
-    HAVE_KERBEROS = True
-except ImportError:
-    pass
-
-from ansible.errors import AnsibleFileNotFound
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes, to_unicode, to_str
-
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -156,10 +156,10 @@ class Connection(ConnectionBase):
 
                 return protocol
             except Exception as e:
-                err_msg = to_unicode(e).strip()
-                if re.search(to_unicode(r'Operation\s+?timed\s+?out'), err_msg, re.I):
+                err_msg = to_text(e).strip()
+                if re.search(to_text(r'Operation\s+?timed\s+?out'), err_msg, re.I):
                     raise AnsibleError('the connection attempt timed out')
-                m = re.search(to_unicode(r'Code\s+?(\d{3})'), err_msg)
+                m = re.search(to_text(r'Code\s+?(\d{3})'), err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
@@ -167,9 +167,9 @@ class Connection(ConnectionBase):
                     elif code == 411:
                         return protocol
                 errors.append(u'%s: %s' % (transport, err_msg))
-                display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_unicode(traceback.format_exc())), host=self._winrm_host)
+                display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_text(traceback.format_exc())), host=self._winrm_host)
         if errors:
-            raise AnsibleConnectionFailure(', '.join(map(to_str, errors)))
+            raise AnsibleConnectionFailure(', '.join(map(to_native, errors)))
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
@@ -220,12 +220,12 @@ class Connection(ConnectionBase):
 
             # TODO: check result from response and set stdin_push_failed if we have nonzero
             if from_exec:
-                display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
+                display.vvvvv('WINRM RESULT %r' % to_text(response), host=self._winrm_host)
             else:
-                display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
+                display.vvvvvv('WINRM RESULT %r' % to_text(response), host=self._winrm_host)
 
-            display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
-            display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
+            display.vvvvvv('WINRM STDOUT %s' % to_text(response.std_out), host=self._winrm_host)
+            display.vvvvvv('WINRM STDERR %s' % to_text(response.std_err), host=self._winrm_host)
 
             if stdin_push_failed:
                 raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
@@ -250,7 +250,7 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_unicode, cmd_parts)
+        cmd_parts = map(to_text, cmd_parts)
         script = None
         cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
         # Support running .ps1 files (via script/raw).
@@ -266,7 +266,7 @@ class Connection(ConnectionBase):
             cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = to_unicode(base64.b64decode(encoded_cmd).decode('utf-16-le'))
+            decoded_cmd = to_text(base64.b64decode(encoded_cmd).decode('utf-16-le'))
             display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
         else:
             display.vvv("EXEC %s" % cmd, host=self._winrm_host)
@@ -300,9 +300,9 @@ class Connection(ConnectionBase):
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
-        in_size = os.path.getsize(to_bytes(in_path, errors='strict'))
+        in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
-        with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
+        with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
             for out_data in iter((lambda:in_file.read(buffer_size)), ''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
@@ -318,7 +318,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
 
         script_template = u'''
@@ -357,7 +357,7 @@ class Connection(ConnectionBase):
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
         # TODO: improve error handling
         if result.status_code != 0:
-            raise AnsibleError(to_str(result.std_err))
+            raise AnsibleError(to_native(result.std_err))
 
         put_output = json.loads(result.std_out)
         remote_sha1 = put_output.get("sha1")
@@ -368,7 +368,7 @@ class Connection(ConnectionBase):
         local_sha1 = secure_hash(in_path)
 
         if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_str(remote_sha1), to_str(local_sha1)))
+            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_native(remote_sha1), to_native(local_sha1)))
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
@@ -407,7 +407,7 @@ class Connection(ConnectionBase):
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(to_str(result.std_err))
+                        raise IOError(to_native(result.std_err))
                     if result.std_out.strip() == '[DIR]':
                         data = None
                     else:
@@ -418,9 +418,9 @@ class Connection(ConnectionBase):
                     else:
                         if not out_file:
                             # If out_path is a directory and we're expecting a file, bail out now.
-                            if os.path.isdir(to_bytes(out_path, errors='strict')):
+                            if os.path.isdir(to_bytes(out_path, errors='surrogate_or_strict')):
                                 break
-                            out_file = open(to_bytes(out_path, errors='strict'), 'wb')
+                            out_file = open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb')
                         out_file.write(data)
                         if len(data) < buffer_size:
                             break

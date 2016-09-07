@@ -22,17 +22,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pipes
-import sys
 from io import StringIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open
+from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes
+
 
 class TestConnectionBaseClass(unittest.TestCase):
 
@@ -277,20 +277,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         C.ANSIBLE_SSH_RETRIES = 9
 
         # test a regular, successful execution
-        conn._exec_command.return_value = (0, 'stdout', '')
+        conn._exec_command.return_value = (0, b'stdout', b'')
         res = conn.exec_command('ssh', 'some data')
+        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
 
         # test a retry, followed by success
         conn._exec_command.return_value = None
-        conn._exec_command.side_effect = [(255, '', ''), (0, 'stdout', '')]
+        conn._exec_command.side_effect = [(255, '', ''), (0, b'stdout', b'')]
         res = conn.exec_command('ssh', 'some data')
+        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
 
         # test multiple failures
-        conn._exec_command.side_effect = [(255, '', '')]*10
+        conn._exec_command.side_effect = [(255, b'', b'')] * 10
         self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
         # test other failure from exec_command
-        conn._exec_command.side_effect = [Exception('bad')]*10
+        conn._exec_command.side_effect = [Exception('bad')] * 10
         self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
 
     @patch('os.path.exists')
@@ -308,20 +310,22 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
-        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', None)
 
-        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', None)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
-        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
-        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
-        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        expected_in_data = b' '.join((b'put',
+            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
         # test that a non-zero rc raises an error
@@ -346,23 +350,24 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
-        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', None)
 
-        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', None)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
-        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
-        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
-        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        expected_in_data = b' '.join((b'get',
+            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+        conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data)
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
-

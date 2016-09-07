@@ -98,8 +98,8 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         must be converted into python's unicode type as the strings will be run
         through jinja2 which has this requirement.  You can use::
 
-            from ansible.utils.unicode import to_unicode
-            result_string = to_unicode(result_string)
+            from ansible.module_utils._text import to_text
+            result_string = to_text(result_string)
         """
         pass
 

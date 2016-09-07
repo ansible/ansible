@@ -27,7 +27,8 @@ from contextlib import contextmanager
 from io import BytesIO, StringIO
 from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
+
 
 @contextmanager
 def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
@@ -48,6 +49,7 @@ def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
     sys.stdin = real_stdin
     sys.argv = real_argv
 
+
 @contextmanager
 def swap_stdout():
     """
@@ -61,6 +63,7 @@ def swap_stdout():
     sys.stdout = fake_stream
     yield fake_stream
     sys.stdout = old_stdout
+
 
 class ModuleTestCase(unittest.TestCase):
     def setUp(self, module_args=None):

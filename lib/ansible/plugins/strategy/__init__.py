@@ -19,18 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-import time
-import zlib
-from collections import defaultdict
-
 from jinja2.exceptions import UndefinedError
 
 from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, text_type, string_types
-from ansible import constants as C
+from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
-from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -38,11 +31,10 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins import action_loader
 from ansible.template import Templar
-from ansible.utils.unicode import to_unicode
-from ansible.vars.unsafe_proxy import wrap_var
 from ansible.vars import combine_vars, strip_internal_keys
+from ansible.module_utils._text import to_text
 
 
 try:
@@ -138,7 +130,7 @@ class StrategyBase:
         ret_results = []
 
         def get_original_host(host_name):
-            host_name = to_unicode(host_name)
+            host_name = to_text(host_name)
             if host_name in self._inventory._hosts_cache:
                 return self._inventory._hosts_cache[host_name]
             else:
@@ -161,7 +153,7 @@ class StrategyBase:
                             target_handler_name = templar.template(handler_task.get_name())
                             if target_handler_name == handler_name:
                                 return handler_task
-                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                    except (UndefinedError, AnsibleUndefinedVariable):
                         # We skip this handler due to the fact that it may be using
                         # a variable in the name that was conditionally included via
                         # set_fact or some other method, and we don't want to error
@@ -182,7 +174,7 @@ class StrategyBase:
                             target_handler_name = templar.template(target_handler.get_name())
                             if target_handler_name == handler_name:
                                 return True
-                    except (UndefinedError, AnsibleUndefinedVariable) as e:
+                    except (UndefinedError, AnsibleUndefinedVariable):
                         pass
                 return parent_handler_match(target_handler._parent, handler_name)
             else:
@@ -567,13 +559,12 @@ class StrategyBase:
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_unicode(e)))
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_text(e)))
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
                 self._tqm.send_callback('v2_runner_on_failed', tr)
             return []
-
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)

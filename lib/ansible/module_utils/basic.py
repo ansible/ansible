@@ -805,7 +805,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.matchpathcon(to_native(path, errors='strict'), mode)
+            ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
         except OSError:
             return context
         if ret[0] == -1:
@@ -820,7 +820,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.lgetfilecon_raw(to_native(path, errors='strict'))
+            ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
         except OSError:
             e = get_exception()
             if e.errno == errno.ENOENT:
@@ -2121,10 +2121,10 @@ class AnsibleModule(object):
         to_clean_args = args
         if PY2:
             if isinstance(args, text_type):
-                to_clean_args = args.encode('utf-8')
+                to_clean_args = to_bytes(args)
         else:
             if isinstance(args, binary_type):
-                to_clean_args = args.decode('utf-8', errors='replace')
+                to_clean_args = to_text(args)
         if isinstance(args, (text_type, binary_type)):
             to_clean_args = shlex.split(to_clean_args)
 
@@ -2193,11 +2193,7 @@ class AnsibleModule(object):
                 if not binary_data:
                     data += '\n'
                 if isinstance(data, text_type):
-                    if PY3:
-                        errors = 'surrogateescape'
-                    else:
-                        errors = 'strict'
-                    data = data.encode('utf-8', errors=errors)
+                    data = to_bytes(data)
                 cmd.stdin.write(data)
                 cmd.stdin.close()
 

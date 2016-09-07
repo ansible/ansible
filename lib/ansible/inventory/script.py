@@ -31,7 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
-from ansible.utils.unicode import to_str, to_unicode
+from ansible.module_utils._text import to_native, to_text
 
 
 class InventoryScript:
@@ -61,9 +61,9 @@ class InventoryScript:
         # make sure script output is unicode so that json loader will output
         # unicode strings itself
         try:
-            self.data = to_unicode(stdout, errors="strict")
+            self.data = to_text(stdout, errors="strict")
         except Exception as e:
-            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_str(self.filename), to_str(e)))
+            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_native(self.filename), to_native(e)))
 
         # see comment about _meta below
         self.host_vars_from_top = None
@@ -78,11 +78,11 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_str(self.filename), to_str(e)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_native(self.filename), to_native(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_str(self.filename)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_native(self.filename)))
 
         group = None
         for (group_name, data) in self.raw.items():
@@ -152,7 +152,7 @@ class InventoryScript:
             try:
                 got = self.host_vars_from_top.get(host.name, {})
             except AttributeError as e:
-                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_str(e)))
+                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_native(e)))
             return got
 
         cmd = [self.filename, "--host", host.name]

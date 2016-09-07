@@ -30,7 +30,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 
 
 def _parse_params(term):
@@ -59,13 +59,15 @@ class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
         config = StringIO()
-        config.write(u'[java_properties]\n' + open(to_bytes(filename, errors='strict')).read())
+        current_cfg_file = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
+
+        config.write(u'[java_properties]\n' + to_text(current_cfg_file.read(), errors='surrogate_or_strict'))
         config.seek(0, os.SEEK_SET)
         self.cp.readfp(config)
         return self.get_value(key, 'java_properties', dflt, is_regexp)
 
     def read_ini(self, filename, key, section, dflt, is_regexp):
-        self.cp.readfp(open(to_bytes(filename, errors='strict')))
+        self.cp.readfp(open(to_bytes(filename, errors='surrogate_or_strict')))
         return self.get_value(key, section, dflt, is_regexp)
 
     def get_value(self, key, section, dflt, is_regexp):
