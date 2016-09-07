@@ -167,7 +167,6 @@ def main():
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
                 changed=False,
-                stderr=False,
                 rc=0
             )
 
@@ -181,7 +180,6 @@ def main():
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
                 changed=False,
-                stderr=False,
                 rc=0
             )
 
