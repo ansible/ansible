@@ -122,8 +122,9 @@ from ansible.module_utils.eos import NetworkModule
 
 def get_config(module):
     config = module.params.get('config')
+    defaults = module.params['include_defaults']
     if not config and not module.params['force']:
-        config = module.config.get_config()
+        config = module.config.get_config(include_defaults=defaults)
     return config
 
 def filter_exit(commands):
@@ -198,7 +199,12 @@ def main():
     commands = filter_exit(commands)
     if commands:
         if not module.check_mode:
-            response = module.config(commands, replace=replace)
+            response = module.config.load_config(commands,
+                                                 replace=replace,
+                                                 session='eos_template',
+                                                 commit=True)
+
+            module.cli('no configure session eos_template')
             result['responses'] = response
         result['changed'] = True
 
