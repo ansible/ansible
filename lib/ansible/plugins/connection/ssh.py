@@ -144,7 +144,7 @@ class Connection(ConnectionBase):
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
-        elif binary == C.ANSIBLE_SSH_EXECUTABLE:
+        elif binary == self._play_context.ssh_executable:
             # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
             self._command += ['-q']
 
@@ -563,12 +563,13 @@ class Connection(ConnectionBase):
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
 
+
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
+        ssh_executable = self._play_context.ssh_executable
 
         if not in_data and sudoable:
             args = (ssh_executable, '-tt', self.host, cmd)
@@ -684,7 +685,7 @@ class Connection(ConnectionBase):
         # TODO: reenable once winrm issues are fixed
         # temporarily disabled as we are forced to currently close connections after every task because of winrm
         # if self._connected and self._persistent:
-        #     ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
+        #     ssh_executable = self._play_context.ssh_executable
         #     cmd = self._build_command(ssh_executable, '-O', 'stop', self.host)
         #
         #     cmd = map(to_bytes, cmd)
