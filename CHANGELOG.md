@@ -8,20 +8,24 @@ Ansible Changes By Release
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Major performance improvements.
 * Added support for binary modules
-* The service module has been changed to use system specific modules if they exist and fallback to the old service module if they cannot be found or detected.
-* Several Windows facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
-  - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
-  - ansible_date_time.iso8601 (changed to UTC instead of local time)
-  - ansible_distribution (now uses OS caption string, e.g.: "Microsoft Windows Server 2012 R2 Standard", version is still available on ansible_distribution_version)
-  - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
-* Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or backgrodund tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
+* Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
+* roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
+* The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
+* Windows:
+  * several facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
+    - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
+    - ansible_date_time.iso8601 (changed to UTC instead of local time)
+    - ansible_distribution (now uses OS caption string, e.g.: "Microsoft Windows Server 2012 R2 Standard", version is still available on ansible_distribution_version)
+    - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
+  * `async:` support for long-running or background tasks.
+  * `environment:` support for setting module environment vars in play/task.
 
 ####New Modules:
 - archive
@@ -89,6 +93,8 @@ Ansible Changes By Release
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 * loop_control now has a label option to allow fine grained control what gets displayed per item
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
+* New privilege escalation become method `ksu`
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 
 ## 2.1.2 "The Song Remains the Same"
 
