@@ -119,8 +119,9 @@ from ansible.module_utils.ios import NetworkModule, NetworkError
 
 def get_config(module):
     config = module.params['config'] or dict()
+    defaults = module.params['include_defaults']
     if not config and not module.params['force']:
-        config = module.config.get_config()
+        config = module.config.get_config(include_defaults=defaults)
     return config
 
 def main():
