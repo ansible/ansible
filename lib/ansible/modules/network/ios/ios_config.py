@@ -242,8 +242,6 @@ def check_args(module, warnings):
     if module.params['parents']:
         if not module.params['lines'] or module.params['src']:
             warnings.append('ignoring unnecessary argument parents')
-    if module.params['match'] == 'none' and module.params['replace']:
-        warnings.append('ignorning unnecessary argument replace')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -298,7 +296,9 @@ def run(module, result):
 
     if match != 'none':
         config = get_config(module, result)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        path = module.params['parents']
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
     else:
         config = None
         configobjs = candidate.items
