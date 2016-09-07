@@ -28,6 +28,8 @@ For example:
   tags: [print_action]"
 
 This allows operators to focus on the tasks that provide value only.
+
+If you increase verbosity all tasks are printed.
 """
 
 from __future__ import (absolute_import, division, print_function)
@@ -165,7 +167,9 @@ class CallbackModule(CallbackBase):
         """Run when a task finishes correctly."""
         failed = 'failed' in result._result
         unreachable = 'unreachable' in result._result
-        if 'print_action' in result._task.tags or failed or unreachable:
+
+        if 'print_action' in result._task.tags or failed or unreachable or \
+           self._display.verbosity > 1:
             self._print_task()
             self.last_skipped = False
             msg = unicode(result._result.get('msg', '')) or\
