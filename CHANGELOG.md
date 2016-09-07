@@ -20,6 +20,8 @@ Ansible Changes By Release
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
+* Windows `async:` support for long-running or background tasks.
+* Windows `environment:` support for setting module environment vars in play/task. 
 
 ####New Modules:
 - archive
