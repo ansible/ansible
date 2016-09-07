@@ -27,6 +27,7 @@
 #
 
 import re
+import time
 
 from ansible.module_utils.basic import json
 from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
@@ -34,6 +35,7 @@ from ansible.module_utils.network import add_argument, register_transport, to_li
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.netcli import Command
 
 EAPI_FORMATS = ['json', 'text']
 
@@ -58,7 +60,7 @@ class EosConfigMixin(object):
             cmd += ' all'
         return self.execute([cmd])[0]
 
-    def load_config(self, config, session, commit=False, replace=False, **kwargs):
+    def load_config(self, config, session=None, commit=False, replace=False, **kwargs):
         """ Loads the configuration into the remote device
 
         This method handles the actual loading of the config
@@ -70,6 +72,7 @@ class EosConfigMixin(object):
 
         :returns list: ordered set of responses from device
         """
+        session = session or 'ansible_%s' % int(time.time())
         commands = ['configure session %s' % session]
         if replace:
             commands.append('rollback clean-config')
@@ -97,7 +100,12 @@ class EosConfigMixin(object):
         commands = ['configure session %s' % session,
                     'show session-config diffs',
                     'end']
-        response = self.execute(commands)
+
+        if isinstance(self, Eapi):
+            response = self.execute(commands, output='text')
+        else:
+            response = self.execute(commands)
+
         return response[-2]
 
     def commit_config(self, session):
@@ -120,16 +128,15 @@ class Eapi(EosConfigMixin):
     def _error(self, msg):
         raise NetworkError(msg, url=self.url)
 
-    def _get_body(self, commands, format, reqid=None):
+    def _get_body(self, commands, output, reqid=None):
         """Create a valid eAPI JSON-RPC request message
         """
-
-        if format not in EAPI_FORMATS:
+        if output not in EAPI_FORMATS:
             msg = 'invalid format, received %s, expected one of %s' % \
-                    (format, ','.join(EAPI_FORMATS))
+                    (output, ', '.join(EAPI_FORMATS))
             self._error(msg=msg)
 
-        params = dict(version=1, cmds=commands, format=format)
+        params = dict(version=1, cmds=commands, format=output)
         return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
     def connect(self, params, **kwargs):
@@ -175,29 +182,7 @@ class Eapi(EosConfigMixin):
         if self.enable is not None:
             commands.insert(0, self.enable)
 
-    def run_commands(self, commands, **kwargs):
-        output = None
-        cmds = list()
-        responses = list()
-
-        for cmd in commands:
-            if output and output != cmd.output:
-                responses.extend(self.execute(cmds, output=output))
-                cmds = list()
-
-            output = cmd.output
-            cmds.append(str(cmd))
-
-        if cmds:
-            responses.extend(self.execute(cmds, output=output))
-
-        for index, cmd in enumerate(commands):
-            if cmd.output == 'text':
-                responses[index] = responses[index].get('output')
-
-        return responses
-
-        data = self._get_body(commands, format)
+        data = self._get_body(commands, output)
         data = json.dumps(data)
 
         headers = {'Content-Type': 'application/json-rpc'}
@@ -227,10 +212,36 @@ class Eapi(EosConfigMixin):
 
         return response['result']
 
+
+    def run_commands(self, commands, **kwargs):
+        output = None
+        cmds = list()
+        responses = list()
+
+        for cmd in commands:
+            if output and output != cmd.output:
+                responses.extend(self.execute(cmds, output=output))
+                cmds = list()
+
+            output = cmd.output
+            cmds.append(str(cmd))
+
+        if cmds:
+            responses.extend(self.execute(cmds, output=output))
+
+        for index, cmd in enumerate(commands):
+            if cmd.output == 'text':
+                responses[index] = responses[index].get('output')
+
+        return responses
+
     ### Config methods ###
 
-    def get_config(self, **kwargs):
-        return self.execute(['show running-config'], output='text')[0]['output']
+    def get_config(self, include_defaults=False):
+        cmd = 'show running-config'
+        if include_defaults:
+            cmd += ' all'
+        return self.execute([cmd], output='text')[0]['output']
 
 Eapi = register_transport('eapi')(Eapi)
 
