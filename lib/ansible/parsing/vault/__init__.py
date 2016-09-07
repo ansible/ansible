@@ -29,16 +29,10 @@ from ansible.errors import AnsibleError
 from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from hashlib import md5
 
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
-from hashlib import md5
 
 try:
     from Crypto.Hash import SHA256, HMAC
@@ -67,6 +61,15 @@ try:
 except ImportError:
     HAS_AES = False
 
+from ansible.compat.six import PY3
+from ansible.module_utils._text import to_bytes, to_text
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # OpenSSL pbkdf2_hmac
 HAS_PBKDF2HMAC = False
 try:
@@ -81,12 +84,11 @@ except Exception as e:
     import traceback
     display.debug("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
 
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_unicode, to_bytes
 
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
-CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
+CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
+    " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 b_HEADER = b'$ANSIBLE_VAULT'
 HEADER = '$ANSIBLE_VAULT'
@@ -105,6 +107,7 @@ def check_prereqs():
 class AnsibleVaultError(AnsibleError):
     pass
 
+
 def is_encrypted(b_data):
     """ Test if this is vault encrypted data blob
 
@@ -115,6 +118,7 @@ def is_encrypted(b_data):
     if b_data.startswith(b_HEADER):
         return True
     return False
+
 
 def is_encrypted_file(file_obj):
     """Test if the contents of a file obj are a vault encrypted data blob.
@@ -252,7 +256,7 @@ class VaultLib:
 
         b_header = HEADER.encode('utf-8')
         header = b';'.join([b_header, self.b_version,
-                        to_bytes(self.cipher_name,'utf-8',errors='strict')])
+                        to_bytes(self.cipher_name,'utf-8', errors='strict')])
         tmpdata = [header]
         tmpdata += [b_data[i:i + 80] for i in range(0, len(b_data), 80)]
         tmpdata += [b'']
@@ -278,7 +282,7 @@ class VaultLib:
         tmpheader = tmpdata[0].strip().split(b';')
 
         self.b_version = tmpheader[1].strip()
-        self.cipher_name = to_unicode(tmpheader[2].strip())
+        self.cipher_name = to_text(tmpheader[2].strip())
         clean_data = b''.join(tmpdata[1:])
 
         return clean_data
@@ -306,7 +310,7 @@ class VaultEditor:
 
         file_len = os.path.getsize(tmp_path)
 
-        if file_len > 0: # avoid work when file was empty
+        if file_len > 0:  # avoid work when file was empty
             max_chunk_len = min(1024*1024*2, file_len)
 
             passes = 3
@@ -321,7 +325,7 @@ class VaultEditor:
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
-                    assert(fh.tell() == file_len) # FIXME remove this assert once we have unittests to check its accuracy
+                    assert(fh.tell() == file_len)  # FIXME remove this assert once we have unittests to check its accuracy
                     os.fsync(fh)
 
     def _shred_file(self, tmp_path):
@@ -528,6 +532,7 @@ class VaultEditor:
 
         return editor
 
+
 class VaultFile(object):
 
     def __init__(self, password, filename):
@@ -567,6 +572,7 @@ class VaultFile(object):
                 return self.tmpfile
         else:
             return self.filename
+
 
 ########################################
 #               CIPHERS                #

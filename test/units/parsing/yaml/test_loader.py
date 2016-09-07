@@ -32,7 +32,6 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.utils.unicode import to_bytes
 
 from units.mock.yaml_helper import YamlTestUtils
 
@@ -41,6 +40,7 @@ try:
 except ImportError:
     from yaml.parser import ParserError
 
+
 class NameStringIO(StringIO):
     """In py2.6, StringIO doesn't let you set name because a baseclass has it
     as readonly property"""
@@ -48,6 +48,7 @@ class NameStringIO(StringIO):
 
     def __init__(self, *args, **kwargs):
         super(NameStringIO, self).__init__(*args, **kwargs)
+
 
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
@@ -282,6 +283,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         self.assertEquals(vault_string, plaintext_var)
         self.assertFalse(plaintext_var != vault_string)
         self.assertFalse(vault_string != plaintext_var)
+
 
 class TestAnsibleLoaderPlay(unittest.TestCase):
 

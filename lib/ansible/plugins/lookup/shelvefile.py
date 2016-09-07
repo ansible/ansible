@@ -21,10 +21,10 @@ import shelve
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
+
 
 class LookupModule(LookupBase):
-
 
     def read_shelve(self, shelve_filename, key):
         """
@@ -66,7 +66,7 @@ class LookupModule(LookupBase):
                 if res is None:
                     raise AnsibleError("Key %s not found in shelve file %s" % (key, file))
                 # Convert the value read to string
-                ret.append(to_unicode(res))
+                ret.append(to_text(res))
                 break
             else:
                 raise AnsibleError("Could not locate shelve file in lookup: %s" % file)

@@ -26,9 +26,11 @@ import glob
 import urlparse
 
 from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
+
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
+
 
 class ActionModule(ActionBase):
 
@@ -55,7 +57,6 @@ class ActionModule(ActionBase):
             filepath = self._write_backup(task_vars['inventory_hostname'],
                                           result['__backup__'])
             result['backup_path'] = filepath
-
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
@@ -98,7 +99,7 @@ class ActionModule(ActionBase):
 
         try:
             with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
+                template_data = to_text(f.read())
         except IOError:
             return dict(failed=True, msg='unable to load src file')
 
@@ -114,5 +115,3 @@ class ActionModule(ActionBase):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-
-

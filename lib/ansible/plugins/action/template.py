@@ -23,12 +23,11 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_bytes, to_unicode, to_str
-from ansible.errors import AnsibleError
-
 
 
 class ActionModule(ActionBase):
@@ -78,7 +77,7 @@ class ActionModule(ActionBase):
                 source = self._find_needle('templates', source)
             except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_str(e)
+                result['msg'] = to_native(e)
 
         if 'failed' in result:
             return result
@@ -96,7 +95,7 @@ class ActionModule(ActionBase):
         b_source = to_bytes(source)
         try:
             with open(b_source, 'r') as f:
-                template_data = to_unicode(f.read())
+                template_data = to_text(f.read())
 
             try:
                 template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
@@ -163,7 +162,7 @@ class ActionModule(ActionBase):
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
 
-            if not self._play_context.check_mode: # do actual work thorugh copy
+            if not self._play_context.check_mode:  # do actual work through copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
@@ -176,7 +175,7 @@ class ActionModule(ActionBase):
                        dest=dest,
                        original_basename=os.path.basename(source),
                        follow=True,
-                    ),
+                   ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 

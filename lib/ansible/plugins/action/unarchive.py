@@ -20,10 +20,11 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
-from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_str
+
 
 class ActionModule(ActionBase):
 
@@ -82,7 +83,7 @@ class ActionModule(ActionBase):
                 source = self._loader.get_real_file(self._find_needle('files', source))
             except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_str(e)
+                result['msg'] = to_native(e)
                 self._remove_tmp_path(tmp)
                 return result
 

@@ -39,14 +39,14 @@ except ImportError:
         _md5 = None
 
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):
     ''' Return a secure hash hex digest of data. '''
 
     digest = hash_func()
-    data = to_bytes(data, errors='strict')
+    data = to_bytes(data, errors='surrogate_or_strict')
     digest.update(data)
     return digest.hexdigest()
 
@@ -54,12 +54,12 @@ def secure_hash_s(data, hash_func=sha1):
 def secure_hash(filename, hash_func=sha1):
     ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
 
-    if not os.path.exists(to_bytes(filename, errors='strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
+    if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
     try:
-        infile = open(to_bytes(filename, errors='strict'), 'rb')
+        infile = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
         block = infile.read(blocksize)
         while block:
             digest.update(block)

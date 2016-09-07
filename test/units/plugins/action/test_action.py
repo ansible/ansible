@@ -21,8 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import ast
-import json
 import pipes
 import os
 
@@ -33,7 +31,6 @@ except ImportError:
 
 from nose.tools import eq_, raises
 
-from ansible.release import __version__ as ansible_version
 from ansible import constants as C
 from ansible.compat.six import text_type
 from ansible.compat.tests import unittest
@@ -41,12 +38,12 @@ from ansible.compat.tests.mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import PluginLoader
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
-from ansible.utils.unicode import to_bytes
 
 from units.mock.loader import DictDataLoader
+from ansible.module_utils._text import to_bytes
+
 
 python_module_replacers = b"""
 #!/usr/bin/python
@@ -67,10 +64,12 @@ WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 
 class DerivedActionBase(ActionBase):
     TRANSFERS_FILES = False
+
     def run(self, tmp=None, task_vars=None):
         # We're not testing the plugin run() method, just the helper
         # methods ActionBase defines
         return super(DerivedActionBase, self).run(tmp=tmp, task_vars=task_vars)
+
 
 class TestActionBase(unittest.TestCase):
 
@@ -144,7 +143,7 @@ class TestActionBase(unittest.TestCase):
                 self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
 
         # test powershell module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
@@ -497,7 +496,10 @@ class TestActionBase(unittest.TestCase):
         action_base._connection.has_pipelining = True
         action_base._low_level_execute_command.return_value = dict(stdout='{"rc": 0, "stdout": "ok"}')
         self.assertEqual(action_base._execute_module(module_name=None, module_args=None), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-        self.assertEqual(action_base._execute_module(module_name='foo', module_args=dict(z=9, y=8, x=7), task_vars=dict(a=1)), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
+        self.assertEqual(action_base._execute_module(module_name='foo',
+            module_args=dict(z=9, y=8, x=7), task_vars=dict(a=1)),
+            dict(_ansible_parsed=True, rc=0, stdout="ok",
+                stdout_lines=['ok']))
 
         # test with needing/removing a remote tmp path
         action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data', 'path')
@@ -555,6 +557,7 @@ class TestActionBase(unittest.TestCase):
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user
 
+
 # Note: Using nose's generator test cases here so we can't inherit from
 # unittest.TestCase
 class TestFilterNonJsonLines(object):
@@ -592,4 +595,3 @@ class TestFilterNonJsonLines(object):
     def test_unparsable_filter_non_json_lines(self):
         for stdout_line in self.unparsable_cases:
             yield self.check_unparsable_filter_non_json_lines, stdout_line
-

@@ -22,8 +22,8 @@ from os import path, walk
 import re
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
@@ -137,7 +137,7 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
 
             except AnsibleError as e:
-                err_msg = to_str(e)
+                err_msg = to_native(e)
                 raise AnsibleError(err_msg)
 
         if self.return_results_as_name:
