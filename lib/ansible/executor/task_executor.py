@@ -667,7 +667,8 @@ class TaskExecutor:
             else:
                 # see if SSH can support ControlPersist if not use paramiko
                 try:
-                    cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
+                    cmd = subprocess.Popen([ssh_executable, '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     (out, err) = cmd.communicate()
                     err = to_text(err)
                     if u"Bad configuration option" in err or u"Usage:" in err:
