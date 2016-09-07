@@ -91,6 +91,7 @@ class EosConfigMixin(object):
             self.abort_config(session)
             diff = None
             raise
+
         return diff
 
     def save_config(self):
@@ -103,8 +104,11 @@ class EosConfigMixin(object):
 
         if isinstance(self, Eapi):
             response = self.execute(commands, output='text')
+            response[-2] = response[-2].get('output').strip()
         else:
             response = self.execute(commands)
+
+
 
         return response[-2]
 
