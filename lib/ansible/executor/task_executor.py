@@ -406,7 +406,7 @@ class TaskExecutor:
                 return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
             # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
-            if self._task.action in ['include', 'include_role']:
+            if self._task.action not in ['include', 'include_role']:
                 raise
 
         # if we ran into an error while setting up the PlayContext, raise it now
