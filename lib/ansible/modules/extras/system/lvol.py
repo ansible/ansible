@@ -276,7 +276,7 @@ def main():
 
     if rc != 0:
         if state == 'absent':
-            module.exit_json(changed=False, stdout="Volume group %s does not exist." % vg, stderr=False)
+            module.exit_json(changed=False, stdout="Volume group %s does not exist." % vg)
         else:
             module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, err=err)
 
@@ -290,7 +290,7 @@ def main():
 
     if rc != 0:
         if state == 'absent':
-            module.exit_json(changed=False, stdout="Volume group %s does not exist." % vg, stderr=False)
+            module.exit_json(changed=False, stdout="Volume group %s does not exist." % vg)
         else:
             module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, err=err)
 
