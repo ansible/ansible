@@ -18,7 +18,7 @@ Ansible Changes By Release
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * `meta` tasks can now use conditionals.
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or backgrodund tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
@@ -38,6 +38,10 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
+- dnos10
+  * dnos10_command
+  * dnos10_config
+  * dnos10_template
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
@@ -79,10 +83,7 @@ Ansible Changes By Release
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
-- dnos
-  * dnos10_command
-  * dnos10_config
-  * dnos10_template
+
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
