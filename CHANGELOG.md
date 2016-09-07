@@ -20,7 +20,7 @@ Ansible Changes By Release
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
-* Windows `async:` support for long-running or background tasks.
+* Windows `async:` support for long-running or backgrodund tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
 
 ####New Modules:
@@ -79,7 +79,7 @@ Ansible Changes By Release
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
-- dnos Networking
+- dnos
   * dnos10_command
   * dnos10_config
   * dnos10_template
