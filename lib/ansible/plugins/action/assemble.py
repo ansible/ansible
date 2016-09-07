@@ -28,6 +28,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
 from ansible.utils.unicode import to_str, to_unicode
+from ansible.module_utils.six import PY3
 
 
 class ActionModule(ActionBase):
@@ -59,7 +60,8 @@ class ActionModule(ActionBase):
             if delimit_me:
                 if delimiter:
                     # un-escape anything like newlines
-                    delimiter = delimiter.decode('unicode-escape')
+                    if not PY3:
+                        delimiter = delimiter.decode('unicode-escape')
                     tmp.write(delimiter)
                     # always make sure there's a newline after the
                     # delimiter, so lines don't run together
