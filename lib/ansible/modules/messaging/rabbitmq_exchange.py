@@ -65,6 +65,28 @@ options:
             - rabbitMQ management api port
         required: false
         default: 15672
+    login_protocol:
+        description:
+            - rabbitMQ management api protocol
+        choices: [ http , https ]
+        required: false
+        default: http
+        version_added: "2.3"
+    cacert:
+        description:
+            - CA certificate to verify SSL connection to management API.
+        required: false
+        version_added: "2.3"
+    cert:
+        description:
+            - Client certificate to send on SSL connections to management API.
+        required: false
+        version_added: "2.3"
+    key:
+        description:
+            - Private key matching the client certificate.
+        required: false
+        version_added: "2.3"
     vhost:
         description:
             - rabbitMQ virtual host
@@ -127,6 +149,10 @@ def main():
             login_password = dict(default='guest', type='str', no_log=True),
             login_host = dict(default='localhost', type='str'),
             login_port = dict(default='15672', type='str'),
+            login_protocol = dict(default='http', choices=['http', 'https'], type='str'),
+            cacert = dict(required=False, type='path', default=None),
+            cert = dict(required=False, type='path', default=None),
+            key = dict(required=False, type='path', default=None),
             vhost = dict(default='/', type='str'),
             durable = dict(default=True, type='bool'),
             auto_delete = dict(default=False, type='bool'),
@@ -137,7 +163,8 @@ def main():
         supports_check_mode = True
     )
 
-    url = "http://%s:%s/api/exchanges/%s/%s" % (
+    url = "%s://%s:%s/api/exchanges/%s/%s" % (
+        module.params['login_protocol'],
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
@@ -145,7 +172,8 @@ def main():
     )
 
     # Check if exchange already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']),
+                     verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
     if r.status_code==200:
         exchange_exists = True
@@ -198,10 +226,13 @@ def main():
                         "internal": module.params['internal'],
                         "type": module.params['exchange_type'],
                         "arguments": module.params['arguments']
-                    })
+                    }),
+                    verify=module.params['cacert'],
+                    cert=(module.params['cert'], module.params['key'])
                 )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']),
+                                verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
         if r.status_code == 204:
             module.exit_json(
