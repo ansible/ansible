@@ -100,9 +100,8 @@ EXAMPLES = '''
             backup=yes
 '''
 
-import ConfigParser
-import sys
 import os
+import re
 
 # ==============================================================
 # match_opt
@@ -198,16 +197,17 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
         changed = True
 
 
+    backup_file = None
     if changed and not module.check_mode:
         if backup:
-            module.backup_local(filename)
+            backup_file = module.backup_local(filename)
         ini_file = open(filename, 'w')
         try:
             ini_file.writelines(ini_lines)
         finally:
             ini_file.close()
 
-    return changed
+    return (changed, backup_file)
 
 # ==============================================================
 # main
@@ -228,8 +228,6 @@ def main():
         supports_check_mode = True
     )
 
-    info = dict()
-
     dest = os.path.expanduser(module.params['dest'])
     section = module.params['section']
     option = module.params['option']
@@ -238,13 +236,17 @@ def main():
     backup = module.params['backup']
     no_extra_spaces = module.params['no_extra_spaces']
 
-    changed = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces)
+    (changed,backup_file) = do_ini(module, dest, section, option, value, state, backup, no_extra_spaces)
 
     file_args = module.load_file_common_arguments(module.params)
     changed = module.set_fs_attributes_if_different(file_args, changed)
 
+    results = { 'changed': changed, 'msg': "OK", 'dest': dest }
+    if backup_file is not None:
+        results['backup_file'] = backup_file
+
     # Mission complete
-    module.exit_json(dest=dest, changed=changed, msg="OK")
+    module.exit_json(**results)
 
 # import module snippets
 from ansible.module_utils.basic import *
