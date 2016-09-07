@@ -247,7 +247,7 @@ class ActionModule(ActionBase):
                 if 'content' in new_module_args:
                     del new_module_args['content']
 
-                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
@@ -272,7 +272,7 @@ class ActionModule(ActionBase):
                 )
 
                 # Execute the file module.
-                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):
