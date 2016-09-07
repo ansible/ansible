@@ -93,7 +93,7 @@ class Playbook:
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
+                    display.notice("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)

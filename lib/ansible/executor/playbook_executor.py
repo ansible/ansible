@@ -193,7 +193,7 @@ class PlaybookExecutor:
                             (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
                             filename = os.path.join(basedir, "%s.retry" % retry_name)
                             if self._generate_retry_inventory(filename, retries):
-                                display.display("\tto retry, use: --limit @%s\n" % filename)
+                                display.notice("\tto retry, use: --limit @%s\n" % filename)
 
                     self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
 
