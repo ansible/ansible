@@ -163,7 +163,7 @@ class VaultCLI(CLI):
             # unicode here because we are displaying it and therefore can make
             # the decision that the display doesn't have to be precisely what
             # the input was (leave that to decrypt instead)
-            self.pager(ansible.module_utils._text.to_text(self.editor.plaintext(f)))
+            self.pager(to_text(self.editor.plaintext(f)))
 
     def execute_rekey(self):
         for f in self.args:
