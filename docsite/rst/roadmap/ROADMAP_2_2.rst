@@ -64,17 +64,17 @@ Target: September 2016
 - **Windows platform feature parity** (Matt D)
 
   - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?)
-  - Environment keyword support 
+  - Environment keyword support (done)
   - win_shell/win_command
-  - Async support 
-  - (stretch goal) Pipelining 
+  - Async support (done)
+  - (stretch goal) Pipelining (bumped to 2.3+)
 
 - **Windows-specific enhancements** (Matt D)
 
-  - Multiple Kerberos credential support (done, shepherd fix to pykerberos)
-  - Server 2016 testing/fixes 
-  - (stretch goal) Nano Server connection + module_utils working
-  - (stretch goal) Encrypted kerberos support in pywinrm 
+  - Multiple Kerberos credential support (done)
+  - Server 2016 testing/fixes (done)
+  - (stretch goal) Nano Server connection + module_utils working (bumped to 2.3)
+  - (stretch goal) Encrypted kerberos support in pywinrm (bumped to 2.3)
 
 - **Network** (Nate C/Peter S)
 
