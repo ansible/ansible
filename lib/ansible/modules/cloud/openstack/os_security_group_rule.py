@@ -39,7 +39,7 @@ options:
      required: true
    protocol:
       description:
-        - IP protocol
+        - IP protocols TCP UDP ICMP 112 (VRRP)
       choices: ['tcp', 'udp', 'icmp', 112, None]
       default: None
    port_range_min:
