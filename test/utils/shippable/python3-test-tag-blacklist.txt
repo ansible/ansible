@@ -7,11 +7,7 @@ test_gem
 test_git
 test_hg
 test_lookups
-test_mysql_db
-test_mysql_user
-test_mysql_variables
 test_pip
-test_postgresql
 test_service
 test_subversion
 test_synchronize
