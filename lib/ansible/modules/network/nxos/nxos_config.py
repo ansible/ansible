@@ -245,7 +245,7 @@ def get_config(module, result):
         contents = module.config.get_config(include_defaults=defaults)
         result[key] = contents
 
-    return NetworkConfig(indent=1, contents=contents)
+    return NetworkConfig(indent=2, contents=contents)
 
 def backup_config(module, result):
     if '__config__' not in result:
@@ -254,15 +254,13 @@ def backup_config(module, result):
 
 def load_config(module, commands, result):
     if not module.check_mode:
-        checkpoint = 'ansible_%s' % int(time.time())
-        module.cli(['checkpoint %s' % checkpoint], output='text')
-        result['__checkpoint__'] = checkpoint
         module.config.load_config(commands)
     result['changed'] = True
 
 def load_checkpoint(module, result):
     try:
         checkpoint = result['__checkpoint__']
+        module.log('load checkpoint %s' % checkpoint)
         module.cli(['rollback running-config checkpoint %s' % checkpoint,
                     'no checkpoint %s' % checkpoint], output='text')
     except KeyError:
@@ -281,7 +279,9 @@ def run(module, result):
 
     if match != 'none':
         config = get_config(module, result)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        path = module.params['parents']
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
     else:
         config = None
         configobjs = candidate.items
@@ -291,13 +291,21 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
-        result['updates'] = commands
 
         if module.params['before']:
             commands[:0] = module.params['before']
 
         if module.params['after']:
             commands.extend(module.params['after'])
+
+        result['updates'] = commands
+
+        # create a checkpoint of the current running config in case
+        # there is a problem loading the candidate config
+        checkpoint = 'ansible_%s' % int(time.time())
+        module.cli(['checkpoint %s' % checkpoint], output='text')
+        result['__checkpoint__'] = checkpoint
+        module.log('create checkpoint %s' % checkpoint)
 
         # if the update mode is set to check just return
         # and do not try to load into the system
@@ -307,7 +315,8 @@ def run(module, result):
         # remove the checkpoint file used to restore the config
         # in case of an error
         if not module.check_mode:
-            module.cli('no checkpoint %s' % result['__checkpoint__'])
+            module.log('remove checkpoint %s' % checkpoint)
+            module.cli('no checkpoint %s' % checkpoint, output='text')
 
     if module.params['save'] and not module.check_mode:
         module.config.save_config()
