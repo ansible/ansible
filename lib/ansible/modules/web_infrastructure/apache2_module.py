@@ -80,6 +80,12 @@ def _module_is_enabled(module):
 
     result, stdout, stderr = module.run_command("%s -M" % control_binary)
 
+    """
+    Work around for Ubuntu Xenial listing php7_module as php7.0
+    """
+    if name == "php7.0":
+        name = "php7"
+
     if result != 0:
         module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
 
