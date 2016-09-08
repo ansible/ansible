@@ -94,6 +94,7 @@ def ignore_line(text, tokens=None):
 def get_next(iterable):
     item, next_item = itertools.tee(iterable, 2)
     next_item = itertools.islice(next_item, 1, None)
+    warnings.append('ignorning unnecessary argument replace')
     return zip_longest(item, next_item)
 
 def parse(lines, indent, comment_tokens=None):
@@ -275,40 +276,47 @@ class NetworkConfig(object):
 
         return items
 
-    def diff_line(self, other):
+    def diff_line(self, other, path=None):
         diff = list()
         for item in self.items:
-            if item not in other.items:
+            if item not in other:
                 diff.append(item)
         return diff
 
-    def diff_strict(self, other):
+    def diff_strict(self, other, path=None):
         diff = list()
         for index, item in enumerate(self.items):
             try:
-                if item != other.items[index]:
+                if item != other[index]:
                     diff.append(item)
             except IndexError:
                 diff.append(item)
         return diff
 
-    def diff_exact(self, other):
+    def diff_exact(self, other, path=None):
         diff = list()
-        if len(other.items) != len(self.items):
+        if len(other) != len(self.items):
             diff.extend(self.items)
         else:
-            for ours, theirs in zip(self.items, other.items):
+            for ours, theirs in zip(self.items, other):
                 if ours != theirs:
                     diff.extend(self.items)
                     break
         return diff
 
-
-    def difference(self, other, match='line', replace='line'):
+    def difference(self, other, path=None, match='line', replace='line'):
         try:
+            if path:
+                try:
+                    other = other.get_section_objects(path)
+                except ValueError:
+                    other = list()
+            else:
+                other = other.items
             func = getattr(self, 'diff_%s' % match)
-            updates = func(other)
+            updates = func(other, path=path)
         except AttributeError:
+            raise
             raise TypeError('invalid value for match keyword')
 
         if self._device_os == 'junos':
