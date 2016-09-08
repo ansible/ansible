@@ -1306,7 +1306,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for inst in res.instances:
 
             # Check "source_dest_check" attribute
-            if inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+            if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
                 inst.modify_attribute('sourceDestCheck', source_dest_check)
                 changed = True
 
