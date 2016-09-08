@@ -17,7 +17,7 @@ by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 By default, everything that ships with Ansible is pulled from its source tree, but
 additional paths can be added.
 
-The directory i:file:`./library`, alongside your top level :term:`playbooks`, is also automatically
+The directory :file:`./library`, alongside your top level :term:`playbooks`, is also automatically
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
