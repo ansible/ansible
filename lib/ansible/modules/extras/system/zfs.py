@@ -198,8 +198,9 @@ class Zfs(object):
             if source == 'local':
                 properties[prop] = value
         # Add alias for enhanced sharing properties
-        properties['sharenfs'] = properties.get('share.nfs', None)
-        properties['sharesmb'] = properties.get('share.smb', None)
+        if self.enhanced_sharing:
+            properties['sharenfs'] = properties.get('share.nfs', None)
+            properties['sharesmb'] = properties.get('share.smb', None)
         return properties
 
 
