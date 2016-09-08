@@ -105,6 +105,17 @@ class TestPasswordLookup(unittest.TestCase):
                 filename=u'/path/to/file',
                 params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'くらとみ', u',']))
                 ),
+            # Including only unicode in chars
+            dict(term=u'/path/to/file chars=くらとみ',
+                filename=u'/path/to/file',
+                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'くらとみ']))
+                ),
+
+            # Include ':' in path
+            dict(term=u'/path/to/file_with:colon chars=ascii_letters,digits',
+                 filename=u'/path/to/file_with:colon',
+                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
+                ),
 
             # Including special chars in both path and chars
             # Special characters in path
@@ -120,6 +131,13 @@ class TestPasswordLookup(unittest.TestCase):
                 filename=u'/path/with/unicode/くらとみ/file',
                 params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ'])
                 ),
+
+            # zero length
+            dict(term=u'/path/to/zero_length chars=ascii_letters,digits length=0',
+                 filename=u'/path/to/zero_length',
+                params=dict(length=0, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
+                ),
+
             )
 
     def setUp(self):
@@ -134,3 +152,20 @@ class TestPasswordLookup(unittest.TestCase):
             params['chars'].sort()
             self.assertEqual(filename, testcase['filename'])
             self.assertEqual(params, testcase['params'])
+
+    def test_gen_password(self):
+        for testcase in self.old_style_params_data:
+            filename, params = _parse_parameters(testcase['term'])
+            password_lookup = LookupModule()
+            candidate_chars = password_lookup.gen_candidate_chars(params['chars'])
+            password = password_lookup.gen_password(length=params['length'],
+                                                    chars=params['chars'])
+            self.assertEquals(len(password),
+                              params['length'],
+                              msg='generated password=%s has length (%s) instead of expected length (%s)' %
+                              (password, len(password), params['length']))
+
+            for char in password:
+                self.assertIn(char, candidate_chars,
+                              msg='%s not found in %s from chars spect %s' %
+                              (char, candidate_chars, params['chars']))

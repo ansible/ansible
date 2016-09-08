@@ -105,6 +105,35 @@ class LookupModule(LookupBase):
         salt_chars = ascii_letters + digits + './'
         return self.random_password(length=8, chars=salt_chars)
 
+    def gen_candidate_chars(self, chars):
+        candidate_chars_list = []
+        for c in chars:
+            try:
+                defaults = getattr(string, c, c)
+            except UnicodeError:
+                defaults = c
+            candidate_chars_list.append(defaults)
+        candidate_chars = "".join(candidate_chars_list)
+        candidate_chars.replace('"', '')
+        candidate_chars.replace("'", '')
+        return candidate_chars
+
+    def gen_password(self, length, chars):
+        chars = self.gen_candidate_chars(chars)
+        password = ''.join(random.choice(chars) for _ in range(length))
+        return password
+
+    def _build_content_string(self, password, salt):
+        return '%s salt=%s' % (password, salt)
+
+    def gen_content(self, length, chars, encrypt):
+        password = self.gen_password(length, chars)
+        if not encrypt:
+            return password
+
+        salt = self.random_salt()
+        return self._build_content_string(password, salt)
+
     def run(self, terms, variables, **kwargs):
 
         ret = []
@@ -121,14 +150,10 @@ class LookupModule(LookupBase):
                 except OSError as e:
                     raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
-                chars = "".join(getattr(string, c, c) for c in params['chars']).replace('"', '').replace("'", '')
-                password = ''.join(random.choice(chars) for _ in range(params['length']))
+                content = self.gen_content(length=params['length'],
+                                           chars=params['chars'],
+                                           encrypt=params['encrypt'])
 
-                if params['encrypt'] is not None:
-                    salt = self.random_salt()
-                    content = '%s salt=%s' % (password, salt)
-                else:
-                    content = password
                 with open(path, 'w') as f:
                     os.chmod(path, 0o600)
                     f.write(content + '\n')
@@ -150,7 +175,7 @@ class LookupModule(LookupBase):
                 if params['encrypt'] is not None and salt is None:
                     # crypt requested, add salt if missing
                     salt = self.random_salt()
-                    content = '%s salt=%s' % (password, salt)
+                    content = self._build_content_string(password, salt)
                     with open(path, 'w') as f:
                         os.chmod(path, 0o600)
                         f.write(content + '\n')
