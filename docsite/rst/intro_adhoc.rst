@@ -94,10 +94,9 @@ specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module does not
-   support shell variables and things like piping.  If we want to execute a module using a
-   shell, use the 'shell' module instead. Read more about the differences on the :doc:`modules`
-   page.
+   The :ref:`command` module does not support extended shell syntax like piping and redirects (although
+   shell variables will always work). If your command requires shell-specific syntax, use the `shell` module
+   instead. Read more about the differences on the :doc:`modules` page.
 
 Using the :ref:`shell` module looks like this::
 
