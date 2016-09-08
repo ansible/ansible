@@ -1048,8 +1048,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                       private_ip_address = private_ip,
                     ))
 
-                # Spot instances do not support start/stop thereby not having the option to change shutdown behavior
-                params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior
+                # For ordinary (not spot) instances, we can select 'stop'
+                # (the default) or 'terminate' here.
+                params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior or 'stop'
 
                 res = ec2.run_instances(**params)
                 instids = [ i.id for i in res.instances ]
@@ -1085,11 +1086,11 @@ def create_instances(module, ec2, vpc, override_count=None):
                         module.fail_json(
                             msg="placement_group parameter requires Boto version 2.3.0 or higher.")
 
-                if boto_supports_param_in_spot_request(ec2, 'instance_initiated_shutdown_behavior'):
-                    params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior
-                elif instance_initiated_shutdown_behavior:
+                # You can't tell spot instances to 'stop'; they will always be
+                # 'terminate'd. For convenience, we'll ignore the latter value.
+                if instance_initiated_shutdown_behavior and instance_initiated_shutdown_behavior != 'terminate':
                     module.fail_json(
-                        msg="instance_initiated_shutdown_behavior parameter is not supported by your Boto version.")
+                        msg="instance_initiated_shutdown_behavior=stop is not supported for spot instances.")
 
                 if spot_launch_group and isinstance(spot_launch_group, basestring):
                     params['launch_group'] = spot_launch_group
@@ -1452,7 +1453,7 @@ def main():
             source_dest_check = dict(type='bool', default=True),
             termination_protection = dict(type='bool', default=False),
             state = dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
-            instance_initiated_shutdown_behavior=dict(default='stop', choices=['stop', 'terminate']),
+            instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
