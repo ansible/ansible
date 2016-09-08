@@ -14,9 +14,9 @@ Each module in Extras is maintained by the owner of that module; each module's o
 
 If you'd like to contribute a new module
 ========================================
-Ansible welcomes new modules. Please be certain that you've read the [module development guide and standards](http://docs.ansible.com/developing_modules.html) thoroughly before submitting your module.
+Ansible welcomes new modules. Please be certain that you've read the [module maintainer guide and standards](./GUIDELINES.md) thoroughly before submitting your module.
 
-Each new module requires two current module owners to approve a new module for inclusion.  The Ansible community reviews new modules as often as possible, but please be patient; there are a lot of new module submissions in the pipeline, and it takes time to evaluate a new module for its adherence to module standards.
+The Ansible community reviews new modules as often as possible, but please be patient; there are a lot of new module submissions in the pipeline, and it takes time to evaluate a new module for its adherence to module standards.
 
 Once your module is accepted, you become responsible for maintenance of that module, which means responding to pull requests and issues in a reasonably timely manner. 
 
