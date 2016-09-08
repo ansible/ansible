@@ -31,7 +31,7 @@ from ansible.compat.six import string_types
 
 class InventoryParser(object):
     """
-    Takes an INI-format inventory file and builds a list of groups and subgroups
+    Takes a YAML-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
 
