@@ -306,7 +306,7 @@ class NetworkConfig(object):
 
     def difference(self, other, path=None, match='line', replace='line'):
         try:
-            if path:
+            if path and match != 'line':
                 try:
                     other = other.get_section_objects(path)
                 except ValueError:
