@@ -123,65 +123,78 @@ class LookupModule(LookupBase):
         password = ''.join(random.choice(chars) for _ in range(length))
         return password
 
-    def _build_content_string(self, password, salt):
-        return '%s salt=%s' % (password, salt)
-
-    def gen_content(self, length, chars, encrypt):
-        password = self.gen_password(length, chars)
+    def format_content(self, password, salt, encrypt):
         if not encrypt:
             return password
 
-        salt = self.random_salt()
-        return self._build_content_string(password, salt)
+        return '%s salt=%s' % (password, salt)
+
+    def _create_password_file(self, path):
+        pathdir = os.path.dirname(path)
+
+        try:
+            makedirs_safe(pathdir, mode=0o700)
+        except OSError as e:
+            raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
+
+    def _read_password_file(self, path):
+        content = open(path).read().rstrip()
+
+        password = content
+        salt = None
+
+        try:
+            sep = content.rindex(' salt=')
+        except ValueError:
+            # No salt
+            pass
+        else:
+            salt = password[sep + len(' salt='):]
+            password = content[:sep]
+
+        return content, password, salt
+
+    def _write_password_file(self, path, content):
+        with open(path, 'w') as f:
+            os.chmod(path, 0o600)
+            f.write(content + '\n')
+
+    def _create_password(self, path, params):
+        salt = None
+
+        if not os.path.exists(path):
+            self._create_password_file(path)
+
+            password = self.gen_password(length=params['length'],
+                                         chars=params['chars'])
+
+        else:
+            content, password, salt = self._read_password_file(path)
+
+        if not salt:
+            salt = self.random_salt()
+
+        content = self.format_content(password=password,
+                                      salt=salt,
+                                      encrypt=params['encrypt'])
+
+        self._write_password_file(path, content)
+
+        if params['encrypt']:
+            password = do_encrypt(password, params['encrypt'], salt=salt)
+
+        return password
 
     def run(self, terms, variables, **kwargs):
-
         ret = []
 
         for term in terms:
             relpath, params = _parse_parameters(term)
 
-            # get password or create it if file doesn't exist
             path = self._loader.path_dwim(relpath)
-            if not os.path.exists(path):
-                pathdir = os.path.dirname(path)
-                try:
-                    makedirs_safe(pathdir, mode=0o700)
-                except OSError as e:
-                    raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
-                content = self.gen_content(length=params['length'],
-                                           chars=params['chars'],
-                                           encrypt=params['encrypt'])
-
-                with open(path, 'w') as f:
-                    os.chmod(path, 0o600)
-                    f.write(content + '\n')
-            else:
-                content = open(path).read().rstrip()
-
-                password = content
-                salt = None
-
-                try:
-                    sep = content.rindex(' salt=')
-                except ValueError:
-                    # No salt
-                    pass
-                else:
-                    salt = password[sep + len(' salt='):]
-                    password = content[:sep]
-
-                if params['encrypt'] is not None and salt is None:
-                    # crypt requested, add salt if missing
-                    salt = self.random_salt()
-                    content = self._build_content_string(password, salt)
-                    with open(path, 'w') as f:
-                        os.chmod(path, 0o600)
-                        f.write(content + '\n')
-
-            if params['encrypt']:
-                password = do_encrypt(password, params['encrypt'], salt=salt)
+            # get password or create it if file doesn't exist
+            password = self._create_password(path, params)
 
             ret.append(password)
 
