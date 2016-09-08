@@ -315,7 +315,7 @@ def add_service(module, service):
                      service_id=result.id,
                      service_name=result.name,
                      service_port=result.port,
-                     checks=map(lambda x: x.to_dict(), service.checks),
+                     checks=[check.to_dict() for check in service.checks],
                      tags=result.tags)
 
 
@@ -484,8 +484,7 @@ class ConsulCheck():
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
             if not any((duration.endswith(suffix) for suffix in duration_units)):
-                    raise Exception('Invalid %s %s you must specify units (%s)' %
-                        (name, duration, ', '.join(duration_units)))
+                duration = "{}s".format(duration)
         return duration
 
     def register(self, consul_api):
