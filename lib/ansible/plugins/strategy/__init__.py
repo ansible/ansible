@@ -199,6 +199,9 @@ class StrategyBase:
                     elif task_result.is_skipped():
                         self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
                     else:
+                        if 'diff' in task_result._result:
+                            if self._diff:
+                                self._tqm.send_callback('v2_on_file_diff', task_result)
                         self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                     continue
 
