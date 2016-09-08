@@ -291,13 +291,14 @@ def load_config(module, commands, result):
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+    path = module.params['parents']
 
     candidate = get_candidate(module)
 
     if match != 'none':
         config = get_config(module, result)
         path = module.params['parents']
-        configobjs = candidate.difference(config, path=path, match=match,
+        configobjs = candidate.difference(config, path=path,match=match,
                                           replace=replace)
     else:
         config = None
