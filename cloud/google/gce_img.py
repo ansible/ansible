@@ -38,6 +38,12 @@ options:
       - an optional description
     required: false
     default: null
+  family:
+    description:
+      - an optional family name
+    required: false
+    default: null
+    version_added: "2.2"
   source:
     description:
       - the source disk or the Google Cloud Storage URI to create the image from
@@ -108,6 +114,7 @@ EXAMPLES = '''
 import sys
 
 try:
+  import libcloud
   from libcloud.compute.types import Provider
   from libcloud.compute.providers import get_driver
   from libcloud.common.google import GoogleBaseError
@@ -128,6 +135,7 @@ def create_image(gce, name, module):
   zone = module.params.get('zone')
   desc = module.params.get('description')
   timeout = module.params.get('timeout')
+  family = module.params.get('family')
 
   if not source:
     module.fail_json(msg='Must supply a source', changed=False)
@@ -147,10 +155,14 @@ def create_image(gce, name, module):
     except GoogleBaseError, e:
       module.fail_json(msg=str(e), changed=False)
 
+  gce_extra_args = {}
+  if family is not None:
+    gce_extra_args['family'] = family
+
   old_timeout = gce.connection.timeout
   try:
     gce.connection.timeout = timeout
-    gce.ex_create_image(name, volume, desc, False)
+    gce.ex_create_image(name, volume, desc, use_existing=False, **gce_extra_args)
     return True
   except ResourceExistsError:
     return False
@@ -175,6 +187,7 @@ def main():
   module = AnsibleModule(
       argument_spec=dict(
           name=dict(required=True),
+          family=dict(),
           description=dict(),
           source=dict(),
           state=dict(default='present', choices=['present', 'absent']),
@@ -193,7 +206,12 @@ def main():
 
   name = module.params.get('name')
   state = module.params.get('state')
+  family = module.params.get('family')
   changed = False
+
+  if family is not None and hasattr(libcloud, '__version__') and libcloud.__version__ <= '0.20.1':
+    module.fail_json(msg="Apache Libcloud 1.0.0+ is required to use 'family' option",
+                     changed=False)
 
   # user wants to create an image.
   if state == 'present':
