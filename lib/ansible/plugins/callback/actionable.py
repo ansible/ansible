@@ -32,6 +32,7 @@ class CallbackModule(CallbackModule_default):
         self.super_ref.__init__()
         self.last_task = None
         self.shown_title = False
+        self.diff = False
 
     def v2_playbook_on_handler_task_start(self, task):
         self.super_ref.v2_playbook_on_handler_task_start(task)
@@ -40,6 +41,7 @@ class CallbackModule(CallbackModule_default):
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.last_task = task
         self.shown_title = False
+        self.diff = False
 
     def display_task_banner(self):
         if not self.shown_title:
@@ -53,6 +55,8 @@ class CallbackModule(CallbackModule_default):
     def v2_runner_on_ok(self, result):
         if result._result.get('changed', False):
             self.display_task_banner()
+            if self.diff:
+                self.super_ref.v2_on_file_diff(result)
             self.super_ref.v2_runner_on_ok(result)
 
     def v2_runner_on_unreachable(self, result):
@@ -68,6 +72,8 @@ class CallbackModule(CallbackModule_default):
     def v2_runner_item_on_ok(self, result):
         if result._result.get('changed', False):
             self.display_task_banner()
+            if self.diff:
+                self.super_ref.v2_on_file_diff(result)
             self.super_ref.v2_runner_item_on_ok(result)
 
     def v2_runner_item_on_skipped(self, result):
@@ -77,3 +83,5 @@ class CallbackModule(CallbackModule_default):
         self.display_task_banner()
         self.super_ref.v2_runner_item_on_failed(result)
 
+    def v2_on_file_diff(self, result):
+        self.diff = True
