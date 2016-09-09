@@ -33,23 +33,22 @@ options:
     default: 22
   username:
     description:
-      - This value I(username) is used to authenticate the SSH session to the
-        remote device. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+      - User to authenticate the SSH session to the remote device. If the
+        value is not specified in the task, the value of environment variable
+        ANSIBLE_NET_USERNAME will be used instead.
     required: false
   password:
     description:
-      - This value I(password) is used to authenticate the SSH session to 
-        the remote device. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+      - Password to authenticate the SSH session to the remote device. If the
+        value is not specified in the task, the value of environment variable
+        ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
-      - This value I(ssh_keyfile) is the path to the key used to authenticate 
-        the SSH session to the remote device.  If the value is not specified
-        in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
-        will be used instead.
+      - Path to an ssh key used to authenticate the SSH session to the remote
+        device.  If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
     required: false
   authorize:
     description:
