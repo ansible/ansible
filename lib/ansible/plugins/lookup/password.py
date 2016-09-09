@@ -32,9 +32,13 @@ from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
 
+from ansible.module_utils._text import to_bytes, to_native, to_text
+
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
 
+
+# ALIKINS
 
 def _parse_parameters(term):
     # Hacky parsing of params
@@ -50,7 +54,7 @@ def _parse_parameters(term):
         params = parse_kv(first_split[1])
         if '_raw_params' in params:
             # Spaces in the path?
-            relpath = ' '.join((relpath, params['_raw_params']))
+            relpath = u' '.join((relpath, params['_raw_params']))
             del params['_raw_params']
 
             # Check that we parsed the params correctly
@@ -73,37 +77,60 @@ def _parse_parameters(term):
     params['chars'] = params.get('chars', None)
     if params['chars']:
         tmp_chars = []
-        if ',,' in params['chars']:
+        if u',,' in params['chars']:
             tmp_chars.append(u',')
-        tmp_chars.extend(c for c in params['chars'].replace(',,', ',').split(',') if c)
+        tmp_chars.extend(c for c in params['chars'].replace(u',,', u',').split(u',') if c)
         params['chars'] = tmp_chars
     else:
         # Default chars for password
-        params['chars'] = ['ascii_letters', 'digits', ".,:-_"]
+        params['chars'] = [u'ascii_letters', u'digits', u".,:-_"]
 
     return relpath, params
+
+def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''
+    Return a random password string of length containing only chars.
+    NOTE: this was moved from the old ansible utils code, as nothing
+          else appeared to use it.
+    '''
+
+    # hate how python implements asserts. Our text strategy says that we
+    # should never be passing byte strings around unless the function
+    # explicitly takes a byte string as its argument.  Therefore if we get
+    # a byte string here it means that the problem is in the calling code.
+    # Asserts would be perfect for this if they were disabled by default.
+    # Alas, in python, they're active by default; only turned off if
+    # python is run with optimization.
+    # assert isinstance(chars, text_type)
+    random_generator = random.SystemRandom()
+
+    password = []
+    while len(password) < length:
+        new_char = random_generator.choice(chars)
+        if new_char in chars:
+            password.append(new_char)
+
+    return u''.join(password)
+
+def _random_salt():
+    salt_chars = to_text(ascii_letters + digits + './', errors='surrogate_or_strict')
+    return _random_password(length=8, chars=salt_chars)
 
 
 class LookupModule(LookupBase):
 
     def random_password(self, length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
-        '''
-        Return a random password string of length containing only chars.
-        NOTE: this was moved from the old ansible utils code, as nothing
-              else appeared to use it.
-        '''
-
-        password = []
-        while len(password) < length:
-            new_char = os.urandom(1)
-            if new_char in chars:
-                password.append(new_char)
-
-        return ''.join(password)
+        return _random_password(length=length,
+                                chars=chars)
 
     def random_salt(self):
-        salt_chars = ascii_letters + digits + './'
-        return self.random_password(length=8, chars=salt_chars)
+        return _random_salt()
+
+    def new_gen_candidate_chars(self, characters):
+        chars = []
+        chars.append(to_text(getattr(string, to_native(characters))), errors='surrogate_or_strict')
+        chars = u''.join(to_text(c) for c in chars).replace(u'"', u'').replace(u"'", u'')
+        return chars
 
     def gen_candidate_chars(self, chars):
         candidate_chars_list = []
@@ -129,16 +156,16 @@ class LookupModule(LookupBase):
 
         return '%s salt=%s' % (password, salt)
 
-    def _create_password_file(self, path):
-        pathdir = os.path.dirname(path)
+    def _create_password_file(self, b_path):
+        b_pathdir = os.path.dirname(b_path)
 
         try:
-            makedirs_safe(pathdir, mode=0o700)
+            makedirs_safe(b_pathdir, mode=0o700)
         except OSError as e:
-            raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
+            raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (b_pathdir, str(e)))
 
-    def _read_password_file(self, path):
-        content = open(path).read().rstrip()
+    def _read_password_file(self, b_path):
+        content = open(b_path).read().rstrip()
 
         password = content
         salt = None
@@ -154,22 +181,22 @@ class LookupModule(LookupBase):
 
         return content, password, salt
 
-    def _write_password_file(self, path, content):
-        with open(path, 'w') as f:
-            os.chmod(path, 0o600)
+    def _write_password_file(self, b_path, content):
+        with open(b_path, 'w') as f:
+            os.chmod(b_path, 0o600)
             f.write(content + '\n')
 
-    def _create_password(self, path, params):
+    def _create_password(self, b_path, params):
         salt = None
 
-        if not os.path.exists(path):
-            self._create_password_file(path)
+        if not os.path.exists(b_path):
+            self._create_password_file(b_path)
 
             password = self.gen_password(length=params['length'],
                                          chars=params['chars'])
 
         else:
-            content, password, salt = self._read_password_file(path)
+            content, password, salt = self._read_password_file(b_path)
 
         if not salt:
             salt = self.random_salt()
@@ -178,7 +205,7 @@ class LookupModule(LookupBase):
                                       salt=salt,
                                       encrypt=params['encrypt'])
 
-        self._write_password_file(path, content)
+        self._write_password_file(b_path, content)
 
         if params['encrypt']:
             password = do_encrypt(password, params['encrypt'], salt=salt)
@@ -192,9 +219,10 @@ class LookupModule(LookupBase):
             relpath, params = _parse_parameters(term)
 
             path = self._loader.path_dwim(relpath)
+            b_path = to_bytes(path, errors='surrogate_or_strict')
 
             # get password or create it if file doesn't exist
-            password = self._create_password(path, params)
+            password = self._create_password(b_path, params)
 
             ret.append(password)
 
