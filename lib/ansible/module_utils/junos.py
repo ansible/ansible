@@ -105,8 +105,10 @@ class Netconf(object):
         self._connected = True
 
     def disconnect(self):
-        if self.device:
+        try:
             self.device.close()
+        except AttributeError:
+            pass
         self._connected = False
 
     ### Command methods ###
