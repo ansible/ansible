@@ -336,8 +336,14 @@ def comment(text, style='plain', **kw):
     str_beginning = ''
     if p['beginning']:
         str_beginning = "%s%s" % (p['beginning'], p['newline'])
-    str_prefix = str(
-        "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+    str_prefix = ''
+    if p['prefix']:
+        if p['prefix'] != p['newline']:
+            str_prefix = str(
+                "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+        else:
+            str_prefix = str(
+                "%s" % (p['newline'])) * int(p['prefix_count'])
     str_text = ("%s%s" % (
         p['decoration'],
         # Prepend each line of the text with the decorator
