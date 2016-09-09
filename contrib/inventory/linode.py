@@ -15,9 +15,13 @@ installed and has a valid config at ~/.chube. If not, run:
 
 For more details, see: https://github.com/exosite/chube
 
-NOTE: This script also assumes that the Linodes in your account all have
+NOTE: By default, this script also assumes that the Linodes in your account all have
 labels that correspond to hostnames that are in your resolver search path.
 Your resolver search path resides in /etc/hosts.
+Optionally, if you would like to use the hosts public IP instead of it's label use
+the following setting in linode.ini:
+
+    use_public_ip = true
 
 When run against a specific host, this script returns the following variables:
 
@@ -161,6 +165,7 @@ class LinodeInventory(object):
         self.cache_path_cache = cache_path + "/ansible-linode.cache"
         self.cache_path_index = cache_path + "/ansible-linode.index"
         self.cache_max_age = config.getint('linode', 'cache_max_age')
+        self.use_public_ip = config.getboolean('linode', 'use_public_ip')
 
     def parse_cli_args(self):
         """Command line argument processing"""
@@ -212,8 +217,10 @@ class LinodeInventory(object):
 
     def add_node(self, node):
         """Adds an node to the inventory and index."""
-
-        dest = node.label
+        if self.use_public_ip:
+            dest = self.get_node_public_ip(node)
+        else:
+            dest = node.label
 
         # Add to index
         self.index[dest] = node.api_id
@@ -226,6 +233,10 @@ class LinodeInventory(object):
 
         # Inventory: Group by dipslay group
         self.push(self.inventory, node.display_group, dest)
+
+    def get_node_public_ip(self, node):
+        """Returns a the public IP address of the node"""
+        return [addr.address for addr in node.ipaddresses if addr.is_public][0]
 
     def get_host_info(self):
         """Get variables about a specific host."""
@@ -272,7 +283,7 @@ class LinodeInventory(object):
             node_vars[direct_attr] = getattr(node, direct_attr)
 
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
-        node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
+        node_vars["public_ip"] = self.get_node_public_ip(node)
 
         # Set the SSH host information, so these inventory items can be used if
         # their labels aren't FQDNs
