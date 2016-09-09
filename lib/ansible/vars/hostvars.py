@@ -20,19 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
-import sys
 
 from jinja2 import Undefined as j2undefined
 
 from ansible import constants as C
-from ansible.inventory.host import Host
 from ansible.template import Templar
 
 STATIC_VARS = [
-  'inventory_hostname', 'inventory_hostname_short',
-  'inventory_file', 'inventory_dir', 'playbook_dir',
-  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
-  'ansible_version', 'omit', 'role_names'
+    'inventory_hostname', 'inventory_hostname_short',
+    'inventory_file', 'inventory_dir', 'playbook_dir',
+    'ansible_play_hosts', 'play_hosts', 'ansible_play_hosts_all', 'groups',
+    'ungrouped', 'group_names', 'ansible_version', 'omit', 'role_names'
 ]
 
 try:

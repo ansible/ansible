@@ -416,6 +416,7 @@ class VariableManager:
                 host_list = [x.name for x in self._inventory.get_hosts()]
                 variables['play_hosts'] = host_list
                 variables['ansible_play_hosts'] = host_list
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts, ignore_restrictions=True)]
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
