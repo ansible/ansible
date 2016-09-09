@@ -41,7 +41,10 @@ class ActionModule(ActionBase):
 
         if module == 'auto':
             try:
-                module = self._templar.template('{{ansible_pkg_mgr}}')
+                if self._task.delegate_to: # if we delegate, we should use delegated host's facts
+                    module = self._templar.template("{{hostvars['%s']['ansible_pkg_mgr']}}" % self._task.delegate_to)
+                else:
+                    module = self._templar.template('{{ansible_pkg_mgr}}')
             except:
                 pass # could not get it from template!
 
