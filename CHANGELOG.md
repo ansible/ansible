@@ -75,7 +75,6 @@ Ansible Changes By Release
   * exo_dns_record
 - dnos6
   * dnos6_command
-
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
