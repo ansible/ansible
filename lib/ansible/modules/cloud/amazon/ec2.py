@@ -1302,7 +1302,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
      # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
-    running_instances_array = []
+    existing_instances_array = []
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
@@ -1327,7 +1327,9 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                 except EC2ResponseError as e:
                     module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
+            existing_instances_array.append(inst.id)
 
+    instance_ids = list(set(existing_instances_array + (instance_ids or [])))
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time():
