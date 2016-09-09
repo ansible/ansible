@@ -126,8 +126,8 @@ def quote(a):
     return pipes.quote(a)
 
 def fileglob(pathname):
-    ''' return list of matched files for glob '''
-    return glob.glob(pathname)
+    ''' return list of matched regular files for glob '''
+    return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
