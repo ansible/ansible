@@ -133,10 +133,10 @@ class TestPasswordLookup(unittest.TestCase):
                 ),
 
             # zero length
-            dict(term=u'/path/to/zero_length chars=ascii_letters,digits length=0',
-                 filename=u'/path/to/zero_length',
-                params=dict(length=0, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
-                ),
+            #dict(term=u'/path/to/zero_length chars=ascii_letters,digits length=0',
+            #     filename=u'/path/to/zero_length',
+            #    params=dict(length=0, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
+            #    ),
 
             )
 
@@ -157,7 +157,9 @@ class TestPasswordLookup(unittest.TestCase):
         for testcase in self.old_style_params_data:
             params = testcase['params']
             # password_lookup = password.LookupModule()
-            candidate_chars = password._gen_candidate_chars(params['chars'])
+#            print(params)
+#            print()
+            candidate_chars = password._new_gen_candidate_chars(params['chars'])
             password_string = password._gen_password(length=params['length'],
                                                     chars=params['chars'])
             self.assertEquals(len(password_string),

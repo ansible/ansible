@@ -31,6 +31,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
+from ansible.compat.six import text_type
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -118,7 +119,9 @@ def _random_salt():
 
 def _new_gen_candidate_chars(characters):
     chars = []
-    chars.append(to_text(getattr(string, to_native(characters))), errors='surrogate_or_strict')
+    for chars_spec in characters:
+        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
+                            errors='surrogate_or_strict'))
     chars = u''.join(to_text(c) for c in chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 
@@ -136,7 +139,7 @@ def _gen_candidate_chars(chars):
     return candidate_chars
 
 def _gen_password(length, chars):
-    chars = _gen_candidate_chars(chars)
+    chars = _new_gen_candidate_chars(chars)
     password = ''.join(random.choice(chars) for _ in range(length))
     return password
 
@@ -151,7 +154,8 @@ def _create_password_file(b_path):
 def _read_password_file(b_path):
     content = open(b_path).read().rstrip()
 
-    password = content
+    password = to_text(content, errors='surrogate_or_strict')
+
     salt = None
 
     try:
@@ -169,12 +173,12 @@ def _format_content(password, salt, encrypt):
     if not encrypt:
         return password
 
-    return '%s salt=%s' % (password, salt)
+    return u'%s salt=%s' % (password, salt)
 
 def _write_password_file(b_path, content):
-    with open(b_path, 'w') as f:
+    with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
-        f.write(content + '\n')
+        f.write(to_bytes(content, errors='surrogate_or_strict') + b'\n')
 
 def _create_password(b_path, params):
     salt = None
@@ -214,7 +218,7 @@ class LookupModule(LookupBase):
             b_path = to_bytes(path, errors='surrogate_or_strict')
 
             # get password or create it if file doesn't exist
-            password = self._create_password(b_path, params)
+            password = _create_password(b_path, params)
 
             ret.append(password)
 
