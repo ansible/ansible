@@ -95,6 +95,7 @@ Ansible Changes By Release
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
 * New privilege escalation become method `ksu`
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
+* removed previously deprecated ';' as host list separator.
 
 ## 2.1.2 "The Song Remains the Same"
 
