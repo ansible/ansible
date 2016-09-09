@@ -20,9 +20,9 @@ DOCUMENTATION = '''
 ---
 module: nxos_vrf_interface
 version_added: "2.1"
-short_description: Manages interface specific VRF configuration
+short_description: Manages interface specific VRF configuration.
 description:
-    - Manages interface specific VRF configuration
+    - Manages interface specific VRF configuration.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
@@ -41,7 +41,7 @@ options:
         required: true
     interface:
         description:
-            - Full name of interface to be managed, i.e. I(Ethernet1/1).
+            - Full name of interface to be managed, i.e. Ethernet1/1.
         required: true
     state:
         description:
@@ -53,9 +53,9 @@ options:
 
 EXAMPLES = '''
 # ensure vrf ntc exists on Eth1/1
-- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host={{ inventory_hostname }} state=present
+- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host=68.170.147.165 state=present
 # ensure ntc VRF does not exist on Eth1/1
-- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host={{ inventory_hostname }} state=absent
+- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host=68.170.147.165 state=absent
 '''
 
 RETURN = '''
@@ -73,11 +73,6 @@ end_state:
     returned: always
     type: dict
     sample: {"interface": "loopback16", "vrf": "ntc"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
 updates:
     description: commands sent to the device
     returned: always
@@ -90,6 +85,164 @@ changed:
     sample: true
 '''
 
+import json
+import collections
+
+# COMMON CODE FOR MIGRATION
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+
+try:
+    from ansible.module_utils.nxos import get_module
+except ImportError:
+    from ansible.module_utils.nxos import NetworkModule
+
+
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
+     else:
+         return list()
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
+
+def get_network_module(**kwargs):
+    try:
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
+
+def get_config(module, include_defaults=False):
+    config = module.params['config']
+    if not config:
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
+    return CustomNetworkConfig(indent=2, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    save_config = module.params['save']
+
+    result = dict(changed=False)
+
+    if commands:
+        if not module.check_mode:
+            try:
+                module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
+            if save_config:
+                try:
+                    module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+# END OF COMMON CODE
+
+WARNINGS = []
 
 def execute_config_command(commands, module):
     try:
@@ -116,6 +269,11 @@ def get_cli_body_ssh_vrf_interface(command, response, module):
 
 
 def execute_show(cmds, module, command_type=None):
+    command_type_map = {
+        'cli_show': 'json',
+        'cli_show_ascii': 'text'
+    }
+
     try:
         if command_type:
             response = module.execute(cmds, command_type=command_type)
@@ -123,14 +281,28 @@ def execute_show(cmds, module, command_type=None):
             response = module.execute(cmds)
     except ShellError:
         clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(command),
+        module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        command += ' | json'
+        if 'show run' not in command:
+            command += ' | json'
         cmds = [command]
         response = execute_show(cmds, module)
         body = get_cli_body_ssh_vrf_interface(command, response, module)
@@ -191,17 +363,16 @@ def get_vrf_list(module):
 
 
 def get_interface_info(interface, module):
-    command = 'show run interface {0}'.format(interface)
+    command = 'show run | section interface.{0}'.format(interface.capitalize())
     vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:
         body = execute_show_command(command, module,
                                     command_type='cli_show_ascii')[0]
-
         match_vrf = re.match(vrf_regex, body, re.DOTALL)
         group_vrf = match_vrf.groupdict()
         vrf = group_vrf["vrf"]
-    except AttributeError:
+    except (AttributeError, TypeError):
         return ""
 
     return vrf
@@ -229,9 +400,12 @@ def main():
             interface=dict(type='str', required=True),
             state=dict(default='present', choices=['present', 'absent'],
                        required=False),
+            include_defaults=dict(default=False),
+            config=dict(),
+            save=dict(type='bool', default=False)
     )
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = get_network_module(argument_spec=argument_spec,
+                                supports_check_mode=True)
 
     vrf = module.params['vrf']
     interface = module.params['interface'].lower()
@@ -239,9 +413,8 @@ def main():
 
     current_vrfs = get_vrf_list(module)
     if vrf not in current_vrfs:
-        module.fail_json(msg="Ensure the VRF you're trying to config/remove on"
-                             " an interface is created globally on the device"
-                             " first.")
+        WARNINGS.append("The VRF is not present/active on the device. "
+                        "Use nxos_vrf to fix this.")
 
     intf_type = get_interface_type(interface)
     if (intf_type != 'ethernet' and module.params['transport'] == 'cli'):
@@ -298,17 +471,14 @@ def main():
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['state'] = state
     results['updates'] = commands
     results['changed'] = changed
+
+    if WARNINGS:
+        results['warnings'] = WARNINGS
 
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
     main()
