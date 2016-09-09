@@ -248,10 +248,6 @@ class Inventory(object):
         if isinstance(pattern, list):
             return list(itertools.chain(*map(cls.split_host_pattern, pattern)))
 
-        if ';' in pattern:
-            patterns = re.split('\s*;\s*', pattern)
-            display.deprecated("Use ',' or ':' instead of ';' to separate host patterns")
-
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
 
