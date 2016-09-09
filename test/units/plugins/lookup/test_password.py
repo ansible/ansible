@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 
-from ansible.plugins.lookup.password import LookupModule, _parse_parameters, DEFAULT_LENGTH
+from ansible.plugins.lookup import password
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
 
@@ -33,34 +33,34 @@ class TestPasswordLookup(unittest.TestCase):
             # Simple case
             dict(term=u'/path/to/file',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
 
             # Special characters in path
             dict(term=u'/path/with/embedded spaces and/file',
                 filename=u'/path/with/embedded spaces and/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
             dict(term=u'/path/with/equals/cn=com.ansible',
                 filename=u'/path/with/equals/cn=com.ansible',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
             dict(term=u'/path/with/unicode/くらとみ/file',
                 filename=u'/path/with/unicode/くらとみ/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
             # Mix several special chars
             dict(term=u'/path/with/utf 8 and spaces/くらとみ/file',
                 filename=u'/path/with/utf 8 and spaces/くらとみ/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
             dict(term=u'/path/with/encoding=unicode/くらとみ/file',
                 filename=u'/path/with/encoding=unicode/くらとみ/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
             dict(term=u'/path/with/encoding=unicode/くらとみ/and spaces file',
                 filename=u'/path/with/encoding=unicode/くらとみ/and spaces file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=DEFAULT_CHARS)
                 ),
 
             # Simple parameters
@@ -70,66 +70,66 @@ class TestPasswordLookup(unittest.TestCase):
                 ),
             dict(term=u'/path/to/file encrypt=pbkdf2_sha256',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt='pbkdf2_sha256', chars=DEFAULT_CHARS)
+                params=dict(length=password.DEFAULT_LENGTH, encrypt='pbkdf2_sha256', chars=DEFAULT_CHARS)
                 ),
             dict(term=u'/path/to/file chars=abcdefghijklmnop',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'abcdefghijklmnop'])
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u'abcdefghijklmnop'])
                 ),
             dict(term=u'/path/to/file chars=digits,abc,def',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'abc', u'def']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'abc', u'def']))
                 ),
             # Including comma in chars
             dict(term=u'/path/to/file chars=abcdefghijklmnop,,digits',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'abcdefghijklmnop', u',', u'digits']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'abcdefghijklmnop', u',', u'digits']))
                 ),
             dict(term=u'/path/to/file chars=,,',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u','])
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u','])
                 ),
 
             # Including = in chars
             dict(term=u'/path/to/file chars=digits,=,,',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'=', u',']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'=', u',']))
                 ),
             dict(term=u'/path/to/file chars=digits,abc=def',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'abc=def']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'abc=def']))
                 ),
 
             # Including unicode in chars
             dict(term=u'/path/to/file chars=digits,くらとみ,,',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'くらとみ', u',']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'digits', u'くらとみ', u',']))
                 ),
             # Including only unicode in chars
             dict(term=u'/path/to/file chars=くらとみ',
                 filename=u'/path/to/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'くらとみ']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'くらとみ']))
                 ),
 
             # Include ':' in path
             dict(term=u'/path/to/file_with:colon chars=ascii_letters,digits',
                  filename=u'/path/to/file_with:colon',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=sorted([u'ascii_letters', u'digits']))
                 ),
 
             # Including special chars in both path and chars
             # Special characters in path
             dict(term=u'/path/with/embedded spaces and/file chars=abc=def',
                 filename=u'/path/with/embedded spaces and/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'abc=def'])
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u'abc=def'])
                 ),
             dict(term=u'/path/with/equals/cn=com.ansible chars=abc=def',
                 filename=u'/path/with/equals/cn=com.ansible',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'abc=def'])
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u'abc=def'])
                 ),
             dict(term=u'/path/with/unicode/くらとみ/file chars=くらとみ',
                 filename=u'/path/with/unicode/くらとみ/file',
-                params=dict(length=DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ'])
+                params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ'])
                 ),
 
             # zero length
@@ -148,24 +148,24 @@ class TestPasswordLookup(unittest.TestCase):
 
     def test_parse_parameters(self):
         for testcase in self.old_style_params_data:
-            filename, params = _parse_parameters(testcase['term'])
+            filename, params = password._parse_parameters(testcase['term'])
             params['chars'].sort()
             self.assertEqual(filename, testcase['filename'])
             self.assertEqual(params, testcase['params'])
 
     def test_gen_password(self):
         for testcase in self.old_style_params_data:
-            filename, params = _parse_parameters(testcase['term'])
-            password_lookup = LookupModule()
-            candidate_chars = password_lookup.gen_candidate_chars(params['chars'])
-            password = password_lookup.gen_password(length=params['length'],
+            params = testcase['params']
+            # password_lookup = password.LookupModule()
+            candidate_chars = password._gen_candidate_chars(params['chars'])
+            password_string = password._gen_password(length=params['length'],
                                                     chars=params['chars'])
-            self.assertEquals(len(password),
+            self.assertEquals(len(password_string),
                               params['length'],
                               msg='generated password=%s has length (%s) instead of expected length (%s)' %
-                              (password, len(password), params['length']))
+                              (password_string, len(password_string), params['length']))
 
-            for char in password:
+            for char in password_string:
                 self.assertIn(char, candidate_chars,
                               msg='%s not found in %s from chars spect %s' %
                               (char, candidate_chars, params['chars']))
