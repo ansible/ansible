@@ -31,7 +31,6 @@ from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
-from ansible.compat.six import text_type
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -128,7 +127,7 @@ def _gen_candidate_chars(characters):
 
 def _gen_password(length, chars):
     chars = _gen_candidate_chars(chars)
-    password = ''.join(random.choice(chars) for _ in range(length))
+    password = u''.join(random.choice(chars) for _ in range(length))
     return password
 
 def _create_password_file(b_path):
@@ -139,13 +138,13 @@ def _create_password_file(b_path):
     except OSError as e:
         raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (b_pathdir, str(e)))
 
-    return open(b_path)
-
 def _read_password_file(b_path):
-    content = open(b_path).read().rstrip()
+    content = open(b_path, 'rb').read().rstrip()
+    return content
 
-    password = to_text(content, errors='surrogate_or_strict')
-
+def _parse_password(b_content):
+    content = to_text(b_content, errors='surrogate_or_strict')
+    password = content
     salt = None
 
     try:
@@ -159,43 +158,44 @@ def _read_password_file(b_path):
 
     return content, password, salt
 
+def _write_password_file(b_path, content):
+    with open(b_path, 'wb') as f:
+        os.chmod(b_path, 0o600)
+        f.write(content)
+
 def _format_content(password, salt, encrypt):
     if not encrypt:
         return password
 
     return u'%s salt=%s' % (password, salt)
 
-def _write_password_file(b_path, content):
-    with open(b_path, 'wb') as f:
-        os.chmod(b_path, 0o600)
-        f.write(to_bytes(content, errors='surrogate_or_strict') + b'\n')
-
-def _create_password(b_path, params):
+def _read_or_create_password_file(b_path):
     salt = None
+    plaintext_password = None
+    content = None
 
-    if not os.path.exists(b_path):
+    if os.path.exists(b_path):
+        b_file_content = _read_password_file(b_path)
+        content, plaintext_password, salt = _parse_password(b_file_content)
+    else:
         _create_password_file(b_path)
 
-        password = _gen_password(length=params['length'],
-                                 chars=params['chars'])
+    return content, plaintext_password, salt
 
-    else:
-        content, password, salt = _read_password_file(b_path)
-
+def _update_content(plaintext_password, salt, params):
     if not salt:
         salt = _random_salt()
 
-    content = _format_content(password=password,
+    # An empty string is a poor but valid plaintext_password
+    if plaintext_password is None:
+        plaintext_password = _gen_password(length=params['length'],
+                                           chars=params['chars'])
+
+    content = _format_content(password=plaintext_password,
                               salt=salt,
                               encrypt=params['encrypt'])
 
-    _write_password_file(b_path, content)
-
-    if params['encrypt']:
-        password = do_encrypt(password, params['encrypt'], salt=salt)
-
-    return password
-
+    return content, plaintext_password, salt
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
@@ -203,13 +203,23 @@ class LookupModule(LookupBase):
 
         for term in terms:
             relpath, params = _parse_parameters(term)
-
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
 
             # get password or create it if file doesn't exist
-            password = _create_password(b_path, params)
+            content, plaintext_password, salt = _read_or_create_password_file(b_path)
+            content, plaintext_password, salt = _update_content(plaintext_password, salt, params)
 
-            ret.append(password)
+            # save it
+            b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
+            _write_password_file(b_path, b_content)
+
+            if params['encrypt']:
+                b_password = do_encrypt(plaintext_password, params['encrypt'],
+                                       salt=to_bytes(salt, errors='surrogate_or_strict'))
+                password = to_text(b_password, errors='surrogate_or_strict')
+                ret.append(password)
+            else:
+                ret.append(plaintext_password)
 
         return ret
