@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_ping
 version_added: "2.1"
-short_description: Tests reachability using ping from Nexus switch
+short_description: Tests reachability using ping from Nexus switch.
 description:
     - Tests reachability using ping from switch to a remote destination.
 extends_documentation_fragment: nxos
@@ -51,9 +51,9 @@ options:
 
 EXAMPLES = '''
 # test reachability to 8.8.8.8 using mgmt vrf
-- nxos_ping: dest=8.8.8.8 vrf=management host={{ inventory_hostname }}
+- nxos_ping: dest=8.8.8.8 vrf=management host=68.170.147.165
 # Test reachability to a few different public IPs using mgmt vrf
-- nxos_ping: dest={{ item }} vrf=management host={{ inventory_hostname }}
+- nxos_ping: dest=nxos_ping vrf=management host=68.170.147.165
   with_items:
     - 8.8.8.8
     - 4.4.4.4
@@ -105,6 +105,162 @@ packet_loss:
     sample: "0.00%"
 '''
 
+import json
+import collections
+
+# COMMON CODE FOR MIGRATION
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+
+try:
+    from ansible.module_utils.nxos import get_module
+except ImportError:
+    from ansible.module_utils.nxos import NetworkModule
+
+
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
+     else:
+         return list()
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
+
+def get_network_module(**kwargs):
+    try:
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
+
+def get_config(module, include_defaults=False):
+    config = module.params['config']
+    if not config:
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
+    return CustomNetworkConfig(indent=2, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    save_config = module.params['save']
+
+    result = dict(changed=False)
+
+    if commands:
+        if not module.check_mode:
+            try:
+                module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
+            if save_config:
+                try:
+                    module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+# END OF COMMON CODE
 
 def get_summary(results_list, reference_point):
     summary_string = results_list[reference_point+1]
@@ -147,6 +303,11 @@ def get_statistics_summary_line(response_as_list):
 
 
 def execute_show(cmds, module, command_type=None):
+    command_type_map = {
+        'cli_show': 'json',
+        'cli_show_ascii': 'text'
+    }
+
     try:
         if command_type:
             response = module.execute(cmds, command_type=command_type)
@@ -156,6 +317,19 @@ def execute_show(cmds, module, command_type=None):
         clie = get_exception()
         module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
@@ -199,9 +373,12 @@ def main():
             source=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'],
                        default='present'),
+            include_defaults=dict(default=False),
+            config=dict(),
+            save=dict(type='bool', default=False)
     )
-    module = get_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+    module = get_network_module(argument_spec=argument_spec,
+                                supports_check_mode=True)
 
     destination = module.params['dest']
     count = module.params['count']
@@ -254,10 +431,5 @@ def main():
         module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 if __name__ == '__main__':
     main()
