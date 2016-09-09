@@ -103,6 +103,8 @@ ElseIf ((Get-Service "WinRM").Status -ne "Running")
 {
     Write-Verbose "Starting WinRM service."
     Start-Service -Name "WinRM" -ErrorAction Stop
+    Write-Verbose "Start WinRM service automatic"
+    Set-Service -Name "WinRM" -StartupType Automatic
 }
 
 # WinRM should be running; check that we have a PS session config.
