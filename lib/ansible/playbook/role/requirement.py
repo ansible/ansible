@@ -37,6 +37,7 @@ VALID_SPEC_KEYS = [
     'role',
     'scm',
     'src',
+    'src_path',
     'version',
 ]
 

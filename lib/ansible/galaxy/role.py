@@ -50,7 +50,7 @@ class GalaxyRole(object):
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
 
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None, src_path=None):
 
         self._metadata = None
         self._install_info = None
@@ -65,6 +65,10 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        if src_path:
+            self.src_path = src_path.split('/')
+        else:
+            self.src_path = None
 
         if path is not None:
             if self.name not in path:
@@ -282,6 +286,10 @@ class GalaxyRole(object):
                         # and drop the leading directory, as mentioned above
                         if member.isreg() or member.issym():
                             parts = member.name.split(os.sep)[1:]
+                            if self.src_path:
+                                if parts[:len(self.src_path)] != self.src_path:
+                                    continue
+                                parts = parts[len(self.src_path):]
                             final_parts = []
                             for part in parts:
                                 if part != '..' and '~' not in part and '$' not in part:
@@ -292,7 +300,7 @@ class GalaxyRole(object):
                     # write out the install info file for later use
                     self._write_galaxy_install_info()
                 except OSError as e:
-                   raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
+                    raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)
