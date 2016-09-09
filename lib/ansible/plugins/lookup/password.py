@@ -140,72 +140,70 @@ def _gen_password(length, chars):
     password = ''.join(random.choice(chars) for _ in range(length))
     return password
 
-class LookupModule(LookupBase):
+def _create_password_file(b_path):
+    b_pathdir = os.path.dirname(b_path)
 
+    try:
+        makedirs_safe(b_pathdir, mode=0o700)
+    except OSError as e:
+        raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (b_pathdir, str(e)))
 
+def _read_password_file(b_path):
+    content = open(b_path).read().rstrip()
 
-    def format_content(self, password, salt, encrypt):
-        if not encrypt:
-            return password
+    password = content
+    salt = None
 
-        return '%s salt=%s' % (password, salt)
+    try:
+        sep = content.rindex(' salt=')
+    except ValueError:
+        # No salt
+        pass
+    else:
+        salt = password[sep + len(' salt='):]
+        password = content[:sep]
 
-    def _create_password_file(self, b_path):
-        b_pathdir = os.path.dirname(b_path)
+    return content, password, salt
 
-        try:
-            makedirs_safe(b_pathdir, mode=0o700)
-        except OSError as e:
-            raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (b_pathdir, str(e)))
-
-    def _read_password_file(self, b_path):
-        content = open(b_path).read().rstrip()
-
-        password = content
-        salt = None
-
-        try:
-            sep = content.rindex(' salt=')
-        except ValueError:
-            # No salt
-            pass
-        else:
-            salt = password[sep + len(' salt='):]
-            password = content[:sep]
-
-        return content, password, salt
-
-    def _write_password_file(self, b_path, content):
-        with open(b_path, 'w') as f:
-            os.chmod(b_path, 0o600)
-            f.write(content + '\n')
-
-    def _create_password(self, b_path, params):
-        salt = None
-
-        if not os.path.exists(b_path):
-            self._create_password_file(b_path)
-
-            password = self.gen_password(length=params['length'],
-                                         chars=params['chars'])
-
-        else:
-            content, password, salt = self._read_password_file(b_path)
-
-        if not salt:
-            salt = _random_salt()
-
-        content = self.format_content(password=password,
-                                      salt=salt,
-                                      encrypt=params['encrypt'])
-
-        self._write_password_file(b_path, content)
-
-        if params['encrypt']:
-            password = do_encrypt(password, params['encrypt'], salt=salt)
-
+def _format_content(password, salt, encrypt):
+    if not encrypt:
         return password
 
+    return '%s salt=%s' % (password, salt)
+
+def _write_password_file(b_path, content):
+    with open(b_path, 'w') as f:
+        os.chmod(b_path, 0o600)
+        f.write(content + '\n')
+
+def _create_password(b_path, params):
+    salt = None
+
+    if not os.path.exists(b_path):
+        _create_password_file(b_path)
+
+        password = _gen_password(length=params['length'],
+                                 chars=params['chars'])
+
+    else:
+        content, password, salt = _read_password_file(b_path)
+
+    if not salt:
+        salt = _random_salt()
+
+    content = _format_content(password=password,
+                              salt=salt,
+                              encrypt=params['encrypt'])
+
+    _write_password_file(b_path, content)
+
+    if params['encrypt']:
+        password = do_encrypt(password, params['encrypt'], salt=salt)
+
+    return password
+
+
+class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []
 
