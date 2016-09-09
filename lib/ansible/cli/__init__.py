@@ -479,10 +479,13 @@ class CLI(object):
                 display.display(text)
             else:
                 self.pager_pipe(text, os.environ['PAGER'])
-        elif subprocess.call('(less --version) &> /dev/null', shell = True) == 0:
-            self.pager_pipe(text, 'less')
         else:
-            display.display(text)
+            p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.communicate()
+            if p.returncode == 0:
+                self.pager_pipe(text, 'less')
+            else:
+                display.display(text)
 
     @staticmethod
     def pager_pipe(text, cmd):
