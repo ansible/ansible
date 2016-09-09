@@ -130,7 +130,7 @@ def all_keys(module, keyring, short_format):
         cmd = "apt-key adv --list-public-keys --keyid-format=long"
     (rc, out, err) = module.run_command(cmd)
     results = []
-    lines = out.split('\n')
+    lines = to_native(out).split('\n')
     for line in lines:
         if line.startswith("pub") or line.startswith("sub"):
             tokens = line.split()

@@ -374,7 +374,7 @@ class UbuntuSourcesList(SourcesList):
         response, info = fetch_url(self.module, lp_api, headers=headers)
         if info['status'] != 200:
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
-        return json.load(response)
+        return json.loads(to_native(response.read()))
 
     def _expand_ppa(self, path):
         ppa = path.split(':')[1]
