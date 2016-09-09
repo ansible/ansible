@@ -219,6 +219,12 @@ def check_args(module, warnings):
         warnings.append('ignoring unnecessary argument replace')
     if module.params['update'] == 'replace' and not module.params['src']:
         module.fail_json(msg='Must specify src when update is `replace`')
+    if module.params['src'] and module.params['match'] not in ['line', 'none']:
+        module.fail_json(msg='match argument must be set to either `line` or '
+                             '`none` when src argument is defined')
+    if module.params['src'] and module.params['replace'] != 'line':
+        module.fail_json(msg='replace argument must be set to `line` when '
+                             'src argument is specified')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -253,12 +259,14 @@ def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
     update = module.params['update']
+    path = module.params['parents']
 
     candidate = get_candidate(module)
 
     if match != 'none' and update != 'replace':
         config = get_config(module, result)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
     else:
         config = None
         configobjs = candidate.items
