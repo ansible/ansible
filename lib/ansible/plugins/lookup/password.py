@@ -117,7 +117,7 @@ def _random_salt():
     salt_chars = to_text(ascii_letters + digits + './', errors='surrogate_or_strict')
     return _random_password(length=8, chars=salt_chars)
 
-def _new_gen_candidate_chars(characters):
+def _gen_candidate_chars(characters):
     chars = []
     for chars_spec in characters:
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
@@ -125,21 +125,9 @@ def _new_gen_candidate_chars(characters):
     chars = u''.join(to_text(c) for c in chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 
-def _gen_candidate_chars(chars):
-    candidate_chars_list = []
-    for c in chars:
-        try:
-            defaults = getattr(string, c, c)
-        except UnicodeError:
-            defaults = c
-        candidate_chars_list.append(defaults)
-    candidate_chars = "".join(candidate_chars_list)
-    candidate_chars.replace('"', '')
-    candidate_chars.replace("'", '')
-    return candidate_chars
 
 def _gen_password(length, chars):
-    chars = _new_gen_candidate_chars(chars)
+    chars = _gen_candidate_chars(chars)
     password = ''.join(random.choice(chars) for _ in range(length))
     return password
 
