@@ -364,7 +364,7 @@ class LXDContainerManagement(object):
         self.actions.append('restart')
 
     def _delete_container(self):
-        return self.client.do('DELETE', '/1.0/containers/{0}'.format(self.name))
+        self.client.do('DELETE', '/1.0/containers/{0}'.format(self.name))
         self.actions.append('delete')
 
     def _freeze_container(self):
@@ -446,7 +446,8 @@ class LXDContainerManagement(object):
         if self.old_state != 'absent':
             if self.old_state == 'frozen':
                 self._unfreeze_container()
-            self._stop_container()
+            if self.old_state != 'stopped':
+                self._stop_container()
             self._delete_container()
 
     def _frozen(self):
