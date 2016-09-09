@@ -269,7 +269,7 @@ class StrategyModule(StrategyBase):
                     # FIXME: probably not required here any more with the result proc
                     #        having been removed, so there's no only a single result
                     #        queue for the main thread
-                    #results += self._process_pending_results(iterator, one_pass=True)
+                    results += self._process_pending_results(iterator, one_pass=True)
 
                 self._tqm.queue_multiple_tasks(items_to_queue, play_context)
 
