@@ -67,9 +67,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
-            stat = result.get('stat', None)
-            if stat and stat.get('exists', False):
+            if self._remote_file_exists(creates):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
                 self._remove_tmp_path(tmp)
