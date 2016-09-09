@@ -85,6 +85,8 @@ ansible_facts:
   returned: always
   type: dict
 """
+from ansible.module_utils.junos import NetworkModule
+from ansible.module_utils.junos import xml_to_string, xml_to_json
 
 def main():
     """ Main entry point for AnsibleModule
@@ -95,12 +97,12 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = get_module(argument_spec=spec,
-                        supports_check_mode=True)
+    module = NetworkModule(argument_spec=spec,
+                           supports_check_mode=True)
 
     result = dict(changed=False)
 
-    facts = module.get_facts()
+    facts = module.connection.get_facts()
 
     if '2RE' in facts:
         facts['has_2RE'] = facts['2RE']
@@ -110,19 +112,17 @@ def main():
 
     if module.params['config'] is True:
         config_format = module.params['config_format']
-        resp_config = module.get_config( config_format=config_format)
+        resp_config = module.config.get_config(config_format=config_format)
 
         if config_format in ['text', 'set']:
-           facts['config'] = resp_config
+            facts['config'] = resp_config
         elif config_format == "xml":
-           facts['config'] = xml_to_string(resp_config)
-           facts['config_json'] = xml_to_json(resp_config)
+            facts['config'] = xml_to_string(resp_config)
+            facts['config_json'] = xml_to_json(resp_config)
 
     result['ansible_facts'] = facts
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.junos import *
 
 if __name__ == '__main__':
     main()
