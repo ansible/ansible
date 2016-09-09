@@ -667,10 +667,7 @@ class TaskExecutor:
                 conn_type = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
-                has_cp = variables['hostvars']['localhost'].get('ansible_controlpersist')
-                if has_cp is None:
-                    has_cp = check_for_controlpersist()
-                if not has_cp:
+                if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
