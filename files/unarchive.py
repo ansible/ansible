@@ -133,6 +133,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
+from ansible.module_utils._text import to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -352,7 +353,7 @@ class ZipArchive(object):
             version = pcs[1]
             ostype = pcs[2]
             size = int(pcs[3])
-            path = pcs[7]
+            path = to_text(pcs[7], errors='surrogate_or_strict')
 
             # Skip excluded files
             if path in self.excludes:
@@ -597,7 +598,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend([ '--exclude=' + quote(f) for f in self.excludes ])
         cmd.extend([ '-f', self.src ])
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -626,7 +627,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend([ '--exclude=' + quote(f) for f in self.excludes ])
         cmd.extend([ '-f', self.src ])
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         # Check whether the differences are in something that we're
         # setting anyway
@@ -675,7 +676,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend([ '--exclude=' + quote(f) for f in self.excludes ])
         cmd.extend([ '-f', self.src ])
-        rc, out, err = self.module.run_command(cmd, cwd=self.dest)
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
@@ -745,9 +746,6 @@ def main():
         # check-mode only works for zip files, we cover that later
         supports_check_mode = True,
     )
-
-    # We screenscrape a huge amount of commands so use C locale anytime we do
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     src        = os.path.expanduser(module.params['src'])
     dest       = os.path.expanduser(module.params['dest'])
