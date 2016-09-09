@@ -307,7 +307,6 @@ class GalaxyRole(object):
                                 error = False
                         if error:
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
-                            break
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)
