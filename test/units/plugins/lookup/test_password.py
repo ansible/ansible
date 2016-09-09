@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
+from ansible.compat.six import text_type
 
 from ansible.plugins.lookup import password
 
@@ -195,3 +196,47 @@ class TestPasswordLookup(unittest.TestCase):
     def test_gen_candidate_chars(self):
         for testcase in self.old_style_params_data:
             self._assert_gen_candidate_chars(testcase)
+
+
+class TestRandomPassword(unittest.TestCase):
+    def _assert_valid_chars(self, res, chars):
+        for res_char in res:
+            self.assertIn(res_char, chars)
+
+    def test_default(self):
+        res = password._random_password()
+        self.assertEquals(len(res), password.DEFAULT_LENGTH)
+        self.assertTrue(isinstance(res, text_type))
+        self._assert_valid_chars(res, DEFAULT_CANDIDATE_CHARS)
+
+    def test_zero_length(self):
+        res = password._random_password(length=0)
+        self.assertEquals(len(res), 0)
+        self.assertTrue(isinstance(res, text_type))
+        self._assert_valid_chars(res, u',')
+
+    def test_just_a_common(self):
+        res = password._random_password(length=1, chars=u',')
+        self.assertEquals(len(res), 1)
+        self.assertEquals(res, u',')
+
+    def test_free_will(self):
+        # A Rush and Spinal Tap reference twofer
+        res = password._random_password(length=11, chars=u'a')
+        self.assertEquals(len(res), 11)
+        self.assertEquals(res, 'aaaaaaaaaaa')
+        self._assert_valid_chars(res, u'a')
+
+    def test_unicode(self):
+        res = password._random_password(length=11, chars=u'くらとみ')
+        self._assert_valid_chars(res, u'くらとみ')
+        self.assertEquals(len(res), 11)
+
+
+class TestRandomSalt(unittest.TestCase):
+    def test(self):
+        res = password._random_salt()
+        expected_salt_candidate_chars = u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./'
+        self.assertEquals(len(res), 8)
+        for res_char in res:
+            self.assertIn(res_char, expected_salt_candidate_chars)
