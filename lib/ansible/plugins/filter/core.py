@@ -129,7 +129,7 @@ def fileglob(pathname):
     ''' return list of matched regular files for glob '''
     return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
 
-def glob(pathname):
+def pathglob(pathname):
     ''' return list of items in expanded glob pattern, including files or directories '''
     return glob.glob(pathname)
 
@@ -443,7 +443,7 @@ class FilterModule(object):
             'fileglob': fileglob,
 
             # glob
-            'glob' : glob,
+            'pathglob' : pathglob,
 
             # regex
             'regex_replace': regex_replace,
