@@ -129,6 +129,10 @@ def fileglob(pathname):
     ''' return list of matched regular files for glob '''
     return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
 
+def glob(pathname):
+    ''' return list of items in expanded glob pattern, including files or directories '''
+    return glob.glob(pathname)
+
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
 
@@ -437,6 +441,9 @@ class FilterModule(object):
 
             # file glob
             'fileglob': fileglob,
+
+            # glob
+            'glob' : glob,
 
             # regex
             'regex_replace': regex_replace,
