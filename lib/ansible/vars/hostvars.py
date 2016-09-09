@@ -97,15 +97,15 @@ class HostVars(collections.Mapping):
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
             yield host
 
     def __len__(self):
-        return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
+        return len(self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True))
 
     def __repr__(self):
         out = {}
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
             name = host.name
             out[name] = self.get(name)
         return repr(out)

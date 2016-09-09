@@ -490,7 +490,7 @@ class VariableManager:
                     if delegated_host_name in C.LOCALHOST:
                         delegated_host = self._inventory.localhost
                     else:
-                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                        for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
                             # check if the address matches, or if both the delegated_to host
                             # and the current host are in the list of localhost aliases
                             if h.address == delegated_host_name:
