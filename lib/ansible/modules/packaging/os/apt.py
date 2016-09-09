@@ -198,6 +198,8 @@ import datetime
 import fnmatch
 import itertools
 
+from ansible.module_utils._text import to_native
+
 # APT related constants
 APT_ENV_VARS = dict(
         DEBIAN_FRONTEND = 'noninteractive',
@@ -372,7 +374,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     return new_pkgspec
 
 def parse_diff(output):
-    diff = output.splitlines()
+    diff = to_native(output).splitlines()
     try:
         # check for start marker from aptitude
         diff_start = diff.index('Resolving dependencies...')
@@ -385,7 +387,7 @@ def parse_diff(output):
             diff_start = -1
     try:
         # check for end marker line from both apt-get and aptitude
-        diff_end = (i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item)).next()
+        diff_end = next(i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item))
     except StopIteration:
         diff_end = len(diff)
     diff_start += 1
@@ -475,7 +477,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
     rc, stdout, stderr = m.run_command(cmd)
     if rc != 0:
         m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
-    return stdout.strip('\n')
+    return to_native(stdout).strip('\n')
 
 def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
     changed=False
