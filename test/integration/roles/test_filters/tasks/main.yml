@@ -110,3 +110,11 @@
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
 
+- name: previous and next element of a list
+  assert:
+    that:
+        - "'a' == [ 'a', 'b', 'c' ]|prev_elem('b')"
+        - "'c' == [ 'a', 'b', 'c' ]|next_elem('b')"
+        - "[ 'a', 'b', 'c' ]|prev_elem('a') is undefined"
+        - "[ 'a', 'b', 'c' ]|next_elem('c') is undefined"
+
