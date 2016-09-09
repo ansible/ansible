@@ -137,9 +137,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         else:
             return result
     except SyntaxError as e:
-        display.warning('SyntaxError in safe_eval() on expr: %s (%s)' % (expr, e))
         # special handling for syntax errors, we just return
-        # the expression string back as-is
+        # the expression string back as-is to support late evaluation
         if include_exceptions:
             return (expr, None)
         return expr
