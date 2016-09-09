@@ -49,7 +49,7 @@ a file at a given filepath.
 (Docs about crypted save modes are pending)
  
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
-up random passwords per host (what simplifies password management in 'host_vars' variables).
+up random passwords per host (which simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
@@ -135,9 +135,10 @@ appears exactly once in column 0 (the first column, 0-indexed) of the table. All
 Field        Default        Description
 ----------   ------------   -----------------------------------------------------------------------------------------
 file         ansible.csv    Name of the file to load
-delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
 col          1              The column to output, indexed by 0
-default      empty string   return value if the key is not in the csv file
+delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
+default      empty string   Default return value if the key is not in the csv file
+encoding     utf-8          Encoding (character set) of the used CSV file (added in version 2.1)
 ==========   ============   =========================================================================================
 
 .. note:: The default delimiter is TAB, *not* comma.
@@ -236,6 +237,24 @@ You can specify regions or tables to fetch secrets from::
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
+      
+      
+If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
+
+    ---
+    - name: test
+      hosts: localhost
+      vars:
+        context:
+          app: my_app
+          environment: production
+      tasks:
+
+      - name: "Test credstash lookup plugin -- get the password with a context passed as a variable"
+        debug: msg="{{ lookup('credstash', 'some-password', context=context) }}"
+
+      - name: "Test credstash lookup plugin -- get the password with a context defined here"
+        debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
 
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 

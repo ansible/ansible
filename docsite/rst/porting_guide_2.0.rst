@@ -26,7 +26,7 @@ To make an escaped string that will work on all versions you have two options::
 
 uses key=value escaping which has not changed.  The other option is to check for the ansible version::
 
-"{{ (ansible_version|version_compare('ge', '2.0'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
+"{{ (ansible_version|version_compare('2.0', 'ge'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
 
 * trailing newline When a string with a trailing newline was specified in the
   playbook via yaml dict format, the trailing newline was stripped. When
@@ -54,6 +54,10 @@ uses key=value escaping which has not changed.  The other option is to check for
         msg: "{{ message }}"
     # Output
     "msg": "Testing some things"
+
+* Behavior of templating DOS-type text files changes with Ansible v2.
+
+  A bug in Ansible v1 causes DOS-type text files (using a carriage return and newline) to be templated to Unix-type text files (using only a newline). In Ansible v2 this long-standing bug was finally fixed and DOS-type text files are preserved correctly. This may be confusing when you expect your playbook to not show any differences when migrating to Ansible v2, while in fact you will see every DOS-type file being completely replaced (with what appears to be the exact same content).
 
 * When specifying complex args as a variable, the variable must use the full jinja2
   variable syntax (```{{var_name}}```) - bare variable names there are no longer accepted.
@@ -186,14 +190,14 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
   The `port` variable is reserved as a play/task directive for overriding the connection port, in previous versions this got conflated with a variable named `port` and was usable
   later in the play, this created issues if a host tried to reconnect or was using a non caching connection. Now it will be correctly identified as a directive and the `port` variable
-  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and varaibles to a role invocation..
+  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and variables to a role invocation.
 
 * Bare operations on `with_`::
 
     with_items: var1 + var2
 
-  An issue with the 'bare variable' features, which was supposed only tempate a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
-  Now you need to use proper templating and braces for all expressions everywhere except condtionals (`when`)::
+  An issue with the 'bare variable' features, which was supposed only template a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
+  Now you need to use proper templating and braces for all expressions everywhere except conditionals (`when`)::
 
     with_items: "{{var1 + var2}}"
 
@@ -241,7 +245,7 @@ populates the callback with them.  Here's a short snippet that shows you how::
 
         def v2_playbook_on_start(self, playbook):
             self.playbook = playbook
-            self.playbook_name = os.path.basename(self.playbook._filename)
+            self.playbook_name = os.path.basename(self.playbook._file_name)
 
         def v2_playbook_on_play_start(self, play):
             self.play = play

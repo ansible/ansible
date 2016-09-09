@@ -25,7 +25,7 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -61,7 +61,25 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
 
     return None
 
+def find_entity_child_by_path(content, entityRootFolder, path):
 
+    entity = entityRootFolder
+    searchIndex = content.searchIndex
+    paths = path.split("/")
+    try:
+        for path in paths:
+            entity = searchIndex.FindChild (entity, path)
+
+        if entity.name == paths[-1]:
+            return entity
+    except:
+        pass
+
+    return None
+
+
+# Maintain for legacy, or remove with 2.1 ?
+# Should be replaced with find_cluster_by_name
 def find_cluster_by_name_datacenter(datacenter, cluster_name):
 
     host_folder = datacenter.hostFolder
@@ -70,6 +88,19 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
             return folder
     return None
 
+def find_cluster_by_name(content, cluster_name, datacenter=None):
+
+    if datacenter:
+        folder = datacenter.hostFolder
+    else:
+        folder = content.rootFolder
+
+    clusters = get_all_objs(content, [vim.ClusterComputeResource], folder)
+    for cluster in clusters:
+        if cluster.name == cluster_name:
+            return cluster
+
+    return None
 
 def find_datacenter_by_name(content, datacenter_name):
 
@@ -98,6 +129,48 @@ def find_hostsystem_by_name(content, hostname):
             return host
     return None
 
+def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
+    """ UUID is unique to a VM, every other id returns the first match. """
+    si = content.searchIndex
+    vm = None
+
+    if vm_id_type == 'dns_name':
+        vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
+    elif vm_id_type == 'inventory_path':
+        vm = si.FindByInventoryPath(inventoryPath=vm_id)
+        if type(vm) != type(vim.VirtualMachine):
+            vm = None
+    elif vm_id_type == 'uuid':
+        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
+    elif vm_id_type == 'ip':
+        vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
+    elif vm_id_type == 'vm_name':
+        folder = None
+        if cluster:
+            folder = cluster
+        elif datacenter:
+            folder = datacenter.hostFolder
+        vm = find_vm_by_name(content, vm_id, folder)
+
+    return vm
+
+
+def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+
+    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=True)
+    for vm in vms:
+        if vm.name == vm_name:
+            return vm
+    return None
+
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
+    return None
+
 
 def vmware_argument_spec():
 
@@ -121,9 +194,9 @@ def connect_to_api(module, disconnect_atexit=True):
 
     try:
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
-    except vim.fault.InvalidLogin, invalid_login:
+    except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
-    except requests.ConnectionError, connection_error:
+    except (requests.ConnectionError, ssl.SSLError) as connection_error:
         if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
@@ -138,10 +211,13 @@ def connect_to_api(module, disconnect_atexit=True):
         atexit.register(connect.Disconnect, service_instance)
     return service_instance.RetrieveContent()
 
-def get_all_objs(content, vimtype):
+def get_all_objs(content, vimtype, folder=None, recurse=True):
+    if not folder:
+      folder = content.rootFolder
 
     obj = {}
-    container = content.viewManager.CreateContainerView(content.rootFolder, vimtype, True)
+    container = content.viewManager.CreateContainerView(folder, vimtype, recurse)
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
+

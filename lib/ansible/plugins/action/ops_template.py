@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import json
 
+from ansible.compat.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.net_template import ActionModule as NetActionModule
 
@@ -32,18 +33,18 @@ class ActionModule(NetActionModule, ActionBase):
 
         result = dict(changed=False)
 
-        if isinstance(self._task.args['src'], basestring):
+        if isinstance(self._task.args['src'], string_types):
             self._handle_template()
-
-        self._task.args['config'] = task_vars.get('config')
 
         result.update(self._execute_module(module_name=self._task.action,
             module_args=self._task.args, task_vars=task_vars))
 
-        if self._task.args.get('backup') and '_config' in result:
-            contents = json.dumps(result['_config'], indent=4)
+        if self._task.args.get('backup') and result.get('_backup'):
+            contents = json.dumps(result['_backup'], indent=4)
             self._write_backup(task_vars['inventory_hostname'], contents)
-            del result['_config']
+
+        if '_backup' in result:
+            del result['_backup']
 
         return result
 

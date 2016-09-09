@@ -21,7 +21,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pipes
+import pwd
 import random
 import re
 import string
@@ -29,11 +31,9 @@ import string
 from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
@@ -53,6 +53,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
+   ssh_executable   = ('ansible_ssh_executable',),
    accelerate_port  = ('ansible_accelerate_port',),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
@@ -65,6 +66,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    become_exe       = ('ansible_become_exe',),
    become_flags     = ('ansible_become_flags',),
    ssh_common_args  = ('ansible_ssh_common_args',),
+   docker_extra_args= ('ansible_docker_extra_args',),
    sftp_extra_args  = ('ansible_sftp_extra_args',),
    scp_extra_args   = ('ansible_scp_extra_args',),
    ssh_extra_args   = ('ansible_ssh_extra_args',),
@@ -78,6 +80,8 @@ MAGIC_VARIABLE_MAPPING = dict(
    su_pass          = ('ansible_su_password', 'ansible_su_pass'),
    su_exe           = ('ansible_su_exe',),
    su_flags         = ('ansible_su_flags',),
+   executable       = ('ansible_shell_executable',),
+   module_compression = ('ansible_module_compression',),
 )
 
 SU_PROMPT_LOCALIZATIONS = [
@@ -119,7 +123,9 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_user',
     'become_pass',
     'become_method',
+    'become_flags',
     'connection',
+    'docker_extra_args',
     'delegate_to',
     'no_log',
     'remote_user',
@@ -127,12 +133,14 @@ TASK_ATTRIBUTE_OVERRIDES = (
 
 RESET_VARS = (
     'ansible_connection',
+    'ansible_docker_extra_args',
     'ansible_ssh_host',
     'ansible_ssh_pass',
     'ansible_ssh_port',
     'ansible_ssh_user',
     'ansible_ssh_private_key_file',
     'ansible_ssh_pipelining',
+    'ansible_ssh_executable',
     'ansible_user',
     'ansible_host',
     'ansible_port',
@@ -148,6 +156,7 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
+    _docker_extra_args  = FieldAttribute(isa='string')
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
@@ -158,11 +167,14 @@ class PlayContext(Base):
     _sftp_extra_args  = FieldAttribute(isa='string')
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
+    _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
     _accelerate       = FieldAttribute(isa='bool', default=False)
     _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
+    _executable       = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -251,6 +263,7 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+
         # privilege escalation
         self.become        = options.become
         self.become_method = options.become_method
@@ -259,7 +272,7 @@ class PlayContext(Base):
         self.check_mode = boolean(options.check)
 
         # get ssh options FIXME: make these common to all connections
-        for flag in ['ssh_common_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
             setattr(self, flag, getattr(options,flag, ''))
 
         # general flags (should we move out?)
@@ -347,35 +360,66 @@ class PlayContext(Base):
 
             # and likewise for the remote user
             for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
-                if user_var in delegated_vars:
+                if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
                 delegated_vars['ansible_user'] = task.remote_user or self.remote_user
         else:
             delegated_vars = dict()
 
+            # setup shell
+            for exe_var in MAGIC_VARIABLE_MAPPING.get('executable'):
+                if exe_var in variables:
+                    setattr(new_info, 'executable', variables.get(exe_var))
+
         attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
-                if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
-                    setattr(new_info, attr, delegated_vars[variable_name])
-                    attrs_considered.append(attr)
+                # if delegation task ONLY use delegated host vars, avoid delegated FOR host vars
+                if task.delegate_to is not None:
+                    if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
+                        setattr(new_info, attr, delegated_vars[variable_name])
+                        attrs_considered.append(attr)
                 elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
                     attrs_considered.append(attr)
+                # no else, as no other vars should be considered
 
-        # make sure we get port defaults if needed
-        if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
-            new_info.port = int(C.DEFAULT_REMOTE_PORT)
-
-        # become legacy updates
+        # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
+
+        # become legacy updates -- from inventory file (inventory overrides
+        # commandline)
+        for become_pass_name in MAGIC_VARIABLE_MAPPING.get('become_pass'):
+            if become_pass_name in variables:
+                break
+        else:  # This is a for-else
+            if new_info.become_method == 'sudo':
+                for sudo_pass_name in MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
+                    if sudo_pass_name in variables:
+                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
+                        break
+            if new_info.become_method == 'sudo':
+                for su_pass_name in MAGIC_VARIABLE_MAPPING.get('su_pass'):
+                    if su_pass_name in variables:
+                        setattr(new_info, 'become_pass', variables[su_pass_name])
+                        break
+
+        # make sure we get port defaults if needed
+        if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
+            new_info.port = int(C.DEFAULT_REMOTE_PORT)
+
+        # if the final connection type is local, reset the remote_user value
+        # to that of the currently logged in user, to ensure any become settings
+        # are obeyed correctly
+        if new_info.connection == 'local':
+            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
@@ -400,9 +444,14 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
-        # have always_run override check mode
         if task.always_run:
+            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
             new_info.check_mode = False
+
+        # check_mode replaces always_run, overwrite always_run if both are given
+        if task.check_mode is not None:
+            new_info.check_mode = task.check_mode
+
 
         return new_info
 
@@ -413,15 +462,20 @@ class PlayContext(Base):
         success_key = None
         self.prompt = None
 
-        if executable is None:
-            executable = C.DEFAULT_EXECUTABLE
-
         if self.become:
+
+            if not executable:
+                executable = self.executable
 
             becomecmd   = None
             randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+
+            if executable:
+                command = '%s -c %s' % (executable, success_cmd)
+            else:
+                command = success_cmd
 
             # set executable to use for the privilege escalation method, with various overrides
             exe = self.become_exe or \
@@ -451,9 +505,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -p "%s" -u %s %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, command)
                 else:
-                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
 
             elif self.become_method == 'su':
@@ -464,12 +518,19 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
                 prompt = detect_su_prompt
 
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote('%s -c %s' % (executable, success_cmd)))
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote(command))
 
             elif self.become_method == 'pbrun':
 
                 prompt='assword:'
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
+
+            elif self.become_method == 'ksu':
+                def detect_ksu_prompt(data):
+                    return re.match("Kerberos password for .*@.*:", data)
+
+                prompt = detect_ksu_prompt
+                becomecmd = '%s %s %s -e %s' % (exe, self.become_user, flags, command)
 
             elif self.become_method == 'pfexec':
 
@@ -495,6 +556,12 @@ class PlayContext(Base):
 
                 #FIXME: make shell independant
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+
+            elif self.become_method == 'dzdo':
+
+                exe = self.become_exe or 'dzdo'
+
+                becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
@@ -523,4 +590,3 @@ class PlayContext(Base):
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
-

@@ -9,8 +9,10 @@ Introduction
 While it is possible to write a playbook in one very large file (and you might start out learning playbooks this way),
 eventually you'll want to reuse files and start to organize things.
 
-At a basic level, including task files allows you to break up bits of configuration policy into smaller files.  Task includes 
-pull in tasks from other files.  Since handlers are tasks too, you can also include handler files from the 'handlers:' section.
+At a basic level, including task files allows you to break up bits of 
+configuration policy into smaller files.  Task includes pull in tasks from other 
+files.  Since handlers are tasks too, you can also include handler files from 
+the 'handler' section.
 
 See :doc:`playbooks` if you need a review of these concepts.
 
@@ -57,8 +59,9 @@ Include directives look like this, and can be mixed in with regular tasks in a p
 
 You can also pass variables into includes.  We call this a 'parameterized include'.
 
-For instance, if deploying multiple wordpress instances, I could
-contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
+For instance, to deploy to multiple wordpress instances, I could
+encapsulate all of my wordpress tasks in a single wordpress.yml file, and use 
+it like so::
 
    tasks:
      - include: wordpress.yml wp_user=timmy
@@ -140,6 +143,73 @@ inside another.
    play are going to get the same tasks.  ('*when*' provides some
    ability for hosts to conditionally skip tasks).
 
+
+.. _dynamic_static:
+
+Dynamic versus Static Includes
+```````````````````````````
+
+Ansible 2.0 changes how include tasks are processed. In previous versions of Ansible, includes acted as a pre-processor statement and were read during playbook parsing time. This created problems with things like inventory variables (like group and host vars, which are not available during
+the parsing time) were used in the included file name.
+
+Ansible 2.0 instead makes includes "dynamic", meaning they are not evaluated until the include task is
+reached during the play execution. This change allows the reintroduction of loops on include statements,
+such as the following::
+
+   - include: foo.yml param={{item}}
+     with_items:
+     - 1
+     - 2
+     - 3
+
+It is also possible to use variables from any source with a dynamic include::
+
+   - include: "{{inventory_hostname}}.yml"
+
+.. note::
+   When an include statement loads different tasks for different hosts,
+   the ``linear`` strategy keeps the hosts in lock-step by alternating
+   which hosts are executing tasks while doing a ``noop`` for all other
+   hosts. For example, if you had hostA, hostB and hostC with the above
+   example, hostA would execute all of the tasks in hostA.yml while hostB
+   and hostC waited. It is generally better to do the above with the
+   ``free`` strategy, which does not force hosts to execute in lock-step.
+
+Dynamic includes introduced some other limitations due to the fact that the included
+file is not read in until that task is reached during the execution of the play. When using dynamic includes,
+it is important to keep these limitations in mind:
+
+* You cannot use ``notify`` to trigger a handler name which comes from a dynamic include.
+* You cannot use ``--start-at-task`` to begin execution at a task inside a dynamic include.
+* Tags which only exist inside a dynamic include will not show up in --list-tags output.
+* Tasks which only exist inside a dynamic include will not show up in --list-tasks output.
+
+.. note::
+   In Ansible 1.9.x and earlier, an error would be raised if a tag name was
+   used with ``--tags`` or ``--skip-tags``. This error was disabled in Ansible
+   2.0 to prevent incorrect failures with tags which only existed inside of
+   dynamic includes.
+
+To work around these limitations, Ansible 2.1 introduces the ``static`` option for includes::
+
+   - include: foo.yml
+     static: <yes|no|true|false>
+
+By default in Ansible 2.1 and higher, includes are automatically treated as static rather than
+dynamic when the include meets the following conditions:
+
+* The include does not use any loops
+* The included file name does not use any variables
+* The ``static`` option is not explicitly disabled (ie. ``static: no``)
+* The ansible.cfg options to force static includes (see below) are disabled
+
+Two options are available in the ansible.cfg configuration for static includes:
+
+* ``task_includes_static`` - forces all includes in tasks sections to be static.
+* ``handler_includes_static`` - forces all includes in handlers sections to be static.
+
+These options allow users to force playbooks to behave exactly as they did in 1.9.x and before.
+
 .. _roles:
 
 Roles
@@ -190,6 +260,7 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
+- If roles/x/defaults/main.yml exists, variables listed therein will be added to the play
 - If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
 - Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely
 
@@ -284,7 +355,7 @@ a list of roles and parameters to insert before the specified role, such as the 
     ---
     dependencies:
       - { role: common, some_parameter: 3 }
-      - { role: apache, appache_port: 80 }
+      - { role: apache, apache_port: 80 }
       - { role: postgres, dbname: blarg, other_parameter: 12 }
 
 Role dependencies can also be specified as a full path, just like top level roles::
@@ -330,13 +401,13 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
-Embedding Modules In Roles
-``````````````````````````
+Embedding Modules and Plugins In Roles
+``````````````````````````````````````
 
 This is an advanced topic that should not be relevant for most users.
 
-If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
-in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
+If you write a custom module (see :doc:`developing_modules`) or a plugin (see :doc:`developing_plugins`), you may wish to distribute it as part of a role.
+Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
 A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
 people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
@@ -364,6 +435,16 @@ This can also be used, with some limitations, to modify modules in Ansible's cor
 in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy
 way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back
 to github whenever possible via a pull request.
+
+The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin::
+
+    roles/
+       my_custom_filter/
+           filter_plugins
+              filter1
+              filter2
+
+They can then be used in a template or a jinja template in any role called after 'my_custom_filter'
 
 Ansible Galaxy
 ``````````````

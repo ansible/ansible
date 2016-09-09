@@ -13,8 +13,10 @@ class RackhdInventory(object):
         self._inventory = {}
         for nodeid in nodeids:
             self._load_inventory_data(nodeid)
+        inventory = {}
         for nodeid,info in self._inventory.iteritems():
-            print(json.dumps(self._format_output(nodeid, info)))
+            inventory[nodeid]= (self._format_output(nodeid, info))
+        print(json.dumps(inventory))
 
     def _load_inventory_data(self, nodeid):
         info = {}
@@ -33,10 +35,10 @@ class RackhdInventory(object):
             ipaddress = ''
             if len(node_info) > 0:
                 ipaddress = node_info[0]['ipAddress']
-            output = {nodeid:{ 'hosts':[ipaddress],'vars':{}}}
+            output = { 'hosts':[ipaddress],'vars':{}}
             for key,result in info.iteritems():
-                output[nodeid]['vars'][key] = json.loads(result)
-            output[nodeid]['vars']['ansible_ssh_user'] = 'monorail'
+                output['vars'][key] = json.loads(result)
+            output['vars']['ansible_ssh_user'] = 'monorail'
         except KeyError:
             pass
         return output

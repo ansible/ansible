@@ -17,8 +17,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: get the hash behavior env setting
-  shell: env | grep ANSIBLE_HASH_BEHAVIOUR | cut -f2- -d'='
+  shell: env | grep ^ANSIBLE_HASH_BEHAVIOUR'=' | cut -f2- -d'='
   register: hash_behavior
+  # This only works with the local connection.  The way this test is run means the 
+  connection: local
+  delegate_to: localhost
+
 
 - name: debug hash behavior result
   debug: var=hash_behavior.stdout 

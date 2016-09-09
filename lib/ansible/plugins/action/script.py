@@ -19,7 +19,8 @@ __metaclass__ = type
 
 import os
 
-from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 
 
@@ -38,17 +39,18 @@ class ActionModule(ActionBase):
             result['msg'] = 'check mode not supported for this module'
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         creates = self._task.args.get('creates')
         if creates:
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            res = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars, tmp=tmp, persist_files=True)
-            stat = res.get('stat', None)
-            if stat and stat.get('exists', False):
+            if self._remote_file_exists(creates):
+                self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
 
         removes = self._task.args.get('removes')
@@ -56,9 +58,8 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            res = self._execute_module(module_name='stat', module_args=dict(path=removes), task_vars=task_vars, tmp=tmp, persist_files=True)
-            stat = res.get('stat', None)
-            if stat and not stat.get('exists', False):
+            if not self._remote_file_exists(removes):
+                self._remove_tmp_path(tmp)
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
         # the script name is the first item in the raw params, so we split it
@@ -69,23 +70,17 @@ class ActionModule(ActionBase):
         source = parts[0]
         args   = ' '.join(parts[1:])
 
-        if self._task._role is not None:
-            source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-        else:
-            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        try:
+            source = self._loader.get_real_file(self._find_needle('files', source))
+        except AnsibleError as e:
+            return dict(failed=True, msg=to_native(e))
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
-        self._connection.put_file(source, tmp_src)
+        self._transfer_file(source, tmp_src)
 
-        sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if self._play_context.become and self._play_context.become_user != 'root':
-            chmod_mode = 'a+rx'
-            sudoable = False
-        else:
-            chmod_mode = '+rx'
-        self._remote_chmod(chmod_mode, tmp_src, sudoable=sudoable)
+        self._fixup_perms2((tmp, tmp_src), remote_user, execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()
@@ -94,8 +89,7 @@ class ActionModule(ActionBase):
         result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
 
         # clean up after
-        if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
-            self._remove_tmp_path(tmp)
+        self._remove_tmp_path(tmp)
 
         result['changed'] = True
 

@@ -56,7 +56,7 @@ class Conditional:
         False if any of them evaluate as such.
         '''
 
-        # since this is a mixin, it may not have an underlying datastructure
+        # since this is a mix-in, it may not have an underlying datastructure
         # associated with it, so we pull it out now in case we need it for
         # error reporting below
         ds = None
@@ -64,6 +64,10 @@ class Conditional:
             ds = getattr(self, '_ds')
 
         try:
+            # this allows for direct boolean assignments to conditionals "when: False"
+            if isinstance(self.when, bool):
+                return self.when
+
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
@@ -86,7 +90,7 @@ class Conditional:
         if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
             conditional = all_vars[conditional]
 
-        # make sure the templar is using the variables specifed to this method
+        # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 
         try:

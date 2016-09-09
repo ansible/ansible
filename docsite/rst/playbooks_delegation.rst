@@ -42,6 +42,36 @@ play, in order to determine the number of hosts per pass::
 
 If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
 
+As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - 10
+
+In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
+every following batch would contain 10 hosts until all available hosts are used.
+
+It is also possible to list multiple batche sizes as percentages::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - "10%"
+      - "20%"
+      - "100%"
+
+You can also mix and match the values::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - "20%"
+
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
 
@@ -130,6 +160,8 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+The `ansible_host` variable (`ansible_ssh_host` in 1.x) reflects the host a task is delegated to.
+
 .. _delegate_facts:
 
 Delegated facts
@@ -190,7 +222,7 @@ This approach is similar to applying a conditional to a task such as::
           when: inventory_hostname == webservers[0]
 
 .. note::
-     When used together with "serial", tasks marked as "run_once" will be ran on one host in *each* serial batch.
+     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
      :code:`inventory_hostname == my_group_name[0]` construct.
 
@@ -200,7 +232,7 @@ Local Playbooks
 ```````````````
 
 It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
 To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::

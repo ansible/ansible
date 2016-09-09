@@ -39,9 +39,10 @@ class Galaxy(object):
     def __init__(self, options):
 
         self.options = options
-        roles_paths = getattr(self.options, 'roles_path', [])
-        if isinstance(roles_paths, string_types):
-            self.roles_paths = [os.path.expanduser(roles_path) for roles_path in roles_paths.split(os.pathsep)]
+        # self.options.roles_path needs to be a list and will be by default
+        roles_path = getattr(self.options, 'roles_path', [])
+        # cli option handling is responsible for making roles_path a list
+        self.roles_paths = roles_path
 
         self.roles =  {}
 

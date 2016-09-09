@@ -96,7 +96,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # plays. If so, we can take a shortcut here and simply prepend them to
             # those attached to each block (if any)
             if forward_conditional:
-                for task_block in entry.tasks:
+                for task_block in entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks:
                     task_block.when = self.when[:] + task_block.when
 
         return pb
@@ -134,6 +134,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
         Splits the include line up into filename and parameters
         '''
+
+        if v is None:
+           raise AnsibleParserError("include parameter is missing", obj=ds)
 
         # The include line must include at least one item, which is the filename
         # to include. Anything after that should be regarded as a parameter to the include

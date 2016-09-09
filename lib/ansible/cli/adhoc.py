@@ -27,11 +27,13 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
+from ansible.module_utils._text import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager
 
 try:
@@ -72,8 +74,10 @@ class AdHocCLI(CLI):
 
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
-        if len(self.args) != 1:
+        if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
+        elif len(self.args) > 1:
+            raise AnsibleOptionsError("Extranous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
@@ -81,11 +85,12 @@ class AdHocCLI(CLI):
         return True
 
     def _play_ds(self, pattern, async, poll):
+        check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
         return dict(
             name = "Ansible Ad-Hoc",
             hosts = pattern,
             gather_facts = 'no',
-            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args)), async=async, poll=poll) ]
+            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async=async, poll=poll) ]
         )
 
     def run(self):
@@ -94,7 +99,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = self.args[0]
+        pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
@@ -121,11 +126,13 @@ class AdHocCLI(CLI):
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
+        variable_manager.options_vars = load_options_vars(self.options)
+
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
 
         no_hosts = False
-        if len(inventory.list_hosts(pattern)) == 0:
+        if len(inventory.list_hosts()) == 0:
             # Empty inventory
             display.warning("provided hosts list is empty, only localhost is available")
             no_hosts = True
@@ -134,7 +141,7 @@ class AdHocCLI(CLI):
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0 and no_hosts is False:
             # Invalid limit
-            raise AnsibleError("Specified --limit does not match any hosts")
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))
@@ -148,6 +155,10 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        # Avoid modules that don't work with ad-hoc
+        if self.options.module_name in ('include', 'include_role'):
+            raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
+
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
@@ -158,7 +169,7 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.callback: 
+        if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
@@ -189,5 +200,7 @@ class AdHocCLI(CLI):
         finally:
             if self._tqm:
                 self._tqm.cleanup()
+            if loader:
+                loader.cleanup_all_tmp_files()
 
         return result

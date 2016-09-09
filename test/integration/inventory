@@ -4,6 +4,11 @@ testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
 # For testing delegate_to
 testhost3 ansible_ssh_host=127.0.0.3
 testhost4 ansible_ssh_host=127.0.0.4
+# For testing fact gathering
+facthost[0:8] ansible_host=1270.0.0.1 ansible_connection=local
+
+[binary_modules]
+testhost_binary_modules ansible_host=127.0.0.1 ansible_connection=local
 
 # the following inline declarations are accompanied
 # by (preferred) group_vars/ and host_vars/ variables

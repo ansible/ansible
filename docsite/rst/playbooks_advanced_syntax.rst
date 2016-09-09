@@ -24,7 +24,7 @@ Jinja2 contains functionality for escaping, or telling Jinja2 to not template da
 Using YAML tags, you can also mark a value as "unsafe" by using the ``!unsafe`` tag such as::
 
     ---
-    my_unsafe_variable: !unsafe 'this variable has {{ characters that shouldn't be treated as a jinja2 template'
+    my_unsafe_variable: !unsafe 'this variable has {{ characters that should not be treated as a jinja2 template'
 
 In a playbook, this may look like::
 

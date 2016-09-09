@@ -27,9 +27,11 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
+from ansible.module_utils._text import to_bytes
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_decrypt
+
 
 try:
     from __main__ import display
@@ -67,20 +69,20 @@ class Connection(ConnectionBase):
             tries = 3
             self.conn = socket.socket()
             self.conn.settimeout(C.ACCELERATE_CONNECT_TIMEOUT)
-            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr,self._play_context.accelerate_port))
+            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port), host=self._play_context.remote_addr)
             while tries > 0:
                 try:
                     self.conn.connect((self._play_context.remote_addr,self._play_context.accelerate_port))
                     break
                 except socket.error:
-                    display.vvvv("connection to %s failed, retrying..." % self._play_context.remote_addr)
+                    display.vvvv("connection to %s failed, retrying..." % self._play_context.remote_addr, host=self._play_context.remote_addr)
                     time.sleep(0.1)
                     tries -= 1
             if tries == 0:
-                display.vvv("Could not connect via the accelerated connection, exceeded # of tries")
+                display.vvv("Could not connect via the accelerated connection, exceeded # of tries", host=self._play_context.remote_addr)
                 raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr, self._play_context.accelerate_port))
             elif wrong_user:
-                display.vvv("Restarting daemon with a different remote_user")
+                display.vvv("Restarting daemon with a different remote_user", host=self._play_context.remote_addr)
                 raise AnsibleError("The accelerated daemon was started on the remote with a different user")
 
             self.conn.settimeout(C.ACCELERATE_TIMEOUT)
@@ -102,25 +104,25 @@ class Connection(ConnectionBase):
         header_len = 8 # size of a packed unsigned long long
         data = b""
         try:
-            display.vvvv("%s: in recv_data(), waiting for the header" % self._play_context.remote_addr)
+            display.vvvv("in recv_data(), waiting for the header", host=self._play_context.remote_addr)
             while len(data) < header_len:
                 d = self.conn.recv(header_len - len(data))
                 if not d:
-                    display.vvvv("%s: received nothing, bailing out" % self._play_context.remote_addr)
+                    display.vvvv("received nothing, bailing out", host=self._play_context.remote_addr)
                     return None
                 data += d
-            display.vvvv("%s: got the header, unpacking" % self._play_context.remote_addr)
+            display.vvvv("got the header, unpacking", host=self._play_context.remote_addr)
             data_len = struct.unpack('!Q',data[:header_len])[0]
             data = data[header_len:]
-            display.vvvv("%s: data received so far (expecting %d): %d" % (self._play_context.remote_addr,data_len,len(data)))
+            display.vvvv("data received so far (expecting %d): %d" % (data_len, len(data)), host=self._play_context.remote_addr)
             while len(data) < data_len:
                 d = self.conn.recv(data_len - len(data))
                 if not d:
-                    display.vvvv("%s: received nothing, bailing out" % self._play_context.remote_addr)
+                    display.vvvv("received nothing, bailing out", host=self._play_context.remote_addr)
                     return None
-                display.vvvv("%s: received %d bytes" % (self._play_context.remote_addr, len(d)))
+                display.vvvv("received %d bytes" % (len(d)), host=self._play_context.remote_addr)
                 data += d
-            display.vvvv("%s: received all of the data, returning" % self._play_context.remote_addr)
+            display.vvvv("received all of the data, returning", host=self._play_context.remote_addr)
             return data
         except socket.timeout:
             raise AnsibleError("timed out while waiting to receive data")
@@ -132,7 +134,7 @@ class Connection(ConnectionBase):
         daemon to exit if they don't match
         '''
 
-        display.vvvv("%s: sending request for validate_user" % self._play_context.remote_addr)
+        display.vvvv("sending request for validate_user", host=self._play_context.remote_addr)
         data = dict(
             mode='validate_user',
             username=self._play_context.remote_user,
@@ -142,7 +144,7 @@ class Connection(ConnectionBase):
         if self.send_data(data):
             raise AnsibleError("Failed to send command to %s" % self._play_context.remote_addr)
 
-        display.vvvv("%s: waiting for validate_user response" % self._play_context.remote_addr)
+        display.vvvv("waiting for validate_user response", host=self._play_context.remote_addr)
         while True:
             # we loop here while waiting for the response, because a
             # long running command may cause us to receive keepalive packets
@@ -154,10 +156,10 @@ class Connection(ConnectionBase):
             response = json.loads(response)
             if "pong" in response:
                 # it's a keepalive, go back to waiting
-                display.vvvv("%s: received a keepalive packet" % self._play_context.remote_addr)
+                display.vvvv("received a keepalive packet", host=self._play_context.remote_addr)
                 continue
             else:
-                display.vvvv("%s: received the validate_user response: %s" % (self._play_context.remote_addr, response))
+                display.vvvv("received the validate_user response: %s" % (response), host=self._play_context.remote_addr)
                 break
 
         if response.get('failed'):
@@ -174,7 +176,7 @@ class Connection(ConnectionBase):
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        display.vvv("EXEC COMMAND %s" % cmd)
+        display.vvv("EXEC COMMAND %s" % cmd, host=self._play_context.remote_addr)
 
         data = dict(
             mode='command',
@@ -197,10 +199,10 @@ class Connection(ConnectionBase):
             response = json.loads(response)
             if "pong" in response:
                 # it's a keepalive, go back to waiting
-                display.vvvv("%s: received a keepalive packet" % self._play_context.remote_addr)
+                display.vvvv("received a keepalive packet", host=self._play_context.remote_addr)
                 continue
             else:
-                display.vvvv("%s: received the response" % self._play_context.remote_addr)
+                display.vvvv("received the response", host=self._play_context.remote_addr)
                 break
 
         return (response.get('rc', None), response.get('stdout', ''), response.get('stderr', ''))
@@ -210,16 +212,18 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to remote '''
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
+        in_path = to_bytes(in_path, errors='surrogate_or_strict')
+
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         fd = file(in_path, 'rb')
         fstat = os.stat(in_path)
         try:
-            display.vvv("PUT file is %d bytes" % fstat.st_size)
+            display.vvv("PUT file is %d bytes" % fstat.st_size, host=self._play_context.remote_addr)
             last = False
             while fd.tell() <= fstat.st_size and not last:
-                display.vvvv("file position currently %ld, file size is %ld" % (fd.tell(), fstat.st_size))
+                display.vvvv("file position currently %ld, file size is %ld" % (fd.tell(), fstat.st_size), host=self._play_context.remote_addr)
                 data = fd.read(CHUNK_SIZE)
                 if fd.tell() >= fstat.st_size:
                     last = True
@@ -242,7 +246,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
-            display.vvvv("waiting for final response after PUT")
+            display.vvvv("waiting for final response after PUT", host=self._play_context.remote_addr)
             response = self.recv_data()
             if not response:
                 raise AnsibleError("Failed to get a response from %s" % self._play_context.remote_addr)
@@ -262,7 +266,7 @@ class Connection(ConnectionBase):
         if self.send_data(data):
             raise AnsibleError("failed to initiate the file fetch with %s" % self._play_context.remote_addr)
 
-        fh = open(out_path, "w")
+        fh = open(to_bytes(out_path, errors='surrogate_or_strict'), "w")
         try:
             bytes = 0
             while True:
@@ -290,7 +294,7 @@ class Connection(ConnectionBase):
             # point in the future or we may just have the put/fetch
             # operations not send back a final response at all
             response = self.recv_data()
-            display.vvv("FETCH wrote %d bytes to %s" % (bytes, out_path))
+            display.vvv("FETCH wrote %d bytes to %s" % (bytes, out_path), host=self._play_context.remote_addr)
             fh.close()
 
     def close(self):

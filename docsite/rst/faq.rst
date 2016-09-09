@@ -23,7 +23,7 @@ How do I handle different machines needing different user accounts or ports to l
 
 Setting inventory variables in the inventory file is the easiest way.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports::
 
@@ -177,7 +177,7 @@ How do I loop over a list of hosts in a group, inside of a template?
 A pretty common pattern is to iterate over a list of hosts inside of a host group, perhaps to populate a template configuration
 file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this:
 
-.. code-block:: jinja2
+.. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
         {{ host }}
@@ -264,7 +264,7 @@ How do I generate crypted passwords for the user module?
 
 The mkpasswd utility that is available on most Linux systems is a great option::
 
-    mkpasswd --method=SHA-512
+    mkpasswd --method=sha-512
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
@@ -328,8 +328,8 @@ be applied to single tasks only, once a playbook is completed.
 .. _dynamic_variables:
 .. _interpolate_variables:
 
-When should I use {{ }}? Also, howto interpolate variables or dyanmic variable names
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,
@@ -340,11 +340,11 @@ as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this::
 
-     {{ somvar_{{other_var}} }}
+     {{ somevar_{{other_var}} }}
 
 The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
 
-    {{ hostvars[inventory_hostname]['somevar_'  + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
 
 .. _i_dont_see_my_question:

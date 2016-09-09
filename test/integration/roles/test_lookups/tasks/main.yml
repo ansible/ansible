@@ -35,10 +35,11 @@
 
 # PASSWORD LOOKUP
 
-- name: remove previous password files
-  file: dest={{output_dir}}/lookup/password state=absent
+- name: remove previous password files and directory
+  file: dest={{item}} state=absent
   with_items:
   - "{{output_dir}}/lookup/password"
+  - "{{output_dir}}/lookup/password_with_salt"
   - "{{output_dir}}/lookup"
 
 - name: create a password file
@@ -80,11 +81,64 @@
     that:
         - "wc_result.stdout == '9'"
         - "cat_result.stdout == newpass"
+        - "' salt=' not in cat_result.stdout"
+
+- name: fetch password from an existing file
+  set_fact:
+    pass2: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
+
+- name: read password (again)
+  shell: cat {{output_dir}}/lookup/password
+  register: cat_result2
+
+- debug: var=cat_result2.stdout
+
+- name: verify password (again)
+  assert:
+    that:
+        - "cat_result2.stdout == newpass"
+        - "' salt=' not in cat_result2.stdout"
+
+
+
+- name: create a password (with salt) file
+  debug: msg={{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=sha256_crypt') }}
+
+- name: read password and salt
+  shell: cat {{output_dir}}/lookup/password_with_salt
+  register: cat_pass_salt
+
+- debug: var=cat_pass_salt.stdout
+
+- name: fetch unencrypted password
+  set_fact:
+    newpass: "{{ lookup('password', output_dir + '/lookup/password_with_salt') }}"
+
+- debug: var=newpass
+
+- name: verify password and salt
+  assert:
+    that:
+        - "cat_pass_salt.stdout != newpass"
+        - "cat_pass_salt.stdout.startswith(newpass)"
+        - "' salt=' in cat_pass_salt.stdout"
+        - "' salt=' not in newpass"
+
+
+- name: fetch unencrypted password (using empty encrypt parameter)
+  set_fact:
+    newpass2: "{{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=') }}"
+
+- name: verify lookup password behavior
+  assert:
+    that:
+        - "newpass == newpass2"
+
 
 # ENV LOOKUP
 
 - name: get first environment var name
-  shell: env | head -n1 | cut -d\= -f1
+  shell: env | fgrep -v '.' | head -n1 | cut -d\= -f1
   register: known_var_name
 
 - name: get first environment var value
@@ -177,7 +231,7 @@
 
 - name: Test that retrieving a url with invalid cert fails
   set_fact:
-    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/') }}"
+    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/') }}"
   ignore_errors: True
   register: url_invalid_cert
 
@@ -188,12 +242,12 @@
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
-    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/', validate_certs=False) }}"
+    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/', validate_certs=False) }}"
   register: url_no_validate_cert
 
 - assert:
     that:
-      - "'www.kennethreitz.org' in web_data"
+      - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
   debug: var={{item}}

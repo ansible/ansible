@@ -172,9 +172,9 @@ class OVirtInventory(object):
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
-        kwargs['url'] = os.environ.get('OVIRT_URL')
-        kwargs['username'] = os.environ.get('OVIRT_EMAIL')
-        kwargs['password'] = os.environ.get('OVIRT_PASS')
+        kwargs['url'] = os.environ.get('OVIRT_URL', kwargs['url'])
+        kwargs['username'] = next(val for val in [os.environ.get('OVIRT_EMAIL'), os.environ.get('OVIRT_USERNAME'), kwargs['username']] if val is not None)
+        kwargs['password'] = next(val for val in [os.environ.get('OVIRT_PASS'), os.environ.get('OVIRT_PASSWORD'), kwargs['password']] if val is not None)
 
         # Retrieve and return the ovirt driver.
         return API(insecure=True, **kwargs)

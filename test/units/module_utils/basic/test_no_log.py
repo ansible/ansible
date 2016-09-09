@@ -50,7 +50,6 @@ class TestReturnValues(unittest.TestCase):
             ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
         )
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_return_values(self):
         for data, expected in self.dataset:
             self.assertEquals(frozenset(return_values(data)), expected)
@@ -103,12 +102,10 @@ class TestRemoveValues(unittest.TestCase):
             (u'Toshio くらとみ', frozenset(['くらとみ']), u'Toshio ********'),
             )
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_no_removal(self):
         for value, no_log_strings in self.dataset_no_remove:
             self.assertEquals(remove_values(value, no_log_strings), value)
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_strings_to_remove(self):
         for value, no_log_strings, expected in self.dataset_remove:
             self.assertEquals(remove_values(value, no_log_strings), expected)

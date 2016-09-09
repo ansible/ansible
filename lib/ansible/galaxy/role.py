@@ -30,6 +30,7 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -53,6 +54,9 @@ class GalaxyRole(object):
 
         self._metadata = None
         self._install_info = None
+        self._validate_certs = not galaxy.options.ignore_certs
+
+        display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.options = galaxy.options
         self.galaxy  = galaxy
@@ -67,8 +71,8 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
-            for path in galaxy.roles_paths:
-                role_path = os.path.join(path, self.name)
+            for role_path_dir in galaxy.roles_paths:
+                role_path = os.path.join(role_path_dir, self.name)
                 if os.path.exists(role_path):
                     self.path = role_path
                     break
@@ -168,7 +172,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url)
+                url_file = open_url(archive_url, validate_certs=self._validate_certs)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -184,6 +188,7 @@ class GalaxyRole(object):
     def install(self):
         # the file is a tar, so open it that way and extract it
         # to the specified (or default) roles directory
+        local_file = False
 
         if self.scm:
             # create tar file from scm url
@@ -191,6 +196,7 @@ class GalaxyRole(object):
         elif self.src:
             if  os.path.isfile(self.src):
                 # installing a local tar.gz
+                local_file = True
                 tmp_file = self.src
             elif '://' in self.src:
                 role_data = self.src
@@ -290,10 +296,11 @@ class GalaxyRole(object):
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)
-                try:
-                    os.unlink(tmp_file)
-                except (OSError,IOError) as e:
-                    display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
+                if not local_file:
+                    try:
+                        os.unlink(tmp_file)
+                    except (OSError,IOError) as e:
+                        display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
                 return True
 
         return False

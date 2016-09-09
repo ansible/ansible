@@ -33,6 +33,14 @@
 - name: prep our test script
   copy: src=remove_afile.sh dest="{{ output_dir_test }}" mode=0755
 
+- name: locate bash
+  shell: which bash
+  register: bash
+
+- name: locate sha1sum/shasum
+  shell: which sha1sum || which shasum
+  register: sha1sum
+
 ##
 ## command
 ##
@@ -53,7 +61,7 @@
 # FIXME doesn't have the expected stdout.
 
 #- name: execute the test.sh script with executable via command
-#  command: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
+#  command: "{{output_dir_test | expanduser}}/test.sh executable={{ bash.stdout }}"
 #  register: command_result1
 #
 #- name: assert that the script executed correctly with command
@@ -133,7 +141,7 @@
 # FIXME doesn't pass the expected stdout
 
 #- name: execute the test.sh script
-#  shell: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
+#  shell: "{{output_dir_test | expanduser}}/test.sh executable={{ bash.stdout }}"
 #  register: shell_result1
 #
 #- name: assert that the shell executed correctly
@@ -174,13 +182,13 @@
 
 - name: execute a shell command using a literal multiline block
   args:
-    executable: /bin/bash
+    executable: "{{ bash.stdout }}"
   shell: |
     echo this is a \
     "multiline echo" \
     "with a new line
     in quotes" \
-    | sha1sum \
+    | {{ sha1sum.stdout }} \
     | tr -s ' ' \
     | cut -f1 -d ' '
     echo "this is a second line"
@@ -196,7 +204,7 @@
 
 - name: execute a shell command using a literal multiline block with arguments in it
   shell: |
-    executable=/bin/bash
+    executable="{{ bash.stdout }}"
     creates={{output_dir_test | expanduser}}/afile.txt
     echo "test"
   register: shell_result6

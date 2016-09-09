@@ -130,17 +130,17 @@
 # INSTALL broken local package
 - name: create directory
   file:
-    path: "{{output_dir | expanduser}}/zypper"
+    path: "{{output_dir | expanduser}}/zypper1"
     state: directory
 
 - name: fake rpm package
   file:
-    path: "{{output_dir | expanduser}}/zypper/broken.rpm"
+    path: "{{output_dir | expanduser}}/zypper1/broken.rpm"
     state: touch
 
 - name: install broken rpm
   zypper:
-    name="{{output_dir | expanduser}}/zypper/broken.rpm"
+    name="{{output_dir | expanduser}}/zypper1/broken.rpm"
     state=present
   register: zypper_result
   ignore_errors: yes
@@ -150,30 +150,45 @@
 - name: verify we failed installation of broken rpm
   assert:
     that:
-      - "zypper_result.rc == 1"
-      - "'broken.rpm: not an rpm package' in zypper_result.msg"
+      - "zypper_result.rc == 3"
+      - "'Problem reading the RPM header' in zypper_result.stdout"
 
 # Build and install an empty rpm
+- name: uninstall empty
+  zypper:
+    name: empty
+    state: removed
+
+- name: clean zypper RPM cache
+  file: 
+    name: /var/cache/zypper/RPMS
+    state: absent
+
+- name: create directory
+  file:
+    path: "{{output_dir | expanduser}}/zypper2"
+    state: directory
+
 - name: copy spec file
   copy:
     src: empty.spec
-    dest: "{{ output_dir | expanduser }}/zypper/empty.spec"
+    dest: "{{ output_dir | expanduser }}/zypper2/empty.spec"
 
 - name: build rpm
   command: |
     rpmbuild -bb \
-    --define "_topdir {{output_dir | expanduser }}/zypper/rpm-build"
+    --define "_topdir {{output_dir | expanduser }}/zypper2/rpm-build"
     --define "_builddir %{_topdir}" \
     --define "_rpmdir %{_topdir}" \
     --define "_srcrpmdir %{_topdir}" \
-    --define "_specdir {{output_dir | expanduser}}/zypper" \
+    --define "_specdir {{output_dir | expanduser}}/zypper2" \
     --define "_sourcedir %{_topdir}" \
-    {{ output_dir }}/zypper/empty.spec
+    {{ output_dir }}/zypper2/empty.spec
   register: rpm_build_result
 
 - name: install empty rpm
   zypper:
-    name: "{{ output_dir | expanduser }}/zypper/rpm-build/noarch/empty-1-0.noarch.rpm"
+    name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm"
   register: zypper_result
 
 - name: check empty with rpm
@@ -188,7 +203,134 @@
         - "zypper_result.changed"
         - "rpm_result.rc == 0"
 
-- name: uninstall empry
+- name: uninstall empty
   zypper:
     name: empty
     state: removed
+
+# test simultaneous remove and install using +- prefixes
+
+- name: install hello to prep next task
+  zypper: name=hello, state=present
+
+- name: remove metamail to prep next task
+  zypper: name=hello, state=absent
+
+- name: install and remove in the same run, with +- prefix
+  zypper: 
+    name: 
+      - -hello
+      - +metamail
+    state: present
+  register: zypper_res1
+
+- name: install and remove again, leave out plus
+  zypper: name={{item}} state=present
+  with_items:
+    - metamail
+    - -hello
+  register: zypper_res1a
+
+- name: in and rm swapped
+  zypper: name={{item}} state=present
+  with_items:
+    - -metamail
+    - hello
+  register: zypper_res1b
+
+- name: install metamail
+  zypper: name=metamail state=absent
+  register: zypper_res2
+
+- name: remove hello
+  zypper: name=hello state=present
+  register: zypper_res3
+
+- name: verify simultaneous install/remove worked
+  assert:
+    that:
+      - zypper_res1|success
+      - zypper_res1|changed
+      - not zypper_res1a|changed
+      - zypper_res1b|changed
+      - not zypper_res2|changed
+      - not zypper_res3|changed
+
+
+- name: install and remove with state=absent
+  zypper: name={{item}} state=absent
+  with_items:
+    - metamail
+    - +hello
+  register: zypper_res
+  ignore_errors: yes
+
+- name: verify simultaneous install/remove failed with absent
+  assert:
+    that:
+      - zypper_res|failed
+      - zypper_res.results[0].msg == "Can not combine '+' prefix with state=remove/absent."
+
+- name: try rm patch
+  zypper: name=openSUSE-2016-128 type=patch state=absent
+  ignore_errors: yes
+  register: zypper_patch
+- assert:
+    that: 
+      - zypper_patch|failed
+      - zypper_patch.msg.startswith('Can not remove patches.')
+
+- name: try rm URL
+  zypper: name=http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/hello-2.9-6.2.x86_64.rpm state=absent
+  ignore_errors: yes
+  register: zypper_rm
+- assert:
+    that: 
+      - zypper_rm|failed
+      - zypper_rm.msg.startswith('Can not remove via URL.')
+
+# use of version specific (42.1) data in the following
+- block:
+  # test for #1627
+  - name: in existing patch
+    zypper: name=openSUSE-2016-128 type=patch state=present
+  - name: in existing patch again
+    zypper: name=openSUSE-2016-128 type=patch state=present
+    register: zypper_patch
+  - assert:
+      that: not zypper_patch.changed
+
+  - name: in non-existing patch
+    zypper: name=openSUSE-1800-1 type=patch state=present
+    ignore_errors: yes
+    register: zypper_patch
+  - assert:
+      that: zypper_patch|failed
+
+  - name: remove pattern update_test
+    zypper: name=update_test type=pattern state=absent
+  - name: install pattern update_test
+    zypper: name=update_test type=pattern state=present
+    register: zypper_install_pattern1
+  - name: install pattern update_test again
+    zypper: name=update_test type=pattern state=present
+    register: zypper_install_pattern2
+  - assert:
+      that:
+        - zypper_install_pattern1|changed
+        - not zypper_install_pattern2|changed
+
+  - name: remove hello
+    zypper: name=hello state=absent
+  - name: install via URL
+    zypper: state=present name=http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/hello-2.9-6.2.x86_64.rpm
+    register: zypperin1
+  - name: test install
+    zypper: name=hello state=present
+    register: zypperin2
+  - assert:
+      that:
+        - zypperin1|success
+        - zypperin1|changed
+        - not zypperin2|changed
+  when: ansible_distribution == 'openSUSE Leap' and ansible_distribution_version == '42.1'

@@ -31,9 +31,9 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.cache.base import BaseCacheModule
-from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -50,7 +50,7 @@ class CacheModule(BaseCacheModule):
 
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = os.path.expandvars(os.path.expanduser(C.CACHE_PLUGIN_CONNECTION)) # expects a dir path
+        self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION)) # expects a dir path
         if not self._cache_dir:
             raise AnsibleError("error, fact_caching_connection is not set, cannot use fact cache")
 
@@ -62,12 +62,15 @@ class CacheModule(BaseCacheModule):
                 return None
 
     def get(self, key):
-
-        if self.has_expired(key) or key == "":
-            raise KeyError
+        """ This checks the in memory cache first as the fact was not expired at 'gather time'
+        and it would be problematic if the key did expire after some long running tasks and
+        user gets 'undefined' error in the same play """
 
         if key in self._cache:
             return self._cache.get(key)
+
+        if self.has_expired(key) or key == "":
+            raise KeyError
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
@@ -96,9 +99,12 @@ class CacheModule(BaseCacheModule):
             display.warning("error while trying to write to %s : %s" % (cachefile, to_bytes(e)))
             pass
         else:
-            f.write(jsonify(value))
+            f.write(jsonify(value, format=True))
         finally:
-            f.close()
+            try:
+                f.close()
+            except UnboundLocalError:
+                pass
 
     def has_expired(self, key):
 

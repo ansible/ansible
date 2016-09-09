@@ -20,10 +20,10 @@ __metaclass__ = type
 
 import os
 
+from ansible.constants import TREE_DIR
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes
-from ansible.constants import TREE_DIR
 
 
 class CallbackModule(CallbackBase):
@@ -63,9 +63,8 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         self.result_to_tree(result)
 
-    def v2_runner_on_failed(self, result):
+    def v2_runner_on_failed(self, result, ignore_errors=False):
         self.result_to_tree(result)
 
     def v2_runner_on_unreachable(self, result):
         self.result_to_tree(result)
-

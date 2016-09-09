@@ -80,7 +80,8 @@ def _ip_query(v):
     if v.size == 1:
         return str(v.ip)
     if v.size > 1:
-        if v.ip != v.network:
+        # /31 networks in netaddr have no broadcast address
+        if v.ip != v.network or not v.broadcast:
             return str(v.ip)
 
 def _gateway_query(v):
@@ -227,6 +228,9 @@ def _bare_query(v):
 def _bool_hwaddr_query(v):
     if v:
         return True
+
+def _int_hwaddr_query(v):
+    return int(v)
 
 def _cisco_query(v):
     v.dialect = netaddr.mac_cisco
@@ -582,7 +586,6 @@ def nthhost(value, query=''):
         return False
 
     try:
-        vsize = ipaddr(v, 'size')
         nth = int(query)
         if value.size > nth:
           return value[nth]
@@ -637,6 +640,7 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
             '': _empty_hwaddr_query,
             'bare': _bare_query,
             'bool': _bool_hwaddr_query,
+            'int': _int_hwaddr_query,
             'cisco': _cisco_query,
             'eui48': _win_query,
             'linux': _linux_query,
@@ -670,6 +674,11 @@ def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
             ' installed on the ansible controller'.format(f_name))
 
+def ip4_hex(arg):
+    ''' Convert an IPv4 address to Hexadecimal notation '''
+    numbers = list(map(int, arg.split('.')))
+    return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
+
 # ---- Ansible filters ----
 
 class FilterModule(object):
@@ -683,6 +692,7 @@ class FilterModule(object):
         'ipsubnet': ipsubnet,
         'nthhost': nthhost,
         'slaac': slaac,
+        'ip4_hex': ip4_hex,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,

@@ -24,10 +24,12 @@ __metaclass__ = type
 import os
 import sys
 import ast
-from ansible.parsing.yaml.loader import AnsibleLoader
 import traceback
 
 from collections import MutableMapping, MutableSet, MutableSequence
+
+from ansible.compat.six import string_types
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
 
 try:
@@ -37,9 +39,11 @@ except ImportError:
     display = Display()
 
 # modules that are ok that they do not have documentation strings
-BLACKLIST_MODULES = [
-   'async_wrapper', 'accelerate', 'async_status'
-]
+BLACKLIST_MODULES = frozenset((
+   'async_wrapper',
+   'accelerate',
+   'fireball',
+))
 
 def get_docstring(filename, verbose=False):
     """
@@ -74,7 +78,7 @@ def get_docstring(filename, verbose=False):
                         doc = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                         fragments = doc.get('extends_documentation_fragment', [])
 
-                        if isinstance(fragments, basestring):
+                        if isinstance(fragments, string_types):
                             fragments = [ fragments ]
 
                         # Allow the module to specify a var other than DOCUMENTATION

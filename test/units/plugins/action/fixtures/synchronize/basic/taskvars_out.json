@@ -1,0 +1,156 @@
+{
+  "ansible_pipelining": false, 
+  "ansible_docker_extra_args": "", 
+  "ansible_scp_extra_args": "", 
+  "ansible_user": "root", 
+  "ansible_play_hosts": [
+    "el6host"
+  ], 
+  "ansible_connection": "smart", 
+  "ansible_ssh_common_args": "", 
+  "environment": [], 
+  "inventory_hostname": "el6host", 
+  "vars": {
+    "ansible_check_mode": false, 
+    "inventory_hostname": "el6host", 
+    "inventory_file": "inventory", 
+    "inventory_hostname_short": "el6host", 
+    "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
+    "role_names": [], 
+    "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
+    "environment": [], 
+    "play_hosts": [
+      "el6host"
+    ], 
+    "ansible_play_hosts": [
+      "el6host"
+    ], 
+    "hostvars": {
+      "el6host": {
+        "inventory_file": "inventory", 
+        "group_names": [
+          "ungrouped"
+        ], 
+        "groups": {
+          "ungrouped": [
+            "el6host", 
+            "::1"
+          ], 
+          "all": [
+            "el6host", 
+            "::1"
+          ]
+        }, 
+        "inventory_hostname": "el6host", 
+        "inventory_hostname_short": "el6host", 
+        "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
+        "omit": "__omit_place_holder__03600813b83569c710bf5cb2a040d6e01da927c6", 
+        "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
+        "ansible_ssh_user": "root", 
+        "ansible_check_mode": false, 
+        "ansible_version": {
+          "major": 2, 
+          "full": "2.2.0", 
+          "string": "2.2.0", 
+          "minor": 2, 
+          "revision": 0
+        }
+      }
+    }, 
+    "groups": {
+      "ungrouped": [
+        "el6host"
+      ], 
+      "all": [
+        "el6host"
+      ]
+    }, 
+    "group_names": [
+      "ungrouped"
+    ], 
+    "omit": "__omit_place_holder__03600813b83569c710bf5cb2a040d6e01da927c6", 
+    "ansible_version": {
+      "major": 2, 
+      "full": "2.2.0", 
+      "string": "2.2.0", 
+      "minor": 2, 
+      "revision": 0
+    }, 
+    "ansible_ssh_user": "root"
+  }, 
+  "ansible_accelerate_port": 5099, 
+  "roledir": null, 
+  "ansible_ssh_extra_args": "", 
+  "ansible_ssh_host": "el6host", 
+  "ansible_current_hosts": [
+    "el6host"
+  ], 
+  "hostvars": {
+    "el6host": {
+      "inventory_file": "inventory", 
+      "group_names": [
+        "ungrouped"
+      ], 
+      "groups": {
+        "ungrouped": [
+          "el6host", 
+          "::1"
+        ], 
+        "all": [
+          "el6host", 
+          "::1"
+        ]
+      }, 
+      "inventory_hostname": "el6host", 
+      "inventory_hostname_short": "el6host", 
+      "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
+      "omit": "__omit_place_holder__03600813b83569c710bf5cb2a040d6e01da927c6", 
+      "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
+      "ansible_ssh_user": "root", 
+      "ansible_check_mode": false, 
+      "ansible_version": {
+        "major": 2, 
+        "full": "2.2.0", 
+        "string": "2.2.0", 
+        "minor": 2, 
+        "revision": 0
+      }
+    }
+  }, 
+  "group_names": [
+    "ungrouped"
+  ], 
+  "ansible_version": {
+    "major": 2, 
+    "full": "2.2.0", 
+    "string": "2.2.0", 
+    "minor": 2, 
+    "revision": 0
+  }, 
+  "ansible_ssh_pipelining": false, 
+  "inventory_file": "inventory", 
+  "ansible_module_compression": "ZIP_DEFLATED", 
+  "ansible_failed_hosts": [], 
+  "ansible_check_mode": false, 
+  "groups": {
+    "ungrouped": [
+      "el6host"
+    ], 
+    "all": [
+      "el6host"
+    ]
+  }, 
+  "ansible_host": "el6host", 
+  "ansible_shell_executable": "/bin/sh", 
+  "inventory_hostname_short": "el6host", 
+  "omit": "__omit_place_holder__03600813b83569c710bf5cb2a040d6e01da927c6", 
+  "ansible_python_interpreter": "/usr/bin/python", 
+  "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
+  "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
+  "ansible_ssh_user": "root", 
+  "role_names": [], 
+  "play_hosts": [
+    "el6host"
+  ], 
+  "ansible_sftp_extra_args": ""
+}

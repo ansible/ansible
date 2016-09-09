@@ -69,7 +69,8 @@ Examples:
   $ contrib/inventory/gce.py --host my_instance
 
 Author: Eric Johnson <erjohnso@google.com>
-Version: 0.0.1
+Contributors: Matt Hite <mhite@hotmail.com>
+Version: 0.0.2
 '''
 
 __requires__ = ['pycrypto>=2.6']
@@ -83,12 +84,15 @@ except ImportError:
     pass
 
 USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v1"
+USER_AGENT_VERSION="v2"
 
 import sys
 import os
 import argparse
 import ConfigParser
+
+import logging
+logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
 
 try:
     import json
@@ -100,15 +104,18 @@ try:
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
 except:
-    print("GCE inventory script requires libcloud >= 0.13")
-    sys.exit(1)
+    sys.exit("GCE inventory script requires libcloud >= 0.13")
 
 
 class GceInventory(object):
     def __init__(self):
         # Read settings and parse CLI arguments
         self.parse_cli_args()
+        self.config = self.get_config()
         self.driver = self.get_gce_driver()
+        self.ip_type = self.get_inventory_options()
+        if self.ip_type:
+            self.ip_type = self.ip_type.lower()
 
         # Just display data for specific host
         if self.args.host:
@@ -117,14 +124,20 @@ class GceInventory(object):
                     pretty=self.args.pretty))
             sys.exit(0)
 
+        zones = self.parse_env_zones()
+
         # Otherwise, assume user wants all instances grouped
-        print(self.json_format_dict(self.group_instances(),
+        print(self.json_format_dict(self.group_instances(zones),
             pretty=self.args.pretty))
         sys.exit(0)
 
-    def get_gce_driver(self):
-        """Determine the GCE authorization settings and return a
-        libcloud driver.
+    def get_config(self):
+        """
+        Populates a SafeConfigParser object with defaults and
+        attempts to read an .ini-style configuration from the filename
+        specified in GCE_INI_PATH. If the environment variable is
+        not present, the filename defaults to gce.ini in the current
+        working directory.
         """
         gce_ini_default_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "gce.ini")
@@ -139,14 +152,45 @@ class GceInventory(object):
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
             'libcloud_secrets': '',
+            'inventory_ip_type': '',
         })
         if 'gce' not in config.sections():
             config.add_section('gce')
+        if 'inventory' not in config.sections():
+            config.add_section('inventory')
+
         config.read(gce_ini_path)
 
+        #########
+        # Section added for processing ini settings
+        #########
+
+        # Set the instance_states filter based on config file options
+        self.instance_states = []
+        if config.has_option('gce', 'instance_states'):
+            states = config.get('gce', 'instance_states')
+            # Ignore if instance_states is an empty string.
+            if states:
+                self.instance_states = states.split(',')
+
+        return config
+
+    def get_inventory_options(self):
+        """Determine inventory options. Environment variables always
+        take precedence over configuration files."""
+        ip_type = self.config.get('inventory', 'inventory_ip_type')
+        # If the appropriate environment variables are set, they override
+        # other configuration
+        ip_type = os.environ.get('INVENTORY_IP_TYPE', ip_type)
+        return ip_type
+
+    def get_gce_driver(self):
+        """Determine the GCE authorization settings and return a
+        libcloud driver.
+        """
         # Attempt to get GCE params from a configuration file, if one
         # exists.
-        secrets_path = config.get('gce', 'libcloud_secrets')
+        secrets_path = self.config.get('gce', 'libcloud_secrets')
         secrets_found = False
         try:
             import secrets
@@ -160,8 +204,7 @@ class GceInventory(object):
             if not secrets_path.endswith('secrets.py'):
                 err = "Must specify libcloud secrets file as "
                 err += "/absolute/path/to/secrets.py"
-                print(err)
-                sys.exit(1)
+                sys.exit(err)
             sys.path.append(os.path.dirname(secrets_path))
             try:
                 import secrets
@@ -172,10 +215,10 @@ class GceInventory(object):
                 pass
         if not secrets_found:
             args = [
-                config.get('gce','gce_service_account_email_address'),
-                config.get('gce','gce_service_account_pem_file_path')
+                self.config.get('gce','gce_service_account_email_address'),
+                self.config.get('gce','gce_service_account_pem_file_path')
             ]
-            kwargs = {'project': config.get('gce', 'gce_project_id')}
+            kwargs = {'project': self.config.get('gce', 'gce_project_id')}
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
@@ -189,6 +232,14 @@ class GceInventory(object):
             '%s/%s' % (USER_AGENT_PRODUCT, USER_AGENT_VERSION),
         )
         return gce
+
+    def parse_env_zones(self):
+        '''returns a list of comma seperated zones parsed from the GCE_ZONE environment variable.
+        If provided, this will be used to filter the results of the grouped_instances call'''
+        import csv
+        reader = csv.reader([os.environ.get('GCE_ZONE',"")], skipinitialspace=True)
+        zones = [r for r in reader]
+        return [z for z in zones[0]]
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -215,6 +266,12 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        # default to exernal IP unless user has specified they prefer internal
+        if self.ip_type == 'internal':
+            ssh_host = inst.private_ips[0]
+        else:
+            ssh_host = inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+
         return {
             'gce_uuid': inst.uuid,
             'gce_id': inst.id,
@@ -230,7 +287,7 @@ class GceInventory(object):
             'gce_metadata': md,
             'gce_network': net,
             # Hosts don't have a public name, so we add an IP
-            'ansible_ssh_host': inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+            'ansible_ssh_host': ssh_host
         }
 
     def get_instance(self, instance_name):
@@ -240,18 +297,35 @@ class GceInventory(object):
         except Exception as e:
             return None
 
-    def group_instances(self):
+    def group_instances(self, zones=None):
         '''Group all instances'''
         groups = {}
         meta = {}
         meta["hostvars"] = {}
 
         for node in self.driver.list_nodes():
+
+            # This check filters on the desired instance states defined in the
+            # config file with the instance_states config option.
+            #
+            # If the instance_states list is _empty_ then _ALL_ states are returned.
+            #
+            # If the instance_states list is _populated_ then check the current
+            # state against the instance_states list
+            if self.instance_states and not node.extra['status'] in self.instance_states:
+                continue
+
             name = node.name
 
             meta["hostvars"][name] = self.node_to_dict(node)
 
             zone = node.extra['zone'].name
+
+            # To avoid making multiple requests per zone
+            # we list all nodes and then filter the results
+            if zones and zone not in zones:
+                continue
+
             if groups.has_key(zone): groups[zone].append(name)
             else: groups[zone] = [name]
 

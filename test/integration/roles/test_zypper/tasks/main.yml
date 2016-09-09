@@ -22,5 +22,5 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - include: 'zypper.yml'
-  when: ansible_distribution in ['SLES', 'openSUSE']
+  when: ansible_os_family == 'Suse'
 

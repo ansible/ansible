@@ -8,20 +8,10 @@
       paths: '../vars'
 
 # Make sure we start fresh
-- name: remove rpm dependencies for postgresql test
-  package: name={{ item }} state=absent
-  with_items: "{{postgresql_packages}}"
-  when: ansible_os_family == "RedHat"
-
-- name: remove dpkg dependencies for postgresql test
-  apt: name={{ item }} state=absent
-  with_items: "{{postgresql_packages}}"
-  when: ansible_pkg_mgr  ==  'apt'
-
-- name: remove old db (red hat)
+- name: remove old db (RedHat or Suse)
   command: rm -rf "{{ pg_dir }}"
   ignore_errors: True
-  when: ansible_os_family == "RedHat"
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 # Theoretically, pg_dropcluster should work but it doesn't so rm files
 - name: remove old db config (debian)
@@ -35,28 +25,36 @@
   when: ansible_os_family == "Debian"
 
 - name: install rpm dependencies for postgresql test
-  package: name={{ item }} state=latest
+  package: name={{ postgresql_package_item }} state=latest
   with_items: "{{postgresql_packages}}"
-  when: ansible_os_family == "RedHat"
+  loop_control:
+    loop_var: postgresql_package_item
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 - name: install dpkg dependencies for postgresql test
-  apt: name={{ item }} state=latest
+  apt: name={{ postgresql_package_item }} state=latest
   with_items: "{{postgresql_packages}}"
+  loop_control:
+    loop_var: postgresql_package_item
   when: ansible_pkg_mgr  ==  'apt'
 
-- name: Initialize postgres (systemd)
+- name: Initialize postgres (RedHat systemd)
   command: postgresql-setup initdb
   when: ansible_distribution == "Fedora" or (ansible_os_family  == "RedHat" and ansible_distribution_major_version|int >= 7)
 
-- name: Initialize postgres (sysv)
+- name: Initialize postgres (RedHat sysv)
   command: /sbin/service postgresql initdb
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 6
 
-- name: Iniitalize postgres (upstart)
+- name: Iniitalize postgres (Debian)
   command: /usr/bin/pg_createcluster {{ pg_ver }} main
   # Sometimes package install creates the db cluster, sometimes this step is needed
   ignore_errors: True
   when: ansible_os_family == 'Debian'
+
+- name: Initialize postgres (Suse)
+  service: name=postgresql state=restarted
+  when: ansible_os_family == 'Suse'
 
 - name: Copy pg_hba into place
   copy: src=pg_hba.conf dest="{{ pg_hba_location }}" owner="postgres" group="root" mode="0644"
@@ -69,13 +67,17 @@
   command: locale-gen es_MX
   when: ansible_os_family == 'Debian'
 
+- name: install i18ndata
+  zypper: name=glibc-i18ndata state=present
+  when: ansible_os_family == 'Suse'
+
 - name: Generate pt_BR locale (Red Hat)
   command: localedef -f ISO-8859-1 -i pt_BR pt_BR
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 - name: Generate es_MX locale (Red Hat)
   command: localedef -f ISO-8859-1 -i es_MX es_MX
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted

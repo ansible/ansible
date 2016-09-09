@@ -22,7 +22,9 @@ import os
 import re
 import shlex
 
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text
+
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
@@ -31,6 +33,7 @@ _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy
 _powershell_version = os.environ.get('POWERSHELL_VERSION', None)
 if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
+
 
 class ShellModule(object):
 
@@ -41,8 +44,29 @@ class ShellModule(object):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    env = dict()
+
+    # We're being overly cautious about which keys to accept (more so than
+    # the Windows environment is capable of doing), since the powershell
+    # env provider's limitations don't appear to be documented.
+    safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
+
+    def assert_safe_env_key(self, key):
+        if not self.safe_envkey.match(key):
+            raise AnsibleError("Invalid PowerShell environment key: %s" % key)
+        return key
+
+    def safe_env_value(self, key, value):
+        if len(value) > 32767:
+            raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
+        # powershell single quoted literals need single-quote doubling as their only escaping
+        value = value.replace("'", "''")
+        return to_text(value, errors='surrogate_or_strict')
+
     def env_prefix(self, **kwargs):
-        return ''
+        env = self.env.copy()
+        env.update(kwargs)
+        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
 
     def join_path(self, *args):
         parts = []
@@ -52,12 +76,14 @@ class ShellModule(object):
         path = '\\'.join(parts)
         if path.startswith('~'):
             return path
-        return '"%s"' % path
+        return '\'%s\'' % path
 
-    # powershell requires that script files end with .ps1
-    def get_remote_filename(self, base_name):
-        if not base_name.strip().lower().endswith('.ps1'):
-            return base_name.strip() + '.ps1'
+    def get_remote_filename(self, pathname):
+        # powershell requires that script files end with .ps1
+        base_name = os.path.basename(pathname.strip())
+        name, ext = os.path.splitext(base_name.strip())
+        if ext.lower() not in ['.ps1', '.exe']:
+            return name + '.ps1'
 
         return base_name.strip()
 
@@ -66,8 +92,14 @@ class ShellModule(object):
         path = self._unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
-    def chmod(self, mode, path):
-        return ''
+    def chmod(self, paths, mode):
+        raise NotImplementedError('chmod is not implemented for Powershell')
+
+    def chown(self, paths, user):
+        raise NotImplementedError('chown is not implemented for Powershell')
+
+    def set_user_facl(self, paths, user, mode):
+        raise NotImplementedError('set_user_facl is not implemented for Powershell')
 
     def remove(self, path, recurse=False):
         path = self._escape(self._unquote(path))
@@ -94,6 +126,22 @@ class ShellModule(object):
             script = 'Write-Host "%s"' % self._escape(user_home_path)
         return self._encode_script(script)
 
+    def exists(self, path):
+        path = self._escape(self._unquote(path))
+        script = '''
+            If (Test-Path "%s")
+            {
+                $res = 0;
+            }
+            Else
+            {
+                $res = 1;
+            }
+            Write-Host "$res";
+            Exit $res;
+         ''' % path
+        return self._encode_script(script)
+
     def checksum(self, path, *args, **kwargs):
         path = self._escape(self._unquote(path))
         script = '''
@@ -117,16 +165,21 @@ class ShellModule(object):
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_unicode, cmd_parts)
+        cmd_parts = map(to_text, cmd_parts)
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
             cmd_parts.insert(0, '&')
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
+        elif not shebang:
+            # The module is assumed to be a binary
+            cmd_parts[0] = self._unquote(cmd_parts[0])
+            cmd_parts.append(arg_path)
         script = '''
             Try
             {
+                %s
                 %s
             }
             Catch
@@ -158,7 +211,7 @@ class ShellModule(object):
                 Echo $_obj | ConvertTo-Json -Compress -Depth 99
                 Exit 1
             }
-        ''' % (' '.join(cmd_parts))
+        ''' % (env_string, ' '.join(cmd_parts))
         if rm_tmp:
             rm_tmp = self._escape(self._unquote(rm_tmp))
             rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
@@ -167,7 +220,7 @@ class ShellModule(object):
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''
-        value = to_unicode(value or '')
+        value = to_text(value or '')
         m = re.match(r'^\s*?\'(.*?)\'\s*?$', value)
         if m:
             return m.group(1)
@@ -192,7 +245,7 @@ class ShellModule(object):
 
     def _encode_script(self, script, as_list=False, strict_mode=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
-        script = to_unicode(script)
+        script = to_text(script)
         if strict_mode:
             script = u'Set-StrictMode -Version Latest\r\n%s' % script
         script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])

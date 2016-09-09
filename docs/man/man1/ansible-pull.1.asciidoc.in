@@ -1,6 +1,6 @@
 ansible(1)
 =========
-:doctype:manpage
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -54,7 +54,12 @@ OPTIONS
 
 Adds the hostkey for the repo URL if not already added.
 
-*--ask-become-pass*::
+*-b*, *--become*::
+
+Use privilege escalation (specific one depends on become_method),
+this does not imply prompting for passwords.
+
+*-K*, *--ask-become-pass*::
 
 Ask for privilege escalation password.
 
@@ -67,7 +72,7 @@ For example, using ssh and not having  a key-based authentication with ssh-agent
 
 Prompt for su password, used with --su (deprecated, use become).
 
-*-K*, *--ask-sudo-pass*::
+*--ask-sudo-pass*::
 
 Prompt for the password to use with --sudo, if any (deprecated, use become).
 
@@ -157,6 +162,14 @@ URL of the playbook repository to checkout.
 *--vault-password-file=*'VAULT_PASSWORD_FILE'::
 
 Vault password file.
+
+*--clean*::
+
+Modified files in the working repository will be discarded.
+
+*--track-subs*::
+
+Submodules will track the latest changes.
 
 *-v*, *--verbose*::
 

@@ -1,7 +1,25 @@
-[windows]
-server ansible_ssh_host=10.10.10.10 ansible_ssh_user=Administrator ansible_ssh_pass=ShhhDontTellAnyone
+[windows_hosts]
+windows
+testhost_binary_modules
 
-[windows:vars]
+[windows_hosts:vars]
 ansible_connection=winrm
+ansible_host=@ansible_host
+ansible_user=@ansible_user
+ansible_password=@ansible_password
 # HTTPS uses 5986, HTTP uses 5985
-ansible_ssh_port=5985
+ansible_port=5986
+ansible_winrm_server_cert_validation=ignore
+
+[winrm]
+winrm-pipelining    ansible_ssh_pipelining=true
+winrm-no-pipelining ansible_ssh_pipelining=false
+
+[winrm:vars]
+ansible_connection=winrm
+ansible_host=@ansible_host
+ansible_user=@ansible_user
+ansible_password=@ansible_password
+# HTTPS uses 5986, HTTP uses 5985
+ansible_port=5986
+ansible_winrm_server_cert_validation=ignore

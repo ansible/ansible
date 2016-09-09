@@ -34,7 +34,7 @@ options:
       aliases: ['pass', 'pwd']
     org:
       description:
-        - The org to login to for creating vapp, mostly set when the service_type is vdc.
+        - The org to login to for creating vapp. This option is required when the C(service_type) is I(vdc).
       required: false
       default: None
     instance_id:

@@ -58,12 +58,14 @@
 
 - name: remove afile.txt with remote_afile.sh via command
   script: remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
+  register: script_result1
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
-  register: script_result1
+  register: script_result2
 
 - name: assert that the file was removed by the script
   assert:
     that:
-      - "script_result1.changed != True"
+      - "script_result1|changed"
+      - "script_result2.state == 'absent'"

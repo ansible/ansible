@@ -15,3 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Note: Do not add any code to this file.  module_utils may be a namespace
+# package when using Ansible-2.1+ Anything in this file may not be available
+# if one of the other packages in the namespace is loaded first.
