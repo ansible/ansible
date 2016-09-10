@@ -92,20 +92,20 @@ tasks:
   - name: run show version on remote devices
     sros_command:
       commands: show version
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains sros
     sros_command:
       commands: show version
       wait_for: result[0] contains sros
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
      sros_command:
       commands:
         - show version
         - show port detail
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     sros_command:
