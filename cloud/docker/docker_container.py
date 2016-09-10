@@ -1767,9 +1767,9 @@ class ContainerManager(DockerBaseClass):
     def _purge_networks(self, container, networks):
         for network in networks:
             self.results['actions'].append(dict(removed_from_network=network['name']))
-            if not self.check_mode and network.get('id'):
+            if not self.check_mode:
                 try:
-                    self.client.disconnect_container_from_network(container.Id, network['id'])
+                    self.client.disconnect_container_from_network(container.Id, network['name'])
                 except Exception as exc:
                     self.fail("Error disconnecting container from network %s - %s" % (network['name'],
                                                                                       str(exc)))
