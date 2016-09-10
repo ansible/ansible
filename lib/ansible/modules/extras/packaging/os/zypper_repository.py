@@ -129,9 +129,17 @@ REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
 
 from distutils.version import LooseVersion
 
+def _get_cmd(*args):
+    """Combines the non-interactive zypper command with arguments/subcommands"""
+    cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive']
+    cmd.extend(args)
+
+    return cmd
+
+
 def _parse_repos(module):
-    """parses the output of zypper -x lr and return a parse repo dictionary"""
-    cmd = ['/usr/bin/zypper', '-x', 'lr']
+    """parses the output of zypper --xmlout repos and return a parse repo dictionary"""
+    cmd = _get_cmd('--xmlout', 'repos')
 
     from xml.dom.minidom import parseString as parseXML
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -207,7 +215,7 @@ def repo_exists(module, repodata, overwrite_multiple):
 def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
     "Adds the repo, removes old repos before, that would conflict."
     repo = repodata['url']
-    cmd = ['/usr/bin/zypper', 'ar', '--check']
+    cmd = _get_cmd('addrepo', '--check')
     if repodata['name']:
         cmd.extend(['--name', repodata['name']])
 
@@ -251,7 +259,7 @@ def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
 
 def remove_repo(module, repo):
     "Removes the repo."
-    cmd = ['/usr/bin/zypper', 'rr', repo]
+    cmd = _get_cmd('removerepo', repo)
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=True)
     return rc, stdout, stderr
@@ -265,7 +273,7 @@ def get_zypper_version(module):
 
 def runrefreshrepo(module, auto_import_keys=False, shortname=None):
     "Forces zypper to refresh repo metadata."
-    cmd = ['/usr/bin/zypper', 'refresh', '--force']
+    cmd = _get_cmd('refresh', '--force')
     if auto_import_keys:
         cmd.append('--gpg-auto-import-keys')
     if shortname is not None:
