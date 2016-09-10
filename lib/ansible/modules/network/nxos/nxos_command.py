@@ -96,7 +96,7 @@ vars:
 - name: run show verion on remote devices
   nxos_command:
     commands: show version
-    provider "{{ cli }}"
+    provider: "{{ cli }}"
 
 - name: run show version and check to see if output contains Cisco
   nxos_command:

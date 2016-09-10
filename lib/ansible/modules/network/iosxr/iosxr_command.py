@@ -93,20 +93,20 @@ tasks:
   - name: run show version on remote devices
     iosxr_command:
       commands: show version
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains iosxr
     iosxr_command:
       commands: show version
       wait_for: result[0] contains IOS-XR
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
      iosxr_command:
       commands:
         - show version
         - show interfaces
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     iosxr_command:

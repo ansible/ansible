@@ -80,20 +80,20 @@ tasks:
   - name: run show version on remote devices
     dnos10_command:
       commands: show version
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains OS10
     dnos10_command:
       commands: show version
       wait_for: result[0] contains OS10
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
      dnos10_command:
       commands:
         - show version
         - show interface
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     dnos10_command:
