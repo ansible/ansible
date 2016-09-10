@@ -22,6 +22,7 @@ import json
 import sys
 import copy
 
+from distutils.version import LooseVersion
 from urlparse import urlparse
 from ansible.module_utils.basic import *
 
@@ -151,7 +152,7 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
 
-        if docker_version < MIN_DOCKER_VERSION:
+        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
@@ -233,7 +234,7 @@ class AnsibleDockerClient(Client):
             tls_hostname=self._get_value('tls_hostname', params['tls_hostname'],
                                         'DOCKER_TLS_HOSTNAME', 'localhost'),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
-                                        DEFAULT_DOCKER_API_VERSION),
+                                        'auto'),
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
             cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
             key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
