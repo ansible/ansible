@@ -27,11 +27,16 @@ author: "Sergio Millan Rodriguez (@sermilrod)"
 options:
   config:
     description:
-      - config.xml file to use as job config within your Ansible repo.
+      - config in XML format.
+      - Required if job does not yet exist.
+      - Mututally exclusive with C(enabled).
+      - Considered if C(state=present).
     required: false
-  enable:
+  enabled:
     description:
-      - Action to take with the Jenkins job (enable/disable).
+      - Whether the job should be enabled or disabled.
+      - Mututally exclusive with C(config).
+      - Considered if C(state=present).
     required: false
   name:
     description:
@@ -68,7 +73,6 @@ EXAMPLES = '''
     config: "{{ lookup('file', 'templates/test.xml') }}"
     name: test
     password: admin
-    enable: True
     url: "http://localhost:8080"
     user: admin
 
@@ -77,7 +81,6 @@ EXAMPLES = '''
     config: "{{ lookup('template', 'templates/test.xml.j2') }}"
     name: test
     token: asdfasfasfasdfasdfadfasfasdfasdfc
-    enable: yes
     url: "http://localhost:8080"
     user: admin
 
@@ -101,7 +104,7 @@ EXAMPLES = '''
 - jenkins_job:
     name: test
     password: admin
-    enable: False
+    enabled: false
     url: "http://localhost:8080"
     user: admin
 
@@ -109,7 +112,7 @@ EXAMPLES = '''
 - jenkins_job:
     name: test
     token: asdfasfasfasdfasdfadfasfasdfasdfc
-    enable: no
+    enabled: false
     url: "http://localhost:8080"
     user: admin
 '''
@@ -146,12 +149,12 @@ except ImportError:
     python_lxml_installed = False
 
 class Jenkins:
-    def __init__(self, config, name, password, state, enable, token, url, user):
+    def __init__(self, config, name, password, state, enabled, token, url, user):
         self.config = config
         self.name = name
         self.password = password
         self.state = state
-        self.enable = enable
+        self.enabled = enabled
         self.token = token
         self.user = user
         self.jenkins_url = url
@@ -195,29 +198,39 @@ class Jenkins:
         return job_config_to_string(self.config)
 
     def configuration_changed(self):
+        # config is optional, if not provided we keep the current config as is
+        if self.config is None:
+            return False
+
         changed = False
         config_file = self.get_config()
         machine_file = job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
-        if not machine_file == config_file:
+        if machine_file != config_file:
             changed = True
-
         return changed
 
     def update_job(self, module):
+        if self.config is None and self.enabled is None:
+            module.fail_json(msg='one of the following params is required on state=present: config,enabled')
+
         if not self.job_exists(module):
             self.create_job(module)
         else:
             self.reconfig_job(module)
 
     def state_changed(self, status):
+        # Keep in current state if enabled arg_spec is not given
+        if self.enabled is None:
+            return False
+
         changed = False
-        if ( (self.enable == False and status != "disabled") or (self.enable == True and status == "disabled") ):
+        if ( (self.enabled == False and status != "disabled") or (self.enabled == True and status == "disabled") ):
             changed = True
 
         return changed
 
     def change_state(self):
-        if self.enable == False:
+        if self.enabled == False:
             self.server.disable_job(self.name)
         else:
             self.server.enable_job(self.name)
@@ -226,17 +239,18 @@ class Jenkins:
         changed = False
         try:
             status = self.get_job_status(module)
-            if self.enable == True:
-                if ( self.configuration_changed() or self.state_changed(status) ):
-                    changed = True
-                    if not module.check_mode:
-                        self.server.reconfig_job(self.name, self.get_config())
-                        self.change_state()
-            else:
-                if self.state_changed(status):
-                    changed = True
-                    if not module.check_mode:
-                        self.change_state()
+
+            # Handle job config
+            if self.configuration_changed():
+                changed = True
+                if not module.check_mode:
+                    self.server.reconfig_job(self.name, self.get_config())
+
+            # Handle job disable/enable
+            elif self.state_changed(status):
+                changed = True
+                if not module.check_mode:
+                    self.change_state()
 
         except Exception:
             e = get_exception()
@@ -245,6 +259,10 @@ class Jenkins:
         module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url)
 
     def create_job(self, module):
+
+        if self.config is None:
+            module.fail_json(msg='missing required param: config')
+
         changed = False
         try:
             changed = True
@@ -288,7 +306,7 @@ def jenkins_builder(module):
         module.params.get('name'),
         module.params.get('password'),
         module.params.get('state'),
-        module.params.get('enable'),
+        module.params.get('enabled'),
         module.params.get('token'),
         module.params.get('url'),
         module.params.get('user')
@@ -301,16 +319,15 @@ def main():
             name        = dict(required=True),
             password    = dict(required=False, no_log=True),
             state       = dict(required=False, choices=['present', 'absent'], default="present"),
-            enable      = dict(required=False, type='bool'),
+            enabled     = dict(required=False, type='bool'),
             token       = dict(required=False, no_log=True),
             url         = dict(required=False, default="http://localhost:8080"),
             user        = dict(required=False)
         ),
-        required_if = [
-            ('state', 'present', ['enable']),
-            ('enable', True, ['config'])
+        mutually_exclusive = [
+            ['password', 'token'],
+            ['config', 'enabled'],
         ],
-        mutually_exclusive = [['password', 'token']],
         supports_check_mode=True,
     )
 
