@@ -159,6 +159,10 @@ class Jenkins:
         self.user = user
         self.jenkins_url = url
         self.server = self.get_jenkins_connection()
+        self.diff = {
+            'before': "",
+            'after': "",
+        }
 
     def get_jenkins_connection(self):
         try:
@@ -204,7 +208,9 @@ class Jenkins:
 
         changed = False
         config_file = self.get_config()
+        self.diff['after'] = config_file
         machine_file = job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
+        self.diff['before'] = machine_file
         if machine_file != config_file:
             changed = True
         return changed
@@ -256,29 +262,31 @@ class Jenkins:
             e = get_exception()
             module.fail_json(msg='Unable to reconfigure job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url)
+        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
 
     def create_job(self, module):
 
         if self.config is None:
             module.fail_json(msg='missing required param: config')
 
-        changed = False
+        changed = True
         try:
-            changed = True
+            config_file = self.get_config()
+            self.diff['after'] = config_file
             if not module.check_mode:
-                self.server.create_job(self.name, self.get_config())
+                self.server.create_job(self.name, config_file)
                 self.change_state()
         except Exception:
             e = get_exception()
             module.fail_json(msg='Unable to create job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url)
+        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
 
     def delete_job(self, module):
         changed = False
         if self.job_exists(module):
             changed = True
+            self.diff['before'] = job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
             if not module.check_mode:
                 try:
                     self.server.delete_job(self.name)
@@ -286,7 +294,7 @@ class Jenkins:
                     e = get_exception()
                     module.fail_json(msg='Unable to delete job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url)
+        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
 
 def test_dependencies(module):
     if not python_jenkins_installed:
