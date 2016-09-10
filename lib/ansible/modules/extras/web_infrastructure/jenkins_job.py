@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: jenkins_job
 short_description: Manage jenkins jobs
 description:
-    - Manage Jenkins jobs by using Jenkins REST API
+    - Manage Jenkins jobs by using Jenkins REST API.
 requirements:
   - "python-jenkins >= 0.4.12"
   - "lxml >= 3.3.3"
@@ -129,6 +129,16 @@ state:
   returned: success
   type: string
   sample: present
+enabled:
+  description: Whether the jenkins job is enabled or not.
+  returned: success
+  type: bool
+  sample: true
+user:
+  description: User used for authentication.
+  returned: success
+  type: string
+  sample: admin
 url:
   description: Url to connect to the Jenkins server.
   returned: success
@@ -148,20 +158,30 @@ try:
 except ImportError:
     python_lxml_installed = False
 
-class Jenkins:
-    def __init__(self, config, name, password, state, enabled, token, url, user):
-        self.config = config
-        self.name = name
-        self.password = password
-        self.state = state
-        self.enabled = enabled
-        self.token = token
-        self.user = user
-        self.jenkins_url = url
+class JenkinsJob:
+    def __init__(self, module):
+        self.module = module
+
+        self.config = module.params.get('config')
+        self.name = module.params.get('name')
+        self.password = module.params.get('password')
+        self.state = module.params.get('state')
+        self.enabled = module.params.get('enabled')
+        self.token = module.params.get('token')
+        self.user = module.params.get('user')
+        self.jenkins_url = module.params.get('url')
         self.server = self.get_jenkins_connection()
-        self.diff = {
-            'before': "",
-            'after': "",
+
+        self.result = {
+            'changed': False,
+            'url': self.jenkins_url,
+            'name': self.name,
+            'user': self.user,
+            'state': self.state,
+            'diff': {
+                'before': "",
+                'after': ""
+            }
         }
 
     def get_jenkins_connection(self):
@@ -176,125 +196,119 @@ class Jenkins:
                 return jenkins.Jenkins(self.jenkins_url)
         except Exception:
             e = get_exception()
-            module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
+            self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
 
-    def get_job_status(self, module):
+    def get_job_status(self):
         try:
             return self.server.get_job_info(self.name)['color'].encode('utf-8')
         except Exception:
             e = get_exception()
-            module.fail_json(msg='Unable to fetch job information, %s' % str(e))
+            self.module.fail_json(msg='Unable to fetch job information, %s' % str(e))
 
-    def job_exists(self, module):
+    def job_exists(self):
         try:
             return bool(self.server.job_exists(self.name))
         except Exception:
             e = get_exception()
-            module.fail_json(msg='Unable to validate if job exists, %s for %s' % (str(e), self.jenkins_url))
-
-    def build(self, module):
-        if self.state == 'present':
-            self.update_job(module)
-        else:
-            self.delete_job(module)
+            self.module.fail_json(msg='Unable to validate if job exists, %s for %s' % (str(e), self.jenkins_url))
 
     def get_config(self):
         return job_config_to_string(self.config)
 
-    def configuration_changed(self):
+    def get_current_config(self):
+        return job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
+
+    def has_config_changed(self):
         # config is optional, if not provided we keep the current config as is
         if self.config is None:
             return False
 
-        changed = False
         config_file = self.get_config()
-        self.diff['after'] = config_file
-        machine_file = job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
-        self.diff['before'] = machine_file
-        if machine_file != config_file:
-            changed = True
-        return changed
+        machine_file = self.get_current_config()
 
-    def update_job(self, module):
+        self.result['diff']['after'] = config_file
+        self.result['diff']['before'] = machine_file
+
+        if machine_file != config_file:
+            return True
+        return False
+
+    def present_job(self):
         if self.config is None and self.enabled is None:
             module.fail_json(msg='one of the following params is required on state=present: config,enabled')
 
-        if not self.job_exists(module):
-            self.create_job(module)
+        if not self.job_exists():
+            self.create_job()
         else:
-            self.reconfig_job(module)
+            self.update_job()
 
-    def state_changed(self, status):
+    def has_state_changed(self, status):
         # Keep in current state if enabled arg_spec is not given
         if self.enabled is None:
             return False
 
-        changed = False
         if ( (self.enabled == False and status != "disabled") or (self.enabled == True and status == "disabled") ):
-            changed = True
+            return True
+        return False
 
-        return changed
-
-    def change_state(self):
+    def switch_state(self):
         if self.enabled == False:
             self.server.disable_job(self.name)
         else:
             self.server.enable_job(self.name)
 
-    def reconfig_job(self, module):
-        changed = False
+    def update_job(self):
         try:
-            status = self.get_job_status(module)
+            status = self.get_job_status()
 
             # Handle job config
-            if self.configuration_changed():
-                changed = True
-                if not module.check_mode:
+            if self.has_config_changed():
+                self.result['changed'] = True
+                if not self.module.check_mode:
                     self.server.reconfig_job(self.name, self.get_config())
 
             # Handle job disable/enable
-            elif self.state_changed(status):
-                changed = True
-                if not module.check_mode:
-                    self.change_state()
+            elif self.has_state_changed(status):
+                self.result['changed'] = True
+                if not self.module.check_mode:
+                    self.switch_state()
 
         except Exception:
             e = get_exception()
-            module.fail_json(msg='Unable to reconfigure job, %s for %s' % (str(e), self.jenkins_url))
+            self.module.fail_json(msg='Unable to reconfigure job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
-
-    def create_job(self, module):
-
+    def create_job(self):
         if self.config is None:
-            module.fail_json(msg='missing required param: config')
+            self.module.fail_json(msg='missing required param: config')
 
-        changed = True
+        self.result['changed'] = True
         try:
             config_file = self.get_config()
-            self.diff['after'] = config_file
-            if not module.check_mode:
+            self.result['diff']['after'] = config_file
+            if not self.module.check_mode:
                 self.server.create_job(self.name, config_file)
-                self.change_state()
         except Exception:
             e = get_exception()
-            module.fail_json(msg='Unable to create job, %s for %s' % (str(e), self.jenkins_url))
+            self.module.fail_json(msg='Unable to create job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
-
-    def delete_job(self, module):
-        changed = False
-        if self.job_exists(module):
-            changed = True
-            self.diff['before'] = job_config_to_string(self.server.get_job_config(self.name).encode('utf-8'))
-            if not module.check_mode:
+    def absent_job(self):
+        if self.job_exists():
+            self.result['changed'] = True
+            self.result['diff']['before'] = self.get_current_config()
+            if not self.module.check_mode:
                 try:
                     self.server.delete_job(self.name)
                 except Exception:
                     e = get_exception()
-                    module.fail_json(msg='Unable to delete job, %s for %s' % (str(e), self.jenkins_url))
+                    self.module.fail_json(msg='Unable to delete job, %s for %s' % (str(e), self.jenkins_url))
 
-        module.exit_json(changed=changed, name=self.name, state=self.state, url=self.jenkins_url, diff=self.diff)
+    def get_result(self):
+        result = self.result
+        if self.job_exists():
+            result['enabled'] = self.get_job_status() != "disabled"
+        else:
+            result['enabled'] = None
+        return result
 
 def test_dependencies(module):
     if not python_jenkins_installed:
@@ -307,18 +321,6 @@ def test_dependencies(module):
 
 def job_config_to_string(xml_str):
     return ET.tostring(ET.fromstring(xml_str))
-
-def jenkins_builder(module):
-    return Jenkins(
-        module.params.get('config'),
-        module.params.get('name'),
-        module.params.get('password'),
-        module.params.get('state'),
-        module.params.get('enabled'),
-        module.params.get('token'),
-        module.params.get('url'),
-        module.params.get('user')
-    )
 
 def main():
     module = AnsibleModule(
@@ -340,8 +342,16 @@ def main():
     )
 
     test_dependencies(module)
-    jenkins = jenkins_builder(module)
-    jenkins.build(module)
+    jenkins_job = JenkinsJob(module)
+
+    if module.params.get('state') == "present":
+        jenkins_job.present_job()
+    else:
+        jenkins_job.absent_job()
+
+    result = jenkins_job.get_result()
+    module.exit_json(**result)
+
 
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
