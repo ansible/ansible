@@ -23,7 +23,7 @@ requirements:
   - "python-jenkins >= 0.4.12"
   - "lxml >= 3.3.3"
 version_added: "2.2"
-author: "Sergio Millan Rodriguez"
+author: "Sergio Millan Rodriguez (@sermilrod)"
 options:
   config:
     description:
@@ -44,7 +44,8 @@ options:
   state:
     description:
       - Attribute that specifies if the job has to be created or deleted.
-    required: true
+    required: false
+    default: present
     choices: ['present', 'absent']
   token:
     description:
@@ -67,7 +68,6 @@ EXAMPLES = '''
     config: "{{ lookup('file', 'templates/test.xml') }}"
     name: test
     password: admin
-    state: present
     enable: True
     url: "http://localhost:8080"
     user: admin
@@ -77,7 +77,6 @@ EXAMPLES = '''
     config: "{{ lookup('template', 'templates/test.xml.j2') }}"
     name: test
     token: asdfasfasfasdfasdfadfasfasdfasdfc
-    state: present
     enable: yes
     url: "http://localhost:8080"
     user: admin
@@ -102,7 +101,6 @@ EXAMPLES = '''
 - jenkins_job:
     name: test
     password: admin
-    state: present
     enable: False
     url: "http://localhost:8080"
     user: admin
@@ -111,7 +109,6 @@ EXAMPLES = '''
 - jenkins_job:
     name: test
     token: asdfasfasfasdfasdfadfasfasdfasdfc
-    state: present
     enable: no
     url: "http://localhost:8080"
     user: admin
@@ -303,7 +300,7 @@ def main():
             config      = dict(required=False),
             name        = dict(required=True),
             password    = dict(required=False, no_log=True),
-            state       = dict(required=True,  choices=['present', 'absent']),
+            state       = dict(required=False, choices=['present', 'absent'], default="present"),
             enable      = dict(required=False, type='bool'),
             token       = dict(required=False, no_log=True),
             url         = dict(required=False, default="http://localhost:8080"),
