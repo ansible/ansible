@@ -181,7 +181,7 @@ class StrategyBase:
                 return False
 
         passes = 1
-        while not self._tqm._terminated and passes < 3:
+        while not self._tqm._terminated and passes < 3 and self._pending_results > 0:
             try:
                 task_result = self._final_q.get(timeout=timeout)
                 original_host = get_original_host(task_result._host)
