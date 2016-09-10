@@ -1927,7 +1927,7 @@ def main():
         recreate=dict(type='bool', default=False),
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
-        restart_retries=dict(type='int', default=0),
+        restart_retries=dict(type='int', default=None),
         shm_size=dict(type='str'),
         security_opts=dict(type='list'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
