@@ -266,10 +266,14 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                    # FIXME: probably not required here any more with the result proc
-                    #        having been removed, so there's no only a single result
-                    #        queue for the main thread
-                    results += self._process_pending_results(iterator, one_pass=True)
+                    # flush the queue if we've got more items than we have workers,
+                    # and read back any results which may have arrived already
+                    if len(items_to_queue) > len(self._tqm._workers):
+                        self._tqm.queue_multiple_tasks(items_to_queue, play_context)
+                        items_to_queue = []
+
+                    if self._pending_results > 0:
+                        results += self._process_pending_results(iterator, one_pass=True)
 
                 self._tqm.queue_multiple_tasks(items_to_queue, play_context)
 
