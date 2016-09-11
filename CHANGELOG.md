@@ -28,17 +28,33 @@ Ansible Changes By Release
   * `environment:` support for setting module environment vars in play/task.
 
 ####New Modules:
+- apache2_mod_proxy
 - archive
 - asa
   * asa_acl
   * asa_command
   * asa_config
   * asa_template
+- atomic
+  * atomic_host
+  * atomic_image
 - aws
+  * cloudformation_facts
+  * ec2_asg_facts
   * ec2_customer_gateway
+  * ec2_lc_find
+  * ec2_vpc_dhcp_options_facts
+  * ec2_vpc_nacl
   * ec2_vpc_nacl_facts
   * ec2_vpc_nat_gateway
+  * ec2_vpc_peer
   * ec2_vpc_vgw
+  * execute_lambda
+  * iam_mfa_device_facts
+  * iam_server_certificate_facts
+  * kinesis_stream
+  * s3_website
+  * sts_session_token
 - cloudstack
   * cs_router
   * cs_snapshot_policy
@@ -46,47 +62,82 @@ Ansible Changes By Release
   * dnos10_command
   * dnos10_config
   * dnos10_template
+- exoscale:
+  * exo_dns_domain
+  * exo_dns_record
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
   * bigip_device_sshd
+  * bigip_gtm_datacenter
+  * bigip_gtm_virtual_server
   * bigip_irule
-- github_key
+  * bigip_routedomain
+  * bigip_selfip
+  * bigip_ssl_certificate
+  * bigip_sys_db
+  * bigip_vlan
+- github
+  * github_key
+  * github_release
 - google
   * gcdns_record
   * gcdns_zone
+- honeybadger_deployment
+- illumos
+  * dladm_etherstub
+  * dladm_vnic
+  * flowadm
+  * ipadm_if
+  * ipadm_prop
 - ipmi
   * ipmi_boot
   * ipmi_power
 - include_role
-- jenkins_plugin
+- jenkins
+  * jenkins_job
+  * jenkins_plugin
+- kibana_plugin
 - letsencrypt
 - logicmonitor
 - logicmonitor_facts
 - lxd
   * lxd_profile
   * lxd_container
+- netapp
+  * netapp_e_facts
+  * netapp_e_storage_system
 - netconf_config
+- mssql_db
 - ovh_ip_loadbalancing_backend
+- opendj_backendprop
 - openstack
   * os_keystone_service
   * os_recordset
   * os_server_group
   * os_stack
   * os_zone
+- rhevm
 - rocketchat
+- sefcontext
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- statusio_maintenance
 - systemd
 - telegram
 - univention
+  * udm_dns_record
+  * udm_dns_zone
+  * udm_group
+  * udm_share
   * udm_user
 - vmware
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
+- win_robocopy
 
 
 ###Minor Changes:
