@@ -49,9 +49,9 @@ To make things explicit, it is suggested that you set them if things are not run
 
 Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
-    jumper ansible_port=5555 ansible_host=192.168.1.50
+    jumper ansible_port=5555 ansible_host=192.0.2.50
 
-In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
+In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
 Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::

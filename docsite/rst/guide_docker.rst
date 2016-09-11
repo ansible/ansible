@@ -72,7 +72,7 @@ Control how modules connect to the Docker API by passing the following parameter
 
     docker_host
         The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``.
-        To connect to a remote host, provide the TCP connection string. For example: ``tcp://192.168.99.100:2376``. If
+        To connect to a remote host, provide the TCP connection string. For example: ``tcp://192.0.2.23:2376``. If
         TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the
         connection URL with 'https'.
 
@@ -170,7 +170,7 @@ examples to get you started:
 
     # Any container's ssh port exposed on 0.0.0.0 will be mapped to
     # another IP address (where Ansible will attempt to connect via SSH)
-    DOCKER_DEFAULT_IP=1.2.3.4 ./docker.py --pretty
+    DOCKER_DEFAULT_IP=192.0.2.5 ./docker.py --pretty
 
     # Run as input to a playbook:
     ansible-playbook -i ~/projects/ansible/contrib/inventory/docker.py docker_inventory_test.yml

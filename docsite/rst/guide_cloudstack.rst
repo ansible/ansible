@@ -115,15 +115,15 @@ This is how our inventory looks like:
     jumphost
 
     [webserver]
-    web-01.example.com  public_ip=1.2.3.4
-    web-02.example.com  public_ip=1.2.3.5
+    web-01.example.com  public_ip=198.51.100.20
+    web-02.example.com  public_ip=198.51.100.21
 
     [db-server]
     db-01.example.com
     db-02.example.com
 
     [jumphost]
-    jump.example.com  public_ip=1.2.3.6
+    jump.example.com  public_ip=198.51.100.22
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 

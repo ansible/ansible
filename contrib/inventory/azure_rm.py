@@ -76,7 +76,7 @@ required. For a specific host, this script returns the following variables:
     "version": "latest"
   },
   "location": "westus",
-  "mac_address": "00-0D-3A-31-2C-EC",
+  "mac_address": "00-00-5E-00-53-FE",
   "name": "object-name",
   "network_interface": "interface-name",
   "network_interface_id": "/subscriptions/subscription-id/resourceGroups/galaxy-production/providers/Microsoft.Network/networkInterfaces/object-name1",
