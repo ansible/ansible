@@ -295,8 +295,8 @@ record type that should be queried. This can be done by either passing-in
 additional parameter of format ``qtype=TYPE`` to the ``dig`` lookup, or by
 appending ``/TYPE`` to the *FQDN* being queried. For example::
 
-  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com.', 'qtype=TXT') }}"
-  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com./TXT') }}"
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org.', 'qtype=TXT') }}"
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org./TXT') }}"
 
 If multiple values are associated with the requested record, the results will be
 returned as a comma-separated list. In such cases you may want to pass option
@@ -310,16 +310,16 @@ In case of reverse DNS lookups (``PTR`` records), you can also use a convenience
 syntax of format ``IP_ADDRESS/PTR``. The following three lines would produce the
 same output::
 
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8/PTR') }}"
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa./PTR') }}"
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa.', 'qtype=PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa.', 'qtype=PTR') }}"
 
 By default, the lookup will rely on system-wide configured DNS servers for
 performing the query. It is also possible to explicitly specify DNS servers to
 query using the ``@DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N`` notation. This
 needs to be passed-in as an additional parameter to the lookup. For example::
 
-  - debug: msg="Querying 8.8.8.8 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@8.8.8.8') }}"
+  - debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
 
 In some cases the DNS records may hold a more complex data structure, or it may
 be useful to obtain the results in a form of a dictionary for future

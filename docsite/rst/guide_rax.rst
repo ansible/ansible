@@ -200,23 +200,23 @@ following information, which will be utilized for inventory and variables.
         "_meta": {
             "hostvars": {
                 "test": {
-                    "ansible_host": "1.1.1.1",
-                    "rax_accessipv4": "1.1.1.1",
-                    "rax_accessipv6": "2607:f0d0:1002:51::4",
+                    "ansible_host": "198.51.100.1",
+                    "rax_accessipv4": "198.51.100.1",
+                    "rax_accessipv6": "2001:DB8::2342",
                     "rax_addresses": {
                         "private": [
                             {
-                                "addr": "2.2.2.2",
+                                "addr": "192.0.2.2",
                                 "version": 4
                             }
                         ],
                         "public": [
                             {
-                                "addr": "1.1.1.1",
+                                "addr": "198.51.100.1",
                                 "version": 4
                             },
                             {
-                                "addr": "2607:f0d0:1002:51::4",
+                                "addr": "2001:DB8::2342",
                                 "version": 6
                             }
                         ]
@@ -262,11 +262,11 @@ following information, which will be utilized for inventory and variables.
                     "rax_name_attr": "name",
                     "rax_networks": {
                         "private": [
-                            "2.2.2.2"
+                            "192.0.2.2"
                         ],
                         "public": [
-                            "1.1.1.1",
-                            "2607:f0d0:1002:51::4"
+                            "198.51.100.1",
+                            "2001:DB8::2342"
                         ]
                     },
                     "rax_os-dcf_diskconfig": "AUTO",
@@ -322,22 +322,22 @@ The ``rax_facts`` module provides facts as followings, which match the ``rax.py`
 
     {
         "ansible_facts": {
-            "rax_accessipv4": "1.1.1.1",
-            "rax_accessipv6": "2607:f0d0:1002:51::4",
+            "rax_accessipv4": "198.51.100.1",
+            "rax_accessipv6": "2001:DB8::2342",
             "rax_addresses": {
                 "private": [
                     {
-                        "addr": "2.2.2.2",
+                        "addr": "192.0.2.2",
                         "version": 4
                     }
                 ],
                 "public": [
                     {
-                        "addr": "1.1.1.1",
+                        "addr": "198.51.100.1",
                         "version": 4
                     },
                     {
-                        "addr": "2607:f0d0:1002:51::4",
+                        "addr": "2001:DB8::2342",
                         "version": 6
                     }
                 ]
@@ -383,11 +383,11 @@ The ``rax_facts`` module provides facts as followings, which match the ``rax.py`
             "rax_name_attr": "name",
             "rax_networks": {
                 "private": [
-                    "2.2.2.2"
+                    "192.0.2.2"
                 ],
                 "public": [
-                    "1.1.1.1",
-                    "2607:f0d0:1002:51::4"
+                    "198.51.100.1",
+                    "2001:DB8::2342"
                 ]
             },
             "rax_os-dcf_diskconfig": "AUTO",

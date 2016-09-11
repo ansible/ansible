@@ -49,7 +49,7 @@ Now that you've installed Ansible, it's time to get started with some basics.
 Edit (or create) ``/etc/ansible/hosts`` and put one or more remote systems in it. Your
 public SSH key should be located in ``authorized_keys`` on those systems::
 
-    192.168.1.50
+    192.0.2.50
     aserver.example.org
     bserver.example.org
 
@@ -147,4 +147,3 @@ To enable basic logging on the control machine see :doc:`intro_configuration` do
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
