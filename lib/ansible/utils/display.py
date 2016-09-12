@@ -124,7 +124,7 @@ class Display:
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
+                msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
             if not stderr:
                 fileobj = sys.stdout
