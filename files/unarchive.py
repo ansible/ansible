@@ -440,6 +440,7 @@ class ZipArchive(object):
                     elif stat.S_ISREG(st.st_mode) and timestamp < st.st_mtime:
                         # Add to excluded files, ignore other changes
                         out += 'File %s is newer, excluding file\n' % path
+                        self.excludes.append(path)
                         continue
                 else:
                     if timestamp != st.st_mtime:
@@ -545,12 +546,12 @@ class ZipArchive(object):
         cmd = [ self.cmd_path, '-o', self.src ]
         if self.opts:
             cmd.extend(self.opts)
-        if self.includes:
+         # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
+#        if self.includes:
             # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
-            cmd.extend(map(shell_escape, self.includes))
-        # We don't need to handle excluded files, since we simply do not include them
-#        if self.excludes:
-#            cmd.extend([ '-x' ] + self.excludes ])
+#            cmd.extend(map(shell_escape, self.includes))
+        if self.excludes:
+            cmd.extend([ '-x' ] + self.excludes)
         cmd.extend([ '-d', self.dest ])
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
