@@ -111,30 +111,6 @@ options:
     default: false
     choices: [ "true", "false" ]
     version_added: "2.2"
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-    version_added: "2.2"
-  commit:
-    description:
-      - This argument specifies the update method to use when applying the
-        configuration changes to the remote node.  If the value is set to
-        I(merge) the configuration updates are merged with the running-
-        config.  If the value is set to I(check), no changes are made to
-        the remote host.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-    version_added: "2.2"
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -170,15 +146,6 @@ options:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
-    version_added: "2.2"
-  state:
-    description:
-      - This argument specifies whether or not the running-config is
-        present on the remote device.  When set to I(absent) the
-        running-config on the remote device is erased.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -235,22 +202,9 @@ backup_path:
   type: path
   sample: /playbooks/ansible/backup/sros_config.2016-07-16@22:28:34
 """
-import re
-
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.sros import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-def check_args(module, warnings):
-    if module.params['parents']:
-        if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unnecessary argument parents')
 
 def sanitize_config(lines):
     commands = list()
@@ -263,10 +217,9 @@ def sanitize_config(lines):
     return commands
 
 def get_config(module, result):
-    contents = module.params['config'] or result.get('__config__')
+    contents = module.params['config']
     if not contents:
         contents = module.config.get_config()
-        result['__config__'] = contents
     return NetworkConfig(device_os='sros', contents=contents)
 
 def get_candidate(module):
@@ -278,12 +231,7 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def revert_config(module):
-    if result.get('__checkpoint__'):
-        module.cli(['admin rollback revert latest-rb',
-                    'admin rollback delete latest-rb'])
-
-def present(module, result):
+def run(module, result):
     match = module.params['match']
 
     candidate = get_candidate(module)
@@ -292,7 +240,6 @@ def present(module, result):
         config = get_config(module, result)
         configobjs = candidate.difference(config)
     else:
-        config = None
         configobjs = candidate.items
 
     if configobjs:
@@ -301,58 +248,40 @@ def present(module, result):
 
         result['updates'] = commands
 
-        if module.params['update'] != 'check':
-            # check if creating checkpoints is possible
-            config = module.config.get_config()
-            if 'rollback-location' not in config:
-                warn = 'Cannot create checkpoint.  Please enable this feature ' \
-                        'with "configure system rollback rollback-location" ' \
-                        'command.  Automatic rollback will be  disabled'
-                result['warnings'].append(warn)
-                result['__checkpoint__'] = False
-            else:
-                result['__checkpoint__'] = True
+        # check if creating checkpoints is possible
+        if not module.connection.rollback_enabled:
+            warn = 'Cannot create checkpoint.  Please enable this feature ' \
+                   'using the sros_rollback module.  Automatic rollback ' \
+                   'will be disabled'
+            result['warnings'].append(warn)
 
-            # create a config checkpoint prior to trying to
-            # configure the device
-            if result.get('__checkpoint__'):
-                module.cli(['admin rollback save'])
+        # send the configuration commands to the device and merge
+        # them with the current running config
+        if not module.check_mode:
+            module.config.load_config(commands)
+        result['changed'] = True
 
-            # send the configuration commands to the device and merge
-            # them with the current running config
-            if not module.check_mode:
-                module.config(commands)
-            result['changed'] = True
-
-            # remove checkpoint from system
-            if result.get('__checkpoint__'):
-                module.cli(['admin rollback delete latest-rb'])
-
-    if module.params['save'] and not module.check_mode:
-       module.config.save_config()
-
-def absent(module, result):
-    if not module.check_mode:
-        module.cli('write erase')
-    result['changed'] = True
+    if module.params['save']:
+        if not module.check_mode:
+            module.config.save_config()
+        result['changed'] = True
 
 def main():
-
+    """ main entry point for module execution
+    """
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
 
-        src=dict(type='path'),
-
         match=dict(default='line', choices=['line', 'none']),
-        update=dict(choices=['merge', 'check'], default='merge'),
 
-        backup=dict(type='bool', default=False),
         config=dict(),
         default=dict(type='bool', default=False),
-        save=dict(type='bool', default=False),
 
-        state=dict(choices=['present', 'absent'], default='present')
+        backup=dict(type='bool', default=False),
+        save=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
@@ -362,22 +291,16 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    state = module.params['state']
-
-    warnings = list()
-    check_args(module, warnings)
-
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False, warnings=list())
 
     if module.params['backup']:
         result['__backup__'] = module.config.get_config()
 
     try:
-        invoke(state, module, result)
+        run(module, result)
     except NetworkError:
-        revert_config(module)
         exc = get_exception()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=str(exc), **exc.kwargs)
 
     module.exit_json(**result)
 
