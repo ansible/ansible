@@ -57,6 +57,13 @@ options:
         description:
             - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
         aliases: ['daemon-reload']
+    user:
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
+        description:
+            - run systemctl talking to the service manager of the calling user, rather than the service manager
+              of the system.
 notes:
     - One option other than name is required.
 requirements:
@@ -231,6 +238,7 @@ def main():
                 enabled = dict(type='bool'),
                 masked = dict(type='bool'),
                 daemon_reload= dict(type='bool', default=False, aliases=['daemon-reload']),
+                user= dict(type='bool', default=False),
             ),
             supports_check_mode=True,
             required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
@@ -238,6 +246,8 @@ def main():
 
     # initialize
     systemctl = module.get_bin_path('systemctl')
+    if module.params['user']:
+        systemctl = systemctl + " --user"
     unit = module.params['name']
     rc = 0
     out = err = ''
