@@ -29,7 +29,7 @@
 import re
 
 from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list, get_exception
+from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
 
 
@@ -96,13 +96,12 @@ class Cli(CliBase):
 
         return diff
 
-    def get_config(self, output='text'):
+    def get_config(self, output='text', **kwargs):
         if output not in ['text', 'set']:
             raise ValueError('invalid output format specified')
         if output == 'set':
             return self.execute(['show configuration commands'])[0]
         else:
             return self.execute(['show configuration'])[0]
-
 
 Cli = register_transport('cli', default=True)(Cli)
