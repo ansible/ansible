@@ -73,6 +73,7 @@ class Response(object):
         except ValueError:
             return None
 
+
 class Rest(object):
 
     DEFAULT_HEADERS = {
@@ -221,7 +222,7 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self):
+    def get_config(self, **kwargs):
         return self.execute('show running-config')[0]
 
     def load_config(self, commands, **kwargs):
@@ -232,6 +233,7 @@ class Cli(CliBase):
 
 Cli = register_transport('cli')(Cli)
 
+
 class Ssh(object):
 
     def __init__(self):
@@ -239,6 +241,7 @@ class Ssh(object):
             msg = 'ops.dc lib is required but does not appear to be available'
             raise NetworkError(msg)
         self._opsidl = None
+        self._extschema = None
 
     def configure(self, config):
         if not self._opsidl:
