@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import subprocess
 import sys
 import re
 import itertools
