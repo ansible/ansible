@@ -36,6 +36,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
@@ -666,14 +667,7 @@ class TaskExecutor:
                 conn_type = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
-                try:
-                    ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
-                    cmd = subprocess.Popen([ssh_executable, '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (out, err) = cmd.communicate()
-                    err = to_text(err)
-                    if u"Bad configuration option" in err or u"Usage:" in err:
-                        conn_type = "paramiko"
-                except OSError:
+                if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
