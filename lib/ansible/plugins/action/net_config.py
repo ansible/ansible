@@ -95,7 +95,7 @@ class ActionModule(ActionBase):
                 source = self._loader.path_dwim_relative(working_path, src)
 
         if not os.path.exists(source):
-            return
+            raise ValueError('path specified in src not found')
 
         try:
             with open(source, 'r') as f:
