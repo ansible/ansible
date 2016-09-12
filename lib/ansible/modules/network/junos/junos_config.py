@@ -180,30 +180,6 @@ from ansible.module_utils.junos import NetworkModule, NetworkError
 DEFAULT_COMMENT = 'configured by junos_config'
 
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-def run(module, result):
-    if module.params['rollback']:
-        action = 'rollback_config'
-    elif module.params['zeroize']:
-        action = 'zeroize_config'
-    else:
-        action = 'load_config'
-
-    return invoke(action, module, result)
-
-
-def check_args(module, warnings):
-    if module.params['replace'] is True:
-        warnings.append('The replace argument is deprecated, please use '
-                        'update=replace instead.  This argument will be '
-                        'removed in the future')
-    if module.params['lines'] and module.params['update'] == 'replace':
-        module.fail_json(msg='config replace is only allowed when src is specified')
-
 def guess_format(config):
     try:
         json.loads(config)
@@ -222,23 +198,21 @@ def guess_format(config):
 
     return 'text'
 
-def backup_config(module, result):
-    result['__backup__'] = module.config.get_config()
-
 def load_config(module, result):
-    comment = module.params['comment']
-    confirm = module.params['confirm']
-
-    update = module.params['update']
-
     candidate =  module.params['lines'] or module.params['src']
-    commit = not module.check_mode
 
-    config_format = module.params['src_format'] or guess_format(candidate)
+    kwargs = dict()
+    kwargs['comment'] = module.params['comment']
+    kwargs['confirm'] = module.params['confirm']
+    kwargs['commit'] = not module.check_mode
 
-    diff = module.config.load_config(candidate, update=update, comment=comment,
-                                     format=config_format, commit=commit,
-                                     confirm=confirm)
+    if module.params['src']:
+        config_format = module.params['src_format'] or guess_format(candidate)
+    elif module.params['lines']:
+        config_format = 'set'
+    kwargs['config_format'] = config_format
+
+    diff = module.config.load_config(candidate, **kwargs)
 
     if diff:
         result['changed'] = True
@@ -246,12 +220,11 @@ def load_config(module, result):
 
 def rollback_config(module, result):
     rollback = module.params['rollback']
-    comment = module.params['comment']
 
-    commit = not module.check_mode
+    kwargs = dict(comment=module.param['comment'],
+                  commit=not module.check_mode)
 
-    diff = module.connection.rollback_config(rollback, commit=commit,
-                                             comment=comment)
+    diff = module.connection.rollback_config(rollback, **kwargs)
 
     if diff:
         result['changed'] = True
@@ -262,9 +235,18 @@ def zeroize_config(module, result):
         module.cli.run_commands('request system zeroize')
     result['changed'] = True
 
+def run(module, result):
+    if module.params['rollback']:
+        return rollback_config(module, result)
+    elif module.params['zeroize']:
+        return zeroize_config(module, result)
+    else:
+        return load_config(module, result)
+
 
 def main():
-
+    """ main entry point for module execution
+    """
     argument_spec = dict(
         lines=dict(type='list'),
 
@@ -272,7 +254,7 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'replace']),
+        replace=dict(default=False, type='bool'),
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
 
@@ -281,10 +263,6 @@ def main():
         rollback=dict(type='int'),
         zeroize=dict(default=False, type='bool'),
 
-        # this argument is deprecated in favor of setting update=replace
-        # and will be removed in a future version
-        replace=dict(default=False, type='bool'),
-
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -292,17 +270,17 @@ def main():
                           ('rollback', 'zeroize'), ('lines', 'src'),
                           ('src', 'zeroize'), ('src', 'rollback')]
 
+    required_if = [('replace', True, ['src'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
+    result = dict(changed=False)
 
-    if module.params['replace'] is True:
-        module.params['update'] = 'replace'
-
-    result = dict(changed=False, warnings=warnings)
+    if module.params['backup']:
+        result['__backup__'] = module.config.get_config()
 
     try:
         run(module, result)
