@@ -28,11 +28,11 @@
 
 import re
 import time
-import itertools
 import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six.moves import zip
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -83,7 +83,7 @@ class Cli(object):
 
     def run_commands(self):
         responses = self.connection.run_commands(self._commands)
-        for resp, cmd in itertools.izip(responses, self._commands):
+        for resp, cmd in zip(responses, self._commands):
             cmd.response = resp
 
         # wipe out the commands list to avoid issues if additional
@@ -189,7 +189,7 @@ class Conditional(object):
 
         key, op, val = shlex.split(conditional)
         self.key = key
-        self.func = self.func(op)
+        self.func = self._func(op)
         self.value = self._cast_value(val)
 
     def __call__(self, data):
@@ -206,9 +206,9 @@ class Conditional(object):
         elif re.match(r'^\d+$', value):
             return int(value)
         else:
-            return unicode(value)
+            return text_type(value)
 
-    def func(self, oper):
+    def _func(self, oper):
         for func, operators in self.OPERATORS.items():
             if oper in operators:
                 return getattr(self, func)
