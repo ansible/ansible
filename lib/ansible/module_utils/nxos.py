@@ -21,7 +21,7 @@ import re
 import time
 import collections
 
-from ansible.module_utils.basic import json
+from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
 from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
@@ -145,14 +145,14 @@ class Nxapi(NxapiConfigMixin):
         while commands:
             stack.append(commands.popleft())
             if len(stack) == 10:
-                data = self._get_body(stack, output)
-                data = self._jsonify(data)
+                body = self._get_body(stack, output)
+                data = self._jsonify(body)
                 requests.append(data)
                 stack = list()
 
         if stack:
-            data = self._get_body(stack, output)
-            data = self._jsonify(data)
+            body = self._get_body(stack, output)
+            data = self._jsonify(body)
             requests.append(data)
 
         headers = {'Content-Type': 'application/json'}
@@ -279,11 +279,13 @@ class Cli(NxapiConfigMixin, CliBase):
 
 Cli = register_transport('cli', default=True)(Cli)
 
+
 def prepare_config(commands):
     prepared = ['config']
     prepared.extend(to_list(commands))
     prepared.append('end')
     return prepared
+
 
 def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
