@@ -59,7 +59,7 @@ class Cli(CliBase):
 
     ### Config methods ###
 
-    def configure(self, commands, **kwargs):
+    def configure(self, commands):
         cmds = ['configure terminal']
         if commands[-1] == 'end':
             commands.pop()
@@ -68,7 +68,7 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self, flags=None, **kwargs):
+    def get_config(self, flags=None):
         cmd = 'show running-config'
         if flags:
             if isinstance(flags, list):
@@ -106,6 +106,7 @@ class Cli(CliBase):
             self.execute(['abort'])
             diff = None
             raise
+
         return diff[0]
 
 Cli = register_transport('cli', default=True)(Cli)
