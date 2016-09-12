@@ -46,14 +46,21 @@ class Cli(CliBase):
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"^\r\nError:", re.M),
     ]
+
+    def __init__(self):
+        super(Cli, self).__init__()
+        self._rollback_enabled = None
+
+    @property
+    def rollback_enabled(self):
+        if self._rollback_enabled is not None:
+            return self._rollback_enabled
+        resp = self.execute(['show system rollback'])
+        match = re.search(r'^Rollback Location\s+:\s(\S+)', resp[0], re.M)
+        self._rollback_enabled = match.group(1) != 'None'
+        return self._rollback_enabled
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
@@ -79,8 +86,20 @@ class Cli(CliBase):
             cmd += ' detail'
         return self.execute(cmd)[0]
 
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
+    def load_config(self, commands):
+        if self.rollback_enabled:
+            self.execute(['admin rollback save'])
+
+        try:
+            self.configure(commands)
+        except NetworkError:
+            if self.rollback_enabled:
+                self.execute(['admin rollback revert latest-rb',
+                              'admin rollback delete latest-rb'])
+            raise
+
+        if self.rollback_enabled:
+            self.execute(['admin rollback delete latest-rb'])
 
     def save_config(self):
         self.execute(['admin save'])
