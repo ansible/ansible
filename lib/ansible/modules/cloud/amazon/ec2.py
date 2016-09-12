@@ -1307,9 +1307,22 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for inst in res.instances:
 
             # Check "source_dest_check" attribute
-            if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                inst.modify_attribute('sourceDestCheck', source_dest_check)
-                changed = True
+            try:
+                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                    inst.modify_attribute('sourceDestCheck', source_dest_check)
+                    changed = True
+            except boto.exception.EC2ResponseError as exc:
+                # instances with more than one Elastic Network Interface will
+                # fail, because they have the sourceDestCheck attribute defined
+                # per-interface
+                if exc.code == 'InvalidInstanceID':
+                    for interface in inst.interfaces:
+                        if interface.source_dest_check != source_dest_check:
+                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
+                            changed = True
+                else:
+                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
+                                     exception=traceback.format_exc(exc))
 
             # Check "termination_protection" attribute
             if inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
