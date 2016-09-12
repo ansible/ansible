@@ -52,7 +52,6 @@ def daemonize_self():
         sys.exit("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
 
     # decouple from parent environment
-    os.chdir("/")
     os.setsid()
     os.umask(int('022', 8))
 
