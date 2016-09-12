@@ -112,19 +112,6 @@ options:
     required: false
     default: false
     choices: [ "true", "false" ]
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -203,9 +190,14 @@ vars:
 RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
-  returned: always
+  returned: when list is specified
   type: list
   sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: path
+  sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
 import time
 
@@ -214,10 +206,6 @@ from ansible.module_utils.nxos import NetworkModule, NetworkError
 from ansible.module_utils.basic import get_exception
 
 def check_args(module, warnings):
-    if module.params['save'] and module.check_mode:
-        warnings.append('will not save configuration due to checkmode')
-    if module.params['parents'] and module.params['src']:
-        warnings.append('ignoring parents argument when src specified')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -232,94 +220,47 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def get_config(module, result):
-    defaults = module.params['defaults']
-    if defaults is True:
-        key = '__configall__'
-    else:
-        key = '__config__'
-
-    contents = module.params['config'] or result.get(key)
-
+def get_config(module):
+    contents = module.params['config']
     if not contents:
+        defaults = module.params['defaults']
         contents = module.config.get_config(include_defaults=defaults)
-        result[key] = contents
-
     return NetworkConfig(indent=2, contents=contents)
-
-def backup_config(module, result):
-    if '__config__' not in result:
-        result['__config__'] = module.config.get_config()
-    result['__backup__'] = result['__config__']
-
-def load_config(module, commands, result):
-    if not module.check_mode:
-        module.config.load_config(commands)
-    result['changed'] = True
-
-def load_checkpoint(module, result):
-    try:
-        checkpoint = result['__checkpoint__']
-        module.log('load checkpoint %s' % checkpoint)
-        module.cli(['rollback running-config checkpoint %s' % checkpoint,
-                    'no checkpoint %s' % checkpoint], output='text')
-    except KeyError:
-        module.fail_json(msg='unable to rollback, checkpoint not found')
-    except NetworkError:
-        exc = get_exception()
-        msg = 'unable to rollback configuration'
-        module.fail_json(msg=msg, checkpoint=checkpoint, **exc.kwargs)
 
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
-    update = module.params['update']
 
     candidate = get_candidate(module)
 
     if match != 'none':
-        config = get_config(module, result)
+        config = get_config(module)
         path = module.params['parents']
         configobjs = candidate.difference(config, path=path, match=match,
                                           replace=replace)
     else:
-        config = None
         configobjs = candidate.items
-
-    if module.params['backup']:
-        backup_config(module, result)
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
 
-        if module.params['before']:
-            commands[:0] = module.params['before']
+        if module.params['lines']:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if module.params['after']:
+                commands.extend(module.params['after'])
 
-        result['updates'] = commands
+            result['updates'] = commands
 
-        # create a checkpoint of the current running config in case
-        # there is a problem loading the candidate config
-        checkpoint = 'ansible_%s' % int(time.time())
-        module.cli(['checkpoint %s' % checkpoint], output='text')
-        result['__checkpoint__'] = checkpoint
-        module.log('create checkpoint %s' % checkpoint)
-
-        # if the update mode is set to check just return
-        # and do not try to load into the system
-        if update != 'check':
-            load_config(module, commands, result)
-
-        # remove the checkpoint file used to restore the config
-        # in case of an error
         if not module.check_mode:
-            module.log('remove checkpoint %s' % checkpoint)
-            module.cli('no checkpoint %s' % checkpoint, output='text')
+            module.config.load_config(commands)
 
-    if module.params['save'] and not module.check_mode:
-        module.config.save_config()
+        result['changed'] = True
+
+    if module.params['save']:
+        if not module.check_mode:
+            module.config.save_config()
         result['changed'] = True
 
 def main():
@@ -327,10 +268,10 @@ def main():
     """
 
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -342,20 +283,23 @@ def main():
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
-        update=dict(choices=['merge', 'check'], default='merge'),
-        backup=dict(type='bool', default=False),
-
         config=dict(),
         defaults=dict(type='bool', default=False),
 
+        backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
 
+    required_if = [('match', 'strict', ['lines']),
+                   ('match', 'exact', ['lines']),
+                   ('replace', 'block', ['lines'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     if module.params['force'] is True:
@@ -366,10 +310,12 @@ def main():
 
     result = dict(changed=False, warnings=warnings)
 
+    if module.params['backup']:
+        result['__backup__'] = module.config.get_config()
+
     try:
         run(module, result)
     except NetworkError:
-        load_checkpoint(module, result)
         exc = get_exception()
         module.fail_json(msg=str(exc), **exc.kwargs)
 
