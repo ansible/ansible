@@ -364,6 +364,11 @@ def main():
         mtime = os.path.getmtime(dest)
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
+        # If the checksum does not match we have to force the download
+        # because last_mod_time may be newer than on remote
+        if checksum_mismatch:
+            force = True
+
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
 
