@@ -108,19 +108,6 @@ options:
     required: false
     default: false
     choices: ['yes', 'no']
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) I(replace) and I(check).  When the argument is
-        set to I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -184,24 +171,15 @@ backup_path:
   description: The full path to the backup file
   returned: when backup is yes
   type: path
-  sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
+  sample: /playbooks/ansible/backup/ops_config.2016-07-16@22:28:34
 """
 import re
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.openswitch import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
 
 def check_args(module, warnings):
-    if module.params['parents']:
-        if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unnecessary argument parents')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -222,59 +200,55 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def load_backup(module):
-    try:
-        module.cli(['exit', 'config replace flash:/ansible-rollback force'])
-    except NetworkError:
-        module.fail_json(msg='unable to rollback configuration')
-
-def backup_config(module):
-    cmd = 'copy running-config flash:/ansible-rollback'
-    cmd = Command(cmd, prompt=re.compile('\? $'), response='\n')
-    module.cli(cmd)
-
 def load_config(module, commands, result):
-    if not module.check_mode and module.params['update'] != 'check':
+    if not module.check_mode:
         module.config(commands)
-    result['changed'] = module.params['update'] != 'check'
-    result['updates'] = commands
+    result['changed'] = True
 
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+    path = module.params['parents']
 
     candidate = get_candidate(module)
 
     if match != 'none':
         config = get_config(module, result)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
     else:
-        config = None
         configobjs = candidate.items
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
 
-        if module.params['before']:
-            commands[:0] = module.params['before']
+        if module.params['lines']:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if module.params['after']:
+                commands.extend(module.params['after'])
+
+        result['updates'] = commands
 
         # send the configuration commands to the device and merge
         # them with the current running config
-        load_config(module, commands, result)
+        if not module.check_mode:
+            module.config.load_config(commands)
+        result['changed'] = True
 
-    if module.params['save'] and not module.check_mode:
-        module.config.save_config()
+    if module.params['save']:
+        if not module.check_mode:
+            module.config.save_config()
+        result['changed'] = True
 
 def main():
 
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -286,13 +260,10 @@ def main():
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
-        update=dict(choices=['merge', 'check'], default='merge'),
-        backup=dict(type='bool', default=False),
-
         config=dict(),
-        default=dict(type='bool', default=False),
 
         save=dict(type='bool', default=False),
+        backup=dict(type='bool', default=False),
 
         # ops_config is only supported over Cli transport so force
         # the value of transport to be cli
@@ -301,9 +272,14 @@ def main():
 
     mutually_exclusive = [('lines', 'src')]
 
+    required_if = [('match', 'strict', ['lines']),
+                   ('match', 'exact', ['lines']),
+                   ('replace', 'block', ['lines'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     if module.params['force'] is True:
