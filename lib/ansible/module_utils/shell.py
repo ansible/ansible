@@ -262,7 +262,7 @@ class CliBase(object):
     def get_config(self, commands):
         raise NotImplementedError
 
-    def load_config(self, commands):
+    def load_config(self, commands, **kwargs):
         raise NotImplementedError
 
     def save_config(self):
