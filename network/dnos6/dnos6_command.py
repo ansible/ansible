@@ -1,4 +1,4 @@
-# !/usr/bin/python
+#!/usr/bin/python
 #
 # This file is part of Ansible
 #
