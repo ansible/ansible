@@ -30,6 +30,10 @@ Ansible Changes By Release
     - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
   * `async:` support for long-running or background tasks.
   * `environment:` support for setting module environment vars in play/task.
+* Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
+  * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
+  * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
 
 ####New Modules:
 - apache2_mod_proxy
