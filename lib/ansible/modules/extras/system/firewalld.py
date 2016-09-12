@@ -114,10 +114,7 @@ try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClient
     fw = FirewallClient()
-    if not fw.connected:
-        HAS_FIREWALLD = False
-    else:
-        HAS_FIREWALLD = True
+    HAS_FIREWALLD = True
 except ImportError:
     HAS_FIREWALLD = False
 
@@ -358,6 +355,13 @@ def main():
     ## Pre-run version checking
     if FW_VERSION < "0.2.11":
         module.fail_json(msg='unsupported version of firewalld, requires >= 2.0.11')
+    ## Check for firewalld running
+    try:
+        if fw.connected == False:
+            module.fail_json(msg='firewalld service must be running')
+    except AttributeError:
+        module.fail_json(msg="firewalld connection can't be established,\
+                installed version (%s) likely too old. Requires firewalld >= 2.0.11" % FW_VERSION)
 
     ## Global Vars
     changed=False
@@ -383,14 +387,6 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
-
-    ## Check for firewalld running
-    try:
-        if fw.connected == False:
-            module.fail_json(msg='firewalld service must be running')
-    except AttributeError:
-        module.fail_json(msg="firewalld connection can't be established,\
-                version likely too old. Requires firewalld >= 2.0.11")
 
     modification_count = 0
     if service != None:
