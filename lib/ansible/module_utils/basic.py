@@ -56,6 +56,7 @@ import pwd
 import platform
 import errno
 import datetime
+import glob
 from itertools import repeat, chain
 
 try:
@@ -1890,6 +1891,17 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
 
         return backupdest
+
+    def backup_local_purge(self, fn, purge):
+        '''purge the outdated backup files'''
+
+        outdatetime = time.time() - purge
+        if os.path.exists(fn):
+            # backups named basename-YYYY-MM-DD@HH:MM:SS~
+            for backup in glob.glob(fn + '.\d+-\d+-\d+@\d+:\d+:\d+~'):
+                backuptime = time.mktime(time.strptime(backup, fn + ".%Y-%m-%d@%H:%M:%S~"))
+                if backuptime < outdatetime:
+                    self.cleanup(backup)
 
     def cleanup(self, tmpfile):
         if os.path.exists(tmpfile):
