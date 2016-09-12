@@ -19,7 +19,6 @@
 import re
 import shlex
 
-import re
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
@@ -175,7 +174,7 @@ class Netconf(object):
         self.lock_config()
 
         try:
-            candidate = '\n'.join(candidate)
+            candidate = '\n'.join(config)
             self.config.load(candidate, format=config_format, merge=merge,
                              overwrite=overwrite)
 
@@ -242,7 +241,7 @@ class Netconf(object):
             self.config.rollback(identifier)
         except ValueError:
             exc = get_exception()
-            self._error('Unable to rollback config: $s' % str(exc))
+            self.raise_exc('Unable to rollback config: $s' % str(exc))
 
         diff = self.config.diff()
         if commit:
@@ -271,12 +270,12 @@ class Cli(CliBase):
             self.execute('cli')
         self.execute('set cli screen-length 0')
 
-    def configure(self, commands, comment=None):
+    def configure(self, commands, comment=None, **kwargs):
         cmds = ['configure']
         cmds.extend(to_list(commands))
 
         if comment:
-            cmds.append('commit and-quit comment "%s"' % kwargs.get('comment'))
+            cmds.append('commit and-quit comment "%s"' % comment)
         else:
             cmds.append('commit and-quit')
 
