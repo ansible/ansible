@@ -96,15 +96,13 @@ class Cli(CliBase):
 
         return diff
 
-    def get_config(self, output='config'):
-        if output not in ['config', 'set']:
+    def get_config(self, output='text'):
+        if output not in ['text', 'set']:
             raise ValueError('invalid output format specified')
         if output == 'set':
             return self.execute(['show configuration commands'])[0]
         else:
             return self.execute(['show configuration'])[0]
 
-    def save_config(self):
-        raise NotImplementedError
 
 Cli = register_transport('cli', default=True)(Cli)
