@@ -56,17 +56,6 @@ options:
     required: false
     default: line
     choices: ['line', 'none']
-  update:
-    description:
-      - The C(update) argument controls the method used to update the
-        remote device configuration.  This argument accepts two valid
-        options, C(merge) or C(check).  When C(merge) is specified, the
-        configuration is merged into the current active config.  When
-        C(check) is specified, the module returns the set of updates
-        that would be applied to the active configuration.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
   backup:
     description:
       - The C(backup) argument will backup the current devices active
@@ -108,7 +97,7 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-removed:
+filtered:
   description: The list of configuration commands removed to avoid a load failure
   returned: always
   type: list
@@ -153,11 +142,6 @@ CONFIG_FILTERS = [
 ]
 
 
-def check_args(module, warnings):
-    if module.params['save'] and module.params['update'] == 'check':
-        warnings.append('The configuration will not be saved when update '
-                        'is set to check')
-
 def config_to_commands(config):
     set_format = config.startswith('set') or config.startswith('delete')
     candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
@@ -181,7 +165,6 @@ def get_config(module, result):
     contents = module.params['config']
     if not contents:
         contents = module.config.get_config(output='set').split('\n')
-
     else:
         contents = config_to_commands(contents)
 
@@ -223,11 +206,11 @@ def diff_config(commands, config):
     return list(updates)
 
 def sanitize_config(config, result):
-    result['removed'] = list()
+    result['filtered'] = list()
     for regex in CONFIG_FILTERS:
         for index, line in enumerate(list(config)):
             if regex.search(line):
-                result['removed'].append(line)
+                result['filtered'].append(line)
                 del config[index]
 
 def load_config(module, commands, result):
@@ -264,25 +247,24 @@ def run(module, result):
     if module.params['update'] != 'check':
         load_config(module, updates, result)
 
-        if result.get('removed'):
+        if result.get('filtered'):
             result['warnings'].append('Some configuration commands where '
-                                      'removed, please see the removed key')
+                                      'removed, please see the filtered key')
 
 
 def main():
 
     argument_spec = dict(
-        lines=dict(type='list'),
         src=dict(type='path'),
-
+        lines=dict(type='list'),
 
         match=dict(default='line', choices=['line', 'none']),
 
-        update=dict(default='merge', choices=['merge', 'check']),
-        backup=dict(default=False, type='bool'),
         comment=dict(default=DEFAULT_COMMENT),
 
         config=dict(),
+
+        backup=dict(default=False, type='bool'),
         save=dict(default=False, type='bool'),
     )
 
@@ -293,10 +275,7 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
-
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False)
 
     if module.params['backup']:
         result['__backup__'] = module.config.get_config()
