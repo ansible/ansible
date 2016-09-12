@@ -369,18 +369,17 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         pass
     cmd = [ git_path, 'clone' ]
 
-    branch_or_tag = is_remote_branch(git_path, module, dest, repo, version) \
-        or is_remote_tag(git_path, module, dest, repo, version)
-
     if bare:
         cmd.append('--bare')
     else:
         cmd.extend([ '--origin', remote ])
-        if branch_or_tag:
-            cmd.extend([ '--branch', version ])
-    if depth and (branch_or_tag or version == 'HEAD' or refspec):
-        # only use depth if the remote opject is branch or tag (i.e. fetchable)
-        cmd.extend([ '--depth', str(depth) ])
+    if depth:
+        if version == 'HEAD' \
+           or refspec  \
+           or is_remote_branch(git_path, module, dest, repo, version) \
+           or is_remote_tag(git_path, module, dest, repo, version):
+            # only use depth if the remote opject is branch or tag (i.e. fetchable)
+            cmd.extend([ '--depth', str(depth) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
@@ -594,7 +593,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     # for Git versions prior to 1.7.5 that lack required functionality.
     return remote_url is not None
 
-def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
@@ -630,20 +629,22 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec):
             # version
             fetch_cmd.extend(['--depth', str(depth)])
 
-    fetch_cmd.extend([remote])
     if not depth or not refspecs:
         # don't try to be minimalistic but do a full clone
         # also do this if depth is given, but version is something that can't be fetched directly
         if bare:
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
-            # unlike in bare mode, there's no way to combine the
-            # additional refspec with the default git fetch behavior,
-            # so use two commands
-            commands.append((fetch_str, fetch_cmd))
-            refspecs = ['+refs/tags/*:refs/tags/*']
+            # ensure all tags are fetched
+            if git_version_used >= LooseVersion('1.9'):
+                fetch_cmd.append('--tags')
+            else:
+                # old git versions have a bug in --tags that prevents updating existing tags
+                commands.append((fetch_str, fetch_cmd + [remote]))
+                refspecs = ['+refs/tags/*:refs/tags/*']
         if refspec:
             refspecs.append(refspec)
+    fetch_cmd.extend([remote])
 
     commands.append((fetch_str, fetch_cmd + refspecs))
 
@@ -744,7 +745,15 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
 
 def switch_version(git_path, module, dest, remote, version, verify_commit, depth):
     cmd = ''
-    if version != 'HEAD':
+    if version == 'HEAD':
+        branch = get_head_branch(git_path, module, dest, remote)
+        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to checkout branch %s" % branch,
+                             stdout=out, stderr=err, rc=rc)
+        cmd = "%s reset --hard %s" % (git_path, remote)
+    else:
+        # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
             if not is_local_branch(git_path, module, dest, version):
                 if depth:
@@ -760,13 +769,6 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                 cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
         else:
             cmd = "%s checkout --force %s" % (git_path, version)
-    else:
-        branch = get_head_branch(git_path, module, dest, remote)
-        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
-        if rc != 0:
-            module.fail_json(msg="Failed to checkout branch %s" % branch,
-                             stdout=out, stderr=err, rc=rc)
-        cmd = "%s reset --hard %s" % (git_path, remote)
     (rc, out1, err1) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         if version != 'HEAD':
@@ -906,7 +908,7 @@ def main():
 
     result.update(before=None)
     local_mods = False
-    repo_updated = None
+    need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -922,7 +924,7 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
-        repo_updated = True
+        need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -951,38 +953,26 @@ def main():
         if remote_url_changed:
             result.update(remote_url_changed=True)
 
-        remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
-        if result['before'] == remote_head:
+        if need_fetch:
+            if module.check_mode:
+                remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
+                result.update(changed=(result['before'] != remote_head), after=remote_head)
+                # FIXME: This diff should fail since the new remote_head is not fetched yet?!
+                if module._diff:
+                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                    if diff:
+                        result['diff'] = diff
+                module.exit_json(**result)
+            else:
+                fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
+
+        result['after'] = get_version(module, git_path, dest)
+
+        if result['before'] == result['after']:
             if local_mods:
                 result.update(changed=True, after=remote_head, msg='Local modifications exist')
-                if module._diff:
-                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
-                    if diff:
-                        result['diff'] = diff
+                # no diff, since the repo didn't change
                 module.exit_json(**result)
-            elif version == 'HEAD':
-                # If the remote and local match and we're using the default of
-                # HEAD (It's not a real tag) then exit early
-                repo_updated = False
-            elif is_remote_tag(git_path, module, dest, repo, version):
-                # if the remote is a tag and we have the tag locally, exit early
-                if version in get_tags(git_path, module, dest):
-                    repo_updated = False
-            else:
-                # if the remote is a branch and we have the branch locally, exit early
-                if version in get_branches(git_path, module, dest):
-                    repo_updated = False
-
-        if repo_updated is None:
-            if module.check_mode:
-                result.update(changed=(result['before']!=remote_head), after=remote_head)
-                if module._diff:
-                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
-                    if diff:
-                        result['diff'] = diff
-                module.exit_json(**result)
-            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec)
-            repo_updated = True
 
     # switch to version specified regardless of whether
     # we got new revisions from the repository
@@ -996,12 +986,10 @@ def main():
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
 
-        if module.check_mode:
-            if submodules_updated:
+            if module.check_mode:
                 result.update(changed=True, after=remote_head)
                 module.exit_json(**result)
 
-        if submodules_updated:
             # Switch to version specified
             submodule_update(git_path, module, dest, track_submodules, force=force)
 
