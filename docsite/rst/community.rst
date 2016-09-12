@@ -177,18 +177,23 @@ Contributions can be for new features like modules, or to fix bugs you or others
 are interested in writing new modules to be included in the core Ansible distribution, please refer
 to the `module development documentation <http://docs.ansible.com/developing_modules.html>`_.
 
-Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending,
-backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+,
-while code in modules must run under Python 2.4 or higher.  Please also use a 4-space indent
-and no tabs, we do not enforce 80 column lines, we are fine with 120-140. We do not take 'style only'
-requests unless the code is nearly unreadable, we are "PEP8ish", but not strictly compliant.
-
 You can also contribute by testing and revising other requests, specially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
 good place to start discussions (ansible-devel and IRC exist for this).
 
 Tip: To easily run from a checkout, source ``./hacking/env-setup`` and that's it -- no install
 required.  You're now live! For more information see `hacking/README.md <https://github.com/ansible/ansible/blob/devel/hacking/README.md>`_.
+
+Style
+-----
+
+Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending,
+backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+,
+while code in modules must run under Python 2.4 or higher.  
+
+Please use a 4-space indent without tabs. We do not enforce 80 column lines - we
+are fine with 120-140. Also, we do not take 'style only'
+requests unless the code is nearly unreadable. We are "PEP8ish", but not strictly compliant.
 
 Other Topics
 ============
