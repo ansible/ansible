@@ -66,10 +66,10 @@ class Cli(CliBase):
         response = self.execute(commands)
         return response[1:-2]
 
-    def load_config(self, config, commit=False, comment=None, save=False):
+    def load_config(self, config, commit=False, comment=None, save=False, **kwargs):
         try:
             config.insert(0, 'configure')
-            response = self.execute(config)
+            self.execute(config)
         except NetworkError:
             # discard any changes in case of failure
             self.execute(['exit discard'])
