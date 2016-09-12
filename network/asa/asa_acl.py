@@ -128,8 +128,10 @@ responses:
   type: list
   sample: ['...', '...']
 """
+import ansible.module_utils.asa
+
 from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.asa import NetworkModule
+from ansible.module_utils.network import NetworkModule
 
 
 def get_config(module):
@@ -179,16 +181,22 @@ def main():
     match = module.params['match']
     replace = module.params['replace']
 
+    candidate = NetworkConfig(indent=1)
+    candidate.add(lines)
+
     module.filter = check_input_acl(lines, module)
+
     if not module.params['force']:
+        contents = get_config(module)
+        config = NetworkConfig(indent=1, contents=contents)
         commands = candidate.difference(config)
         commands = dumps(commands, 'commands').split('\n')
-        commands = [str(c) for c in commands if c]
     else:
         commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
+            commands = [str(c) for c in commands if c]
             response = module.config(commands)
             result['responses'] = response
         result['changed'] = True
