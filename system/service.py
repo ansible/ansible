@@ -1462,7 +1462,7 @@ def main():
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
     )
 
