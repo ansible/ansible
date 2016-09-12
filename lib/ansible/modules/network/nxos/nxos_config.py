@@ -112,6 +112,17 @@ options:
     required: false
     default: false
     choices: [ "true", "false" ]
+  backup:
+    description:
+      - This argument will cause the module to create a full backup of
+        the current C(running-config) from the remote device before any
+        changes are made.  The backup file is written to the C(backup)
+        folder in the playbook root directory.  If the directory does not
+        exist, it is created.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -145,7 +156,6 @@ options:
     default: false
     version_added: "2.2"
 """
-
 
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
