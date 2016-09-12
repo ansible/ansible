@@ -164,7 +164,7 @@ def main():
         if module._diff:
             after = prev.copy()
             after.update(curr)
-            diffdict = {'before': prev, 'after': after}
+            diff_dict = {'before': prev, 'after': after}
         else:
             diff_dict = {}
 
