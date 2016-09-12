@@ -97,7 +97,7 @@ options:
         line is not correct
     required: false
     default: line
-    choices: ['line', 'block']
+    choices: ['line', 'block', 'config']
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -110,19 +110,6 @@ options:
     required: false
     default: false
     choices: [ "yes", "no" ]
-    version_added: "2.2"
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'replace', 'check']
     version_added: "2.2"
   config:
     description:
@@ -191,7 +178,7 @@ RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
-  type: list
+  type: when lines is defined
   sample: ['...', '...']
 backup_path:
   description: The full path to the backup file
@@ -206,25 +193,7 @@ from ansible.module_utils.iosxr import NetworkModule, NetworkError
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
 def check_args(module, warnings):
-    if module.params['parents']:
-        if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unnecessary argument parents')
-    if module.params['match'] == 'none' and module.params['replace']:
-        warnings.append('ignoring unnecessary argument replace')
-    if module.params['update'] == 'replace' and not module.params['src']:
-        module.fail_json(msg='Must specify src when update is `replace`')
-    if module.params['src'] and module.params['match'] not in ['line', 'none']:
-        module.fail_json(msg='match argument must be set to either `line` or '
-                             '`none` when src argument is defined')
-    if module.params['src'] and module.params['replace'] != 'line':
-        module.fail_json(msg='replace argument must be set to `line` when '
-                             'src argument is specified')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -232,7 +201,7 @@ def check_args(module, warnings):
 
 
 def get_config(module, result):
-    contents = module.params['config'] or result.get('__config__')
+    contents = module.params['config']
     if not contents:
         contents = module.config.get_config()
     return NetworkConfig(indent=1, contents=contents)
@@ -247,75 +216,80 @@ def get_candidate(module):
     return candidate
 
 def load_config(module, commands, result):
-    replace = module.params['update'] == 'replace'
+    replace = module.params['replace'] == 'config'
     comment = module.params['comment']
     commit = not module.check_mode
+
     diff = module.config.load_config(commands, replace=replace, commit=commit,
                                      comment=comment)
-    result['diff'] = dict(prepared=diff)
-    result['changed'] = True
+
+    if diff:
+        result['diff'] = dict(prepared=diff)
+        result['changed'] = True
 
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
-    update = module.params['update']
     path = module.params['parents']
 
     candidate = get_candidate(module)
 
-    if match != 'none' and update != 'replace':
+    if match != 'none' and replace != 'config':
         config = get_config(module, result)
         configobjs = candidate.difference(config, path=path, match=match,
                                           replace=replace)
     else:
-        config = None
         configobjs = candidate.items
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
 
-        if module.params['before']:
-            commands[:0] = module.params['before']
+        if module.params['lines']:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if module.params['after']:
+                commands.extend(module.params['after'])
 
-        result['updates'] = commands
+            result['updates'] = commands
 
-        if update != 'check':
-            load_config(module, commands, result)
+        load_config(module, commands, result)
 
 def main():
     """main entry point for module execution
     """
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
-        replace=dict(default='line', choices=['line', 'block']),
-
-        update=dict(choices=['merge', 'replace', 'check'], default='merge'),
-        backup=dict(type='bool', default=False),
-        comment=dict(default=DEFAULT_COMMIT_COMMENT),
+        replace=dict(default='line', choices=['line', 'block', 'config']),
 
         # this argument is deprecated in favor of setting match: none
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
         config=dict(),
+        backup=dict(type='bool', default=False),
+        comment=dict(default=DEFAULT_COMMIT_COMMENT),
     )
 
     mutually_exclusive = [('lines', 'src')]
 
+    required_if = [('match', 'strict', ['lines']),
+                   ('match', 'exact', ['lines']),
+                   ('replace', 'block', ['lines']),
+                   ('replace', 'config', ['src'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     if module.params['force'] is True:
@@ -327,9 +301,7 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
-        config = module.config.get_config()
-        result['__config__'] = config
-        result['__backup__'] = config
+        result['__backup__'] = module.config.get_config()
 
     try:
         run(module, result)
