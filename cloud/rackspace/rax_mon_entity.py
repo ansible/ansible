@@ -68,8 +68,8 @@ EXAMPLES = '''
       state: present
       label: my_entity
       named_ip_addresses:
-        web_box: 192.168.0.10
-        db_box: 192.168.0.11
+        web_box: 192.0.2.4
+        db_box: 192.0.2.5
       meta:
         hurf: durf
     register: the_entity

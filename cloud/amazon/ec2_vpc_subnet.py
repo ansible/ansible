@@ -29,7 +29,7 @@ options:
     default: null
   cidr:
     description:
-      - "The CIDR block for the subnet. E.g. 10.0.0.0/16. Only required when state=present."
+      - "The CIDR block for the subnet. E.g. 192.0.2.0/24. Only required when state=present."
     required: false
     default: null
   tags:

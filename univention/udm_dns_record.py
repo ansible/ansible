@@ -74,7 +74,7 @@ options:
         required: false
         default: []
         description:
-            - "Additional data for this record, e.g. ['a': '192.168.1.1'].
+            - "Additional data for this record, e.g. ['a': '192.0.2.1'].
                Required if C(state=present)."
 '''
 
@@ -84,7 +84,7 @@ EXAMPLES = '''
 - udm_dns_zone: name=www
                 zone=example.com
                 type=host_record
-                data=['a': '192.168.1.1']
+                data=['a': '192.0.2.1']
 '''
 
 

@@ -263,7 +263,7 @@ EXAMPLES = '''
     service_offering: Tiny
     ip_to_networks:
       - {'network': NetworkA, 'ip': '10.1.1.1'}
-      - {'network': NetworkB, 'ip': '192.168.1.1'}
+      - {'network': NetworkB, 'ip': '192.0.2.1'}
 
 # Ensure an instance is stopped
 - local_action: cs_instance name=web-vm-1 state=stopped

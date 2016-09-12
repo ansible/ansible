@@ -122,7 +122,7 @@ allow:
         system.
     returned: changed
     type: list
-    sample: "192.168.*.*"
+    sample: "192.0.2.*"
 banner:
     description: Whether the banner is enabled or not.
     returned: changed

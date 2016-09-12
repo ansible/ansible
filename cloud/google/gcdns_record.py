@@ -193,10 +193,10 @@ EXAMPLES = '''
     zone_id: 'example-com'
     type: A
     values:
-      - '10.1.2.3'
+      - '192.0.2.23'
       - '10.4.5.6'
-      - '10.7.8.9'
-      - '192.168.5.10'
+      - '198.51.100.5'
+      - '203.0.113.10'
 
 # Change the value of an existing record with multiple values.
 - gcdns_record:
@@ -205,10 +205,10 @@ EXAMPLES = '''
     type: A
     overwrite: true
     values:           # WARNING: All values in a record will be replaced
-      - '10.1.2.3'
-      - '10.5.5.7'    # The changed record
-      - '10.7.8.9'
-      - '192.168.5.10'
+      - '192.0.2.23'
+      - '192.0.2.42'    # The changed record
+      - '198.51.100.5'
+      - '203.0.113.10'
 
 # Safely remove a multi-line record.
 - gcdns_record:
@@ -217,10 +217,10 @@ EXAMPLES = '''
     state: absent
     type: A
     values:           # NOTE: All of the values must match exactly
-      - '10.1.2.3'
-      - '10.5.5.7'
-      - '10.7.8.9'
-      - '192.168.5.10'
+      - '192.0.2.23'
+      - '192.0.2.42'
+      - '198.51.100.5'
+      - '203.0.113.10'
 
 # Unconditionally remove a record.
 - gcdns_record:

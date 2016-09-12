@@ -49,12 +49,12 @@ EXAMPLES = '''
        fw_rules:
          - description: "ben testing"
            source_ip: "Any"
-           dest_ip: 192.168.2.11
+           dest_ip: 192.0.2.23
          - description: "ben testing 2"
-           source_ip: 192.168.2.100
+           source_ip: 192.0.2.50
            source_port: "Any"
            dest_port: "22"
-           dest_ip: 192.168.2.13
+           dest_ip: 192.0.2.101
            is_enable: "true"
            enable_logging: "false"
            protocol: "Tcp"

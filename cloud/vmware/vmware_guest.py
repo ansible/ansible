@@ -97,7 +97,7 @@ Example from Ansible playbook
     - name: create the VM
       vmware_guest:
         validate_certs: False
-        hostname: 192.168.1.209
+        hostname: 192.0.2.44
         username: administrator@vsphere.local
         password: vmware
         name: testvm_2
@@ -117,7 +117,7 @@ Example from Ansible playbook
             osid: centos64guest
             scsi: paravirtual
         datacenter: datacenter1
-        esxi_hostname: 192.168.1.117
+        esxi_hostname: 192.0.2.117
         template: template_el7
         wait_for_ip_address: yes
       register: deploy

@@ -73,16 +73,16 @@ options:
         required: False
         default: None
         description:
-            - 'The IPv4 address to this interface using this format ie: "192.168.1.24/24"'
+            - 'The IPv4 address to this interface using this format ie: "192.0.2.24/24"'
     gw4:
         required: False
         description:
-            - 'The IPv4 gateway for this interface using this format ie: "192.168.100.1"'
+            - 'The IPv4 gateway for this interface using this format ie: "192.0.2.1"'
     dns4:
         required: False
         default: None
         description:
-            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ["8.8.8.8 8.8.4.4"]'
+            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ["192.0.2.53", "198.51.100.53"]'
     ip6:
         required: False
         default: None
@@ -228,9 +228,9 @@ The following examples are working examples that I have run in the field. I foll
 ```yml
 ---
 #devops_os_define_network
-storage_gw: "192.168.0.254"
-external_gw: "10.10.0.254"
-tenant_gw: "172.100.0.254"
+storage_gw: "192.0.2.254"
+external_gw: "198.51.100.254"
+tenant_gw: "203.0.113.254"
 
 #Team vars
 nmcli_team:
@@ -265,9 +265,9 @@ nmcli_ethernet:
 ### host_vars
 ```yml
 ---
-storage_ip: "192.168.160.21/23"
-external_ip: "10.10.152.21/21"
-tenant_ip: "192.168.200.21/23"
+storage_ip: "192.0.2.91/23"
+external_ip: "198.51.100.23/21"
+tenant_ip: "203.0.113.77/23"
 ```
 
 
@@ -346,16 +346,16 @@ tenant_ip: "192.168.200.21/23"
       - { conn_name: 'team-p2p2'}
 ```
 # To add an Ethernet connection with static IP configuration, issue a command as follows
-- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
+- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
 
 # To add an Team connection with static IP configuration, issue a command as follows
-- nmcli: conn_name=my-team1 ifname=my-team1 type=team ip4=192.168.100.100/24 gw4=192.168.100.1 state=present autoconnect=yes
+- nmcli: conn_name=my-team1 ifname=my-team1 type=team ip4=192.0.2.100/24 gw4=192.0.2.1 state=present autoconnect=yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
-- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 ip6=abbe::cafe gw6=2001:db8::1 state=present
+- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 ip6=2001:db8::cafe gw6=2001:db8::1 state=present
 
 # To add two IPv4 DNS server addresses:
--nmcli: conn_name=my-eth1 dns4=["8.8.8.8", "8.8.4.4"] state=present
+-nmcli: conn_name=my-eth1 dns4=["192.0.2.53", "198.51.100.53"] state=present
 
 # To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
 - nmcli: ctype=ethernet name=my-eth1 ifname="*" state=present
@@ -806,8 +806,8 @@ class Nmcli(object):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for creating ethernet interface
         # To add an Ethernet connection with static IP configuration, issue a command as follows
-        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
-        # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.168.100.100/24 gw4 192.168.100.1
+        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
+        # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
         cmd.append('con')
         cmd.append('add')
         cmd.append('type')
@@ -843,8 +843,8 @@ class Nmcli(object):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for  modifying ethernet interface
         # To add an Ethernet connection with static IP configuration, issue a command as follows
-        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
-        # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.168.100.100/24 gw4 192.168.100.1
+        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
+        # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
         cmd.append('con')
         cmd.append('mod')
         cmd.append(self.conn_name)

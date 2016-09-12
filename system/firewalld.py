@@ -99,7 +99,7 @@ EXAMPLES = '''
 - firewalld: port=161-162/udp permanent=true state=enabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
-- firewalld: source='192.168.1.0/24' zone=internal state=enabled
+- firewalld: source='192.0.2.0/24' zone=internal state=enabled
 - firewalld: zone=trusted interface=eth2 permanent=true state=enabled
 - firewalld: masquerade=yes state=enabled permanent=true zone=dmz
 '''

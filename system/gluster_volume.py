@@ -121,7 +121,7 @@ author: "Taneli Leppä (@rosmo)"
 
 EXAMPLES = """
 - name: create gluster volume
-  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster="192.168.1.10,192.168.1.11"
+  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster="192.0.2.10,192.0.2.11"
   run_once: true
 
 - name: tune
@@ -140,7 +140,7 @@ EXAMPLES = """
   gluster_volume: state=absent name=test1
 
 - name: create gluster volume with multiple bricks
-  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster="192.168.1.10,192.168.1.11"
+  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster="192.0.2.10,192.0.2.11"
   run_once: true
 """
 
