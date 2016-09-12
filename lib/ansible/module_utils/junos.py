@@ -56,7 +56,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 
-SUPPORTED_CONFIG_FORMATS = ['text', 'set', 'json', 'xml']
+SUPPORTED_CONFIG_FORMATS = ['text', 'xml']
 
 
 def xml_to_json(val):
@@ -151,23 +151,34 @@ class Netconf(object):
 
         ele = self.rpc('get_configuration', output=config_format)
 
-        if config_format in ['text', 'set']:
+        if config_format == 'text':
             return str(ele.text).strip()
         else:
             return ele
 
-    def load_config(self, candidate, update='merge', comment=None,
-                    confirm=None, format='text', commit=True):
+    def load_config(self, config, commit=False, replace=False, confirm=None,
+                    comment=None, config_format='text'):
 
-        merge = update == 'merge'
-        overwrite = update == 'overwrite'
+    #def load_config(self, candidate, update='merge', comment=None,
+    #                confirm=None, format='text', commit=True):
+
+        if replace:
+            merge = False
+            overwrite = True
+        else:
+            merge = True
+            overwrite = False
+
+        if overwrite and config_format == 'set':
+            self.raise_exc('replace cannot be True when config_format is `set`')
 
         self.lock_config()
 
         try:
             candidate = '\n'.join(candidate)
-            self.config.load(candidate, format=format, merge=merge,
+            self.config.load(candidate, format=config_format, merge=merge,
                              overwrite=overwrite)
+
         except ConfigLoadError:
             exc = get_exception()
             self.raise_exc('Unable to load config: %s' % str(exc))
@@ -251,42 +262,26 @@ class Cli(CliBase):
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"unkown command")
     ]
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, **kwargs)
-
         if self.shell._matched_prompt.strip().endswith('%'):
             self.execute('cli')
         self.execute('set cli screen-length 0')
 
-    def configure(self, commands, **kwargs):
+    def configure(self, commands, comment=None):
         cmds = ['configure']
         cmds.extend(to_list(commands))
 
-        if kwargs.get('comment'):
+        if comment:
             cmds.append('commit and-quit comment "%s"' % kwargs.get('comment'))
         else:
             cmds.append('commit and-quit')
 
         responses = self.execute(cmds)
         return responses[1:-1]
-
-    def load_config(self, commands):
-        return self.configure(commands)
-
-    def get_config(self, output='block'):
-        cmd = 'show configuration'
-        if output == 'set':
-            cmd += ' | display set'
-        return self.execute([cmd])[0]
 
 Cli = register_transport('cli', default=True)(Cli)
 
