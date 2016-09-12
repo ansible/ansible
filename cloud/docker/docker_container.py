@@ -276,6 +276,12 @@ options:
       - Whether or not to disable OOM Killer for the container.
     default: false
     required: false
+  oom_score_adj:
+    description:
+      - An integer value containing the score given to the container in order to tune OOM killer preferences.
+    default: 0
+    required: false
+    version_added: "2.2"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -713,6 +719,7 @@ class TaskParameters(DockerBaseClass):
         self.network_mode = None
         self.networks = None
         self.oom_killer = None
+        self.oom_score_adj = None
         self.paused = None
         self.pid_mode = None
         self.privileged = None
@@ -909,6 +916,7 @@ class TaskParameters(DockerBaseClass):
             mem_limit='memory',
             memswap_limit='memory_swap',
             mem_swappiness='memory_swappiness',
+            oom_score_adj='oom_score_adj',
             shm_size='shm_size',
             group_add='groups',
             devices='devices',
@@ -1218,6 +1226,7 @@ class Container(DockerBaseClass):
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
             oom_killer=host_config.get('OomKillDisable'),
+            oom_score_adj=host_config.get('OomScoreAdj'),
             pid_mode=host_config.get('PidMode'),
             privileged=host_config.get('Privileged'),
             expected_ports=host_config.get('PortBindings'),
@@ -1329,6 +1338,7 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
+            oom_score_adj=host_config.get('OomScoreAdj'),
         )
 
         differences = []
@@ -1917,6 +1927,7 @@ def main():
         network_mode=dict(type='str'),
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
+        oom_score_adj=dict(type='int'),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
