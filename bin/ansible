@@ -91,9 +91,16 @@ if __name__ == '__main__':
             else:
                 raise
 
-        cli = mycli(sys.argv)
-        cli.parse()
-        exit_code = cli.run()
+        try:
+            args = [to_text(a, errors='surrogate_or_strict') for a in sys.argv]
+        except UnicodeError:
+            display.error('Command line args are not in utf-8, unable to continue.  Ansible currently only understands utf-8')
+            display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
+            exit_code = 6
+        else:
+            cli = mycli(args)
+            cli.parse()
+            exit_code = cli.run()
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()

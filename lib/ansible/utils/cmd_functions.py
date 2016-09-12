@@ -24,15 +24,26 @@ import shlex
 import subprocess
 import select
 
+from ansible.compat.six import PY2
+from ansible.module_utils._text import to_bytes
+
 def run_cmd(cmd, live=False, readsize=10):
 
     #readsize = 10
 
+    # On python2, shlex needs byte strings
+    if PY2:
+        cmd = to_bytes(cmd, errors='surrogate_or_strict')
     cmdargs = shlex.split(cmd)
+
+    # subprocess should be passed byte strings.  (on python2.6 it must be
+    # passed byte strtings)
+    cmdargs = [to_bytes(a, errors='surrogate_or_strict') for a in cmdargs]
+
     p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    stdout = ''
-    stderr = ''
+    stdout = b''
+    stderr = b''
     rpipes = [p.stdout, p.stderr]
     while True:
         rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
@@ -42,14 +53,14 @@ def run_cmd(cmd, live=False, readsize=10):
             if live:
                 sys.stdout.write(dat)
             stdout += dat
-            if dat == '':
+            if dat == b'':
                 rpipes.remove(p.stdout)
         if p.stderr in rfd:
             dat = os.read(p.stderr.fileno(), readsize)
             stderr += dat
             if live:
                 sys.stdout.write(dat)
-            if dat == '':
+            if dat == b'':
                 rpipes.remove(p.stderr)
         # only break out if we've emptied the pipes, or there is nothing to
         # read from and the process has finished.
