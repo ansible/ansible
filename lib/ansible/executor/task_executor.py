@@ -177,21 +177,12 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
-                # TODO: remove convert_bare true and deprecate this in with_
                 if self._task.loop == 'first_found':
-                    # first_found loops are special.  If the item is undefined
-                    # then we want to fall through to the next value rather
-                    # than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                            loader=self._loader, fail_on_undefined=False, convert_bare=True)
+                    # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=False)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
-                    try:
-                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                                loader=self._loader, fail_on_undefined=True, convert_bare=True)
-                    except AnsibleUndefinedVariable as e:
-                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.: %s" % to_bytes(e))
-                        return None
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
