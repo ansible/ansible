@@ -18,6 +18,7 @@
 #
 
 import re
+import time
 import collections
 
 from ansible.module_utils.basic import json
@@ -29,8 +30,38 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 add_argument('use_ssl', dict(default=False, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
+class NxapiConfigMixin(object):
 
-class Nxapi(object):
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if include_defaults:
+            cmd += ' all'
+        if isinstance(self, Nxapi):
+            return self.execute([cmd], output='text')[0]
+        else:
+            return self.execute([cmd])[0]
+
+    def load_config(self, config):
+        checkpoint = 'ansible_%s' % int(time.time())
+        self.execute(['checkpoint %s' % checkpoint], output='text')
+
+        try:
+            self.configure(config)
+        except NetworkError:
+            self.load_checkpoint(checkpoint)
+            raise
+
+        self.execute(['no checkpoint %s' % checkpoint], output='text')
+
+    def save_config(self, **kwargs):
+        self.execute(['copy running-config startup-config'])
+
+    def load_checkpoint(self, checkpoint):
+        self.execute(['rollback running-config checkpoint %s' % checkpoint,
+                      'no checkpoint %s' % checkpoint], output='text')
+
+
+class Nxapi(NxapiConfigMixin):
 
     OUTPUT_TO_COMMAND_TYPE = {
         'text': 'cli_show_ascii',
@@ -178,18 +209,6 @@ class Nxapi(object):
         commands = to_list(commands)
         return self.execute(commands, output='config')
 
-    def get_config(self, include_defaults=False, **kwargs):
-        cmd = 'show running-config'
-        if include_defaults:
-            cmd += ' all'
-        return self.execute([cmd], output='text')[0]
-
-    def load_config(self, config, **kwargs):
-        return self.configure(config)
-
-    def save_config(self, **kwargs):
-        self.execute(['copy running-config startup-config'])
-
     def _jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
             try:
@@ -208,7 +227,7 @@ class Nxapi(object):
 Nxapi = register_transport('nxapi')(Nxapi)
 
 
-class Cli(CliBase):
+class Cli(NxapiConfigMixin, CliBase):
 
     CLI_PROMPTS_RE = [
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
@@ -258,25 +277,13 @@ class Cli(CliBase):
         responses.pop(0)
         return responses
 
-    def get_config(self, include_defaults=False):
-        cmd = 'show running-config'
-        if include_defaults:
-            cmd += ' all'
-        return self.execute([cmd])[0]
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
 Cli = register_transport('cli', default=True)(Cli)
 
 def prepare_config(commands):
-    commands = to_list(commands)
-    commands.insert(0, 'configure')
-    commands.append('end')
-    return commands
+    prepared = ['config']
+    prepared.extend(to_list(commands))
+    prepared.append('end')
+    return prepared
 
 def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
