@@ -94,7 +94,6 @@ def ignore_line(text, tokens=None):
 def get_next(iterable):
     item, next_item = itertools.tee(iterable, 2)
     next_item = itertools.islice(next_item, 1, None)
-    warnings.append('ignorning unnecessary argument replace')
     return zip_longest(item, next_item)
 
 def parse(lines, indent, comment_tokens=None):
