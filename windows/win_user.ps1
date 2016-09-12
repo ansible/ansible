@@ -137,8 +137,16 @@ If ($state -eq 'present') {
             [void][system.reflection.assembly]::LoadWithPartialName('System.DirectoryServices.AccountManagement')
             $host_name = [System.Net.Dns]::GetHostName()
             $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $host_name
-            # ValidateCredentials fails if PasswordExpired == 1
-            If (!$pc.ValidateCredentials($username, $password)) {
+
+            # ValidateCredentials will fail if either of these are true- just force update...
+            If($user_obj.AccountDisabled -or $user_obj.PasswordExpired) {
+                $password_match = $false
+            }
+            Else {
+                $password_match = $pc.ValidateCredentials($username, $password)
+            }
+
+            If (-not $password_match) {
                 $user_obj.SetPassword($password)
                 $result.changed = $true
             }
