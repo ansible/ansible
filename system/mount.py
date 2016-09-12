@@ -44,17 +44,19 @@ options:
     default: null
   opts:
     description:
-      - mount options (see fstab(5))
+      - mount options (see fstab(5), or vfstab(4) on Solaris)
     required: false
     default: null
   dump:
     description:
       - "dump (see fstab(5)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
+      - Has no effect on Solaris systems.
     required: false
     default: 0
   passno:
     description:
       - "passno (see fstab(5)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
+      - Deprecated on Solaris systems.
     required: false
     default: 0
   state:
@@ -71,7 +73,14 @@ options:
         unless you really know what you are doing. This might be useful if
         you need to configure mountpoints in a chroot environment.
     required: false
-    default: /etc/fstab
+    default: /etc/fstab (/etc/vfstab on Solaris)
+  boot:
+    version_added: 2.2
+    description:
+      - Determines if the filesystem should be mounted on boot.  Only applies to Solaris systems.
+    required: false
+    default: yes
+    choices: [ "yes", "no" ]
 
 author:
     - Ansible Core Team
@@ -109,16 +118,25 @@ def _escape_fstab(v):
 def set_mount(module, **kwargs):
     """ set/change a mount point location in fstab """
 
-    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = dict(
-        opts   = 'defaults',
-        dump   = '0',
-        passno = '0',
-        fstab  = '/etc/fstab'
-    )
+    # solaris kwargs: name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
+    # linux kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    if get_platform() == 'SunOS':
+        args = dict(
+            opts   = '-',
+            passno = '-',
+            fstab  = '/etc/vfstab',
+            boot   = 'yes'
+        )
+        new_line = '%(src)s - %(name)s %(fstype)s %(passno)s %(boot)s %(opts)s\n'
+    else:
+        args = dict(
+            opts   = 'defaults',
+            dump   = '0',
+            passno = '0',
+            fstab  = '/etc/fstab'
+        )
+        new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
     args.update(kwargs)
-
-    new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
     to_write = []
     exists = False
@@ -131,14 +149,17 @@ def set_mount(module, **kwargs):
         if line.strip().startswith('#'):
             to_write.append(line)
             continue
-        if len(line.split()) != 6:
+        if len(line.split()) != 6 and get_platform() != 'SunOS':
             # not sure what this is or why it is here
             # but it is not our fault so leave it be
             to_write.append(line)
             continue
 
         ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+        if get_platform() == 'SunOS':
+            ld['src'], dash, ld['name'], ld['fstype'], ld['passno'], ld['boot'], ld['opts']  = line.split()
+        else:
+            ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
         if ld['name'] != escaped_args['name']:
             to_write.append(line)
@@ -146,10 +167,16 @@ def set_mount(module, **kwargs):
 
         # it exists - now see if what we have is different
         exists = True
-        for t in ('src', 'fstype','opts', 'dump', 'passno'):
-            if ld[t] != escaped_args[t]:
-                changed = True
-                ld[t] = escaped_args[t]
+        if get_platform() == 'SunOS':
+            for t in ('src', 'fstype','passno', 'boot', 'opts'):
+                if ld[t] != escaped_args[t]:
+                    changed = True
+                    ld[t] = escaped_args[t]
+        else:
+            for t in ('src', 'fstype','opts', 'dump', 'passno'):
+                if ld[t] != escaped_args[t]:
+                    changed = True
+                    ld[t] = escaped_args[t]
 
         if changed:
             to_write.append(new_line % ld)
@@ -169,13 +196,22 @@ def set_mount(module, **kwargs):
 def unset_mount(module, **kwargs):
     """ remove a mount point from fstab """
 
-    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = dict(
-        opts   = 'default',
-        dump   = '0',
-        passno = '0',
-        fstab  = '/etc/fstab'
-    )
+    # solaris kwargs: name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
+    # linux kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    if get_platform() == 'SunOS':
+        args = dict(
+            opts   = '-',
+            passno = '-',
+            fstab  = '/etc/vfstab',
+            boot   = 'yes'
+        )
+    else:
+        args = dict(
+            opts   = 'default',
+            dump   = '0',
+            passno = '0',
+            fstab  = '/etc/fstab'
+        )
     args.update(kwargs)
 
     to_write = []
@@ -188,14 +224,17 @@ def unset_mount(module, **kwargs):
         if line.strip().startswith('#'):
             to_write.append(line)
             continue
-        if len(line.split()) != 6:
+        if len(line.split()) != 6 and get_platform() != 'SunOS':
             # not sure what this is or why it is here
             # but it is not our fault so leave it be
             to_write.append(line)
             continue
 
         ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+        if get_platform() == 'SunOS':
+            ld['src'], dash, ld['name'], ld['fstype'], ld['passno'], ld['boot'], ld['opts']  = line.split()
+        else:
+            ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
         if ld['name'] != escaped_name:
             to_write.append(line)
@@ -213,13 +252,22 @@ def unset_mount(module, **kwargs):
 def mount(module, **kwargs):
     """ mount up a path or remount if needed """
 
-    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = dict(
-        opts   = 'default',
-        dump   = '0',
-        passno = '0',
-        fstab  = '/etc/fstab'
-    )
+    # solaris kwargs: name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
+    # linux kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    if get_platform() == 'SunOS':
+        args = dict(
+            opts   = '-',
+            passno = '-',
+            fstab  = '/etc/vfstab',
+            boot   = 'yes'
+        )
+    else:
+        args = dict(
+            opts   = 'default',
+            dump   = '0',
+            passno = '0',
+            fstab  = '/etc/fstab'
+        )
     args.update(kwargs)
 
     mount_bin = module.get_bin_path('mount')
@@ -269,6 +317,7 @@ def main():
             dump   = dict(default=None),
             src    = dict(required=False),
             fstype = dict(required=False),
+            boot   = dict(default='yes', choices=['yes', 'no']),
             fstab  = dict(default='/etc/fstab')
         ),
         supports_check_mode=True,
@@ -292,7 +341,9 @@ def main():
         args['opts'] = module.params['opts']
     if module.params['dump'] is not None:
         args['dump'] = module.params['dump']
-    if module.params['fstab'] is not None:
+    if get_platform() == 'SunOS' and module.params['fstab'] == '/etc/fstab':
+        args['fstab'] = '/etc/vfstab'
+    elif module.params['fstab'] is not None:
         args['fstab'] = module.params['fstab']
 
     # if fstab file does not exist, we first need to create it. This mainly
