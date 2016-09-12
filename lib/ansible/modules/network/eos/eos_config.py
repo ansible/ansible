@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 DOCUMENTATION = """
 ---
 module: eos_config
@@ -108,6 +109,17 @@ options:
     required: false
     default: false
     choices: ['yes', 'no']
+  backup:
+    description:
+      - This argument will cause the module to create a full backup of
+        the current C(running-config) from the remote device before any
+        changes are made.  The backup file is written to the C(backup)
+        folder in the playbook root directory.  If the directory does not
+        exist, it is created.
+    required: false
+    default: no
+    choices: ['yes', 'no']
+    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -270,10 +282,10 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -285,11 +297,10 @@ def main():
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
-        backup=dict(type='bool', default=False),
-
         config=dict(),
         defaults=dict(type='bool', default=False),
 
+        backup=dict(type='bool', default=False),
         save=dict(default=False, type='bool'),
     )
 
