@@ -109,20 +109,7 @@ options:
         will be removed in a future release.
     required: false
     default: false
-    choices: [ "true", "false" ]
-    version_added: "2.2"
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
+    choices: ["true", "false"]
     version_added: "2.2"
   commit:
     description:
@@ -218,18 +205,13 @@ RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
-  type: list
+  type: when lines is defined
   sample: ['...', '...']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
   type: path
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
 """
 import re
 
@@ -239,27 +221,16 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.netcli import Command
 
 def check_args(module, warnings):
-    if module.params['parents']:
-        if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unnecessary argument parents')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
 def get_config(module, result):
-    defaults = module.params['default']
-    if defaults is True:
-        key = '__configall__'
-    else:
-        key = '__config__'
-
-    contents = module.params['config'] or result.get(key)
-
+    contents = module.params['config']
     if not contents:
+        defaults = module.params['default']
         contents = module.config.get_config(include_defaults=defaults)
-        result[key] = contents
-
     return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
@@ -275,18 +246,12 @@ def load_backup(module):
     try:
         module.cli(['exit', 'config replace flash:/ansible-rollback force'])
     except NetworkError:
-        module.fail_json(msg='unable to rollback configuration')
+        module.fail_json(msg='unable to load backup configuration')
 
 def backup_config(module):
     cmd = 'copy running-config flash:/ansible-rollback'
     cmd = Command(cmd, prompt=re.compile('\? $'), response='\n')
     module.cli(cmd)
-
-def load_config(module, commands, result):
-    if not module.check_mode and module.params['update'] != 'check':
-        module.config(commands)
-    result['changed'] = module.params['update'] != 'check'
-    result['updates'] = commands
 
 def run(module, result):
     match = module.params['match']
@@ -301,17 +266,19 @@ def run(module, result):
         configobjs = candidate.difference(config, path=path,match=match,
                                           replace=replace)
     else:
-        config = None
         configobjs = candidate.items
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
 
-        if module.params['before']:
-            commands[:0] = module.params['before']
+        if module.params['lines']:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if module.params['after']:
+                commands.extend(module.params['after'])
+
+            result['updates'] = commands
 
         # create a backup copy of the current running-config on
         # device flash drive
@@ -319,22 +286,28 @@ def run(module, result):
 
         # send the configuration commands to the device and merge
         # them with the current running config
-        load_config(module, commands, result)
+        if not module.check_mode:
+            module.config(commands)
+        result['changed'] = True
 
         # remove the backup copy of the running-config since its
         # no longer needed
         module.cli('delete /force flash:/ansible-rollback')
 
-    if module.params['save'] and not module.check_mode:
-        module.config.save_config()
+    if module.params['save']:
+        if not module.check_mode:
+            module.config.save_config()
+        result['changed'] = True
 
 def main():
+    """ main entry point for module execution
+    """
 
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -346,20 +319,23 @@ def main():
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
-        update=dict(choices=['merge', 'check'], default='merge'),
-        backup=dict(type='bool', default=False),
-
         config=dict(),
         default=dict(type='bool', default=False),
 
         save=dict(type='bool', default=False),
+        backup=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
 
+    required_if = [('match', 'strict', ['lines']),
+                   ('match', 'exact', ['lines']),
+                   ('replace', 'block', ['lines'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     if module.params['force'] is True:
