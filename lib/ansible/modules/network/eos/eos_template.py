@@ -117,8 +117,10 @@ responses:
 """
 import re
 
+import ansible.module_utils.eos
+
+from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.eos import NetworkModule
 
 def get_config(module):
     config = module.params.get('config')
@@ -199,12 +201,8 @@ def main():
     commands = filter_exit(commands)
     if commands:
         if not module.check_mode:
-            response = module.config.load_config(commands,
-                                                 replace=replace,
-                                                 session='eos_template',
+            response = module.config.load_config(commands, replace=replace,
                                                  commit=True)
-
-            module.cli('no configure session eos_template')
             result['responses'] = response
         result['changed'] = True
 
