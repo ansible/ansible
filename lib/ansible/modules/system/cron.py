@@ -200,6 +200,7 @@ EXAMPLES = '''
 '''
 
 import os
+import pwd
 import re
 import tempfile
 import platform
@@ -479,7 +480,7 @@ class CronTab(object):
                 return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
                 return "%s %s %s" % (CRONCMD , '-l', pipes.quote(self.user))
-            elif os.getlogin() != self.user:
+            elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, '-l')
 
@@ -491,7 +492,7 @@ class CronTab(object):
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
                 return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
-            elif os.getlogin() != self.user:
+            elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
 
