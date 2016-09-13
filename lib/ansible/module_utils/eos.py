@@ -60,20 +60,12 @@ class EosConfigMixin(object):
             cmd += ' all'
         return self.execute([cmd])[0]
 
-    def load_config(self, config, session=None, commit=False, replace=False, **kwargs):
+    def load_config(self, config, commit=False, replace=False):
         """ Loads the configuration into the remote device
-
-        This method handles the actual loading of the config
-        commands into the remote EOS device.  By default the
-        config specified is merged with the current running-config.
-
-        :param config: ordered list of config commands to load
-        :param replace: replace current config when True otherwise merge
-
-        :returns list: ordered set of responses from device
         """
-        session = session or 'ansible_%s' % int(time.time())
+        session = 'ansible_%s' % int(time.time())
         commands = ['configure session %s' % session]
+
         if replace:
             commands.append('rollback clean-config')
 
@@ -87,6 +79,8 @@ class EosConfigMixin(object):
             diff = self.diff_config(session)
             if commit:
                 self.commit_config(session)
+            else:
+                self.execute(['no configure session %s' % session])
         except NetworkError:
             self.abort_config(session)
             diff = None
@@ -107,8 +101,6 @@ class EosConfigMixin(object):
             response[-2] = response[-2].get('output').strip()
         else:
             response = self.execute(commands)
-
-
 
         return response[-2]
 

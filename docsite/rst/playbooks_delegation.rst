@@ -37,7 +37,7 @@ The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and 
 play, in order to determine the number of hosts per pass::
 
     - name: test play
-      hosts: websevers
+      hosts: webservers
       serial: "30%"
 
 If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.

@@ -4,8 +4,6 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -28,13 +26,42 @@
 
 import re
 
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.network import NetworkError, NetworkModule
-from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
+from ansible.module_utils.network import register_transport, to_list, Command
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+
+
+def get_config(module):
+    contents = module.params['config']
+
+    if not contents:
+        contents = module.config.get_config()
+        module.params['config'] = contents
+
+    return NetworkConfig(indent=1, contents=contents[0])
+
+
+def get_sublevel_config(running_config, module):
+    contents = list()
+    current_config_contents = list()
+    obj = running_config.get_object(module.params['parents'])
+    if obj:
+        contents = obj.children
+    contents[:0] = module.params['parents']
+
+    for c in contents:
+        if isinstance(c, str):
+            current_config_contents.append(c)
+        if isinstance(c, ConfigLine):
+            current_config_contents.append(c.raw)
+    sublevel_config = '\n'.join(current_config_contents)
+
+    return sublevel_config
 
 
 class Cli(CliBase):
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password:\s?$", re.I)
 
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -51,62 +78,38 @@ class Cli(CliBase):
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
+        self.shell.send('terminal length 0')
 
-    ### Config methods ###
 
-    def configure(self, commands):
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.run_commands(
+            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        )
+
+
+    def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
-        if commands[-1] == 'end':
-            commands.pop()
         cmds.extend(to_list(commands))
-        cmds.extend(['commit', 'end'])
+        cmds.append('end')
+
         responses = self.execute(cmds)
-        return responses[1:]
+        responses.pop(0)
+        return responses
 
-    def get_config(self, flags=None):
-        cmd = 'show running-config'
-        if flags:
-            if isinstance(flags, list):
-                cmd += ' %s' % ' '.join(flags)
-            else:
-                cmd += ' %s' % flags
-        return self.execute([cmd])[0]
 
-    def load_config(self, config, commit=False, replace=False, comment=None):
-        commands = ['configure terminal']
-        commands.extend(config)
+    def get_config(self, **kwargs):
+        return self.execute(['show running-config'])
 
-        if commands[-1] == 'end':
-            commands.pop()
 
-        try:
-            self.execute(commands)
-            diff = self.execute(['show commit changes diff'])
-            if commit:
-                if replace:
-                    prompt = re.compile(r'\[no\]:\s$')
-                    commit = 'commit replace'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    cmd = Command(commit, prompt=prompt, response='yes')
-                    self.execute([cmd, 'end'])
-                else:
-                    commit = 'commit'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    self.execute([commit, 'end'])
-            else:
-                self.execute(['abort'])
-        except NetworkError:
-            self.execute(['abort'])
-            diff = None
-            raise
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
 
-        return diff[0]
+
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
+
 
 Cli = register_transport('cli', default=True)(Cli)

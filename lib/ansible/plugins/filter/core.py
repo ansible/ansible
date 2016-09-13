@@ -193,6 +193,11 @@ def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
 
+def from_yaml(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load(data)
+    return data
+
 @environmentfilter
 def rand(environment, end, start=None, step=None):
     r = SystemRandom()
@@ -402,7 +407,7 @@ class FilterModule(object):
             # yaml
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
-            'from_yaml': yaml.safe_load,
+            'from_yaml': from_yaml,
 
             #date
             'to_datetime': to_datetime,

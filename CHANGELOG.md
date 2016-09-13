@@ -18,6 +18,10 @@ Ansible Changes By Release
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
+* Add ability to specify what ssh client binary to use on the controller.  This
+  can be configured via ssh_executable in the ansible config file or by setting
+  ansible_ssh_executable as an inventory variable if different ones are needed
+  for different hosts.
 * Windows:
   * several facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
     - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
@@ -26,19 +30,39 @@ Ansible Changes By Release
     - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
   * `async:` support for long-running or background tasks.
   * `environment:` support for setting module environment vars in play/task.
+* Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
+  * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
+  * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
 
 ####New Modules:
+- apache2_mod_proxy
 - archive
 - asa
   * asa_acl
   * asa_command
   * asa_config
   * asa_template
+- atomic
+  * atomic_host
+  * atomic_image
 - aws
+  * cloudformation_facts
+  * ec2_asg_facts
   * ec2_customer_gateway
+  * ec2_lc_find
+  * ec2_vpc_dhcp_options_facts
+  * ec2_vpc_nacl
   * ec2_vpc_nacl_facts
   * ec2_vpc_nat_gateway
+  * ec2_vpc_peer
   * ec2_vpc_vgw
+  * execute_lambda
+  * iam_mfa_device_facts
+  * iam_server_certificate_facts
+  * kinesis_stream
+  * s3_website
+  * sts_session_token
 - cloudstack
   * cs_router
   * cs_snapshot_policy
@@ -46,47 +70,86 @@ Ansible Changes By Release
   * dnos10_command
   * dnos10_config
   * dnos10_template
+- exoscale:
+  * exo_dns_domain
+  * exo_dns_record
+- dnos6
+  * dnos6_command
+- dnos9
+  * dnos9_command
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
   * bigip_device_sshd
+  * bigip_gtm_datacenter
+  * bigip_gtm_virtual_server
   * bigip_irule
-- github_key
+  * bigip_routedomain
+  * bigip_selfip
+  * bigip_ssl_certificate
+  * bigip_sys_db
+  * bigip_vlan
+- github
+  * github_key
+  * github_release
 - google
   * gcdns_record
   * gcdns_zone
+- honeybadger_deployment
+- illumos
+  * dladm_etherstub
+  * dladm_vnic
+  * flowadm
+  * ipadm_if
+  * ipadm_prop
 - ipmi
   * ipmi_boot
   * ipmi_power
 - include_role
-- jenkins_plugin
+- jenkins
+  * jenkins_job
+  * jenkins_plugin
+- kibana_plugin
 - letsencrypt
 - logicmonitor
 - logicmonitor_facts
 - lxd
   * lxd_profile
   * lxd_container
+- netapp
+  * netapp_e_facts
+  * netapp_e_storage_system
 - netconf_config
+- mssql_db
 - ovh_ip_loadbalancing_backend
+- opendj_backendprop
 - openstack
   * os_keystone_service
   * os_recordset
   * os_server_group
   * os_stack
   * os_zone
+- rhevm
 - rocketchat
+- sefcontext
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- statusio_maintenance
 - systemd
 - telegram
 - univention
+  * udm_dns_record
+  * udm_dns_zone
+  * udm_group
+  * udm_share
   * udm_user
 - vmware
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
+- win_robocopy
 
 
 ###Minor Changes:
@@ -95,6 +158,8 @@ Ansible Changes By Release
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
 * New privilege escalation become method `ksu`
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
+* removed previously deprecated ';' as host list separator.
+* Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
 
 ## 2.1.2 "The Song Remains the Same"
 

@@ -259,10 +259,10 @@ class CliBase(object):
     def configure(self, commands):
         raise NotImplementedError
 
-    def get_config(self, commands):
+    def get_config(self, **kwargs):
         raise NotImplementedError
 
-    def load_config(self, commands):
+    def load_config(self, commands, **kwargs):
         raise NotImplementedError
 
     def save_config(self):
