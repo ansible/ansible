@@ -626,7 +626,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
         required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-        required_if=None):
+        required_if=None, skip_post_default_settings=False):
 
         '''
         common code for quickly building an ansible module in Python
@@ -688,7 +688,6 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
                 'str': self._check_type_str,
                 'list': self._check_type_list,
@@ -711,7 +710,9 @@ class AnsibleModule(object):
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
 
-        self._set_defaults(pre=False)
+        self._set_defaults(
+            pre=False,
+            skip_post_default_settings=skip_post_default_settings)
 
         if not self.no_log and self._verbosity >= 3:
             self._log_invocation()
@@ -1570,17 +1571,32 @@ class AnsibleModule(object):
             except (TypeError, ValueError):
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
 
-    def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.items():
+    def _set_defaults(self, pre=True, skip_post_default_settings=False):
+        """
+        Sets defaults for the module parameters that have defaults specified
+        in the argument spec. Additionally, it sets null for all the fields
+        that were not provided during the module instantiations.
+        skip_post_default_settings flag allows caller to prevent setting of
+        null to all the optional fields that do not have default. The intention
+        of the module there is to not pass null values for items like int,
+        string, etc.
+        :param pre: Whether it is run first time.
+        :param skip_post_default_settings: skip the force setting of all the
+            optional fields with default null.
+        """
+        for k, v in self.argument_spec.items():
             default = v.get('default', None)
-            if pre == True:
+            if pre:
                 # this prevents setting defaults on required items
                 if default is not None and k not in self.params:
                     self.params[k] = default
             else:
                 # make sure things without a default still get set None
+                # in case of required the initialization already fails if
+                # required is not specified.
                 if k not in self.params:
-                    self.params[k] = default
+                    if (not skip_post_default_settings) or ('default' in v):
+                        self.params[k] = default
 
     def _set_fallbacks(self):
         for k,v in self.argument_spec.items():
