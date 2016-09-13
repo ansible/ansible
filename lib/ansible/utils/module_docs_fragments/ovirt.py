@@ -1,19 +1,22 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # Copyright (c) 2016 Red Hat, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Ansible
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 class ModuleDocFragment(object):
@@ -43,7 +46,7 @@ options:
             should be used instead of the default basic authentication."
     timeout:
         description:
-            - "The amount of time the module should wait for the instance to
+            - "The amount of time in seconds the module should wait for the instance to
                get into desired state."
         default: 180
 requirements:
@@ -51,6 +54,6 @@ requirements:
   - ovirt-engine-sdk-python >= 4.0.0
 notes:
   - "In order to use this module you have to install oVirt Python SDK.
-     To ensure it's installed with correct version you can create following task:
+     To ensure it's installed with correct version you can create the following task:
      pip: name=ovirt-engine-sdk-python version=4.0.0"
 '''

@@ -123,7 +123,7 @@ def convert_to_bytes(param):
     elif param.isdigit():
         return int(param) * 2**10
     else:
-        raise Exception(
+        raise ValueError(
             "Unsupported value(IEC supported): '{value}'".format(value=param)
         )
 
@@ -225,12 +225,13 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
-def wait(service, condition, timeout=180, wait=True):
+def wait(service, condition, fail_condition=lambda e: False, timeout=180, wait=True):
     """
     Wait until entity fulfill expected condition.
 
     :param service: service of the entity
     :param condition: condition to be fulfilled
+    :param fail_condition: if this condition is true, raise Exception
     :param timeout: max time to wait in seconds
     :param wait: if True wait for condition, if False don't wait
     """
@@ -239,8 +240,11 @@ def wait(service, condition, timeout=180, wait=True):
         start = time.time()
         while time.time() < start + timeout:
             # Exit if the condition of entity is valid:
-            if condition(service.get()):
+            entity = service.get()
+            if condition(entity):
                 return
+            elif fail_condition(entity):
+                raise Exception("Error while waiting on result state of the entity.")
             else:
                 time.sleep(float(wait))
 
@@ -296,8 +300,8 @@ class BaseModule(object):
     @abstractmethod
     def build_entity(self):
         """
-        This method should return oVirt Python SDK type, which we want want
-        to create or update, initialized by values passed by Ansible module.
+        This method should return oVirt Python SDK type, which we want to
+        create or update, initialized by values passed by Ansible module.
 
         For example if we want to create VM, we will return following:
           types.Vm(name=self._module.params['vm_name'])
@@ -340,7 +344,7 @@ class BaseModule(object):
         """
         pass
 
-    def create(self, entity=None, result_state=None, search_params=None, **kwargs):
+    def create(self, entity=None, result_state=None, fail_condition=lambda e: False, search_params=None, **kwargs):
         """
         Method which is called when state of the entity is 'present'. If user
         don't provide `entity` parameter the entity is searched using
@@ -348,12 +352,13 @@ class BaseModule(object):
         the entity should be updated is checked by `update_check` method.
         The corresponding updated entity is build by `build_entity` method.
 
-        Additional task can be executed after entity is created by overriding
-        `post_create` method. Another task can be executed after update, by
-        overriding `post_update` method.
+        Function executed after entity is created can optionally be specified
+        in `post_create` parameter. Function executed after entity is updated
+        can optionally be specified in `post_update` parameter.
 
         :param entity: Entity we want to update, if exists.
         :param result_state: State which should entity has in order to finish task.
+        :param fail_condition: Function which checks incorrect state of entity, if it returns `True` Exception is raised.
         :param search_params: Dictionary of parameters to be used for search.
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
@@ -386,10 +391,11 @@ class BaseModule(object):
 
         state_condition = lambda entity: entity
         if result_state:
-            state_condition = lambda entity: entity and entity.status == result_state,
+            state_condition = lambda entity: entity and entity.status == result_state
         wait(
             service=entity_service,
             condition=state_condition,
+            fail_condition=fail_condition,
             wait=self._module.params['wait'],
             timeout=self._module.params['timeout'],
         )
@@ -414,8 +420,8 @@ class BaseModule(object):
         don't provide `entity` parameter the entity is searched using
         `search_params` parameter. If entity is found it's removed.
 
-        Additional task can be executed after entity is searched and before
-        remove action is executed by overriding `pre_remove` method.
+        Function executed before remove is executed can optionally be specified
+        in `pre_remove` parameter.
 
         :param entity: Entity we want to remove.
         :param search_params: Dictionary of parameters to be used for search.
@@ -457,6 +463,7 @@ class BaseModule(object):
         entity=None,
         action_condition=lambda e: e,
         wait_condition=lambda e: e,
+        fail_condition=lambda e: False,
         pre_action=lambda e: e,
         post_action=lambda e: None,
         search_params=None,
@@ -466,18 +473,18 @@ class BaseModule(object):
         This method is executed when we want to change the state of some oVirt
         entity. The action to be executed on oVirt service is specified by
         `action` parameter. Whether the action should be executed can be
-        specified by passing `action_condition` parameter. Which state the entity
-        should have after executing the action can be specified by passing
-        `wait_condition` parameter.
+        specified by passing `action_condition` parameter. State which the
+        entity should be in after execution of the action can be specified
+        by `wait_condition` parameter.
 
-        Additional task can be executed before action on entity is executed
-        by passing `pre_action` parameter to method. Another task can be
-        executed after action is executed, by passing `post_action` parameter
-        to method.
+        Function executed before an action on entity can optionally be specified
+        in `pre_action` parameter. Function executed after an action on entity can
+        optionally be specified in `post_action` parameter.
 
-        :param action: Action which should be executed on service.
+        :param action: Action which should be executed by service on entity.
         :param entity: Entity we want to run action on.
         :param action_condition: Function which is executed when checking if action should be executed.
+        :param fail_condition: Function which checks incorrect state of entity, if it returns `True` Exception is raised.
         :param wait_condition: Function which is executed when waiting on result state.
         :param pre_action: Function which is executed before running the action.
         :param post_action: Function which is executed after running the action.
@@ -507,8 +514,9 @@ class BaseModule(object):
         post_action(entity)
 
         wait(
-            service=entity_service,
+            service=self._service.service(entity.id),
             condition=wait_condition,
+            fail_condition=fail_condition,
             wait=self._module.params['wait'],
             timeout=self._module.params['timeout'],
         )
