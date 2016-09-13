@@ -35,7 +35,6 @@ from ansible.module_utils.network import add_argument, register_transport, to_li
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils.netcli import Command
 
 EAPI_FORMATS = ['json', 'text']
 
@@ -112,6 +111,7 @@ class EosConfigMixin(object):
         commands = ['configure session %s' % session, 'abort']
         self.execute(commands)
 
+
 class Eapi(EosConfigMixin):
 
     def __init__(self):
@@ -178,8 +178,8 @@ class Eapi(EosConfigMixin):
         if self.enable is not None:
             commands.insert(0, self.enable)
 
-        data = self._get_body(commands, output)
-        data = json.dumps(data)
+        body = self._get_body(commands, output)
+        data = json.dumps(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
 
@@ -207,7 +207,6 @@ class Eapi(EosConfigMixin):
             response['result'].pop(0)
 
         return response['result']
-
 
     def run_commands(self, commands, **kwargs):
         output = None
