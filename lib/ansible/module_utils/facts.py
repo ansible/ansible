@@ -1121,8 +1121,10 @@ class LinuxHardware(Hardware):
             elif key == '# processors':
                 self.facts['processor_cores'] = int(data[1].strip())
 
-        if vendor_id_occurrence == model_name_occurrence:
-            i = vendor_id_occurrence
+        # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
+        if vendor_id_occurrence > 0:
+            if vendor_id_occurrence == model_name_occurrence:
+                i = vendor_id_occurrence
 
         if self.facts['architecture'] != 's390x':
             if xen_paravirt:
