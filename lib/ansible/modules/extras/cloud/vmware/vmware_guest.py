@@ -72,7 +72,7 @@ options:
    nic:
         description:
             - A list of nics to add
-        required: True
+        required: False
    wait_for_ip_address:
         description:
             - Wait until vcenter detects an IP address for the guest
@@ -94,6 +94,9 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 Example from Ansible playbook
+#
+# Crate VM from template
+#
     - name: create the VM
       vmware_guest:
         validate_certs: False
@@ -121,6 +124,19 @@ Example from Ansible playbook
         template: template_el7
         wait_for_ip_address: yes
       register: deploy
+
+#
+# Gather facts only
+#
+    - name: gather the VM facts
+      vmware_guest:
+        validate_certs: False
+        hostname: 192.168.1.209
+        username: administrator@vsphere.local
+        password: vmware
+        name: testvm_2
+        esxi_hostname: 192.168.1.117
+      register: facts
 '''
 
 RETURN = """
@@ -476,6 +492,9 @@ class PyVmomiHelper(object):
                             self.params['folder']
                          )
 
+        if not 'disk' in self.params:
+            return ({'changed': False, 'failed': True, 'msg': "'disk' is required for VM deployment"})
+
         datastore_name = self.params['disk'][0]['datastore']
         datastore = get_obj(self.content, [vim.Datastore], datastore_name)
 
@@ -803,8 +822,8 @@ def main():
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default=None, aliases=['folder']),
-            disk=dict(required=True, type='list'),
-            nic=dict(required=True, type='list'),
+            disk=dict(required=False, type='list'),
+            nic=dict(required=False, type='list'),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
             datacenter=dict(required=False, type='str', default=None),
