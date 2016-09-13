@@ -96,7 +96,7 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_start(self, playbook):
         """Display playbook start messages"""
         self.playbook_name = os.path.basename(playbook._file_name)
-        self.send_msg("Starting play: %s" %
+        self.send_msg("Starting playbook: %s" %
                       (self.playbook_name))
 
 
