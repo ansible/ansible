@@ -254,7 +254,7 @@ With option ''any_errors_fatal'' any failure on any host in a multi-host play wi
 
 Sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
 
-For example there is a service located in many datacenters, there a some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
+For example there is a service located in many datacenters, there are some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
 
 - disable traffic on load balancers (must be turned off simultaneously)
 - gracefully stop service
