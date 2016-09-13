@@ -835,34 +835,39 @@ def apply_key_map(key_map, table):
 
 def get_available_features(feature, module):
     available_features = {}
+    feature_regex = '(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
     command = 'show feature'
-    body = execute_show_command(command, module)
 
-    try:
-        body = body[0]['TABLE_cfcFeatureCtrlTable']['ROW_cfcFeatureCtrlTable']
-    except (TypeError, IndexError):
-        return available_features
+    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    split_body = body[0].splitlines()
 
-    for each_feature in body:
-        feature = each_feature['cfcFeatureCtrlName2']
-        state = each_feature['cfcFeatureCtrlOpStatus2']
+    for line in split_body:
+        try:
+            match_feature = re.match(feature_regex, line, re.DOTALL)
+            feature_group = match_feature.groupdict()
+            feature = feature_group['feature']
+            state = feature_group['state']
+        except AttributeError:
+            feature = ''
+            state = ''
 
-        if 'enabled' in state:
-            state = 'enabled'
+        if feature and state:
+            if 'enabled' in state:
+                state = 'enabled'
 
-        if feature not in available_features.keys():
-            available_features[feature] = state
-        else:
-            if (available_features[feature] == 'disabled' and
-                    state == 'enabled'):
+            if feature not in available_features.keys():
                 available_features[feature] = state
+            else:
+                if (available_features[feature] == 'disabled' and
+                    state == 'enabled'):
+                    available_features[feature] = state
 
     return available_features
 
 
+
 def get_commands(proposed, existing, state, module):
     feature = validate_feature(module, mode='config')
-
     commands = []
     feature_check = proposed == existing
     if not feature_check:
