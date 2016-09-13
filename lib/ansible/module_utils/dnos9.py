@@ -63,18 +63,23 @@ class Cli(CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password:\s?$", re.I)
 
+    WARNING_PROMPTS_RE = [
+        re.compile(r"[\r\n]?\[confirm yes/no\]:\s?$"),
+        re.compile(r"[\r\n]?\[y/n\]:\s?$"),
+        re.compile(r"[\r\n]?\[yes/no\]:\s?$")
+    ]
+
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
+        re.compile(r"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b).)*$"),
         re.compile(r"% ?Bad secret"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
         re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
@@ -92,7 +97,11 @@ class Cli(CliBase):
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
+        cmdlist = list()
+        for c in to_list(commands):
+            cmd = Command(c, prompt=self.WARNING_PROMPTS_RE, response='yes')
+            cmdlist.append(cmd)
+        cmds.extend(cmdlist)
         cmds.append('end')
 
         responses = self.execute(cmds)
