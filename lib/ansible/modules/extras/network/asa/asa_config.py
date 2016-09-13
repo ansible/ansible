@@ -208,7 +208,7 @@ backup_path:
   description: The full path to the backup file
   returned: when backup is yes
   type: path
-  sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+  sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 responses:
   description: The set of responses from issuing the commands on the device
   returned: when not check_mode
@@ -217,36 +217,17 @@ responses:
 """
 import re
 
+import ansible.module_utils.asa
+
 from ansible.module_utils.basic import get_exception
-from ansible.module_utils.asa import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-def check_args(module, warnings):
-    if module.params['parents']:
-        if not module.params['lines'] or module.params['src']:
-            warnings.append('ignoring unnecessary argument parents')
-    if module.params['match'] == 'none' and module.params['replace']:
-        warnings.append('ignoring unnecessary argument replace')
-
-def get_config(module, result):
-    defaults = module.params['default']
-    if defaults is True:
-        key = '__configall__'
-    else:
-        key = '__config__'
-
-    contents = module.params['config'] or result.get(key)
-
+def get_config(module):
+    contents = module.params['config']
     if not contents:
+        defaults = module.params['default']
         contents = module.config.get_config(include_defaults=defaults)
-        result[key] = contents
-
     return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
@@ -258,48 +239,51 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def load_config(module, commands, result):
-    if not module.check_mode and module.params['update'] != 'check':
-        module.config(commands)
-    result['changed'] = module.params['update'] != 'check'
-    result['updates'] = commands.split('\n')
-
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+    path = module.params['parents']
 
     candidate = get_candidate(module)
 
     if match != 'none':
-        config = get_config(module, result)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        config = get_config(module)
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
     else:
-        config = None
         configobjs = candidate.items
 
     if configobjs:
-        commands = dumps(configobjs, 'commands')
+        commands = dumps(configobjs, 'commands').split('\n')
 
-        if module.params['before']:
-            commands[:0] = module.params['before']
+        if module.params['lines']:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if module.params['after']:
+                commands.extend(module.params['after'])
+
+        result['updates'] = commands
 
         # send the configuration commands to the device and merge
         # them with the current running config
-        load_config(module, commands, result)
+        if not module.check_mode:
+            module.config.load_config(commands)
+        result['changed'] = True
 
-    if module.params['save'] and not module.check_mode:
-        module.config.save_config()
+    if module.params['save']:
+        if not module.check_mode:
+            module.config.save_config()
+        result['changed'] = True
 
 def main():
-
+    """ main entry point for module execution
+    """
     argument_spec = dict(
+        src=dict(type='path'),
+
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
-
-        src=dict(type='path'),
 
         before=dict(type='list'),
         after=dict(type='list'),
@@ -307,26 +291,26 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
 
-        update=dict(choices=['merge', 'check'], default='merge'),
-        backup=dict(type='bool', default=False),
-
         config=dict(),
         default=dict(type='bool', default=False),
 
+        backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
 
+    required_if = [('match', 'strict', ['lines']),
+                   ('match', 'exact', ['lines']),
+                   ('replace', 'block', ['lines'])]
+
     module = NetworkModule(argument_spec=argument_spec,
                            connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
-
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False)
 
     if module.params['backup']:
         result['__backup__'] = module.config.get_config()
@@ -335,7 +319,7 @@ def main():
         run(module, result)
     except NetworkError:
         exc = get_exception()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=str(exc), **exc.kwargs)
 
     module.exit_json(**result)
 
