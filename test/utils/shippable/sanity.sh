@@ -12,7 +12,7 @@ if [ "${TOXENV}" = 'py24' ]; then
     fi
 
     python2.4 -V
-    python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|lxd|docker_common|azure_rm_common|vca|vmware|gcp|gcdns).py' lib/ansible/module_utils
+    python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|cloud|ec2|gce|lxd|docker_common|azure_rm_common|vca|vmware|gcp|gcdns).py' lib/ansible/module_utils
 else
     if [ "${install_deps}" != "" ]; then
         pip install -r "${source_root}/test/utils/shippable/sanity-requirements.txt" --upgrade
