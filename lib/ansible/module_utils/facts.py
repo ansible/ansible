@@ -1886,6 +1886,7 @@ class AIX(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_vgs_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -1943,6 +1944,35 @@ class AIX(Hardware):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         self.facts['firmware_version'] = data[1].strip('IBM,')
+        rc, out, err = self.module.run_command("/usr/sbin/lsconf")
+        if out:
+            for line in out.splitlines():
+                data = line.split(':')
+                if 'Machine Serial Number' in line:
+                    self.facts['product_serial'] = data[1].strip()
+                if 'LPAR Info' in line:
+                    self.facts['lpar_info'] = data[1].strip()
+                if 'System Model' in line:
+                    self.facts['product_name'] = data[1].strip()
+    def get_vgs_facts(self):
+        """ Get vg and pv Facts  """
+        rc, out, err = self.module.run_command("/usr/sbin/lsvg|/usr/bin/xargs /usr/sbin/lsvg -p" ,use_unsafe_shell=True)
+        if out:
+            self.facts['vgs']= {}
+            for m in re.finditer(r'(\S+):\n.*FREE DISTRIBUTION(\n(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*)+', out):
+                self.facts['vgs'][m.group(1)] = []
+                pp_size = 0
+                rc, out, err = self.module.run_command("/usr/sbin/lsvg " + m.group(1))
+                pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
+                for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                    pv_info = { 'pv_name': n.group(1),
+                                'pv_state': n.group(2),
+                                'total_pps': n.group(3),
+                                'free_pps': n.group(4),
+                                'pp_size': pp_size
+                              }
+                    self.facts['vgs'][m.group(1)].append(pv_info)
+
 
 class HPUX(Hardware):
     """
