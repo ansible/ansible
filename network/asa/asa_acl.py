@@ -96,6 +96,16 @@ options:
 """
 
 EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: cisco
+    password: cisco
+    transport: cli
+    authorize: yes
+    auth_pass: cisco
 
 - asa_acl:
     lines:
@@ -107,12 +117,14 @@ EXAMPLES = """
     before: clear configure access-list ACL-ANSIBLE
     match: strict
     replace: block
+    provider: "{{ cli }}"
 
 - asa_acl:
     lines:
       - access-list ACL-OUTSIDE extended permit tcp any any eq www
       - access-list ACL-OUTSIDE extended permit tcp any any eq https
      context: customer_a
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -130,25 +142,30 @@ responses:
 """
 import ansible.module_utils.asa
 
-from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.netcfg import NetworkConfig, dumps
 
 
-def get_config(module):
-    config = module.params['config'] or dict()
-    if not config and not module.params['force']:
-        config = module.config
-    return config
+def get_config(module, acl_name):
+    contents = module.params['config']
+    if not contents:
+        contents = module.config.get_config()
 
+    filtered_config = list()
+    for item in contents.split('\n'):
+        if item.startswith('access-list %s' % acl_name):
+            filtered_config.append(item)
 
-def check_input_acl(lines, module):
+    return NetworkConfig(indent=1, contents='\n'.join(filtered_config))
+
+def parse_acl_name(module):
     first_line = True
-    for line in lines:
+    for line in module.params['lines']:
         ace = line.split()
         if ace[0] != 'access-list':
             module.fail_json(msg='All lines/commands must begin with "access-list" %s is not permitted' % ace[0])
         if len(ace) <= 1:
-            module.fail_json(msg='All lines/commainds must contain the name of the access-list')
+            module.fail_json(msg='All lines/commands must contain the name of the access-list')
         if first_line:
             acl_name = ace[1]
         else:
@@ -156,7 +173,7 @@ def check_input_acl(lines, module):
                 module.fail_json(msg='All lines/commands must use the same access-list %s is not %s' % (ace[1], acl_name))
         first_line = False
 
-    return 'access-list %s' % acl_name
+    return acl_name
 
 def main():
 
@@ -181,22 +198,25 @@ def main():
     match = module.params['match']
     replace = module.params['replace']
 
+    result = dict(changed=False)
+
     candidate = NetworkConfig(indent=1)
     candidate.add(lines)
 
-    module.filter = check_input_acl(lines, module)
+    acl_name = parse_acl_name(module)
 
     if not module.params['force']:
-        contents = get_config(module)
+        contents = get_config(module, acl_name)
         config = NetworkConfig(indent=1, contents=contents)
+
         commands = candidate.difference(config)
         commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c) for c in commands if c]
     else:
         commands = str(candidate).split('\n')
 
     if commands:
         if not module.check_mode:
-            commands = [str(c) for c in commands if c]
             response = module.config(commands)
             result['responses'] = response
         result['changed'] = True
