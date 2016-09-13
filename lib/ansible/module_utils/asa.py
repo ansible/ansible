@@ -30,36 +30,31 @@
 import re
 
 from ansible.module_utils.network import NetworkError, NetworkModule
-from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.network import add_argument, register_transport
+from ansible.module_utils.network import to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
 
-add_argument('show_command', dict(default='show running-config', choices=['show running-config', 'more system:running-config']))
+add_argument('show_command', dict(default='show running-config',
+             choices=['show running-config', 'more system:running-config']))
 add_argument('context', dict(required=False))
 
 
 class Cli(CliBase):
+
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"is not valid", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"error:", re.I),
     ]
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     def __init__(self, *args, **kwargs):
         super(Cli, self).__init__(*args, **kwargs)
-        self.filter = None
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
@@ -72,7 +67,7 @@ class Cli(CliBase):
         cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
         self.execute([cmd, 'no terminal pager'])
 
-    def change_context(self, params, **kwargs):
+    def change_context(self, params):
         context = params['context']
         if context == 'system':
             command = 'changeto system'
@@ -86,18 +81,20 @@ class Cli(CliBase):
     def configure(self, commands):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
-        if cmds[-1] != 'end':
+        if cmds[-1] == 'exit':
+            cmds[-1] = 'end'
+        elif cmds[-1] != 'end':
             cmds.append('end')
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self, include_defaults=False, **kwargs):
+    def get_config(self, include_defaults=False):
         cmd = 'show running-config'
         if include_defaults:
             cmd += ' all'
         return self.run_commands(cmd)[0]
 
-    def load_config(self, commands, **kwargs):
+    def load_config(self, commands):
         return self.configure(commands)
 
     def save_config(self):
