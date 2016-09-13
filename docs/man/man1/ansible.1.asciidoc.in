@@ -69,7 +69,7 @@ Run commands in the background, killing the task after 'NUM' seconds.
 *--become-method=*'BECOME_METHOD'::
 
 Privilege escalation method to use (default=sudo),
-valid choices: [ sudo | su | pbrun | pfexec | runas | doas | dzdo ]
+valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu ]
 
 *--become-user=*'BECOME_USER'::
 
