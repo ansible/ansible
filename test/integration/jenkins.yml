@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tags:
+    - jenkins
+  roles:
+    - test_jenkins_job
