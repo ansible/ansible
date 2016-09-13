@@ -111,6 +111,15 @@ def find_datacenter_by_name(content, datacenter_name):
 
     return None
 
+def find_datastore_by_name(content, datastore_name):
+
+    datastores = get_all_objs(content, [vim.Datastore])
+    for ds in datastores:
+        if ds.name == datastore_name:
+            return ds
+
+    return None
+
 
 def find_dvs_by_name(content, switch_name):
 
@@ -203,6 +212,10 @@ def connect_to_api(module, disconnect_atexit=True):
             service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
         else:
             module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
+    except Exception as e:
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.verify_mode = ssl.CERT_NONE
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -220,4 +233,3 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
-
