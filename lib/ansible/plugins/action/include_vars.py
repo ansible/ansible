@@ -102,7 +102,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
-        self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', '.json']
+        self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
         if not task_vars:
             task_vars = dict()
 
