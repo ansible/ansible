@@ -7,6 +7,7 @@ mock >= 1.0.1, < 1.1
 passlib
 coverage
 coveralls
+graphviz
 unittest2
 redis
 python3-memcached
