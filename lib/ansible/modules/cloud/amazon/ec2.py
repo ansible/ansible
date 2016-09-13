@@ -1233,7 +1233,7 @@ def terminate_instances(module, ec2, instance_ids):
                 instance_ids=terminated_instance_ids, \
                 filters={'instance-state-name':'terminated'})
             try:
-                num_terminated = len(response.pop().instances)
+                num_terminated = sum([len(res.instances) for res in response])
             except Exception as e:
                 # got a bad response of some sort, possibly due to
                 # stale/cached data. Wait a second and then try again
