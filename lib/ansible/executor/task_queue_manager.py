@@ -182,6 +182,7 @@ class TaskQueueManager:
                     )
                     self._workers[worker_idx][0] = worker_prc
                     worker_prc.start()
+                    self.send_callback('v2_runner_on_start', host, task)
                     display.debug("worker is %d (out of %d available)" % (worker_idx+1, len(self._workers)))
 
                 except (EOFError, IOError, AssertionError) as e:
