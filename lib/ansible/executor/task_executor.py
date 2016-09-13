@@ -389,6 +389,10 @@ class TaskExecutor:
             if not self._play_context.remote_addr:
                 self._play_context.remote_addr = self._host.address
 
+            # Preserve the real host information, since remote_addr can be overridden
+            # by delegation and knowing the intended host can be useful
+            self._play_context.host = self._host
+
             # We also add "magic" variables back into the variables dict to make sure
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)

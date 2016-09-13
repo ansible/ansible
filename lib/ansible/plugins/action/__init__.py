@@ -208,7 +208,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Create and return a temporary path on a remote box.
         '''
 
-        basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
+        # For captured (teed) output to be useful, it should be in a predictable directory
+        # But to minimize risk, that's the only time we'll use that predictable structure
+        if C.DEFAULT_TEE_REMOTE_OUTPUT:
+            basefile = '%s-%s' % (self._play_context.host, self._task._uuid)
+        else:
+            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = False
 
         if self._play_context.become and self._play_context.become_user not in ('root', remote_user):

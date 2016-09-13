@@ -34,6 +34,7 @@ from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.boolean import boolean
+from ansible.inventory.host import Host
 
 __all__ = ['PlayContext']
 
@@ -157,6 +158,7 @@ class PlayContext(Base):
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
     _docker_extra_args  = FieldAttribute(isa='string')
+    _host             = FieldAttribute(isa='class', class_type=Host)
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
