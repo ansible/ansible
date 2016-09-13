@@ -317,7 +317,7 @@ def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
     for item in to_list(commands):
         if item.output == 'json':
-            cmd = jsonify(cmd)
+            cmd = jsonify(item)
         elif item.command.endswith('| json'):
             item.output = 'json'
             cmd = str(item)
