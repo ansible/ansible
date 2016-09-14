@@ -24,8 +24,10 @@ import os
 import smtplib
 import json
 
-from ansible.utils.unicode import to_bytes
+from ansible.compat.six import string_types
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
+
 
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
 
@@ -83,7 +85,7 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        attach =  res._task.action
+        attach = res._task.action
         if 'invocation' in res._result:
             attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
 
@@ -94,7 +96,7 @@ class CallbackModule(CallbackBase):
             subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
         if 'stderr' in res._result.keys() and res._result['stderr']:
-            subject = res['stderr'].strip('\r\n').split('\n')[-1]
+            subject = res._result['stderr'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
         if 'msg' in res._result.keys() and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
@@ -108,7 +110,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:
@@ -123,7 +125,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:

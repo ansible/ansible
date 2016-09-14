@@ -21,15 +21,24 @@ __metaclass__ = type
 import os
 import time
 
-from collections import OrderedDict
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.unicode import to_bytes
 
 try:
     from junit_xml import TestSuite, TestCase
     HAS_JUNIT_XML = True
 except ImportError:
     HAS_JUNIT_XML = False
+
+try:
+    from collections import OrderedDict
+    HAS_ORDERED_DICT = True
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+        HAS_ORDERED_DICT = True
+    except ImportError:
+        HAS_ORDERED_DICT = False
 
 
 class CallbackModule(CallbackBase):
@@ -64,13 +73,20 @@ class CallbackModule(CallbackBase):
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
-        self._task_data = OrderedDict()
+        self._task_data = None
 
         self.disabled = False
 
         if not HAS_JUNIT_XML:
             self.disabled = True
             self._display.warning('The `junit_xml` python module is not installed. '
+                                  'Disabling the `junit` callback plugin.')
+
+        if HAS_ORDERED_DICT:
+            self._task_data = OrderedDict()
+        else:
+            self.disabled = True
+            self._display.warning('The `ordereddict` python module is not installed. '
                                   'Disabling the `junit` callback plugin.')
 
         if not os.path.exists(self._output_dir):
@@ -166,7 +182,7 @@ class CallbackModule(CallbackBase):
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
         with open(output_file, 'wb') as xml:
-            xml.write(to_bytes(report, errors='strict'))
+            xml.write(to_bytes(report, errors='surrogate_or_strict'))
 
     def v2_playbook_on_start(self, playbook):
         self._playbook_path = playbook._file_name
@@ -222,7 +238,11 @@ class TaskData:
 
     def add_host(self, host):
         if host.uuid in self.host_data:
-            raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
+            if host.status == 'included':
+                # concatenate task include output from multiple items
+                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+            else:
+                raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
 
         self.host_data[host.uuid] = host
 

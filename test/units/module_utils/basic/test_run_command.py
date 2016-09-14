@@ -42,7 +42,6 @@ class OpenBytesIO(BytesIO):
         pass
 
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleRunCommand(unittest.TestCase):
     def setUp(self):
         self.cmd_out = {

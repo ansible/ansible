@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Determine if python looks like it will support modern ssl features like SNI
-  command: python -c 'from ssl import SSLContext'
+  command: "{{ ansible_python.executable }} -c 'from ssl import SSLContext'"
   ignore_errors: True
   register: python_test
 

@@ -80,7 +80,7 @@ class VMWareInventory(object):
     host_filters = []
     groupby_patterns = []
 
-    bad_types = ['Array']
+    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
     if (sys.version_info > (3, 0)):
         safe_types = [int, bool, str, float, None]
     else:
@@ -108,10 +108,15 @@ class VMWareInventory(object):
             if self.args.refresh_cache or not cache_valid:
                 self.do_api_calls_update_cache()
             else:
+                self.debugl('# loading inventory from cache')
                 self.inventory = self.get_inventory_from_cache()
 
     def debugl(self, text):
         if self.args.debug:
+            try:
+                text = str(text)
+            except UnicodeEncodeError:
+                text = text.encode('ascii','ignore')                            
             print(text)
 
     def show(self):
@@ -280,7 +285,6 @@ class VMWareInventory(object):
             kwargs['sslContext'] = context
 
         instances = self._get_instances(kwargs)
-        self.debugl("### INSTANCES RETRIEVED")
         return instances
 
 
@@ -290,55 +294,34 @@ class VMWareInventory(object):
 
         instances = []
         si = SmartConnect(**inkwargs)
-            
+
+        self.debugl('# retrieving instances')            
         if not si:
             print("Could not connect to the specified host using specified "
                 "username and password")
             return -1
         atexit.register(Disconnect, si)
         content = si.RetrieveContent()
-        for child in content.rootFolder.childEntity:
-            instances += self._get_instances_from_children(child)
-        if self.args.max_instances:
-            if len(instances) >= (self.args.max_instances+1):
-                instances = instances[0:(self.args.max_instances+1)]
+
+        # Create a search container for virtualmachines
+        container = content.rootFolder
+        viewType = [vim.VirtualMachine]
+        recursive = True
+        containerView = content.viewManager.CreateContainerView(container, viewType, recursive)
+        children = containerView.view
+        for child in children:
+            # If requested, limit the total number of instances
+            if self.args.max_instances:
+                if len(instances) >= (self.args.max_instances):
+                    break
+            instances.append(child)
+        self.debugl("# total instances retrieved %s" % len(instances))
+
         instance_tuples = []    
         for instance in sorted(instances):    
             ifacts = self.facts_from_vobj(instance)
             instance_tuples.append((instance, ifacts))
         return instance_tuples
-
-
-    def _get_instances_from_children(self, child):
-        instances = []
-
-        if hasattr(child, 'childEntity'):
-            self.debugl("CHILDREN: %s" % str(child.childEntity))
-            instances += self._get_instances_from_children(child.childEntity)
-        elif hasattr(child, 'vmFolder'):
-            self.debugl("FOLDER: %s" % str(child))
-            instances += self._get_instances_from_children(child.vmFolder)
-        elif hasattr(child, 'index'):
-            self.debugl("LIST: %s" % str(child))
-            for x in sorted(child):
-                self.debugl("LIST_ITEM: %s" % x)
-                instances += self._get_instances_from_children(x)
-        elif hasattr(child, 'guest'):
-            self.debugl("GUEST: %s" % str(child))
-            instances.append(child)
-        elif hasattr(child, 'vm'):    
-            # resource pools
-            self.debugl("RESOURCEPOOL: %s" % child.vm)
-            if child.vm:
-                instances += self._get_instances_from_children(child.vm)
-        else:            
-            self.debugl("ELSE ...")
-            try:
-                self.debugl(child.__dict__)
-            except Exception as e:
-                pass
-            self.debugl(child)
-        return instances
 
 
     def instances_to_inventory(self, instances):
@@ -362,7 +345,7 @@ class VMWareInventory(object):
             inventory['_meta']['hostvars'][thisid] = idata.copy()
             inventory['_meta']['hostvars'][thisid]['ansible_uuid'] = thisid
 
-        # Make a map of the uuid to the name the user wants
+        # Make a map of the uuid to the alias the user wants
         name_mapping = self.create_template_mapping(inventory, 
                             self.config.get('vmware', 'alias_pattern'))
 
@@ -370,13 +353,20 @@ class VMWareInventory(object):
         host_mapping = self.create_template_mapping(inventory,
                             self.config.get('vmware', 'host_pattern'))
 
+
         # Reset the inventory keys
         for k,v in name_mapping.iteritems():
 
+            if not host_mapping or not k in host_mapping:
+                continue
+
             # set ansible_host (2.x)
-            inventory['_meta']['hostvars'][k]['ansible_host'] = host_mapping[k]
-            # 1.9.x backwards compliance
-            inventory['_meta']['hostvars'][k]['ansible_ssh_host'] = host_mapping[k]
+            try:
+                inventory['_meta']['hostvars'][k]['ansible_host'] = host_mapping[k]
+                # 1.9.x backwards compliance
+                inventory['_meta']['hostvars'][k]['ansible_ssh_host'] = host_mapping[k]
+            except Exception as e:
+                continue
 
             if k == v:
                 continue
@@ -389,14 +379,14 @@ class VMWareInventory(object):
             inventory['all']['hosts'].remove(k)
             inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('PREFILTER_HOSTS:')
+        self.debugl('# pre-filtered hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl(i)
+            self.debugl('#   * %s' % i)
         # Apply host filters
         for hf in self.host_filters:
             if not hf:
                 continue
-            self.debugl('FILTER: %s' % hf)
+            self.debugl('# filter: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
             for k,v in filter_map.iteritems():
                 if not v:
@@ -404,9 +394,9 @@ class VMWareInventory(object):
                     inventory['all']['hosts'].remove(k)
                     inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('POSTFILTER_HOSTS:')
+        self.debugl('# post-filter hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl(i)
+            self.debugl('#   * %s' % i)
 
         # Create groups
         for gbp in self.groupby_patterns:
@@ -433,8 +423,7 @@ class VMWareInventory(object):
                 newkey = t.render(v)
                 newkey = newkey.strip()
             except Exception as e:
-                self.debugl(str(e))
-                #import epdb; epdb.st()
+                self.debugl(e)
             if not newkey:
                 continue
             elif dtype == 'integer':
@@ -457,100 +446,90 @@ class VMWareInventory(object):
         # pyvmomi objects are not yet serializable, but may be one day ...
         # https://github.com/vmware/pyvmomi/issues/21
 
+        # WARNING:
+        # Accessing an object attribute will trigger a SOAP call to the remote.
+        # Increasing the attributes collected or the depth of recursion greatly
+        # increases runtime duration and potentially memory+network utilization.
+
+        if level == 0:
+            try:
+                self.debugl("# get facts: %s" % vobj.name)
+            except Exception as e:
+                self.debugl(e)
+
         rdata = {}
 
-        # Do not serialize self
-        if hasattr(vobj, '__name__'):
-            if vobj.__name__ == 'VMWareInventory':
-                return rdata
+        methods = dir(vobj)
+        methods = [str(x) for x in methods if not x.startswith('_')]
+        methods = [x for x in methods if not x in self.bad_types]
+        methods = sorted(methods)
 
-        # Exit early if maxlevel is reached
-        if level > self.maxlevel:
-            return rdata
+        for method in methods:
+            # Attempt to get the method, skip on fail
+            try:
+                methodToCall = getattr(vobj, method)
+            except Exception as e:
+                continue
+            # Skip callable methods
+            if callable(methodToCall):
+                continue
+            if self.lowerkeys:
+                method = method.lower()
+            rdata[method] = self._process_object_types(methodToCall)
 
-        # Objects usually have a dict property
-        if hasattr(vobj, '__dict__') and not level == 0:
+        return rdata
 
-            keys = sorted(vobj.__dict__.keys())
-            for k in keys:
-                v = vobj.__dict__[k]
-                # Skip private methods
-                if k.startswith('_'):
-                    continue
 
-                if k.lower() in self.skip_keys:
-                    continue
+    def _process_object_types(self, vobj, level=0):
+        ''' Serialize an object '''
+        rdata = {}
 
-                if self.lowerkeys:
-                    k = k.lower()
-
-                rdata[k] = self._process_object_types(v, level=level)
-
-        else:    
-
+        if vobj is None:
+            rdata = None
+        elif issubclass(type(vobj), str) or isinstance(vobj, str):
+            rdata = vobj
+        elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
+            rdata = vobj
+        elif issubclass(type(vobj), int) or isinstance(vobj, int):
+            rdata = vobj
+        elif issubclass(type(vobj), float) or isinstance(vobj, float):
+            rdata = vobj
+        elif issubclass(type(vobj), long) or isinstance(vobj, long):
+            rdata = vobj
+        elif issubclass(type(vobj), list) or issubclass(type(vobj), tuple):
+            rdata = []
+            try:
+                vobj = sorted(vobj)
+            except Exception as e:
+                pass
+            for vi in vobj:
+                if (level+1 <= self.maxlevel):
+                    #vid = self.facts_from_vobj(vi, level=(level+1))
+                    vid = self._process_object_types(vi, level=(level+1))
+                    if vid:
+                        rdata.append(vid)
+        elif issubclass(type(vobj), dict):
+            pass
+        elif issubclass(type(vobj), object):
             methods = dir(vobj)
             methods = [str(x) for x in methods if not x.startswith('_')]
             methods = [x for x in methods if not x in self.bad_types]
             methods = sorted(methods)
 
             for method in methods:
-
-                if method in rdata:
-                    continue
-
                 # Attempt to get the method, skip on fail
                 try:
                     methodToCall = getattr(vobj, method)
                 except Exception as e:
                     continue
-
-                # Skip callable methods
                 if callable(methodToCall):
                     continue
-
                 if self.lowerkeys:
                     method = method.lower()
-
-                rdata[method] = self._process_object_types(methodToCall, level=level)
-
-        return rdata
-
-
-    def _process_object_types(self, vobj, level=0):
-
-        rdata = {}
-
-        self.debugl("PROCESSING: %s" % str(vobj))
-
-        if type(vobj) in self.safe_types:
-            try:
-                rdata = vobj
-            except Exception as e:
-                self.debugl(str(e))
-
-        elif hasattr(vobj, 'append'):
-            rdata = []
-            for vi in sorted(vobj):
-                if type(vi) in self.safe_types:
-                    rdata.append(vi)
-                else:
-                    if (level+1 <= self.maxlevel):
-                        vid = self.facts_from_vobj(vi, level=(level+1))
-                        if vid:
-                            rdata.append(vid)
-
-        elif hasattr(vobj, '__dict__'):
-            if (level+1 <= self.maxlevel):
-                md = None
-                md = self.facts_from_vobj(vobj, level=(level+1))
-                if md:
-                    rdata = md
-        elif not vobj or type(vobj) in self.safe_types:
-            rdata = vobj
-        elif type(vobj) == datetime.datetime:
-            rdata = str(vobj)
+                if (level+1 <= self.maxlevel):
+                    rdata[method] = self._process_object_types(methodToCall, level=(level+1))
         else:
-            self.debugl("unknown datatype: %s" % type(vobj))
+            pass
 
         if not rdata:
             rdata = None

@@ -1,6 +1,3 @@
-- name: set service_type fact
-  set_fact: service_type=upstart
-
 - name: install the upstart init file
   copy: src=ansible.upstart dest=/etc/init/ansible_test.conf mode=0644
   register: install_upstart_result

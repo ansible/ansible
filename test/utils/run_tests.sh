@@ -22,7 +22,7 @@ if [ "${TARGET}" = "sanity" ]; then
     ./test/code-smell/boilerplate.sh
     ./test/code-smell/required-and-default-attributes.sh
     if test x"$TOXENV" != x'py24' ; then tox ; fi
-    if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common|vca|vmware).py' lib/ansible/module_utils ; fi
+    if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce|docker_common|azure_rm_common|vca|vmware|gcp|gcdns).py' lib/ansible/module_utils ; fi
 else
     if [ ! -e /tmp/cid_httptester ]; then
         docker pull ansible/ansible:httptester
@@ -30,7 +30,14 @@ else
     fi
     export C_NAME="testAbull_$$_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)"
     docker pull ansible/ansible:${TARGET}
-    docker run -d --volume="${PWD}:/root/ansible:Z" $LINKS --name "${C_NAME}" --env HTTPTESTER=1 ${TARGET_OPTIONS:=''} ansible/ansible:${TARGET} > /tmp/cid_${TARGET}
+
+    # enable colors if output is going to a terminal
+    COLOR_SETTINGS=""
+    if [ -t 1 ]; then
+	COLOR_SETTINGS="--env TERM=$TERM"
+    fi
+
+    docker run -d --volume="${PWD}:/root/ansible:Z" $LINKS --name "${C_NAME}" $COLOR_SETTINGS --env HTTPTESTER=1 ${TARGET_OPTIONS:=''} ansible/ansible:${TARGET} > /tmp/cid_${TARGET}
     docker exec -ti $(cat /tmp/cid_${TARGET}) /bin/sh -c "export TEST_FLAGS='${TEST_FLAGS:-''}'; cd /root/ansible; . hacking/env-setup; (cd test/integration; LC_ALL=en_US.utf-8 make ${MAKE_TARGET:-})"
     docker kill $(cat /tmp/cid_${TARGET})
 

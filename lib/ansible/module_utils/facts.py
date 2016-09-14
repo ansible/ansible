@@ -32,15 +32,18 @@ import datetime
 import getpass
 import pwd
 
+from ansible.module_utils.basic import get_all_subclasses
+from ansible.module_utils.six import PY3, iteritems
+from ansible.module_utils._text import to_native
+
+# py2 vs py3; replace with six via ansiballz
 try:
     # python2
     import ConfigParser as configparser
 except ImportError:
     # python3
     import configparser
-from ansible.module_utils.basic import get_all_subclasses
 
-# py2 vs py3; replace with six via ziploader
 try:
     # python2
     from StringIO import StringIO
@@ -48,31 +51,12 @@ except ImportError:
     # python3
     from io import StringIO
 
-
 try:
     # python2
     from string import maketrans
 except ImportError:
     # python3
     maketrans = str.maketrans # TODO: is this really identical?
-
-try:
-    dict.iteritems
-except AttributeError:
-    # Python 3
-    def iteritems(d):
-        return d.items()
-else:
-    # Python 2
-    def iteritems(d):
-        return d.iteritems()
-
-try:
-    # Python 2
-    long
-except NameError:
-    # Python 3
-    long = int
 
 try:
     import selinux
@@ -113,15 +97,21 @@ if platform.system() != 'SunOS':
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
+GATHER_TIMEOUT=None
+
 class TimeoutError(Exception):
     pass
 
 def timeout(seconds=10, error_message="Timer expired"):
+
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
+            if 'GATHER_TIMEOUT' in globals():
+                if GATHER_TIMEOUT:
+                    seconds = GATHER_TIMEOUT
             signal.signal(signal.SIGALRM, _handle_timeout)
             signal.alarm(seconds)
             try:
@@ -182,7 +172,7 @@ class Facts(object):
         if not cached_facts:
             self.facts = {}
         else:
-            self.facts = cached_facts    
+            self.facts = cached_facts
         ### TODO: Eventually, these should all get moved to populate().  But
         # some of the values are currently being used by other subclasses (for
         # instance, os_family and distribution).  Have to sort out what to do
@@ -272,6 +262,13 @@ class Facts(object):
                 # if that fails read it with ConfigParser
                 # if that fails, skip it
                 rc, out, err = self.module.run_command(fn)
+                try:
+                    out = out.decode('utf-8', 'strict')
+                except UnicodeError:
+                    fact = 'error loading fact - output of running %s was not utf-8' % fn
+                    local[fact_base] = fact
+                    self.facts['local'] = local
+                    return
             else:
                 out = get_file_content(fn, default='')
 
@@ -354,6 +351,7 @@ class Facts(object):
             proc_1 = os.path.basename(proc_1)
 
         if proc_1 is not None:
+            proc_1 = to_native(proc_1)
             proc_1 = proc_1.strip()
 
         if proc_1 == 'init' or proc_1.endswith('sh'):
@@ -398,6 +396,7 @@ class Facts(object):
         if lsb_path:
             rc, out, err = self.module.run_command([lsb_path, "-a"])
             if rc == 0:
+                out = out.decode('utf-8', 'replace')
                 self.facts['lsb'] = {}
                 for line in out.split('\n'):
                     if len(line) < 1 or ':' not in line:
@@ -468,6 +467,7 @@ class Facts(object):
         capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
             rc, out, err = self.module.run_command([capsh_path, "--print"])
+            out = out.decode('utf-8', 'replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.split('\n'):
@@ -581,8 +581,8 @@ class Facts(object):
         size_available = None
         try:
             statvfs_result = os.statvfs(mountpoint)
-            size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-            size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+            size_total = statvfs_result.f_frsize * statvfs_result.f_blocks
+            size_available = statvfs_result.f_frsize * (statvfs_result.f_bavail)
         except OSError:
             pass
         return size_total, size_available
@@ -955,11 +955,20 @@ class Hardware(Facts):
     platform = 'Generic'
 
     def __new__(cls, *arguments, **keyword):
+        # When Hardware is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Hardware:
+            return super(Hardware, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Hardware):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        if PY3:
+            return super(cls, subclass).__new__(subclass)
+        else:
+            return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
     def populate(self):
         return self.facts
@@ -985,6 +994,12 @@ class LinuxHardware(Hardware):
     # Now we have all of these in a dict structure
     MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(('Buffers', 'Cached', 'SwapCached'))
 
+    # regex used against findmnt output to detect bind mounts
+    BIND_MOUNT_RE = re.compile(r'.*\]')
+
+    # regex used against mtab content to find entries that are bind mounts
+    MTAB_BIND_MOUNT_RE = re.compile(r'.*bind.*"')
+
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
@@ -1008,11 +1023,11 @@ class LinuxHardware(Hardware):
             key = data[0]
             if key in self.ORIGINAL_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
-                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+                self.facts["%s_mb" % key.lower()] = int(val) / 1024
 
             if key in self.MEMORY_FACTS:
                  val = data[1].strip().split(' ')[0]
-                 memstats[key.lower()] = long(val) / 1024
+                 memstats[key.lower()] = int(val) / 1024
 
         if None not in (memstats.get('memtotal'), memstats.get('memfree')):
             memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
@@ -1106,8 +1121,10 @@ class LinuxHardware(Hardware):
             elif key == '# processors':
                 self.facts['processor_cores'] = int(data[1].strip())
 
-        if vendor_id_occurrence == model_name_occurrence:
-            i = vendor_id_occurrence
+        # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
+        if vendor_id_occurrence > 0:
+            if vendor_id_occurrence == model_name_occurrence:
+                i = vendor_id_occurrence
 
         if self.facts['architecture'] != 's390x':
             if xen_paravirt:
@@ -1116,10 +1133,23 @@ class LinuxHardware(Hardware):
                 self.facts['processor_threads_per_core'] = 1
                 self.facts['processor_vcpus'] = i
             else:
-                self.facts['processor_count'] = sockets and len(sockets) or i
-                self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-                self.facts['processor_threads_per_core'] = ((cores.values() and
-                    cores.values()[0] or 1) / self.facts['processor_cores'])
+                if sockets:
+                    self.facts['processor_count'] = len(sockets)
+                else:
+                    self.facts['processor_count'] = i
+
+                socket_values = list(sockets.values())
+                if socket_values:
+                    self.facts['processor_cores'] = socket_values[0]
+                else:
+                    self.facts['processor_cores'] = 1
+
+                core_values = list(cores.values())
+                if core_values:
+                    self.facts['processor_threads_per_core'] = core_values[0] // self.facts['processor_cores']
+                else:
+                    self.facts['processor_threads_per_core'] = 1 // self.facts['processor_cores']
+
                 self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
                     self.facts['processor_count'] * self.facts['processor_cores'])
 
@@ -1196,64 +1226,138 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
-    @timeout(10)
-    def get_mount_facts(self):
-        uuids = dict()
-        self.facts['mounts'] = []
-        bind_mounts = []
-        findmntPath = self.module.get_bin_path("findmnt")
-        if findmntPath:
-            rc, out, err = self.module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
-            if rc == 0:
-                # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
-                for line in out.split('\n'):
-                    fields = line.rstrip('\n').split()
-                    if(len(fields) < 2):
-                        continue
-                    if(re.match(".*\]",fields[1])):
-                        bind_mounts.append(fields[0])
+    def _run_lsblk(self, lsblk_path):
+        args = ['--list', '--noheadings', '--paths',  '--output', 'NAME,UUID']
+        cmd = [lsblk_path] + args
+        rc, out, err = self.module.run_command(cmd)
+        return rc, out, err
 
+    def _lsblk_uuid(self):
+        uuids = {}
+        lsblk_path = self.module.get_bin_path("lsblk")
+        if not lsblk_path:
+            return uuids
+
+        rc, out, err = self._run_lsblk(lsblk_path)
+        if rc != 0:
+            return uuids
+
+        # each line will be in format:
+        # <devicename><some whitespace><uuid>
+        # /dev/sda1  32caaec3-ef40-4691-a3b6-438c3f9bc1c0
+        for lsblk_line in out.splitlines():
+            if not lsblk_line:
+                continue
+
+            line = lsblk_line.strip()
+            fields = line.rsplit(None, 1)
+
+            if len(fields) < 2:
+                continue
+
+            device_name, uuid = fields[0].strip(), fields[1].strip()
+            if device_name in uuids:
+                continue
+            uuids[device_name] = uuid
+
+        return uuids
+
+    def _run_findmnt(self, findmnt_path):
+        args = ['--list', '--noheadings', '--notruncate']
+        cmd = [findmnt_path] + args
+        rc, out, err = self.module.run_command(cmd)
+        return rc, out, err
+
+    def _find_bind_mounts(self):
+        bind_mounts = set()
+        findmnt_path = self.module.get_bin_path("findmnt")
+        if not findmnt_path:
+            return bind_mounts
+
+        rc, out, err = self._run_findmnt(findmnt_path)
+        if rc != 0:
+            return bind_mounts
+        out = out.decode('utf-8', 'replace')
+
+        # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
+        for line in out.splitlines():
+            fields = line.split()
+            # fields[0] is the TARGET, fields[1] is the SOURCE
+            if len(fields) < 2:
+                continue
+
+            # bind mounts will have a [/directory_name] in the SOURCE column
+            if self.BIND_MOUNT_RE.match(fields[1]):
+                bind_mounts.add(fields[0])
+
+        return bind_mounts
+
+    def _mtab_entries(self):
         mtab = get_file_content('/etc/mtab', '')
-        for line in mtab.split('\n'):
-            fields = line.rstrip('\n').split()
+        mtab_entries = []
+        for line in mtab.splitlines():
+            fields = line.split()
             if len(fields) < 4:
                 continue
-            if fields[0].startswith('/') or ':/' in fields[0]:
-                if(fields[2] != 'none'):
-                    size_total, size_available = self._get_mount_size_facts(fields[1])
-                    if fields[0] in uuids:
-                        uuid = uuids[fields[0]]
-                    else:
-                        uuid = 'NA'
-                        lsblkPath = self.module.get_bin_path("lsblk")
-                        if lsblkPath:
-                            rc, out, err = self.module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
+            mtab_entries.append(fields)
+        return mtab_entries
 
-                            if rc == 0:
-                                uuid = out.strip()
-                                uuids[fields[0]] = uuid
+    @timeout(10)
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
 
-                    if fields[1] in bind_mounts:
-                        # only add if not already there, we might have a plain /etc/mtab
-                        if not re.match(".*bind.*", fields[3]):
-                            fields[3] += ",bind"
+        bind_mounts = self._find_bind_mounts()
+        uuids = self._lsblk_uuid()
+        mtab_entries = self._mtab_entries()
 
-                    self.facts['mounts'].append(
-                        {'mount': fields[1],
-                         'device':fields[0],
-                         'fstype': fields[2],
-                         'options': fields[3],
-                         # statvfs data
-                         'size_total': size_total,
-                         'size_available': size_available,
-                         'uuid': uuid,
-                         })
+        mounts = []
+        for fields in mtab_entries:
+            device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
+
+            if not device.startswith('/') and ':/' not in device:
+                continue
+
+            if fstype == 'none':
+                continue
+
+            size_total, size_available = self._get_mount_size_facts(mount)
+
+            if mount in bind_mounts:
+                # only add if not already there, we might have a plain /etc/mtab
+                if not self.MTAB_BIND_MOUNT_RE.match(options):
+                    options += ",bind"
+
+            mount_info = {'mount': mount,
+                          'device': device,
+                          'fstype': fstype,
+                          'options': options,
+                          # statvfs data
+                          'size_total': size_total,
+                          'size_available': size_available,
+                          'uuid': uuids.get(device, 'N/A')}
+
+            mounts.append(mount_info)
+
+        self.facts['mounts'] = mounts
+
+    def get_holders(self, block_dev_dict, sysdir):
+        block_dev_dict['holders'] = []
+        if os.path.isdir(sysdir + "/holders"):
+            for folder in os.listdir(sysdir + "/holders"):
+                if not folder.startswith("dm-"):
+                    continue
+                name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    block_dev_dict['holders'].append(name)
+                else:
+                    block_dev_dict['holders'].append(folder)
 
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
         if lspci:
             rc, pcidata, err = self.module.run_command([lspci, '-D'])
+            pcidata = pcidata.decode('utf-8', 'replace')
         else:
             pcidata = None
 
@@ -1308,6 +1412,9 @@ class LinuxHardware(Hardware):
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = self.module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    part['uuid'] = get_partition_uuid(partname)
+                    self.get_holders(part, part_sysdir)
+
                     d['partitions'][partname] = part
 
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
@@ -1337,16 +1444,7 @@ class LinuxHardware(Hardware):
                 if m:
                     d['host'] = m.group(1)
 
-            d['holders'] = []
-            if os.path.isdir(sysdir + "/holders"):
-                for folder in os.listdir(sysdir + "/holders"):
-                    if not folder.startswith("dm-"):
-                        continue
-                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
-                    if name:
-                        d['holders'].append(name)
-                    else:
-                        d['holders'].append(folder)
+            self.get_holders(d, sysdir)
 
             self.facts['devices'][diskname] = d
 
@@ -1452,10 +1550,10 @@ class SunOSHardware(Hardware):
             if 'Memory size' in line:
                 self.facts['memtotal_mb'] = line.split()[2]
         rc, out, err = self.module.run_command("/usr/sbin/swap -s")
-        allocated = long(out.split()[1][:-1])
-        reserved = long(out.split()[5][:-1])
-        used = long(out.split()[8][:-1])
-        free = long(out.split()[10][:-1])
+        allocated = int(out.split()[1][:-1])
+        reserved = int(out.split()[5][:-1])
+        used = int(out.split()[8][:-1])
+        free = int(out.split()[10][:-1])
         self.facts['swapfree_mb'] = free / 1024
         self.facts['swaptotal_mb'] = (free + used) / 1024
         self.facts['swap_allocated_mb'] = allocated / 1024
@@ -1530,8 +1628,8 @@ class OpenBSDHardware(Hardware):
         #  0 0 0  47512   28160   51   0   0   0   0   0   1   0  116    89   17  0  1 99
         rc, out, err = self.module.run_command("/usr/bin/vmstat")
         if rc == 0:
-            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[4]) / 1024
-            self.facts['memtotal_mb'] = long(self.sysctl['hw.usermem']) / 1024 / 1024
+            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) / 1024
+            self.facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) / 1024 / 1024
 
         # Get swapctl info. swapctl output looks like:
         # total: 69268 1K-blocks allocated, 0 used, 69268 available
@@ -1541,8 +1639,8 @@ class OpenBSDHardware(Hardware):
         if rc == 0:
             swaptrans = maketrans(' ', ' ')
             data = out.split()
-            self.facts['swapfree_mb'] = long(data[-2].translate(swaptrans, "kmg")) / 1024
-            self.facts['swaptotal_mb'] = long(data[1].translate(swaptrans, "kmg")) / 1024
+            self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans, "kmg")) / 1024
+            self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans, "kmg")) / 1024
 
     def get_processor_facts(self):
         processor = []
@@ -1612,11 +1710,11 @@ class FreeBSDHardware(Hardware):
         for line in out.split('\n'):
             data = line.split()
             if 'vm.stats.vm.v_page_size' in line:
-                pagesize = long(data[1])
+                pagesize = int(data[1])
             if 'vm.stats.vm.v_page_count' in line:
-                pagecount = long(data[1])
+                pagecount = int(data[1])
             if 'vm.stats.vm.v_free_count' in line:
-                freecount = long(data[1])
+                freecount = int(data[1])
         self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
         self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
         # Get swapinfo.  swapinfo output looks like:
@@ -1691,8 +1789,10 @@ class FreeBSDHardware(Hardware):
             else:
                 self.facts[k] = 'NA'
 
+
 class DragonFlyHardware(FreeBSDHardware):
-    pass
+    platform = 'DragonFly'
+
 
 class NetBSDHardware(Hardware):
     """
@@ -1757,7 +1857,7 @@ class NetBSDHardware(Hardware):
             key = data[0]
             if key in NetBSDHardware.MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
-                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+                self.facts["%s_mb" % key.lower()] = int(val) / 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1823,9 +1923,9 @@ class AIX(Hardware):
         for line in out.split('\n'):
             data = line.split()
             if 'memory pages' in line:
-                pagecount = long(data[0])
+                pagecount = int(data[0])
             if 'free pages' in line:
-                freecount = long(data[0])
+                freecount = int(data[0])
         self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
         self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
         # Get swapinfo.  swapinfo output looks like:
@@ -1836,10 +1936,10 @@ class AIX(Hardware):
         if out:
             lines = out.split('\n')
             data = lines[1].split()
-            swaptotal_mb = long(data[0].rstrip('MB'))
+            swaptotal_mb = int(data[0].rstrip('MB'))
             percused = int(data[1].rstrip('%'))
             self.facts['swaptotal_mb'] = swaptotal_mb
-            self.facts['swapfree_mb'] = long(swaptotal_mb * ( 100 - percused ) / 100)
+            self.facts['swapfree_mb'] = int(swaptotal_mb * ( 100 - percused ) / 100)
 
     def get_dmi_facts(self):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
@@ -2013,11 +2113,11 @@ class Darwin(Hardware):
             self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
 
     def get_memory_facts(self):
-        self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
+        self.facts['memtotal_mb'] = int(self.sysctl['hw.memsize']) / 1024 / 1024
 
         rc, out, err = self.module.run_command("sysctl hw.usermem")
         if rc == 0:
-            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
+            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
 
 class Network(Facts):
@@ -2040,11 +2140,20 @@ class Network(Facts):
                    '80' : 'organization' }
 
     def __new__(cls, *arguments, **keyword):
+        # When Network is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Network:
+            return super(Network, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        if PY3:
+            return super(cls, subclass).__new__(subclass)
+        else:
+            return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
     def populate(self):
         return self.facts
@@ -2091,6 +2200,7 @@ class LinuxNetwork(Network):
             if v == 'v6' and not socket.has_ipv6:
                 continue
             rc, out, err = self.module.run_command(command[v])
+            out = out.decode('utf-8', 'replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -2158,6 +2268,10 @@ class LinuxNetwork(Network):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
             if os.path.exists(os.path.join(path,'device')):
                 interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
+            if os.path.exists(os.path.join(path, 'speed')):
+                speed = get_file_content(os.path.join(path, 'speed'))
+                if speed is not None:
+                    interfaces[device]['speed'] = int(speed)
 
             # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
@@ -2257,14 +2371,16 @@ class LinuxNetwork(Network):
 
             args = [ip_path, 'addr', 'show', 'primary', device]
             rc, stdout, stderr = self.module.run_command(args)
-            primary_data = stdout
+            primary_data = stdout.decode('utf-8', 'replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
             rc, stdout, stderr = self.module.run_command(args)
-            secondary_data = stdout
+            secondary_data = stdout.decode('utf-8', 'decode')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
+
+            interfaces[device]['features'] = self.get_ethtool_data(device)
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
@@ -2275,6 +2391,25 @@ class LinuxNetwork(Network):
                 new_interfaces[i] = interfaces[i]
         return new_interfaces, ips
 
+    def get_ethtool_data(self, device):
+
+        features = {}
+        ethtool_path = self.module.get_bin_path("ethtool")
+        if ethtool_path:
+            args = [ethtool_path, '-k', device]
+            rc, stdout, stderr = self.module.run_command(args)
+            stdout = stdout.decode('utf-8', 'replace')
+            if rc == 0:
+                for line in stdout.strip().split('\n'):
+                    if not line or line.endswith(":"):
+                        continue
+                    key,value = line.split(": ")
+                    if not value:
+                        continue
+                    features[key.strip().replace('-','_')] = value.strip()
+        return features
+
+
 class GenericBsdIfconfigNetwork(Network):
     """
     This is a generic BSD subclass of Network using the ifconfig command.
@@ -2282,9 +2417,6 @@ class GenericBsdIfconfigNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
-    It currently does not define
-    - default_ipv4 and default_ipv6
-    - type, mtu and network on interfaces
     """
     platform = 'Generic_BSD_Ifconfig'
 
@@ -2399,7 +2531,7 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['flags']  = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
 
-        if len(words) >= 5 : # Newer FreeBSD versions
+        if len(words) >= 5 :  # Newer FreeBSD versions
             current_if['metric'] = words[3]
             current_if['mtu'] = words[5]
         else:
@@ -2497,6 +2629,7 @@ class GenericBsdIfconfigNetwork(Network):
             for item in ifinfo[ip_type][0].keys():
                 defaults[item] = ifinfo[ip_type][0][item]
 
+
 class HPUXNetwork(Network):
     """
     HP-UX-specifig subclass of Network. Defines networking facts:
@@ -2576,12 +2709,14 @@ class FreeBSDNetwork(GenericBsdIfconfigNetwork):
     """
     platform = 'FreeBSD'
 
+
 class DragonFlyNetwork(GenericBsdIfconfigNetwork):
     """
     This is the DragonFly Network Class.
     It uses the GenericBsdIfconfigNetwork unchanged.
     """
     platform = 'DragonFly'
+
 
 class AIXNetwork(GenericBsdIfconfigNetwork):
     """
@@ -2805,11 +2940,21 @@ class Virtual(Facts):
     """
 
     def __new__(cls, *arguments, **keyword):
+        # When Virtual is created, it chooses a subclass to create instead.
+        # This check prevents the subclass from then trying to find a subclass
+        # and create that.
+        if cls is not Virtual:
+            return super(Virtual, cls).__new__(cls)
+
         subclass = cls
         for sc in get_all_subclasses(Virtual):
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+
+        if PY3:
+            return super(cls, subclass).__new__(subclass)
+        else:
+            return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
     def populate(self):
         return self.facts
@@ -2828,13 +2973,22 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
+        # lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
                 if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
                     self.facts['virtualization_type'] = 'docker'
                     self.facts['virtualization_role'] = 'guest'
                     return
-                if re.search('/lxc/', line):
+                if re.search('/lxc/', line) or re.search('/machine.slice/machine-lxc', line):
+                    self.facts['virtualization_type'] = 'lxc'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+
+        # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
+        if os.path.exists('/proc/1/environ'):
+            for line in get_file_lines('/proc/1/environ'):
+                if re.search('container=lxc', line):
                     self.facts['virtualization_type'] = 'lxc'
                     self.facts['virtualization_role'] = 'guest'
                     return
@@ -2997,7 +3151,7 @@ class FreeBSDVirtual(Virtual):
         self.facts['virtualization_role'] = ''
 
 class DragonFlyVirtual(FreeBSDVirtual):
-    pass
+    platform = 'DragonFly'
 
 class OpenBSDVirtual(Virtual):
     """
@@ -3012,8 +3166,40 @@ class OpenBSDVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
+        sysctl_path = self.module.get_bin_path('sysctl')
+
+        # Set empty values as default
         self.facts['virtualization_type'] = ''
         self.facts['virtualization_role'] = ''
+
+        if sysctl_path:
+            rc, out, err = self.module.run_command("%s -n hw.product" % sysctl_path)
+            if rc == 0:
+                if re.match('(KVM|Bochs|SmartDC).*', out):
+                    self.facts['virtualization_type'] = 'kvm'
+                    self.facts['virtualization_role'] = 'guest'
+                elif re.match('.*VMware.*', out):
+                    self.facts['virtualization_type'] = 'VMware'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'VirtualBox':
+                    self.facts['virtualization_type'] = 'virtualbox'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'HVM domU':
+                    self.facts['virtualization_type'] = 'xen'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'Parallels':
+                    self.facts['virtualization_type'] = 'parallels'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'RHEV Hypervisor':
+                    self.facts['virtualization_type'] = 'RHEV'
+                    self.facts['virtualization_role'] = 'guest'
+                else:
+                    # Try harder and see if hw.vendor has anything we could use.
+                    rc, out, err = self.module.run_command("%s -n hw.vendor" % sysctl_path)
+                    if rc == 0:
+                        if out.rstrip() == 'QEMU':
+                            self.facts['virtualization_type'] = 'kvm'
+                            self.facts['virtualization_role'] = 'guest'
 
 class HPUXVirtual(Virtual):
     """
@@ -3065,24 +3251,13 @@ class SunOSVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        rc, out, err = self.module.run_command("/usr/sbin/prtdiag")
-        for line in out.split('\n'):
-            if 'VMware' in line:
-                self.facts['virtualization_type'] = 'vmware'
-                self.facts['virtualization_role'] = 'guest'
-            if 'Parallels' in line:
-                self.facts['virtualization_type'] = 'parallels'
-                self.facts['virtualization_role'] = 'guest'
-            if 'VirtualBox' in line:
-                self.facts['virtualization_type'] = 'virtualbox'
-                self.facts['virtualization_role'] = 'guest'
-            if 'HVM domU' in line:
-                self.facts['virtualization_type'] = 'xen'
-                self.facts['virtualization_role'] = 'guest'
+
         # Check if it's a zone
-        if os.path.exists("/usr/bin/zonename"):
-            rc, out, err = self.module.run_command("/usr/bin/zonename")
-            if out.rstrip() != "global":
+
+        zonename = self.module.get_bin_path('zonename')
+        if zonename:
+            rc, out, err = self.module.run_command(zonename)
+            if rc == 0 and out.rstrip() != "global":
                 self.facts['container'] = 'zone'
         # Check if it's a branded zone (i.e. Solaris 8/9 zone)
         if os.path.isdir('/.SUNWnative'):
@@ -3090,16 +3265,25 @@ class SunOSVirtual(Virtual):
         # If it's a zone check if we can detect if our global zone is itself virtualized.
         # Relies on the "guest tools" (e.g. vmware tools) to be installed
         if 'container' in self.facts and self.facts['container'] == 'zone':
-            rc, out, err = self.module.run_command("/usr/sbin/modinfo")
-            for line in out.split('\n'):
-                if 'VMware' in line:
-                    self.facts['virtualization_type'] = 'vmware'
-                    self.facts['virtualization_role'] = 'guest'
-                if 'VirtualBox' in line:
-                    self.facts['virtualization_type'] = 'virtualbox'
-                    self.facts['virtualization_role'] = 'guest'
+            modinfo = self.module.get_bin_path('modinfo')
+            if modinfo:
+                rc, out, err = self.module.run_command(modinfo)
+                if rc == 0:
+                    for line in out.split('\n'):
+                        if 'VMware' in line:
+                            self.facts['virtualization_type'] = 'vmware'
+                            self.facts['virtualization_role'] = 'guest'
+                        if 'VirtualBox' in line:
+                            self.facts['virtualization_type'] = 'virtualbox'
+                            self.facts['virtualization_role'] = 'guest'
+
+        if os.path.exists('/proc/vz'):
+            self.facts['virtualization_type'] = 'virtuozzo'
+            self.facts['virtualization_role'] = 'guest'
+
         # Detect domaining on Sparc hardware
-        if os.path.exists("/usr/sbin/virtinfo"):
+        virtinfo = self.module.get_bin_path('virtinfo')
+        if virtinfo:
             # The output of virtinfo is different whether we are on a machine with logical
             # domains ('LDoms') on a T-series or domains ('Domains') on a M-series. Try LDoms first.
             rc, out, err = self.module.run_command("/usr/sbin/virtinfo -p")
@@ -3107,21 +3291,40 @@ class SunOSVirtual(Virtual):
             #   DOMAINROLE|impl=LDoms|control=false|io=false|service=false|root=false
             # The output may also be not formatted and the returncode is set to 0 regardless of the error condition:
             #   virtinfo can only be run from the global zone
-            try:
+            if rc == 0:
+                try:
+                    for line in out.split('\n'):
+                        fields = line.split('|')
+                        if( fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms' ):
+                            self.facts['virtualization_type'] = 'ldom'
+                            self.facts['virtualization_role'] = 'guest'
+                            hostfeatures = []
+                            for field in fields[2:]:
+                                arg = field.split('=')
+                                if( arg[1] == 'true' ):
+                                    hostfeatures.append(arg[0])
+                            if( len(hostfeatures) > 0 ):
+                                self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
+                except ValueError:
+                    pass
+
+        else:
+            smbios = self.module.get_bin_path('smbios')
+            rc, out, err = self.module.run_command(smbios)
+            if rc == 0:
                 for line in out.split('\n'):
-                    fields = line.split('|')
-                    if( fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms' ):
-                        self.facts['virtualization_type'] = 'ldom'
+                    if 'VMware' in line:
+                        self.facts['virtualization_type'] = 'vmware'
                         self.facts['virtualization_role'] = 'guest'
-                        hostfeatures = []
-                        for field in fields[2:]:
-                            arg = field.split('=')
-                            if( arg[1] == 'true' ):
-                                hostfeatures.append(arg[0])
-                        if( len(hostfeatures) > 0 ):
-                            self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
-            except ValueError:
-                pass
+                    elif 'Parallels' in line:
+                        self.facts['virtualization_type'] = 'parallels'
+                        self.facts['virtualization_role'] = 'guest'
+                    elif 'VirtualBox' in line:
+                        self.facts['virtualization_type'] = 'virtualbox'
+                        self.facts['virtualization_role'] = 'guest'
+                    elif 'HVM domU' in line:
+                        self.facts['virtualization_type'] = 'xen'
+                        self.facts['virtualization_role'] = 'guest'
 
 class Ohai(Facts):
     """
@@ -3194,6 +3397,19 @@ def get_uname_version(module):
         return out
     return None
 
+def get_partition_uuid(partname):
+    try:
+        uuids = os.listdir("/dev/disk/by-uuid")
+    except OSError:
+        return
+
+    for uuid in uuids:
+        dev = os.path.realpath("/dev/disk/by-uuid/" + uuid)
+        if dev == ("/dev/" + partname):
+            return uuid
+
+    return None
+
 def get_file_lines(path):
     '''get list of lines from file'''
     data = get_file_content(path)
@@ -3219,6 +3435,9 @@ def get_all_facts(module):
 
     # Retrieve module parameters
     gather_subset = module.params['gather_subset']
+
+    global GATHER_TIMEOUT
+    GATHER_TIMEOUT = module.params['gather_timeout']
 
     # Retrieve all facts elements
     additional_subsets = set()

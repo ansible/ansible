@@ -15,8 +15,6 @@ matrix:
       python: 2.6
     - env: TARGET=sanity TOXENV=py27
       python: 2.7
-    - env: TARGET=sanity TOXENV=py34
-      python: 3.4
     - env: TARGET=sanity TOXENV=py35
       python: 3.5
     - env: TARGET=sanity TOXENV=py24

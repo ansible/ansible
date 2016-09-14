@@ -12,3 +12,5 @@ redis
 python-memcached
 python-systemd
 pycrypto
+botocore
+boto3

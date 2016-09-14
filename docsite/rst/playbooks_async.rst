@@ -79,6 +79,9 @@ following::
    "check on it later" task to fail because the temporary status file that
    the ``async_status:`` is looking for will not have been written or no longer exist 
 
+.. note::
+   ``async:`` is not currently supported for Windows targets
+
 .. seealso::
 
    :doc:`playbooks`

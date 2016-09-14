@@ -23,11 +23,11 @@ import json
 import os
 import tempfile
 
-from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
-from ansible.utils.unicode import to_bytes
 
 
 class ActionModule(ActionBase):
@@ -81,33 +81,29 @@ class ActionModule(ActionBase):
                 source = content_tempfile
             except Exception as err:
                 result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % err
+                result['msg'] = "could not write content temp file: %s" % to_native(err)
                 return result
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
-                return result
-
         elif remote_src:
             result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
             return result
-
-        else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        else:  # find in expected paths
+            try:
+                source = self._find_needle('files', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_text(e)
+                return result
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
 
         # If source is a directory populate our list else source is a file and translate it to a tuple.
-        if os.path.isdir(to_bytes(source, errors='strict')):
+        if os.path.isdir(to_bytes(source, errors='surrogate_or_strict')):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
                 sz = len(source)
@@ -115,9 +111,9 @@ class ActionModule(ActionBase):
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
             # Walk the directory and append the file tuples to source_files.
-            for base_path, sub_folders, files in os.walk(source):
+            for base_path, sub_folders, files in os.walk(to_bytes(source)):
                 for file in files:
-                    full_path = os.path.join(base_path, file)
+                    full_path = to_text(os.path.join(base_path, file), errors='surrogate_or_strict')
                     rel_path = full_path[sz:]
                     if rel_path.startswith('/'):
                         rel_path = rel_path[1:]
@@ -217,8 +213,10 @@ class ActionModule(ActionBase):
                 # Define a remote directory that we will copy the file to.
                 tmp_src = self._connection._shell.join_path(tmp, 'source')
 
+                remote_path = None
+
                 if not raw:
-                    self._transfer_file(source_full, tmp_src)
+                    remote_path = self._transfer_file(source_full, tmp_src)
                 else:
                     self._transfer_file(source_full, dest_file)
 
@@ -227,7 +225,8 @@ class ActionModule(ActionBase):
                 self._loader.cleanup_tmp_file(source_full)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms(tmp, remote_user, recursive=True)
+                if remote_path:
+                    self._fixup_perms2((tmp, remote_path), remote_user)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
@@ -248,7 +247,9 @@ class ActionModule(ActionBase):
                 if 'content' in new_module_args:
                     del new_module_args['content']
 
-                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='copy',
+                        module_args=new_module_args, task_vars=task_vars,
+                        tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
@@ -273,7 +274,9 @@ class ActionModule(ActionBase):
                 )
 
                 # Execute the file module.
-                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='file',
+                        module_args=new_module_args, task_vars=task_vars,
+                        tmp=tmp, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):

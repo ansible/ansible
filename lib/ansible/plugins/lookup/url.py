@@ -17,12 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import urllib2
 
+from ansible.compat.six.moves.urllib.error import HTTPError, URLError
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.utils.unicode import to_unicode
+from ansible.plugins.lookup import LookupBase
 
 try:
     from __main__ import display
@@ -42,9 +42,9 @@ class LookupModule(LookupBase):
             display.vvvv("url lookup connecting to %s" % term)
             try:
                 response = open_url(term, validate_certs=validate_certs)
-            except urllib2.HTTPError as e:
+            except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, str(e)))
-            except urllib2.URLError as e:
+            except URLError as e:
                 raise AnsibleError("Failed lookup url for %s : %s" % (term, str(e)))
             except SSLValidationError as e:
                 raise AnsibleError("Error validating the server's certificate for %s: %s" % (term, str(e)))
@@ -52,5 +52,5 @@ class LookupModule(LookupBase):
                 raise AnsibleError("Error connecting to %s: %s" % (term, str(e)))
 
             for line in response.read().splitlines():
-                ret.append(to_unicode(line))
+                ret.append(to_text(line))
         return ret

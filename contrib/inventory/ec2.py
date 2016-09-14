@@ -37,6 +37,7 @@ When run against a specific host, this script returns the following variables:
  - ec2_attachTime
  - ec2_attachment
  - ec2_attachmentId
+ - ec2_block_devices
  - ec2_client_token
  - ec2_deleteOnTermination
  - ec2_description
@@ -130,6 +131,15 @@ from boto import rds
 from boto import elasticache
 from boto import route53
 import six
+
+from ansible.module_utils import ec2 as ec2_utils
+
+HAS_BOTO3 = False
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    pass
 
 from six.moves import configparser
 from collections import defaultdict
@@ -264,6 +274,12 @@ class Ec2Inventory(object):
         self.rds_enabled = True
         if config.has_option('ec2', 'rds'):
             self.rds_enabled = config.getboolean('ec2', 'rds')
+
+        # Include RDS cluster instances?
+        if config.has_option('ec2', 'include_rds_clusters'):
+            self.include_rds_clusters = config.getboolean('ec2', 'include_rds_clusters')
+        else:
+            self.include_rds_clusters = False
 
         # Include ElastiCache instances?
         self.elasticache_enabled = True
@@ -474,6 +490,8 @@ class Ec2Inventory(object):
             if self.elasticache_enabled:
                 self.get_elasticache_clusters_by_region(region)
                 self.get_elasticache_replication_groups_by_region(region)
+            if self.include_rds_clusters:
+                self.include_rds_clusters_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -573,6 +591,65 @@ class Ec2Inventory(object):
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
+
+    def include_rds_clusters_by_region(self, region):
+        if not HAS_BOTO3:
+            self.fail_with_error("Working with RDS clusters requires boto3 - please install boto3 and try again",
+                                 "getting RDS clusters")
+
+        client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
+
+        marker, clusters = '', []
+        while marker is not None:
+            resp = client.describe_db_clusters(Marker=marker)
+            clusters.extend(resp["DBClusters"])
+            marker = resp.get('Marker', None)
+
+        account_id = boto.connect_iam().get_user().arn.split(':')[4]
+        c_dict = {}
+        for c in clusters:
+            # remove these datetime objects as there is no serialisation to json
+            # currently in place and we don't need the data yet
+            if 'EarliestRestorableTime' in c:
+                del c['EarliestRestorableTime']
+            if 'LatestRestorableTime' in c:
+                del c['LatestRestorableTime']
+
+            if self.ec2_instance_filters == {}:
+                matches_filter = True
+            else:
+                matches_filter = False
+
+            try:
+                # arn:aws:rds:<region>:<account number>:<resourcetype>:<name>
+                tags = client.list_tags_for_resource(
+                    ResourceName='arn:aws:rds:' + region + ':' + account_id + ':cluster:' + c['DBClusterIdentifier'])
+                c['Tags'] = tags['TagList']
+
+                if self.ec2_instance_filters:
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        # get AWS tag key e.g. tag:env will be 'env'
+                        tag_name = filter_key.split(":", 1)[1]
+                        # Filter values is a list (if you put multiple values for the same tag name)
+                        matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
+
+                        if matches_filter:
+                            # it matches a filter, so stop looking for further matches
+                            break
+
+            except Exception as e:
+                if e.message.find('DBInstanceNotFound') >= 0:
+                    # AWS RDS bug (2016-01-06) means deletion does not fully complete and leave an 'empty' cluster.
+                    # Ignore errors when trying to find tags for these
+                    pass
+
+            # ignore empty clusters caused by AWS bug
+            if len(c['DBClusterMembers']) == 0:
+                continue
+            elif matches_filter:
+                c_dict[c['DBClusterIdentifier']] = c
+
+        self.inventory['db_clusters'] = c_dict
 
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
@@ -1247,6 +1324,10 @@ class Ec2Inventory(object):
                     group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
                 instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
+            elif key == 'ec2_block_device_mapping':
+                instance_vars["ec2_block_devices"] = {}
+                for k, v in value.items():
+                    instance_vars["ec2_block_devices"][ os.path.basename(k) ] = v.volume_id
             else:
                 pass
                 # TODO Product codes if someone finds them useful

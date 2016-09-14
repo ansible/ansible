@@ -27,13 +27,13 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
+from ansible.module_utils._text import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.utils.vars import load_options_vars
-from ansible.utils.unicode import to_unicode
 from ansible.vars import VariableManager
 
 try:
@@ -99,7 +99,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = to_unicode(self.args[0], errors='strict')
+        pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
@@ -155,6 +155,10 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        # Avoid modules that don't work with ad-hoc
+        if self.options.module_name in ('include', 'include_role'):
+            raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
+
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
@@ -165,7 +169,7 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.callback: 
+        if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'

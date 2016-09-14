@@ -40,4 +40,4 @@ if len(sys.argv) == 2 and sys.argv[1] == '--list':
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     print(json.dumps({'ansible_connection': 'zone'}))
 else:
-    print("Need an argument, either --list or --host <host>")
+    sys.stderr.write("Need an argument, either --list or --host <host>\n")

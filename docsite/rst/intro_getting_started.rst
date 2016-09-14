@@ -26,10 +26,10 @@ Before we get started, it's important to understand how Ansible communicates wit
 machines over SSH. 
 
 By default, Ansible 1.3 and later will try to use native 
-OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
+OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform -- or engage 'accelerated mode' in Ansible.  See :doc:`playbooks_acceleration`.
 
-In releases up to and including Ansible 1.2, the default was strictly paramiko.  Native SSH had to be explicitly selected with the -c ssh option or set in the configuration file.
+In releases up to and including Ansible 1.2, the default was strictly paramiko.  Native SSH had to be explicitly selected with the ``-c`` ssh option or set in the configuration file.
 
 Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :doc:`intro_configuration`.
 
@@ -46,10 +46,10 @@ Your first commands
 
 Now that you've installed Ansible, it's time to get started with some basics.
 
-Edit (or create) /etc/ansible/hosts and put one or more remote systems in it. Your
+Edit (or create) ``/etc/ansible/hosts`` and put one or more remote systems in it. Your
 public SSH key should be located in ``authorized_keys`` on those systems::
 
-    192.168.1.50
+    192.0.2.50
     aserver.example.org
     bserver.example.org
 
@@ -116,7 +116,7 @@ Ansible 1.2.1 and later have host key checking enabled by default.
 
 If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron.  You might not want this.
 
-If you understand the implications and wish to disable this behavior, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
+If you understand the implications and wish to disable this behavior, you can do so by editing ``/etc/ansible/ansible.cfg`` or ``~/.ansible.cfg``::
 
     [defaults]
     host_key_checking = False
@@ -147,4 +147,3 @@ To enable basic logging on the control machine see :doc:`intro_configuration` do
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

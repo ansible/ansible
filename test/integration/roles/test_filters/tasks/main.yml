@@ -40,8 +40,8 @@
   register: diff_result_9851
 
 - name: 9851 - verify generated file matches known good
-  assert:  
-    that: 
+  assert:
+    that:
         - 'diff_result_9851.stdout == ""'
 
 - name: fill in a basic template
@@ -52,21 +52,48 @@
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
 - name: compare templated file to known good
-  shell: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt
+  shell: diff -w {{output_dir}}/foo.templated {{output_dir}}/foo.txt
   register: diff_result
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-        - 'diff_result.stdout == ""' 
-
-- name: Verify human_readable
   assert:
     that:
+        - 'diff_result.stdout == ""'
+
+- name: Verify human_readable
+  tags: "human_readable"
+  assert:
+    that:
+        - '"1.00 Bytes" == 1|human_readable'
+        - '"1.00 bits" == 1|human_readable(isbits=True)'
         - '"10.00 KB" == 10240|human_readable'
         - '"97.66 MB" == 102400000|human_readable'
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+- name: Verify human_to_bytes
+  tags: "human_to_bytes"
+  assert:
+    that:
+        - "{{'0'|human_to_bytes}}        == 0"
+        - "{{'0.1'|human_to_bytes}}      == 0"
+        - "{{'0.9'|human_to_bytes}}      == 1"
+        - "{{'1'|human_to_bytes}}        == 1"
+        - "{{'10.00 KB'|human_to_bytes}} == 10240"
+        - "{{   '11 MB'|human_to_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+- name: Verify human_to_bytes (bad string)
+  tags: "human_to_bytes"
+  set_fact: bad_string="{{'10.00 foo'|human_to_bytes}}"
+  ignore_errors: yes
+  register: _
+
+- name: Verify human_to_bytes (bad string)
+  tags: "human_to_bytes"
+  assert:
+    that: "{{_.failed}}"
 
 - name: Container lookups with extract
   assert:
@@ -77,3 +104,9 @@
         - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+
+- name: Test json_query filter
+  assert:
+    that:
+      - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
+

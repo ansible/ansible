@@ -1,4 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -33,7 +34,7 @@ import subprocess
 from ansible.release import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from __main__ import display
@@ -50,6 +51,42 @@ class SortedOptParser(optparse.OptionParser):
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
+
+
+# Note: Inherit from SortedOptParser so that we get our format_help method
+class InvalidOptsParser(SortedOptParser):
+    '''Ignore invalid options.
+
+    Meant for the special case where we need to take care of help and version
+    but may not know the full range of options yet.  (See it in use in set_action)
+    '''
+    def __init__(self, parser):
+        # Since this is special purposed to just handle help and version, we
+        # take a pre-existing option parser here and set our options from
+        # that.  This allows us to give accurate help based on the given
+        # option parser.
+        SortedOptParser.__init__(self, usage=parser.usage,
+                                 option_list=parser.option_list,
+                                 option_class=parser.option_class,
+                                 conflict_handler=parser.conflict_handler,
+                                 description=parser.description,
+                                 formatter=parser.formatter,
+                                 add_help_option=False,
+                                 prog=parser.prog,
+                                 epilog=parser.epilog)
+        self.version=parser.version
+
+    def _process_long_opt(self, rargs, values):
+        try:
+            optparse.OptionParser._process_long_opt(self, rargs, values)
+        except optparse.BadOptionError:
+            pass
+
+    def _process_short_opts(self, rargs, values):
+        try:
+            optparse.OptionParser._process_short_opts(self, rargs, values)
+        except optparse.BadOptionError:
+            pass
 
 
 class CLI(object):
@@ -82,7 +119,7 @@ class CLI(object):
         """
         Get the action the user wants to execute from the sys argv list.
         """
-        for i in range(0,len(self.args)):
+        for i in range(0, len(self.args)):
             arg = self.args[i]
             if arg in self.VALID_ACTIONS:
                 self.action = arg
@@ -90,8 +127,13 @@ class CLI(object):
                 break
 
         if not self.action:
-            # if no need for action if version/help
-            tmp_options, tmp_args = self.parser.parse_args()
+            # if we're asked for help or version, we don't need an action.
+            # have to use a special purpose Option Parser to figure that out as
+            # the standard OptionParser throws an error for unknown options and
+            # without knowing action, we only know of a subset of the options
+            # that could be legal for this command
+            tmp_parser = InvalidOptsParser(self.parser)
+            tmp_options, tmp_args = tmp_parser.parse_args(self.args)
             if not(hasattr(tmp_options, 'help') and tmp_options.help) or (hasattr(tmp_options, 'version') and tmp_options.version):
                 raise AnsibleOptionsError("Missing required action")
 
@@ -109,7 +151,7 @@ class CLI(object):
 
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
-                display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
+                display.display(u"Using %s as config file" % to_text(C.CONFIG_FILE))
             else:
                 display.display(u"No config file found; using defaults")
 
@@ -479,10 +521,13 @@ class CLI(object):
                 display.display(text)
             else:
                 self.pager_pipe(text, os.environ['PAGER'])
-        elif subprocess.call('(less --version) &> /dev/null', shell = True) == 0:
-            self.pager_pipe(text, 'less')
         else:
-            display.display(text)
+            p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.communicate()
+            if p.returncode == 0:
+                self.pager_pipe(text, 'less')
+            else:
+                display.display(text)
 
     @staticmethod
     def pager_pipe(text, cmd):

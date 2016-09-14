@@ -7,11 +7,16 @@ test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
 test_target="${TARGET:-}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
+test_python3="${PYTHON3:-}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
 keep_containers="${KEEP_CONTAINERS:-}"
 copy_source="${COPY_SOURCE:-}"
+
+# Force ansible color output by default.
+# To disable color force mode use FORCE_COLOR=0
+force_color="${FORCE_COLOR:-1}"
 
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
@@ -22,7 +27,7 @@ else
 fi
 
 if [ "${copy_source}" ]; then
-    test_shared_dir="/tmp/shared-dir"
+    test_shared_dir="/shared"
 else
     test_shared_dir="${test_ansible_dir}"
 fi
@@ -69,6 +74,7 @@ fi
 
 httptester_id=$(docker run -d "${http_image}")
 container_id=$(docker run -d \
+    --env "ANSIBLE_FORCE_COLOR=${force_color}" \
     -v "/sys/fs/cgroup:/sys/fs/cgroup:ro" \
     -v "${host_shared_dir}:${test_shared_dir}" \
     --link="${httptester_id}:ansible.http.tests" \
@@ -80,8 +86,25 @@ container_id=$(docker run -d \
 
 show_environment
 
+if [ "${test_python3}" ]; then
+    docker exec "${container_id}" ln -s /usr/bin/python3 /usr/bin/python
+    docker exec "${container_id}" ln -s /usr/bin/pip3 /usr/bin/pip
+
+    skip_tags=$(tr '\n' ',' < "${source_root}/test/utils/shippable/python3-test-tag-blacklist.txt")
+    test_flags="--skip-tags ${skip_tags} ${test_flags}"
+fi
+
 if [ "${copy_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
+fi
+
+docker exec "${container_id}" \
+    pip install -r "${test_ansible_dir}/test/utils/shippable/integration-requirements.txt" --upgrade
+
+if [ "${test_python3}" ]; then
+    docker exec "${container_id}" sed -i -f \
+        "${test_ansible_dir}/test/utils/shippable/python3-test-target-blacklist.txt" \
+        "${test_ansible_dir}/test/integration/Makefile"
 fi
 
 docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults"

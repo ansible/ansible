@@ -80,7 +80,8 @@ def _ip_query(v):
     if v.size == 1:
         return str(v.ip)
     if v.size > 1:
-        if v.ip != v.network:
+        # /31 networks in netaddr have no broadcast address
+        if v.ip != v.network or not v.broadcast:
             return str(v.ip)
 
 def _gateway_query(v):
@@ -585,7 +586,6 @@ def nthhost(value, query=''):
         return False
 
     try:
-        vsize = ipaddr(v, 'size')
         nth = int(query)
         if value.size > nth:
           return value[nth]

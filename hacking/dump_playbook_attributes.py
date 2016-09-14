@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import optparse
 from jinja2 import Environment, FileSystemLoader

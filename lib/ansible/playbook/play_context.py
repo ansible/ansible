@@ -21,7 +21,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pipes
+import pwd
 import random
 import re
 import string
@@ -51,6 +53,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
+   ssh_executable   = ('ansible_ssh_executable',),
    accelerate_port  = ('ansible_accelerate_port',),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
@@ -120,6 +123,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_user',
     'become_pass',
     'become_method',
+    'become_flags',
     'connection',
     'docker_extra_args',
     'delegate_to',
@@ -136,6 +140,7 @@ RESET_VARS = (
     'ansible_ssh_user',
     'ansible_ssh_private_key_file',
     'ansible_ssh_pipelining',
+    'ansible_ssh_executable',
     'ansible_user',
     'ansible_host',
     'ansible_port',
@@ -162,6 +167,7 @@ class PlayContext(Base):
     _sftp_extra_args  = FieldAttribute(isa='string')
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
+    _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
     _accelerate       = FieldAttribute(isa='bool', default=False)
@@ -409,6 +415,12 @@ class PlayContext(Base):
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
+        # if the final connection type is local, reset the remote_user value
+        # to that of the currently logged in user, to ensure any become settings
+        # are obeyed correctly
+        if new_info.connection == 'local':
+            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
             # in the event that we were using local before make sure to reset the
@@ -432,9 +444,14 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
-        # have always_run override check mode
         if task.always_run:
+            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
             new_info.check_mode = False
+
+        # check_mode replaces always_run, overwrite always_run if both are given
+        if task.check_mode is not None:
+            new_info.check_mode = task.check_mode
+
 
         return new_info
 
@@ -508,6 +525,13 @@ class PlayContext(Base):
                 prompt='assword:'
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
+            elif self.become_method == 'ksu':
+                def detect_ksu_prompt(data):
+                    return re.match("Kerberos password for .*@.*:", data)
+
+                prompt = detect_ksu_prompt
+                becomecmd = '%s %s %s -e %s' % (exe, self.become_user, flags, command)
+
             elif self.become_method == 'pfexec':
 
                 # No user as it uses it's own exec_attr to figure it out
@@ -521,7 +545,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'doas':
 
-                prompt = 'Password:'
+                prompt = 'doas (%s@' % self.remote_user
                 exe = self.become_exe or 'doas'
 
                 if not self.become_pass:

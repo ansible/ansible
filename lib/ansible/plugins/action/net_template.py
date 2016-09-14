@@ -19,17 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import os
 import time
 import glob
 import urlparse
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_unicode
+
 
 BOOLEANS = ('true', 'false', 'yes', 'no')
+
 
 class ActionModule(ActionBase):
 
@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
 
         try:
             self._handle_template()
-        except ValueError as exc:
+        except (ValueError, AttributeError) as exc:
             return dict(failed=True, msg=exc.message)
 
         result.update(self._execute_module(module_name=self._task.action,
@@ -75,9 +75,12 @@ class ActionModule(ActionBase):
 
     def _handle_template(self):
         src = self._task.args.get('src')
+        if not src:
+            raise ValueError('missing required arguments: src')
+
         working_path = self._get_working_path()
 
-        if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
+        if os.path.isabs(src) or urlparse.urlsplit(src).scheme:
             source = src
         else:
             source = self._loader.path_dwim_relative(working_path, 'templates', src)
@@ -89,7 +92,7 @@ class ActionModule(ActionBase):
 
         try:
             with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
+                template_data = to_text(f.read())
         except IOError:
             return dict(failed=True, msg='unable to load src file')
 
@@ -105,5 +108,3 @@ class ActionModule(ActionBase):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-
-

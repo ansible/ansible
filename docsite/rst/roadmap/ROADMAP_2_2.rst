@@ -34,55 +34,62 @@ Target: September 2016
 
   - AWS
 
-    - Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere)
-    - Refactoring ec2.py to be more digestible
-    - Fix inconsistencies with different authentication methods (STS, environment creds, ~/.aws/credentials)
-    - Ryan Brown and Robyn Bergeron work on bug/PR triage to reduce backlog
+    - Pagination for all AWS modules (generic pagination exists, but isn’t used everywhere) (bumped to 2.3)
+    - Refactoring ec2.py to be more digestible (bumped to 2.3)
+    - Fix inconsistencies with different authentication methods (STS, environment creds, ~/.aws/credentials) (done)
+    - AWS Lambda modules (lambda_execute done, others pending)
+    - Ryan Brown and Robyn Bergeron work on bug/PR triage to reduce backlog (reduced - continuing to work on it)
   - Google (Ryan Brown and Tom Melendez)
 
     - Add support for Google Cloud DNS
+    - Add support for Google Cloud managed instance groups (done)
     - Support restoring instances from snapshots
-    - Improved handling of scratch disks on instances
+    - Improved handling of scratch disks on instances (done)
   - External OpenStack (Stretch goal for this release)
 
     - Ryan with some help from David Shrewsbury (Zuul/Openstack at RedHat).
-    - Support Heat stack resources
+    - Support Heat stack resources (done)
     - Support LBaaS load balancers
   - Azure load balancer: Feature parity for AWS ELB (Stretch Goal)
 
 - **VMware** (Brian, Jtanner)
 
-  - module/inventory script: port to pyvmomi (jtanner, bcoca)
-  - inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)
+  - *module/inventory script: port to pyvmomi (jtanner, bcoca)*
+    **done:** https://github.com/ansible/ansible/pull/15967
+  - *inventory script: allow filtering ala ec2 (jtanner) (undergoing PR process)*
+    **done:** https://github.com/ansible/ansible/pull/15967
 
-    - https://github.com/ansible/ansible/pull/15967
   - vsphere: feature parity with whereismyjetpack and viasat modules 
 
 - **Windows platform feature parity** (Matt D)
 
   - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?)
-  - Environment keyword support 
+  - Environment keyword support (done)
   - win_shell/win_command
-  - Async support 
-  - (stretch goal) Pipelining 
+  - Async support (done)
+  - (stretch goal) Pipelining (bumped to 2.3+)
 
 - **Windows-specific enhancements** (Matt D)
 
-  - Multiple Kerberos credential support (done, shepherd fix to pykerberos)
-  - Server 2016 testing/fixes 
-  - (stretch goal) Nano Server connection + module_utils working
-  - (stretch goal) Encrypted kerberos support in pywinrm 
+  - Multiple Kerberos credential support (done)
+  - Server 2016 testing/fixes (done)
+  - (stretch goal) Nano Server connection + module_utils working (bumped to 2.3)
+  - (stretch goal) Encrypted kerberos support in pywinrm (bumped to 2.3)
 
 - **Network** (Nate C/Peter S)
 
-  - Unify NetworkModules (module_utils/network.py) as much as possible 
-  - Add support for config diff and replace on supported platforms (2 weeks)
+  - **Done:** Unify NetworkModules (module_utils/network.py) as much as possible 
+  - **Done:** Add support for config diff and replace on supported platforms (2 weeks)
   - Network facts modules 
-  - Support for VyOS network operating system
-  - Add support for NetConf / RestConf for IOS/XE
-  - Quagga modules 
-  - Bird modules (stretch)
-  - GoBGP modules (stretch)
+  - **Done:** Support for VyOS network operating system
+  - **Done:** Add support for RestConf for IOS/XE
+  - Add support for NetConf for IOS/XE
+  - **Done:** Support for Dell Networking OS10
+  - **Done:** Add support for Nokia SR OS modules
+  - **Deferred:** (stretch goal) Quagga modules
+  - **Deferred:** (stretch goal) Bird modules
+  - **Deferred:** (stretch goal) GoBGP modules
+  
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
 
@@ -90,10 +97,11 @@ Target: September 2016
 
 - **Vault** (Jtanner/Adrian)
 
-  - Extend ‘transparent vault file usage’ to other action plugins other than 'copy' 
-  - Add ‘per variable’ vault support (!vault YAML directive, existing PR already)
-  - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087
-  - Add vault support to lookups
+  - *Extend ‘transparent vault file usage’ to other action plugins other than 'copy'(https://github.com/ansible/ansible/issues/7298)*
+    **done:** https://github.com/ansible/ansible/pull/16957
+  - Add ‘per variable’ vault support (!vault YAML directive, existing PR already) https://github.com/ansible/ansible/issues/13287 https://github.com/ansible/ansible/issues/14721
+  - Add vault/unvault filters https://github.com/ansible/ansible/issues/12087 (deferred to 2.3)
+  - Add vault support to lookups (likely deferred to 2.3 or until lookup plugins are revamped)
   - Allow for multiple vault secrets https://github.com/ansible/ansible/issues/13243
   - Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
 
@@ -138,12 +146,20 @@ Target: September 2016
 
   - **CI Performance**
       Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
+      **Done:** Most tests have been migrated from Travis to Shippable.
   - **Core Module Test Organization**
       Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
+      **Deferred:** Relocation of core module tests has been deferred due to proposed changes in `modules management <https://github.com/ansible/proposals/blob/master/modules-management.md>`_.
   - **Documentation**
       Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
   - **Test Coverage**
       Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
+      **Done:** Module PRs now run integration tests for the module(s) being changed.
     - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
+      **Done:** Integration tests now run on Shippable using a Ubuntu 16.04 docker image with only Python 3 installed.
     - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
+      **Done:** Windows integration tests now run on Shippable.
+    - FreeBSD - Include FreeBSD in CI coverage. Not originally on the roadmap, this is an intermediary step for CI coverage for OS X.
+      **Done:** FreeBSD integration tests now run on Shippable.
     - OS X - Include OS X in CI coverage.
+      **Done:** OS X integration tests now run on Shippable.

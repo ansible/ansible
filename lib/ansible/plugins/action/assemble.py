@@ -23,6 +23,8 @@ import os.path
 import tempfile
 import re
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
@@ -40,13 +42,14 @@ class ActionModule(ActionBase):
         delimit_me = False
         add_newline = False
 
-        for f in sorted(os.listdir(src_path)):
+        for f in (to_text(p, errors='surrogate_or_strict') for p in sorted(os.listdir(src_path))):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
-            fragment = "%s/%s" % (src_path, f)
+            fragment = u"%s/%s" % (src_path, f)
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
-            fragment_content = file(fragment).read()
+
+            fragment_content = open(self._loader.get_real_file(fragment)).read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
@@ -106,19 +109,22 @@ class ActionModule(ActionBase):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
             self._remove_tmp_path(tmp)
             return result
-        elif self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
+            try:
+                src = self._find_needle('files', src)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_native(e)
+                return result
+
+        if not os.path.isdir(src):
+            result['failed'] = True
+            result['msg'] = u"Source (%s) is not a directory" % src
+            return result
 
         _re = None
         if regexp is not None:
             _re = re.compile(regexp)
-
-        if not os.path.isdir(src):
-            result['failed'] = True
-            result['msg'] = "Source (%s) is not a directory" % src
-            return result
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
@@ -153,7 +159,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_file(path, remote_path)
 
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms(tmp, remote_user, recursive=True)
+            self._fixup_perms2((tmp, remote_path), remote_user)
 
             new_module_args.update( dict( src=xfered,))
 

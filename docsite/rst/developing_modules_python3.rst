@@ -13,37 +13,41 @@ factors that make it harder to port them than most code:
 Which version of Python-3.x and which version of Python-2.x are our minimums?
 =============================================================================
 
-The short answer is Python-3.4 and Python-2.4 but please read on for more
+The short answer is Python-3.5 and Python-2.4 but please read on for more
 information.
 
-For Python-3 we are currently using Python-3.4 as a minimum.  However, no long
-term supported Linux distributions currently ship with Python-3.  When that
-occurs, we will probably take that as our minimum Python-3 version rather than
-Python-3.4.  Thus far, Python-3 has been adding small changes that make it
-more compatible with Python-2 in its newer versions (For instance, Python-3.5
-added the ability to use percent-formatted byte strings.) so it should be more
-pleasant to use a newer version of Python-3 if it's available.  At some point
-this will change but we'll just have to cross that bridge when we get to it.
+For Python-3 we are currently using Python-3.5 as a minimum on both the
+controller and the managed nodes.  This was chosen as it's the version of
+Python3 in Ubuntu-16.04, the first long-term support (LTS) distribution to
+ship with Python3 and not Python2.  Much of our code would still work with
+Python-3.4 but there are always bugfixes and new features in any new upstream
+release.  Taking advantage of this relatively new version allows us not to
+worry about workarounds for problems and missing features in that older
+version.
 
-For Python-2 the default is for modules to run on Python-2.4.  This allows
-users with older distributions that are stuck on Python-2.4 to manage their
-machines.  Modules are allowed to drop support for Python-2.4 when one of
-their dependent libraries require a higher version of python.  This is not an
-invitation to add unnecessary dependent libraries in order to force your
-module to be usable only with a newer version of Python.  Instead it is an
-acknowledgment that some libraries (for instance, boto3 and docker-py) will
-only function with newer Python.
+For Python-2, the default is for the controller to run on Python-2.6 and
+modules to run on Python-2.4.  This allows users with older distributions that
+are stuck on Python-2.4 to manage their machines.  Modules are allowed to drop
+support for Python-2.4 when one of their dependent libraries require a higher
+version of python.  This is not an invitation to add unnecessary dependent
+libraries in order to force your module to be usable only with a newer version
+of Python.  Instead it is an acknowledgment that some libraries (for instance,
+boto3 and docker-py) will only function with newer Python.
 
 .. note:: When will we drop support for Python-2.4?
 
     The only long term supported distro that we know of with Python-2.4 is
-    RHEL5 (and its rebuilds like CentOS5)  which is supported until April of
-    2017.  We will likely end our support for Python-2.4 in modules in an
-    Ansible release around that time.  We know of no long term supported
-    distributions with Python-2.5 so the new minimum Python-2 version will
-    likely be Python-2.6.  This will let us take advantage of the
-    forwards-compat features of Python-2.6 so porting and maintainance of
-    Python-2/Python-3 code will be easier after that.
+    RHEL5 (and its rebuilds like CentOS5) which is supported until April of
+    2017.  Whatever major release we make in or after April of 2017 (probably
+    2.4.0) will no longer have support for Python-2.4 on the managed machines.
+    Previous major release series's that we support (2.3.x)  will continue to
+    support Python-2.4 on the managed nodes.
+
+    We know of no long term supported distributions with Python-2.5 so the new
+    minimum Python-2 version will be Python-2.6.  This will let us take
+    advantage of the forwards-compat features of Python-2.6 so porting and
+    maintainance of Python-2/Python-3 code will be easier after that.
+
 
 Supporting only Python-2 or only Python-3
 =========================================
@@ -83,6 +87,12 @@ with python3 syntax but only the code path to get to the library import being
 attempted and then a fail_json() being called because the libraries are
 unavailable needs to actually work.
 
+.. note:: Metadata proposal in progress
+
+    A metadata specification is being created to address module
+    maintainership.  In the future we will likely extend this to record that a module
+    works with Python2 and 3, Python2 only, or Python3 only.
+
 Tips, tricks, and idioms to adopt
 =================================
 
@@ -119,6 +129,29 @@ modules should create their octals like this::
 
     # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
     EXECUTABLE_PERMS = int('0755', 8)
+
+Outputting octal numbers may also need to be changed.  In python2 we often did
+this to return file permissions::
+
+    mode = int('0775', 8)
+    result['mode'] = oct(mode)
+
+This would give the user ``result['mode'] == '0755'`` in their playbook.  In
+python3, :func:`oct` returns the format with the lowercase ``o`` in it like:
+``result['mode'] == '0o755'``.  If a user had a conditional in their playbook
+or was using the mode in a template the new format might break things.  We
+need to return the old form of mode for backwards compatibility.  You can do
+it like this::
+
+    mode = int('0775', 8)
+    result['mode'] = '0%03o' % mode
+
+You should use this wherever backwards compatibility is a concern or you are
+dealing with file permissions.  (With file permissions a user may be feeding
+the mode into another program or to another module which doesn't understand
+the python syntax for octal numbers.  ``[zero][digit][digit][digit]`` is
+understood by most everything and therefore the right way to express octals in
+these circumstances.
 
 Bundled six
 -----------
@@ -157,3 +190,83 @@ which should not be tested (because we know that they are older modules which
 have not yet been ported to pass the Python-3 syntax checks.  To get another
 old module to compile with Python-3, remove the entry for it from the list.
 The goal is to have the LIST be empty.
+
+String Model
+------------
+
+One of the big differences between Python2 and Python3 is the string model.
+In Python2, most APIs take byte strings (the Python2 ``str`` type).  Using the
+text type (in Python2, this is the ``unicode`` type) often leads to tracebacks
+because the strings need to be converted to bytes and Python fails to do that
+correctly.  In Python3, the situation is somewhat reversed.  Most APIs take
+text strings (this is **Python3's** ``str`` type).  When you have byte strings
+(the Python3 ``bytes`` type) you sometimes get errors when attempting to
+combine those with text strings.  Note, however, that under the hood, Python
+still has to convert text to bytes to interface operating system libraries and
+system calls.  This means that you can still get tracebacks when passing
+text to APIs which call those OS level facilities.
+
+For module_utils, code we've decided to make the environment work with "native
+strings".  This means that on Python2, things should work if you use the byte
+string type.  In Python3, code should work if you give it text strings.  The
+reason for this is so that third party modules written for Python2 don't start
+issuing UnicodeError exceptions once we've ported module_utils to work under
+Python3.  We'll need to gather experience to see if this is going to work out
+well for modules as well or if we should give the module_utils API explicit
+switches so that modules can choose to operate with text type all of the time.
+
+Helpers
+~~~~~~~
+
+For converting between bytes, text, and native strings we have three helper
+functions.  These are :func:`ansible.module_utils._text.to_bytes`,
+:func:`ansible.module_utils._text.to_native`, and
+:func:`ansible.module_utils._text.to_text`.  These are similar to using
+``bytes.decode()`` and ``unicode.encode()`` with a few differences.
+
+* By default they try very hard not to traceback.
+* The default encoding is "utf-8"
+* There are two error strategies that don't correspond one-to-one with
+  a python codec error handler.  These are ``surrogate_or_strict`` and
+  ``surrogate_or_replace``.  ``surrogate_or_strict`` will use the ``surrogateescape``
+  error handler if available (mostly on python3) or strict if not.  It is most
+  appropriate to use when dealing with something that needs to round trip its
+  value like file paths database keys, etc.  Without ``surrogateescape`` the best
+  thing these values can do is generate a traceback that our code can catch
+  and decide how to show an error message.  ``surrogate_or_replace`` is for
+  when a value is going to be displayed to the user.  If the
+  ``surrogateescape`` error handler is not present, it will replace
+  undecodable byte sequences with a replacement character.
+
+================================
+Porting Core Ansible to Python 3
+================================
+
+The Ansible code which runs controller-side is easier to port to Python3 in
+one important way:  We do not have to support Python-2.4 on the controller.
+We only have to support Python-2.6 and above.  However, this doesn't eliminate
+the work that has to be done.  The controller is a much more complicated piece
+of code than any individual module.  Making it Python2 and Python3 compatible
+is a much more complex task.
+
+String Model
+------------
+
+By and large, the controller uses the standard best practice of storing
+everything internally as text type and converting to and from bytes at the
+borders.  In many places we hardcode these byte values as utf-8.  Thus yaml
+and inventory files are encoded in utf-8.  Filenames are also utf-8.  This may
+not be the right answer forever but it is sufficient for now.  If there's
+demand from users to handle encodings other than utf-8 after the code works on
+Python3 we can look into what strategy to take for supporting other encodings.
+
+In some cases, storing values as a byte string is not necessarily a choice
+without drawbacks.  For instance, filenames and environment variables on POSIX
+systems are a sequence of bytes.  By using text to represent filenames we
+prevent filenames that are undecodable in utf-8 and filenames that are not
+text at all from working.  We made the choice to represent these as text for
+now due to code paths that handle filenames not being able to handle bytes
+end-to-end.  PyYAML on Python3 and jinja2 on both Python2 and Python3, for
+instance, are meant to work with text.  Any decision to allow filenames to be
+byte values will have to address how we deal with those pieces of the code as
+well.

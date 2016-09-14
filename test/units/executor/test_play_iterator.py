@@ -121,7 +121,7 @@ class TestPlayIterator(unittest.TestCase):
 
         # lookup up an original task
         target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_block=True)
+        task_copy = target_task.copy(exclude_parent=True)
         found_task = itr.get_original_task(hosts[0], task_copy)
         self.assertEqual(target_task, found_task)
 
@@ -329,7 +329,7 @@ class TestPlayIterator(unittest.TestCase):
         # test the high-level add_tasks() method
         s = HostState(blocks=[0,1,2])
         itr._insert_tasks_into_state = MagicMock(return_value=s)
-        itr.add_tasks(hosts[0], [3,4,5])
+        itr.add_tasks(hosts[0], [MagicMock(), MagicMock(), MagicMock()])
         self.assertEqual(itr._host_states[hosts[0].name], s)
 
         # now actually test the lower-level method that does the work

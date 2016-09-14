@@ -21,8 +21,7 @@ __metaclass__ = type
 
 import os
 
-from collections import defaultdict
-from collections import MutableMapping
+from collections import defaultdict, MutableMapping
 
 from ansible.compat.six import iteritems
 from jinja2.exceptions import UndefinedError
@@ -233,11 +232,11 @@ class VariableManager:
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-            # if we have a task in this context, and that task has a role, make
-            # sure it sees its defaults above any other roles, as we previously
-            # (v1) made sure each task had a copy of its roles default vars
-            if task and task._role is not None:
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task._block.get_dep_chain()))
+        # if we have a task in this context, and that task has a role, make
+        # sure it sees its defaults above any other roles, as we previously
+        # (v1) made sure each task had a copy of its roles default vars
+        if task and task._role is not None and (play or task.action == 'include_role'):
+            all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
@@ -334,7 +333,7 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(include_params=False))
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False))
             all_vars = combine_vars(all_vars, task.get_vars())
 
         # next, we merge in the vars cache (include vars) and nonpersistent
@@ -346,7 +345,7 @@ class VariableManager:
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task._block.get_dep_chain()))
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()))
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
@@ -394,10 +393,9 @@ class VariableManager:
         if host:
             variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
 
-            if self._inventory is not None:
-                variables['groups']  = dict()
-                for (group_name, group) in iteritems(self._inventory.groups):
-                    variables['groups'][group_name] = [h.name for h in group.get_hosts()]
+            if self._inventory:
+                variables['groups']  = self._inventory.get_group_dict()
+
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
@@ -489,15 +487,18 @@ class VariableManager:
                 # try looking it up based on the address field, and finally
                 # fall back to creating a host on the fly to use for the var lookup
                 if delegated_host is None:
-                    for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
-                        # check if the address matches, or if both the delegated_to host
-                        # and the current host are in the list of localhost aliases
-                        if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
-                            delegated_host = h
-                            break
+                    if delegated_host_name in C.LOCALHOST:
+                        delegated_host = self._inventory.localhost
                     else:
-                        delegated_host = Host(name=delegated_host_name)
-                        delegated_host.vars.update(new_delegated_host_vars)
+                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                            # check if the address matches, or if both the delegated_to host
+                            # and the current host are in the list of localhost aliases
+                            if h.address == delegated_host_name:
+                                delegated_host = h
+                                break
+                        else:
+                            delegated_host = Host(name=delegated_host_name)
+                            delegated_host.vars.update(new_delegated_host_vars)
             else:
                 delegated_host = Host(name=delegated_host_name)
                 delegated_host.vars.update(new_delegated_host_vars)
@@ -615,6 +616,20 @@ class VariableManager:
                 self._group_vars_files[name].append(data)
 
         return data
+
+    def clear_playbook_hostgroup_vars_files(self, path):
+        for f in self._host_vars_files.keys():
+            keepers = []
+            for entry in self._host_vars_files[f]:
+                if os.path.dirname(entry.path) != os.path.join(path, 'host_vars'):
+                    keepers.append(entry)
+            self._host_vars_files[f] = keepers
+        for f in self._group_vars_files.keys():
+            keepers = []
+            for entry in self._group_vars_files[f]:
+                if os.path.dirname(entry.path) != os.path.join(path, 'group_vars'):
+                    keepers.append(entry)
+            self._group_vars_files[f] = keepers
 
     def clear_facts(self, hostname):
         '''
