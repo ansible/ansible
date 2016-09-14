@@ -268,5 +268,5 @@ text at all from working.  We made the choice to represent these as text for
 now due to code paths that handle filenames not being able to handle bytes
 end-to-end.  PyYAML on Python3 and jinja2 on both Python2 and Python3, for
 instance, are meant to work with text.  Any decision to allow filenames to be
-byte values will have to address how we deal with those pieves of the code as
+byte values will have to address how we deal with those pieces of the code as
 well.
