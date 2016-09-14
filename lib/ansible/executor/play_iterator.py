@@ -159,6 +159,7 @@ class PlayIterator:
         # Default options to gather
         gather_subset = C.DEFAULT_GATHER_SUBSET
         gather_timeout = C.DEFAULT_GATHER_TIMEOUT
+        gather_interfaces = C.DEFAULT_GATHER_NETWORK_INTERFACES
 
         # Retrieve subset to gather
         if self._play.gather_subset is not None:
@@ -166,6 +167,9 @@ class PlayIterator:
         # Retrieve timeout for gather
         if self._play.gather_timeout is not None:
             gather_timeout = self._play.gather_timeout
+        # Retrieve list of interfaces to gather
+        if self._play.gather_network_interfaces is not None:
+            gather_interfaces = self._play.gather_network_interfaces
 
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
@@ -173,6 +177,7 @@ class PlayIterator:
         setup_task.tags   = ['always']
         setup_task.args   = {
           'gather_subset': gather_subset,
+          'gather_network_interfaces': gather_interfaces,
         }
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout

@@ -2158,6 +2158,22 @@ class Network(Facts):
     def populate(self):
         return self.facts
 
+    def _include_interface(self, device_name, default_ipv4=dict(), default_ipv6=dict()):
+        interfaces_list = self.module.params.get('gather_network_interfaces', None)
+        # if no limits are set include all interfaces
+        if interfaces_list is None:
+            return True
+        # always include the default interfaces
+        if default_ipv4 and device_name == default_ipv4.get('interface', None):
+            return True
+        if default_ipv6 and device_name == default_ipv6.get('interface', None):
+            return True
+        # include all requested interfaces
+        for pat in interfaces_list:
+            if fnmatch.fnmatch(device_name, pat):
+                return True
+        return False
+
 class LinuxNetwork(Network):
     """
     This is a Linux-specific subclass of Network.  It defines
@@ -2228,6 +2244,8 @@ class LinuxNetwork(Network):
             if not os.path.isdir(path):
                 continue
             device = os.path.basename(path)
+            if not self._include_interface(device, default_ipv4, default_ipv6):
+                continue
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
                 macaddress = get_file_content(os.path.join(path, 'address'), default='')
@@ -2432,7 +2450,7 @@ class GenericBsdIfconfigNetwork(Network):
             return self.facts
 
         default_ipv4, default_ipv6 = self.get_default_interfaces(route_path)
-        interfaces, ips = self.get_interfaces_info(ifconfig_path)
+        interfaces, ips = self.get_interfaces_info(ifconfig_path, default_ipv4, default_ipv6)
         self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
         self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
         self.facts['interfaces'] = interfaces.keys()
@@ -2482,9 +2500,10 @@ class GenericBsdIfconfigNetwork(Network):
 
         return interface['v4'], interface['v6']
 
-    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-a'):
+    def get_interfaces_info(self, ifconfig_path, default_ipv4, default_ipv6, ifconfig_options='-a'):
         interfaces = {}
         current_if = {}
+        skip_current_if = False
         ips = dict(
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
@@ -2497,12 +2516,19 @@ class GenericBsdIfconfigNetwork(Network):
         for line in out.split('\n'):
 
             if line:
+                if skip_current_if and not (re.match('^\S', line) and len(words) > 3):
+                    continue
+
                 words = line.split()
 
                 if words[0] == 'pass':
                     continue
                 elif re.match('^\S', line) and len(words) > 3:
+                    skip_current_if = False
                     current_if = self.parse_interface_line(words)
+                    if not self._include_interface(current_if['device'], default_ipv4, default_ipv6):
+                        skip_current_if = True
+                        continue
                     interfaces[ current_if['device'] ] = current_if
                 elif words[0].startswith('options='):
                     self.parse_options_line(words, current_if, ips)
