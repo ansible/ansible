@@ -68,6 +68,7 @@ Ansible Changes By Release
   * cs_snapshot_policy
 - dnos6
   * dnos6_command
+  * dnos6_template
 - dnos9
   * dnos9_command
   * dnos9_config
