@@ -120,7 +120,7 @@ class GalaxyCLI(CLI):
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        self.options, self.args =self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
         display.verbosity = self.options.verbosity
         self.galaxy = Galaxy(self.options)
         return True
