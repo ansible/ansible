@@ -157,7 +157,7 @@ class CacheModule(BaseCacheModule):
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-        self._keys.remove_by_timerange(0, expiry_age)
+            self._keys.remove_by_timerange(0, expiry_age)
 
     def get(self, key):
         value = self._cache.get(self._make_key(key))
