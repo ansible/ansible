@@ -58,7 +58,7 @@ EXAMPLES = """
 
 - name: Run tasks/other.yml instead of 'main'
   include_role:
-    role: myrole
+    name: myrole
     tasks_from: other
 
 - name: Pass variables to role
