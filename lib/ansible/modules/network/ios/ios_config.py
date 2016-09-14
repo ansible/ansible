@@ -142,7 +142,7 @@ options:
     required: false
     default: null
     version_added: "2.2"
-  default:
+  defaults:
     description:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
@@ -229,7 +229,7 @@ def check_args(module, warnings):
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
-        defaults = module.params['default']
+        defaults = module.params['defaults']
         contents = module.config.get_config(include_defaults=defaults)
     return NetworkConfig(indent=1, contents=contents)
 
@@ -320,7 +320,7 @@ def main():
         force=dict(default=False, type='bool'),
 
         config=dict(),
-        default=dict(type='bool', default=False),
+        defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
         save=dict(default=False, type='bool'),
