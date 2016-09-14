@@ -1,0 +1,369 @@
+#!/usr/bin/python
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: nxos_snmp_contact
+version_added: "2.2"
+short_description: Manages SNMP contact info.
+description:
+    - Manages SNMP contact information.
+extends_documentation_fragment: nxos
+author:
+    - Jason Edelman (@jedelman8)
+    - Gabriele Gerbino (@GGabriele)
+notes:
+    - C(state=absent) removes the contact configuration if it is configured.
+options:
+    contact:
+        description:
+            - Contact information.
+        required: true
+    state:
+        description:
+            - Manage the state of the resource.
+        required: true
+        default: present
+        choices: ['present','absent']
+'''
+
+EXAMPLES = '''
+# ensure snmp contact is configured
+- nxos_snmp_contact:
+    contact=Test
+    state=present
+    host={{ inventory_hostname }}
+    username={{ un }}
+    password={{ pwd }}
+'''
+
+RETURN = '''
+proposed:
+    description: k/v pairs of parameters passed into module
+    returned: always
+    type: dict
+    sample: {"contact": "New_Test"}
+existing:
+    description: k/v pairs of existing snmp contact
+    type: dict
+    sample: {"contact": "Test"}
+end_state:
+    description: k/v pairs of snmp contact after module execution
+    returned: always
+    type: dict
+    sample: {"contact": "New_Test"}
+commands:
+    description: command string sent to the device
+    returned: always
+    type: string
+    sample: "snmp-server contact New_Test ;"
+changed:
+    description: check to see if a change was made on the device
+    returned: always
+    type: boolean
+    sample: true
+'''
+
+import json
+
+# COMMON CODE FOR MIGRATION
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+
+try:
+    from ansible.module_utils.nxos import get_module
+except ImportError:
+    from ansible.module_utils.nxos import NetworkModule
+
+
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
+     else:
+         return list()
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
+
+def get_network_module(**kwargs):
+    try:
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
+
+def get_config(module, include_defaults=False):
+    config = module.params['config']
+    if not config:
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
+    return CustomNetworkConfig(indent=2, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    save_config = module.params['save']
+
+    result = dict(changed=False)
+
+    if commands:
+        if not module.check_mode:
+            try:
+                module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
+            if save_config:
+                try:
+                    module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+# END OF COMMON CODE
+
+
+def execute_config_command(commands, module):
+    try:
+        body = module.configure(commands)
+    except ShellError:
+        clie = get_exception()
+        module.fail_json(msg='Error sending CLI commands',
+                         error=str(clie), commands=commands)
+    return body
+
+
+def get_cli_body_ssh(command, response, module):
+    """Get response for when transport=cli.  This is kind of a hack and mainly
+    needed because these modules were originally written for NX-API.  And
+    not every command supports "| json" when using cli/ssh.  As such, we assume
+    if | json returns an XML string, it is a valid command, but that the
+    resource doesn't exist yet. Instead, the output will be a raw string
+    when issuing commands containing 'show run'.
+    """
+    if 'xml' in response[0]:
+        body = []
+    elif 'show run' in command:
+        body = response
+    else:
+        try:
+            response = response[0].replace(command + '\n\n', '').strip()
+            body = [json.loads(response)]
+        except ValueError:
+            module.fail_json(msg='Command does not support JSON output',
+                             command=command)
+    return body
+
+
+def execute_show(cmds, module, command_type=None):
+    try:
+        if command_type:
+            response = module.execute(cmds, command_type=command_type)
+        else:
+            response = module.execute(cmds)
+    except ShellError:
+        clie = get_exception()
+        module.fail_json(msg='Error sending {0}'.format(command),
+                         error=str(clie))
+    return response
+
+
+def execute_show_command(command, module, command_type='cli_show'):
+    if module.params['transport'] == 'cli':
+        command += ' | json'
+        cmds = [command]
+        response = execute_show(cmds, module)
+        body = get_cli_body_ssh(command, response, module)
+    elif module.params['transport'] == 'nxapi':
+        cmds = [command]
+        body = execute_show(cmds, module, command_type=command_type)
+
+    return body
+
+
+def flatten_list(command_lists):
+    flat_command_list = []
+    for command in command_lists:
+        if isinstance(command, list):
+            flat_command_list.extend(command)
+        else:
+            flat_command_list.append(command)
+    return flat_command_list
+
+
+def get_snmp_contact(module):
+    contact = {}
+    contact_regex = '.*snmp-server\scontact\s(?P<contact>\S+).*'
+    command = 'show run snmp'
+
+    body = execute_show_command(command, module)[0]
+
+    try:
+        match_contact = re.match(contact_regex, body, re.DOTALL)
+        group_contact = match_contact.groupdict()
+        contact['contact'] = group_contact["contact"]
+    except AttributeError:
+        contact = {}
+
+    return contact
+
+
+def main():
+    argument_spec = dict(
+            contact=dict(required=True, type='str'),
+            state=dict(choices=['absent', 'present'],
+                       default='present')
+    )
+    module = get_network_module(argument_spec=argument_spec,
+                                supports_check_mode=True)
+
+    contact = module.params['contact']
+    state = module.params['state']
+
+    existing = get_snmp_contact(module)
+    changed = False
+    proposed = dict(contact=contact)
+    end_state = existing
+    commands = []
+
+    if state == 'absent':
+        if existing and existing['contact'] == contact:
+            commands.append('no snmp-server contact')
+    elif state == 'present':
+        if not existing or existing['contact'] != contact:
+            commands.append('snmp-server contact {0}'.format(contact))
+
+    cmds = flatten_list(commands)
+    if cmds:
+        if module.check_mode:
+            module.exit_json(changed=True, commands=cmds)
+        else:
+            changed = True
+            execute_config_command(cmds, module)
+            end_state = get_snmp_contact(module)
+
+    results = {}
+    results['proposed'] = proposed
+    results['existing'] = existing
+    results['end_state'] = end_state
+    results['commands'] = cmds
+    results['changed'] = changed
+
+    module.exit_json(**results)
+
+
+if __name__ == '__main__':
+    main()
