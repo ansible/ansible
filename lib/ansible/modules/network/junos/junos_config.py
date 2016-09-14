@@ -43,7 +43,7 @@ options:
         to load into the remote system.  The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
-        This arugment is mutually exclusive with the I(lines) and
+        This argument is mutually exclusive with the I(lines) and
         I(parents) arguments.
     required: false
     default: null
@@ -133,7 +133,7 @@ requirements:
   - junos-eznc
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
 """
 
 EXAMPLES = """
