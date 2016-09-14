@@ -33,6 +33,7 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
+from ansible.module_utils._text import to_text
 
 
 __all__ = ['Role', 'hash_params']
@@ -204,9 +205,17 @@ class Role(Base, Become, Conditional, Taggable):
     def _load_role_yaml(self, subdir, main=None):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            main_file = self._resolve_main(file_path, main)
-            if self._loader.path_exists(main_file):
-                return self._loader.load_from_file(main_file)
+            if subdir == 'defaults' or subdir == 'vars':
+                combined_vars = {} 
+                found_vars_files = set(os.listdir(to_text(file_path)))
+                for file in found_vars_files:
+                    combined_vars = combine_vars(combined_vars, self._loader.load_from_file(file_path + '/' + file)) 
+                return combined_vars
+               
+            else: 
+                main_file = self._resolve_main(file_path, main)
+                if self._loader.path_exists(main_file):
+                    return self._loader.load_from_file(main_file)
         return None
 
     def _resolve_main(self, basepath, main=None):
