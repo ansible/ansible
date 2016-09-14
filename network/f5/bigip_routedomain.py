@@ -260,6 +260,20 @@ class BigIpRouteDomain(object):
             p['service_policy'] = str(r.servicePolicy)
         return p
 
+    def domains(self):
+        result = []
+
+        domains = self.api.tm.net.route_domains.get_collection()
+        for domain in domains:
+            # Just checking for the addition of the partition here for
+            # different versions of BIG-IP
+            if '/' + self.params['partition'] + '/' in domain.name:
+                result.append(domain.name)
+            else:
+                full_name = '/%s/%s' % (self.params['partition'], domain.name)
+                result.append(full_name)
+        return result
+
     def create(self):
         params = dict()
         params['id'] = self.params['id']
@@ -284,7 +298,7 @@ class BigIpRouteDomain(object):
 
         if parent is not None:
             parent = '/%s/%s' % (partition, parent)
-            if parent in self.domains:
+            if parent in self.domains():
                 params['parent'] = parent
             else:
                 raise F5ModuleError(
