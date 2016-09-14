@@ -239,7 +239,8 @@ def load_config(module, candidate):
 def execute_config_command(commands, module):
     try:
         body = module.configure(commands)
-    except ShellError, clie:
+    except ShellError:
+        clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
     return body
