@@ -326,8 +326,8 @@ COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LI
 DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, integer=True)
 
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
-MODULE_NO_JSON            = ['command', 'shell', 'raw']
+MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None

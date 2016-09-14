@@ -29,7 +29,9 @@ from ansible.template import Templar
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
     'command',
+    'win_command',
     'shell',
+    'win_shell',
     'script',
     'include',
     'include_vars',
@@ -161,7 +163,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'shell', 'script', 'raw'):
+        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
@@ -191,7 +193,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -217,7 +219,7 @@ class ModuleArgsParser:
         action = None
         args = None
 
-        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
+        actions_allowing_raw = ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
