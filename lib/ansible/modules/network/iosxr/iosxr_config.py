@@ -63,13 +63,13 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a changed needs to be made.  Just like with I(before) this
+        stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
     required: false
@@ -94,7 +94,7 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct
+        line is not correct.
     required: false
     default: line
     choices: ['line', 'block', 'config']
@@ -105,7 +105,7 @@ options:
         cause the module to push the contents of I(src) into the device
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the match argument to none.  This argument
+        the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
     required: false
     default: false
@@ -177,8 +177,8 @@ vars:
 RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
-  returned: always
-  type: when lines is defined
+  returned: Only when C(lines) is specified.
+  type: list
   sample: ['...', '...']
 backup_path:
   description: The full path to the backup file

@@ -35,7 +35,7 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser. This argument is mutually exclusive with O(src).
+        device config parser. This argument is mutually exclusive with I(src).
     required: false
     default: null
     aliases: ['commands']
@@ -53,7 +53,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root dir.  This argument is mutually
-        exclusive with O(lines).
+        exclusive with I(lines).
     required: false
     default: null
   before:
@@ -68,7 +68,7 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a changed needs to be made.  Just like with I(before) this
+        stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
     required: false

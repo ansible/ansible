@@ -53,7 +53,7 @@ options:
         to load into the remote system.  The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
-        This arugment is mutually exclusive with the I(lines) and
+        This argument is mutually exclusive with the I(lines) and
         I(parents) arguments.
     required: false
     default: null
@@ -70,7 +70,7 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a changed needs to be made.  Just like with I(before) this
+        stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
     required: false
@@ -81,11 +81,10 @@ options:
         the set of commands against the current device config.  If
         match is set to I(line), commands are matched line by line.  If
         match is set to I(strict), command lines are matched with respect
-        to position.  Finally if match is set to I(exact), command lines
-        must be an equal match.
-      - Version 2.2 added a new choice I(none).  When match is set to
-        none, the configure is loaded into the remote device without
-        consulting the configuration.
+        to position.  If match is set to I(exact), command lines
+        must be an equal match.  Finally, if match is set to I(none), the
+        module will not attempt to compare the source configuration with
+        the running configuration on the remote device.
     required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
@@ -107,7 +106,7 @@ options:
         cause the module to push the contents of I(src) into the device
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
-        the equivalient, set the match argument to none.  This argument
+        the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
     required: false
     default: false
@@ -146,7 +145,7 @@ options:
     version_added: "2.2"
   save:
     description:
-      - The I(save) argument will instruct the module to save the
+      - The C(save) argument instructs the module to save the
         running-config to startup-config.  This operation is performed
         after any changes are made to the current running config.  If
         no changes are made, the configuration is still saved to the
@@ -200,7 +199,7 @@ vars:
 RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
-  returned: when list is specified
+  returned: Only when C(lines) is specified.
   type: list
   sample: ['...', '...']
 backup_path:
@@ -330,6 +329,7 @@ def main():
         module.fail_json(msg=str(exc), **exc.kwargs)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
