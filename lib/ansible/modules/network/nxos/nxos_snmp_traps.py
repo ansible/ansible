@@ -452,7 +452,7 @@ def get_trap_commands(group, state, existing, module):
 
 def main():
     argument_spec = dict(
-            state=dict(choices=['enabled', 'disabled'], required=True),
+            state=dict(choices=['enabled', 'disabled'], default='enabled'),
             group=dict(choices=['aaa', 'bridge', 'callhome', 'cfs', 'config',
                                 'entity', 'feature-control', 'hsrp',
                                 'license', 'link', 'lldp', 'ospf', 'pim', 'rf',
