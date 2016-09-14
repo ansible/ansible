@@ -149,7 +149,7 @@ class Backend(object):
             'create-backend',
             '--backend-name', name,
             '--set', 'base-dn:' + base_dn,
-            '--set', 'enabled:' + str(enable).lower(),
+            '--set', 'enabled:' + str(enabled).lower(),
             '--bindDN', bind_dn,
             '-h', hostname,
             '-p', str(port),
