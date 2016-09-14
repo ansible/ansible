@@ -22,7 +22,6 @@ RUN apt-get update -y && \
     mysql-server \
     openssh-client \
     openssh-server \
-    python3-apt \
     python3-coverage \
     python3-dbus \
     python3-httplib2 \
