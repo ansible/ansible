@@ -131,7 +131,7 @@ options:
     required: false
     default: null
     version_added: "2.2"
-  default:
+  defaults:
     description:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
@@ -140,6 +140,7 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
+    aliases: ['detail']
     version_added: "2.2"
   save:
     description:
@@ -219,7 +220,8 @@ def sanitize_config(lines):
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
-        contents = module.config.get_config()
+        defaults = module.params['defaults']
+        contents = module.config.get_config(detail=defaults)
     return NetworkConfig(device_os='sros', contents=contents)
 
 def get_candidate(module):
@@ -278,7 +280,7 @@ def main():
         match=dict(default='line', choices=['line', 'none']),
 
         config=dict(),
-        default=dict(type='bool', default=False),
+        defaults=dict(type='bool', default=False, aliases=['detail']),
 
         backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
