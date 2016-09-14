@@ -41,9 +41,12 @@ class NxapiConfigMixin(object):
         else:
             return self.execute([cmd])[0]
 
-    def load_config(self, config):
+    def load_config(self, config, **kwargs):
         checkpoint = 'ansible_%s' % int(time.time())
-        self.execute(['checkpoint %s' % checkpoint], output='text')
+        if isinstance(self, Cli):
+            self.execute(['checkpoint %s' % checkpoint])
+        else:
+            self.execute(['checkpoint %s' % checkpoint], output='text')
 
         try:
             self.configure(config)
@@ -51,7 +54,10 @@ class NxapiConfigMixin(object):
             self.load_checkpoint(checkpoint)
             raise
 
-        self.execute(['no checkpoint %s' % checkpoint], output='text')
+        if isinstance(self, Cli):
+            self.execute(['checkpoint %s' % checkpoint])
+        else:
+            self.execute(['no checkpoint %s' % checkpoint], output='text')
 
     def save_config(self, **kwargs):
         self.execute(['copy running-config startup-config'])
