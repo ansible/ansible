@@ -235,7 +235,7 @@ class JenkinsJob:
 
     def present_job(self):
         if self.config is None and self.enabled is None:
-            module.fail_json(msg='one of the following params is required on state=present: config,enabled')
+            self.module.fail_json(msg='one of the following params is required on state=present: config,enabled')
 
         if not self.job_exists():
             self.create_job()
