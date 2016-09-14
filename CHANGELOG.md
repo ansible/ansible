@@ -72,6 +72,7 @@ Ansible Changes By Release
 - dnos9
   * dnos9_command
   * dnos9_config
+  * dnos9_template
 - dnos10
   * dnos10_command
   * dnos10_config
