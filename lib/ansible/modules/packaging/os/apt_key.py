@@ -123,6 +123,7 @@ def check_missing_binaries(module):
     if len(missing):
         module.fail_json(msg="binaries are missing", names=missing)
 
+
 def all_keys(module, keyring, short_format):
     if keyring:
         cmd = "apt-key --keyring %s adv --list-public-keys --keyid-format=long" % keyring
@@ -141,6 +142,7 @@ def all_keys(module, keyring, short_format):
         results = shorten_key_ids(results)
     return results
 
+
 def shorten_key_ids(key_id_list):
     """
     Takes a list of key ids, and converts them to the 'short' format,
@@ -150,6 +152,7 @@ def shorten_key_ids(key_id_list):
     for key in key_id_list:
         short.append(key[-8:])
     return short
+
 
 def download_key(module, url):
     # FIXME: move get_url code to common, allow for in-memory D/L, support proxies
@@ -166,12 +169,13 @@ def download_key(module, url):
     except Exception:
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
 
+
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
         cmd = "apt-key --keyring %s adv --keyserver %s --recv %s" % (keyring, keyserver, key_id)
     else:
         cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
-    for retry in xrange(5):
+    for retry in range(5):
         (rc, out, err) = module.run_command(cmd)
         if rc == 0:
             break
@@ -180,6 +184,7 @@ def import_key(module, keyring, keyserver, key_id):
         module.fail_json(cmd=cmd, msg="error fetching key from keyserver: %s" % keyserver,
                          rc=rc, stdout=out, stderr=err)
     return True
+
 
 def add_key(module, keyfile, keyring, data=None):
     if data is not None:
@@ -196,6 +201,7 @@ def add_key(module, keyfile, keyring, data=None):
         (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
+
 def remove_key(module, key_id, keyring):
     # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
     if keyring:
@@ -204,6 +210,7 @@ def remove_key(module, key_id, keyring):
         cmd = 'apt-key del %s' % key_id
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
+
 
 def main():
     module = AnsibleModule(
