@@ -180,6 +180,8 @@ class PyVmomiHelper(object):
         self.si = None
         self.smartconnect()
         self.datacenter = None
+        self.folders = None
+        self.foldermap = None
 
     def smartconnect(self):
         kwargs = {'host': self.params['hostname'],
@@ -205,6 +207,7 @@ class PyVmomiHelper(object):
 
         tree = {'virtualmachines': [],
                         'subfolders': {},
+                        'vimobj': folder,
                         'name': folder.name}
 
         children = None
@@ -216,7 +219,6 @@ class PyVmomiHelper(object):
                 if child == folder or child in tree:
                     continue
                 if type(child) == vim.Folder:
-                    #ctree = self._build_folder_tree(child, tree={})
                     ctree = self._build_folder_tree(child)
                     tree['subfolders'][child] = dict.copy(ctree)
                 elif type(child) == vim.VirtualMachine:
@@ -246,9 +248,31 @@ class PyVmomiHelper(object):
         else:
             thispath = os.path.join(inpath, folder['name'])
 
+        if thispath not in vmap['paths']:
+            vmap['paths'][thispath] = []
+
+        # helpful for isolating folder objects later on
+        if not 'path_by_fvim' in vmap:
+            vmap['path_by_fvim'] = {}
+        if not 'fvim_by_path' in vmap:
+            vmap['fvim_by_path'] = {}
+        # store object by path and store path by object
+        vmap['fvim_by_path'][thispath] = folder['vimobj']
+        vmap['path_by_fvim'][folder['vimobj']] = thispath
+
+        # helpful for isolating vm objects later on
+        if not 'path_by_vvim' in vmap:
+            vmap['path_by_vvim'] = {}
+        if not 'vvim_by_path' in vmap:
+            vmap['vvim_by_path'] = {}
+        if thispath not in vmap['vvim_by_path']:
+            vmap['vvim_by_path'][thispath] = []
+    
+
         for item in folder.items():
             k = item[0]
             v = item[1]
+
             if k == 'name':
                 pass
             elif k == 'subfolders':
@@ -260,21 +284,25 @@ class PyVmomiHelper(object):
                         vmap['names'][x.config.name] = []
                     vmap['names'][x.config.name].append(x.config.uuid)
                     vmap['uuids'][x.config.uuid] = x.config.name
-                    if not thispath in vmap['paths']:
-                        vmap['paths'][thispath] = []
                     vmap['paths'][thispath].append(x.config.uuid)
 
+                    if x not in vmap['vvim_by_path'][thispath]:
+                        vmap['vvim_by_path'][thispath].append(x)
+                    if x not in vmap['path_by_vvim']:
+                        vmap['path_by_vvim'][x] = thispath
         return vmap
 
     def getfolders(self):
 
         if not self.datacenter:
-            self.datacenter = get_obj(self.content, [vim.Datacenter], 
-                                       self.params['esxi']['datacenter'])
+            self.get_datacenter()
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
         self.folder_map = self._build_folder_map(self.folders)
         return (self.folders, self.folder_map)
 
+    def get_datacenter(self):
+        self.datacenter = get_obj(self.content, [vim.Datacenter], 
+                                   self.params['datacenter'])
 
     def getvm(self, name=None, uuid=None, folder=None, name_match=None):
 
@@ -289,35 +317,41 @@ class PyVmomiHelper(object):
 
         elif folder:
 
-            matches = []
-            folder_paths = []
+            if self.params['folder'].endswith('/'):
+                self.params['folder'] = self.params['folder'][0:-1]
 
-            datacenter = None
-            if 'esxi' in self.params:
-                if 'datacenter' in self.params['esxi']:
-                    datacenter = self.params['esxi']['datacenter']
-
-            if datacenter:
-                folder_paths.append('%s/vm/%s' % (datacenter, folder))
+            # Build the absolute folder path to pass into the search method
+            searchpath = None
+            if self.params['folder'].startswith('/vm'):
+                searchpath = '%s' % self.params['datacenter']
+                searchpath += self.params['folder']
+            elif self.params['folder'].startswith('/'):
+                searchpath = '%s' % self.params['datacenter']
+                searchpath += '/vm' + self.params['folder']
             else:
-                # get a list of datacenters
-                datacenters = get_all_objs(self.content, [vim.Datacenter])
-                datacenters = [x.name for x in datacenters]
-                for dc in datacenters:
-                    folder_paths.append('%s/vm/%s' % (dc, folder))
+                # need to look for matching absolute path
+                if not self.folders:
+                    self.getfolders()
+                paths = self.folder_map['paths'].keys()
+                paths = [x for x in paths if x.endswith(self.params['folder'])]
+                if len(paths) > 1:
+                    self.module.fail_json(msg='%s matches more than one folder. Please use the absolute path' % self.params['folder'])
+                elif paths:
+                    searchpath = paths[0]
 
-            for folder_path in folder_paths:
-                fObj = self.si.content.searchIndex.FindByInventoryPath(folder_path)
-                for cObj in fObj.childEntity:
-                    if not type(cObj) == vim.VirtualMachine:
-                        continue
-                    if cObj.name == name:
-                        matches.append(cObj)
-            if len(matches) > 1 and not name_match:
-                module.fail_json(msg='more than 1 vm exists by the name %s in folder %s. Please specify a uuid, a datacenter or name_match' \
-                                 % (folder, name))
-            elif len(matches) > 0:
-                vm = matches[0]
+            if searchpath:
+                # get all objects for this path ...
+                fObj = self.si.content.searchIndex.FindByInventoryPath(searchpath)
+                if fObj:
+                    if isinstance(fObj, vim.Datacenter):
+                        fObj = fObj.vmFolder
+                    for cObj in fObj.childEntity:
+                        if not type(cObj) == vim.VirtualMachine:
+                            continue
+                        if cObj.name == name:
+                            vm = cObj
+                            break
+
         else:
             vmList = get_all_objs(self.content, [vim.VirtualMachine])
             if name_match:
@@ -475,22 +509,30 @@ class PyVmomiHelper(object):
         #   - multiple datacenters
         #   - resource pools
         #   - multiple templates by the same name
+        #   - use disk config from template by default
         #   - static IPs
 
         datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = get_obj(self.content, [vim.Datacenter], 
                              self.params['datacenter'])
 
-        # folder is a required clone argument
-        if len(datacenters) > 1:
-            # FIXME: need to find the folder in the right DC.
-            raise "multi-dc with folders is not yet implemented"
-        else:    
-            destfolder = get_obj(
-                            self.content, 
-                            [vim.Folder], 
-                            self.params['folder']
-                         )
+        if not self.foldermap:
+            self.folders, self.foldermap = self.getfolders()
+
+        # find matching folders
+        if self.params['folder'].startswith('/'):
+            folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
+        else:
+            folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
+
+        # throw error if more than one match or no matches
+        if len(folders) == 0:
+            self.module.fail_json('no folder matched the path: %s' % self.params['folder'])
+        elif len(folders) > 1:
+            self.module.fail_json('too many folders matched "%s", please give the full path' % self.params['folder'])
+
+        # grab the folder vim object
+        destfolder = folders[0][1]
 
         if not 'disk' in self.params:
             return ({'changed': False, 'failed': True, 'msg': "'disk' is required for VM deployment"})
@@ -745,48 +787,6 @@ def get_all_objs(content, vimtype):
     return obj
 
 
-def _build_folder_tree(nodes, parent):
-    tree = {}
-
-    for node in nodes:
-        if node['parent'] == parent:
-            tree[node['name']] = dict.copy(node)
-            tree[node['name']]['subfolders'] = _build_folder_tree(nodes, node['id'])
-            del tree[node['name']]['parent']
-
-    return tree
-
-
-def _find_path_in_tree(tree, path):
-    for name, o in tree.iteritems():
-        if name == path[0]:
-            if len(path) == 1:
-                return o
-            else:
-                return _find_path_in_tree(o['subfolders'], path[1:])
-
-    return None
-
-
-def _get_folderid_for_path(vsphere_client, datacenter, path):
-    content = vsphere_client._retrieve_properties_traversal(property_names=['name', 'parent'], obj_type=MORTypes.Folder)
-    if not content: return {}
-
-    node_list = [
-        {
-            'id': o.Obj,
-            'name': o.PropSet[0].Val,
-            'parent': (o.PropSet[1].Val if len(o.PropSet) > 1 else None)
-        } for o in content
-    ]
-
-    tree = _build_folder_tree(node_list, datacenter)
-    tree = _find_path_in_tree(tree, ['vm'])['subfolders']
-    folder = _find_path_in_tree(tree, path.split('/'))
-    return folder['id'] if folder else None
-
-
-
 def main():
 
     vm = None
@@ -821,7 +821,7 @@ def main():
             name=dict(required=True, type='str'),
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default=None, aliases=['folder']),
+            folder=dict(required=False, type='str', default='/vm', aliases=['folder']),
             disk=dict(required=False, type='list'),
             nic=dict(required=False, type='list'),
             hardware=dict(required=False, type='dict', default={}),
