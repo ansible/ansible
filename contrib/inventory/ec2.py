@@ -37,6 +37,7 @@ When run against a specific host, this script returns the following variables:
  - ec2_attachTime
  - ec2_attachment
  - ec2_attachmentId
+ - ec2_block_devices
  - ec2_client_token
  - ec2_deleteOnTermination
  - ec2_description
@@ -1323,6 +1324,10 @@ class Ec2Inventory(object):
                     group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
                 instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
+            elif key == 'ec2_block_device_mapping':
+                instance_vars["ec2_block_devices"] = {}
+                for k, v in value.items():
+                    instance_vars["ec2_block_devices"][ os.path.basename(k) ] = v.volume_id
             else:
                 pass
                 # TODO Product codes if someone finds them useful
