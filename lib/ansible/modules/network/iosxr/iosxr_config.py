@@ -177,7 +177,7 @@ vars:
 RETURN = """
 updates:
   description: The set of commands that will be pushed to the remote device
-  returned: Only when C(lines) is specified.
+  returned: Only when lines is specified.
   type: list
   sample: ['...', '...']
 backup_path:
