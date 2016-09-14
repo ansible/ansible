@@ -114,7 +114,7 @@ def main():
             args['changed'] = True
     elif args['state'] == 'absent':
         if present:
-            rc, _, err = module.run_command([module.get_bin_path('rmmod', True), args['name']])
+            rc, _, err = module.run_command([module.get_bin_path('modprobe', True), '-r', args['name']])
             if rc != 0:
                 module.fail_json(msg=err, **args)
             args['changed'] = True
