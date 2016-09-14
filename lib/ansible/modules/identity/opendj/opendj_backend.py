@@ -72,7 +72,7 @@ options:
         required: false
         choices: ["je", "pdb"]
         default: "je"
-    enable:
+    enabled:
         description:
             - If the backend needs to be enabled when the backend is created.
         required: false
@@ -95,7 +95,7 @@ EXAMPLES = '''
               name=myPizzaBackend
               bind_dn="cn=Directory Manager"
               base_dn=dc=ansible,dc=example,dc=com
-              enable=true
+              enabled=true
 
     - name: "Delete Pizza Backend"
       action: opendj_backend
@@ -106,7 +106,7 @@ EXAMPLES = '''
               bind_dn="cn=Directory Manager"
               base_dn=dc=ansible,dc=example,dc=com
               type=pdb
-              enable=true
+              enabled=true
               state=absent
 
 '''
@@ -143,7 +143,7 @@ class Backend(object):
         else:
             return self._module.fail_json(msg="Error message while getting list backends: " + str(stderr))
 
-    def create_backend(self, opendj_bindir, hostname, port, password_method, name, base_dn, bind_dn, type, enable):
+    def create_backend(self, opendj_bindir, hostname, port, password_method, name, base_dn, bind_dn, type, enabled):
         my_command = [
             opendj_bindir + '/dsconfig',
             'create-backend',
@@ -269,7 +269,7 @@ def main():
             bind_dn=dict(required=True),
             base_dn=dict(required=True),
             type=dict(default="je", choices=["je", "pdb"]),
-            enable=dict(default=True, type='bool'),
+            enabled=dict(default=True, type='bool'),
             state=dict(default="present", choices=['present', 'absent']),
         ),
         supports_check_mode=True
@@ -284,7 +284,7 @@ def main():
     bind_dn = module.params['bind_dn']
     base_dn = module.params['base_dn']
     type = module.params['type']
-    enable = module.params['enable']
+    enabled = module.params['enabled']
     state = module.params['state']
 
     if module.params["password"] is not None:
@@ -331,7 +331,7 @@ def main():
                                      bind_dn=bind_dn,
                                      password_method=password_method,
                                      type=type,
-                                     enable=enable):
+                                     enabled=enabled):
                 opendj.create_root(opendj_bindir=opendj_bindir,
                                    hostname=hostname,
                                    port=port,
