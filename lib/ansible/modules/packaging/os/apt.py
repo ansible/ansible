@@ -116,8 +116,10 @@ options:
     required: false
     default: false
     version_added: "2.1"
-
-requirements: [ python-apt, aptitude ]
+requirements:
+   - python-apt (python 2)
+   - python3-apt (python 3)
+   - aptitude
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
@@ -197,6 +199,7 @@ import os
 import datetime
 import fnmatch
 import itertools
+import sys
 
 from ansible.module_utils._text import to_native
 
@@ -226,12 +229,19 @@ try:
 except ImportError:
     HAS_PYTHON_APT = False
 
+if sys.version_info[0] < 3:
+    PYTHON_APT = 'python-apt'
+else:
+    PYTHON_APT = 'python3-apt'
+
+
 def package_split(pkgspec):
     parts = pkgspec.split('=', 1)
     if len(parts) > 1:
         return parts[0], parts[1]
     else:
         return parts[0], None
+
 
 def package_versions(pkgname, pkg, pkg_cache):
     try:
@@ -245,11 +255,13 @@ def package_versions(pkgname, pkg, pkg_cache):
 
     return versions
 
+
 def package_version_compare(version, other_version):
     try:
         return apt_pkg.version_compare(version, other_version)
     except AttributeError:
         return apt_pkg.VersionCompare(version, other_version)
+
 
 def package_status(m, pkgname, version, cache, state):
     try:
@@ -327,6 +339,7 @@ def package_status(m, pkgname, version, cache, state):
 
     return package_is_installed, package_is_upgradable, has_files
 
+
 def expand_dpkg_options(dpkg_options_compressed):
     options_list = dpkg_options_compressed.split(',')
     dpkg_options = ""
@@ -334,6 +347,7 @@ def expand_dpkg_options(dpkg_options_compressed):
         dpkg_options = '%s -o "Dpkg::Options::=--%s"' \
                        % (dpkg_options, dpkg_option)
     return dpkg_options.strip()
+
 
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     # Note: apt-get does implicit regex matching when an exact package name
@@ -373,6 +387,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
             new_pkgspec.append(pkgspec_pattern)
     return new_pkgspec
 
+
 def parse_diff(output):
     diff = to_native(output).splitlines()
     try:
@@ -393,6 +408,7 @@ def parse_diff(output):
     diff_start += 1
     diff_end += 1
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
+
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
@@ -471,6 +487,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     else:
         return (True, dict(changed=False))
 
+
 def get_field_of_deb(m, deb_file, field="Version"):
     cmd_dpkg = m.get_bin_path("dpkg", True)
     cmd = cmd_dpkg + " --field %s %s" % (deb_file, field)
@@ -478,6 +495,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
     if rc != 0:
         m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     return to_native(stdout).strip('\n')
+
 
 def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
     changed=False
@@ -553,6 +571,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     else:
         m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
 
+
 def remove(m, pkgspec, cache, purge=False, force=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
     pkg_list = []
@@ -597,6 +616,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
+
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -648,6 +668,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
+
 def download(module, deb):
     tempdir = os.path.dirname(__file__)
     package = os.path.join(tempdir, str(deb.rsplit('/', 1)[1]))
@@ -673,6 +694,7 @@ def download(module, deb):
         module.fail_json(msg="Failure downloading %s, %s" % (deb, e))
 
     return deb
+
 
 def main():
     module = AnsibleModule(
@@ -701,16 +723,18 @@ def main():
 
     if not HAS_PYTHON_APT:
         if module.check_mode:
-            module.fail_json(msg="python-apt must be installed to use check mode. If run normally this module can autoinstall it")
+            module.fail_json(msg="%s must be installed to use check mode. "
+                                 "If run normally this module can auto-install it." % PYTHON_APT)
         try:
-            module.run_command('apt-get update', check_rc=True)
-            module.run_command('apt-get install python-apt -y -q', check_rc=True)
+            module.run_command(['apt-get', 'update'], check_rc=True)
+            module.run_command(['apt-get', 'install', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile
             import apt_pkg
         except ImportError:
-            module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+            module.fail_json(msg="Could not import python modules: apt, apt_pkg. "
+                                 "Please install %s package." % PYTHON_APT)
 
     global APTITUDE_CMD
     APTITUDE_CMD = module.get_bin_path("aptitude", False)
@@ -772,15 +796,14 @@ def main():
                         updated_cache_time = int(time.mktime(mtimestamp.timetuple()))
 
             if cache_valid is not True:
-                for retry in xrange(3):
+                for retry in range(3):
                     try:
                         cache.update()
                         break
                     except apt.cache.FetchFailedException:
                         pass
                 else:
-                    #out of retries, pass on the exception
-                    raise
+                    module.fail_json(msg='Failed to update apt cache.')
                 cache.open(progress=None)
                 updated_cache = True
                 updated_cache_time = int(time.mktime(now.timetuple()))
