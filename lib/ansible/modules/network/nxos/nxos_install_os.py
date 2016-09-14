@@ -83,6 +83,23 @@ EXAMPLES = '''
             - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I4(1)'
 '''
 
+RETURN = '''
+install_state:
+    returned: always
+    type: dictionary
+    sample: {
+        "kick": "n5000-uk9-kickstart.7.2.1.N1.1.bin",
+        "sys": "n5000-uk9.7.2.1.N1.1.bin",
+        "status": "This is the log of last installation.\n
+            Continuing with installation process, please wait.\n
+            The login will be disabled until the installation is completed.\n
+            Performing supervisor state verification. \n
+            SUCCESS\n
+            Supervisor non-disruptive upgrade successful.\n
+            Install has been successful.\n",
+    }
+'''
+
 
 # COMMON CODE FOR MIGRATION
 import re
