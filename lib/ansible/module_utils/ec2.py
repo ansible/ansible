@@ -58,8 +58,18 @@ class AnsibleAWSError(Exception):
     pass
 
 
+def _botocore_exception_maybe():
+    """
+    Allow for boto3 not being installed when using these utils by wrapping
+    botocore.exceptions instead of assigning from it directly.
+    """
+    if HAS_BOTO3:
+        return botocore.exceptions.ClientError
+    return type(None)
+
+
 class AWSRetry(CloudRetry):
-    base_class = botocore.exceptions.ClientError
+    base_class = _botocore_exception_maybe()
 
     @staticmethod
     def status_code_from_exception(error):
