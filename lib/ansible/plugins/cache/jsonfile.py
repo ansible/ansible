@@ -108,6 +108,9 @@ class CacheModule(BaseCacheModule):
 
     def has_expired(self, key):
 
+        if self._timeout == 0:
+            return False
+
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
             st = os.stat(cachefile)
