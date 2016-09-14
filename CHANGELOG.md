@@ -69,6 +69,7 @@ Ansible Changes By Release
 - dnos6
   * dnos6_command
   * dnos6_template
+  * dnos6_config
 - dnos9
   * dnos9_command
   * dnos9_config
