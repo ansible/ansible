@@ -31,7 +31,7 @@ notes:
     - This module works at the group level for traps.  If you need to only
       enable/disable 1 specific trap within a group, use the M(nxos_command)
       module.
-      IMPORTANT: Be aware that you can set a trap only for an enabled feature.
+    - Be aware that you can set a trap only for an enabled feature.
 options:
     group:
         description:
