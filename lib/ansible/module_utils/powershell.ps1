@@ -105,37 +105,48 @@ Function Fail-Json($obj, $message = $null)
 #Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
 #Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
-{
+Function Get-AnsibleParam
+    param(
+        $obj, 
+        [string[]]$name, 
+        $default = $null, 
+        $resultobj, 
+        $failifempty=$false, 
+        $emptyattributefailmessage, 
+        $ValidateSet, 
+        $ValidateSetErrorMessage)   
+    )
     # Check if the provided Member $name exists in $obj and return it or the default. 
     Try
     {
-        If (-not $obj.$name.GetType)
+        foreach ($n in $name)
         {
-            throw
-        }
-
-        if ($ValidateSet)
-        {
-            if ($ValidateSet -contains ($obj.$name))
+            If (-not $obj.$n.GetType)
             {
-                $obj.$name    
+                throw
+            }
+
+            if ($ValidateSet)
+            {
+                if ($ValidateSet -contains ($obj.$n))
+                {
+                    $obj.$n
+                }
+                Else
+                {
+                    if ($ValidateSetErrorMessage -eq $null)
+                    {
+                        #Auto-generated error should be sufficient in most use cases
+                        $ValidateSetErrorMessage = "Argument $n needs to be one of $($ValidateSet -join ",") but was $($obj.$n)."
+                    }
+                    Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+                }
             }
             Else
             {
-                if ($ValidateSetErrorMessage -eq $null)
-                {
-                    #Auto-generated error should be sufficient in most use cases
-                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
-                }
-                Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+                $obj.$n
             }
         }
-        Else
-        {
-            $obj.$name
-        }
-        
     }
     Catch
     {
