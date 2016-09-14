@@ -13,6 +13,21 @@
     that:
     - result|success
 
+- name: test fail on missing params
+  local_action:
+     module: jenkins_job
+     name: test.job
+     url: "{{ jenkins_url }}"
+     user: "{{ jenkins_user }}"
+     password: "{{ jenkins_password }}"
+  register: result
+  ignore_errors: true
+- name: verify test fail on missing params
+  assert:
+    that:
+    - result|failed
+    - 'result.msg == "one of the following params is required on state=present: config,enabled"'
+
 - name: test create a job
   local_action:
      module: jenkins_job
