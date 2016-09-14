@@ -28,7 +28,7 @@ short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
-    - This module works on Debian and Ubuntu and requires C(python-apt).
+    - This module works on Debian and Ubuntu.
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
 options:
@@ -72,7 +72,9 @@ options:
         required: false
 author: "Alexander Saltanov (@sashka)"
 version_added: "0.7"
-requirements: [ python-apt ]
+requirements:
+   - python-apt (python 2)
+   - python3-apt (python 3)
 '''
 
 EXAMPLES = '''
@@ -96,6 +98,7 @@ apt_repository: repo='ppa:nginx/stable'
 import glob
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -108,9 +111,15 @@ except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
+if sys.version_info[0] < 3:
+    PYTHON_APT = 'python-apt'
+else:
+    PYTHON_APT = 'python3-apt'
+
 DEFAULT_SOURCES_PERM = int('0644', 8)
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
+
 
 def install_python_apt(module):
 
@@ -119,8 +128,8 @@ def install_python_apt(module):
         if apt_get_path:
             rc, so, se = module.run_command([apt_get_path, 'update'])
             if rc != 0:
-                module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
-            rc, so, se = module.run_command([apt_get_path, 'install', 'python-apt', '-y', '-q'])
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
+            rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
             if rc == 0:
                 global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
                 import apt
@@ -129,9 +138,10 @@ def install_python_apt(module):
                 distro = aptsources_distro.get_distro()
                 HAVE_PYTHON_APT = True
             else:
-                module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
     else:
-        module.fail_json(msg="python-apt must be installed to use check mode")
+        module.fail_json(msg="%s must be installed to use check mode" % PYTHON_APT)
+
 
 class InvalidSource(Exception):
     pass
@@ -255,7 +265,7 @@ class SourcesList(object):
         self.files[file] = group
 
     def save(self):
-        for filename, sources in self.files.items():
+        for filename, sources in list(self.files.items()):
             if sources:
                 d, fn = os.path.split(filename)
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
@@ -475,7 +485,7 @@ def main():
         if params['install_python_apt']:
             install_python_apt(module)
         else:
-            module.fail_json(msg='python-apt is not installed, and install_python_apt is False')
+            module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
     if isinstance(distro, aptsources_distro.UbuntuDistribution):
         sourceslist = UbuntuSourcesList(module,
