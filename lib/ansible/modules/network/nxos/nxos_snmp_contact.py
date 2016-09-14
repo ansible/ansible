@@ -67,11 +67,11 @@ end_state:
     returned: always
     type: dict
     sample: {"contact": "New_Test"}
-commands:
-    description: command string sent to the device
+updates:
+    description: commands sent to the device
     returned: always
-    type: string
-    sample: "snmp-server contact New_Test ;"
+    type: list
+    sample: ["snmp-server contact New_Test"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -238,12 +238,20 @@ def load_config(module, candidate):
 
 def execute_config_command(commands, module):
     try:
-        body = module.configure(commands)
+        module.configure(commands)
     except ShellError:
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
-    return body
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def get_cli_body_ssh(command, response, module):
@@ -260,8 +268,10 @@ def get_cli_body_ssh(command, response, module):
         body = response
     else:
         try:
-            response = response[0].replace(command + '\n\n', '').strip()
-            body = [json.loads(response)]
+            if isinstance(response[0], str):
+                body = [json.loads(response[0])]
+            else:
+                body = response
         except ValueError:
             module.fail_json(msg='Command does not support JSON output',
                              command=command)
@@ -269,6 +279,11 @@ def get_cli_body_ssh(command, response, module):
 
 
 def execute_show(cmds, module, command_type=None):
+    command_type_map = {
+        'cli_show': 'json',
+        'cli_show_ascii': 'text'
+    }
+
     try:
         if command_type:
             response = module.execute(cmds, command_type=command_type)
@@ -276,14 +291,28 @@ def execute_show(cmds, module, command_type=None):
             response = module.execute(cmds)
     except ShellError:
         clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(command),
+        module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        command += ' | json'
+        if 'show run' not in command:
+            command += ' | json'
         cmds = [command]
         response = execute_show(cmds, module)
         body = get_cli_body_ssh(command, response, module)
@@ -309,7 +338,7 @@ def get_snmp_contact(module):
     contact_regex = '.*snmp-server\scontact\s(?P<contact>\S+).*'
     command = 'show run snmp'
 
-    body = execute_show_command(command, module)[0]
+    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
 
     try:
         match_contact = re.match(contact_regex, body, re.DOTALL)
@@ -359,7 +388,7 @@ def main():
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['commands'] = cmds
+    results['updates'] = cmds
     results['changed'] = changed
 
     module.exit_json(**results)
