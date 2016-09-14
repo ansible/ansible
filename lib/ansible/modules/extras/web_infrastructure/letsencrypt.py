@@ -169,14 +169,18 @@ def simple_get(module,url):
     result = None
     try:
         content = resp.read()
+    except AttributeError:
+        if info['body']:
+            content = info['body']
+
+    if content:
         if info['content-type'].startswith('application/json'):
-            result = module.from_json(content.decode('utf8'))
+            try:
+                result = module.from_json(content.decode('utf8'))
+            except ValueError:
+                module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url,content))
         else:
             result = content
-    except AttributeError:
-        result = None
-    except ValueError:
-        module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url,content))
 
     if info['status'] >= 400:
         module.fail_json(msg="ACME request failed: CODE: {0} RESULT:{1}".format(info['status'],result))
@@ -370,14 +374,18 @@ class ACMEAccount(object):
         result = None
         try:
             content = resp.read()
+        except AttributeError:
+            if info['body']:
+                content = info['body']
+
+        if content:
             if info['content-type'].startswith('application/json'):
-                result = self.module.from_json(content.decode('utf8'))
+                try:
+                    result = self.module.from_json(content.decode('utf8'))
+                except ValueError:
+                    self.module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url,content))
             else:
                 result = content
-        except AttributeError:
-            result = None
-        except ValueError:
-            self.module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url,content))
 
         return result,info
 
@@ -637,7 +645,7 @@ class ACMEClient(object):
                 "keyAuthorization": keyauthorization,
             }
             result, info = self.account.send_signed_request(uri, challenge_response)
-            if info['status'] != 200:
+            if info['status'] not in [200,202]:
                 self.module.fail_json(msg="Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
 
         status = ''
