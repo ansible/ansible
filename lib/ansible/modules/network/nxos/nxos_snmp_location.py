@@ -75,7 +75,7 @@ end_state:
 updates:
     description: command sent to the device
     returned: always
-    type: string
+    type: list
     sample: ["snmp-server location New_Test"]
 changed:
     description: check to see if a change was made on the device
