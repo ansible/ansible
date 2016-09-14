@@ -50,15 +50,16 @@ class CacheModule(BaseCacheModule):
 
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION)) # expects a dir path
+        self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
+
         if not self._cache_dir:
-            raise AnsibleError("error, fact_caching_connection is not set, cannot use fact cache")
+            raise AnsibleError("error, 'jsonfile' cache plugin requires the 'fact_caching_connection' config option to be set (to a writeable directory path)")
 
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
             except (OSError,IOError) as e:
-                display.warning("error while trying to create cache dir %s : %s" % (self._cache_dir, to_bytes(e)))
+                display.warning("error in 'jsonfile' cache plugin while trying to create cache dir %s : %s" % (self._cache_dir, to_bytes(e)))
                 return None
 
     def get(self, key):
@@ -80,12 +81,12 @@ class CacheModule(BaseCacheModule):
                     self._cache[key] = value
                     return value
                 except ValueError as e:
-                    display.warning("error while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, to_bytes(e)))
+                    display.warning("error in 'jsonfile' cache plugin while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, to_bytes(e)))
                     self.delete(key)
                     raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data."
                             " It has been removed, so you can re-run your command now." % cachefile)
         except (OSError,IOError) as e:
-            display.warning("error while trying to read %s : %s" % (cachefile, to_bytes(e)))
+            display.warning("error in 'jsonfile' cache plugin while trying to read %s : %s" % (cachefile, to_bytes(e)))
             raise KeyError
 
     def set(self, key, value):
@@ -96,7 +97,7 @@ class CacheModule(BaseCacheModule):
         try:
             f = codecs.open(cachefile, 'w', encoding='utf-8')
         except (OSError,IOError) as e:
-            display.warning("error while trying to write to %s : %s" % (cachefile, to_bytes(e)))
+            display.warning("error in 'jsonfile' cache plugin while trying to write to %s : %s" % (cachefile, to_bytes(e)))
             pass
         else:
             f.write(jsonify(value, format=True))
@@ -118,7 +119,7 @@ class CacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error while trying to stat %s : %s" % (cachefile, to_bytes(e)))
+                display.warning("error in 'jsonfile' cache plugin while trying to stat %s : %s" % (cachefile, to_bytes(e)))
                 pass
 
         if time.time() - st.st_mtime <= self._timeout:
@@ -150,7 +151,7 @@ class CacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error while trying to stat %s : %s" % (cachefile, to_bytes(e)))
+                display.warning("error in 'jsonfile' cache plugin while trying to stat %s : %s" % (cachefile, to_bytes(e)))
                 pass
 
     def delete(self, key):
