@@ -65,10 +65,12 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
 
     Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check'])
     # initialize needed objects
+    vaultpass = 'password123'
     variable_manager = VariableManager()
     loader = DataLoader()
+    loader.set_vault_password(vaultpass)
     options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False)
-    passwords = dict(vault_pass='secret')
+    passwords = {}
 
     # Instantiate our ResultCallback for handling results as they come in
     results_callback = ResultCallback()
