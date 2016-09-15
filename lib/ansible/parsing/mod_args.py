@@ -165,6 +165,8 @@ class ModuleArgsParser:
         # we don't allow users to set them directy in arguments
         if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
+                if not isinstance(arg, str) or not isinstance(arg, unicode):
+                    arg = str(arg)
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
