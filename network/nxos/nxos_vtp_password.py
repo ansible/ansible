@@ -366,17 +366,31 @@ def apply_key_map(key_map, table):
 
 def get_vtp_config(module):
     command = 'show vtp status'
-    body = execute_show_command(command, module)
+
+    body = execute_show_command(
+            command, module, command_type='cli_show_ascii')[0]
     vtp_parsed = {}
 
-    vtp_key = {
-        'running-version': 'version',
-        'domain_name': 'domain',
-        }
-
     if body:
-        vtp_parsed = apply_key_map(vtp_key, body[0])
-        vtp_parsed['vtp_password'] = get_vtp_password(module)
+        version_regex = '.*VTP version running\s+:\s+(?P<version>\d).*'
+        domain_regex = '.*VTP Domain Name\s+:\s+(?P<domain>\S+).*'
+
+        try:
+            match_version = re.match(version_regex, body, re.DOTALL)
+            version = match_version.groupdict()['version']
+        except AttributeError:
+            version = ''
+
+        try:
+            match_domain = re.match(domain_regex, body, re.DOTALL)
+            domain = match_domain.groupdict()['domain']
+        except AttributeError:
+            domain = ''
+
+        if domain and version:
+            vtp_parsed['domain'] = domain
+            vtp_parsed['version'] = version
+            vtp_parsed['vtp_password'] = get_vtp_password(module)
 
     return vtp_parsed
 
