@@ -58,7 +58,11 @@ if C.DEFAULT_LOG_PATH:
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
-
+b_COW_PATHS = (b"/usr/bin/cowsay",
+               b"/usr/games/cowsay",
+               b"/usr/local/bin/cowsay",  # BSD path for cowsay
+               b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
+              )
 class Display:
 
     def __init__(self, verbosity=0):
@@ -71,35 +75,27 @@ class Display:
         self._warns        = {}
         self._errors       = {}
 
-        self.cowsay = None
+        self.b_cowsay = None
         self.noncow = C.ANSIBLE_COW_SELECTION
 
         self.set_cowsay_info()
 
-        if self.cowsay:
+        if self.b_cowsay:
             try:
-                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
+                self.cows_available = [ to_bytes(c) for c in set(C.ANSIBLE_COW_WHITELIST).intersection(out.split())]
             except:
                 # could not execute cowsay for some reason
-                self.cowsay = False
+                self.b_cowsay = False
 
         self._set_column_width()
 
     def set_cowsay_info(self):
-
         if not C.ANSIBLE_NOCOWS:
-            if os.path.exists("/usr/bin/cowsay"):
-                self.cowsay = "/usr/bin/cowsay"
-            elif os.path.exists("/usr/games/cowsay"):
-                self.cowsay = "/usr/games/cowsay"
-            elif os.path.exists("/usr/local/bin/cowsay"):
-                # BSD path for cowsay
-                self.cowsay = "/usr/local/bin/cowsay"
-            elif os.path.exists("/opt/local/bin/cowsay"):
-                # MacPorts path for cowsay
-                self.cowsay = "/opt/local/bin/cowsay"
+            for b_cow_path in b_COW_PATHS:
+                if os.path.exists(b_cow_path):
+                    self.b_cowsay = b_cow_path
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
@@ -231,7 +227,7 @@ class Display:
         Prints a header-looking line with stars taking up to 80 columns
         of width (3 columns, minimum)
         '''
-        if self.cowsay:
+        if self.b_cowsay:
             try:
                 self.banner_cowsay(msg)
                 return
@@ -242,25 +238,25 @@ class Display:
         star_len = (79 - len(msg))
         if star_len < 0:
             star_len = 3
-        stars = "*" * star_len
-        self.display("\n%s %s" % (msg, stars), color=color)
+        stars = u"*" * star_len
+        self.display(u"\n%s %s" % (msg, stars), color=color)
 
     def banner_cowsay(self, msg, color=None):
-        if ": [" in msg:
-            msg = msg.replace("[","")
-            if msg.endswith("]"):
+        if u": [" in msg:
+            msg = msg.replace(u"[", u"")
+            if msg.endswith(u"]"):
                 msg = msg[:-1]
-        runcmd = [self.cowsay,"-W", "60"]
+        runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == 'random':
+            if thecow == b'random':
                 thecow = random.choice(self.cows_available)
-            runcmd.append('-f')
+            runcmd.append(b'-f')
             runcmd.append(thecow)
-        runcmd.append(msg)
+        runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display("%s\n" % out, color=color)
+        self.display(u"%s\n" % to_text(out), color=color)
 
     def error(self, msg, wrap_text=True):
         if wrap_text:
