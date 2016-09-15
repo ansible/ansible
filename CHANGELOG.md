@@ -153,7 +153,10 @@ Ansible Changes By Release
   * vmware_local_user_manager
   * vmware_vmotion
 - wakeonlan
-- win_robocopy
+- windows:
+  * win_command
+  * win_robocopy
+  * win_shell
 
 
 ###Minor Changes:
