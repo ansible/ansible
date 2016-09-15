@@ -52,7 +52,6 @@ def get_file_parser(hostsfile, groups, loader):
     except:
         pass
 
-
     #FIXME: make this 'plugin loop'
     # script
     if loader.is_executable(hostsfile):
@@ -62,7 +61,8 @@ def get_file_parser(hostsfile, groups, loader):
         except Exception as e:
             myerr.append(str(e))
     elif shebang_present:
-        myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
+
+        myerr.append("The inventory file \'%s\' looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
 
     # YAML/JSON
     if not processed and not shebang_present and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
@@ -81,7 +81,7 @@ def get_file_parser(hostsfile, groups, loader):
             myerr.append(str(e))
 
     if not processed and myerr:
-        raise AnsibleError( '\n'.join(myerr) )
+        raise AnsibleError('\n'.join(myerr))
 
     return parser
 
@@ -191,7 +191,6 @@ class InventoryDirectory(object):
                     # info
                     allgroup.child_groups.remove(group)
 
-
     def _add_group(self, group):
         """ Merge an existing group or add a new one;
             Track parent and child groups, and hosts of the new one """
@@ -225,7 +224,7 @@ class InventoryDirectory(object):
 
         # name
         if group.name != newgroup.name:
-            raise AnsibleError("Cannot merge group %s with %s" % (group.name, newgroup.name))
+            raise AnsibleError("Cannot merge inventory group %s with %s" % (group.name, newgroup.name))
 
         # depth
         group.depth = max([group.depth, newgroup.depth])
@@ -245,7 +244,6 @@ class InventoryDirectory(object):
                 for hostgroup in [g for g in host.groups]:
                     if hostgroup.name == group.name and hostgroup != self.groups[group.name]:
                         self.hosts[host.name].groups.remove(hostgroup)
-
 
         # group child membership relation
         for newchild in newgroup.child_groups:
@@ -298,4 +296,3 @@ class InventoryDirectory(object):
         for i in self.parsers:
             vars.update(i.get_host_variables(host))
         return vars
-
