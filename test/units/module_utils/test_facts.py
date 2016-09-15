@@ -17,6 +17,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import os
+
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock, patch
@@ -168,6 +170,40 @@ class TestHPUXVirtual(BaseTestFactsPlatform):
 class TestSunOSVirtual(BaseTestFactsPlatform):
     platform_id = 'SunOS'
     fact_class = facts.SunOSVirtual
+
+
+class TestLinuxHardwareGetCpuFacts(unittest.TestCase):
+    @patch('ansible.module_utils.facts.get_file_lines')
+    def _cpuinfo_test(self, arch, fixture, mock_get_file_lines):
+        module = Mock()
+        lh = facts.LinuxHardware(module=module, load_on_init=False)
+        lh.facts = {'architecture': arch}
+        cpu_info_data = open(os.path.join('module_utils/fixtures/cpuinfo/', fixture), 'r').readlines()
+        mock_get_file_lines.return_value = cpu_info_data
+        lh.get_cpu_facts()
+        return lh
+
+    def test_x86_64_8cpu(self):
+        lh = self._cpuinfo_test('x86_64', 'x86_64-8cpu-cpuinfo')
+        self.assertEqual(lh.facts['processor_count'], 1)
+        self.assertEqual(lh.facts['processor_cores'], 4)
+
+    def test_x86_64_64cpu(self):
+        lh = self._cpuinfo_test('x86_64', 'x86_64-64cpu-cpuinfo')
+        self.assertEqual(lh.facts['processor_count'], 4)
+        self.assertEqual(lh.facts['processor_cores'], 8)
+        self.assertEqual(lh.facts['processor_threads_per_core'], 2)
+
+    def test_ppc64_power7_8cpu(self):
+        lh = self._cpuinfo_test('ppc6e', 'ppc64-power7-rhel7-8cpu-cpuinfo')
+        self.assertEqual(lh.facts['processor_count'], 8)
+        self.assertEqual(lh.facts['processor_cores'], 1)
+
+    def test_ppc64le_power8_24_cpu(self):
+        lh = self._cpuinfo_test('ppc6le', 'ppc64le-power8-24cpu-cpuinfo')
+        self.assertEqual(lh.facts['processor_count'], 24)
+        self.assertEqual(lh.facts['processor_cores'], 1)
+
 
 
 LSBLK_OUTPUT = b"""
