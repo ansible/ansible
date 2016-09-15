@@ -647,7 +647,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
                     if not os.path.exists(lookup_path):
                         # Note -- if we have a global function to setup, that would
                         # be a better place to run this
-                        os.mkdir(lookup_path)
+                        os.makedirs(lookup_path)
                     display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
