@@ -116,10 +116,26 @@ Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. If you
 
 
 
-.. _developing_connection_type_plugins:
+.. _developing_modules:
 
-Connection Type Plugins
------------------------
+Task Plugins (aka Modules)
+--------------------------
+
+Task plugins are the most common type of plugin people need and develop. To learn all about them, refer to: :doc:`developing_modules`.
+
+.. _developing_action_plugins:
+
+Action Plugins
+--------------
+
+Action plugins are actually a 'front' to modules. If an action plugin matches a module name, then the action plugin is executed instead and it will use the module by the same name, if needed. Action plugins are used for when part of the task (or all of it) needs to happen on the machine running Ansible. Examples of action plugins include 'raw', 'script', 'copy', and 'template' are examples of action plugins. In the case of 'template', the module itself is just a documentation holder and all of the work is done by the action plugin.
+
+More documentation on writing action plugins is pending, though you can refer to `lib/ansible/plugins/action <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_ and figure things out pretty easily.
+
+.. _developing_connection_plugins:
+
+Connection Plugins
+------------------
 
 By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used
 in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
@@ -128,7 +144,7 @@ Carrier Pigeon?) it's as simple as copying the format of one of the existing mod
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
 'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 and later.  Previous versions did not support 'smart'.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_ and figure things out pretty easily.
+More documentation on writing connection plugins is pending, though you can refer to `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_ and figure things out pretty easily.
 
 .. _developing_lookup_plugins:
 
@@ -137,7 +153,7 @@ Lookup Plugins
 
 Language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.  Just like other plugin types, you can write your own.
 
-More documentation on writing lookup plugins is pending, though you can jump into `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_ and figure
+More documentation on writing lookup plugins is pending, though you can refer to `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_ and figure
 things out pretty easily.
 
 .. _developing_vars_plugins:
@@ -149,7 +165,7 @@ Playbook constructs like 'host_vars' and 'group_vars' work via 'vars' plugins.  
 data into ansible runs that did not come from an inventory, playbook, or command line.  Note that variables
 can also be returned from inventory, so in most cases, you won't need to write or understand vars_plugins.
 
-More documentation on writing vars plugins is pending, though you can jump into `lib/ansible/inventory/vars_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/vars_plugins>`_ and figure
+More documentation on writing vars plugins is pending, though you can refer to `lib/ansible/inventory/vars_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/vars_plugins>`_ and figure
 things out pretty easily.
 
 If you find yourself wanting to write a vars_plugin, it's more likely you should write an inventory script instead.
@@ -159,9 +175,60 @@ If you find yourself wanting to write a vars_plugin, it's more likely you should
 Filter Plugins
 --------------
 
-If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, we'll just include them in 'core.py' instead.
+If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, they can just be included in 'core.py'.
 
 Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+
+Test Plugins
+------------
+
+If you want more Jinja2 tests available in a Jinja2 template (tests like 'even' and 'odd' are provided by default), they can be extended by writing a test plugin. Most of the time, when someone comes up with an idea for a new test they would like to make available in a playbook, they can just be included in 'core.py'.
+
+Jump into `lib/ansible/plugins/test <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/test>`_ for details.
+
+.. _developing_callbacks:
+
+Callback Plugins
+----------------
+
+Callbacks are one of the more interesting plugin types. Adding additional callback plugins to Ansible allows for adding new behaviors tied to play events.
+The output you see from playbooks is controlled by callbacks. They can also be used to integrate with (send information to) other systems.
+
+
+.. _callback_examples:
+
+Examples
+++++++++
+
+Example callbacks are shown in `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_.
+
+The `log_plays
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/log_plays.py>`_
+callback is an example of how to intercept playbook events to a log
+file, and the `mail
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/mail.py>`_
+callback sends email when playbooks complete.
+
+The `osx_say
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/osx_say.py>`_
+callback provided is particularly entertaining -- it will respond with
+computer synthesized speech on OS X in relation to playbook events,
+and is guaranteed to entertain and/or annoy coworkers.
+
+.. _configuring_callbacks:
+
+Configuring
++++++++++++
+
+To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`. Plugin load order is alphanumeric in nature. If you have a plugin you want to run first consider naming it `1_first.py`, or if you have a plugin you want to run last consider naming it `z_last.py`. 
+
+.. _callback_development:
+
+Development
++++++++++++
+
+More information will come later, though see the source of any of the existing callbacks and you should be able to get started quickly.
+They should be reasonably self-explanatory.
 
 .. _distributing_plugins:
 
