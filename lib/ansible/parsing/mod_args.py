@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError,AnsibleError
+from ansible.module_utils._text import to_text
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
@@ -165,6 +166,7 @@ class ModuleArgsParser:
         # we don't allow users to set them directy in arguments
         if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
+                arg = to_text(arg)
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
