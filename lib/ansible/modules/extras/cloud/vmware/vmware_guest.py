@@ -164,6 +164,7 @@ except ImportError:
 import atexit
 import os
 import ssl
+import string
 import time
 
 from ansible.module_utils.urls import fetch_url
@@ -503,14 +504,19 @@ class PyVmomiHelper(object):
     def deploy_template(self, poweron=False, wait_for_ip=False):
 
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
+        # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
+        # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.ConfigSpec.html
 
         # FIXME:
         #   - clusters
         #   - multiple datacenters
         #   - resource pools
         #   - multiple templates by the same name
-        #   - use disk config from template by default
+        #   - multiple disks
         #   - static IPs
+
+        # FIXME: need to search for this in the same way as guests to ensure accuracy
+        template = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
 
         datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = get_obj(self.content, [vim.Datacenter], 
@@ -534,18 +540,19 @@ class PyVmomiHelper(object):
         # grab the folder vim object
         destfolder = folders[0][1]
 
-        if not 'disk' in self.params:
-            return ({'changed': False, 'failed': True, 'msg': "'disk' is required for VM deployment"})
-
-        datastore_name = self.params['disk'][0]['datastore']
-        datastore = get_obj(self.content, [vim.Datastore], datastore_name)
-
-
-        # cluster or hostsystem ... ?
+        # FIXME: cluster or hostsystem ... ?
         #cluster = get_obj(self.content, [vim.ClusterComputeResource], self.params['esxi']['hostname'])
         hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
-
         resource_pools = get_all_objs(self.content, [vim.ResourcePool])
+
+        if self.params['disk']:
+            datastore_name = self.params['disk'][0]['datastore']
+            datastore = get_obj(self.content, [vim.Datastore], datastore_name)
+        else:
+            # use the template's existing DS
+            disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
+            datastore = disks[0].backing.datastore
+            datastore_name = datastore.name
 
         relospec = vim.vm.RelocateSpec()
         relospec.datastore = datastore
@@ -554,10 +561,58 @@ class PyVmomiHelper(object):
         relospec.pool = resource_pools[0]
         relospec.host = hostsystem
 
-        clonespec = vim.vm.CloneSpec()
-        clonespec.location = relospec
+        clonespec_kwargs = {}
+        clonespec_kwargs['location'] = relospec
 
-        template = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
+        # create disk spec if not default
+        if self.params['disk']:
+            # grab the template's first disk and modify it for this customization
+            disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
+            diskspec = vim.vm.device.VirtualDeviceSpec()
+            # set the operation to edit so that it knows to keep other settings
+            diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+            diskspec.device = disks[0]
+
+            # get the first disk attributes
+            pspec = self.params.get('disk')[0]
+
+            # is it thin?
+            if pspec.get('type', '').lower() == 'thin':
+                diskspec.device.backing.thinProvisioned = True
+
+            # what size is it?
+            if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
+                # size_tb, size_gb, size_mb, size_kb, size_b ...?
+                if 'size' in pspec:
+                    # http://stackoverflow.com/a/1451407
+                    trans = string.maketrans('', '')
+                    chars = trans.translate(trans, string.digits)
+                    expected = pspec['size'].translate(trans, chars)
+                    expected = expected
+                    unit = pspec['size'].replace(expected, '').lower()
+                    expected = int(expected)
+                else:
+                    expected = [x for x in pspec.keys() if x.startswith('size_')][0]
+                    unit = expected.split('_')[-1].lower()
+
+                kb = None
+                if unit == 'tb':
+                    kb = expected * 1024 * 1024 * 1024
+                elif unit == 'gb':
+                    kb = expected * 1024 * 1024
+                elif unit ==' mb':
+                    kb = expected * 1024
+                elif unit == 'kb':
+                    kb = expected
+                else:
+                    self.module.fail_json(msg='%s is not a supported unit for disk size' % unit)
+                diskspec.device.capacityInKB = kb
+
+            # tell the configspec that the disk device needs to change
+            configspec = vim.vm.ConfigSpec(deviceChange=[diskspec])
+            clonespec_kwargs['config'] = configspec
+
+        clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
 
