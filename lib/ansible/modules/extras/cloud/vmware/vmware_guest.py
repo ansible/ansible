@@ -336,7 +336,7 @@ class PyVmomiHelper(object):
                 paths = self.folder_map['paths'].keys()
                 paths = [x for x in paths if x.endswith(self.params['folder'])]
                 if len(paths) > 1:
-                    self.module.fail_json(msg='%s matches more than one folder. Please use the absolute path' % self.params['folder'])
+                    self.module.fail_json(msg='%s matches more than one folder. Please use the absolute path starting with /vm/' % self.params['folder'])
                 elif paths:
                     searchpath = paths[0]
 
@@ -506,6 +506,7 @@ class PyVmomiHelper(object):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.ConfigSpec.html
+        # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
 
         # FIXME:
         #   - clusters
@@ -513,14 +514,19 @@ class PyVmomiHelper(object):
         #   - resource pools
         #   - multiple templates by the same name
         #   - multiple disks
+        #   - changing the esx host is ignored?
         #   - static IPs
 
         # FIXME: need to search for this in the same way as guests to ensure accuracy
         template = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
+        if not template:
+            self.module.fail_json(msg="Could not find a template named %s" % self.params['template'])
 
         datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = get_obj(self.content, [vim.Datacenter], 
                              self.params['datacenter'])
+        if not datacenter:
+            self.module.fail_json(msg='No datacenter named %s was found' % self.params['datacenter'])
 
         if not self.foldermap:
             self.folders, self.foldermap = self.getfolders()
@@ -533,9 +539,9 @@ class PyVmomiHelper(object):
 
         # throw error if more than one match or no matches
         if len(folders) == 0:
-            self.module.fail_json('no folder matched the path: %s' % self.params['folder'])
+            self.module.fail_json(msg='no folder matched the path: %s' % self.params['folder'])
         elif len(folders) > 1:
-            self.module.fail_json('too many folders matched "%s", please give the full path' % self.params['folder'])
+            self.module.fail_json(msg='too many folders matched "%s", please give the full path starting with /vm/' % self.params['folder'])
 
         # grab the folder vim object
         destfolder = folders[0][1]
@@ -545,6 +551,7 @@ class PyVmomiHelper(object):
         hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
         resource_pools = get_all_objs(self.content, [vim.ResourcePool])
 
+        # set the destination datastore in the relocation spec
         if self.params['disk']:
             datastore_name = self.params['disk'][0]['datastore']
             datastore = get_obj(self.content, [vim.Datastore], datastore_name)
@@ -554,6 +561,7 @@ class PyVmomiHelper(object):
             datastore = disks[0].backing.datastore
             datastore_name = datastore.name
 
+        # create the relocation spec
         relospec = vim.vm.RelocateSpec()
         relospec.datastore = datastore
 
@@ -580,6 +588,13 @@ class PyVmomiHelper(object):
             if pspec.get('type', '').lower() == 'thin':
                 diskspec.device.backing.thinProvisioned = True
 
+            # which datastore?
+            if pspec.get('datastore'):
+                # This is already handled by the relocation spec,
+                # but it needs to eventually be handled for all the
+                # other disks defined
+                pass
+
             # what size is it?
             if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
                 # size_tb, size_gb, size_mb, size_kb, size_b ...?
@@ -592,8 +607,10 @@ class PyVmomiHelper(object):
                     unit = pspec['size'].replace(expected, '').lower()
                     expected = int(expected)
                 else:
-                    expected = [x for x in pspec.keys() if x.startswith('size_')][0]
-                    unit = expected.split('_')[-1].lower()
+                    param = [x for x in pspec.keys() if x.startswith('size_')][0]
+                    unit = param.split('_')[-1].lower()
+                    expected = [x[1] for x in pspec.items() if x[0].startswith('size_')][0]
+                    expected = int(expected)
 
                 kb = None
                 if unit == 'tb':
@@ -617,6 +634,8 @@ class PyVmomiHelper(object):
         self.wait_for_task(task)
 
         if task.info.state == 'error':
+            # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
+            # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
             return ({'changed': False, 'failed': True, 'msg': task.info.error.msg})
         else:
 
