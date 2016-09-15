@@ -567,6 +567,11 @@ class ScientificLinuxHostname(Hostname):
     distribution = 'Scientific linux'
     strategy_class = RedHatStrategy
 
+class ScientificLinuxCERNHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific linux cern slc'
+    strategy_class = RedHatStrategy
+
 class OracleLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Oracle linux server'
