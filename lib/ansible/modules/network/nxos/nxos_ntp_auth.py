@@ -446,7 +446,10 @@ def get_ntp_auth_info(key_id, module):
 
 
 def auth_type_to_num(auth_type):
-    return '7' if auth_type == 'encrypt' else '0'
+    if auth_type == 'encrypt' :
+        return '7'
+    else:
+        return '0'
 
 
 def set_ntp_auth_key(key_id, md5string, auth_type, trusted_key, authentication):
