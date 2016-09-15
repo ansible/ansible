@@ -147,14 +147,14 @@ class CallbackModule(CallbackBase):
         # (shoulder surfing, logging stdout straight to a file, etc).
         args = ''
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
-            args = ', '.join(('%s=%s' % a for a in task.args.items()))
-            args = ' %s' % args
+            args = u', '.join(u'%s=%s' % a for a in task.args.items())
+            args = u' %s' % args
 
-        self._display.banner("TASK [%s%s]" % (task.get_name().strip(), args))
+        self._display.banner(u"TASK [%s%s]" % (task.get_name().strip(), args))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
-                self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
+                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
 
         self._last_task_banner = task._uuid
 
@@ -167,9 +167,9 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
         if not name:
-            msg = "PLAY"
+            msg = u"PLAY"
         else:
-            msg = "PLAY [%s]" % name
+            msg = u"PLAY [%s]" % name
 
         self._play = play
 
