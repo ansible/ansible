@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 DOCUMENTATION = '''
-module: na_eseries_storage_system
+module: netapp_e_storage_system
 version_added: "2.2"
 short_description: Add/remove arrays from the Web Services Proxy
 description:
@@ -80,7 +80,7 @@ author: Kevin Hulquest (@hulquest)
 EXAMPLES = '''
 ---
     - name:  Presence of storage system
-      na_eseries_storage_system:
+      netapp_e_storage_system:
         ssid: "{{ item.key }}"
         state: present
         api_url: "{{ netapp_api_url }}"
@@ -99,8 +99,7 @@ msg: Storage system removed.
 msg: Storage system added.
 '''
 import json
-import os
-from datetime import datetime as dt, timedelta, time
+from datetime import datetime as dt, timedelta
 from time import sleep
 
 from ansible.module_utils.api import basic_auth_argument_spec
@@ -267,7 +266,6 @@ def main():
                     module.fail_json(msg="Failed to add storage system. Id[%s]. Request body [%s]. Error[%s]." %
                                          (ssid, request_data, str(err)))
 
-
             else:  # array exists, modify...
                 post_headers = dict(Accept="application/json")
                 post_headers['Content-Type'] = 'application/json'
@@ -285,7 +283,6 @@ def main():
                     err = get_exception()
                     module.fail_json(msg="Failed to update storage system. Id[%s]. Request body [%s]. Error[%s]." %
                                          (ssid, post_body, str(err)))
-
 
         elif state == 'absent':
             # delete the array
