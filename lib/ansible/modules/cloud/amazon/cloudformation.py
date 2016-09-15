@@ -203,28 +203,28 @@ def stack_operation(cfn, stack_name, operation):
             if 'yes' in existed:
                 result = dict(changed=True,
                               output='Stack Deleted',
-                              events=map(str, list(stack.describe_events())))
+                              events=list(map(str, list(stack.describe_events()))))
             else:
                 result = dict(changed= True, output='Stack Not Found')
             break
         if '%s_COMPLETE' % operation == stack.stack_status:
             result = dict(changed=True,
-                          events = map(str, list(stack.describe_events())),
+                          events = list(map(str, list(stack.describe_events()))),
                           output = 'Stack %s complete' % operation)
             break
         if  'ROLLBACK_COMPLETE' == stack.stack_status or '%s_ROLLBACK_COMPLETE' % operation == stack.stack_status:
             result = dict(changed=True, failed=True,
-                          events = map(str, list(stack.describe_events())),
+                          events = list(map(str, list(stack.describe_events()))),
                           output = 'Problem with %s. Rollback complete' % operation)
             break
         elif '%s_FAILED' % operation == stack.stack_status:
             result = dict(changed=True, failed=True,
-                          events = map(str, list(stack.describe_events())),
+                          events = list(map(str, list(stack.describe_events()))),
                           output = 'Stack %s failed' % operation)
             break
         elif '%s_ROLLBACK_FAILED' % operation == stack.stack_status:
             result = dict(changed=True, failed=True,
-                          events = map(str, list(stack.describe_events())),
+                          events = list(map(str, list(stack.describe_events()))),
                           output = 'Stack %s rollback failed' % operation)
             break
         else:
