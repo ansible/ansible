@@ -28,7 +28,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleSshConnectionFailure, AnsibleFileNotFound
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
 from ansible.module_utils._text import to_bytes
@@ -289,7 +289,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test multiple failures
         conn._exec_command.side_effect = [(255, b'', b'')] * 10
-        self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
+        self.assertRaises(AnsibleSshConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
         # test other failure from exec_command
         conn._exec_command.side_effect = [Exception('bad')] * 10

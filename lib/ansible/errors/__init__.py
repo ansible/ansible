@@ -173,6 +173,19 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+
+class AnsibleSshConnectionFailure(AnsibleConnectionFailure):
+    ''' the ssh transport / connection_plugin had a fatal error '''
+    def __init__(self, *args, **kwargs):
+        stderr_buf = kwargs.pop('stderr', None)
+        super(AnsibleSshConnectionFailure, self).__init__(args, kwargs)
+
+        self.stderr = stderr_buf
+
+    def __str__(self):
+        return "%s\nstderr:\n%s" % (self.message, self.stderr)
+
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass

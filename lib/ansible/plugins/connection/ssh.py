@@ -148,12 +148,8 @@ class Connection(ConnectionBase):
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
-        elif binary == self._play_context.ssh_executable:
-            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
-            self._command += ['-q']
 
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
-
         if self._play_context.ssh_args:
             args = self._split_ssh_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
@@ -611,7 +607,8 @@ class Connection(ConnectionBase):
                 if return_tuple[0] != 255:
                     break
                 else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
+                    raise AnsibleSshConnectionFailure("Failed to connect to the host via ssh.",
+                                                      stderr=return_tuple[2])
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
                     raise
