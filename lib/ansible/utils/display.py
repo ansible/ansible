@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import fcntl
 import textwrap
 import os
@@ -105,6 +106,10 @@ class Display:
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
+
+        msg, unused = codecs.escape_decode(msg.encode('utf8'))
+        msg = msg.decode()
+
         nocolor = msg
         if color:
             msg = stringc(msg, color)
