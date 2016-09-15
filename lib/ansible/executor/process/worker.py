@@ -55,20 +55,18 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, rslt_q, play, host, task, task_vars, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, rslt_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
         self._rslt_q            = rslt_q
-        self._play              = play
+        self._task_vars         = task_vars
         self._host              = host
         self._task              = task
         self._play_context      = play_context
         self._loader            = loader
         self._variable_manager  = variable_manager
         self._shared_loader_obj = shared_loader_obj
-
-        self._task_vars = task_vars
 
         # dupe stdin, if we have one
         self._new_stdin = sys.stdin
@@ -151,4 +149,3 @@ class WorkerProcess(multiprocessing.Process):
         #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #    f.write(s.getvalue())
 
-        sys.exit(0)
