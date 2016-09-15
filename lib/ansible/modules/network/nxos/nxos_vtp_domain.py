@@ -334,20 +334,6 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
-
 def get_vtp_config(module):
     command = 'show vtp status'
 
