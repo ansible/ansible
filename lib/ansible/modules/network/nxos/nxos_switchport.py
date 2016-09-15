@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_switchport
 version_added: "2.1"
-short_description: Manages Layer 2 switchport interfaces
+short_description: Manages Layer 2 switchport interfaces.
 extends_documentation_fragment: nxos
 description:
     - Manages Layer 2 interfaces
@@ -28,12 +28,12 @@ author: Jason Edelman (@jedelman8)
 notes:
     - When C(state=absent), VLANs can be added/removed from trunk links and
       the existing access VLAN can be 'unconfigured' to just having VLAN 1
-      on that interface
+      on that interface.
     - When working with trunks VLANs the keywords add/remove are always sent
       in the `switchport trunk allowed vlan` command. Use verbose mode to see
       commands sent.
     - When C(state=unconfigured), the interface will result with having a default
-      Layer 2 interface, i.e. vlan 1 in access mode
+      Layer 2 interface, i.e. vlan 1 in access mode.
 options:
     interface:
         description:
@@ -77,28 +77,21 @@ options:
         required: false
         version_added: 2.2
         default: null
-
 '''
 EXAMPLES = '''
 # ENSURE Eth1/5 is in its default switchport state
 - nxos_switchport: interface=eth1/5 state=unconfigured host={{ inventory_hostname }}
-
 # ENSURE Eth1/5 is configured for access vlan 20
 - nxos_switchport: interface=eth1/5 mode=access access_vlan=20 host={{ inventory_hostname }}
-
 # ENSURE Eth1/5 only has vlans 5-10 as trunk vlans
 - nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=5-10 host={{ inventory_hostname }}
-
 # Ensure eth1/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
 - nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=2-50 host={{ inventory_hostname }}
-
 # Ensure these VLANs are not being tagged on the trunk
 - nxos_switchport: interface=eth1/5 mode=trunk trunk_vlans=51-4094 host={{ inventory_hostname }} state=absent
-
 '''
 
 RETURN = '''
-
 proposed:
     description: k/v pairs of parameters passed into module
     returned: always
@@ -119,12 +112,7 @@ end_state:
               "interface": "Ethernet1/5", "mode": "access",
               "native_vlan": "1", "native_vlan_name": "default",
               "switchport": "Enabled", "trunk_vlans": "1-4094"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-commands:
+updates:
     description: command string sent to the device
     returned: always
     type: string
@@ -134,21 +122,172 @@ changed:
     returned: always
     type: boolean
     sample: true
-
 '''
 
+import json
+
+# COMMON CODE FOR MIGRATION
+import re
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+
+try:
+    from ansible.module_utils.nxos import get_module
+except ImportError:
+    from ansible.module_utils.nxos import NetworkModule
+
+
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
+     else:
+         return list()
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
+
+def get_network_module(**kwargs):
+    try:
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
+
+def get_config(module, include_defaults=False):
+    config = module.params['config']
+    if not config:
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
+    return CustomNetworkConfig(indent=2, contents=config)
+
+def load_config(module, candidate):
+    config = get_config(module)
+
+    commands = candidate.difference(config)
+    commands = [str(c).strip() for c in commands]
+
+    save_config = module.params['save']
+
+    result = dict(changed=False)
+
+    if commands:
+        if not module.check_mode:
+            try:
+                module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
+            if save_config:
+                try:
+                    module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
+
+        result['changed'] = True
+        result['updates'] = commands
+
+    return result
+# END OF COMMON CODE
 
 def get_interface_type(interface):
     """Gets the type of interface
-
     Args:
         interface (str): full name of interface, i.e. Ethernet1/1, loopback10,
             port-channel20, vlan20
-
     Returns:
         type of interface: ethernet, svi, loopback, management, portchannel,
          or unknown
-
     """
     if interface.upper().startswith('ET'):
         return 'ethernet'
@@ -168,16 +307,13 @@ def get_interface_type(interface):
 
 def get_interface_mode(interface, module):
     """Gets current mode of interface: layer2 or layer3
-
     Args:
         device (Device): This is the device object of an NX-API enabled device
             using the Device class within device.py
         interface (string): full name of interface, i.e. Ethernet1/1,
             loopback10, port-channel20, vlan20
-
     Returns:
         str: 'layer2' or 'layer3'
-
     """
     command = 'show interface ' + interface
     intf_type = get_interface_type(interface)
@@ -205,13 +341,10 @@ def get_interface_mode(interface, module):
 
 def interface_is_portchannel(interface, module):
     """Checks to see if an interface is part of portchannel bundle
-
     Args:
         interface (str): full name of interface, i.e. Ethernet1/1
-
     Returns:
         True/False based on if interface is a member of a portchannel bundle
-
     """
     intf_type = get_interface_type(interface)
     if intf_type == 'ethernet':
@@ -234,15 +367,12 @@ def interface_is_portchannel(interface, module):
 
 def get_switchport(port, module):
     """Gets current config of L2 switchport
-
     Args:
         device (Device): This is the device object of an NX-API enabled device
             using the Device class within device.py
         port (str): full name of interface, i.e. Ethernet1/1
-
     Returns:
         dictionary with k/v pairs for L2 vlan config
-
     """
 
     command = 'show interface {0} switchport'.format(port)
@@ -356,14 +486,11 @@ def get_switchport_config_commands(interface, existing, proposed, module):
 
 def is_switchport_default(existing):
     """Determines if switchport has a default config based on mode
-
     Args:
         existing (dict): existing switcport configuration from Ansible mod
-
     Returns:
         boolean: True if switchport has OOB Layer 2 config, i.e.
            vlan 1 and trunk all and mode is access
-
     """
 
     c1 = existing['access_vlan'] == '1'
@@ -455,6 +582,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def get_cli_body_ssh(command, response, module):
@@ -462,13 +598,19 @@ def get_cli_body_ssh(command, response, module):
     needed because these modules were originally written for NX-API.  And
     not every command supports "| json" when using cli/ssh.  As such, we assume
     if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet.
+    resource doesn't exist yet. Instead, the output will be a raw string
+    when issuing commands containing 'show run'.
     """
-    if 'xml' in response[0]:
+    if 'xml' in response[0] or response[0] == '\n':
         body = []
+    elif 'status' in command:
+        body = response
     else:
         try:
-            body = [json.loads(response[0])]
+            if isinstance(response[0], str):
+                body = [json.loads(response[0])]
+            else:
+                body = response
         except ValueError:
             module.fail_json(msg='Command does not support JSON output',
                              command=command)
@@ -476,6 +618,11 @@ def get_cli_body_ssh(command, response, module):
 
 
 def execute_show(cmds, module, command_type=None):
+    command_type_map = {
+        'cli_show': 'json',
+        'cli_show_ascii': 'text'
+    }
+
     try:
         if command_type:
             response = module.execute(cmds, command_type=command_type)
@@ -483,15 +630,28 @@ def execute_show(cmds, module, command_type=None):
             response = module.execute(cmds)
     except ShellError:
         clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(command),
+        module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-
     if module.params['transport'] == 'cli':
-        command += ' | json'
+        if 'status' not in command:
+            command += ' | json'
         cmds = [command]
         response = execute_show(cmds, module)
         body = get_cli_body_ssh(command, response, module)
@@ -524,11 +684,11 @@ def main():
         state=dict(choices=['absent', 'present', 'unconfigured'],
                    default='present')
     )
-    module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=[['access_vlan', 'trunk_vlans'],
-                                            ['access_vlan', 'native_vlan'],
-                                            ['access_vlan', 'trunk_allowed_vlans']],
-                        supports_check_mode=True)
+    module = get_network_module(argument_spec=argument_spec,
+                                mutually_exclusive=[['access_vlan', 'trunk_vlans'],
+                                                    ['access_vlan', 'native_vlan'],
+                                                    ['access_vlan', 'trunk_allowed_vlans']],
+                                supports_check_mode=True)
 
     interface = module.params['interface']
     mode = module.params['mode']
@@ -637,17 +797,10 @@ def main():
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['state'] = state
     results['updates'] = cmds
     results['changed'] = changed
 
     module.exit_json(**results)
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.shell import *
-from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
 
 if __name__ == '__main__':
     main()
