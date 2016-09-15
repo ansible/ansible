@@ -75,7 +75,7 @@ class Cli(CliBase):
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b).)*$"),
+        re.compile(r"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
         re.compile(r"% ?Bad secret"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
