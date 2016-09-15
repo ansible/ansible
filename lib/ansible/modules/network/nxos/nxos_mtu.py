@@ -102,7 +102,7 @@ end_state:
     returned: always
     type: dict
     sample: {"mtu": "1700", sysmtu": "9216"}
-commands:
+updates:
     description: command sent to the device
     returned: always
     type: list
