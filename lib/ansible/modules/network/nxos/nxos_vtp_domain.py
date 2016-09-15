@@ -18,6 +18,7 @@
 DOCUMENTATION = '''
 ---
 module: nxos_vtp
+version_added: "2.2"
 short_description: Manages VTP domain configuration.
 description:
     - Manages VTP domain configuration.
