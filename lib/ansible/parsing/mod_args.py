@@ -167,7 +167,7 @@ class ModuleArgsParser:
         if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 if not isinstance(arg, text_type):
-                    arg = str(arg)
+                    arg = text_type(arg)
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
