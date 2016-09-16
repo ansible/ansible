@@ -21,8 +21,7 @@ __metaclass__ = type
 
 from io import StringIO
 
-import mock
-
+from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext

@@ -169,6 +169,22 @@ Ansible Changes By Release
 * removed previously deprecated ';' as host list separator.
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
 
+
+###For custom front ends using the API:
+* ansible.parsing.vault:
+  * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
+    Use ansible.parsing.vault.is_encrypted() instead
+  * VaultFile has been removed. This unfinished code was never used inside of
+    Ansible.  The feature it was intended to support has now been implemented
+    without using this.
+  * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
+    and was relaced by VaultAES256 less than a week later, now has a deprecation
+    warning.  **It will be removed in 2.3**.  In the unlikely event that you
+    wrote a vault file in that 1 week window and have never modified the file
+    since (ansible-vault automatically re-encrypts the file using VaultAES256
+    whenever it is written to but not read), run ``ansible-vault rekey
+    [filename]`` to move to VaultAES256.
+
 ## 2.1.2 "The Song Remains the Same"
 
 ###Deprecations:
