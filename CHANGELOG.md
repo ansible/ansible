@@ -13,7 +13,7 @@ Ansible Changes By Release
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
-* Windows `async:` support for long-running or backgrodund tasks.
+* Windows `async:` support for long-running or background tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
