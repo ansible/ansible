@@ -487,7 +487,10 @@ class VMWareInventory(object):
         if vobj is None:
             rdata = None
         elif issubclass(type(vobj), str) or isinstance(vobj, str):
-            rdata = vobj
+            if vobj.isalnum():
+                rdata = vobj
+            else:
+                rdata = vobj.decode('ascii', 'ignore')
         elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
             rdata = vobj
         elif issubclass(type(vobj), int) or isinstance(vobj, int):
