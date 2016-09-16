@@ -205,6 +205,7 @@ to "replace_instances":
 
 import time
 import logging as log
+import traceback
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
@@ -443,7 +444,7 @@ def create_autoscaling_group(connection, module):
             changed = True
             return(changed, asg_properties)
         except BotoServerError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
     else:
         as_group = as_groups[0]
         changed = False
@@ -455,14 +456,15 @@ def create_autoscaling_group(connection, module):
                 group_attr = getattr(as_group, attr)
                 # we do this because AWS and the module may return the same list
                 # sorted differently
-                try:
-                    module_attr.sort()
-                except:
-                    pass
-                try:
-                    group_attr.sort()
-                except:
-                    pass
+                if attr != 'termination_policies':
+                    try:
+                        module_attr.sort()
+                    except:
+                        pass
+                    try:
+                        group_attr.sort()
+                    except:
+                        pass
                 if group_attr != module_attr:
                     changed = True
                     setattr(as_group, attr, module_attr)
@@ -498,7 +500,7 @@ def create_autoscaling_group(connection, module):
             try:
                 as_group.update()
             except BotoServerError as e:
-                module.fail_json(msg=str(e))
+                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
 
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
@@ -507,7 +509,7 @@ def create_autoscaling_group(connection, module):
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
         except BotoServerError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc(e))
         return(changed, asg_properties)
 
 
