@@ -676,6 +676,6 @@ class VariableManager:
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
         if varname in self._vars_cache[host_name] and isinstance(self._vars_cache[host_name][varname], MutableMapping) and isinstance(value, MutableMapping):
-            self._vars_cache[host_name][varname] = combine_vars(self._vars_cache[host_name][varname], value)
+            self._vars_cache[host_name] = combine_vars(self._vars_cache[host_name], {varname: value})
         else:
             self._vars_cache[host_name][varname] = value
