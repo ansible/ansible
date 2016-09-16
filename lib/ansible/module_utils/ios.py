@@ -178,7 +178,8 @@ class Cli(CliBase):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+        if params['term_length']:
+            self.shell.send('terminal length 0')
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
