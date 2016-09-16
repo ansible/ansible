@@ -37,9 +37,6 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
 
-
-# ALIKINS
-
 def _parse_parameters(term):
     # Hacky parsing of params
     # See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156

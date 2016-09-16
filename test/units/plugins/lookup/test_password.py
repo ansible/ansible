@@ -28,9 +28,10 @@ from ansible.compat.six import text_type
 
 from ansible.errors import AnsibleError
 from ansible.plugins import PluginLoader
-from ansible.plugins.lookup import password
 
 from ansible.module_utils._text import to_bytes
+
+from ansible.plugins.lookup import password
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
 DEFAULT_CANDIDATE_CHARS = u'.,:-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
