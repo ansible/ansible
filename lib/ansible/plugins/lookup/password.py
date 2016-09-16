@@ -132,7 +132,7 @@ def _gen_candidate_chars(characters):
     for chars_spec in characters:
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
                             errors='surrogate_or_strict'))
-    chars = u''.join(to_text(c) for c in chars).replace(u'"', u'').replace(u"'", u'')
+    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 
 
