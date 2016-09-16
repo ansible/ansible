@@ -1,4 +1,6 @@
 #
+# Copyright 2015 Peter Sprygada <psprygada@ansible.com>
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
