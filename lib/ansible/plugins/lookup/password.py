@@ -31,6 +31,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
+from ansible.compat.six import text_type
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -98,7 +99,7 @@ def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
     # Asserts would be perfect for this if they were disabled by default.
     # Alas, in python, they're active by default; only turned off if
     # python is run with optimization.
-    # assert isinstance(chars, text_type)
+    assert isinstance(chars, text_type)
     random_generator = random.SystemRandom()
 
     password = []
