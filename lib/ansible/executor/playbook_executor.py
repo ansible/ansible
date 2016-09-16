@@ -195,7 +195,7 @@ class PlaybookExecutor:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
                             elif playbook_path:
-                                basedir = os.path.dirname(playbook_path)
+                                basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:
                                 basedir = '~/'
 
