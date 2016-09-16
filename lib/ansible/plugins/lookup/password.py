@@ -105,8 +105,7 @@ def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
     password = []
     while len(password) < length:
         new_char = random_generator.choice(chars)
-        if new_char in chars:
-            password.append(new_char)
+        password.append(new_char)
 
     return u''.join(password)
 
