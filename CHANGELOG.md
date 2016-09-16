@@ -72,13 +72,13 @@ Ansible Changes By Release
 - dellos9
   * dellos9_command
   * dellos9_config
-  * dellos9_template
   * dellos9_facts
+  * dellos9_template
 - dellos10
   * dellos10_command
   * dellos10_config
-  * dellos10_template
   * dellos10_facts
+  * dellos10_template
 - exoscale:
   * exo_dns_domain
   * exo_dns_record
