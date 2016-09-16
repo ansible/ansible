@@ -27,7 +27,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with Dell OS9 configuration sections in
     a deterministic way.
-extends_documentation_fragment: dnos9
+extends_documentation_fragment: dellos9
 options:
   lines:
     description:

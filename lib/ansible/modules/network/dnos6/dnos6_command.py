@@ -28,7 +28,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(dnos6_config) to configure Dell OS6 devices.
-extends_documentation_fragment: dnos6
+extends_documentation_fragment: dellos6
 options:
   commands:
     description:
