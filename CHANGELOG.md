@@ -66,20 +66,19 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
-- dnos6
-  * dnos6_command
-  * dnos6_template
-  * dnos6_config
-- dnos9
-  * dnos9_command
-  * dnos9_config
-  * dnos9_template
-  * dnos9_facts
-- dnos10
-  * dnos10_command
-  * dnos10_config
-  * dnos10_template
-  * dnos10_facts
+- dellos6
+  * dellos6_command
+  * dellos6_config
+- dellos9
+  * dellos9_command
+  * dellos9_config
+  * dellos9_facts
+  * dellos9_template
+- dellos10
+  * dellos10_command
+  * dellos10_config
+  * dellos10_facts
+  * dellos10_template
 - exoscale:
   * exo_dns_domain
   * exo_dns_record

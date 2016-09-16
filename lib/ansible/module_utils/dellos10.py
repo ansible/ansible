@@ -1,3 +1,8 @@
+#
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible

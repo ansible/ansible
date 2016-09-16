@@ -1,4 +1,9 @@
-# This file is part of Ansible #
+#
+# (c) 2015, Peter Sprygada <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
+# This file is part of Ansible 
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +64,7 @@ options:
     default: 10
   provider:
     description:
-      - Convenience method that allows all M(dnos10) arguments to be passed as
+      - Convenience method that allows all M(dellos10) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
