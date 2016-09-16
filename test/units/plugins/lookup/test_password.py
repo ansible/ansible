@@ -280,24 +280,6 @@ class TestParseParamaters(unittest.TestCase):
         self.assertRaises(AnsibleError, password._parse_parameters, testcase['term'])
 
 
-class TestGenPassword(unittest.TestCase):
-    def test_gen_password(self):
-        for testcase in old_style_params_data:
-            params = testcase['params']
-            candidate_chars = testcase['candidate_chars']
-            password_string = password._gen_password(length=params['length'],
-                                                     chars=params['chars'])
-            self.assertEquals(len(password_string),
-                              params['length'],
-                              msg='generated password=%s has length (%s) instead of expected length (%s)' %
-                              (password_string, len(password_string), params['length']))
-
-            for char in password_string:
-                self.assertIn(char, candidate_chars,
-                              msg='%s not found in %s from chars spect %s' %
-                              (char, candidate_chars, params['chars']))
-
-
 class TestGenCandidateChars(unittest.TestCase):
     def _assert_gen_candidate_chars(self, testcase):
         expected_candidate_chars = testcase['candidate_chars']
@@ -344,6 +326,23 @@ class TestRandomPassword(unittest.TestCase):
         res = password._random_password(length=11, chars=u'くらとみ')
         self._assert_valid_chars(res, u'くらとみ')
         self.assertEquals(len(res), 11)
+
+    def test_gen_password(self):
+        for testcase in old_style_params_data:
+            params = testcase['params']
+            candidate_chars = testcase['candidate_chars']
+            params_chars_spec = password._gen_candidate_chars(params['chars'])
+            password_string = password._random_password(length=params['length'],
+                                                        chars=params_chars_spec)
+            self.assertEquals(len(password_string),
+                              params['length'],
+                              msg='generated password=%s has length (%s) instead of expected length (%s)' %
+                              (password_string, len(password_string), params['length']))
+
+            for char in password_string:
+                self.assertIn(char, candidate_chars,
+                              msg='%s not found in %s from chars spect %s' %
+                              (char, candidate_chars, params['chars']))
 
 
 class TestRandomSalt(unittest.TestCase):

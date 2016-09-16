@@ -100,7 +100,8 @@ def _random_password(length=DEFAULT_LENGTH, chars=None):
     # Alas, in python, they're active by default; only turned off if
     # python is run with optimization.
     chars = chars or to_text(C.DEFAULT_PASSWORD_CHARS)
-    assert isinstance(chars, text_type)
+    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
+
     random_generator = random.SystemRandom()
 
     password = []
@@ -111,7 +112,8 @@ def _random_password(length=DEFAULT_LENGTH, chars=None):
     return u''.join(password)
 
 def _random_salt():
-    salt_chars = to_text(ascii_letters + digits + './', errors='surrogate_or_strict')
+    salt_chars_spec = to_text(ascii_letters + digits + './', errors='surrogate_or_strict')
+    salt_chars = _gen_candidate_chars([salt_chars_spec])
     return _random_password(length=8, chars=salt_chars)
 
 def _gen_candidate_chars(characters):
@@ -135,12 +137,6 @@ def _gen_candidate_chars(characters):
                             errors='surrogate_or_strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
-
-
-def _gen_password(length, chars):
-    chars = _gen_candidate_chars(chars)
-    password = u''.join(random.choice(chars) for _ in range(length))
-    return password
 
 def _create_password_file(b_path):
     b_pathdir = os.path.dirname(b_path)
@@ -200,8 +196,9 @@ def _update_content(plaintext_password, salt, params):
 
     # An empty string is a poor but valid plaintext_password
     if plaintext_password is None:
-        plaintext_password = _gen_password(length=params['length'],
-                                           chars=params['chars'])
+        chars = _gen_candidate_chars(params['chars'])
+        plaintext_password = _random_password(length=params['length'],
+                                              chars=chars)
 
     content = _format_content(password=plaintext_password,
                               salt=salt,
