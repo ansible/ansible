@@ -24,6 +24,16 @@ Prior to 1.5 the order was::
 
 Ansible will process the above list and use the first file found. Settings in files are not merged.
 
+.. note:: Comments
+    The configuration file is one variant of an INI format.  Both the hash
+    sign ("#") and semicolon (";") are allowed as comment markers when the
+    comment starts the line.  However, if the comment is inline with regular
+    values, only the semicolon is allowed to introduce the comment.  For
+    instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
 .. _getting_the_latest_configuration:
 
 Getting the latest configuration
