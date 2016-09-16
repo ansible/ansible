@@ -263,17 +263,15 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                    # FIXME: probably not required here any more with the result proc
-                    #        having been removed, so there's no only a single result
-                    #        queue for the main thread
-                    results += self._process_pending_results(iterator, one_pass=True)
+                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
 
                 # go to next host/task group
                 if skip_rest:
                     continue
 
                 display.debug("done queuing things up, now waiting for results queue to drain")
-                results += self._wait_on_pending_results(iterator)
+                if self._pending_results > 0:
+                    results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 all_role_blocks = []

@@ -25,6 +25,7 @@ from ansible.compat.six import text_type
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+from ansible.module_utils._text import to_native
 
 class Conditional:
 
@@ -72,7 +73,7 @@ class Conditional:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
         except Exception as e:
-            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=ds)
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
         return True
 
