@@ -166,7 +166,7 @@ old_style_params_data = (
 
 class TestLookupModule(unittest.TestCase):
     @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file')
+    @patch('ansible.plugins.lookup.password._create_password_file_dir')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test(self, mock_get_paths, mock_create_pf, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -180,7 +180,7 @@ class TestLookupModule(unittest.TestCase):
             self.assertIsInstance(result, text_type)
 
     @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file')
+    @patch('ansible.plugins.lookup.password._create_password_file_dir')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_encrypt(self, mock_get_paths, mock_create_pf, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -194,7 +194,7 @@ class TestLookupModule(unittest.TestCase):
             self.assertIsInstance(result, text_type)
 
     @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file')
+    @patch('ansible.plugins.lookup.password._create_password_file_dir')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_only_a(self, mock_get_paths, mock_create_pf, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']

@@ -138,7 +138,7 @@ def _gen_candidate_chars(characters):
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 
-def _create_password_file(b_path):
+def _create_password_file_dir(b_path):
     b_pathdir = os.path.dirname(b_path)
 
     try:
@@ -177,7 +177,7 @@ def _format_content(password, salt, encrypt):
 
     return u'%s salt=%s' % (password, salt)
 
-def _read_or_create_password_file(b_path):
+def _read_or_create_password_file_dir(b_path):
     salt = None
     plaintext_password = None
     content = None
@@ -186,7 +186,7 @@ def _read_or_create_password_file(b_path):
         b_file_content = _read_password_file(b_path)
         content, plaintext_password, salt = _parse_password(b_file_content)
     else:
-        _create_password_file(b_path)
+        _create_password_file_dir(b_path)
 
     return content, plaintext_password, salt
 
@@ -216,7 +216,7 @@ class LookupModule(LookupBase):
             b_path = to_bytes(path, errors='surrogate_or_strict')
 
             # get password or create it if file doesn't exist
-            content, plaintext_password, salt = _read_or_create_password_file(b_path)
+            content, plaintext_password, salt = _read_or_create_password_file_dir(b_path)
             content, plaintext_password, salt = _update_content(plaintext_password, salt, params)
 
             # save it
