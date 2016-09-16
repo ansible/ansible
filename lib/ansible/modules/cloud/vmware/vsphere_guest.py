@@ -1518,13 +1518,13 @@ def power_state(vm, state, force):
 
     check_status = ' '.join(state.split("_")).upper()
 
-    # Need Force
-    if not force and power_status in [
-        'SUSPENDED', 'POWERING ON',
-        'RESETTING', 'BLOCKED ON MSG'
-    ]:
-
-        return "VM is in %s power state. Force is required!" % power_status
+    # Need Force - skip check for suspended if already true
+    if not (state == 'suspended' and power_status == check_status):
+        if not force and power_status in [
+            'SUSPENDED', 'POWERING ON',
+            'RESETTING', 'BLOCKED ON MSG'
+        ]:
+            return "VM is in %s power state. Force is required!" % power_status
 
     # State is already true
     if power_status == check_status:
@@ -1543,6 +1543,12 @@ def power_state(vm, state, force):
                     vm.reset(sync_run=False)
                 else:
                     return "Cannot restart VM in the current state %s" \
+                        % power_status
+            elif state == 'suspended':
+                if power_status == 'POWERED_ON':
+                    vm.suspend(sync_run=False)
+                else:
+                    return "Cannot suspend VM in the current state %s" \
                         % power_status
             return True
 
@@ -1711,7 +1717,8 @@ def main():
                     'present',
                     'absent',
                     'restarted',
-                    'reconfigured'
+                    'reconfigured',
+                    'suspended'
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, type='bool'),
