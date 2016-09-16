@@ -285,6 +285,7 @@ class TaskQueueManager:
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
 
+        strategy.cleanup()
         self._cleanup_processes()
         return play_return
 
