@@ -144,7 +144,9 @@ def _create_password_file_dir(b_path):
     try:
         makedirs_safe(b_pathdir, mode=0o700)
     except OSError as e:
-        raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (b_pathdir, str(e)))
+        msg = "cannot create the path for the password lookup: %s (error was %s)" % \
+            (to_native(b_pathdir), to_native(e))
+        raise AnsibleError(msg)
 
 def _read_password_file(b_path):
     content = open(b_path, 'rb').read().rstrip()
