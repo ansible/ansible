@@ -114,6 +114,20 @@ def _random_salt():
     return _random_password(length=8, chars=salt_chars)
 
 def _gen_candidate_chars(characters):
+    '''Generate a string containing all valid chars as defined by char spec in arg 'characters'
+
+    The input here is a list of character specs. The character specs are shorthand
+    names for sets of characters like 'digits', 'ascii_letters', or 'punctuation'.
+
+    The values of each char spec can be:
+        - a name of an attribute in the 'strings' module ('digits' for example). The
+        value of the attribute will be added to the candidate chars return value.
+        - a string of characters. If the string isn't an attribute in 'string' module, the
+        string will be directly added to the candidate chars.
+
+    characters=['digits', '?|'] will match string.digits and add all ascii digits, and '?|'
+    will add those chars directly. Return will be the string '0123456789?|'
+    '''
     chars = []
     for chars_spec in characters:
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
