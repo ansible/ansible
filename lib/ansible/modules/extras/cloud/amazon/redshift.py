@@ -17,7 +17,7 @@
 
 DOCUMENTATION = '''
 ---
-author: 
+author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift
 version_added: "2.1"
@@ -293,15 +293,15 @@ def create_cluster(module, redshift):
     try:
         redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
         changed = False
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         try:
             redshift.create_cluster(identifier, node_type, username, password, **params)
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
     try:
         resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     if wait:
@@ -316,7 +316,7 @@ def create_cluster(module, redshift):
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
     return(changed, _collect_facts(resource))
@@ -333,7 +333,7 @@ def describe_cluster(module, redshift):
 
     try:
         resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     return(True, _collect_facts(resource))
@@ -353,7 +353,7 @@ def delete_cluster(module, redshift):
 
     try:
         redshift.delete_custer( identifier )
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     if wait:
@@ -368,7 +368,7 @@ def delete_cluster(module, redshift):
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
     return(True, {})
@@ -400,15 +400,15 @@ def modify_cluster(module, redshift):
     try:
         redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
         changed = False
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         try:
             redshift.modify_cluster(identifier, **params)
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
     try:
         resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     if wait:
@@ -423,7 +423,7 @@ def modify_cluster(module, redshift):
 
                 resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
 
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             # https://github.com/boto/boto/issues/2776 is fixed.
             module.fail_json(msg=str(e))
 
@@ -476,7 +476,7 @@ def main():
     # connect to the rds endpoint
     try:
         conn = connect_to_aws(boto.redshift, region, **aws_connect_params)
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     changed = True
