@@ -20,6 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import passlib
+
 from units.mock.loader import DictDataLoader
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -175,6 +177,7 @@ class TestLookupModule(unittest.TestCase):
 
         # FIXME: assert something useful
         for result in results:
+            self.assertEquals(len(result), password.DEFAULT_LENGTH)
             self.assertIsInstance(result, text_type)
 
     @patch.object(PluginLoader, '_get_paths')
@@ -187,8 +190,24 @@ class TestLookupModule(unittest.TestCase):
         results = password_lookup.run([u'/path/to/somewhere encrypt=pbkdf2_sha256'],
                                       None)
 
-        # FIXME: assert something useful
+        # pbkdf2 format plus hash
+        expected_password_length = 76
+
         for result in results:
+            self.assertEquals(len(result), expected_password_length)
+            # result should have 5 parts split by '$'
+            str_parts = result.split('$', 5)
+
+            # verify the result is parseable by the passlib
+            crypt_parts = passlib.hash.pbkdf2_sha256.parsehash(result)
+
+            # verify it used the right algo type
+            self.assertEquals(str_parts[1], 'pbkdf2-sha256')
+
+            self.assertEquals(len(str_parts), 5)
+
+            # verify the string and parsehash agree on the number of rounds
+            self.assertEquals(int(str_parts[2]), crypt_parts['rounds'])
             self.assertIsInstance(result, text_type)
 
     @patch.object(PluginLoader, '_get_paths')
@@ -201,6 +220,9 @@ class TestLookupModule(unittest.TestCase):
         results = password_lookup.run([u'/path/to/somewhere chars=a'],
                                   None)
         for result in results:
+            self.assertEquals(len(result), password.DEFAULT_LENGTH)
+            self.assertIsInstance(result, text_type)
+
             for char in result:
                 self.assertEqual(char, u'a')
 
