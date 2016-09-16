@@ -698,10 +698,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # parse the main result
         data = self._parse_returned_data(res)
 
-        # pre-split stdout into lines, if stdout is in the data and there
-        # isn't already a stdout_lines value there
+        # pre-split stdout and stderr into lines
         if 'stdout' in data and 'stdout_lines' not in data:
             data['stdout_lines'] = data.get('stdout', u'').splitlines()
+
+        if 'stderr' in data and 'stderr_lines' not in data:
+            data['stderr_lines'] = data.get('stderr', u'').splitlines()
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
@@ -790,7 +792,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         out = self._strip_success_message(out)
 
         display.debug("_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, stdout, stderr))
-        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_first_available_file(self, faf, of=None, searchdir='files'):
 
