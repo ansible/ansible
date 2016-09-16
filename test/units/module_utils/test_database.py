@@ -1,5 +1,4 @@
 import collections
-import mock
 import os
 import re
 
@@ -23,6 +22,8 @@ except ImportError:
             if hasattr(expected,'__name__'): excName = expected.__name__
             else: excName = str(expected)
             raise AssertionError("%s not raised" % excName)
+
+from ansible.compat.tests import mock
 
 from ansible.module_utils.database import (
     pg_quote_identifier,
