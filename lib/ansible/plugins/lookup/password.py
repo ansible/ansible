@@ -85,7 +85,7 @@ def _parse_parameters(term):
 
     return relpath, params
 
-def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+def _random_password(length=DEFAULT_LENGTH, chars=None):
     '''
     Return a random password string of length containing only chars.
     NOTE: this was moved from the old ansible utils code, as nothing
@@ -99,6 +99,7 @@ def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
     # Asserts would be perfect for this if they were disabled by default.
     # Alas, in python, they're active by default; only turned off if
     # python is run with optimization.
+    chars = chars or to_text(C.DEFAULT_PASSWORD_CHARS)
     assert isinstance(chars, text_type)
     random_generator = random.SystemRandom()
 
