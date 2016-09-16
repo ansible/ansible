@@ -185,6 +185,11 @@ Ansible Changes By Release
     since (ansible-vault automatically re-encrypts the file using VaultAES256
     whenever it is written to but not read), run ``ansible-vault rekey
     [filename]`` to move to VaultAES256.
+###Removed Deprecated:
+* ';' as host list separator.
+* with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
+* skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
+* skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
 ## 2.1.2 "The Song Remains the Same"
 
