@@ -139,13 +139,13 @@ options:
       - A SNS topic ARN to send auto scaling notifications to.
     default: None
     required: false
-    version_added: "2.0"
+    version_added: "2.2"
   notification_types:
     description:
       - A list of auto scaling events to trigger notifications on.
     default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
     required: false
-    version_added: "2.0"
+    version_added: "2.2"
 extends_documentation_fragment:
     - aws
     - ec2
