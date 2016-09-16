@@ -17,7 +17,7 @@
 
 DOCUMENTATION = '''
 ---
-author: 
+author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift_subnet_group
 version_added: "2.1"
@@ -128,7 +128,7 @@ def main():
     # Connect to the Redshift endpoint.
     try:
         conn = connect_to_aws(boto.redshift, region, **aws_connect_params)
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     try:
@@ -139,7 +139,7 @@ def main():
         try:
             matching_groups = conn.describe_cluster_subnet_groups(group_name, max_records=100)
             exists = len(matching_groups) > 0
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             if e.body['Error']['Code'] != 'ClusterSubnetGroupNotFoundFault':
             #if e.code != 'ClusterSubnetGroupNotFoundFault':
                 module.fail_json(msg=str(e))
@@ -169,7 +169,7 @@ def main():
 
             changed = True
 
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     module.exit_json(changed=changed, group=group)

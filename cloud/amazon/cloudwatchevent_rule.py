@@ -128,7 +128,7 @@ class CloudWatchEventRule(object):
         """Returns the existing details of the rule in AWS"""
         try:
             rule_info = self.client.describe_rule(Name=self.name)
-        except botocore.exceptions.ClientError, e:
+        except botocore.exceptions.ClientError as e:
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return {}
@@ -176,7 +176,7 @@ class CloudWatchEventRule(object):
         """Lists the existing targets for the rule in AWS"""
         try:
             targets = self.client.list_targets_by_rule(Rule=self.name)
-        except botocore.exceptions.ClientError, e:
+        except botocore.exceptions.ClientError as e:
             error_code = e.response.get('Error', {}).get('Code')
             if error_code == 'ResourceNotFoundException':
                 return []
@@ -356,7 +356,7 @@ def get_cloudwatchevents_client(module):
                           resource='events',
                           region=region, endpoint=ec2_url,
                           **aws_conn_kwargs)
-    except boto3.exception.NoAuthHandlerFound, e:
+    except boto3.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
 
 
