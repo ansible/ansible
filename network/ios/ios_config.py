@@ -322,8 +322,8 @@ def main():
         config=dict(),
         defaults=dict(type='bool', default=False),
 
-        save=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
+        save=dict(default=False, type='bool'),
     )
 
     mutually_exclusive = [('lines', 'src')]
