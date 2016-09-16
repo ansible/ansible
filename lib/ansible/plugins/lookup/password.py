@@ -149,21 +149,22 @@ def _create_password_file_dir(b_path):
         raise AnsibleError(msg)
 
 def _read_password_file(b_path):
-    content = open(b_path, 'rb').read().rstrip()
-    return content
+    b_content = open(b_path, 'rb').read().rstrip()
+    return to_text(b_content, errors='surrogate_or_strict')
 
-def _parse_password(b_content):
-    content = to_text(b_content, errors='surrogate_or_strict')
+def _parse_password(content):
+    '''parse 'content' (text_type) into content, password, and salt'''
     password = content
     salt = None
 
+    salt_slug = ' salt='
     try:
-        sep = content.rindex(' salt=')
+        sep = content.rindex(salt_slug)
     except ValueError:
         # No salt
         pass
     else:
-        salt = password[sep + len(' salt='):]
+        salt = password[sep + len(salt_slug):]
         password = content[:sep]
 
     return content, password, salt
@@ -185,8 +186,8 @@ def _read_or_create_password_file_dir(b_path):
     content = None
 
     if os.path.exists(b_path):
-        b_file_content = _read_password_file(b_path)
-        content, plaintext_password, salt = _parse_password(b_file_content)
+        file_content = _read_password_file(b_path)
+        content, plaintext_password, salt = _parse_password(file_content)
     else:
         _create_password_file_dir(b_path)
 

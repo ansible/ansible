@@ -29,8 +29,6 @@ from ansible.compat.six import text_type
 from ansible.errors import AnsibleError
 from ansible.plugins import PluginLoader
 
-from ansible.module_utils._text import to_bytes
-
 from ansible.plugins.lookup import password
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
@@ -209,20 +207,20 @@ class TestLookupModule(unittest.TestCase):
 
 class TestParsePassword(unittest.TestCase):
     def test_empty_password_file(self):
-        content, plaintext_password, salt = password._parse_password(b'')
+        content, plaintext_password, salt = password._parse_password('')
         self.assertEquals(content, u'')
 
     def test(self):
         expected_content = u'12345678'
-        b_file_content = to_bytes(expected_content, errors='surrogate_or_strict')
-        content, plaintext_password, salt = password._parse_password(b_file_content)
+        file_content = expected_content
+        content, plaintext_password, salt = password._parse_password(file_content)
         self.assertEquals(content, expected_content)
         self.assertEquals(plaintext_password, expected_content)
 
     def test_with_salt(self):
         expected_content = u'12345678 salt=87654321'
-        b_file_content = to_bytes(expected_content, errors='surrogate_or_strict')
-        content, plaintext_password, salt = password._parse_password(b_file_content)
+        file_content = expected_content
+        content, plaintext_password, salt = password._parse_password(file_content)
         self.assertEquals(content, expected_content)
         self.assertEquals(salt, u'87654321')
 
