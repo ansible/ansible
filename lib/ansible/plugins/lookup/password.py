@@ -172,7 +172,8 @@ def _parse_password(content):
 def _write_password_file(b_path, content):
     with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
-        f.write(content)
+        b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
+        f.write(b_content)
 
 def _format_content(password, salt, encrypt):
     if not encrypt:
@@ -223,8 +224,7 @@ class LookupModule(LookupBase):
             content, plaintext_password, salt = _update_content(plaintext_password, salt, params)
 
             # save it
-            b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
-            _write_password_file(b_path, b_content)
+            _write_password_file(b_path, content)
 
             if params['encrypt']:
                 b_password = do_encrypt(plaintext_password, params['encrypt'],
