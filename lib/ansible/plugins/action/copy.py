@@ -324,7 +324,7 @@ class ActionModule(ActionBase):
                 r_files.append((full_path, rel_path))
 
                 for sf in sub_folders:
-                    r_files += self._get_recursive_files(os.path.join(topdir, sf), sz=sz)
+                    r_files += self._get_recursive_files(os.path.join(topdir, to_text(sf)), sz=sz)
         return r_files
 
     def _create_content_tempfile(self, content):
