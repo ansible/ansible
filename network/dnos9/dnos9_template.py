@@ -28,7 +28,7 @@ description:
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
-extends_documentation_fragment: dnos9
+extends_documentation_fragment: dellos9
 options:
   src:
     description:

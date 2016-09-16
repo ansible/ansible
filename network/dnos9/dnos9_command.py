@@ -28,7 +28,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(dnos9_config) to configure Dell OS9 devices.
-extends_documentation_fragment: dnos9
+extends_documentation_fragment: dellos9
 options:
   commands:
     description:

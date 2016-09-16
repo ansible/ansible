@@ -29,7 +29,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(dnos10_config) to configure Dell OS10 devices.
-extends_documentation_fragment: dnos10
+extends_documentation_fragment: dellos10
 options:
   commands:
     description:
