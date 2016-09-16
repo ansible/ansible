@@ -369,7 +369,7 @@ def format_output(module, path, st, follow, get_md5, get_checksum,
         isgid=bool(mode & stat.S_ISGID),
         readable=os.access(path, os.R_OK),
         writeable=os.access(path, os.W_OK),
-        excutable=os.access(path, os.X_OK),
+        executable=os.access(path, os.X_OK),
     )
 
     if stat.S_ISLNK(mode):
