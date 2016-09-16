@@ -121,7 +121,7 @@ class ActionModule(ActionBase):
 
                 # recurse into subdirs
                 for sf in sub_folders:
-                    source_files += self._get_recursive_files(os.path.join(source, sf), sz=sz)
+                    source_files += self._get_recursive_files(os.path.join(source, to_text(sf)), sz=sz)
 
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - copy module relies on this).
