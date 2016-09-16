@@ -79,6 +79,7 @@ Ansible Changes By Release
   * dnos10_command
   * dnos10_config
   * dnos10_template
+  * dnos10_facts
 - exoscale:
   * exo_dns_domain
   * exo_dns_record
