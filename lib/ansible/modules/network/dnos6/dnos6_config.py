@@ -27,7 +27,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with Dell OS6 configuration sections in
     a deterministic way.
-extends_documentation_fragment: dnos6
+extends_documentation_fragment: dellos6
 options:
   lines:
     description:
