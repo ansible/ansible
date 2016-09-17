@@ -113,14 +113,6 @@ options:
     required: false
     default: default
     version_added: "2.2"
-  qos:
-    description:
-      - The C(qos) argument configures the IP DSCP value to assign to
-        eAPI response packets.  This argument accepts integer values
-        in the valid IP DSCP range of 0 to 63.
-    required: false
-    default: 0
-    version_added: "2.2"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -256,11 +248,6 @@ def set_vrf(module, commands):
             module.fail_json(msg="vrf '%s' is not configured" % vrf)
     commands.append('vrf %s' % vrf)
 
-def set_qos(module, commands):
-    if not 0 <= module.params['qos'] <= 63:
-        module.fail_json(msg='qos must be between 0 and 63')
-    commands.append('qos dscp %s' % module.params['qos'])
-
 def get_config(module):
     contents = module.params['config']
     if not contents:
@@ -270,17 +257,11 @@ def get_config(module):
     return config
 
 def load_config(module, commands, result):
-    session = 'ansible_%s' % int(time.time())
     commit = not module.check_mode
-
-    diff = module.config.load_config(commands, session=session, commit=commit)
-
-    # once the configuration is done, remove the config session and
-    # remove the session name from the result
-    module.cli(['no configure session %s' % session])
-
-    result['diff'] = dict(prepared=diff)
-    result['changed'] = diff is not None
+    diff = module.config.load_config(commands, commit=commit)
+    if diff:
+        result['diff'] = dict(prepared=diff)
+        result['changed'] = True
 
 def load(module, commands, result):
     candidate = NetworkConfig(indent=3)
@@ -330,12 +311,11 @@ def main():
         socket=dict(aliases=['enable_socket'], default=False, type='bool'),
 
         vrf=dict(default='default'),
-        qos=dict(default=0, type='int'),
 
         config=dict(),
 
         # Only allow use of transport cli when configuring eAPI
-        transport=dict(required=True, choices=['cli']),
+        transport=dict(default='cli', choices=['cli']),
 
         state=dict(default='started', choices=['stopped', 'started']),
     )
