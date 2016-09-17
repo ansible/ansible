@@ -10,7 +10,7 @@ repo="${REPO_NAME}"
 
 if [ "${is_pr}" != "true" ]; then
     echo "Module integration tests are only supported on pull requests."
-    exit 1
+    exit 0
 fi
 
 case "${repo}" in
