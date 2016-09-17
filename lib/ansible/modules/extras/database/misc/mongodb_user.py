@@ -178,11 +178,28 @@ def check_compatibility(module, client):
     elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
         module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
+
 def user_find(client, user, db_name):
+    """Check if the user exists.
+
+    Args:
+        client (cursor): Mongodb cursor on admin database.
+        user (str): User to check.
+        db_name (str): User's database.
+
+    Returns:
+        dict: when user exists, False otherwise.
+    """
     for mongo_user in client["admin"].system.users.find():
-        if mongo_user['user'] == user and mongo_user['db'] == db_name:
-            return mongo_user
+        if mongo_user['user'] == user:
+            # NOTE: there is no 'db' field in mongo 2.4.
+            if 'db' not in mongo_user:
+                return mongo_user
+
+            if mongo_user["db"] == db_name:
+                return mongo_user
     return False
+
 
 def user_add(module, client, db_name, user, password, roles):
     #pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
