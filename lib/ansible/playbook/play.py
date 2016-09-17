@@ -111,7 +111,7 @@ class Play(Base, Taggable, Become):
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
-                 data['name'] = data['hosts']
+                data['name'] = data['hosts']
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
