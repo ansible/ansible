@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ansible/ansible-modules-core.svg?branch=devel)](https://travis-ci.org/ansible/ansible-modules-core)
+[![Build Status](https://api.shippable.com/projects/573f79d02a8192902e20e34e/badge?branch=devel)](https://app.shippable.com/projects/573f79d02a8192902e20e34e)
 
 ansible-modules-core
 ====================
