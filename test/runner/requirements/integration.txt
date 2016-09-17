@@ -7,3 +7,4 @@ passlib
 pexpect
 pycrypto
 pyyaml
+netaddr

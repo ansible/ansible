@@ -125,3 +125,16 @@
     that:
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
+
+- name: Test ipaddr filter
+  assert:
+    that:
+      - "'192.168.0.1/32' | ipaddr('netmask')   == '255.255.255.255'"
+      - "'192.168.0.1/24' | ipaddr('netmask')   == '255.255.255.0'"
+      - "'192.168.0.1/32' | ipaddr('broadcast') is sameas false"
+      - "'192.168.0.1/24' | ipaddr('broadcast') == '192.168.0.255'"
+      - "'192.168.0.1/24' | ipaddr('prefix')    == '24'"
+      - "'192.168.0.1/24' | ipaddr('address')   == '24'"
+      - "'192.168.0.1/24' | ipaddr('network')   == '192.168.0.0'"
+      - "'::1/120' | ipaddr('broadcast')        == '::ff'"
+      - "'::1/120' | ipaddr('netmask')          == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
