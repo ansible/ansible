@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,21 +22,21 @@
 
 DOCUMENTATION = """
 ---
-module: dnos6_command
+module: dellos6_command
 version_added: "2.2"
 short_description: Run commands on remote devices running Dell OS6
 description:
   - Sends arbitrary commands to a Dell OS6 node and returns the results
-    read from the device. The M(dnos6_command) module includes an
+    read from the device. The M(dellos6_command) module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(dnos6_config) to configure Dell OS6 devices.
+    Please use M(dellos6_config) to configure Dell OS6 devices.
 extends_documentation_fragment: dellos6
 options:
   commands:
     description:
-      - List of commands to send to the remote dnos6 device over the
+      - List of commands to send to the remote dellos6 device over the
         configured provider. The resulting output from the command
         is returned. If the I(waitfor) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -77,25 +81,25 @@ vars:
 
 tasks:
  - name: run show verion on remote devices
-   dnos6_command:
+   dellos6_command:
      commands: show version
      provider "{{ cli }}"
 
  - name: run show version and check to see if output contains Dell
-   dnos6_command:
+   dellos6_command:
      commands: show version
      wait_for: result[0] contains Dell
      provider "{{ cli }}"
 
  - name: run multiple commands on remote nodes
-   dnos6_command:
+   dellos6_command:
      commands:
       - show version
       - show interfaces
      provider "{{ cli }}"
 
  - name: run multiple commands and evaluate the output
-   dnos6_command:
+   dellos6_command:
      commands:
       - show version
       - show interfaces
@@ -134,7 +138,7 @@ warnings:
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, FailedConditionsError
 from ansible.module_utils.network import NetworkModule, NetworkError
-import ansible.module_utils.dnos6
+import ansible.module_utils.dellos6
 
 def to_lines(stdout):
     for item in stdout:
@@ -168,9 +172,9 @@ def main():
                             'check mode, not executing `%s`' % cmd)
         else:
             if cmd.startswith('conf'):
-                module.fail_json(msg='dnos6_command does not support running '
+                module.fail_json(msg='dellos6_command does not support running '
                                      'config mode commands.  Please use '
-                                     'dnos6_config instead')
+                                     'dellos6_config instead')
             runner.add_command(cmd)
 
     for item in conditionals:

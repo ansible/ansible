@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -17,9 +21,9 @@
 #
 DOCUMENTATION = """
 ---
-module: dnos10_facts
+module: dellos10_facts
 version_added: "2.2"
-author: "Senthil Kumar Ganesan (@skg_net)"
+author: "Senthil Kumar Ganesan (@skg-net)"
 short_description: Collect facts from remote devices running Dell OS10
 description:
   - Collects a base set of device facts from a remote device that
@@ -43,16 +47,16 @@ options:
 
 EXAMPLES = """
 # Collect all facts from the device
-- dnos10_facts:
+- dellos10_facts:
     gather_subset: all
 
 # Collect only the config and default facts
-- dnos10_facts:
+- dellos10_facts:
     gather_subset:
       - config
 
 # Do not collect hardware facts
-- dnos10_facts:
+- dellos10_facts:
     gather_subset:
       - "!hardware"
 """
@@ -125,12 +129,11 @@ ansible_net_neighbors:
 """
 
 import re
-import itertools
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dnos10
+import ansible.module_utils.dellos10
 
 try:
     from lxml import etree as ET

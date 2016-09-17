@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,9 +22,9 @@
 
 DOCUMENTATION = """
 ---
-module: dnos10_command
+module: dellos10_command
 version_added: "2.2"
-author: "Senthil Kumar Ganesan (@skg_net)"
+author: "Senthil Kumar Ganesan (@skg-net)"
 short_description: Run commands on remote devices running Dell OS10
 description:
   - Sends arbitrary commands to a Dell OS10 node and returns the results
@@ -28,12 +32,12 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(dnos10_config) to configure Dell OS10 devices.
+    Please use M(dellos10_config) to configure Dell OS10 devices.
 extends_documentation_fragment: dellos10
 options:
   commands:
     description:
-      - List of commands to send to the remote dnos10 device over the
+      - List of commands to send to the remote dellos10 device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -78,25 +82,25 @@ vars:
 
 tasks:
   - name: run show version on remote devices
-    dnos10_command:
+    dellos10_command:
       commands: show version
       provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains OS10
-    dnos10_command:
+    dellos10_command:
       commands: show version
       wait_for: result[0] contains OS10
       provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     dnos10_command:
+     dellos10_command:
       commands:
         - show version
         - show interface
       provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
-    dnos10_command:
+    dellos10_command:
       commands:
         - show version
         - show interface
@@ -135,7 +139,7 @@ warnings:
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, FailedConditionsError
 from ansible.module_utils.network import NetworkModule, NetworkError
-import ansible.module_utils.dnos10
+import ansible.module_utils.dellos10
 
 def to_lines(stdout):
     for item in stdout:
@@ -168,9 +172,9 @@ def main():
                             'check mode, not executing `%s`' % cmd)
         else:
             if cmd.startswith('conf'):
-                module.fail_json(msg='dnos10_command does not support running '
+                module.fail_json(msg='dellos10_command does not support running '
                                      'config mode commands.  Please use '
-                                     'dnos10_config instead')
+                                     'dellos10_config instead')
             runner.add_command(cmd)
 
     for item in conditionals:
