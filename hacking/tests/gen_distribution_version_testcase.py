@@ -45,7 +45,7 @@ for f in filelist:
 dist = platform.dist()
 
 
-facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version']
+facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 ansible_out = subprocess.Popen(['ansible', 'localhost', '-m', 'setup'], stdout=subprocess.PIPE).communicate()[0]
 parsed = json.loads(ansible_out[ansible_out.index('{'):])
 ansible_facts = {}
