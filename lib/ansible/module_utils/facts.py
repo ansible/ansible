@@ -1944,34 +1944,55 @@ class AIX(Hardware):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         self.facts['firmware_version'] = data[1].strip('IBM,')
-        rc, out, err = self.module.run_command("/usr/sbin/lsconf")
-        if out:
-            for line in out.splitlines():
-                data = line.split(':')
-                if 'Machine Serial Number' in line:
-                    self.facts['product_serial'] = data[1].strip()
-                if 'LPAR Info' in line:
-                    self.facts['lpar_info'] = data[1].strip()
-                if 'System Model' in line:
-                    self.facts['product_name'] = data[1].strip()
+        lsconf_path = self.module.get_bin_path("lsconf")
+        if lsconf_path:
+            rc, out, err = self.module.run_command(lsconf_path)
+            if rc == 0:
+                if out:
+                    for line in out.splitlines():
+                        data = line.split(':')
+                        if 'Machine Serial Number' in line:
+                            self.facts['product_serial'] = data[1].strip()
+                        if 'LPAR Info' in line:
+                            self.facts['lpar_info'] = data[1].strip()
+                        if 'System Model' in line:
+                            self.facts['product_name'] = data[1].strip()
     def get_vgs_facts(self):
-        """ Get vg and pv Facts  """
-        rc, out, err = self.module.run_command("/usr/sbin/lsvg|/usr/bin/xargs /usr/sbin/lsvg -p" ,use_unsafe_shell=True)
-        if out:
-            self.facts['vgs']= {}
-            for m in re.finditer(r'(\S+):\n.*FREE DISTRIBUTION(\n(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*)+', out):
-                self.facts['vgs'][m.group(1)] = []
-                pp_size = 0
-                rc, out, err = self.module.run_command("/usr/sbin/lsvg " + m.group(1))
-                pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
-                for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
-                    pv_info = { 'pv_name': n.group(1),
-                                'pv_state': n.group(2),
-                                'total_pps': n.group(3),
-                                'free_pps': n.group(4),
-                                'pp_size': pp_size
-                              }
-                    self.facts['vgs'][m.group(1)].append(pv_info)
+        """
+        Get vg and pv Facts
+        rootvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk0            active            546         0           00..00..00..00..00
+        hdisk1            active            546         113         00..00..00..22..92
+        realsyncvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk74           active            1999        6           00..00..00..01..06
+        testvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk105          active            999         838         300..49..129..210..210
+        hdisk106          active            999         599         401..01..00..109..200
+        """
+
+        lsvg_path = self.module.get_bin_path("lsvg")
+        xargs_path = self.module.get_bin_path("xargs")
+        cmd = "%s | %s %s -p" % (lsvg_path ,xargs_path,lsvg_path)
+        if lsvg_path and xargs_path:
+            rc, out, err = self.module.run_command(cmd,use_unsafe_shell=True)
+            if out:
+                self.facts['vgs']= {}
+                for m in re.finditer(r'(\S+):\n.*FREE DISTRIBUTION(\n(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*)+', out):
+                    self.facts['vgs'][m.group(1)] = []
+                    pp_size = 0
+                    rc, out, err = self.module.run_command("/usr/sbin/lsvg " + m.group(1))
+                    pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
+                    for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                        pv_info = { 'pv_name': n.group(1),
+                                    'pv_state': n.group(2),
+                                    'total_pps': n.group(3),
+                                    'free_pps': n.group(4),
+                                    'pp_size': pp_size
+                                  }
+                        self.facts['vgs'][m.group(1)].append(pv_info)
 
 
 class HPUX(Hardware):
