@@ -201,20 +201,14 @@ class Nxapi(NxapiConfigMixin):
 
         for cmd in commands:
             if output and output != cmd.output:
-                try:
-                    responses.extend(self.execute(cmds, output=output))
-                except ValueError:
-                    responses.extend(self.execute(cmds))
+                responses.extend(self.execute(cmds, output=output))
                 cmds = list()
 
             output = cmd.output
             cmds.append(str(cmd))
 
         if cmds:
-            try:
-                responses.extend(self.execute(cmds, output=output))
-            except ValueError:
-                responses.extend(self.execute(cmds))
+            responses.extend(self.execute(cmds, output=output))
 
         return responses
 
@@ -223,10 +217,7 @@ class Nxapi(NxapiConfigMixin):
 
     def configure(self, commands):
         commands = to_list(commands)
-        try:
-            return self.execute(commands, output='config')
-        except ValueError:
-            return self.execute(commands)
+        return self.execute(commands, output='config')
 
     def _jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
