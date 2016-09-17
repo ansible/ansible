@@ -608,7 +608,7 @@ def slaac(value, query = ''):
         elif vtype == 'network':
             v = ipaddr(value, 'subnet')
 
-        if v.version != 6:
+        if ipaddr(value, 'version') != 6:
             return False
 
         value = netaddr.IPNetwork(v)
