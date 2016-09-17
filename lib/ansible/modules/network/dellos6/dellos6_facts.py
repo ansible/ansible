@@ -1,4 +1,4 @@
-# !/usr/bin/python
+#!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
