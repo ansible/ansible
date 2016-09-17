@@ -21,17 +21,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import passlib
-
-from units.mock.loader import DictDataLoader
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from passlib.handlers import pbkdf2
 
 from ansible.compat.six import text_type
-
+from ansible.compat.six.moves import builtins
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.plugins import PluginLoader
+from ansible.utils import encrypt
+
+from units.mock.loader import DictDataLoader
 
 from ansible.plugins.lookup import password
+
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
 DEFAULT_CANDIDATE_CHARS = u'.,:-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -164,120 +167,7 @@ old_style_params_data = (
 )
 
 
-class TestLookupModule(unittest.TestCase):
-    @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file_dir')
-    @patch('ansible.plugins.lookup.password._write_password_file')
-    def test(self, mock_get_paths, mock_create_pf, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        fake_loader = DictDataLoader({'/path/to/somewhere':'sdfsdf'})
-        password_lookup = password.LookupModule(loader=fake_loader)
-        results = password_lookup.run([u'/path/to/somewhere'],
-                                  None)
-
-        # FIXME: assert something useful
-        for result in results:
-            self.assertEquals(len(result), password.DEFAULT_LENGTH)
-            self.assertIsInstance(result, text_type)
-
-    @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file_dir')
-    @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_encrypt(self, mock_get_paths, mock_create_pf, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        fake_loader = DictDataLoader({'/path/to/somewhere':'sdfsdf'})
-        password_lookup = password.LookupModule(loader=fake_loader)
-        results = password_lookup.run([u'/path/to/somewhere encrypt=pbkdf2_sha256'],
-                                      None)
-
-        # pbkdf2 format plus hash
-        expected_password_length = 76
-
-        for result in results:
-            self.assertEquals(len(result), expected_password_length)
-            # result should have 5 parts split by '$'
-            str_parts = result.split('$', 5)
-
-            # verify the result is parseable by the passlib
-            crypt_parts = passlib.hash.pbkdf2_sha256.parsehash(result)
-
-            # verify it used the right algo type
-            self.assertEquals(str_parts[1], 'pbkdf2-sha256')
-
-            self.assertEquals(len(str_parts), 5)
-
-            # verify the string and parsehash agree on the number of rounds
-            self.assertEquals(int(str_parts[2]), crypt_parts['rounds'])
-            self.assertIsInstance(result, text_type)
-
-    @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._create_password_file_dir')
-    @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_only_a(self, mock_get_paths, mock_create_pf, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        fake_loader = DictDataLoader({'/path/to/somewhere':'sdfsdf'})
-        password_lookup = password.LookupModule(loader=fake_loader)
-        results = password_lookup.run([u'/path/to/somewhere chars=a'],
-                                  None)
-        for result in results:
-            self.assertEquals(len(result), password.DEFAULT_LENGTH)
-            self.assertIsInstance(result, text_type)
-
-            for char in result:
-                self.assertEqual(char, u'a')
-
-
-class TestParsePassword(unittest.TestCase):
-    def test_empty_password_file(self):
-        content, plaintext_password, salt = password._parse_password('')
-        self.assertEquals(content, u'')
-
-    def test(self):
-        expected_content = u'12345678'
-        file_content = expected_content
-        content, plaintext_password, salt = password._parse_password(file_content)
-        self.assertEquals(content, expected_content)
-        self.assertEquals(plaintext_password, expected_content)
-
-    def test_with_salt(self):
-        expected_content = u'12345678 salt=87654321'
-        file_content = expected_content
-        content, plaintext_password, salt = password._parse_password(file_content)
-        self.assertEquals(content, expected_content)
-        self.assertEquals(salt, u'87654321')
-
-
-class TestUpdateContent(unittest.TestCase):
-    default_params = {'length': 20,
-                      'chars': DEFAULT_CHARS,
-                      'encrypt': None}
-
-    # FIXME: could use better asserts here
-    def _assert_type(self, content, pw, salt):
-        self.assertIsInstance(content, text_type)
-        self.assertIsInstance(salt, text_type)
-        self.assertIsInstance(pw, text_type)
-
-    def test(self):
-        content, pw, salt = password._update_content(u'123456', None, self.default_params)
-        self._assert_type(content, pw, salt)
-        self.assertEqual(content, u'123456')
-
-    def test_none(self):
-        content, pw, salt = password._update_content(None, None, self.default_params)
-        self._assert_type(content, pw, salt)
-
-    def test_no_salt(self):
-        content, pw, salt = password._update_content(u'12345', None, self.default_params)
-        self._assert_type(content, pw, salt)
-        self.assertEqual(content, u'12345')
-
-    def test_no_password(self):
-        content, pw, salt = password._update_content(None, u'12345678', self.default_params)
-        self._assert_type(content, pw, salt)
-
-
-class TestParseParamaters(unittest.TestCase):
+class TestParseParameters(unittest.TestCase):
     def test(self):
         for testcase in old_style_params_data:
             filename, params = password._parse_parameters(testcase['term'])
@@ -298,6 +188,23 @@ class TestParseParamaters(unittest.TestCase):
                         params=dict(length=password.DEFAULT_LENGTH, encrypt=None, chars=[u'くらとみ']),
                         candidate_chars=u'くらとみ')
         self.assertRaises(AnsibleError, password._parse_parameters, testcase['term'])
+
+
+class TestReadPasswordFile(unittest.TestCase):
+    def setUp(self):
+        self.os_path_exists = password.os.path.exists
+
+    def tearDown(self):
+        password.os.path.exists = self.os_path_exists
+
+    def test_no_password_file(self):
+        password.os.path.exists = lambda x: False
+        self.assertEqual(password._read_password_file(b'/nonexistent'), None)
+
+    def test_with_password_file(self):
+        password.os.path.exists = lambda x: True
+        with patch.object(builtins, 'open', mock_open(read_data=b'Testing\n')) as m:
+            self.assertEqual(password._read_password_file(b'/etc/motd'), u'Testing')
 
 
 class TestGenCandidateChars(unittest.TestCase):
@@ -374,15 +281,161 @@ class TestRandomSalt(unittest.TestCase):
             self.assertIn(res_char, expected_salt_candidate_chars)
 
 
+class TestParseContent(unittest.TestCase):
+    def test_empty_password_file(self):
+        plaintext_password, salt = password._parse_content(u'')
+        self.assertEquals(plaintext_password, u'')
+        self.assertEquals(salt, None)
+
+    def test(self):
+        expected_content = u'12345678'
+        file_content = expected_content
+        plaintext_password, salt = password._parse_content(file_content)
+        self.assertEquals(plaintext_password, expected_content)
+        self.assertEquals(salt, None)
+
+    def test_with_salt(self):
+        expected_content = u'12345678 salt=87654321'
+        file_content = expected_content
+        plaintext_password, salt = password._parse_content(file_content)
+        self.assertEquals(plaintext_password, u'12345678')
+        self.assertEquals(salt, u'87654321')
+
+
 class TestFormatContent(unittest.TestCase):
     def test_no_encrypt(self):
-        res = password._format_content(password=u'hunter42',
-                                       salt=u'87654321',
-                                       encrypt=None)
-        self.assertEqual(res, u'hunter42')
+        self.assertEqual(
+                password._format_content(password=u'hunter42',
+                                         salt=u'87654321',
+                                         encrypt=False),
+                u'hunter42 salt=87654321')
+
+    def test_no_encrypt_no_salt(self):
+        self.assertEqual(
+                password._format_content(password=u'hunter42',
+                                         salt=None,
+                                         encrypt=False),
+                u'hunter42')
 
     def test_encrypt(self):
-        res = password._format_content(password=u'hunter42',
-                                       salt=u'87654321',
-                                       encrypt='pbkdf2_sha256')
-        self.assertNotEqual(res, u'hunter42')
+        self.assertEqual(
+                password._format_content(password=u'hunter42',
+                                         salt=u'87654321',
+                                         encrypt='pbkdf2_sha256'),
+                u'hunter42 salt=87654321')
+
+    def test_encrypt_no_salt(self):
+        self.assertRaises(AssertionError, password._format_content,
+                u'hunter42', None, 'pbkdf2_sha256')
+
+
+class TestWritePasswordFile(unittest.TestCase):
+    def setUp(self):
+        self.makedirs_safe = password.makedirs_safe
+        self.os_chmod = password.os.chmod
+        password.makedirs_safe = lambda path, mode: None
+        password.os.chmod = lambda path, mode: None
+
+    def tearDown(self):
+        password.makedirs_safe = self.makedirs_safe
+        password.os.chmod = self.os_chmod
+
+    def test_content_written(self):
+
+        with patch.object(builtins, 'open', mock_open()) as m:
+            password._write_password_file(b'/this/is/a/test/caf\xc3\xa9', u'Testing Café')
+
+            m.assert_called_once_with(b'/this/is/a/test/caf\xc3\xa9', 'wb')
+            m().write.assert_called_once_with(u'Testing Café\n'.encode('utf-8'))
+
+
+class TestLookupModule(unittest.TestCase):
+    def setUp(self):
+        self.fake_loader = DictDataLoader({'/path/to/somewhere':'sdfsdf'})
+        self.password_lookup = password.LookupModule(loader=self.fake_loader)
+        self.os_path_exists = password.os.path.exists
+
+        # Different releases of passlib default to a different number of rounds
+        self.sha256 = passlib.registry.get_crypt_handler('pbkdf2_sha256')
+        sha256_for_tests =  pbkdf2.create_pbkdf2_hash("sha256", 32, 20000)
+        passlib.registry.register_crypt_handler(sha256_for_tests, force=True)
+
+    def tearDown(self):
+        password.os.path.exists = self.os_path_exists
+        passlib.registry.register_crypt_handler(self.sha256, force=True)
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_no_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+
+        results = self.password_lookup.run([u'/path/to/somewhere'],
+                                  None)
+
+        # FIXME: assert something useful
+        for result in results:
+            self.assertEquals(len(result), password.DEFAULT_LENGTH)
+            self.assertIsInstance(result, text_type)
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+
+        results = self.password_lookup.run([u'/path/to/somewhere encrypt=pbkdf2_sha256'],
+                                      None)
+
+        # pbkdf2 format plus hash
+        expected_password_length = 76
+
+        for result in results:
+            self.assertEquals(len(result), expected_password_length)
+            # result should have 5 parts split by '$'
+            str_parts = result.split('$', 5)
+
+            # verify the result is parseable by the passlib
+            crypt_parts = passlib.hash.pbkdf2_sha256.parsehash(result)
+
+            # verify it used the right algo type
+            self.assertEquals(str_parts[1], 'pbkdf2-sha256')
+
+            self.assertEquals(len(str_parts), 5)
+
+            # verify the string and parsehash agree on the number of rounds
+            self.assertEquals(int(str_parts[2]), crypt_parts['rounds'])
+            self.assertIsInstance(result, text_type)
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+        password.os.path.exists = lambda x: True
+
+        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+            results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'],
+                                  None)
+        for result in results:
+            self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_password_already_created_no_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+        password.os.path.exists = lambda x: True
+
+        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+            results = self.password_lookup.run([u'/path/to/somewhere chars=anything'],
+                                  None)
+
+        for result in results:
+            self.assertEqual(result, u'hunter42')
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_only_a(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+
+        results = self.password_lookup.run([u'/path/to/somewhere chars=a'],
+                                  None)
+        for result in results:
+            self.assertEquals(result, u'a' * password.DEFAULT_LENGTH)

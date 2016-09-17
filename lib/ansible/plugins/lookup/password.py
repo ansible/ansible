@@ -23,25 +23,26 @@ import os
 import string
 import random
 
-from string import ascii_letters, digits
-
 from ansible import constants as C
+from ansible.compat.six import text_type
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
-from ansible.compat.six import text_type
 
-from ansible.module_utils._text import to_bytes, to_native, to_text
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
 
+
 def _parse_parameters(term):
-    # Hacky parsing of params
-    # See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156
-    # and the first_found lookup For how we want to fix this later
+    """Hacky parsing of params
+
+    See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156
+    and the first_found lookup For how we want to fix this later
+    """
     first_split = term.split(' ', 1)
     if len(first_split) <= 1:
         # Only a single argument given, therefore it's a path
@@ -85,21 +86,66 @@ def _parse_parameters(term):
 
     return relpath, params
 
-def _random_password(length=DEFAULT_LENGTH, chars=None):
-    '''
-    Return a random password string of length containing only chars.
-    NOTE: this was moved from the old ansible utils code, as nothing
-          else appeared to use it.
-    '''
 
-    # hate how python implements asserts. Our text strategy says that we
-    # should never be passing byte strings around unless the function
-    # explicitly takes a byte string as its argument.  Therefore if we get
-    # a byte string here it means that the problem is in the calling code.
-    # Asserts would be perfect for this if they were disabled by default.
-    # Alas, in python, they're active by default; only turned off if
-    # python is run with optimization.
-    chars = chars or to_text(C.DEFAULT_PASSWORD_CHARS)
+def _read_password_file(b_path):
+    """Read the contents of a password file and return it
+    :arg b_path: A byte string containing the path to the password file
+    :returns: a text string containing the contents of the password file or
+        None if no password file was present.
+    """
+    content = None
+
+    if os.path.exists(b_path):
+        with open(b_path, 'rb') as f:
+            b_content = f.read().rstrip()
+        content = to_text(b_content, errors='surrogate_or_strict')
+
+    return content
+
+
+def _gen_candidate_chars(characters):
+    '''Generate a string containing all valid chars as defined by ``characters``
+
+    :arg characters: A list of character specs. The character specs are
+        shorthand names for sets of characters like 'digits', 'ascii_letters',
+        or 'punctuation' or a string to be included verbatim.
+
+    The values of each char spec can be:
+
+    * a name of an attribute in the 'strings' module ('digits' for example).
+      The value of the attribute will be added to the candidate chars.
+    * a string of characters. If the string isn't an attribute in 'string'
+      module, the string will be directly added to the candidate chars.
+
+    For example::
+
+        characters=['digits', '?|']``
+
+    will match ``string.digits`` and add all ascii digits.  ``'?|'`` will add
+    the question mark and pipe characters directly. Return will be the string::
+
+        u'0123456789?|'
+    '''
+    chars = []
+    for chars_spec in characters:
+        # getattr from string expands things like "ascii_letters" and "digits"
+        # into a set of characters.
+        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
+                            errors='strict'))
+    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
+    return chars
+
+
+def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars
+
+    :kwarg length: The number of characters in the new password.  Defaults to 20.
+    :kwarg chars: The characters to choose from.  The default is all ascii
+        letters, ascii digits, and these symbols ``.,:-_``
+
+    .. note: this was moved from the old ansible utils code, as nothing
+        else appeared to use it.
+    '''
     assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
 
     random_generator = random.SystemRandom()
@@ -111,53 +157,26 @@ def _random_password(length=DEFAULT_LENGTH, chars=None):
 
     return u''.join(password)
 
+
 def _random_salt():
-    salt_chars_spec = to_text(ascii_letters + digits + './', errors='surrogate_or_strict')
-    salt_chars = _gen_candidate_chars([salt_chars_spec])
+    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
+    """
+    # Note passlib salt values must be pure ascii so we can't let the user
+    # configure this
+    salt_chars = _gen_candidate_chars(['ascii_letters', 'digits', './'])
     return _random_password(length=8, chars=salt_chars)
 
-def _gen_candidate_chars(characters):
-    '''Generate a string containing all valid chars as defined by char spec in arg 'characters'
 
-    The input here is a list of character specs. The character specs are shorthand
-    names for sets of characters like 'digits', 'ascii_letters', or 'punctuation'.
+def _parse_content(content):
+    '''parse our password data format into password and salt
 
-    The values of each char spec can be:
-        - a name of an attribute in the 'strings' module ('digits' for example). The
-        value of the attribute will be added to the candidate chars return value.
-        - a string of characters. If the string isn't an attribute in 'string' module, the
-        string will be directly added to the candidate chars.
-
-    characters=['digits', '?|'] will match string.digits and add all ascii digits, and '?|'
-    will add those chars directly. Return will be the string '0123456789?|'
+    :arg content: The data read from the file
+    :returns: password and salt
     '''
-    chars = []
-    for chars_spec in characters:
-        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                            errors='surrogate_or_strict'))
-    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
-    return chars
-
-def _create_password_file_dir(b_path):
-    b_pathdir = os.path.dirname(b_path)
-
-    try:
-        makedirs_safe(b_pathdir, mode=0o700)
-    except OSError as e:
-        msg = "cannot create the path for the password lookup: %s (error was %s)" % \
-            (to_native(b_pathdir), to_native(e))
-        raise AnsibleError(msg)
-
-def _read_password_file(b_path):
-    b_content = open(b_path, 'rb').read().rstrip()
-    return to_text(b_content, errors='surrogate_or_strict')
-
-def _parse_password(content):
-    '''parse 'content' (text_type) into content, password, and salt'''
     password = content
     salt = None
 
-    salt_slug = ' salt='
+    salt_slug = u' salt='
     try:
         sep = content.rindex(salt_slug)
     except ValueError:
@@ -167,48 +186,39 @@ def _parse_password(content):
         salt = password[sep + len(salt_slug):]
         password = content[:sep]
 
-    return content, password, salt
+    return password, salt
+
+
+def _format_content(password, salt, encrypt=True):
+    """Format the password and salt for saving
+    :arg password: the plaintext password to save
+    :arg salt: the salt to use when encrypting a password
+    :arg encrypt: Whether the user requests that this password is encrypted.
+        Note that the password is saved in clear.  Encrypt just tells us if we
+        must save the salt value for idempotence.  Defaults to True.
+    :returns: a text string containing the formatted information
+
+    .. warning:: Passwords are saved in clear.  This is because the playbooks
+        expect to get cleartext passwords from this lookup.
+    """
+    if not encrypt and not salt:
+        return password
+
+    # At this point, the calling code should have assured us that there is a salt value.
+    assert salt, '_format_content was called with encryption requested but no salt value'
+
+    return u'%s salt=%s' % (password, salt)
+
 
 def _write_password_file(b_path, content):
+    b_pathdir = os.path.dirname(b_path)
+    makedirs_safe(b_pathdir, mode=0o700)
+
     with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
         b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
         f.write(b_content)
 
-def _format_content(password, salt, encrypt):
-    if not encrypt:
-        return password
-
-    return u'%s salt=%s' % (password, salt)
-
-def _read_or_create_password_file_dir(b_path):
-    salt = None
-    plaintext_password = None
-    content = None
-
-    if os.path.exists(b_path):
-        file_content = _read_password_file(b_path)
-        content, plaintext_password, salt = _parse_password(file_content)
-    else:
-        _create_password_file_dir(b_path)
-
-    return content, plaintext_password, salt
-
-def _update_content(plaintext_password, salt, params):
-    if not salt:
-        salt = _random_salt()
-
-    # An empty string is a poor but valid plaintext_password
-    if plaintext_password is None:
-        chars = _gen_candidate_chars(params['chars'])
-        plaintext_password = _random_password(length=params['length'],
-                                              chars=chars)
-
-    content = _format_content(password=plaintext_password,
-                              salt=salt,
-                              encrypt=params['encrypt'])
-
-    return content, plaintext_password, salt
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
@@ -218,18 +228,28 @@ class LookupModule(LookupBase):
             relpath, params = _parse_parameters(term)
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
+            chars = _gen_candidate_chars(params['chars'])
 
-            # get password or create it if file doesn't exist
-            content, plaintext_password, salt = _read_or_create_password_file_dir(b_path)
-            content, plaintext_password, salt = _update_content(plaintext_password, salt, params)
+            changed = False
+            content = _read_password_file(b_path)
+            if content is None:
+                plaintext_password = _random_password(params['length'], chars)
+                salt = None
+                changed = True
+            else:
+                plaintext_password, salt = _parse_content(content)
 
-            # save it
-            _write_password_file(b_path, content)
+            if params['encrypt'] and not salt:
+                changed = True
+                salt = _random_salt()
+
+            if changed:
+                content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
+                _write_password_file(b_path, content)
 
             if params['encrypt']:
-                b_password = do_encrypt(plaintext_password, params['encrypt'],
-                                       salt=to_bytes(salt, errors='surrogate_or_strict'))
-                password = to_text(b_password, errors='surrogate_or_strict')
+                password = do_encrypt(plaintext_password, params['encrypt'],
+                                      salt=to_bytes(salt, encoding='ascii', errors='strict'))
                 ret.append(password)
             else:
                 ret.append(plaintext_password)
