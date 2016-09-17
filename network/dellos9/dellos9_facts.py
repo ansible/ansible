@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -17,7 +21,7 @@
 #
 DOCUMENTATION = """
 ---
-module: dnos9_facts
+module: dellos9_facts
 version_added: "2.2"
 author: "Dhivya P (@dhivyap)"
 short_description: Collect facts from remote devices running Dell OS9
@@ -43,16 +47,16 @@ options:
 
 EXAMPLES = """
 # Collect all facts from the device
-- dnos9_facts:
+- dellos9_facts:
     gather_subset: all
 
 # Collect only the config and default facts
-- dnos9_facts:
+- dellos9_facts:
     gather_subset:
       - config
 
 # Do not collect hardware facts
-- dnos9_facts:
+- dellos9_facts:
     gather_subset:
       - "!hardware"
 """
@@ -128,7 +132,7 @@ import itertools
 
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dnos9
+import ansible.module_utils.dellos9
 
 
 class FactsBase(object):

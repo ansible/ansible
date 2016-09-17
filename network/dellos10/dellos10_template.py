@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -17,9 +21,9 @@
 #
 DOCUMENTATION = """
 ---
-module: dnos10_template
+module: dellos10_template
 version_added: "2.2"
-author: "Senthil Kumar Ganesan (@skg_net)"
+author: "Senthil Kumar Ganesan (@skg-net)"
 short_description: Manage Dell OS10 device configurations over SSH.
 description:
   - Manages Dell OS10 network device configurations over SSH.  This module
@@ -44,7 +48,7 @@ options:
         current device running-config.  When set to true, this will
         cause the module to push the contents of I(src) into the device
         without first checking if already configured. This argument is
-        mutually exclusive with O(config).
+        mutually exclusive with I(config).
     required: false
     default: false
     choices: [ "true", "false" ]
@@ -54,7 +58,7 @@ options:
         the running-config from the node prior to making any changes.
         The backup file will be written to backup_{{ hostname }} in
         the root of the playbook directory. This argument is
-        mutually exclusive with O(config).
+        mutually exclusive with I(config).
 
     required: false
     default: false
@@ -68,7 +72,7 @@ options:
         every task.  The I(config) argument allows the implementer to
         pass in the configuration to use as the base config for
         comparison. This argument is mutually exclusive with
-        O(force) and O(backup).
+        I(force) and I(backup).
 
     required: false
     default: null
@@ -76,20 +80,20 @@ options:
 
 EXAMPLES = """
 - name: push a configuration onto the device
-  dnos10_template:
+  dellos10_template:
     host: hostname
     username: foo
     src: config.j2
 
 - name: forceable push a configuration onto the device
-  dnos10_template:
+  dellos10_template:
     host: hostname
     username: foo
     src: config.j2
     force: yes
 
 - name: provide the base configuration for comparison
-  dnos10_template:
+  dellos10_template:
     host: hostname
     username: foo
     src: candidate_config.txt
@@ -117,7 +121,7 @@ responses:
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dnos10
+import ansible.module_utils.dellos10
 
 
 def get_config(module):

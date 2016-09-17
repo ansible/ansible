@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,16 +22,16 @@
 
 DOCUMENTATION = """
 ---
-module: dnos10_config
+module: dellos6_config
 version_added: "2.2"
-author: "Senthil Kumar Ganesan (@skg_net)"
-short_description: Manage Dell OS10 configuration sections
+author: "Abirami N(@abirami-n)"
+short_description: Manage Dell OS6 configuration sections
 description:
-  - Dell OS10 configurations use a simple block indent file syntax
+  - Dell OS6 configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
-    an implementation for working with Dell OS10 configuration sections in
+    an implementation for working with Dell OS6 configuration sections in
     a deterministic way.
-extends_documentation_fragment: dellos10
+extends_documentation_fragment: dellos6
 options:
   lines:
     description:
@@ -119,7 +123,7 @@ options:
     choices: ['yes', 'no']
   config:
     description:
-      - The C(config) argument allows the playbook desginer to supply
+      - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
@@ -138,28 +142,28 @@ options:
 """
 
 EXAMPLES = """
-- dnos10_config:
+- dellos6_config:
     lines: ['hostname {{ inventory_hostname }}']
     provider: "{{ cli }}"
 
-- dnos10_config:
+- dellos6_config:
     lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-      - 50 permit ip host 5.5.5.5 any log
+      - 10 permit ip 1.1.1.1 any log
+      - 20 permit ip 2.2.2.2 any log
+      - 30 permit ip 3.3.3.3 any log
+      - 40 permit ip 4.4.4.4 any log
+      - 50 permit ip  5.5.5.5 any log
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     match: exact
     provider: "{{ cli }}"
 
-- dnos10_config:
+- dellos6_config:
     lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
+      - 10 permit ip 1.1.1.1 any log
+      - 20 permit ip 2.2.2.2 any log
+      - 30 permit ip 3.3.3.3 any log
+      - 40 permit ip 4.4.4.4 any log
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     replace: block
@@ -176,21 +180,21 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 
 saved:
-  description: Returns whether the configuration is saved to the startup 
+  description: Returns whether the configuration is saved to the startup
                configuration or not.
-  retured: when not check_mode
+  returned: when not check_mode
   type: bool
   sample: True
 
 """
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.netcfg import NetworkConfig, dumps, ConfigLine
 from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.dnos10 import get_config, get_sublevel_config 
+from ansible.module_utils.dellos6 import get_config
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -201,9 +205,22 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+def get_contents(other,module):
+    contents =list()
+ 
+    parent = ''.join(module.params['parents'])
+    start = False
+    for item in other.items:
+        if item.text == parent:
+                start = True
+        elif item.text != 'exit' and start:
+                contents.append(item.text)
+        elif item.text == 'exit' and start:
+                start = False
+                break
+    return contents
 
 def main():
-
     argument_spec = dict(
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
@@ -216,11 +233,10 @@ def main():
         match=dict(default='line',
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
-
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
-        backup =dict(type='bool', default=False)
+        backup=dict(type='bool', default=False)
     )
 
     mutually_exclusive = [('lines', 'src')]
@@ -234,47 +250,45 @@ def main():
 
     match = module.params['match']
     replace = module.params['replace']
+    before = module.params['before']
     result = dict(changed=False, saved=False)
-
     candidate = get_candidate(module)
 
-    if match != 'none':
+    if module.params['match'] != 'none':
         config = get_config(module)
         if parents:
-            contents = get_sublevel_config(config, module)
-            config = NetworkConfig(contents=contents, indent=1)
+                con = get_contents(config,module)
+                config = NetworkConfig(indent=1)
+                config.add(con,parents=module.params['parents'])
         configobjs = candidate.difference(config, match=match, replace=replace)
-
     else:
         configobjs = candidate.items
 
     if module.params['backup']:
         result['__backup__'] = module.cli('show running-config')[0]
-
     commands = list()
     if configobjs:
         commands = dumps(configobjs, 'commands')
         commands = commands.split('\n')
-
         if module.params['before']:
-            commands[:0] = module.params['before']
-
+            commands[:0] = before
         if module.params['after']:
             commands.extend(module.params['after'])
-
         if not module.check_mode and module.params['update'] == 'merge':
             response = module.config.load_config(commands)
             result['responses'] = response
-
+            
             if module.params['save']:
                 module.config.save_config()
                 result['saved'] = True
+
 
         result['changed'] = True
 
     result['updates'] = commands
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
