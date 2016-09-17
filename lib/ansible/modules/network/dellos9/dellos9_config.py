@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,7 +22,7 @@
 
 DOCUMENTATION = """
 ---
-module: dnos9_config
+module: dellos9_config
 version_added: "2.2"
 author: "Dhivya P (@dhivyap)"
 short_description: Manage Dell OS9 configuration sections
@@ -138,11 +142,11 @@ options:
 """
 
 EXAMPLES = """
-- dnos9_config:
+- dellos9_config:
     lines: ['hostname {{ inventory_hostname }}']
     provider: "{{ cli }}"
 
-- dnos9_config:
+- dellos9_config:
     lines:
       - 10 permit ip host 1.1.1.1 any log
       - 20 permit ip host 2.2.2.2 any log
@@ -154,7 +158,7 @@ EXAMPLES = """
     match: exact
     provider: "{{ cli }}"
 
-- dnos9_config:
+- dellos9_config:
     lines:
       - 10 permit ip host 1.1.1.1 any log
       - 20 permit ip host 2.2.2.2 any log
@@ -190,7 +194,7 @@ saved:
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.dnos9 import get_config, get_sublevel_config
+from ansible.module_utils.dellos9 import get_config, get_sublevel_config
 
 
 def get_candidate(module):

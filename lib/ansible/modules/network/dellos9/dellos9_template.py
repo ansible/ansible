@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -17,7 +21,7 @@
 #
 DOCUMENTATION = """
 ---
-module: dnos9_template
+module: dellos9_template
 version_added: "2.2"
 author: "Dhivya P (@dhivyap)"
 short_description: Manage Dell OS9 device configurations over SSH.
@@ -76,20 +80,20 @@ options:
 
 EXAMPLES = """
 - name: push a configuration onto the device
-  dnos9_template:
+  dellos9_template:
     host: hostname
     username: foo
     src: config.j2
 
 - name: forceable push a configuration onto the device
-  dnos9_template:
+  dellos9_template:
     host: hostname
     username: foo
     src: config.j2
     force: yes
 
 - name: provide the base configuration for comparison
-  dnos9_template:
+  dellos9_template:
     host: hostname
     username: foo
     src: candidate_config.txt
@@ -117,7 +121,7 @@ responses:
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dnos9
+import ansible.module_utils.dellos9
 
 
 def get_config(module):
