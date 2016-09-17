@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
         searchpath = [working_path]
         if self._task._role is not None:
             searchpath.append(self._task._role._role_path)
-            dep_chain = self._task._block.get_dep_chain()
+            dep_chain = self._task._block.get_dep_chain() if hasattr(self._task, "_block:") else None
             if dep_chain is not None:
                 for role in dep_chain:
                     searchpath.append(role._role_path)
