@@ -51,6 +51,7 @@ TESTSETS = [
         "distribution_release": "Core",
         "distribution": "CentOS",
         "distribution_major_version": "7",
+        "os_family": "RedHat",
         "distribution_version": "7.2.1511"
     }
 },
@@ -70,6 +71,7 @@ TESTSETS = [
         "distribution_release": "Final",
         "distribution": "CentOS",
         "distribution_major_version": "6",
+        "os_family": "RedHat",
         "distribution_version": "6.7"
     }
 },
@@ -89,6 +91,7 @@ TESTSETS = [
         "distribution_release": "Maipo",
         "distribution": "RedHat",
         "distribution_major_version": "7",
+        "os_family": "RedHat",
         "distribution_version": "7.2"
     }
 },
@@ -108,6 +111,7 @@ TESTSETS = [
         "distribution_release": "Santiago",
         "distribution": "RedHat",
         "distribution_major_version": "6",
+        "os_family": "RedHat",
         "distribution_version": "6.7"
     }
 },
@@ -139,6 +143,7 @@ CODENAME = Malachite
             "distribution": "openSUSE Leap",
             "distribution_major_version": "42",
             "distribution_release": "x86_64",
+            "os_family": "Suse",
             "distribution_version": "42.1",
         }
     },
@@ -164,6 +169,7 @@ ID_LIKE="suse"
         'result': {'distribution': u'openSUSE',
                    'distribution_major_version': u'13',
                    'distribution_release': u'Harlequin',
+                   'os_family': u'Suse',
                    'distribution_version': u'13.2'}
     },
     { # see https://github.com/ansible/ansible/issues/14837
@@ -180,6 +186,7 @@ PATCHLEVEL = 3
             "distribution": "SLES",
             "distribution_major_version": "11",
             "distribution_release": "3",
+            "os_family": "Suse",
             "distribution_version": "11.3",
         }
     },
@@ -206,6 +213,7 @@ CPE_NAME="cpe:/o:suse:sles:11:4"
             "distribution": "SLES",
             "distribution_major_version": "11",
             "distribution_release": "4",
+            "os_family": "Suse",
             "distribution_version": "11.4",
         }
     },
@@ -234,6 +242,7 @@ CPE_NAME="cpe:/o:suse:sles:12"
             "distribution": "SLES",
             "distribution_major_version": "12",
             "distribution_release": "0",
+            "os_family": "Suse",
             "distribution_version": "12",
         }
     },
@@ -263,6 +272,7 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
             "distribution": "SLES",
             "distribution_major_version": "12",
             "distribution_release": "1",
+            "os_family": "Suse",
             "distribution_version": "12.1",
         }
     },
@@ -287,6 +297,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
             "distribution": "Debian",
             "distribution_major_version": "stretch/sid",
             "distribution_release": "NA",
+            "os_family": "Debian",
             "distribution_version": "stretch/sid",
         }
     },
@@ -306,6 +317,7 @@ BUG_REPORT_URL="http://bugs.debian.org/"
         'result': {'distribution': u'Debian',
                    'distribution_major_version': u'7',
                    'distribution_release': u'wheezy',
+                   "os_family": "Debian",
                    'distribution_version': u'7.9'}
     },
     {
@@ -323,6 +335,7 @@ BUG_REPORT_URL="http://bugs.debian.org/"
             "distribution_release": "xenial",
             "distribution": "Ubuntu",
             "distribution_major_version": "16",
+            "os_family": "Debian",
             "distribution_version": "16.04"
         }
     },
@@ -347,6 +360,7 @@ BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
         'result': {'distribution': u'Ubuntu',
                    'distribution_major_version': u'14',
                    'distribution_release': u'trusty',
+                   "os_family": "Debian",
                    'distribution_version': u'14.04'}
     },
     {
@@ -367,6 +381,7 @@ VERSION_ID="12.04"
         'result': {'distribution': u'Ubuntu',
                    'distribution_major_version': u'12',
                    'distribution_release': u'precise',
+                   "os_family": "Debian",
                    'distribution_version': u'12.04'}
     },
     {
@@ -404,6 +419,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "SmartOS 20160330T234717Z x86_64",
             "distribution": "SmartOS",
+            "os_family": "Solaris",
             "distribution_version": "joyent_20160330T234717Z"
         },
         "platform.dist": [
@@ -422,6 +438,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "SmartOS x86_64",
             "distribution": "SmartOS",
+            "os_family": "Solaris",
             "distribution_version": "14.3.0"
         },
         "platform.dist": [
@@ -441,6 +458,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "OpenIndiana Development oi_151.1.9 X86 (powered by illumos)",
             "distribution": "OpenIndiana",
+            "os_family": "Solaris",
             "distribution_version": "oi_151a9"
         },
         "platform.dist": [
@@ -459,6 +477,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "OmniOS v11 r151012",
             "distribution": "OmniOS",
+            "os_family": "Solaris",
             "distribution_version": "r151012"
         },
         "platform.dist": [
@@ -477,6 +496,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "Open Storage Appliance v3.1.6",
             "distribution": "Nexenta",
+            "os_family": "Solaris",
             "distribution_version": "3.1.6"
         },
         "platform.dist": [
@@ -495,6 +515,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "Open Storage Appliance 4.0.3-FP2",
             "distribution": "Nexenta",
+            "os_family": "Solaris",
             "distribution_version": "4.0.3-FP2"
         },
         "platform.dist": [
@@ -513,6 +534,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
+            "os_family": "Solaris",
             "distribution_version": "10"
         },
         "platform.dist": [
@@ -531,6 +553,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
+            "os_family": "Solaris",
             "distribution_version": "11"
         },
         "platform.dist": [
@@ -558,6 +581,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     "result": {
         "distribution_release": "Oracle Solaris 11.3 X86",
         "distribution": "Solaris",
+        "os_family": "Solaris",
         "distribution_version": "11.3"
     }
 },
@@ -576,6 +600,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     "result": {
         "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
         "distribution": "Solaris",
+        "os_family": "Solaris",
         "distribution_version": "10"
     }
 },
@@ -596,6 +621,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "distribution_release": "Twenty Two",
         "distribution": "Fedora",
         "distribution_major_version": "22",
+        "os_family": "RedHat",
         "distribution_version": "22"
     }
 },
@@ -615,6 +641,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "distribution_release": "Rawhide",
         "distribution": "Fedora",
         "distribution_major_version": "25",
+        "os_family": "RedHat",
         "distribution_version": "25"
     }
 },
@@ -632,7 +659,7 @@ def test_distribution_version():
       * those should be complete and also include "irrelevant" files that might be mistaken as coming from other distributions
       * all files that are not listed here are assumed to not exist at all
     * the output of pythons platform.dist()
-    * results for the ansible variables distribution*
+    * results for the ansible variables distribution* and os_family
     """
 
     from ansible.module_utils import basic
