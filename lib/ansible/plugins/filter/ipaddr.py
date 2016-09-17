@@ -191,6 +191,59 @@ def _revdns_query(v):
 def _size_query(v):
     return v.size
 
+def _slack_query(v, value, alias, hwaddr = None, prefix = None, ignore_rfc = False):
+    ''' Get the SLAAC address within given network
+    prefix(bool): include the prefix in the output (default: include if included the original input)
+    ignore_rfc(bool): ignore the RFC 4862 5.5.3 and do not enforce a prefixlen of 64
+    '''
+    # macaddr is required
+    if hwaddr is None:
+        raise errors.AnsibleFilterError(alias + ': expecting non empty keyword argument hwaddr')
+    try:
+        mac = macaddr(hwaddr, alias = alias)
+        eui = netaddr.EUI(mac)
+    except Exception as e:
+        raise errors.AnsibleFilterError(alias + ': invalid hwaddr: %s' % hwaddr)
+
+    try:
+        # SLAAC is only supported on IPv6
+        if v.version != 6:
+            return False
+    except:
+        return False
+
+    # Determine if the prefix should be included in the output (address/prefix vs address)
+    if prefix is None:
+        try:
+            raw_address, raw_prefix = value.split('/')
+            raw_prefix = int(raw_prefix)
+            prefix = v.prefixlen == raw_prefix
+        except:
+            prefix = False
+
+    # Require RFC 4862 5.5.3
+    if not ignore_rfc and v.prefixlen != 64:
+        # Support addresses without network mask
+        if v.prefixlen != 128:
+            return False
+
+    # Save original prefix length
+    if ignore_rfc:
+        org_prefixlen = v.prefixlen
+    else:
+        org_prefixlen = 64
+
+    # Always cut off after 64 bits to ensure a well defined behaviour
+    v.prefixlen = 64
+    ret = eui.ipv6(v.network) # netaddr.IPAddress
+
+    # Convert to IPNetwork if the prefix should be included
+    if prefix:
+        ret = netaddr.IPNetwork(ret)
+        ret.prefixlen = org_prefixlen
+
+    return str(ret)
+
 def _subnet_query(v):
     return str(v.cidr)
 
@@ -259,7 +312,7 @@ def _win_query(v):
 
 # ---- IP address and network filters ----
 
-def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
+def ipaddr(value, query = '', version = False, alias = 'ipaddr', **kwargs):
     ''' Check if string is an IP address or network and filter it '''
 
     query_func_extra_args = {
@@ -275,6 +328,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
             'multicast': ('value',),
             'private': ('value',),
             'public': ('value',),
+            'slaac': ('value', 'alias'),
             'unicast': ('value',),
             'wrap': ('vtype', 'value'),
             }
@@ -310,6 +364,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
             'revdns': _revdns_query,
             'router': _gateway_query,
             'size': _size_query,
+            'slaac': _slack_query,
             'subnet': _subnet_query,
             'type': _type_query,
             'unicast': _unicast_query,
@@ -332,8 +387,8 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
 
         _ret = []
         for element in value:
-            if ipaddr(element, str(query), version):
-                    _ret.append(ipaddr(element, str(query), version))
+            if ipaddr(element, str(query), version, alias, **kwargs):
+                _ret.append(ipaddr(element, str(query), version, alias, **kwargs))
 
         if _ret:
             return _ret
@@ -439,7 +494,16 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     for arg in query_func_extra_args.get(query, tuple()):
         extras.append(locals()[arg])
     try:
-        return query_func_map[query](v, *extras)
+        return query_func_map[query](v, *extras, **kwargs)
+    except TypeError as e:
+        message = e.args[0]
+        keyword_error = 'got an unexpected keyword argument \''
+        if message.find(keyword_error) > 0:
+            unknown_keyword = message[message.find(keyword_error) + len(keyword_error):-1]
+
+            raise errors.AnsibleFilterError(alias + ": filter type '%s' received unknown keyword: %s" % (query, unknown_keyword))
+        else:
+            raise
     except KeyError:
         try:
             float(query)
@@ -598,34 +662,18 @@ def nthhost(value, query=''):
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
-#  - prefix | slaac(mac)
-def slaac(value, query = ''):
+#  - ip_addr | slaac(mac)
+def slaac(value, query = '', prefix = None, ignore_rfc = False):
     ''' Get the SLAAC address within given network '''
-    try:
-        vtype = ipaddr(value, 'type')
-        if vtype == 'address':
-            v = ipaddr(value, 'cidr')
-        elif vtype == 'network':
-            v = ipaddr(value, 'subnet')
-
-        if v.version != 6:
-            return False
-
-        value = netaddr.IPNetwork(v)
-    except:
-        return False
-
-    if not query:
-        return False
-
-    try:
-        mac = hwaddr(query, alias = 'slaac')
-
-        eui = netaddr.EUI(mac)
-    except:
-        return False
-
-    return eui.ipv6(value.network)
+    return ipaddr(
+        value = value,
+        query = 'slaac',
+        version = 6,
+        alias = 'slaac',
+        hwaddr = query,
+        prefix = prefix,
+        ignore_rfc = ignore_rfc
+    )
 
 
 # ---- HWaddr / MAC address filters ----
@@ -667,8 +715,8 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 
     return False
 
-def macaddr(value, query = ''):
-    return hwaddr(value, query, alias = 'macaddr')
+def macaddr(value, query = '', alias = 'macaddr'):
+    return hwaddr(value, query, alias = alias)
 
 def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
