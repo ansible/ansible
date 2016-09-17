@@ -27,6 +27,8 @@ matrix:
     - env: TEST=integration PLATFORM=freebsd VERSION=10.3-STABLE
 
     - env: TEST=integration PLATFORM=osx VERSION=10.11
+
+    - env: TEST=sanity INSTALL_DEPS=1
 build:
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
