@@ -1,0 +1,2 @@
+cloud/amazon/_ec2_ami_search.py
+cloud/amazon/ec2_facts.py
