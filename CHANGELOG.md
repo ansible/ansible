@@ -70,6 +70,7 @@ Ansible Changes By Release
   * dellos6_command
   * dellos6_config
   * dellos6_facts
+  * dellos6_template
 - dellos9
   * dellos9_command
   * dellos9_config
