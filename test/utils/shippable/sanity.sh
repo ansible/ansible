@@ -13,7 +13,7 @@ if [ "${install_deps}" != "" ]; then
     pip install git+https://github.com/sivel/ansible-testing.git#egg=ansible_testing
 fi
 
-python2.4 -m compileall -fq   -i                   "test/utils/shippable/sanity-test-python24.txt"
+python2.4 -m compileall -fq   -i                    "test/utils/shippable/sanity-test-python24.txt"
 python2.4 -m compileall -fq   -x "($(printf %s "$(< "test/utils/shippable/sanity-skip-python24.txt"))" | tr '\n' '|')" .
 python2.6 -m compileall -fq .
 python2.7 -m compileall -fq .
