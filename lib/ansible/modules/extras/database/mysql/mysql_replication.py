@@ -184,7 +184,7 @@ def main():
     module = AnsibleModule(
             argument_spec = dict(
             login_user=dict(default=None),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
@@ -192,7 +192,7 @@ def main():
             master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
             master_user=dict(default=None),
-            master_password=dict(default=None),
+            master_password=dict(default=None, no_log=True),
             master_port=dict(default=None, type='int'),
             master_connect_retry=dict(default=None, type='int'),
             master_log_file=dict(default=None),
@@ -206,7 +206,7 @@ def main():
             master_ssl_key=dict(default=None),
             master_ssl_cipher=dict(default=None),
             connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf"),
+            config_file=dict(default="~/.my.cnf", type='path'),
             ssl_cert=dict(default=None),
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
@@ -238,7 +238,6 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
-    config_file = os.path.expanduser(os.path.expandvars(config_file))
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
