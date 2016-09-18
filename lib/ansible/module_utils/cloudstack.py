@@ -68,6 +68,10 @@ class AnsibleCloudStack(object):
 
         self.result = {
             'changed': False,
+            'diff' : {
+                'before': dict(),
+                'after': dict()
+            }
         }
 
         # Common returns, will be merged with self.returns
@@ -148,6 +152,7 @@ class AnsibleCloudStack(object):
 
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
+        result = False
         for key, value in want_dict.iteritems():
 
             # Optionally limit by a list of keys
@@ -171,18 +176,26 @@ class AnsibleCloudStack(object):
                         current_dict[key] = complex(current_dict[key])
 
                     if value != current_dict[key]:
-                        return True
+                        self.result['diff']['before'][key] = current_dict[key]
+                        self.result['diff']['after'][key] = value
+                        result = True
                 else:
                     if self.case_sensitive_keys and key in self.case_sensitive_keys:
                         if value != current_dict[key].encode('utf-8'):
-                            return True
+                            self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                            self.result['diff']['after'][key] = value
+                            result = True
 
                     # Test for diff in case insensitive way
                     elif value.lower() != current_dict[key].encode('utf-8').lower():
-                        return True
+                        self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                        self.result['diff']['after'][key] = value
+                        result = True
             else:
-                return True
-        return False
+                self.result['diff']['before'][key] = None
+                self.result['diff']['after'][key] = value
+                result = True
+        return result
 
 
     def _get_by_key(self, key=None, my_dict=None):
