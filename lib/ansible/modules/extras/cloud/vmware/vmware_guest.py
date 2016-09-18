@@ -156,14 +156,11 @@ HAS_PYVMOMI = False
 try:
     import pyVmomi
     from pyVmomi import vim
-    from pyVim.connect import SmartConnect, Disconnect
     HAS_PYVMOMI = True
 except ImportError:
     pass
 
-import atexit
 import os
-import ssl
 import string
 import time
 
@@ -185,24 +182,7 @@ class PyVmomiHelper(object):
         self.foldermap = None
 
     def smartconnect(self):
-        kwargs = {'host': self.params['hostname'],
-                  'user': self.params['username'],
-                  'pwd': self.params['password']}
-
-        if hasattr(ssl, 'SSLContext'):
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            context.verify_mode = ssl.CERT_NONE
-            kwargs['sslContext'] = context
-
-        # CONNECT TO THE SERVER
-        try:
-            self.si = SmartConnect(**kwargs)
-        except Exception:
-            err = get_exception()
-            self.module.fail_json(msg="Cannot connect to %s: %s" %
-                             (kwargs['host'], err))
-        atexit.register(Disconnect, self.si)
-        self.content = self.si.RetrieveContent()
+        self.content = connect_to_api(self.module)
 
     def _build_folder_tree(self, folder, tree={}, treepath=None):
 
@@ -342,7 +322,7 @@ class PyVmomiHelper(object):
 
             if searchpath:
                 # get all objects for this path ...
-                fObj = self.si.content.searchIndex.FindByInventoryPath(searchpath)
+                fObj = self.content.searchIndex.FindByInventoryPath(searchpath)
                 if fObj:
                     if isinstance(fObj, vim.Datacenter):
                         fObj = fObj.vmFolder
@@ -354,6 +334,7 @@ class PyVmomiHelper(object):
                             break
 
         else:
+            # FIXME - this is unused if folder has a default value
             vmList = get_all_objs(self.content, [vim.VirtualMachine])
             if name_match:
                 if name_match == 'first':
@@ -549,7 +530,6 @@ class PyVmomiHelper(object):
         # FIXME: cluster or hostsystem ... ?
         #cluster = get_obj(self.content, [vim.ClusterComputeResource], self.params['esxi']['hostname'])
         hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
-        resource_pools = get_all_objs(self.content, [vim.ResourcePool])
 
         # set the destination datastore in the relocation spec
         if self.params['disk']:
@@ -563,11 +543,22 @@ class PyVmomiHelper(object):
 
         # create the relocation spec
         relospec = vim.vm.RelocateSpec()
+        relospec.host = hostsystem
         relospec.datastore = datastore
 
-        # fixme ... use the pool from the cluster if given
-        relospec.pool = resource_pools[0]
-        relospec.host = hostsystem
+        # Find the associated resourcepool for the host system
+        #   * FIXME: find resourcepool for clusters too
+        resource_pool = None
+        resource_pools = get_all_objs(self.content, [vim.ResourcePool])
+        for rp in resource_pools.items():
+            if rp[0].parent == hostsystem.parent:
+                resource_pool = rp[0]    
+                break
+        if resource_pool:
+            relospec.pool = resource_pool
+        else:
+            self.module.fail_json(msg="Failed to find a resource group for %s" \
+                                  % hostsystem.name)
 
         clonespec_kwargs = {}
         clonespec_kwargs['location'] = relospec
@@ -667,7 +658,6 @@ class PyVmomiHelper(object):
                 time.sleep(sleep)
                 thispoll += 1
 
-        #import epdb; epdb.st()
         return facts
 
 
@@ -827,7 +817,6 @@ class PyVmomiHelper(object):
 
         return result
 
-
 def get_obj(content, vimtype, name):
     """
     Return an object by name, if name is None the
@@ -845,18 +834,6 @@ def get_obj(content, vimtype, name):
             obj = c
             break
 
-    container.Destroy()
-    return obj
-
-
-def get_all_objs(content, vimtype):
-    """
-    Get all the vsphere objects associated with a given type
-    """
-    obj = []
-    container = content.viewManager.CreateContainerView(content.rootFolder, vimtype, True)
-    for c in container.view:
-        obj.append(c)
     container.Destroy()
     return obj
 
@@ -951,6 +928,7 @@ def main():
                         poweron=poweron, 
                         wait_for_ip=module.params['wait_for_ip_address']
                      )
+            result['changed'] = True
         elif module.params['state'] == 'absent':
             result = {'changed': False, 'failed': False}
         else:
@@ -966,7 +944,7 @@ def main():
         module.exit_json(**result)
 
 
-# this is magic, see lib/ansible/module_common.py
+from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
