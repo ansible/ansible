@@ -105,7 +105,13 @@ class CloudRetry(object):
     """
     # This is the base class of the exception.
     # AWS Example botocore.exceptions.ClientError
-    base_class = None
+    @staticmethod
+    def base_class(error):
+        """ Return the base class of the error you are matching against
+        Args:
+            error (object): The exception itself.
+        """
+        pass
 
     @staticmethod
     def status_code_from_exception(error):

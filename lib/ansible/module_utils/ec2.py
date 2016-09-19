@@ -61,15 +61,28 @@ def _botocore_exception_maybe():
     """
     if HAS_BOTO3:
         return botocore.exceptions.ClientError
-    return type(None)
+    else:
+        return boto.exceptions
 
 
 class AWSRetry(CloudRetry):
-    base_class = _botocore_exception_maybe()
+    @staticmethod
+    def base_class(error):
+        if isinstance(error, botocore.exceptions.ClientError):
+            return botocore.exceptions.ClientError
+
+        elif isinstance(error, boto.compat.StandardError):
+            return boto.compat.StandardError
+
+        else:
+            return type(None)
 
     @staticmethod
     def status_code_from_exception(error):
-        return error.response['Error']['Code']
+        if isinstance(error, botocore.exceptions.ClientError):
+            return error.response['Error']['Code']
+        else:
+            return error.error_code
 
     @staticmethod
     def found(response_code, added_exceptions):
