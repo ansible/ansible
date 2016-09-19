@@ -29,6 +29,8 @@ matrix:
     - env: TEST=integration PLATFORM=osx VERSION=10.11
 
     - env: TEST=sanity INSTALL_DEPS=1
+
+    - env: TEST=docs
 build:
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
