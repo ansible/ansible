@@ -18,7 +18,6 @@
 
 DOCUMENTATION = '''
 ---
-
 module: nxos_portchannel
 version_added: "2.2"
 short_description: Manages port-channel interfaces.
@@ -107,14 +106,14 @@ end_state:
             "Ethernet2/5": {"mode": "on", "status": "D"},
             "Ethernet2/6": {"mode": "on", "status": "D"}},
             "min_links": null, "mode": "on"}
-commands:
-    description: command string sent to the device
+updates:
+    description: command sent to the device
     returned: always
-    type: string
-    sample: "interface Ethernet2/6 ; no channel-group 12 ;
-            interface Ethernet2/5 ; no channel-group 12 ;
-            interface Ethernet2/6 ; channel-group 12 mode on ;
-            interface Ethernet2/5 ; channel-group 12 mode on ;"
+    type: list
+    sample: ["interface Ethernet2/6", "no channel-group 12",
+             "interface Ethernet2/5", "no channel-group 12",
+             "interface Ethernet2/6", "channel-group 12 mode on",
+             "interface Ethernet2/5", "channel-group 12 mode on"
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -330,12 +329,24 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            output = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
     return output
 
 
 def get_cli_body_ssh(command, response, module):
     try:
-        body = [json.loads(response[0])]
+        if isinstance(response[0], str):
+            body = [json.loads(response[0])]
+        else:
+            body = response
     except ValueError:
         module.fail_json(msg='Command does not support JSON output',
                          command=command)
@@ -714,12 +725,13 @@ def main():
             output = execute_config_command(cmds, module)
             changed = True
             end_state, interface_exist = get_existing(module, args)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
     results = {}
     results['proposed'] = proposed
     results['existing'] = existing
     results['end_state'] = end_state
-    results['state'] = state
     results['updates'] = cmds
     results['changed'] = changed
 
