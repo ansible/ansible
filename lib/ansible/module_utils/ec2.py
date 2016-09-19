@@ -61,8 +61,7 @@ def _botocore_exception_maybe():
     """
     if HAS_BOTO3:
         return botocore.exceptions.ClientError
-    else:
-        return boto.exceptions
+    return type(None)
 
 
 class AWSRetry(CloudRetry):
