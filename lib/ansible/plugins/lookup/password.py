@@ -31,6 +31,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
+from ansible.module_utils._text import to_native
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
@@ -95,7 +96,7 @@ class LookupModule(LookupBase):
 
         password = []
         while len(password) < length:
-            new_char = os.urandom(1)
+            new_char = to_native(os.urandom(1))
             if new_char in chars:
                 password.append(new_char)
 
