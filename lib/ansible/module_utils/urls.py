@@ -304,6 +304,16 @@ if not HAS_MATCH_HOSTNAME:
 
     HAS_MATCH_HOSTNAME = True
 
+try:
+    from socket import create_connection
+except ImportError:
+    # Just a graceful fallback for py < 2.6, implementing old behaviour.
+    # Wouldn't work with IPv6, but it is unlikely that python 2.4 could be met
+    # on IPv6-only machine.
+    def create_connection(address):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(address)
+        return sock
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
 # ca cert, regardless of validity, for Python on Mac OS to use the
@@ -682,11 +692,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             return req
 
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s.connect((proxy_parts.get('hostname'), port))
+                s = create_connection((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
@@ -710,7 +719,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 else:
                     raise ProxyError('Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
-                s.connect((self.hostname, self.port))
+                s = create_connection((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                 elif HAS_URLLIB3_SNI_SUPPORT:
