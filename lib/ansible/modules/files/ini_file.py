@@ -154,8 +154,12 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             if within_section:
                 if state == 'present':
                     # insert missing option line at the end of the section
-                    ini_lines.insert(index, assignment_format % (option, value))
-                    changed = True
+                    for i in range(index, 0, -1):
+                        # search backwards for previous non-blank or non-comment line
+                        if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
+                            ini_lines.insert(i, assignment_format % (option, value))
+                            changed = True
+                            break
                 elif state == 'absent' and not option:
                     # remove the entire section
                     del ini_lines[section_start:index]
