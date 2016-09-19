@@ -192,12 +192,13 @@ saved:
   sample: True
 
 """
-from ansible.module_utils.netcfg import NetworkConfig, dumps, ConfigLine
+from ansible.module_utils.netcfg import dumps
 from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.dellos6 import get_config
+from ansible.module_utils.dnos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
+
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = Dellos6NetworkConfig(indent=0)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -205,22 +206,9 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def get_contents(other,module):
-    contents =list()
- 
-    parent = ''.join(module.params['parents'])
-    start = False
-    for item in other.items:
-        if item.text == parent:
-                start = True
-        elif item.text != 'exit' and start:
-                contents.append(item.text)
-        elif item.text == 'exit' and start:
-                start = False
-                break
-    return contents
 
 def main():
+
     argument_spec = dict(
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
@@ -250,45 +238,44 @@ def main():
 
     match = module.params['match']
     replace = module.params['replace']
-    before = module.params['before']
     result = dict(changed=False, saved=False)
     candidate = get_candidate(module)
 
-    if module.params['match'] != 'none':
+    if match != 'none':
         config = get_config(module)
         if parents:
-                con = get_contents(config,module)
-                config = NetworkConfig(indent=1)
-                config.add(con,parents=module.params['parents'])
+            config = get_sublevel_config(config, module)
         configobjs = candidate.difference(config, match=match, replace=replace)
     else:
         configobjs = candidate.items
 
     if module.params['backup']:
         result['__backup__'] = module.cli('show running-config')[0]
+
     commands = list()
     if configobjs:
         commands = dumps(configobjs, 'commands')
         commands = commands.split('\n')
+
         if module.params['before']:
-            commands[:0] = before
+            commands[:0] = module.params['before']
+
         if module.params['after']:
             commands.extend(module.params['after'])
+
         if not module.check_mode and module.params['update'] == 'merge':
             response = module.config.load_config(commands)
             result['responses'] = response
-            
+
             if module.params['save']:
                 module.config.save_config()
                 result['saved'] = True
-
 
         result['changed'] = True
 
     result['updates'] = commands
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()
