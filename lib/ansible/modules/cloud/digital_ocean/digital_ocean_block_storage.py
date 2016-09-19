@@ -26,7 +26,6 @@ short_description: Create/destroy or attach/detach Block Storage volumes in Digi
 description:
      - Create/destroy Block Storage volume in DigitalOcean, or attach/detach Block Storage volume to a droplet. 
 version_added: "2.2"
-author: "Harnek Sidhu"
 options:
   command:
     description:
