@@ -115,7 +115,6 @@ options:
         the equivalent, set the I(update) argument to C(replace).  This argument
         will be removed in a future release.
     required: false
-    required: true
     choices: ['yes', 'no']
     default: false
   backup:
