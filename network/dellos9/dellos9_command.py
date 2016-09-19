@@ -24,6 +24,7 @@ DOCUMENTATION = """
 ---
 module: dellos9_command
 version_added: "2.2"
+author: "Dhivya P (@dhivyap)"
 short_description: Run commands on remote devices running Dell OS9
 description:
   - Sends arbitrary commands to a Dell OS9 node and returns the results
@@ -83,22 +84,22 @@ tasks:
   - name: run show version on remote devices
     dellos9_command:
       commands: show version
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains OS9
     dellos9_command:
       commands: show version
       wait_for: result[0] contains OS9
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
     dellos9_command:
       commands:
         - show version
         - show interfaces
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 
-  - name: run multiple commands and evalute the output
+  - name: run multiple commands and evaluate the output
     dellos9_command:
       commands:
         - show version
@@ -106,7 +107,7 @@ tasks:
       wait_for:
         - result[0] contains OS9
         - result[1] contains Loopback
-      provider "{{ cli }}"
+      provider: "{{ cli }}"
 """
 
 RETURN = """

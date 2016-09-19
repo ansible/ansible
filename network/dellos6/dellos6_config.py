@@ -194,7 +194,7 @@ saved:
 """
 from ansible.module_utils.netcfg import dumps
 from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.dnos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
+from ansible.module_utils.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
 
 
 def get_candidate(module):
