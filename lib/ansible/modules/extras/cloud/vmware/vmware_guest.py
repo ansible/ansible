@@ -294,7 +294,7 @@ class PyVmomiHelper(object):
         folder_path = None
 
         if uuid:
-            vm = self.si.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
+            vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
 
         elif folder:
 
@@ -532,14 +532,19 @@ class PyVmomiHelper(object):
         hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
 
         # set the destination datastore in the relocation spec
+        datastore_name = None
+        datastore = None
         if self.params['disk']:
-            datastore_name = self.params['disk'][0]['datastore']
-            datastore = get_obj(self.content, [vim.Datastore], datastore_name)
-        else:
+            if 'datastore' in self.params['disk'][0]:
+                datastore_name = self.params['disk'][0]['datastore']
+                datastore = get_obj(self.content, [vim.Datastore], datastore_name)
+        if not datastore:
             # use the template's existing DS
             disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
             datastore = disks[0].backing.datastore
             datastore_name = datastore.name
+        if not datastore:
+            self.module.fail_json(msg="Failed to find a matching datastore")
 
         # create the relocation spec
         relospec = vim.vm.RelocateSpec()
