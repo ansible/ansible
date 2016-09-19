@@ -80,16 +80,16 @@ Target: September 2016
 
   - **Done:** Unify NetworkModules (module_utils/network.py) as much as possible 
   - **Done:** Add support for config diff and replace on supported platforms (2 weeks)
-  - Network facts modules 
   - **Done:** Support for VyOS network operating system
   - **Done:** Add support for RestConf for IOS/XE
-  - Add support for NetConf for IOS/XE
   - **Done:** Support for Dell Networking OS10
   - **Done:** Add support for Nokia SR OS modules
+  - **Done:** Network facts modules (dellos, eos, ios, iosxr, junos, nxos, openswitch, vyos)
+  - **Deferred:** Network facts modules (cumulus, netvisor, sros)
+  - **Deferred:** Add support for NetConf for IOS/XE
   - **Deferred:** (stretch goal) Quagga modules
   - **Deferred:** (stretch goal) Bird modules
   - **Deferred:** (stretch goal) GoBGP modules
-  
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
 
