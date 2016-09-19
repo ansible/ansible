@@ -32,7 +32,7 @@ option_schema = Schema(
 doc_schema = Schema(
     {
         Required('module'): basestring,
-        'short_description': Any(basestring, [basestring]),
+        'short_description': basestring,
         'description': Any(basestring, [basestring]),
         'version_added': Any(basestring, float),
         'author': Any(None, basestring, [basestring]),
