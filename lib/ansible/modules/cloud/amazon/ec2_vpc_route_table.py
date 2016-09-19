@@ -37,6 +37,13 @@ options:
       - "Enable route propagation from virtual gateways specified by ID."
     default: None
     required: false
+  purge_routes:
+    version_added: "2.2"
+    description:
+      - "Purge existing routes that are not found in routes"
+    required: false
+    default: 'true'
+    aliases: []
   route_table_id:
     description:
       - "The ID of the route table to update or delete."
@@ -322,7 +329,7 @@ def index_of_matching_route(route_spec, routes_to_match):
 
 
 def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
-                  check_mode):
+                  check_mode, purge_routes):
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
     for route_spec in route_specs:
@@ -339,13 +346,14 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     # The current logic will leave non-propagated routes using propagating
     # VGWs in place.
     routes_to_delete = []
-    for r in routes_to_match:
-        if r.gateway_id:
-            if r.gateway_id != 'local' and not r.gateway_id.startswith('vpce-'):
-                if not propagating_vgw_ids or r.gateway_id not in propagating_vgw_ids:
-                    routes_to_delete.append(r)
-        else:
-            routes_to_delete.append(r)
+    if purge_routes:
+        for r in routes_to_match:
+            if r.gateway_id:
+                if r.gateway_id != 'local' and not r.gateway_id.startswith('vpce-'):
+                    if not propagating_vgw_ids or r.gateway_id not in propagating_vgw_ids:
+                        routes_to_delete.append(r)
+            else:
+                routes_to_delete.append(r)
 
     changed = bool(routes_to_delete or route_specs_to_create)
     if changed:
@@ -506,6 +514,7 @@ def ensure_route_table_present(connection, module):
 
     lookup = module.params.get('lookup')
     propagating_vgw_ids = module.params.get('propagating_vgw_ids')
+    purge_routes = module.params.get('purge_routes')
     route_table_id = module.params.get('route_table_id')
     subnets = module.params.get('subnets')
     tags = module.params.get('tags')
@@ -547,7 +556,7 @@ def ensure_route_table_present(connection, module):
 
     if routes is not None:
         try:
-            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, module.check_mode)
+            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, module.check_mode, purge_routes)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             module.fail_json(msg=e.message)
@@ -591,6 +600,7 @@ def main():
         dict(
             lookup = dict(default='tag', required=False, choices=['tag', 'id']),
             propagating_vgw_ids = dict(default=None, required=False, type='list'),
+            purge_routes=dict(default=True, required=False, type='bool'),
             route_table_id = dict(default=None, required=False),
             routes = dict(default=[], required=False, type='list'),
             state = dict(default='present', choices=['present', 'absent']),
