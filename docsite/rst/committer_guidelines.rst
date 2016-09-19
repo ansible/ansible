@@ -42,6 +42,7 @@ General Rules
 Individuals with direct commit access to ansible/ansible (+core, + extras) are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement. 
 
 * Don’t
+
   - Commit directly.
   - Merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
   - Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
@@ -51,6 +52,7 @@ Individuals with direct commit access to ansible/ansible (+core, + extras) are e
   - Forget to keep it simple. Complexity breeds all kinds of problems.
 
 * Do
+
   - Squash, avoid merges whenever possible, use github's squash commits or cherry pick if needed (bisect thanks you).
   - Be active. Committers who have no activity on the project (through merges, triage, commits, etc.) will have their permissions suspended.
   - Consider backwards compatibility (goes back to "don’t break existing playbooks").
