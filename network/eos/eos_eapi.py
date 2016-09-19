@@ -182,9 +182,11 @@ urls:
 import re
 import time
 
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.eos import NetworkModule, NetworkError
+import ansible.module_utils.eos
+
 from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.netcfg import NetworkConfig, dumps
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 
@@ -194,7 +196,24 @@ def invoke(name, *args, **kwargs):
     if func:
         return func(*args, **kwargs)
 
-def started(module, commands):
+def get_instance(module):
+    try:
+        resp = module.cli('show management api http-commands', 'json')
+        return dict(
+            http=resp[0]['httpServer']['configured'],
+            http_port=resp[0]['httpServer']['port'],
+            https=resp[0]['httpsServer']['configured'],
+            https_port=resp[0]['httpsServer']['port'],
+            local_http=resp[0]['localHttpServer']['configured'],
+            local_http_port=resp[0]['localHttpServer']['port'],
+            socket=resp[0]['unixSocketServer']['configured'],
+            vrf=resp[0]['vrf']
+        )
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
+
+def started(module, instance, commands):
     commands.append('no shutdown')
     setters = set()
     for key, value in module.argument_spec.iteritems():
@@ -202,45 +221,45 @@ def started(module, commands):
             setter = value.get('setter') or 'set_%s' % key
             if setter not in setters:
                 setters.add(setter)
-            invoke(setter, module, commands)
+            invoke(setter, module, instance, commands)
 
-def stopped(module, commands):
+def stopped(module, instance, commands):
     commands.append('shutdown')
 
-def set_protocol_http(module, commands):
+def set_protocol_http(module, instance, commands):
     port = module.params['http_port']
     if not 1 <= port <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
-    elif module.params['http'] is True:
+    elif any((module.params['http'], instance['http'])):
         commands.append('protocol http port %s' % port)
     elif module.params['http'] is False:
         commands.append('no protocol http')
 
-def set_protocol_https(module, commands):
+def set_protocol_https(module, instance, commands):
     port = module.params['https_port']
     if not 1 <= port <= 65535:
         module.fail_json(msg='https_port must be between 1 and 65535')
-    elif module.params['https'] is True:
+    elif any((module.params['https'], instance['https'])):
         commands.append('protocol https port %s' % port)
     elif module.params['https'] is False:
         commands.append('no protocol https')
 
-def set_local_http(module, commands):
+def set_local_http(module, instance, commands):
     port = module.params['local_http_port']
     if not 1 <= port <= 65535:
         module.fail_json(msg='local_http_port must be between 1 and 65535')
-    elif module.params['local_http'] is True:
+    elif any((module.params['local_http'], instance['local_http'])):
         commands.append('protocol http localhost port %s' % port)
     elif module.params['local_http'] is False:
         commands.append('no protocol http localhost port 8080')
 
-def set_socket(module, commands):
-    if module.params['socket'] is True:
+def set_socket(module, instance, commands):
+    if any((module.params['socket'], instance['socket'])):
         commands.append('protocol unix-socket')
     elif module.params['socket'] is False:
         commands.append('no protocol unix-socket')
 
-def set_vrf(module, commands):
+def set_vrf(module, instance, commands):
     vrf = module.params['vrf']
     if vrf != 'default':
         resp = module.cli(['show vrf'])
@@ -256,14 +275,14 @@ def get_config(module):
     config = NetworkConfig(indent=3, contents=contents[0])
     return config
 
-def load_config(module, commands, result):
+def load_config(module, instance, commands, result):
     commit = not module.check_mode
     diff = module.config.load_config(commands, commit=commit)
     if diff:
         result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
-def load(module, commands, result):
+def load(module, instance, commands, result):
     candidate = NetworkConfig(indent=3)
     candidate.add(commands, parents=['management api http-commands'])
 
@@ -273,7 +292,7 @@ def load(module, commands, result):
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
         result['updates'] = commands
-        load_config(module, commands, result)
+        load_config(module, instance, commands, result)
 
 def clean_result(result):
     # strip out any keys that have two leading and two trailing
@@ -326,15 +345,15 @@ def main():
 
     state = module.params['state']
 
-    warnings = list()
-
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False)
 
     commands = list()
-    invoke(state, module, commands)
+    instance = get_instance(module)
+
+    invoke(state, module, instance, commands)
 
     try:
-        load(module, commands, result)
+        load(module, instance, commands, result)
     except NetworkError:
         exc = get_exception()
         module.fail_json(msg=str(exc), **exc.kwargs)
