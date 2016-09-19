@@ -180,21 +180,21 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 
 saved:
-  description: Returns whether the configuration is saved to the startup 
+  description: Returns whether the configuration is saved to the startup
                configuration or not.
-  retured: when not check_mode
+  returned: when not check_mode
   type: bool
   sample: True
 
 """
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.dellos10 import get_config, get_sublevel_config 
+from ansible.module_utils.dellos10 import get_config, get_sublevel_config
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -220,11 +220,10 @@ def main():
         match=dict(default='line',
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
-
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
-        backup =dict(type='bool', default=False)
+        backup=dict(type='bool', default=False)
     )
 
     mutually_exclusive = [('lines', 'src')]
