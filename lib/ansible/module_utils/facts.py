@@ -1891,6 +1891,7 @@ class AIX(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_vgs_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -1948,6 +1949,57 @@ class AIX(Hardware):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         self.facts['firmware_version'] = data[1].strip('IBM,')
+        lsconf_path = self.module.get_bin_path("lsconf")
+        if lsconf_path:
+            rc, out, err = self.module.run_command(lsconf_path)
+            if rc == 0 and out:
+                for line in out.splitlines():
+                    data = line.split(':')
+                    if 'Machine Serial Number' in line:
+                        self.facts['product_serial'] = data[1].strip()
+                    if 'LPAR Info' in line:
+                        self.facts['lpar_info'] = data[1].strip()
+                    if 'System Model' in line:
+                        self.facts['product_name'] = data[1].strip()
+    def get_vgs_facts(self):
+        """
+        Get vg and pv Facts
+        rootvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk0            active            546         0           00..00..00..00..00
+        hdisk1            active            546         113         00..00..00..21..92
+        realsyncvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk74           active            1999        6           00..00..00..00..06
+        testvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk105          active            999         838         200..39..199..200..200
+        hdisk106          active            999         599         200..00..00..199..200
+        """
+
+        lsvg_path = self.module.get_bin_path("lsvg")
+        xargs_path = self.module.get_bin_path("xargs")
+        cmd = "%s | %s %s -p" % (lsvg_path ,xargs_path,lsvg_path)
+        if lsvg_path and xargs_path:
+            rc, out, err = self.module.run_command(cmd,use_unsafe_shell=True)
+            if rc == 0 and out:
+                self.facts['vgs']= {}
+                for m in re.finditer(r'(\S+):\n.*FREE DISTRIBUTION(\n(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*)+', out):
+                    self.facts['vgs'][m.group(1)] = []
+                    pp_size = 0
+                    cmd = "%s %s" % (lsvg_path,m.group(1))
+                    rc, out, err = self.module.run_command(cmd)
+                    if rc == 0 and out:
+                        pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
+                        for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                            pv_info = { 'pv_name': n.group(1),
+                                        'pv_state': n.group(2),
+                                        'total_pps': n.group(3),
+                                        'free_pps': n.group(4),
+                                        'pp_size': pp_size
+                                      }
+                            self.facts['vgs'][m.group(1)].append(pv_info)
+
 
 class HPUX(Hardware):
     """
