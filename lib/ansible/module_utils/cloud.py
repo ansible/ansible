@@ -48,7 +48,13 @@ class CloudRetry(object):
     """
     # This is the base class of the exception.
     # AWS Example botocore.exceptions.ClientError
-    base_class = None
+    @staticmethod
+    def base_class(error):
+        """ Return the base class of the error you are matching against
+        Args:
+            error (object): The exception itself.
+        """
+        pass
 
     @staticmethod
     def status_code_from_exception(error):
@@ -89,7 +95,8 @@ class CloudRetry(object):
                         return f(*args, **kwargs)
                     except Exception:
                         e = get_exception()
-                        if isinstance(e, cls.base_class):
+                        base_exception_class = cls.base_class(e)
+                        if isinstance(e, base_exception_class):
                             response_code = cls.status_code_from_exception(e)
                             if cls.found(response_code, added_exceptions):
                                 msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
