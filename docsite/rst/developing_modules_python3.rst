@@ -172,21 +172,13 @@ installed on the remote system.  To make use of it, import it like this::
 Compile Test
 ------------
 
-We have travis compiling all modules with various versions of Python to check
+We have Shippable compiling all modules with various versions of Python to check
 that the modules conform to the syntax at those versions.  When you've
-ported a module so that its syntax works with Python-3, we need to modify
-.travis.yml so that the module is included in the syntax check.  Here's the
-relevant section of .travis.yml::
+ported a module so that its syntax works with Python-3, we need to remove it from
+the blacklist so that the module is included in the syntax check.
 
-    env:
-      global:
-        - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
-          cloud/amazon/ec2_ami.py
-          [...]
-          utilities/logic/wait_for.py"
-
-The :envvar:`PY3_EXCLUDE_LIST` environment variable is a blacklist of modules
-which should not be tested (because we know that they are older modules which
+The file `test/utils/shippable/sanity-skip-python3.txt` contains the list of
+modules which should not be tested (because we know that they are older modules which
 have not yet been ported to pass the Python-3 syntax checks.  To get another
 old module to compile with Python-3, remove the entry for it from the list.
 The goal is to have the LIST be empty.
