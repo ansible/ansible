@@ -17,7 +17,7 @@ options:
     description: The block device (disk) where to operate
     required: True
   align:
-    description: Set alignment for newly created partitions, valid alignment types are: none, cylinder, minimal and optimal.
+    description: Set alignment for newly created partitions, valid alignment types are none, cylinder, minimal and optimal.
     choices: ['none', 'cylinder', 'minimal', 'optimal']
     required: False
     default: optimal
