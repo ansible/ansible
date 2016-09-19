@@ -67,6 +67,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
 
 __all__ = ['do_encrypt']
 
@@ -89,7 +90,11 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     else:
         raise AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
-    return result
+    # Hashes from passlib.hash should be represented as ascii strings of hex
+    # digits so this should not traceback.  If it's not representable as such
+    # we need to traceback and then blacklist such algorithms because it may
+    # impact calling code.
+    return to_text(result, errors='strict')
 
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
