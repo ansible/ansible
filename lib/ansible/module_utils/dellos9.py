@@ -123,7 +123,10 @@ class Cli(CliBase):
 
 
     def save_config(self):
-        self.execute(['copy running-config startup-config'])
+        cmdlist = list()
+        cmd = 'copy running-config startup-config'
+        cmdlist.append(Command(cmd, prompt=self.WARNING_PROMPTS_RE, response='yes'))
+        self.execute(cmdlist)
 
 
 Cli = register_transport('cli', default=True)(Cli)
