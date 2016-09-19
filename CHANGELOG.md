@@ -81,6 +81,8 @@ Ansible Changes By Release
   * dellos10_config
   * dellos10_facts
   * dellos10_template
+- eos
+  * eos_facts
 - exoscale:
   * exo_dns_domain
   * exo_dns_record
@@ -112,6 +114,10 @@ Ansible Changes By Release
 - ipmi
   * ipmi_boot
   * ipmi_power
+- ios
+  * ios_facts
+- iosxr
+  * iosxr_facts
 - include_role
 - jenkins
   * jenkins_job
@@ -127,6 +133,68 @@ Ansible Changes By Release
   * netapp_e_facts
   * netapp_e_storage_system
 - netconf_config
+- netvisor
+  * pn_cluster
+  * pn_ospfarea
+  * pn_ospf
+  * pn_show
+  * pn_trunk
+  * pn_vlag
+  * pn_vlan
+  * pn_vrouterbgp
+  * pn_vrouterif
+  * pn_vrouterlbif
+  * pn_vrouter
+- nxos
+  * nxos_aaa_server_host
+  * nxos_aaa_server
+  * nxos_acl_interface
+  * nxos_acl
+  * nxos_bgp_af
+  * nxos_bgp_neighbor_af
+  * nxos_bgp_neighbor
+  * nxos_bgp
+  * nxos_evpn_global
+  * nxos_evpn_vni
+  * nxos_file_c
+  * nxos_gir_profile_management
+  * nxos_gir
+  * nxos_hsrp
+  * nxos_igmp_interface
+  * nxos_igmp
+  * nxos_igmp_snooping
+  * nxos_interface_ospf
+  * nxos_mtu
+  * nxos_ntp_auth
+  * nxos_ntp_options
+  * nxos_ntp
+  * nxos_ospf
+  * nxos_ospf_vrf
+  * nxos_overlay_global
+  * nxos_pim_interface
+  * nxos_pim
+  * nxos_pim_rp_address
+  * nxos_portchannel
+  * nxos_rollback
+  * nxos_smu
+  * nxos_snapshot
+  * nxos_snmp_community
+  * nxos_snmp_contact
+  * nxos_snmp_host
+  * nxos_snmp_location
+  * nxos_snmp_traps
+  * nxos_snmp_user
+  * nxos_static_route
+  * nxos_udld_interface
+  * nxos_udld
+  * nxos_vpc_interface
+  * nxos_vpc
+  * nxos_vrf_af
+  * nxos_vtp_domain
+  * nxos_vtp_password
+  * nxos_vtp_version
+  * nxos_vxlan_vtep
+  * nxos_vxlan_vtep_vni
 - mssql_db
 - ovh_ip_loadbalancing_backend
 - opendj_backendprop
@@ -142,6 +210,10 @@ Ansible Changes By Release
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- sros
+  * sros_command
+  * sros_config
+  * sros_rollback
 - statusio_maintenance
 - systemd
 - telegram
@@ -155,6 +227,10 @@ Ansible Changes By Release
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
+- vyos
+  * vyos_command
+  * vyos_config
+  * vyos_facts
 - wakeonlan
 - windows:
   * win_command
@@ -2619,3 +2695,4 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
+
