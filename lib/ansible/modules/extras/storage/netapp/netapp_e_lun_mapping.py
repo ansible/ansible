@@ -21,8 +21,7 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_lun_mapping
 author: Kevin Hulquest (@hulquest)
-short_description:
-     - Create or Remove LUN Mappings
+short_description: Create or Remove LUN Mappings
 description:
      - Allows for the creation and removal of volume to host mappings for NetApp E-series storage arrays.
 version_added: "2.2"
