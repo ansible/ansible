@@ -1986,7 +1986,10 @@ class AnsibleModule(object):
                         try:
                             os.rename(b_tmp_dest_name, b_dest)
                         except (shutil.Error, OSError, IOError):
-                            self._unsafe_writes(unsafe_writes, b_tmp_dest_name, b_dest, get_exception())
+                            if unsafe_writes:
+                                self._unsafe_writes(b_tmp_dest_name, b_dest, get_exception())
+                            else:
+                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
                     except (shutil.Error, OSError, IOError):
                         self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
                 finally:
@@ -2005,10 +2008,10 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def _unsafe_writes(self, unsafe_writes, src, dest, exception):
+    def _unsafe_writes(self, src, dest, exception):
       # sadly there are some situations where we cannot ensure atomicity, but only if
       # the user insists and we get the appropriate error we update the file unsafely
-      if unsafe_writes and exception.errno == errno.EBUSY:
+      if exception.errno == errno.EBUSY:
           #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
           try:
               try:
