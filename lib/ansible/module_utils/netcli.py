@@ -47,6 +47,11 @@ class FailedConditionsError(Exception):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
 
+class FailedConditionalError(Exception):
+    def __init__(self, msg, failed_conditional):
+        super(FailedConditionalError, self).__init__(msg)
+        self.failed_conditional = failed_conditional
+
 class AddCommandError(Exception):
     def __init__(self, msg, command):
         super(AddCommandError, self).__init__(msg)
@@ -216,7 +221,12 @@ class Conditional(object):
 
     def get_value(self, result):
         if self.encoding in ['json', 'text']:
-            return self.get_json(result)
+            try:
+                return self.get_json(result)
+            except (IndexError, TypeError):
+                msg = 'unable to apply conditional to result'
+                raise FailedConditionalError(msg, self.key)
+
         elif self.encoding == 'xml':
             return self.get_xml(result.get('result'))
 
