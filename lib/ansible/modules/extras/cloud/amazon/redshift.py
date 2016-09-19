@@ -121,11 +121,6 @@ options:
     required: false
     aliases: ['version_upgrade']
     default: null
-  number_of_nodes:
-    description:
-      - number of the nodes the cluster should run
-    required: false
-    default: null
   publicly_accessible:
     description:
       - if the cluster is accessible publicly or not
