@@ -25,9 +25,9 @@ from string import ascii_letters, digits
 
 from ansible.compat.six import string_types
 from ansible.compat.six.moves import configparser
-
-from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
+from ansible.module_utils._text import to_text
+from ansible.parsing.quoting import unquote
 from ansible.utils.path import makedirs_safe
 
 BOOL_TRUE = frozenset([ "true", "t", "y", "1", "yes", "on" ])
@@ -303,8 +303,6 @@ GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBL
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', islist=True)
 
-# characters included in auto-generated passwords
-DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], islist=True )
 
 # colors
@@ -329,6 +327,7 @@ DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, integ
 MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
 MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
+DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
