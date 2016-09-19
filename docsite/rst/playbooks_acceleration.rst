@@ -56,7 +56,7 @@ In order to use accelerated mode, simply add `accelerate: true` to your play::
         - bar
         - baz
 
-If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerated_port` option::
+If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerate_port` option::
 
     ---
 
