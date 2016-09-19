@@ -95,7 +95,6 @@ options:
               keyword 'any'.
         required: false
         default: null
-        default: null
     dest_port_op:
         description:
             - Destination port operands such as eq, neq, gt, lt, range.
