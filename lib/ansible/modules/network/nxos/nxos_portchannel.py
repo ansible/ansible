@@ -113,7 +113,7 @@ updates:
     sample: ["interface Ethernet2/6", "no channel-group 12",
              "interface Ethernet2/5", "no channel-group 12",
              "interface Ethernet2/6", "channel-group 12 mode on",
-             "interface Ethernet2/5", "channel-group 12 mode on"
+             "interface Ethernet2/5", "channel-group 12 mode on"]
 changed:
     description: check to see if a change was made on the device
     returned: always
