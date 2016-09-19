@@ -64,7 +64,7 @@ If you'd like to step down as a maintainer, please submit a PR to the maintainer
 
 ## Useful tools
 * https://ansible.sivel.net/pr/byfile.html -- a full list of all open Pull Requests, organized by file. 
-* https://github.com/sivel/ansible-testing -- these are the tests that run in Travis against all PRs for extras modules, so it's a good idea to run these tests locally first.
+* https://github.com/sivel/ansible-testing -- these are the tests that run on Shippable against all PRs for extras modules, so it's a good idea to run these tests locally first.
 
 ## Other Resources
 
