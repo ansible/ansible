@@ -163,8 +163,7 @@ def _net_query(v):
             return str(v.network) + '/' + str(v.prefixlen)
 
 def _netmask_query(v):
-    if v.size > 1:
-        return str(v.netmask)
+    return str(v.netmask)
 
 def _network_query(v):
     if v.size > 1:
