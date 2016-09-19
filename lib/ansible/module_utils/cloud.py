@@ -124,7 +124,7 @@ class CloudRetry(object):
         pass
 
     @classmethod
-    def _backoff(cls, backoff_strategy):
+    def _backoff(cls, backoff_strategy, added_exceptions=None):
         """ Retry calling the Cloud decorated function using the provided
         backoff strategy.
         Args:
@@ -141,8 +141,8 @@ class CloudRetry(object):
                     except Exception as e:
                         if isinstance(e, cls.base_class):
                             response_code = cls.status_code_from_exception(e)
-                            if cls.found(response_code):
-                                msg = "{0}: Retrying in {1} seconds...".format(str(e), delay)
+                            if cls.found(response_code, added_exceptions):
+                                msg = "{0}: Retrying in {1} seconds...".format(str(e), max_delay)
                                 syslog.syslog(syslog.LOG_INFO, msg)
                                 time.sleep(delay)
                             else:
@@ -158,7 +158,7 @@ class CloudRetry(object):
         return deco
 
     @classmethod
-    def exponential_backoff(cls, retries=10, delay=3, backoff=2, max_delay=60):
+    def exponential_backoff(cls, retries=10, delay=3, backoff=2, max_delay=60, added_exceptions=None):
         """
         Retry calling the Cloud decorated function using an exponential backoff.
 
@@ -174,10 +174,10 @@ class CloudRetry(object):
                 default=60
         """
         return cls._backoff(_exponential_backoff(
-            retries=retries, delay=delay, backoff=backoff, max_delay=max_delay))
+            retries=retries, delay=delay, backoff=backoff, max_delay=max_delay), added_exceptions)
 
     @classmethod
-    def jittered_backoff(cls, retries=10, delay=3, max_delay=60):
+    def jittered_backoff(cls, retries=10, delay=3, max_delay=60, added_exceptions=None):
         """
         Retry calling the Cloud decorated function using a jittered backoff
         strategy. More on this strategy here:
@@ -193,7 +193,7 @@ class CloudRetry(object):
                 default=60
         """
         return cls._backoff(_full_jitter_backoff(
-            retries=retries, delay=delay, max_delay=max_delay))
+            retries=retries, delay=delay, max_delay=max_delay), added_exceptions)
 
     @classmethod
     def backoff(cls, tries=10, delay=3, backoff=1.1):
