@@ -2,13 +2,11 @@
 /cloud/amazon/dynamodb_table.py
 /cloud/amazon/ec2_ami_copy.py
 /cloud/amazon/ec2_customer_gateway.py
-/cloud/amazon/ec2_elb_facts.py
 /cloud/amazon/ec2_eni.py
 /cloud/amazon/ec2_eni_facts.py
 /cloud/amazon/ec2_remote_facts.py
 /cloud/amazon/ec2_snapshot_facts.py
 /cloud/amazon/ec2_vol_facts.py
-/cloud/amazon/ec2_vpc_dhcp_options_facts.py
 /cloud/amazon/ec2_vpc_igw.py
 /cloud/amazon/ec2_vpc_nacl.py
 /cloud/amazon/ec2_vpc_net_facts.py
@@ -24,7 +22,6 @@
 /cloud/amazon/route53_facts.py
 /cloud/amazon/route53_health_check.py
 /cloud/amazon/route53_zone.py
-/cloud/amazon/s3_bucket.py
 /cloud/amazon/s3_lifecycle.py
 /cloud/amazon/s3_logging.py
 /cloud/amazon/sns_topic.py
@@ -77,15 +74,8 @@
 /network/cloudflare_dns.py
 /network/dnsimple.py
 /network/dnsmadeeasy.py
-/network/f5/bigip_facts.py
 /network/f5/bigip_gtm_virtual_server.py
 /network/f5/bigip_gtm_wide_ip.py
-/network/f5/bigip_monitor_http.py
-/network/f5/bigip_monitor_tcp.py
-/network/f5/bigip_node.py
-/network/f5/bigip_pool.py
-/network/f5/bigip_pool_member.py
-/network/f5/bigip_virtual_server.py
 /network/nmcli.py
 /network/openvswitch_bridge.py
 /network/openvswitch_port.py
