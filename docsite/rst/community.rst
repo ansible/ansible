@@ -148,7 +148,7 @@ is a good fit or not, having the discussion on the development list is often a l
 to modify a pull request later.
 
 When submitting patches, be sure to run the unit tests first ``make tests`` and always use, these are the same basic
-tests that will automatically run on Travis when creating the PR. There are more in depth tests in the ``tests/integration``
+tests that will automatically run on Shippable when creating the PR. There are more in depth tests in the ``tests/integration``
 directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are set up
 with tags so you can run subsets, some of the tests require cloud credentials and will only run if they are provided.
 When adding new features or fixing bugs it would be nice to add new tests to avoid regressions. For more information about testing see `test/README.md <https://github.com/ansible/ansible/blob/devel/test/README.md>`_.
