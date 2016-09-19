@@ -34,6 +34,7 @@ notes:
      account."
    - "In order to use api_key, cc, bcc, attachments, from_name, html_body, headers
      you must pip install sendgrid"
+   - "since 2.2 username and password are not required if you supply an api_key"
 requirements:
   - sendgrid python library
 options:
@@ -104,8 +105,6 @@ options:
     required: false
     default: null
 author: "Matt Makai (@makaimc)"
-notes:
-    - since 2.2 username and password are not required if you supply an api_key.
 '''
 
 EXAMPLES = '''
