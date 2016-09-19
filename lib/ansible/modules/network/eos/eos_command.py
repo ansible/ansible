@@ -143,10 +143,15 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+
+import ansible.module_utils.eos
+
 from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.eos import NetworkModule, NetworkError
+from ansible.module_utils.netcli import AddCommandError
+from ansible.module_utils.netcli import FailedConditionsError
+from ansible.module_utils.netcli import FailedConditionalError
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
@@ -182,7 +187,6 @@ def main():
     )
 
     module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
                            supports_check_mode=True)
 
     commands = list(parse_commands(module))
@@ -219,9 +223,12 @@ def main():
     except FailedConditionsError:
         exc = get_exception()
         module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
+    except FailedConditionalError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), failed_conditional=exc.failed_conditional)
     except NetworkError:
         exc = get_exception()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=str(exc), **exc.kwargs)
 
     result = dict(changed=False, stdout=list())
 
