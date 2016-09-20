@@ -31,10 +31,10 @@ extends_documentation_fragment: junos
 options:
   lines:
     description:
-      - The path to the config source.  The source can be either a
-        file with config or a template that will be merged during
-        runtime.  By default the task will search for the source
-        file in role or playbook root folder in templates directory.
+      - This argument takes a list of C(set) or C(delete) configuration
+        lines to push into the remote device.  Each line must start with
+        either C(set) or C(delete).  This argument is mutually exclusive
+        with the I(src) argument.
     required: false
     default: null
   src:
@@ -57,17 +57,6 @@ options:
     required: false
     default: null
     choices: ['xml', 'set', 'text', 'json']
-    version_added: "2.2"
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(replace).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device active configuration.
-    required: false
-    default: merge
-    choices: ['merge', 'replace']
     version_added: "2.2"
   rollback:
     description:
@@ -159,6 +148,10 @@ vars:
   junos_config:
     zeroize: yes
     provider: "{{ netconf }}"
+
+- name: confirm a previous commit
+  junos_config:
+    provider: "{{ netconf }}"
 """
 
 RETURN = """
@@ -168,12 +161,14 @@ backup_path:
   type: path
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
-import re
 import json
 
-from lxml import etree
+from xml.etree import ElementTree
 
-from ansible.module_utils.junos import NetworkModule, NetworkError
+import ansible.module_utils.junos
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
 
 
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -187,9 +182,9 @@ def guess_format(config):
         pass
 
     try:
-        etree.fromstring(config)
+        ElementTree.fromstring(config)
         return 'xml'
-    except etree.XMLSyntaxError:
+    except ElementTree.ParseError:
         pass
 
     if config.startswith('set') or config.startswith('delete'):
@@ -203,6 +198,7 @@ def load_config(module, result):
     kwargs = dict()
     kwargs['comment'] = module.params['comment']
     kwargs['confirm'] = module.params['confirm']
+    kwargs['replace'] = module.params['replace']
     kwargs['commit'] = not module.check_mode
 
     if module.params['src']:
@@ -234,11 +230,18 @@ def zeroize_config(module, result):
         module.cli.run_commands('request system zeroize')
     result['changed'] = True
 
+def confirm_config(module, result):
+    if not module.check_mode:
+        module.connection.commit_config()
+    result['changed'] = True
+
 def run(module, result):
     if module.params['rollback']:
         return rollback_config(module, result)
     elif module.params['zeroize']:
         return zeroize_config(module, result)
+    elif not any((module.params['src'], module.params['lines'])):
+        return confirm_config(module, result)
     else:
         return load_config(module, result)
 
