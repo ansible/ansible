@@ -246,7 +246,7 @@ Ansible Changes By Release
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * removed previously deprecated ';' as host list separator.
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
-
+* Fix a problem with the pip module updating the python pip package itself.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
