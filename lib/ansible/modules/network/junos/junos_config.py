@@ -231,9 +231,8 @@ def zeroize_config(module, result):
     result['changed'] = True
 
 def confirm_config(module, result):
-    if not module.check_mode:
-        module.connection.commit_config()
-    result['changed'] = True
+    checkonly = module.check_mode
+    result['changed'] = module.connection.confirm_commit(checkonly)
 
 def run(module, result):
     if module.params['rollback']:
