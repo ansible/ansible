@@ -18,64 +18,99 @@
 #
 # Authors:
 #   - Aimon Bustardo <aimon.bustardo@dimensiondata.com>
+#   - Mark Maglana   <mmaglana@gmail.com>
 #
 # Common methods to be used by versious module components
 import os
-import sys
 import ConfigParser
 from os.path import expanduser
-from libcloud.common.dimensiondata import API_ENDPOINTS
-from libcloud.common.dimensiondata import DimensionDataAPIException
 from uuid import UUID
 
+try:
+    from libcloud.common.dimensiondata import \
+        API_ENDPOINTS, DimensionDataAPIException
+    HAS_LIBCLOUD = True
+except ImportError:
+    HAS_LIBCLOUD = False
 
-# -------------------------
-# This method will get user_id and key from environemnt or dot file.
-# Environment takes priority.
-#
-# To set in environment:
-# export DIDATA_USER='myusername'
-# export DIDATA_PASSWORD='mypassword'
-#
-# To set in dot file place a file at ~/.dimensiondata with
-# the following contents:
-# [dimensiondatacloud]
-# DIDATA_USER: myusername
-# DIDATA_PASSWORD: mypassword
-# -------------------------
+
+# Custom Exceptions
+
+class LibcloudNotFound(Exception):
+    pass
+
+
+class MissingCredentialsError(Exception):
+    pass
+
+
+class UnknownNetworkError(Exception):
+    pass
+
+
+class UnknownVLANError(Exception):
+    pass
+
+
+def check_libcloud_or_fail():
+    """
+    Checks if libcloud is installed and fails if not
+    """
+    if not HAS_LIBCLOUD:
+        raise LibcloudNotFound("apache-libcloud is required.")
+
+
 def get_credentials():
-    user_id = None
-    key = None
+    """
+    This method will get user_id and key from environemnt or dot file.
+    Environment takes priority.
+
+    To set in environment:
+
+        export DIDATA_USER='myusername'
+        export DIDATA_PASSWORD='mypassword'
+
+    To set in dot file place a file at ~/.dimensiondata with
+    the following contents:
+
+        [dimensiondatacloud]
+        DIDATA_USER: myusername
+        DIDATA_PASSWORD: mypassword
+    """
+    check_libcloud_or_fail()
 
     # Attempt to grab from environment
-    if 'DIDATA_USER' in os.environ and 'DIDATA_PASSWORD' in os.environ:
-        user_id = os.environ['DIDATA_USER']
-        key = os.environ['DIDATA_PASSWORD']
+    user_id = os.environ.get('DIDATA_USER', None)
+    key = os.environ.get('DIDATA_PASSWORD', None)
 
     # Environment failed try dot file
-    if user_id is None or key is None:
+    if not user_id or not key:
         home = expanduser('~')
         config = ConfigParser.RawConfigParser()
         config.read("%s/.dimensiondata" % home)
         try:
             user_id = config.get("dimensiondatacloud", "DIDATA_USER")
             key = config.get("dimensiondatacloud", "DIDATA_PASSWORD")
-        except:
+        except ConfigParser.NoSectionError, ConfigParser.NoOptionError:
             pass
 
-    # Return False if either are not found
-    if user_id is None or key is None:
-        return False
+    # One or more credentials not found. Function can't recover from this
+    # so it has to raise an error instead of fail silently.
+    if not user_id:
+        raise MissingCredentialsError("Dimension Data user id not found")
+    elif not key:
+        raise MissingCredentialsError("Dimension Data key not found")
 
     # Both found, return data
     return dict(user_id=user_id, key=key)
 
 
-# -------------------------
-# Get the list of available regions
-# whos vendor is Dimension Data.
-# -------------------------
 def get_dd_regions():
+    """
+    Get the list of available regions whose vendor is Dimension Data.
+    """
+    check_libcloud_or_fail()
+
     # Get endpoints
     all_regions = API_ENDPOINTS.keys()
 
@@ -88,61 +123,61 @@ def get_dd_regions():
     return regions
 
 
-# ----------------------------------------
-# Get a network domain object by its name
-# ----------------------------------------
 def get_network_domain_by_name(driver, name, location):
+    """
+    Get a network domain object by its name
+    """
     networks = driver.ex_list_network_domains(location=location)
-    network = filter(lambda x: x.name == name, networks)
-    if len(network) > 0:
-        return network[0]
-    else:
-        return None
+    found_networks = filter(lambda x: x.name == name, networks)
+
+    if not found_networks:
+        raise UnknownNetworkError("Network '%s' could not be found" % name)
+
+    return found_networks[0]
 
 
-# ---------------------------------------------
-# Get a network domain object by its name or id
-# ---------------------------------------------
 def get_network_domain(driver, locator, location):
+    """
+    Get a network domain object by its name or id
+    """
     if is_uuid(locator):
         net_id = locator
     else:
+        name = locator
         networks = driver.ex_list_network_domains(location=location)
-        found_networks = filter(lambda x: x.name == locator, networks)
-        if len(found_networks) > 0:
-            net_id = found_networks[0].id
-        else:
-            return False
-    try:
-        return driver.ex_get_network_domain(net_id)
-    except DimensionDataAPIException:
-        return False
+        found_networks = filter(lambda x: x.name == name, networks)
+
+        if not found_networks:
+            raise UnknownNetworkError("Network '%s' could not be found" % name)
+
+        net_id = found_networks[0].id
+
+    return driver.ex_get_network_domain(net_id)
 
 
-# ---------------------------------------------
-# Get a VLAN object by its name or id
-# ---------------------------------------------
 def get_vlan(driver, locator, location, network_domain):
+    """
+    Get a VLAN object by its name or id
+    """
     if is_uuid(locator):
         vlan_id = locator
     else:
         vlans = driver.ex_list_vlans(location=location,
                                      network_domain=network_domain)
         found_vlans = filter(lambda x: x.name == locator, vlans)
-        if len(found_vlans) > 0:
-            vlan_id = found_vlans[0].id
-        else:
-            return False
-    try:
-        return driver.ex_get_vlan(vlan_id)
-    except:
-        return False
+
+        if not found_vlans:
+            raise UnknownVLANError("VLAN '%s' could not be found" % locator)
+
+        vlan_id = found_vlans[0].id
+
+    return driver.ex_get_vlan(vlan_id)
 
 
-# ----------------------------------------
-# Get a locations MCP version
-# ----------------------------------------
 def get_mcp_version(driver, location):
+    """
+    Get a locations MCP version
+    """
     # Get location to determine if MCP 1.0 or 2.0
     location = driver.ex_get_location_by_id(location)
     if 'MCP 2.0' in location.name:
@@ -150,10 +185,10 @@ def get_mcp_version(driver, location):
     return '1.0'
 
 
-# ---------------------
-# Test if valid v4 UUID
-# ---------------------
 def is_uuid(u, version=4):
+    """
+    Test if valid v4 UUID
+    """
     try:
         uuid_obj = UUID(u, version=version)
         return str(uuid_obj) == u
@@ -161,10 +196,10 @@ def is_uuid(u, version=4):
         return False
 
 
-# --------------------------------------------
-# Expand public IP block to show all addresses
-# --------------------------------------------
 def expand_ip_block(block):
+    """
+    Expand public IP block to show all addresses
+    """
     addresses = []
     ip_r = block.base_ip.split('.')
     last_quad = int(ip_r[3])
@@ -174,17 +209,16 @@ def expand_ip_block(block):
     return addresses
 
 
-# ---------------------------
-# Get public IP block details
-# ---------------------------
 def get_public_ip_block(module, driver, network_domain, block_id=False,
                         base_ip=False):
+    """
+    Get public IP block details
+    """
     # Block ID given, try to use it.
     if block_id is not 'False':
         try:
             block = driver.ex_get_public_ip_block(block_id)
-        except DimensionDataAPIException:
-            e = sys.exc_info()[1]
+        except DimensionDataAPIException as e:
             # 'UNEXPECTED_ERROR' should be removed once upstream bug is fixed.
             # Currently any call to ex_get_public_ip_block where the block does
             # not exist will return UNEXPECTED_ERROR rather than
@@ -208,46 +242,42 @@ def get_public_ip_block(module, driver, network_domain, block_id=False,
     return block
 
 
-# --------------------------------
-# Get list of NAT rules for domain
-# --------------------------------
 def list_nat_rules(module, driver, network_domain):
+    """
+    Get list of NAT rules for domain
+    """
     try:
         return driver.ex_list_nat_rules(network_domain)
-    except DimensionDataAPIException:
-        e = sys.exc_info()[1]
+    except DimensionDataAPIException as e:
         module.fail_json(msg="Failed to list NAT rules: %s" % e.message)
 
 
-# -----------------------------------------
-# Get list of public IP blocks for a domain
-# -----------------------------------------
 def list_public_ip_blocks(module, driver, network_domain):
+    """
+    Get list of public IP blocks for a domain
+    """
     try:
         blocks = driver.ex_list_public_ip_blocks(network_domain)
-        if len(blocks) == 0:
-            return []
-        else:
-            return blocks
-    except DimensionDataAPIException:
-        e = sys.exc_info()[1]
+        return blocks
+    except DimensionDataAPIException as e:
         module.fail_json(msg="Error retreving Public IP Blocks: %s" % e)
 
 
-# --------------------------------------
-# Get public IP block allocation details
-# --------------------------------------
 def get_block_allocation(module, cp_driver, lb_driver, network_domain, block):
-    #  Shows all ips in block and if they are allocated
-    # ex: {'id': 'eb8b16ca-3c91-45fb-b04b-5d7d387a9f4a',
-    #       'addresses': [{'address': '162.2.100.100',
-    #                      'allocated': True
-    #                      },
-    #                      {'address': '162.2.100.101',
-    #                       'allocated': False
-    #                      }
-    #                     ]
-    #     }
+    """
+    Get public IP block allocation details. Shows all ips in block and if
+    they are allocated. Example:
+
+        {'id': 'eb8b16ca-3c91-45fb-b04b-5d7d387a9f4a',
+          'addresses': [{'address': '162.2.100.100',
+                         'allocated': True
+                         },
+                         {'address': '162.2.100.101',
+                          'allocated': False
+                         }
+                        ]
+        }
+    """
     nat_rules = list_nat_rules(module, cp_driver, network_domain)
     balancers = list_balancers(module, lb_driver)
     pub_ip_block = get_public_ip_block(module, cp_driver, network_domain,
@@ -270,23 +300,20 @@ def get_block_allocation(module, cp_driver, lb_driver, network_domain, block):
 def list_balancers(module, lb_driver):
     try:
         return lb_driver.list_balancers()
-    except DimensionDataAPIException:
-        e = sys.exc_info()[1]
+    except DimensionDataAPIException as e:
         module.fail_json(msg="Failed to list Load Balancers: %s" % e.message)
 
 
-# --------------------------------------
-# Get list of public IP blocks with one
-# or more unallocated IPs
-# --------------------------------------
 def get_blocks_with_unallocated(module, cp_driver, lb_driver, network_domain):
-    # Gets ip blocks with one or more unallocated IPs.
-    # ex:
-    #   {'unallocated_count': <total count of unallocated ips>,
-    #    'ip_blocks': [<list of expanded blocks with details
-    #                  (see get_block_allocation())>],
-    #    'unallocated_addresses': [<list of unallocated ip addresses>]
-    #   }
+    """
+    Gets ip blocks with one or more unallocated IPs.
+    ex:
+        {'unallocated_count': <total count of unallocated ips>,
+         'ip_blocks': [<list of expanded blocks with details
+                       (see get_block_allocation())>],
+         'unallocated_addresses': [<list of unallocated ip addresses>]
+        }
+    """
     total_unallocated_ips = 0
     all_blocks = list_public_ip_blocks(module, cp_driver, network_domain)
     unalloc_blocks = []
@@ -307,11 +334,11 @@ def get_blocks_with_unallocated(module, cp_driver, lb_driver, network_domain):
             'unallocated_addresses': unalloc_addresses}
 
 
-# -------------------------------------------
-# Get and/or provision unallocated public IPs
-# -------------------------------------------
 def get_unallocated_public_ips(module, cp_driver, lb_driver, network_domain,
                                reuse_free, count=0):
+    """
+    Get and/or provision unallocated public IPs
+    """
     free_ips = []
     if reuse_free is True:
         blocks_with_unallocated = get_blocks_with_unallocated(module,
@@ -337,10 +364,10 @@ def get_unallocated_public_ips(module, cp_driver, lb_driver, network_domain,
                 ' without provisioning.', 'addresses': free_ips}
 
 
-# ------------------------------------
-# Simple way to check if IPv4 address
-# ------------------------------------
 def is_ipv4_addr(ip):
+    """
+    Simple way to check if IPv4 address
+    """
     parts = ip.split('.')
     try:
         return len(parts) == 4 and all(0 <= int(part) < 256 for part in parts)
@@ -348,12 +375,11 @@ def is_ipv4_addr(ip):
         return False
 
 
-# ------------------------------------------------------------------
-#           --- Get node by name and IP ---
-# Nodes do not have unique names, we need to match name and IP to be
-# sure we get the correct one
-# ------------------------------------------------------------------
 def get_node_by_name_and_ip(module, lb_driver, name, ip):
+    """
+    Nodes do not have unique names, we need to match name and IP to be
+    sure we get the correct one
+    """
     nodes = lb_driver.ex_get_nodes()
     found_nodes = []
     if not is_ipv4_addr(ip):
