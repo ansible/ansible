@@ -269,6 +269,10 @@ Ansible Changes By Release
 * skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
 * skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
+###Notice of future Deprecations
+* Networking modules `asa_template`, `eos_template`, `ios_template`, `iosxr_template`, `junos_template`, `nxos_template`, and `ops_template` have been deprecated and will be removed in 2.4. Use the equivelent `_config` module.
+
+
 ## 2.1.2 "The Song Remains the Same"
 
 ###Deprecations:
