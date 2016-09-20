@@ -29,7 +29,7 @@ module: parted
 short_description: Configure block device partitions using parted
 description:
   - Linux parted tool. For a full description of the fields and the options check the GNU parted manual.
-version_added: "2.22.2"
+version_added: "2.2"
 options:
   device:
     description: The block device (disk) where to operate
