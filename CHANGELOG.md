@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2 TBD - ACTIVE DEVELOPMENT
+## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
 
