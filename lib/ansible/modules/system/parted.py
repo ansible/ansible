@@ -25,11 +25,11 @@ import math
 
 DOCUMENTATION = '''
 ---
-author: "Fabrizio Colonna <colofabrix@tin.it>"
 module: parted
-short_description: Configure block device partitions
+short_description: Configure block device partitions using parted
 description:
   - Linux parted tool. For a full description of the fields and the options check the GNU parted manual.
+version_added: "2.22.2"
 options:
   device:
     description: The block device (disk) where to operate
@@ -79,6 +79,12 @@ options:
     choices: ["present", "absent"]
     required: False
     default: present
+
+author: "Fabrizio Colonna (@ColOfAbRiX)"
+notes:
+  - "Requires parted installed on the target host"
+  - "Partition numbers start with 1"
+  - "Partition numbers are assigned by parted when the partition is created and they are not created sequentially. This can create confusion because most commands require that number. A solution is to create the partition manually upfront and see what number will be assigned."
 '''
 
 RETURN = '''
@@ -95,7 +101,7 @@ partition_info:
       type: list
 '''
 
-EXAMPLES = """
+EXAMPLES = '''
 - name: read current partitions on a device
   parted: device=/dev/sdb
 
@@ -107,7 +113,10 @@ EXAMPLES = """
 
 - name: create a new primary partition for LVM
   parted: device=/dev/sdb number=1 flags_on=lvm state=present
-"""
+
+- name: remove a specific partition
+  parted: device=/dev/sdb number=2 state=absent
+'''
 
 
 def parse_unit(s, unit, ceil=True):
