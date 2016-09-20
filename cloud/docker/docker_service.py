@@ -877,7 +877,7 @@ class ContainerManager(DockerBaseClass):
                         result['actions'][service.name]['scale'] = self.scale[service.name] - len(containers)
                     if not self.check_mode:
                         try:
-                            service.scale(self.scale[service.name])
+                            service.scale(int(self.scale[service.name]))
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
         return result
