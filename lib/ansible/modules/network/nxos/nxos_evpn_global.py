@@ -40,7 +40,10 @@ options:
 '''
 EXAMPLES = '''
 - nxos_evpn_global:
-    nv_overlay_evpn=true
+    nv_overlay_evpn: true
+    username: "{{ un }}"
+    password: "{{ pwd }}"
+    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''

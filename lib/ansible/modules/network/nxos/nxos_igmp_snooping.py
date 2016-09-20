@@ -72,10 +72,10 @@ options:
 EXAMPLES = '''
 # ensure igmp snooping params supported in this module are in there default state
 - nxos_igmp_snooping:
-    state=default
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    state: default
+    host:  inventory_hostname }}
+    username:  un }}
+    password:  pwd }}
 
 # ensure following igmp snooping params are in the desired state
 - nxos_igmp_snooping:
@@ -86,8 +86,8 @@ EXAMPLES = '''
    report_supp: true
    v3_report_supp: true
    host: "{{ inventory_hostname }}"
-   username={{ un }}
-   password={{ pwd }}
+   username: {{ un }}
+   password: {{ pwd }}
 '''
 
 RETURN = '''

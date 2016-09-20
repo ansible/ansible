@@ -69,13 +69,13 @@ options:
 
 EXAMPLES = '''
 - nxos_snmp_user:
-    user=ntc
-    group=network-operator
-    auth=md5
-    pwd=test_password
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    user: ntc
+    group: network-operator
+    auth: md5
+    pwd: test_password
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

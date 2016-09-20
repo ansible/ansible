@@ -42,10 +42,10 @@ options:
 EXAMPLES = '''
 # ENSURE VTP VERSION IS 2
 - nxos_vtp_version:
-    version=2
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    version: 2
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

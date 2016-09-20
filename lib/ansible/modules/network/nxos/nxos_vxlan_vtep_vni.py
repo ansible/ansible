@@ -80,9 +80,9 @@ options:
 '''
 EXAMPLES = '''
 - nxos_vxlan_vtep_vni:
-    interface=nve1
-    vni=6000
-    ingress_replication=default
+    interface: nve1
+    vni: 6000
+    ingress_replication: default
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

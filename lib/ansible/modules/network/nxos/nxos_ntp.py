@@ -78,12 +78,12 @@ options:
 EXAMPLES = '''
 # Set NTP Server with parameters
 - nxos_ntp:
-    server=1.2.3.4
-    key_id=32
-    prefer=enabled
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    server: 1.2.3.4
+    key_id: 32
+    prefer: enabled
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

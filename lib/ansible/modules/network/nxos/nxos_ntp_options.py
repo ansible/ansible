@@ -62,12 +62,12 @@ options:
 EXAMPLES = '''
 # Basic NTP options configuration
 - nxos_ntp_options:
-    master=true
-    stratum=12
-    logging=false
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    master: true
+    stratum: 12
+    logging: false
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''
