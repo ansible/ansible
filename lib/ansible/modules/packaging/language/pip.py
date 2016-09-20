@@ -204,18 +204,46 @@ def _get_full_name(name, version=None):
         resp = name + '==' + version
     return resp
 
-def _is_present(name, version, installed_pkgs):
-    for pkg in installed_pkgs:
-        if '==' not in pkg:
-            continue
 
-        [pkg_name, pkg_version] = pkg.split('==')
+def _get_packages(module, pip, chdir):
+    '''Return results of pip command to get packages.'''
+    # Try 'pip list' command first.
+    command = '%s list' % pip
+    rc, out, err = module.run_command(command, cwd=chdir)
+
+    # If there was an error (pip version too old) then use 'pip freeze'.
+    if rc != 0:
+        command = '%s freeze' % pip
+        rc, out, err = module.run_command(command, cwd=chdir)
+        if rc != 0:
+            _fail(module, command, out, err)
+
+    return (command, out, err)
+
+
+def _is_present(name, version, installed_pkgs, pkg_command):
+    '''Return whether or not package is installed.'''
+    for pkg in installed_pkgs:
+        # Package listing will be different depending on which pip
+        # command was used ('pip list' vs. 'pip freeze').
+        if 'list' in pkg_command:
+            pkg = pkg.replace('(', '').replace(')', '')
+            if ',' in pkg:
+                pkg_name, pkg_version, _ = pkg.replace(',', '').split(' ')
+            else:
+                pkg_name, pkg_version = pkg.split(' ')
+        elif 'freeze' in pkg_command:
+            if '==' in pkg:
+                pkg_name, pkg_version = pkg.split('==')
+            else:
+                continue
+        else:
+            continue
 
         if pkg_name == name and (version is None or version == pkg_version):
             return True
 
     return False
-
 
 
 def _get_pip(module, env=None, executable=None):
@@ -400,12 +428,7 @@ def main():
             elif has_vcs:
                 module.exit_json(changed=True)
 
-            freeze_cmd = '%s freeze' % pip
-
-            rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=chdir)
-
-            if rc != 0:
-                module.exit_json(changed=True)
+            pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
 
             out += out_pip
             err += err_pip
@@ -413,15 +436,14 @@ def main():
             changed = False
             if name:
                 for pkg in name:
-                    is_present = _is_present(pkg, version, out.split())
+                    is_present = _is_present(pkg, version, out.split('\n'), pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
-            module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
+            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
         if requirements or has_vcs:
-            freeze_cmd = '%s freeze' % pip
-            out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
+            _, out_freeze_before, _ = _get_packages(module, pip, chdir)
         else:
             out_freeze_before = None
 
@@ -443,7 +465,7 @@ def main():
                 if out_freeze_before is None:
                     changed = 'Successfully installed' in out_pip
                 else:
-                    out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
+                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
                     changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
