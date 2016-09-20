@@ -44,7 +44,7 @@ from ansible.utils.vars import combine_vars
 from ansible.vars.unsafe_proxy import wrap_var
 
 try:
-    from __main__ import display
+    from __main__ import display, cli
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
