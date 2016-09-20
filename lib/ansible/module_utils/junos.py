@@ -22,13 +22,9 @@ import shlex
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
-
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
 
 try:
     from jnpr.junos import Device
