@@ -168,9 +168,6 @@ class Netconf(object):
     def load_config(self, config, commit=False, replace=False, confirm=None,
                     comment=None, config_format='text'):
 
-    #def load_config(self, candidate, update='merge', comment=None,
-    #                confirm=None, format='text', commit=True):
-
         if replace:
             merge = False
             overwrite = True
@@ -280,7 +277,7 @@ class Cli(CliBase):
             self.execute('cli')
         self.execute('set cli screen-length 0')
 
-    def configure(self, commands, comment=None, **kwargs):
+    def configure(self, commands, comment=None):
         cmds = ['configure']
         cmds.extend(to_list(commands))
 
