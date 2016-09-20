@@ -8,17 +8,7 @@ Networking Support
 Working with Networking Devices
 ```````````````````````````````
 
-Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices. 
-
-Ansible currently supports the following networking devices:
-
-* Arista EOS 
-* Cisco NXOS 
-* Cisco IOS 
-* Cisco IOSXR 
-* Cumulus Linux 
-* Juniper JUNOS 
-* OpenSwitch
+Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices.  Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 .. _networking_installation:
 
