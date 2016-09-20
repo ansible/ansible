@@ -3,6 +3,10 @@ Accelerated Mode
 
 .. versionadded:: 1.3
 
+.. note::  
+
+     Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead. This feature will be removed in a future release. Deprecation warnings can be disabled by setting :code:`deprecation_warnings=False` in :code:`ansible.cfg`.
+
 You Might Not Need This!
 ````````````````````````
 
