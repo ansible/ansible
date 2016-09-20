@@ -30,13 +30,15 @@ description:
     resources as defined in RFC 6242.
 extends_documentation_fragment: junos
 options:
-  listens_on:
+  netconf_port:
     description:
       - This argument specifies the port the netconf service should
         listen on for SSH connections.  The default port as defined
         in RFC 6242 is 830.
     required: false
     default: 830
+    aliases: ['listens_on']
+    version_added: "2.2"
   state:
     description:
       - Specifies the state of the M(junos_netconf) resource on
@@ -53,29 +55,37 @@ EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
 vars:
-  netconf:
+  cli:
     host: "{{ inventory_hostname }}"
     username: ansible
     password: Ansible
-    transport: netconf
+    transport: cli
 
 - name: enable netconf service on port 830
   junos_netconf:
     listens_on: 830
     state: present
-    provider: "{{ netconf }}"
+    provider: "{{ cli }}"
 
 - name: disable netconf service
   junos_netconf:
     state: absent
-    provider: "{{ netconf }}"
+    provider: "{{ cli }}"
 """
 
 RETURN = """
+commands:
+  description: Returns the command sent to the remote device
+  returned: when changed is True
+  type: str
+  sample: 'set system services netconf ssh port 830'
 """
 import re
 
-from ansible.module_utils.junos import NetworkModule
+import ansible.module_utils.junos
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
 
 def parse_port(config):
     match = re.search(r'port (\d+)', config)
@@ -84,7 +94,7 @@ def parse_port(config):
 
 def get_instance(module):
     cmd = 'show configuration system services netconf'
-    cfg = module.run_commands(cmd)[0]
+    cfg = module.cli(cmd)[0]
     result = dict(state='absent')
     if cfg:
         result = dict(state='present')
@@ -96,7 +106,7 @@ def main():
     """
 
     argument_spec = dict(
-        listens_on=dict(type='int', default=830),
+        netconf_port=dict(type='int', default=830, aliases=['listens_on']),
         state=dict(default='present', choices=['present', 'absent']),
         transport=dict(default='cli', choices=['cli'])
     )
@@ -105,25 +115,31 @@ def main():
                            supports_check_mode=True)
 
     state = module.params['state']
-    port = module.params['listens_on']
+    port = module.params['netconf_port']
 
     result = dict(changed=False)
 
     instance = get_instance(module)
-    commands = None
 
     if state == 'present' and instance.get('state') == 'absent':
         commands = 'set system services netconf ssh port %s' % port
+    elif state == 'present' and port != instance.get('port'):
+        commands = 'set system services netconf ssh port %s' % port
     elif state == 'absent' and instance.get('state') == 'present':
         commands = 'delete system services netconf'
-    elif port != instance.get('port'):
-        commands = 'set system services netconf ssh port %s' % port
+    else:
+        commands = None
 
     if commands:
         if not module.check_mode:
-            comment = 'configuration updated by junos_netconf'
-            module.config(commands, comment=comment)
+            try:
+                comment = 'configuration updated by junos_netconf'
+                module.config(commands, comment=comment)
+            except NetworkError:
+                exc = get_exception()
+                module.fail_json(msg=str(exc), **exc.kwargs)
         result['changed'] = True
+        result['commands'] = commands
 
     module.exit_json(**result)
 
