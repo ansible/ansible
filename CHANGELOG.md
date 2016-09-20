@@ -262,6 +262,7 @@ Ansible Changes By Release
     since (ansible-vault automatically re-encrypts the file using VaultAES256
     whenever it is written to but not read), run ``ansible-vault rekey
     [filename]`` to move to VaultAES256.
+
 ###Removed Deprecated:
 * ';' as host list separator.
 * with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
