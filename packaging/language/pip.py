@@ -424,7 +424,6 @@ def main():
             if requirements:
                 cmd += ' -r %s' % requirements
 
-
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
                 module.exit_json(changed=True)
@@ -438,8 +437,34 @@ def main():
 
             changed = False
             if name:
-                # Pip spits an upgrade notice to stdout that we have to get rid of
                 pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+                if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
+                    # Older versions of pip (pre-1.3) do not have pip list.
+                    # pip freeze does not list setuptools or pip in its output
+                    # So we need to get those via a specialcase
+                    if 'setuptools' in name:
+                        try:
+                            import setuptools
+                        except ImportError:
+                            # Could not import, assume that it is not installed
+                            pass
+                        else:
+                            formatted_dep = 'setuptools==%s' % setuptools.__version__
+                            pkg_list.append(formatted_dep)
+                            out += '%s\n' % formatted_dep
+
+                    if 'pip' in name:
+                        try:
+                            import pkg_resources
+                        except ImportError:
+                            # Could not import pkg_resources.  pip requires
+                            # pkg_resources so assume that it is not installed
+                            pass
+                        else:
+                            formatted_dep = 'pip==%s' % pkg_resources.get_distribution('pip').version
+                            pkg_list.append(formatted_dep)
+                            out += '%s\n' % formatted_dep
+
                 for pkg in name:
                     is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
