@@ -236,6 +236,7 @@ DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pa
 # In the future we should probably generalize this even further
 # (mapping of param: squash field)
 DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apk, apt, dnf, package, pacman, pkgng, yum, zypper", islist=True)
+DEFAULT_FACTS_ACTIONS          = get_config(p, DEFAULTS, 'facts_actions',      'ANSIBLE_FACTS_ACTIONS', "set_fact", islist=True)
 # paths
 DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '~/.ansible/plugins/action:/usr/share/ansible/plugins/action', ispathlist=True)
 DEFAULT_CACHE_PLUGIN_PATH      = get_config(p, DEFAULTS, 'cache_plugins',      'ANSIBLE_CACHE_PLUGINS', '~/.ansible/plugins/cache:/usr/share/ansible/plugins/cache', ispathlist=True)
