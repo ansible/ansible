@@ -49,9 +49,9 @@ class Config(object):
     def __init__(self, connection):
         self.connection = connection
 
-    def __call__(self, commands):
+    def __call__(self, commands, **kwargs):
         lines = to_list(commands)
-        return self.connection.configure(lines)
+        return self.connection.configure(lines, **kwargs)
 
     def load_config(self, commands, **kwargs):
         commands = to_list(commands)
