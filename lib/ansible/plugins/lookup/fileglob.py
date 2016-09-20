@@ -32,10 +32,7 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             term_file = os.path.basename(term)
-            try:
-                dwimmed_path = self.find_file_in_search_path(variables, 'files', os.path.dirname(term))
-            except AnsibleFileNotFound:
-                dwimmed_path = None
+            dwimmed_path = self.find_file_in_search_path(variables, 'files', os.path.dirname(term))
             if dwimmed_path:
                 globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
                 ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
