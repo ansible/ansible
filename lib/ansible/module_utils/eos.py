@@ -29,7 +29,7 @@
 import re
 import time
 
-from ansible.module_utils.basic import json
+from ansible.module_utils.basic import json, get_exception
 from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcli import Command
@@ -81,6 +81,11 @@ class EosConfigMixin(object):
             else:
                 self.execute(['no configure session %s' % session])
         except NetworkError:
+            exc = get_exception()
+            if 'timeout trying to send command' in exc.message:
+                # try to get control back and get out of config mode
+                if isinstance(self, Cli):
+                    self.execute(['\x03', 'end'])
             self.abort_config(session)
             diff = None
             raise
