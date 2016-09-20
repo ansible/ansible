@@ -182,9 +182,7 @@ class StrategyModule(StrategyBase):
                 any_errors_fatal = False
 
                 results = []
-                items_to_queue = []
                 for (host, task) in host_tasks:
-
                     if not task:
                         continue
 
@@ -259,27 +257,22 @@ class StrategyModule(StrategyBase):
                             display.debug("sending task start callback")
 
                         self._blocked_hosts[host.get_name()] = True
-                        items_to_queue.append((host, task, task_vars))
-                        self._pending_results += 1
+                        self._queue_task(host, task, task_vars, play_context)
                         del task_vars
 
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
 
-                    # FIXME: probably not required here any more with the result proc
-                    #        having been removed, so there's no only a single result
-                    #        queue for the main thread
-                    results += self._process_pending_results(iterator, one_pass=True)
-
-                self._tqm.queue_multiple_tasks(items_to_queue, play_context)
+                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
 
                 # go to next host/task group
                 if skip_rest:
                     continue
 
                 display.debug("done queuing things up, now waiting for results queue to drain")
-                results += self._wait_on_pending_results(iterator)
+                if self._pending_results > 0:
+                    results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 all_role_blocks = []
