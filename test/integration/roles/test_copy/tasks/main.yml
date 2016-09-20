@@ -258,9 +258,3 @@
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
-
-- name: test first avialable file
-  copy: dest={{output_dir}}/faf_test
-  first_available_file: 
-        - doesntexist.txt
-        - foo.txt
