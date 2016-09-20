@@ -85,7 +85,9 @@ ansible_facts:
   returned: always
   type: dict
 """
-from ansible.module_utils.junos import NetworkModule
+import ansible.module_utils.junos
+
+from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.junos import xml_to_string, xml_to_json
 
 def main():
