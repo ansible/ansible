@@ -424,7 +424,8 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
         return { 'prepared': '>> Newly checked out %s' % after }
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
-        fetch(git_path, module, repo, dest, after, remote, depth, bare, '')
+        git_version_used = git_version(git_path, module)
+        fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc == 0 and out:
