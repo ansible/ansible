@@ -59,12 +59,12 @@ options:
 EXAMPLES = '''
 # ensure snmp community is configured
 - nxos_snmp_community:
-    community=TESTING7
-    group=network-operator
-    state=present
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    community: TESTING7
+    group: network-operator
+    state: present
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

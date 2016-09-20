@@ -56,34 +56,35 @@ options:
 EXAMPLES = '''
 # Ensure system mtu is 9126
 - nxos_mtu:
-    sysmtu=9216
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    sysmtu: 9216
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # Config mtu on Eth1/1 (routed interface)
 - nxos_mtu:
-    interface=Ethernet1/1
-    mtu=1600
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: Ethernet1/1
+    mtu: 1600
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # Config mtu on Eth1/3 (switched interface)
 - nxos_mtu:
-    interface=Ethernet1/3
-    mtu=9216
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: Ethernet1/3
+    mtu: 9216
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # Unconfigure mtu on a given interface
 - nxos_mtu:
-    interface=Ethernet1/3
-    mtu=9216 host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
-    state=absent
+    interface: Ethernet1/3
+    mtu: 9216
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
+    state: absent
 '''
 
 RETURN = '''

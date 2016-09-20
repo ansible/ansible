@@ -115,9 +115,9 @@ options:
 '''
 EXAMPLES = '''
 - nxos_interface_ospf:
-    interface=ethernet1/32
-    ospf=1
-    area=1
+    interface: ethernet1/32
+    ospf: 1
+    area: 1
     cost=default
     username: "{{ un }}"
     password: "{{ pwd }}"

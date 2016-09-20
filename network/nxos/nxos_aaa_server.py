@@ -86,33 +86,33 @@ EXAMPLES = '''
 # Radius Server Basic settings
   - name: "Radius Server Basic settings"
     nxos_aaa_server:
-        server_type=radius
-        server_timeout=9
-        deadtime=20
-        directed_request=enabled
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        server_type: radius
+        server_timeout: 9
+        deadtime: 20
+        directed_request: enabled
+        host:  inventory_hostname }}
+        username:  un }}
+        password:  pwd }}
 
 # Tacacs Server Basic settings
   - name: "Tacacs Server Basic settings"
     nxos_aaa_server:
-        server_type=tacacs
-        server_timeout=8
-        deadtime=19
-        directed_request=disabled
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        server_type: tacacs
+        server_timeout: 8
+        deadtime: 19
+        directed_request: disabled
+        host:  inventory_hostname }}
+        username:  un }}
+        password:  pwd }}
 
 # Setting Global Key
   - name: "AAA Server Global Key"
     nxos_aaa_server:
-        server_type=radius
-        global_key=test_key
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        server_type: radius
+        global_key: test_key
+        host:  inventory_hostname }}
+        username:  un }}
+        password:  pwd }}
 '''
 
 RETURN = '''

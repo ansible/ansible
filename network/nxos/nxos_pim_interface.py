@@ -108,40 +108,40 @@ options:
 EXAMPLES = '''
 # ensure PIM is not running on the interface
 - nxos_pim_interface:
-    interface=eth1/33
-    state=absent
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: eth1/33
+    state: absent
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # ensure the interface has pim-sm enabled with the appropriate priority and hello interval
 - nxos_pim_interface:
-    interface=eth1/33
-    dr_prio=10
-    hello_interval=40
-    state=present
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: eth1/33
+    dr_prio: 10
+    hello_interval: 40
+    state: present
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # ensure join-prune policies exist
 - nxos_pim_interface:
-    interface=eth1/33
-    jp_policy_in=JPIN
-    jp_policy_out=JPOUT
-    jp_type_in=routemap
-    jp_type_out=routemap
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: eth1/33
+    jp_policy_in: JPIN
+    jp_policy_out: JPOUT
+    jp_type_in: routemap
+    jp_type_out: routemap
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # ensure defaults are in place
 - nxos_pim_interface:
-    interface=eth1/33
-    state=default
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    interface: eth1/33
+    state: default
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''
