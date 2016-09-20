@@ -120,15 +120,23 @@
 
 # Test pip package in check mode doesn't always report changed.
 
+- name: detect support for 'pip list'
+  command: pip list
+  register: pip_list
+  ignore_errors: yes
+
 - name: check for pip package
   pip: name=pip virtualenv={{ output_dir }}/pipenv state=present
+  when: "pip_list.rc == 0"
 
 - name: check for pip package in check_mode
   pip: name=pip virtualenv={{ output_dir }}/pipenv state=present
   check_mode: True
   register: pip_check_mode
+  when: "pip_list.rc == 0"
 
 - name: make sure pip in check_mode doesn't report changed
   assert:
     that:
       - "not pip_check_mode.changed"
+  when: "pip_list.rc == 0"
