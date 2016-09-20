@@ -236,6 +236,18 @@ class Netconf(object):
             exc = get_exception()
             raise NetworkError('unable to commit config: %s' % str(exc))
 
+    def confirm_commit(self, checkonly=False):
+        try:
+            resp = self.rpc('get_commit_information')
+            needs_confirm = 'commit confirmed, rollback' in resp[0][4].text
+            if checkonly:
+                return needs_confirm
+            return self.commit_config()
+        except IndexError:
+            # if there is no comment tag, the system is not in a commit
+            # confirmed state so just return
+            pass
+
     def rollback_config(self, identifier, commit=True, comment=None):
 
         self.lock_config()
