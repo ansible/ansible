@@ -39,7 +39,7 @@ options:
    protocol:
       description:
         - IP protocols TCP UDP ICMP 112 (VRRP)
-      choices: ['tcp', 'udp', 'icmp', 112, None]
+      choices: ['tcp', 'udp', 'icmp', '112', None]
       default: None
    port_range_min:
       description:
@@ -257,7 +257,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol         = dict(default=None,
-                                choices=[None, 'tcp', 'udp', 'icmp', 112]),
+                                choices=[None, 'tcp', 'udp', 'icmp', '112']),
         port_range_min   = dict(required=False, type='int'),
         port_range_max   = dict(required=False, type='int'),
         remote_ip_prefix = dict(required=False, default=None),
