@@ -58,8 +58,8 @@ options:
 
 EXAMPLES = '''
 - nxos_vpc_portchannel:
-    portchannel=10
-    vpc=100
+    portchannel: 10
+    vpc: 100
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

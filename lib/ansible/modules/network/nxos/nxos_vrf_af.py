@@ -67,9 +67,9 @@ options:
 '''
 EXAMPLES = '''
 - nxos_vrf_af:
-    interface=nve1
-    vni=6000
-    ingress_replication=true
+    interface: nve1
+    vni: 6000
+    ingress_replication: true
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

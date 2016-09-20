@@ -46,7 +46,7 @@ options:
 
 EXAMPLES = '''
 - nxos_ospf:
-    ospf=ntc
+    ospf: 1
     state: present
     username: "{{ un }}"
     password: "{{ pwd }}"

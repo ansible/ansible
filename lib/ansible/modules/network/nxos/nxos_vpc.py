@@ -90,13 +90,13 @@ options:
 EXAMPLES = '''
 # configure a simple asn
 - nxos_vpc:
-    domain=100
-    role_priority=1000
-    system_priority=2000
-    pkl_dest=192.168.100.4
-    pkl_src=10.1.100.20
-    peer_gw=true
-    auto_recovery=true
+    domain: 100
+    role_priority: 1000
+    system_priority: 2000
+    pkl_dest: 192.168.100.4
+    pkl_src: 10.1.100.20
+    peer_gw: true
+    auto_recovery: true
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

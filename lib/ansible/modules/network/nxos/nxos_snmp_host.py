@@ -79,12 +79,12 @@ options:
 EXAMPLES = '''
 # ensure snmp host is configured
 - nxos_snmp_host:
-    snmp_host=3.3.3.3
-    community=TESTING
-    state=present
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    snmp_host: 3.3.3.3
+    community: TESTING
+    state: present
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

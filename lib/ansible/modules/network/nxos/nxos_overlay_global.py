@@ -44,7 +44,7 @@ options:
 '''
 EXAMPLES = '''
 - nxos_overlay_global:
-    anycast_gateway_mac="b.b.b"
+    anycast_gateway_mac: "b.b.b"
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

@@ -60,19 +60,19 @@ options:
 EXAMPLES = '''
 # ensure udld aggressive mode is globally disabled and se global message interval is 20
 - nxos_udld:
-    aggressive=disabled
-    msg_time=20
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    aggressive: disabled
+    msg_time: 20
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # Ensure agg mode is globally enabled and msg time is 15
 - nxos_udld:
-    aggressive=enabled
-    msg_time=15
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    aggressive: enabled
+    msg_time: 15
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

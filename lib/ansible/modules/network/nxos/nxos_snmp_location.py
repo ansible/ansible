@@ -42,19 +42,19 @@ options:
 EXAMPLES = '''
 # ensure snmp location is configured
 - nxos_snmp_location:
-    location=Test
-    state=present
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    location: Test
+    state: present
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # ensure snmp location is not configured
 - nxos_snmp_location:
-    location=Test
-    state=absent
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    location: Test
+    state: absent
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

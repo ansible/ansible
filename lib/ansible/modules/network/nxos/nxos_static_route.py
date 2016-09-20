@@ -72,10 +72,10 @@ options:
 
 EXAMPLES = '''
 - nxos_static_route:
-    prefix="192.168.20.64/24"
-    next_hop="3.3.3.3"
-    route_name=testing
-    pref=100
+    prefix: "192.168.20.64/24"
+    next_hop: "3.3.3.3"
+    route_name: testing
+    pref: 100
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

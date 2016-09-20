@@ -40,7 +40,7 @@ options:
 '''
 EXAMPLES = '''
 - nxos_pim:
-    ssm_range="232.0.0.0/8"
+    ssm_range: "232.0.0.0/8"
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

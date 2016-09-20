@@ -74,12 +74,12 @@ options:
 EXAMPLES = '''
 # Basic NTP authentication configuration
 - nxos_ntp_auth:
-    key_id=32
-    md5string=hello
-    auth_type=text
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    key_id: 32
+    md5string: hello
+    auth_type: text
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''

@@ -83,38 +83,38 @@ EXAMPLES = '''
 # Radius Server Host Basic settings
   - name: "Radius Server Host Basic settings"
     nxos_aaa_server_host:
-        state=present
-        server_type=radius
-        address=1.2.3.4
-        acct_port=2084
-        host_timeout=10
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        state: present
+        server_type: radius
+        address: 1.2.3.4
+        acct_port: 2084
+        host_timeout: 10
+        host: {{ inventory_hostname }}
+        username: {{ un }}
+        password: {{ pwd }}
 
 # Radius Server Host Key Configuration
   - name: "Radius Server Host Key Configuration"
     nxos_aaa_server_host:
-        state=present
-        server_type=radius
-        address=1.2.3.4
-        key=hello
-        encrypt_type=7
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        state: present
+        server_type: radius
+        address: 1.2.3.4
+        key: hello
+        encrypt_type: 7
+        host:  inventory_hostname }}
+        username: {{ un }}
+        password: {{ pwd }}
 
 # TACACS Server Host Configuration
   - name: "Tacacs Server Host Configuration"
     nxos_aaa_server_host:
-        state=present
-        server_type=tacacs 
-        tacacs_port=89
-        host_timeout=10
-        address=5.6.7.8
-        host={{ inventory_hostname }}
-        username={{ un }}
-        password={{ pwd }}
+        state: present
+        server_type: tacacs 
+        tacacs_port: 89
+        host_timeout: 10
+        address: 5.6.7.8
+        host:  inventory_hostname }}
+        username:  un }}
+        password:  pwd }}
 '''
 
 RETURN = '''

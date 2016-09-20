@@ -247,12 +247,12 @@ options:
 EXAMPLES = '''
 # configure a simple address-family
 - nxos_bgp_af:
-    asn=65535
-    vrf=TESTING
-    afi=ipv4
-    safi=unicast
-    advertise_l2vpn_evpn=true
-    state=present
+    asn: 65535
+    vrf: TESTING
+    afi: ipv4
+    safi: unicast
+    advertise_l2vpn_evpn: true
+    state: present
 '''
 
 RETURN = '''

@@ -49,22 +49,22 @@ options:
         choices: ['enabled','disabled']
 '''
 
-EXAMPLES = '''
+EXAMPLES =  '''
 # ensure lldp trap configured
 - nxos_snmp_traps:
-    group=lldp
-    state=enabled
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    group: lldp
+    state: enabled
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 
 # ensure lldp trap is not configured
 - nxos_snmp_traps:
-    group=lldp
-    state=disabled
-    host={{ inventory_hostname }}
-    username={{ un }}
-    password={{ pwd }}
+    group: lldp
+    state: disabled
+    host: {{ inventory_hostname }}
+    username: {{ un }}
+    password: {{ pwd }}
 '''
 
 RETURN = '''
