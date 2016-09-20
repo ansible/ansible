@@ -154,10 +154,12 @@ failed_conditionals:
 """
 import re
 
+import ansible.module_utils.junos
+
 from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.junos import NetworkModule, NetworkError
 
 VALID_KEYS = {
     'cli': frozenset(['command', 'output', 'prompt', 'response']),
