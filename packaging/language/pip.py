@@ -19,11 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import tempfile
-import re
-import os
-import sys
-
 DOCUMENTATION = '''
 ---
 module: pip
@@ -46,8 +41,8 @@ options:
     default: null
   requirements:
     description:
-      - The path to a pip requirements file, which should be local to the remote system. 
-        File can be specified as a relative path if using the chdir option.  
+      - The path to a pip requirements file, which should be local to the remote system.
+        File can be specified as a relative path if using the chdir option.
     required: false
     default: null
   virtualenv:
@@ -186,6 +181,14 @@ EXAMPLES = '''
   become: True
 '''
 
+import tempfile
+import re
+import os
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 def _get_cmd_options(module, cmd):
     thiscmd = cmd + " --help"
     rc, stdout, stderr = module.run_command(thiscmd)
@@ -209,7 +212,8 @@ def _get_packages(module, pip, chdir):
     '''Return results of pip command to get packages.'''
     # Try 'pip list' command first.
     command = '%s list' % pip
-    rc, out, err = module.run_command(command, cwd=chdir)
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
 
     # If there was an error (pip version too old) then use 'pip freeze'.
     if rc != 0:
@@ -334,9 +338,8 @@ def main():
             module.fail_json(msg="umask must be an octal integer",
                     details=str(sys.exc_info()[1]))
 
-
     old_umask = None
-    if umask != None:
+    if umask is not None:
         old_umask = os.umask(umask)
     try:
         if state == 'latest' and version is not None:
@@ -435,8 +438,10 @@ def main():
 
             changed = False
             if name:
+                # Pip spits an upgrade notice to stdout that we have to get rid of
+                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
                 for pkg in name:
-                    is_present = _is_present(pkg, version, out.split('\n'), pkg_cmd)
+                    is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
@@ -472,10 +477,8 @@ def main():
                          state=state, requirements=requirements, virtualenv=env,
                          stdout=out, stderr=err)
     finally:
-        if old_umask != None:
+        if old_umask is not None:
             os.umask(old_umask)
 
-# import module snippets
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()
