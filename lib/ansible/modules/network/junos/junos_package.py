@@ -92,7 +92,9 @@ EXAMPLES = """
     src: junos-vsrx-12.1X46-D10.2-domestic.tgz
     reboot: no
 """
-from ansible.module_utils.junos import NetworkModule
+import ansible.module_utils.junos
+
+from ansible.module_utils.newtork import NetworkModule
 
 try:
     from jnpr.junos.utils.sw import SW
