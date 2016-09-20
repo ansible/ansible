@@ -21,9 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: assert
-short_description: Fail with custom message
+short_description: Asserts given expressions are true 
 description:
-     - This module asserts that a given expression is true and can be a simpler alternative to the 'fail' module in some cases.
+     - This module asserts that given expressions are true with an optional custom message.
 version_added: "1.5"
 options:
   that:
@@ -31,6 +31,10 @@ options:
       - "A string expression of the same form that can be passed to the 'when' statement"
       - "Alternatively, a list of string expressions"
     required: true
+  msg:
+    description:
+      - "The customized message used for a failing assertion"
+    required: false
 author: 
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -43,4 +47,10 @@ EXAMPLES = '''
     that: 
       - "'foo' in some_command_result.stdout" 
       - "number_of_the_counting == 3"
+
+- assert: 
+    that: 
+      - "my_param <= 100"
+      - "my_param >= 0"
+    msg: "'my_param' is must be between 0 and 100"
 '''
