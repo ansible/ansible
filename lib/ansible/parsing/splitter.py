@@ -94,7 +94,7 @@ def parse_kv(args, check_raw=False):
             elif check_raw:
                 raw_params.append(orig_x)
             else:
-                raise AnsibleParserError("Incorrectly formatted data, not JSON, YAML or K=V pairs: %s" % to_native(args))
+                raise AnsibleParserError("Incorrectly formatted data, not valid KEY=VALUE pairs: %s" % to_native(args))
 
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
