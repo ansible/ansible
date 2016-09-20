@@ -655,7 +655,7 @@ class ContainerManager(DockerBaseClass):
                     detached=detached,
                     remove_orphans=self.remove_orphans)
             except Exception as exc:
-                self.client.fail("Error bring %s up - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error starting project - %s" % str(exc))
 
         if self.stopped:
             result.update(self.cmd_stop(service_names))
@@ -804,7 +804,7 @@ class ContainerManager(DockerBaseClass):
             try:
                 self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
-                self.client.fail("Error bringing %s down - %s" % (self.project.name, str(exc)))
+                self.client.fail("Error stopping project - %s" % str(exc))
 
         return result
 
