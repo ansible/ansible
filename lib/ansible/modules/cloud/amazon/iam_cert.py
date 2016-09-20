@@ -230,7 +230,7 @@ def main():
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False),
-        dup_ok=dict(default=False, required=False, choices=[False, True], type='bool')
+        dup_ok=dict(default=False, required=False, type='bool')
     )
     )
 
