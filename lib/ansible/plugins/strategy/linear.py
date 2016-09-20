@@ -70,9 +70,12 @@ class StrategyModule(StrategyBase):
                              if state_task and state_task[1]]
 
         if host_tasks_to_run:
-            lowest_cur_block = min(
-                (s.cur_block for h, (s, t) in host_tasks_to_run
-                if s.run_state != PlayIterator.ITERATING_COMPLETE))
+            try:
+                lowest_cur_block = min(
+                    (s.cur_block for h, (s, t) in host_tasks_to_run
+                    if s.run_state != PlayIterator.ITERATING_COMPLETE))
+            except ValueError:
+                lowest_cur_block = None
         else:
             # empty host_tasks_to_run will just run till the end of the function
             # without ever touching lowest_cur_block
