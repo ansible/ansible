@@ -23,7 +23,7 @@ import re
 import codecs
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.quoting import unquote
 
 
