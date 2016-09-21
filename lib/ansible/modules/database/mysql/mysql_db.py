@@ -317,7 +317,7 @@ def main():
             else:
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
                                             login_password, db, target, all_databases,
-                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca, single_transaction, quick)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
