@@ -2,8 +2,6 @@
   gather_facts: True
   roles:
     # In destructive because it creates and removes a user
-    - { role: test_sudo, tags: test_sudo}
-    #- { role: test_su, tags: test_su} # wait till su support is added to local connection, needs tty
     - { role: test_become, tags: test_become}
     - { role: test_service, tags: test_service }
     # Current pip unconditionally uses md5.  We can re-enable if pip switches
