@@ -81,7 +81,7 @@ class Task(Base, Conditional, Taggable, Become):
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
-    _retries = FieldAttribute(isa='int')
+    _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None):
