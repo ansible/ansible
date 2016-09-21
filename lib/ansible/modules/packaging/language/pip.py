@@ -187,6 +187,14 @@ import os
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
+#: Python one-liners to be run at the command line that will determine the
+# installed version for these special libraries.  These are libraries that
+# don't end up in the output of pip freeze.
+_SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
+                             'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
 def _get_cmd_options(module, cmd):
@@ -196,7 +204,7 @@ def _get_cmd_options(module, cmd):
         module.fail_json(msg="Could not get output from %s: %s" % (thiscmd, stdout + stderr))
 
     words = stdout.strip().split()
-    cmd_options = [ x for x in words if x.startswith('--') ]
+    cmd_options = [x for x in words if x.startswith('--')]
     return cmd_options
 
 
@@ -292,6 +300,31 @@ def _fail(module, cmd, out, err):
     module.fail_json(cmd=cmd, msg=msg)
 
 
+def _get_package_info(module, package, env=None):
+    """This is only needed for special packages which do not show up in pip freeze
+
+    pip and setuptools fall into this category.
+
+    :returns: a string containing the version number if the package is
+        installed.  None if the package is not installed.
+    """
+    if env:
+        opt_dirs = ['%s/bin' % env]
+    else:
+        opt_dirs = []
+    python_bin = module.get_bin_path('python', False, opt_dirs)
+
+    if python_bin is None:
+        formatted_dep = None
+    else:
+        rc, out, err = module.run_command([python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[package]])
+        if rc:
+            formatted_dep = None
+        else:
+            formatted_dep = '%s==%s' % (package, out.strip())
+    return formatted_dep
+
+
 def main():
     state_map = dict(
         present='install',
@@ -306,9 +339,9 @@ def main():
             name=dict(type='list'),
             version=dict(type='str'),
             requirements=dict(),
-            virtualenv=dict(),
+            virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(default=False, type='bool'),
-            virtualenv_command=dict(default='virtualenv'),
+            virtualenv_command=dict(default='virtualenv', type='path'),
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
             extra_args=dict(),
@@ -336,7 +369,7 @@ def main():
             umask = int(umask, 8)
         except Exception:
             module.fail_json(msg="umask must be an octal integer",
-                    details=str(sys.exc_info()[1]))
+                             details=to_native(sys.exc_info()[1]))
 
     old_umask = None
     if umask is not None:
@@ -347,23 +380,21 @@ def main():
 
         if chdir is None:
             # this is done to avoid permissions issues with privilege escalation and virtualenvs
-            chdir =  tempfile.gettempdir()
+            chdir = tempfile.gettempdir()
 
         err = ''
         out = ''
 
         env = module.params['virtualenv']
-        virtualenv_command = module.params['virtualenv_command']
 
         if env:
-            env = os.path.expanduser(env)
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 if module.check_mode:
                     module.exit_json(changed=True)
 
-                cmd = os.path.expanduser(virtualenv_command)
+                cmd = module.params['virtualenv_command']
                 if os.path.basename(cmd) == cmd:
-                    cmd = module.get_bin_path(virtualenv_command, True)
+                    cmd = module.get_bin_path(cmd, True)
 
                 if module.params['virtualenv_site_packages']:
                     cmd += ' --system-site-packages'
@@ -438,32 +469,17 @@ def main():
             changed = False
             if name:
                 pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+
                 if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
                     # Older versions of pip (pre-1.3) do not have pip list.
                     # pip freeze does not list setuptools or pip in its output
                     # So we need to get those via a specialcase
-                    if 'setuptools' in name:
-                        try:
-                            import setuptools
-                        except ImportError:
-                            # Could not import, assume that it is not installed
-                            pass
-                        else:
-                            formatted_dep = 'setuptools==%s' % setuptools.__version__
-                            pkg_list.append(formatted_dep)
-                            out += '%s\n' % formatted_dep
-
-                    if 'pip' in name:
-                        try:
-                            import pkg_resources
-                        except ImportError:
-                            # Could not import pkg_resources.  pip requires
-                            # pkg_resources so assume that it is not installed
-                            pass
-                        else:
-                            formatted_dep = 'pip==%s' % pkg_resources.get_distribution('pip').version
-                            pkg_list.append(formatted_dep)
-                            out += '%s\n' % formatted_dep
+                    for pkg in ('setuptools', 'pip'):
+                        if pkg in name:
+                            formatted_dep = _get_package_info(module, pkg, env)
+                            if formatted_dep is not None:
+                                pkg_list.append(formatted_dep)
+                                out += '%s\n' % formatted_dep
 
                 for pkg in name:
                     is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
