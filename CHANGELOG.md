@@ -42,7 +42,6 @@ Ansible Changes By Release
   * asa_acl
   * asa_command
   * asa_config
-  * asa_template
 - atomic
   * atomic_host
   * atomic_image
@@ -270,7 +269,15 @@ Ansible Changes By Release
 * skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
 ###Deprecations
-* Networking modules `asa_template`, `eos_template`, `ios_template`, `iosxr_template`, `junos_template`, `nxos_template`, and `ops_template` have been deprecated and will be removed in 2.4. Use the equivelent `_config` module.
+Notice given that the following will be removed in Ansible 2.4:
+* Modules
+  * asa_template
+  * eos_template
+  * ios_template
+  * iosxr_template
+  * junos_template
+  * nxos_template
+  * ops_template
 
 ## 2.1.2 "The Song Remains the Same"
 
