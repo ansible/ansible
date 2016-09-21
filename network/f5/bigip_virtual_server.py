@@ -86,6 +86,12 @@ options:
       - List of rules to be applied in priority order
     required: false
     default: None
+  all_enabled_vlans:
+    version_added: "2.2"
+    description:
+      - List of vlans to be enabled
+    required: false
+    default: None
   pool:
     description:
       - Default pool for the virtual server
@@ -126,6 +132,8 @@ EXAMPLES = '''
       all_profiles:
           - http
           - clientssl
+      all_enabled_vlans:
+          - /Common/vlan2
   delegate_to: localhost
 
 - name: Modify Port of the Virtual Server
@@ -250,7 +258,7 @@ def set_rules(api, name, rules_list):
             updated = True
         return updated
     except bigsuds.OperationFailed as e:
-        raise Exception('Error on setting profiles : %s' % e)
+        raise Exception('Error on setting rules : %s' % e)
 
 
 def get_profiles(api, name):
@@ -289,6 +297,24 @@ def set_profiles(api, name, profiles_list):
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting profiles : %s' % e)
 
+def set_enabled_vlans(api, name, vlans_enabled_list):
+    updated = False
+    try:
+        if vlans_enabled_list is None:
+            return False
+
+        to_add_vlans = []
+        for x in vlans_enabled_list:
+            to_add_vlans.append(x)
+
+        api.LocalLB.VirtualServer.set_vlan(
+            virtual_servers=[name],
+            vlans = [{ 'state':'STATE_ENABLED', 'vlans':[to_add_vlans] }]
+        )
+        updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting enabled vlans : %s' % e)
 
 def set_snat(api, name, snat):
     updated = False
@@ -462,6 +488,7 @@ def main():
         port=dict(type='int'),
         all_profiles=dict(type='list'),
         all_rules=dict(type='list'),
+        all_enabled_vlans=dict(type='list'),
         pool=dict(type='str'),
         description=dict(type='str'),
         snat=dict(type='str'),
@@ -494,6 +521,7 @@ def main():
     port = module.params['port']
     all_profiles = fq_list_names(partition, module.params['all_profiles'])
     all_rules = fq_list_names(partition, module.params['all_rules'])
+    all_enabled_vlans = fq_list_names(partition, module.params['all_enabled_vlans'])
     pool = fq_name(partition, module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
@@ -537,6 +565,7 @@ def main():
                     try:
                         vs_create(api, name, destination, port, pool)
                         set_profiles(api, name, all_profiles)
+                        set_enabled_vlans(api, name, all_enabled_vlans)
                         set_rules(api, name, all_rules)
                         set_snat(api, name, snat)
                         set_description(api, name, description)
@@ -562,6 +591,7 @@ def main():
                         result['changed'] |= set_description(api, name, description)
                         result['changed'] |= set_snat(api, name, snat)
                         result['changed'] |= set_profiles(api, name, all_profiles)
+                        result['changed'] |= set_enabled_vlans(api, name, all_enabled_vlans)
                         result['changed'] |= set_rules(api, name, all_rules)
                         result['changed'] |= set_default_persistence_profiles(api, name, default_persistence_profile)
                         result['changed'] |= set_state(api, name, state)
