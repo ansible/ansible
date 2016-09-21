@@ -2,8 +2,8 @@
 # Create and destroy db
 #
 - name: Create DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     state: present
     name: "{{ db_name }}"
@@ -16,8 +16,8 @@
        - "result.db =='{{ db_name }}'"
 
 - name: Check that database created
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -26,8 +26,8 @@
       - "result.stdout_lines[-1] == '(1 row)'"
 
 - name: Run create on an already created db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     state: present
     name: "{{ db_name }}"
@@ -39,8 +39,8 @@
        - "result.changed == false"
 
 - name: Destroy DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
@@ -52,8 +52,8 @@
        - "result.changed == true"
 
 - name: Check that database was destroyed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -62,8 +62,8 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 - name: Destroy DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
@@ -100,8 +100,8 @@
 # Test encoding, collate, ctype, template options
 #
 - name: Create a DB with encoding, collate, ctype, and template options
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -111,8 +111,8 @@
     template: 'template0'
 
 - name: Check that the DB has all of our options
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -126,8 +126,8 @@
       - "'en_US' not in result.stdout_lines[-2]"
 
 - name: Check that running db cration with options a second time does nothing
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -143,8 +143,8 @@
 
 
 - name: Check that attempting to change encoding returns an error
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -160,15 +160,15 @@
       - 'result.failed == True'
 
 - name: Cleanup test DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'absent'
 
 - shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   register: result
 
 - assert:
@@ -179,8 +179,8 @@
 # Create and destroy user
 #
 - name: Create a user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -193,8 +193,8 @@
       - "result.changed == True"
 
 - name: Check that they were created
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 
@@ -203,8 +203,8 @@
       - "result.stdout_lines[-1] == '(1 row)'"
 
 - name: Check that creating user a second time does nothing
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -217,8 +217,8 @@
       - "result.changed == False"
 
 - name: Remove user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
@@ -230,8 +230,8 @@
       - "result.changed == True"
 
 - name: Check that they were removed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 
@@ -240,8 +240,8 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 - name: Check that removing user a second time does nothing
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
@@ -253,16 +253,16 @@
       - "result.changed == False"
 
 - name: Create a user with all role attributes
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: "present"
     role_attr_flags: "SUPERUSER,CREATEROLE,CREATEDB,INHERIT,login"
 
 - name: Check that the user has the requested role attributes
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user1 }}';" | psql
   register: result
 
@@ -276,8 +276,8 @@
       - "'login:t' in result.stdout_lines[-2]"
 
 - name: Modify a user to have no role attributes
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: "present"
@@ -290,8 +290,8 @@
       - "result.changed == True"
 
 - name: Check that the user has the requested role attributes
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user1 }}';" | psql
   register: result
 
@@ -305,8 +305,8 @@
       - "'login:f' in result.stdout_lines[-2]"
 
 - name: Modify a single role attribute on a user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: "present"
@@ -319,8 +319,8 @@
       - "result.changed == True"
 
 - name: Check that the user has the requested role attributes
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin  from pg_roles where rolname='{{ db_user1 }}';" | psql
   register: result
 
@@ -334,15 +334,15 @@
       - "'login:t' in result.stdout_lines[-2]"
 
 - name: Cleanup the user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
 
 - name: Check that they were removed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 
@@ -356,24 +356,24 @@
 # Test db ownership
 #
 - name: Create an unprivileged user to own a DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
     password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
 
 - name: Create db with user ownership
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
     owner: "{{ db_user1 }}"
 
 - name: Check that the user owns the newly created DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -383,8 +383,8 @@
       - "'{{ db_user1 }}' == '{{ result.stdout_lines[-2] | trim }}'"
 
 - name: Change the owner on an existing db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
@@ -397,8 +397,8 @@
       - "result.changed == True"
 
 - name: Check that the user owns the newly created DB
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -408,15 +408,15 @@
       - "'postgres' == '{{ result.stdout_lines[-2] | trim }}'"
 
 - name: Cleanup db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: "{{ db_name }}"
     state: "absent"
 
 - name: Check that database was destroyed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -425,15 +425,15 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 - name: Cleanup test user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
 
 - name: Check that they were removed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 
@@ -445,24 +445,24 @@
 # Test settings privleges
 #
 - name: Create db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
 
 - name: Create some tables on the db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "create table test_table1 (field text);" | psql {{ db_name }}
 
-- sudo_user: postgres
-  sudo: True
+- become_user: postgres
+  become: True
   shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
 
 - name: Create a user with some permissions on the db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -471,20 +471,20 @@
     priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
 
 - name: Check that the user has the requested permissions (table1)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that the user has the requested permissions (table2)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
 - name: Check that the user has the requested permissions (database)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -504,8 +504,8 @@
       - "'{{ db_user1 }}=CTc/postgres' in result_database.stdout_lines[-2]"
 
 - name: Add another permission for the user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -520,8 +520,8 @@
       - "results.changed == True"
 
 - name: Check that the user has the requested permissions (table2)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -538,8 +538,8 @@
 #
 
 - name: Revoke a privilege
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     type: "table"
     state: "absent"
@@ -555,8 +555,8 @@
       - "results.changed == True"
 
 - name: Check that the user has the requested permissions (table2)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -566,8 +566,8 @@
       - "'SELECT' == '{{ result_table2.stdout_lines[-2] | trim }}'"
 
 - name: Revoke many privileges on multiple tables
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     state: "absent"
     roles: "{{ db_user1 }}"
@@ -582,14 +582,14 @@
       - "results.changed == True"
 
 - name: Check that permissions were revoked (table1)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that permissions were revoked (table2)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -599,8 +599,8 @@
       - "result_table2.stdout_lines[-1] == '(0 rows)'"
 
 - name: Revoke database privileges
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     type: "database"
     state: "absent"
@@ -610,8 +610,8 @@
     db: "{{ db_name }}"
 
 - name: Check that the user has the requested permissions (database)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -621,8 +621,8 @@
       - "'{{ db_user1 }}' not in result_database.stdout"
 
 - name: Grant database privileges
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     type: "database"
     state: "present"
@@ -638,8 +638,8 @@
       - "results.changed == True"
 
 - name: Check that the user has the requested permissions (database)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -649,8 +649,8 @@
       - "'{{ db_user1 }}=Cc' in result_database.stdout"
 
 - name: Grant a single privilege on a table
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     state: "present"
     roles: "{{ db_user1 }}"
@@ -659,8 +659,8 @@
     db: "{{ db_name }}"
 
 - name: Check that permissions were added (table1)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
@@ -670,8 +670,8 @@
       - "'{{ result_table1.stdout_lines[-2] | trim }}' == 'INSERT'"
 
 - name: Grant many privileges on multiple tables
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_privs:
     state: "present"
     roles: "{{ db_user1 }}"
@@ -680,14 +680,14 @@
     db: "{{ db_name }}"
 
 - name: Check that permissions were added (table1)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that permissions were added (table2)
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -714,15 +714,15 @@
 # Cleanup
 #
 - name: Cleanup db
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_db:
     name: "{{ db_name }}"
     state: "absent"
 
 - name: Check that database was destroyed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -731,15 +731,15 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 - name: Cleanup test user
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
 
 - name: Check that they were removed
-  sudo_user: postgres
-  sudo: True
+  become_user: postgres
+  become: True
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 
@@ -751,8 +751,8 @@
 # Test login_user functionality
 #
 - name: Create a user to test login module parameters
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   postgresql_user:
     name: "{{ db_user1 }}"
     state: "present"
@@ -769,8 +769,8 @@
     login_host: "localhost"
 
 - name: Check that database created
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -790,8 +790,8 @@
     login_host: "localhost"
 
 - name: Check that they were created
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql
   register: result
 
@@ -812,8 +812,8 @@
     host: "localhost"
 
 - name: Check that the user has the requested permissions (database)
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -833,8 +833,8 @@
     login_host: "localhost"
 
 - name: Check that they were removed
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql
   register: result
 
@@ -851,8 +851,8 @@
     login_host: "localhost"
 
 - name: Check that database was destroyed
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql
   register: result
 
@@ -864,15 +864,15 @@
 # Cleanup
 #
 - name: Cleanup test user
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
 
 - name: Check that they were removed
-  sudo: True
-  sudo_user: postgres
+  become: True
+  become_user: postgres
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql
   register: result
 

@@ -24,7 +24,7 @@
 - hosts: ec2
   gather_facts: no
   remote_user: ec2-user
-  sudo: true
+  become: true
   roles:
     - { role: ec2_elb_instance_setup, tags: test_ec2_elb }
 

@@ -25,8 +25,8 @@
 
 - debug: var=fetched
 
-# TODO: check the sudo and non-sudo forms of fetch because in one form we'll do
-# the get method of the connection plugin and in the sudo case we'll use the
+# TODO: check the become and non-become forms of fetch because in one form we'll do
+# the get method of the connection plugin and in the become case we'll use the
 # fetch module.
 
 - name: diff what we fetched with the original file
@@ -82,8 +82,8 @@
 
 - debug: var=fetched
 
-# TODO: check the sudo and non-sudo forms of fetch because in one form we'll do
-# the get method of the connection plugin and in the sudo case we'll use the
+# TODO: check the become and non-become forms of fetch because in one form we'll do
+# the get method of the connection plugin and in the become case we'll use the
 # fetch module.
 
 - name: diff what we fetched with the original file
