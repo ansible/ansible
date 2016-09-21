@@ -291,9 +291,9 @@ class DataLoader():
         b_source = to_bytes(source)
 
         result = None
-        if not source:
-            display.warning('Invalid request to find a file that matches an empty string or "null" value')
-        elif source.startswith('~') or source.startswith(os.path.sep):
+        if source is None:
+            display.warning('Invalid request to find a file that matches a "null" value')
+        elif source and (source.startswith('~') or source.startswith(os.path.sep)):
             # path is absolute, no relative needed, check existence and return source
             test_path = unfrackpath(b_source)
             if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
