@@ -269,7 +269,7 @@ class Cli(NxapiConfigMixin, CliBase):
         cmds = list(prepare_commands(commands))
         responses = self.execute(cmds)
         for index, cmd in enumerate(commands):
-            if cmd.output == 'json':
+            if cmd.output == 'json' and cmd.args.get('raw') is False:
                 try:
                     responses[index] = json.loads(responses[index])
                 except ValueError:
