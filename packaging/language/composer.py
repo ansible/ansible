@@ -103,6 +103,7 @@ requirements:
     - composer installed in bin path (recommended /usr/local/bin)
 notes:
     - Default options that are always appended in each execution are --no-ansi, --no-interaction and --no-progress if available.
+    - We received reports about issues on macOS if composer was installed by Homebrew. Please use the official install method to avoid it.
 '''
 
 EXAMPLES = '''
