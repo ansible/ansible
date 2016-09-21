@@ -64,7 +64,7 @@ def get_dict_of_struct(struct):
 
     res = {}
     if struct is not None:
-        for key, value in struct.__dict__.iteritems():
+        for key, value in struct.__dict__.items():
             key = remove_underscore(key)
             if value is None:
                 continue
@@ -90,6 +90,14 @@ def get_dict_of_struct(struct):
 def create_connection(auth):
     """
     Create a connection to Python SDK, from task `auth` parameter.
+    If user doesnt't have SSO token the `auth` dictionary has following parameters mandatory:
+     url, username, password
+
+    If user has SSO token the `auth` dictionary has following parameters mandatory:
+     url, token
+
+    The `ca_file` parameter is mandatory in case user want to use secure connection,
+    in case user want to use insecure connection, it's mandatory to send insecure=True.
 
     :param auth: dictionary which contains needed values for connection creation
     :return: Python SDK connection
@@ -225,7 +233,14 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
-def wait(service, condition, fail_condition=lambda e: False, timeout=180, wait=True):
+def wait(
+    service,
+    condition,
+    fail_condition=lambda e: False,
+    timeout=180,
+    wait=True,
+    poll_interval=3,
+):
     """
     Wait until entity fulfill expected condition.
 
@@ -234,6 +249,7 @@ def wait(service, condition, fail_condition=lambda e: False, timeout=180, wait=T
     :param fail_condition: if this condition is true, raise Exception
     :param timeout: max time to wait in seconds
     :param wait: if True wait for condition, if False don't wait
+    :param poll_interval: Number of seconds we should wait until next condition check
     """
     # Wait until the desired state of the entity:
     if wait:
@@ -245,8 +261,9 @@ def wait(service, condition, fail_condition=lambda e: False, timeout=180, wait=T
                 return
             elif fail_condition(entity):
                 raise Exception("Error while waiting on result state of the entity.")
-            else:
-                time.sleep(float(wait))
+
+            # Sleep for `poll_interval` seconds if nor of the conditions apply:
+            time.sleep(float(poll_interval))
 
 
 def ovirt_full_argument_spec(**kwargs):
@@ -260,6 +277,7 @@ def ovirt_full_argument_spec(**kwargs):
         auth=dict(required=True, type='dict'),
         timeout=dict(default=180, type='int'),
         wait=dict(default=True, type='bool'),
+        poll_interval=dict(default=3, type='int'),
     )
     spec.update(kwargs)
     return spec
@@ -269,7 +287,7 @@ def check_params(module):
     """
     Most modules must have either `name` or `id` specified.
     """
-    if module.params['name'] is None and module.params['id'] is None:
+    if module.params.get('name') is None and module.params.get('id') is None:
         module.fail_json(msg='"name" or "id" is required')
 
 
@@ -398,6 +416,7 @@ class BaseModule(object):
             fail_condition=fail_condition,
             wait=self._module.params['wait'],
             timeout=self._module.params['timeout'],
+            poll_interval=self._module.params['poll_interval'],
         )
 
         return {
@@ -448,6 +467,7 @@ class BaseModule(object):
                 condition=lambda entity: not entity,
                 wait=self._module.params['wait'],
                 timeout=self._module.params['timeout'],
+                poll_interval=self._module.params['poll_interval'],
             )
         self.changed = True
 
@@ -519,6 +539,7 @@ class BaseModule(object):
             fail_condition=fail_condition,
             wait=self._module.params['wait'],
             timeout=self._module.params['timeout'],
+            poll_interval=self._module.params['poll_interval'],
         )
         return {
             'changed': self.changed,

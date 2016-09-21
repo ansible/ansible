@@ -49,6 +49,10 @@ options:
             - "The amount of time in seconds the module should wait for the instance to
                get into desired state."
         default: 180
+    poll_interval:
+        description:
+            - "Number of the seconds the module waits until another poll request on entity status is sent."
+        default: 3
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.0.0
