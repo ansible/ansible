@@ -119,7 +119,7 @@ tasks:
         - name: Always revoke the SSO token
           ovirt_auth:
             state: absent
-            ovirt_auth: {{ ovirt_auth }}
+            ovirt_auth: "{{ ovirt_auth }}"
 '''
 
 RETURN = '''
