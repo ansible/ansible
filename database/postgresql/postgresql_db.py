@@ -288,11 +288,11 @@ def main():
     try:
         if module.check_mode:
             if state == "absent":
-                changed = not db_exists(cursor, db)
+                changed = db_exists(cursor, db)
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding,
                                          lc_collate, lc_ctype)
-            module.exit_json(changed=changed,db=db)
+            module.exit_json(changed=changed, db=db)
 
         if state == "absent":
             try:
