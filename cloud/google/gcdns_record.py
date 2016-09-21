@@ -71,19 +71,19 @@ options:
             - The type of resource record to add.
         required: true
         choices: [ 'A', 'AAAA', 'CNAME', 'SRV', 'TXT', 'SOA', 'NS', 'MX', 'SPF', 'PTR' ]
-    values:
+    record_data:
         description:
-            - The values to use for the resource record.
-            - I(values) must be specified if I(state) is C(present) or
+            - The record_data to use for the resource record.
+            - I(record_data) must be specified if I(state) is C(present) or
               I(overwrite) is C(True), or the module will fail.
-            - Valid values vary based on the record's I(type). In addition,
+            - Valid record_data vary based on the record's I(type). In addition,
               resource records that contain a DNS domain name in the value
               field (e.g., CNAME, PTR, SRV, .etc) MUST include a trailing dot
               in the value.
-            - Individual string values for TXT records must be enclosed in
+            - Individual string record_data for TXT records must be enclosed in
               double quotes.
             - For resource records that have the same name but different
-              values (e.g., multiple A records), they must be defined as
+              record_data (e.g., multiple A records), they must be defined as
               multiple list entries in a single record.
         required: false
         aliases: ['value']
@@ -99,15 +99,15 @@ options:
               or fail. The behavior of this option depends on I(state).
             - If I(state) is C(present) and I(overwrite) is C(True), this
               module will replace an existing resource record of the same name
-              with the provided I(values). If I(state) is C(present) and
+              with the provided I(record_data). If I(state) is C(present) and
               I(overwrite) is C(False), this module will fail if there is an
               existing resource record with the same name and type, but
               different resource data.
             - If I(state) is C(absent) and I(overwrite) is C(True), this
               module will remove the given resource record unconditionally.
               If I(state) is C(absent) and I(overwrite) is C(False), this
-              module will fail if the provided values do not match exactly
-              with the existing resource record's values.
+              module will fail if the provided record_data do not match exactly
+              with the existing resource record's record_data.
         required: false
         choices: [True, False]
         default: False
@@ -192,19 +192,19 @@ EXAMPLES = '''
     record: 'api.example.com'
     zone_id: 'example-com'
     type: A
-    values:
+    record_data:
       - '192.0.2.23'
       - '10.4.5.6'
       - '198.51.100.5'
       - '203.0.113.10'
 
-# Change the value of an existing record with multiple values.
+# Change the value of an existing record with multiple record_data.
 - gcdns_record:
     record: 'api.example.com'
     zone: 'example.com'
     type: A
     overwrite: true
-    values:           # WARNING: All values in a record will be replaced
+    record_data:           # WARNING: All values in a record will be replaced
       - '192.0.2.23'
       - '192.0.2.42'    # The changed record
       - '198.51.100.5'
@@ -216,7 +216,7 @@ EXAMPLES = '''
     zone_id: 'example-com'
     state: absent
     type: A
-    values:           # NOTE: All of the values must match exactly
+    record_data:           # NOTE: All of the values must match exactly
       - '192.0.2.23'
       - '192.0.2.42'
       - '198.51.100.5'
@@ -250,7 +250,7 @@ EXAMPLES = '''
     zone: 'example.com'
     type: NS
     ttl: 21600
-    values:
+    record_data:
       - 'ns-cloud-d1.googledomains.com.'    # Note the trailing dots on values
       - 'ns-cloud-d2.googledomains.com.'
       - 'ns-cloud-d3.googledomains.com.'
@@ -261,7 +261,7 @@ EXAMPLES = '''
     record: 'example.com'
     zone_id: 'example-com'
     type: TXT
-    values:
+    record_data:
       - '"v=spf1 include:_spf.google.com -all"'   # A single-string TXT value
       - '"hello " "world"'    # A multi-string TXT value
 '''
@@ -292,7 +292,7 @@ type:
     returned: success
     type: string
     sample: A
-values:
+record_data:
     description: The resource record values
     returned: success
     type: list
@@ -365,8 +365,8 @@ def create_record(module, gcdns, zone, record):
     record_name = module.params['record']
     record_type = module.params['type']
     ttl = module.params['ttl']
-    values = module.params['values']
-    data = dict(ttl=ttl, rrdatas=values)
+    record_data = module.params['record_data']
+    data = dict(ttl=ttl, rrdatas=record_data)
 
     # Google Cloud DNS wants the trailing dot on all DNS names.
     if record_name[-1] != '.':
@@ -375,7 +375,7 @@ def create_record(module, gcdns, zone, record):
     # If we found a record, we need to check if the values match.
     if record is not None:
         # If the record matches, we obviously don't have to change anything.
-        if _records_match(record.data['ttl'], record.data['rrdatas'], ttl, values):
+        if _records_match(record.data['ttl'], record.data['rrdatas'], ttl, record_data):
             return False
 
         # The record doesn't match, so we need to check if we can overwrite it.
@@ -397,7 +397,7 @@ def create_record(module, gcdns, zone, record):
                 # as its value).
                 module.fail_json(
                     msg     = 'value is invalid for the given type: ' +
-                              "%s, got value: %s" % (record_type, values),
+                              "%s, got value: %s" % (record_type, record_data),
                     changed = False
                 )
 
@@ -455,7 +455,7 @@ def remove_record(module, gcdns, record):
 
     overwrite   = module.boolean(module.params['overwrite'])
     ttl         = module.params['ttl']
-    values      = module.params['values']
+    record_data = module.params['record_data']
 
     # If there is no record, we're obviously done.
     if record is None:
@@ -464,11 +464,11 @@ def remove_record(module, gcdns, record):
     # If there is an existing record, do our values match the values of the
     # existing record?
     if not overwrite:
-        if not _records_match(record.data['ttl'], record.data['rrdatas'], ttl, values):
+        if not _records_match(record.data['ttl'], record.data['rrdatas'], ttl, record_data):
             module.fail_json(
-                msg     = 'cannot delete due to non-matching ttl or values: ' +
-                          "ttl: %d, values: %s " % (ttl, values) +
-                          "original ttl: %d, original values: %s" % (record.data['ttl'], record.data['rrdatas']),
+                msg     = 'cannot delete due to non-matching ttl or record_data: ' +
+                          "ttl: %d, record_data: %s " % (ttl, record_data) +
+                          "original ttl: %d, original record_data: %s" % (record.data['ttl'], record.data['rrdatas']),
                 changed = False
             )
 
@@ -516,14 +516,14 @@ def _get_zone(gcdns, zone_name, zone_id):
     return found_zone
 
 
-def _records_match(old_ttl, old_values, new_ttl, new_values):
+def _records_match(old_ttl, old_record_data, new_ttl, new_record_data):
     """Checks to see if original and new TTL and values match."""
 
     matches = True
 
     if old_ttl != new_ttl:
         matches = False
-    if old_values != new_values:
+    if old_record_data != new_record_data:
         matches = False
 
     return matches
@@ -537,7 +537,7 @@ def _sanity_check(module):
     record_type = module.params['type']
     state       = module.params['state']
     ttl         = module.params['ttl']
-    values      = module.params['values']
+    record_data = module.params['record_data']
 
     # Apache libcloud needs to be installed and at least the minimum version.
     if not HAS_LIBCLOUD:
@@ -567,10 +567,10 @@ def _sanity_check(module):
         module.fail_json(msg='cannot update SOA records', changed=False)
 
     # Some sanity checks depend on what value was supplied.
-    if values is not None and (state == 'present' or not overwrite):
+    if record_data is not None and (state == 'present' or not overwrite):
         # A records must contain valid IPv4 addresses.
         if record_type == 'A':
-            for value in values:
+            for value in record_data:
                 try:
                     socket.inet_aton(value)
                 except socket.error:
@@ -581,7 +581,7 @@ def _sanity_check(module):
 
         # AAAA records must contain valid IPv6 addresses.
         if record_type == 'AAAA':
-            for value in values:
+            for value in record_data:
                 try:
                     socket.inet_pton(socket.AF_INET6, value)
                 except socket.error:
@@ -591,10 +591,10 @@ def _sanity_check(module):
                     )
 
         # CNAME and SOA records can't have multiple values.
-        if record_type in ['CNAME', 'SOA'] and len(values) > 1:
+        if record_type in ['CNAME', 'SOA'] and len(record_data) > 1:
             module.fail_json(
                 msg     = 'CNAME or SOA records cannot have more than one value, ' +
-                          "got: %s" % values,
+                          "got: %s" % record_data,
                 changed = False
             )
 
@@ -607,10 +607,10 @@ def _sanity_check(module):
 
         # Values for txt records must begin and end with a double quote.
         if record_type == 'TXT':
-            for value in values:
+            for value in record_data:
                 if value[0] != '"' and value[-1] != '"':
                     module.fail_json(
-                        msg     = 'TXT values must be enclosed in double quotes, ' +
+                        msg     = 'TXT record_data must be enclosed in double quotes, ' +
                                   'got: %s' % value,
                         changed = False
                     )
@@ -670,7 +670,7 @@ def main():
             zone                  = dict(type='str'),
             zone_id               = dict(type='str'),
             type                  = dict(required=True, choices=SUPPORTED_RECORD_TYPES, type='str'),
-            values                = dict(aliases=['value'], type='list'),
+            record_data           = dict(aliases=['value'], type='list'),
             ttl                   = dict(default=300, type='int'),
             overwrite             = dict(default=False, type='bool'),
             service_account_email = dict(type='str'),
@@ -679,8 +679,8 @@ def main():
             project_id            = dict(type='str')
         ),
         required_if = [
-            ('state', 'present', ['values']),
-            ('overwrite', False, ['values'])
+            ('state', 'present', ['record_data']),
+            ('overwrite', False, ['record_data'])
         ],
         required_one_of     = [['zone', 'zone_id']],
         supports_check_mode = True
@@ -696,14 +696,14 @@ def main():
     zone_id     = module.params['zone_id']
 
     json_output = dict(
-        state     = state,
-        record    = record_name,
-        zone      = zone_name,
-        zone_id   = zone_id,
-        type      = record_type,
-        values    = module.params['values'],
-        ttl       = ttl,
-        overwrite = module.boolean(module.params['overwrite'])
+        state       = state,
+        record      = record_name,
+        zone        = zone_name,
+        zone_id     = zone_id,
+        type        = record_type,
+        record_data = module.params['record_data'],
+        ttl         = ttl,
+        overwrite   = module.boolean(module.params['overwrite'])
     )
 
     # Google Cloud DNS wants the trailing dot on all DNS names.
@@ -755,20 +755,20 @@ def main():
         diff['before_header'] = '<absent>'
     else:
         diff['before'] = dict(
-            record = record.data['name'],
-            type   = record.data['type'],
-            values = record.data['rrdatas'],
-            ttl    = record.data['ttl']
+            record      = record.data['name'],
+            type        = record.data['type'],
+            record_data = record.data['rrdatas'],
+            ttl         = record.data['ttl']
         )
         diff['before_header'] = "%s:%s" % (record_type, record_name)
 
     # Create, remove, or modify the record.
     if state == 'present':
         diff['after'] = dict(
-            record = record_name,
-            type   = record_type,
-            values = module.params['values'],
-            ttl    = ttl
+            record      = record_name,
+            type        = record_type,
+            record_data = module.params['record_data'],
+            ttl         = ttl
         )
         diff['after_header'] = "%s:%s" % (record_type, record_name)
 
