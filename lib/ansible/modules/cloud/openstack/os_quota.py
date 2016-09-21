@@ -424,8 +424,8 @@ def main():
 
             project_quota_output = project_quota_update
 
-        module.exit_json(changed=changes_required, ansible_facts=dict(
-            openstack_quotas=project_quota_output)
+        module.exit_json(changed=changes_required,
+            openstack_quotas=project_quota_output
         )
 
     except shade.OpenStackCloudException as e:
