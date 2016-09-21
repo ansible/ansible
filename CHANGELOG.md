@@ -81,6 +81,8 @@ Ansible Changes By Release
   * dellos10_config
   * dellos10_facts
   * dellos10_template
+- docker
+  * docker_network
 - eos
   * eos_facts
 - exoscale:
