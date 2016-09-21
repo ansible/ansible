@@ -70,8 +70,8 @@
 
 - name: Ask to create a file without enough perms to change ownership
   file: path=/tmp/worldwritable/baz.txt state=touch owner=root
-  sudo: yes
-  sudo_user: nobody
+  become: yes
+  become_user: nobody
   register: chown_result
   ignore_errors: True
 
