@@ -214,8 +214,8 @@
 
 - name: overwrite the file as user nobody
   copy: dest=/tmp/worldwritable/file.txt content="baz"
-  sudo: yes
-  sudo_user: nobody
+  become: yes
+  become_user: nobody
   register: copy_result7
 
 - name: assert the file was overwritten
