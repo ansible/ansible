@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2 TBD - ACTIVE DEVELOPMENT
+## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
 
@@ -13,7 +13,7 @@ Ansible Changes By Release
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
-* Windows `async:` support for long-running or backgrodund tasks.
+* Windows `async:` support for long-running or background tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
@@ -66,15 +66,25 @@ Ansible Changes By Release
 - cloudstack
   * cs_router
   * cs_snapshot_policy
-- dnos6
-  * dnos6_command
-- dnos9
-  * dnos9_command
-  * dnos9_config
-- dnos10
-  * dnos10_command
-  * dnos10_config
-  * dnos10_template
+- dellos6
+  * dellos6_command
+  * dellos6_config
+  * dellos6_facts
+  * dellos6_template
+- dellos9
+  * dellos9_command
+  * dellos9_config
+  * dellos9_facts
+  * dellos9_template
+- dellos10
+  * dellos10_command
+  * dellos10_config
+  * dellos10_facts
+  * dellos10_template
+- docker
+  * docker_network
+- eos
+  * eos_facts
 - exoscale:
   * exo_dns_domain
   * exo_dns_record
@@ -106,6 +116,10 @@ Ansible Changes By Release
 - ipmi
   * ipmi_boot
   * ipmi_power
+- ios
+  * ios_facts
+- iosxr
+  * iosxr_facts
 - include_role
 - jenkins
   * jenkins_job
@@ -121,6 +135,68 @@ Ansible Changes By Release
   * netapp_e_facts
   * netapp_e_storage_system
 - netconf_config
+- netvisor
+  * pn_cluster
+  * pn_ospfarea
+  * pn_ospf
+  * pn_show
+  * pn_trunk
+  * pn_vlag
+  * pn_vlan
+  * pn_vrouterbgp
+  * pn_vrouterif
+  * pn_vrouterlbif
+  * pn_vrouter
+- nxos
+  * nxos_aaa_server_host
+  * nxos_aaa_server
+  * nxos_acl_interface
+  * nxos_acl
+  * nxos_bgp_af
+  * nxos_bgp_neighbor_af
+  * nxos_bgp_neighbor
+  * nxos_bgp
+  * nxos_evpn_global
+  * nxos_evpn_vni
+  * nxos_file_c
+  * nxos_gir_profile_management
+  * nxos_gir
+  * nxos_hsrp
+  * nxos_igmp_interface
+  * nxos_igmp
+  * nxos_igmp_snooping
+  * nxos_interface_ospf
+  * nxos_mtu
+  * nxos_ntp_auth
+  * nxos_ntp_options
+  * nxos_ntp
+  * nxos_ospf
+  * nxos_ospf_vrf
+  * nxos_overlay_global
+  * nxos_pim_interface
+  * nxos_pim
+  * nxos_pim_rp_address
+  * nxos_portchannel
+  * nxos_rollback
+  * nxos_smu
+  * nxos_snapshot
+  * nxos_snmp_community
+  * nxos_snmp_contact
+  * nxos_snmp_host
+  * nxos_snmp_location
+  * nxos_snmp_traps
+  * nxos_snmp_user
+  * nxos_static_route
+  * nxos_udld_interface
+  * nxos_udld
+  * nxos_vpc_interface
+  * nxos_vpc
+  * nxos_vrf_af
+  * nxos_vtp_domain
+  * nxos_vtp_password
+  * nxos_vtp_version
+  * nxos_vxlan_vtep
+  * nxos_vxlan_vtep_vni
 - mssql_db
 - ovh_ip_loadbalancing_backend
 - opendj_backendprop
@@ -136,6 +212,10 @@ Ansible Changes By Release
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- sros
+  * sros_command
+  * sros_config
+  * sros_rollback
 - statusio_maintenance
 - systemd
 - telegram
@@ -149,8 +229,15 @@ Ansible Changes By Release
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
+- vyos
+  * vyos_command
+  * vyos_config
+  * vyos_facts
 - wakeonlan
-- win_robocopy
+- windows:
+  * win_command
+  * win_robocopy
+  * win_shell
 
 
 ###Minor Changes:
@@ -161,6 +248,28 @@ Ansible Changes By Release
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * removed previously deprecated ';' as host list separator.
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
+* Fix a problem with the pip module updating the python pip package itself.
+
+###For custom front ends using the API:
+* ansible.parsing.vault:
+  * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
+    Use ansible.parsing.vault.is_encrypted() instead
+  * VaultFile has been removed. This unfinished code was never used inside of
+    Ansible.  The feature it was intended to support has now been implemented
+    without using this.
+  * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
+    and was relaced by VaultAES256 less than a week later, now has a deprecation
+    warning.  **It will be removed in 2.3**.  In the unlikely event that you
+    wrote a vault file in that 1 week window and have never modified the file
+    since (ansible-vault automatically re-encrypts the file using VaultAES256
+    whenever it is written to but not read), run ``ansible-vault rekey
+    [filename]`` to move to VaultAES256.
+
+###Removed Deprecated:
+* ';' as host list separator.
+* with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
+* skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
+* skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
 ## 2.1.2 "The Song Remains the Same"
 
@@ -2589,3 +2698,4 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
+

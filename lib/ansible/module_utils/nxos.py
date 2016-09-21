@@ -43,7 +43,10 @@ class NxapiConfigMixin(object):
 
     def load_config(self, config):
         checkpoint = 'ansible_%s' % int(time.time())
-        self.execute(['checkpoint %s' % checkpoint], output='text')
+        try:
+            self.execute(['checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['checkpoint %s' % checkpoint])
 
         try:
             self.configure(config)
@@ -51,14 +54,21 @@ class NxapiConfigMixin(object):
             self.load_checkpoint(checkpoint)
             raise
 
-        self.execute(['no checkpoint %s' % checkpoint], output='text')
+        try:
+            self.execute(['no checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['no checkpoint %s' % checkpoint])
 
     def save_config(self, **kwargs):
         self.execute(['copy running-config startup-config'])
 
     def load_checkpoint(self, checkpoint):
-        self.execute(['rollback running-config checkpoint %s' % checkpoint,
-                      'no checkpoint %s' % checkpoint], output='text')
+        try:
+            self.execute(['rollback running-config checkpoint %s' % checkpoint,
+                          'no checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['rollback running-config checkpoint %s' % checkpoint,
+                          'no checkpoint %s' % checkpoint])
 
 
 class Nxapi(NxapiConfigMixin):
@@ -259,7 +269,7 @@ class Cli(NxapiConfigMixin, CliBase):
         cmds = list(prepare_commands(commands))
         responses = self.execute(cmds)
         for index, cmd in enumerate(commands):
-            if cmd.output == 'json':
+            if cmd.output == 'json' and cmd.args.get('raw') is False:
                 try:
                     responses[index] = json.loads(responses[index])
                 except ValueError:

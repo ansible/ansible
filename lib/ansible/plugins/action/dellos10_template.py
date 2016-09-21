@@ -1,4 +1,6 @@
 #
+# Copyright 2015 Peter Sprygada <psprygada@ansible.com>
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
-from ansible.plugins.action.net_config import ActionModule as NetActionModule
+from ansible.plugins.action.net_template import ActionModule as NetActionModule
 
 class ActionModule(NetActionModule, ActionBase):
     pass

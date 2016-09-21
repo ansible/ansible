@@ -1,3 +1,8 @@
+#
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
@@ -26,8 +31,8 @@
 
 import re
 
+from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
-from ansible.module_utils.network import register_transport, to_list, Command
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 
 
@@ -63,46 +68,33 @@ class Cli(CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password:\s?$", re.I)
 
-    WARNING_PROMPTS_RE = [
-        re.compile(r"[\r\n]?\[confirm yes/no\]:\s?$"),
-        re.compile(r"[\r\n]?\[y/n\]:\s?$"),
-        re.compile(r"[\r\n]?\[yes/no\]:\s?$")
-    ]
-
     CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b).)*$"),
+        re.compile(r"% ?Error"),
         re.compile(r"% ?Bad secret"),
+        re.compile(r"Syntax error:"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
         re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
+
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
 
 
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.run_commands(
-            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
-        )
-
-
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
-        cmdlist = list()
-        for c in to_list(commands):
-            cmd = Command(c, prompt=self.WARNING_PROMPTS_RE, response='yes')
-            cmdlist.append(cmd)
-        cmds.extend(cmdlist)
+        cmds.extend(to_list(commands))
         cmds.append('end')
+        cmds.append('commit')
 
         responses = self.execute(cmds)
         responses.pop(0)
@@ -110,11 +102,19 @@ class Cli(CliBase):
 
 
     def get_config(self, **kwargs):
-        return self.execute(['show running-config'])
+        return self.execute(['show running-configuration'])
 
 
     def load_config(self, commands, **kwargs):
         return self.configure(commands)
+
+
+    def commit_config(self, **kwargs):
+        self.execute(['commit'])
+
+
+    def abort_config(self, **kwargs):
+        self.execute(['discard'])
 
 
     def save_config(self):

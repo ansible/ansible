@@ -1,3 +1,8 @@
+#
+# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+#
+# Copyright (c) 2016 Dell Inc.
+#
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
@@ -26,9 +31,9 @@
 
 import re
 
-from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.network import Command, register_transport, to_list
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine, ignore_line, DEFAULT_COMMENT_TOKENS
 
 
 def get_config(module):
@@ -38,25 +43,91 @@ def get_config(module):
         contents = module.config.get_config()
         module.params['config'] = contents
 
-    return NetworkConfig(indent=1, contents=contents[0])
+    return Dellos6NetworkConfig(indent=0, contents=contents[0])
 
 
 def get_sublevel_config(running_config, module):
     contents = list()
     current_config_contents = list()
+    sublevel_config = Dellos6NetworkConfig(indent=0)
+
     obj = running_config.get_object(module.params['parents'])
     if obj:
         contents = obj.children
-    contents[:0] = module.params['parents']
 
     for c in contents:
-        if isinstance(c, str):
-            current_config_contents.append(c)
         if isinstance(c, ConfigLine):
             current_config_contents.append(c.raw)
-    sublevel_config = '\n'.join(current_config_contents)
+    sublevel_config.add(current_config_contents, module.params['parents'])
 
     return sublevel_config
+
+
+def os6_parse(lines, indent=None, comment_tokens=None):
+    sublevel_cmds = [
+        re.compile(r'^vlan.*$'),
+        re.compile(r'^stack.*$'),
+        re.compile(r'^interface.*$'),
+        re.compile(r'line [(console)|(telnet)|(ssh)].*$'),
+        re.compile(r'ip ssh !(server).*$'),
+        re.compile(r'ip address .*$'),
+        re.compile(r'ip access-list .*$'),
+        re.compile(r'banner motd.*$'),
+        re.compile(r'radius-server host auth.*$')]
+
+    childline = re.compile(r'^exit$')
+
+    config = list()
+    inSubLevel = False
+    parent = None
+    children = list()
+    subcommandcount = 0
+
+    for line in str(lines).split('\n'):
+        text = str(re.sub(r'([{};])', '', line)).strip()
+
+        cfg = ConfigLine(text)
+        cfg.raw = line
+
+        if not text or ignore_line(text, comment_tokens):
+            parent = None
+            children = list()
+            inSubLevel = False
+            continue
+
+        if inSubLevel is False:
+            for pr in sublevel_cmds:
+                if pr.match(line):
+                    parent = cfg
+                    config.append(parent)
+                    inSubLevel = True
+                    continue
+            if parent is None:
+                config.append(cfg)
+
+        # handle sub level commands
+        elif inSubLevel and childline.match(line):
+            parent.children = children
+            inSubLevel = False
+            children = list()
+            parent = None
+
+        # handle top level commands
+        elif inSubLevel:
+            children.append(cfg)
+            cfg.parents = [parent]
+            config.append(cfg)
+
+        else:  # global level
+            config.append(cfg)
+
+    return config
+
+
+class Dellos6NetworkConfig(NetworkConfig):
+
+    def load(self, contents):
+        self._config = os6_parse(contents, self.indent, DEFAULT_COMMENT_TOKENS)
 
 
 class Cli(CliBase):
@@ -71,45 +142,40 @@ class Cli(CliBase):
     CLI_ERRORS_RE = [
         re.compile(r"% ?Error"),
         re.compile(r"% ?Bad secret"),
-        re.compile(r"Syntax error:"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
         re.compile(r"connection timed out", re.I),
         re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
+        re.compile(r"'[^']' +returned error code: ?\d+")]
 
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+
+
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.run_commands(
+            Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
+        )
+        self.run_commands('terminal length 0')
 
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         cmds.append('end')
-        cmds.append('commit')
-
         responses = self.execute(cmds)
         responses.pop(0)
         return responses
 
 
     def get_config(self, **kwargs):
-        return self.execute(['show running-configuration'])
+        return self.execute(['show running-config'])
 
 
     def load_config(self, commands, **kwargs):
         return self.configure(commands)
-
-
-    def commit_config(self, **kwargs):
-        self.execute(['commit'])
-
-
-    def abort_config(self, **kwargs):
-        self.execute(['discard'])
 
 
     def save_config(self):

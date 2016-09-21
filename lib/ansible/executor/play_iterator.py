@@ -502,6 +502,8 @@ class PlayIterator:
         elif state.fail_state != self.FAILED_NONE:
             if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
                 return False
+            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+                return False
             else:
                 return True
         elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
