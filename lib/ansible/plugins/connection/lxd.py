@@ -36,7 +36,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._host = self._play_context.remote_addr
+        self._host = self._play_context.remote_addr.replace(':::', ':')
         self._lxc_cmd = find_executable("lxc")
 
         if not self._lxc_cmd:
