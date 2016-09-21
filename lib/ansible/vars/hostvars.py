@@ -68,13 +68,19 @@ class HostVars(collections.Mapping):
             host = self._inventory.get_host(host_name)
         return host
 
-    def __getitem__(self, host_name):
+    def raw_get(self, host_name):
+        '''
+        Similar to __getitem__, however the returned data is not run through
+        the templating engine to expand variables in the hostvars.
+        '''
         host = self._find_host(host_name)
         if host is None:
             raise j2undefined
 
-        data = self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
+        return self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
+    def __getitem__(self, host_name):
+        data = self.raw_get(host_name)
         sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
         if sha1_hash in self._cached_result:
             result = self._cached_result[sha1_hash]
