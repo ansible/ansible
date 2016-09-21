@@ -187,7 +187,7 @@ options:
      required: false
      default: false
      version_added: "2.2"
-   reuse_fips:
+   reuse_ips:
      description:
        - When I(auto_ip) is true and this option is true, the I(auto_ip) code
          will attempt to re-use unassigned floating ips in the project before
@@ -489,7 +489,7 @@ def _create_server(module, cloud):
         boot_volume=module.params['boot_volume'],
         boot_from_volume=module.params['boot_from_volume'],
         terminate_volume=module.params['terminate_volume'],
-        reuse_fips=module.params['reuse_fips'],
+        reuse_ips=module.params['reuse_ips'],
         wait=module.params['wait'], timeout=module.params['timeout'],
         **bootkwargs
     )
@@ -590,7 +590,7 @@ def main():
         scheduler_hints                 = dict(default=None, type='dict'),
         state                           = dict(default='present', choices=['absent', 'present']),
         delete_fip                      = dict(default=False, type='bool'),
-        reuse_fips                      = dict(default=True, type='bool'),
+        reuse_ips                       = dict(default=True, type='bool'),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
