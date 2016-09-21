@@ -1,7 +1,6 @@
 [![PyPI version](https://img.shields.io/pypi/v/ansible.svg)](https://pypi.python.org/pypi/ansible)
 [![PyPI downloads](https://img.shields.io/pypi/dm/ansible.svg)](https://pypi.python.org/pypi/ansible)
-[![Build Status](https://travis-ci.org/ansible/ansible.svg?branch=devel)](https://travis-ci.org/ansible/ansible)
-
+[![Build Status](https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=stable-2.1)](https://app.shippable.com/projects/573f79d02a8192902e20e34b)
 
 Ansible
 =======
