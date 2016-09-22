@@ -29,7 +29,7 @@ from ansible.template import Templar
 STATIC_VARS = [
     'inventory_hostname', 'inventory_hostname_short',
     'inventory_file', 'inventory_dir', 'playbook_dir',
-    'ansible_play_hosts', 'play_hosts', 'ansible_play_hosts_all', 'groups',
+    'ansible_play_hosts', 'play_hosts', 'groups',
     'ungrouped', 'group_names', 'ansible_version', 'omit', 'role_names'
 ]
 
