@@ -34,6 +34,7 @@ fi
 
 container_id=
 httptester_id=
+tests_completed=
 
 function show_environment
 {
@@ -49,6 +50,10 @@ function cleanup
     if [ "${controller_shared_dir}" ]; then
         cp -av "${controller_shared_dir}/shippable" "${SHIPPABLE_BUILD_DIR}"
         rm -rf "${controller_shared_dir}"
+    fi
+
+    if [ "${keep_containers}" == "onfailure" ] && [ "${tests_completed}" != "" ]; then
+        keep_containers=
     fi
 
     if [ "${keep_containers}" == "" ]; then
@@ -111,3 +116,5 @@ docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults
 docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
+
+tests_completed=1
