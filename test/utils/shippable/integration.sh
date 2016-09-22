@@ -2,7 +2,8 @@
 
 source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '../../..')))")
 
-test_image="${IMAGE}"
+default_test_image="docker.io/ansible/ansible:centos7"
+test_image="${IMAGE:-$default_test_image}"
 test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
 test_target="${TARGET:-}"
