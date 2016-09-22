@@ -1079,7 +1079,7 @@ class AddressClasses(object):
     def get_address_class(self):
         key = self.api.LocalLB.Class.get_address_class(self.address_classes)
         value = self.api.LocalLB.Class.get_address_class_member_data_value(key)
-        result = map(zip, [x['members'] for x in key], value)
+        result = list(map(zip, [x['members'] for x in key], value))
         return result
 
     def get_description(self):
