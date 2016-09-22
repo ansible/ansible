@@ -7,6 +7,10 @@ install_deps="${INSTALL_DEPS:-}"
 cd "${source_root}"
 
 if [ "${install_deps}" != "" ]; then
+    apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
+    apt-get update -qq
+    apt-get install shellcheck
+
     pip install -r "${source_root}/test/utils/shippable/code-smell-requirements.txt" --upgrade
     pip list
 fi
@@ -16,3 +20,6 @@ test/code-smell/replace-urlopen.sh .
 test/code-smell/use-compat-six.sh lib
 test/code-smell/boilerplate.sh
 test/code-smell/required-and-default-attributes.sh
+
+shellcheck \
+    test/utils/shippable/*.sh
