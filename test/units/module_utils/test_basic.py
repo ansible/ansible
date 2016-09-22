@@ -343,6 +343,51 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+    def test_module_utils_basic_ansible_module_type_check(self):
+        from ansible.module_utils import basic
+
+        arg_spec = dict(
+            foo = dict(type='float'),
+            foo2 = dict(type='float'),
+            foo3 = dict(type='float'),
+            bar = dict(type='int'),
+            bar2 = dict(type='int'),
+        )
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
+            "foo": 123.0, # float
+            "foo2": 123, # int
+            "foo3": "123", # string
+            "bar": 123, # int
+            "bar2": "123", # string
+        }))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec = arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec = arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
     def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
@@ -582,6 +627,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
