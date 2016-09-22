@@ -52,5 +52,5 @@ EXAMPLES = '''
     that: 
       - "my_param <= 100"
       - "my_param >= 0"
-    msg: "'my_param' is must be between 0 and 100"
+    msg: "'my_param' must be between 0 and 100"
 '''
