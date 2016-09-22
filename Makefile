@@ -105,6 +105,9 @@ tests:
 tests-py3:
 	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
 
+integration:
+	test/utils/shippable/integration.sh
+
 authors:
 	sh hacking/authors.sh
 
