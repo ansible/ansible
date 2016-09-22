@@ -23,7 +23,7 @@ def add_credentials_options(parser):
         credentials = yaml.load(open('credentials.yml', 'r'))
         default_service_account_email = credentials[
             'gce_service_account_email']
-        default_pem_file = credentials['gce_credentials_file']
+        default_pem_file = credentials['gce_pem_file']
         default_project_id = credentials['gce_project_id']
 
     parser.add_option(
