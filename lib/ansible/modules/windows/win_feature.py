@@ -25,9 +25,9 @@ DOCUMENTATION = '''
 ---
 module: win_feature
 version_added: "1.7"
-short_description: Installs and uninstalls Windows Features
+short_description: Installs and uninstalls Windows Features on Windows Server
 description:
-     - Installs or uninstalls Windows Roles or Features
+     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets, which is not available on client os machines.
 options:
   name:
     description:
