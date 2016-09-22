@@ -1941,7 +1941,7 @@ class AnsibleModule(object):
             os.rename(b_src, b_dest)
         except (IOError, OSError):
             e = get_exception()
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
+            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
@@ -1983,29 +1983,15 @@ class AnsibleModule(object):
                             e = get_exception()
                             if e.errno != errno.EPERM:
                                 raise
-                        os.rename(b_tmp_dest_name, b_dest)
+                        try:
+                            os.rename(b_tmp_dest_name, b_dest)
+                        except (shutil.Error, OSError, IOError):
+                            if unsafe_writes:
+                                self._unsafe_writes(b_tmp_dest_name, b_dest, get_exception())
+                            else:
+                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
                     except (shutil.Error, OSError, IOError):
-                        e = get_exception()
-                        # sadly there are some situations where we cannot ensure atomicity, but only if
-                        # the user insists and we get the appropriate error we update the file unsafely
-                        if unsafe_writes and e.errno == errno.EBUSY:
-                            #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
-                            try:
-                                try:
-                                    out_dest = open(b_dest, 'wb')
-                                    in_src = open(b_src, 'rb')
-                                    shutil.copyfileobj(in_src, out_dest)
-                                finally: # assuring closed files in 2.4 compatible way
-                                    if out_dest:
-                                        out_dest.close()
-                                    if in_src:
-                                        in_src.close()
-                            except (shutil.Error, OSError, IOError):
-                                e = get_exception()
-                                self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
-
-                        else:
-                            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
@@ -2021,6 +2007,28 @@ class AnsibleModule(object):
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
+
+    def _unsafe_writes(self, src, dest, exception):
+      # sadly there are some situations where we cannot ensure atomicity, but only if
+      # the user insists and we get the appropriate error we update the file unsafely
+      if exception.errno == errno.EBUSY:
+          #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+          try:
+              try:
+                  out_dest = open(dest, 'wb')
+                  in_src = open(src, 'rb')
+                  shutil.copyfileobj(in_src, out_dest)
+              finally: # assuring closed files in 2.4 compatible way
+                  if out_dest:
+                      out_dest.close()
+                  if in_src:
+                      in_src.close()
+          except (shutil.Error, OSError, IOError):
+              e = get_exception()
+              self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+      
+      else:
+          self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None):
         '''
