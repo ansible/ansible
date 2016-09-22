@@ -23,6 +23,7 @@ from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.network import NetworkError
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
 
@@ -93,14 +94,22 @@ class Netconf(object):
 
     def connect(self, params, **kwargs):
         host = params['host']
-        port = params.get('port') or 830
 
-        user = params['username']
-        passwd = params['password']
+        kwargs = dict()
+        kwargs['port'] = params.get('port') or 830
+
+        kwargs['user'] = params['username']
+
+        if params['password']:
+            kwargs['passwd'] = params['password']
+
+        if params['ssh_keyfile']:
+            kwargs['ssh_private_key_file'] = params['ssh_keyfile']
+
+        kwargs['gather_facts'] = False
 
         try:
-            self.device = Device(host, user=user, passwd=passwd, port=port,
-                                 gather_facts=False)
+            self.device = Device(host, **kwargs)
             self.device.open()
         except ConnectError:
             exc = get_exception()
