@@ -181,7 +181,11 @@ class ModuleValidator(Validator):
             return False
 
     def _is_new_module(self):
-        return not module_loader.has_plugin(self.name)
+        if self.name.startswith("_") and not os.path.islink(self.name):
+            # This is a deprecated module, so look up the *old* name
+            return not module_loader.has_plugin(self.name[1:])
+        else:
+            return not module_loader.has_plugin(self.name)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
