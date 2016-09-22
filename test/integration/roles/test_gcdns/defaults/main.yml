@@ -1,0 +1,7 @@
+---
+# defaults file for test_gcdns
+dnszone_name: "{{ resource_prefix|lower }}.com."
+dnszone_id: "{{ resource_prefix|lower }}-com"
+service_account_email: "{{ gce_service_account_email }}"
+pem_file: "{{ gce_pem_file }}"
+project_id: "{{ gce_project_id }}"
