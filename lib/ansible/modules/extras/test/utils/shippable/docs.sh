@@ -42,14 +42,21 @@ pip list
 
 source hacking/env-setup
 
+docs_status=0
+
 PAGER=/bin/cat \
     ANSIBLE_DEPRECATION_WARNINGS=false \
     bin/ansible-doc -l \
-    2>/tmp/ansible-doc.err
+    2>/tmp/ansible-doc.err || docs_status=$?
 
 if [ -s /tmp/ansible-doc.err ]; then
     # report warnings as errors
     echo "Output from 'ansible-doc -l' on stderr is considered an error:"
     cat /tmp/ansible-doc.err
+    exit 1
+fi
+
+if [ "${docs_status}" -ne 0 ]; then
+    echo "Running 'ansible-doc -l' failed with no output on stderr and exit code: ${docs_status}"
     exit 1
 fi
