@@ -44,7 +44,7 @@ options:
         By default, when eAPI is first configured, the HTTP protocol is
         disabled.
     required: false
-    default: yes
+    default: no
     choices: ['yes', 'no']
     aliases: ['enable_http']
   http_port:
