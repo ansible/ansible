@@ -165,7 +165,7 @@ class Inventory(object):
             self.get_group_vars(group)
 
         # get host vars from host_vars/ files and vars plugins
-        for host in self.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self.get_hosts(ignore_limits=True, ignore_restrictions=True):
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
 
@@ -193,7 +193,7 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all", ignore_limits_and_restrictions=False):
+    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False):
         """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
@@ -206,11 +206,11 @@ class Inventory(object):
         else:
             pattern_hash = pattern
 
-        if not ignore_limits_and_restrictions:
-            if self._subset:
-                pattern_hash += u":%s" % to_text(self._subset)
-            if self._restriction:
-                pattern_hash += u":%s" % to_text(self._restriction)
+        if not ignore_limits and self._subset:
+            pattern_hash += u":%s" % to_text(self._subset)
+
+        if not ignore_restrictions and self._restriction:
+            pattern_hash += u":%s" % to_text(self._restriction)
 
         if pattern_hash not in HOSTS_PATTERNS_CACHE:
 
@@ -218,15 +218,14 @@ class Inventory(object):
             hosts = self._evaluate_patterns(patterns)
 
             # mainly useful for hostvars[host] access
-            if not ignore_limits_and_restrictions:
+            if not ignore_limits and self._subset:
                 # exclude hosts not in a subset, if defined
-                if self._subset:
-                    subset = self._evaluate_patterns(self._subset)
-                    hosts = [ h for h in hosts if h in subset ]
+                subset = self._evaluate_patterns(self._subset)
+                hosts = [ h for h in hosts if h in subset ]
 
+            if not ignore_restrictions and self._restriction:
                 # exclude hosts mentioned in any restriction (ex: failed hosts)
-                if self._restriction:
-                    hosts = [ h for h in hosts if h.name in self._restriction ]
+                hosts = [ h for h in hosts if h.name in self._restriction ]
 
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]

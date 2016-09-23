@@ -674,6 +674,7 @@ reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains th
 period, without the rest of the domain.
 
 ``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+``ansible_play_hosts`` is the same as ``play_hosts`` but includes all hosts in all ``serial`` batches, if you're not using ``serial`` it's the same as ``play_hosts``.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
