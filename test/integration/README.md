@@ -123,6 +123,7 @@ Use the prefix `ansible/ansible:` with the image names below.
 
 > Running `make integration` will automatically download the container image you have specified, if it is not already 
 > available. However, you will be responsible for keeping the container images up-to-date using `docker pull`.
+
 ### Python 2
 
 Most container images are for testing with Python 2:
