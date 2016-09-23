@@ -249,6 +249,7 @@ Ansible Changes By Release
 * removed previously deprecated ';' as host list separator.
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
 * Fix a problem with the pip module updating the python pip package itself.
+* ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
