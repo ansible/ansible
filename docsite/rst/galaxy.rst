@@ -90,7 +90,6 @@ Content of the webserver.yml file.
  
      # from github installing to a relative path
      - src: https://github.com/bennojoy/nginx
-      path: vagrant/roles/
 
 Advanced Control over Role Requirements Files
 =============================================
