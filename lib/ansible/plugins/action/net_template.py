@@ -75,6 +75,9 @@ class ActionModule(ActionBase):
 
     def _handle_template(self):
         src = self._task.args.get('src')
+        if not src:
+            return
+
         working_path = self._get_working_path()
 
         if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
