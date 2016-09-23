@@ -45,6 +45,8 @@ If you have a list of hashes, you can reference subkeys using things like::
 
 Also be aware that when combining `when` with `with_items` (or any other loop statement), the `when` statement is processed separately for each item. See :ref:`the_when_statement` for an example.
 
+Loops are actually a combination of things `with_` + `lookup()`, so any lookup plugin can be used as a source for a loop, 'items' is lookup.
+
 .. _nested_loops:
 
 Nested Loops
