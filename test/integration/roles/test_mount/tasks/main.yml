@@ -1,0 +1,113 @@
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create the mount point
+  file:
+    state: "directory"
+    path: "{{ outputdir }}/mount_dest"
+
+- name: Create a directory to bind mount
+  file:
+    state: "directory"
+    path: "{{ outputdir }}/mount_source"
+
+- name: Put something in the directory so we see that it worked
+  copy:
+    content: "Testing\n"
+    dest: "{{ outputdir }}/mount_source/test_file"
+  register: orig_info
+
+# The opts type of bind mount only works on Linux
+- name: Bind mount a filesystem (Linux)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Bind mount a filesystem (FreeBSD)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: get checksum for bind mounted file
+  stat:
+    path: "{{ outputdir }}/mount_dest/test_file"
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: assert the bind mount was successful
+  assert:
+    that:
+      - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
+      - "dest_stat['stat']['exists']"
+      - "orig_info['checksum'] == dest_stat['stat']['checksum']"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# The opts type of bind mount only works on Linux
+- name: Bind mount a filesystem (Linux)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Bind mount a filesystem (FreeBSD)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: Make sure we didn't mount a second time
+  assert:
+    that:
+      - "not bind_result_linux['changed'] and not bind_result_freebsd['changed']"
+
+- name: Unmount the bind mount
+  mount:
+    name: "{{ outputdir }}/mount_dest"
+    state: "absent"
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: unmount_result
+
+- name: Make sure the file no longer exists in dest
+  stat:
+    path: "{{ outputdir }}/mount_dest/test_file"
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: Check that we unmounted
+  assert:
+    that:
+      - "unmount_result['changed']"
+      - "not dest_stat['stat']['exists']"
+  when: ansible_system in ('FreeBSD', 'Linux')
