@@ -625,6 +625,17 @@ class PyVmomiHelper(object):
             configspec = vim.vm.ConfigSpec(deviceChange=[diskspec])
             clonespec_kwargs['config'] = configspec
 
+        # set cpu/memory/etc
+        if 'hardware' in self.params:
+            if not 'config' in clonespec_kwargs:
+                clonespec_kwargs['config'] = vim.vm.ConfigSpec()
+            if 'num_cpus' in self.params['hardware']:
+                clonespec_kwargs['config'].numCPUs = \
+                    int(self.params['hardware']['num_cpus'])
+            if 'memory_mb' in self.params['hardware']:
+                clonespec_kwargs['config'].memoryMB = \
+                    int(self.params['hardware']['memory_mb'])
+
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
