@@ -50,7 +50,7 @@ options:
     default: null
   volume_type:
     description:
-      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
+      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD). "Standard" is the old EBS default
         and continues to remain the Ansible default for backwards compatibility.
     required: false
     default: standard
@@ -484,7 +484,7 @@ def main():
             id = dict(),
             name = dict(),
             volume_size = dict(),
-            volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
+            volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
             iops = dict(),
             encrypted = dict(type='bool', default=False),
             device_name = dict(),
