@@ -431,8 +431,8 @@ def main():
         target_rule = get_firewall_rule_by_name(driver, relative_to_rule,
                                                 network_obj.id)
         if target_rule is None:
-            module.fail_json(msg="Rule '%s' specifed in " % relative_to_rule +
-                                 " 'relative_to_rule' not found")
+            module.fail_json(msg="Rule '%s' specified in 'relative_to_rule'" +
+                             " not found" % relative_to_rule )
 
     # Get rule if exists
     existing_rule = get_firewall_rule_by_name(driver, name, network_obj.id)
