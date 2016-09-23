@@ -359,7 +359,10 @@ class HttpResponse:
         self.response = response
 
     def json(self):
-        return json.loads(self.response)
+        try:
+            return json.loads(self.response)
+        except ValueError:
+            raise ValueError('Cannot parse response as JSON:\n%s' % self.response)
 
 
 requests = HttpRequest()
