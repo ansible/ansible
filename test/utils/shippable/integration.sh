@@ -11,8 +11,17 @@ test_python3="${PYTHON3:-}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
+# Keep the docker containers after tests complete.
+# The default behavior is to always remove the containers.
+# Set to "onfailure" to keep the containers only on test failure.
+# Any other non-empty value will always keep the containers.
 keep_containers="${KEEP_CONTAINERS:-}"
-copy_source="${COPY_SOURCE:-}"
+
+# Run the tests directly from the source directory shared with the container.
+# The default behavior is to run the tests on a copy of the source.
+# Copying the source isolates changes to the source between host and container.
+# Set to any non-empty value to share the source.
+share_source="${SHARE_SOURCE:-}"
 
 # Force ansible color output by default.
 # To disable color force mode use FORCE_COLOR=0
@@ -21,12 +30,13 @@ force_color="${FORCE_COLOR:-1}"
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
+    share_source=1
 else
     host_shared_dir="${source_root}"
     controller_shared_dir=""
 fi
 
-if [ "${copy_source}" ]; then
+if [ -z "${share_source}" ]; then
     test_shared_dir="/shared"
 else
     test_shared_dir="${test_ansible_dir}"
@@ -99,7 +109,7 @@ if [ "${test_python3}" ]; then
     test_flags="--skip-tags ${skip_tags} ${test_flags}"
 fi
 
-if [ "${copy_source}" ]; then
+if [ -z "${share_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
 fi
 
