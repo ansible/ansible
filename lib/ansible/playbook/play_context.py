@@ -415,12 +415,6 @@ class PlayContext(Base):
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
-        # if the final connection type is local, reset the remote_user value
-        # to that of the currently logged in user, to ensure any become settings
-        # are obeyed correctly
-        if new_info.connection == 'local':
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
-
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
             # in the event that we were using local before make sure to reset the
@@ -436,6 +430,14 @@ class PlayContext(Base):
                     setattr(new_info, 'connection', 'local')
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+
+        # if the final connection type is local, reset the remote_user value
+        # to that of the currently logged in user, to ensure any become settings
+        # are obeyed correctly
+        # additionally, we need to do this check after final connection has been
+        # correctly set above ...
+        if new_info.connection == 'local':
+            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
