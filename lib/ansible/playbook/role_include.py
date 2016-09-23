@@ -53,7 +53,6 @@ class IncludeRole(Task):
 
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
 
-        self._role_name = None
         self.statically_loaded = False
         self._from_files = {}
         self._parent_role = role
@@ -67,7 +66,7 @@ class IncludeRole(Task):
         else:
             myplay = play
 
-        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
+        ri = RoleInclude.load(self.name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
         #ri._role_params.update(self.args) # jimi-c cant we avoid this?
 
@@ -91,14 +90,13 @@ class IncludeRole(Task):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        #TODO: use more automated list: for builtin in r.get_attributes(): #jimi-c: doing this to avoid using role_params and conflating include_role specific opts with other tasks
         # set built in's
-        ir._role_name =  ir.args.get('name')
-        for builtin in ['static', 'private']:
+        attributes = frozenset(self._valid_attrs.keys())
+        for builtin in attributes:
             if ir.args.get(builtin):
                 setattr(ir, builtin, ir.args.get(builtin))
 
-        # build options for roles
+        # build options for role includes
         for key in ['tasks', 'vars', 'defaults']:
             from_key = key + '_from'
             if  ir.args.get(from_key):
@@ -110,7 +108,7 @@ class IncludeRole(Task):
 
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
-        new_me._role_name = self._role_name
+        new_me.name = self.name
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
 
