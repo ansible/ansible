@@ -96,7 +96,7 @@
 - name: Unmount the bind mount
   mount:
     name: "{{ outputdir }}/mount_dest"
-    state: "unmounted"
+    state: "absent"
   when: ansible_system in ('Linux', 'FreeBSD')
   register: unmount_result
 
