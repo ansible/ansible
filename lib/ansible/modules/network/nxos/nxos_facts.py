@@ -276,11 +276,11 @@ class Interfaces(FactsBase):
     def commands(self):
         add_command(self.runner, 'show interface', output='json')
 
-        resp = self.module.cli(['show ipv6 interface | wc lines'])
-        if int(resp[0]) > 1:
+        try:
+            self.module.cli('show ipv6 interface', 'json')
             add_command(self.runner, 'show ipv6 interface', output='json')
             self.ipv6 = True
-        else:
+        except NetworkError:
             self.ipv6 = False
 
         try:
