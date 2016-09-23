@@ -74,11 +74,10 @@ being raised.
 
 .. _omitting_undefined_variables:
 
-Omitting Undefined Variables and Parameters
--------------------------------------------
+Omitting Parameters
+-------------------
 
-As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
-`omit` variable::
+As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
       file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
