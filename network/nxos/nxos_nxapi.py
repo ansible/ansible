@@ -65,7 +65,7 @@ options:
         enable the use of the HTTPS transport, set the value of this
         argument to True.
     required: false
-    default: yes
+    default: no
     choices: ['yes', 'no']
     aliases: ['enable_https']
   sandbox:
@@ -151,7 +151,26 @@ def invoke(name, *args, **kwargs):
     if func:
         return func(*args, **kwargs)
 
-def present(module, commands):
+def get_instance(module):
+    instance = dict(state='absent')
+    try:
+        resp = module.cli('show nxapi', 'json')
+    except NetworkError:
+        return instance
+
+    instance['state'] = 'present'
+
+    instance['http'] = 'http_port' in resp[0]
+    instance['http_port'] = resp[0].get('http_port') or 80
+
+    instance['https'] = 'https_port' in resp[0]
+    instance['https_port'] = resp[0].get('https_port') or 443
+
+    instance['sandbox'] = resp[0]['sandbox_status']
+
+    return instance
+
+def present(module, instance, commands):
     commands.append('feature nxapi')
     setters = set()
     for key, value in module.argument_spec.iteritems():
@@ -159,12 +178,13 @@ def present(module, commands):
         if setter not in setters:
             setters.add(setter)
             if module.params[key] is not None:
-                invoke(setter, module, commands)
+                invoke(setter, module, instance, commands)
 
-def absent(module, commands):
-    commands.append('no feature nxapi')
+def absent(module, instance, commands):
+    if instance['state'] != 'absent':
+        commands.append('no feature nxapi')
 
-def set_http(module, commands):
+def set_http(module, instance, commands):
     port = module.params['http_port']
     if not 0 <= port <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
@@ -173,7 +193,7 @@ def set_http(module, commands):
     elif module.params['http'] is False:
         commands.append('no nxapi http')
 
-def set_https(module, commands):
+def set_https(module, instance, commands):
     port = module.params['https_port']
     if not 0 <= port <= 65535:
         module.fail_json(msg='https_port must be between 1 and 65535')
@@ -182,7 +202,7 @@ def set_https(module, commands):
     elif module.params['https'] is False:
         commands.append('no nxapi https')
 
-def set_sandbox(module, commands):
+def set_sandbox(module, instance, commands):
     if module.params['sandbox'] is True:
         commands.append('nxapi sandbox')
     elif module.params['sandbox'] is False:
@@ -287,7 +307,9 @@ def main():
                         'a future release.  Please use state=absent instead')
 
     commands = list()
-    invoke(state, module, commands)
+    instance = get_instance(module)
+
+    invoke(state, module, instance, commands)
 
     try:
         load(module, commands, result)
