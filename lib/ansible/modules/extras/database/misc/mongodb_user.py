@@ -315,7 +315,7 @@ def main():
     ssl_cert_reqs = None
     if ssl:
         ssl_cert_reqs = getattr(ssl_lib, module.params['ssl_cert_reqs'])
-    roles = module.params['roles']
+    roles = module.params['roles'] or []
     state = module.params['state']
     update_password = module.params['update_password']
 
