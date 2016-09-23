@@ -361,8 +361,8 @@ def main():
                           description, base_address, prefix_size)
         vlan = vlan_obj_to_dict(res['vlan'])
         if res['changed'] is False:
-            module.exit_json(changed=False, msg="VLAN with name '%s'" % name +
-                             "already exists.", vlan=vlan)
+            module.exit_json(changed=False, msg="VLAN with name '%s'" +
+                             " already exists." % name, vlan=vlan)
         module.exit_json(changed=True, msg="Successfully created VLAN.",
                          vlan=vlan)
     elif action == 'read' or action == 'get':
@@ -404,8 +404,8 @@ def main():
                              vlan=vlan_obj_to_dict(res))
     else:
         fail_json(msg="Requested action was " +
-                  "'%s'. Action must be one of 'create', 'read', " % state +
-                  "'update', 'expand' or 'delete'")
+                  "'%s'. Action must be one of 'create', 'read', " +
+                  "'update', 'expand' or 'delete'" % state)
 
 if __name__ == '__main__':
     main()
