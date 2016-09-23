@@ -9,6 +9,12 @@ Some tests may require credentials.  Credentials may be specified with `credenti
 
 Tests should be run as root.
 
+Quick Start
+===========
+
+To get started quickly using Docker containers for testing,
+see [Tests in Docker containers](#tests-in-docker-containers).
+
 Configuration
 =============
 
