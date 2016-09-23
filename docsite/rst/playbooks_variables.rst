@@ -673,8 +673,9 @@ be useful for when you don't want to rely on the discovered hostname ``ansible_h
 reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
 period, without the rest of the domain.
 
-``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
-``ansible_play_hosts`` is the same as ``play_hosts`` but includes all hosts in all ``serial`` batches, if you're not using ``serial`` it's the same as ``play_hosts``.
+``ansible_play_hosts`` is the full list of all hosts still active in the current play.
+``play_hosts`` is available as a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
+These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
