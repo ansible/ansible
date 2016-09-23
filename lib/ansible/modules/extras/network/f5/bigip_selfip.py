@@ -367,6 +367,20 @@ class BigIpSelfIp(object):
         else:
             return list(services)
 
+    def traffic_groups(self):
+        result = []
+
+        groups = self.api.tm.cm.traffic_groups.get_collection()
+        for group in groups:
+            # Just checking for the addition of the partition here for
+            # different versions of BIG-IP
+            if '/' + self.params['partition'] + '/' in group.name:
+                result.append(group.name)
+            else:
+                full_name = '/%s/%s' % (self.params['partition'], group.name)
+                result.append(str(full_name))
+        return result
+
     def update(self):
         changed = False
         svcs = []
@@ -408,19 +422,17 @@ class BigIpSelfIp(object):
                 )
 
         if traffic_group is not None:
-            groups = self.api.tm.cm.traffic_groups.get_collection()
-            params['trafficGroup'] = "/%s/%s" % (partition, traffic_group)
+            traffic_group = "/%s/%s" % (partition, traffic_group)
+            if traffic_group not in self.traffic_groups():
+                raise F5ModuleError(
+                    'The specified traffic group was not found'
+                )
 
             if 'traffic_group' in current:
                 if traffic_group != current['traffic_group']:
                     params['trafficGroup'] = traffic_group
             else:
                 params['trafficGroup'] = traffic_group
-
-            if traffic_group not in groups:
-                raise F5ModuleError(
-                    'The specified traffic group was not found'
-                )
 
         if vlan is not None:
             vlans = self.get_vlans()
@@ -527,9 +539,9 @@ class BigIpSelfIp(object):
         if traffic_group is None:
             params['trafficGroup'] = "/%s/%s" % (partition, DEFAULT_TG)
         else:
-            groups = self.api.tm.cm.traffic_groups.get_collection()
-            if traffic_group in groups:
-                params['trafficGroup'] = "/%s/%s" % (partition, traffic_group)
+            traffic_group = "/%s/%s" % (partition, traffic_group)
+            if traffic_group in self.traffic_groups():
+                params['trafficGroup'] = traffic_group
             else:
                 raise F5ModuleError(
                     'The specified traffic group was not found'
