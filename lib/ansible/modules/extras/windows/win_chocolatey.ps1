@@ -74,7 +74,7 @@ Function Chocolatey-Install-Upgrade
     {
         $script:executable = "choco.exe"
 
-        if ((choco --version) -lt '0.9.9')
+        if ([Version](choco --version) -lt [Version]'0.9.9')
         {
             Choco-Upgrade chocolatey 
         }
