@@ -110,7 +110,6 @@ options:
     required: false
     default: false
     choices: ["true", "false"]
-    version_added: "2.2"
   commit:
     description:
       - This argument specifies the update method to use when applying the
