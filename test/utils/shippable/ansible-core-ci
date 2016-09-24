@@ -334,9 +334,13 @@ class HttpRequest:
     def request(self, method, url, data=None, headers=None):
         args = ['/usr/bin/curl', '-s', '-S', '-i', '-X', method]
 
-        if headers is not None:
-            for header in headers:
-                args += ['-H', '%s: %s' % (header, headers[header])]
+        if headers is None:
+            headers = {}
+
+        headers['Expect'] = ''  # don't send expect continue header
+
+        for header in headers:
+            args += ['-H', '%s: %s' % (header, headers[header])]
 
         if data is not None:
             args += ['-d', data]
