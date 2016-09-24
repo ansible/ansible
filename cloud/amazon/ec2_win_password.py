@@ -142,9 +142,15 @@ def main():
 
     try:
         f = open(key_file, 'r')
-        key = RSA.importKey(f.read(), key_passphrase)
-    finally:
-        f.close()
+    except IOError as e:
+        module.fail_json(msg = "I/O error (%d) opening key file: %s" % (e.errno, e.strerror))
+    else:
+        try:
+            with f:
+                key = RSA.importKey(f.read(), key_passphrase)
+        except (ValueError, IndexError, TypeError) as e:
+            module.fail_json(msg = "unable to parse key file")
+
     cipher = PKCS1_v1_5.new(key)
     sentinel = 'password decryption failed!!!'
 
