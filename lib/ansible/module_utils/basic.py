@@ -2030,7 +2030,7 @@ class AnsibleModule(object):
       else:
           self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2053,6 +2053,7 @@ class AnsibleModule(object):
             used to detect prompts in the stdout which would otherwise cause
             the execution to hang (especially if no input data is specified)
         :kwarg environ_update: dictionary to *update* os.environ with
+        :kw umask: Umask to be used when running the command. Default None
         '''
 
         shell = False
@@ -2180,6 +2181,10 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
 
+        old_umask = None
+        if umask:
+            old_umask = os.umask(umask)
+
         try:
 
             if self._debug:
@@ -2252,6 +2257,9 @@ class AnsibleModule(object):
                 del os.environ[key]
             else:
                 os.environ[key] = val
+
+        if old_umask:
+            os.umask(old_umask)
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
