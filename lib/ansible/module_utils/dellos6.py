@@ -68,12 +68,24 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'^vlan.*$'),
         re.compile(r'^stack.*$'),
         re.compile(r'^interface.*$'),
-        re.compile(r'line [(console)|(telnet)|(ssh)].*$'),
+        re.compile(r'line (console|telnet|ssh).*$'),
         re.compile(r'ip ssh !(server).*$'),
-        re.compile(r'ip address .*$'),
-        re.compile(r'ip access-list .*$'),
+        re.compile(r'ip (dhcp|vrf).*$'),
+        re.compile(r'(ip|mac|management|arp) access-list.*$'),
+        re.compile(r'ipv6 (dhcp|router).*$'),
+        re.compile(r'mail-server.*$'),
+        re.compile(r'vpc domain.*$'),
+        re.compile(r'router.*$'),
+        re.compile(r'route-map.*$'),
+        re.compile(r'policy-map.*$'),
+        re.compile(r'class-map match-all.*$'),
+        re.compile(r'captive-portal.*$'),
+        re.compile(r'admin-profile.*$'),
+        re.compile(r'link-dependency group.*$'),
         re.compile(r'banner motd.*$'),
-        re.compile(r'radius-server host auth.*$')]
+        re.compile(r'openflow.*$'),
+        re.compile(r'support-assist.*$'),
+        re.compile(r'(radius-server|tacacs-server) host.*$')]
 
     childline = re.compile(r'^exit$')
 
