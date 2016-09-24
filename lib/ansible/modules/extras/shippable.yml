@@ -8,16 +8,16 @@ matrix:
   exclude:
     - env: TEST=none
   include:
-    - env: TEST=integration IMAGE=ansible/ansible:centos6 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:centos7 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:fedora-rawhide PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:fedora23 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:opensuseleap PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:centos6
+    - env: TEST=integration IMAGE=ansible/ansible:centos7
+    - env: TEST=integration IMAGE=ansible/ansible:fedora-rawhide
+    - env: TEST=integration IMAGE=ansible/ansible:fedora23
+    - env: TEST=integration IMAGE=ansible/ansible:opensuseleap
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
     - env: TEST=integration IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
-    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604
 
-    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1 PRIVILEGED=true
+    - env: TEST=integration IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1
 
     - env: TEST=integration PLATFORM=windows VERSION=2008-SP2
     - env: TEST=integration PLATFORM=windows VERSION=2008-R2_SP1
