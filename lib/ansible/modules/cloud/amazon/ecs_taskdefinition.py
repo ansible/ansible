@@ -57,10 +57,12 @@ options:
         required: false
         default: bridge
         choices: [ 'bridge', 'host', 'none' ]
+        version_added: 2.2
     task_role_arn:
         description:
             - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role.
         required: false
+        version_added: 2.2
     volumes:
         description:
             - A list of names of volumes to be attached
