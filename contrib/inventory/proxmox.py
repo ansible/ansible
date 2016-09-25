@@ -224,7 +224,7 @@ def main():
     parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
     parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
-    parser.add_option('--trust-invalid-certs', action="store_true", default=bool_validate_cert, dest='validate')
+    parser.add_option('--trust-invalid-certs', action="store_false", default=bool_validate_cert, dest='validate')
     (options, args) = parser.parse_args()
 
     if options.list:
