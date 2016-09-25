@@ -192,12 +192,11 @@ def get_cert_days(module,cert_file):
     Return the days the certificate in cert_file remains valid and -1
     if the file was not found.
     '''
-    _cert_file = os.path.expanduser(cert_file)
-    if not os.path.exists(_cert_file):
+    if not os.path.exists(cert_file):
         return -1
 
     openssl_bin = module.get_bin_path('openssl', True)
-    openssl_cert_cmd = [openssl_bin, "x509", "-in", _cert_file, "-noout", "-text"]
+    openssl_cert_cmd = [openssl_bin, "x509", "-in", cert_file, "-noout", "-text"]
     _, out, _ = module.run_command(openssl_cert_cmd,check_rc=True)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)",out.decode('utf8')).group(1)
@@ -293,7 +292,7 @@ class ACMEAccount(object):
     def __init__(self,module):
         self.module         = module
         self.agreement      = module.params['agreement']
-        self.key            = os.path.expanduser(module.params['account_key'])
+        self.key            = module.params['account_key']
         self.email          = module.params['account_email']
         self.data           = module.params['data']
         self.directory      = ACMEDirectory(module)
@@ -498,8 +497,8 @@ class ACMEClient(object):
     def __init__(self,module):
         self.module         = module
         self.challenge      = module.params['challenge']
-        self.csr            = os.path.expanduser(module.params['csr'])
-        self.dest           = os.path.expanduser(module.params['dest'])
+        self.csr            = module.params['csr']
+        self.dest           = module.params['dest']
         self.account        = ACMEAccount(module)
         self.directory      = self.account.directory
         self.authorizations = self.account.get_authorizations()
@@ -756,14 +755,14 @@ class ACMEClient(object):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            account_key    = dict(required=True, type='str'),
+            account_key    = dict(required=True, type='path'),
             account_email  = dict(required=False, default=None, type='str'),
             acme_directory = dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
             agreement      = dict(required=False, default='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', type='str'),
             challenge      = dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
-            csr            = dict(required=True, aliases=['src'], type='str'),
+            csr            = dict(required=True, aliases=['src'], type='path'),
             data           = dict(required=False, no_log=True, default=None, type='dict'),
-            dest           = dict(required=True, aliases=['cert'], type='str'),
+            dest           = dict(required=True, aliases=['cert'], type='path'),
             remaining_days = dict(required=False, default=10, type='int'),
         ),
         supports_check_mode = True,
