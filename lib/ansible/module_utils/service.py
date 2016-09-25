@@ -50,7 +50,6 @@ class Service(object):
         # states
         self.running        = None
         self.enabled        = None
-        self.action         = None
 
         # outcome
         self.changed        = False
