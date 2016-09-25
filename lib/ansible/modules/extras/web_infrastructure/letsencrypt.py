@@ -66,7 +66,7 @@ options:
       - "The ACME directory to use. This is the entry point URL to access
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
-         This will create technically correct, but untrusted certifiactes."
+         This will create technically correct, but untrusted certificates."
     required: false
     default: https://acme-staging.api.letsencrypt.org/directory
   agreement:
