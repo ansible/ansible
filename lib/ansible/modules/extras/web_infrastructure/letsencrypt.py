@@ -49,6 +49,7 @@ description:
       protocol."
 requirements:
   - "python >= 2.6"
+  - openssl
 options:
   account_key:
     description:
