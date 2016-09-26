@@ -9,12 +9,12 @@ Ansible Changes By Release
 * Major performance improvements.
 * Added support for binary modules
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
-* Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
+* Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks. Further the path for reading config files in modules, such as `cloudstack.ini` for CloudStack modules, will change to the path relative to your playbooks.
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or background tasks.
-* Windows `environment:` support for setting module environment vars in play/task. 
+* Windows `environment:` support for setting module environment vars in play/task.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
