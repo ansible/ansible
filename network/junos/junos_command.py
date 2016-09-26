@@ -151,15 +151,23 @@ failed_conditionals:
   retured: failed
   type: list
   sample: ['...', '...']
+
+xml:
+  description: The raw XML reply from the device
+  returned: when format is xml
+  type: list
+  sample: [['...', '...'], ['...', '...']]
 """
 import re
 
 import ansible.module_utils.junos
 
+
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
+from ansible.module_utils.junos import xml_to_json
 
 VALID_KEYS = {
     'cli': frozenset(['command', 'output', 'prompt', 'response']),
@@ -270,15 +278,19 @@ def main():
         module.fail_json(msg=str(exc))
 
     result = dict(changed=False, stdout=list())
+    xmlout = list()
 
     for cmd in commands:
         try:
             output = runner.get_command(cmd['command'], cmd.get('output'))
+            xmlout.append(output)
+            output = xml_to_json(output)
         except ValueError:
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
 
     result['warnings'] = warnings
+    result['xml'] = xmlout
     result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)
