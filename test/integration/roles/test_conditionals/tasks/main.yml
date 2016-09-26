@@ -281,7 +281,7 @@
 - block:
   - name: test a with_items loop using a variable with a missing attribute
     debug: var=item
-    with_items: "{{cond_bad_attribute.results}}"
+    with_items: "{{cond_bad_attribute.results | default('')}}"
     register: result
   - set_fact: skipped_bad_attribute=False
   - name: assert the task was skipped
@@ -292,7 +292,7 @@
 
 - name: test a with_items loop skipping a single item
   debug: var=item
-  with_items: cond_list_of_items.results
+  with_items: "{{cond_list_of_items.results}}"
   when: item != 'b'
   register: result
 

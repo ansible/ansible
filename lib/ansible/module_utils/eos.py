@@ -29,13 +29,12 @@
 import re
 import time
 
-from ansible.module_utils.basic import json
+from ansible.module_utils.basic import json, get_exception
 from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils.netcli import Command
 
 EAPI_FORMATS = ['json', 'text']
 
@@ -60,20 +59,12 @@ class EosConfigMixin(object):
             cmd += ' all'
         return self.execute([cmd])[0]
 
-    def load_config(self, config, session=None, commit=False, replace=False, **kwargs):
+    def load_config(self, config, commit=False, replace=False):
         """ Loads the configuration into the remote device
-
-        This method handles the actual loading of the config
-        commands into the remote EOS device.  By default the
-        config specified is merged with the current running-config.
-
-        :param config: ordered list of config commands to load
-        :param replace: replace current config when True otherwise merge
-
-        :returns list: ordered set of responses from device
         """
-        session = session or 'ansible_%s' % int(time.time())
+        session = 'ansible_%s' % int(time.time())
         commands = ['configure session %s' % session]
+
         if replace:
             commands.append('rollback clean-config')
 
@@ -87,7 +78,14 @@ class EosConfigMixin(object):
             diff = self.diff_config(session)
             if commit:
                 self.commit_config(session)
+            else:
+                self.execute(['no configure session %s' % session])
         except NetworkError:
+            exc = get_exception()
+            if 'timeout trying to send command' in exc.message:
+                # try to get control back and get out of config mode
+                if isinstance(self, Cli):
+                    self.execute(['\x03', 'end'])
             self.abort_config(session)
             diff = None
             raise
@@ -108,8 +106,6 @@ class EosConfigMixin(object):
         else:
             response = self.execute(commands)
 
-
-
         return response[-2]
 
     def commit_config(self, session):
@@ -119,6 +115,7 @@ class EosConfigMixin(object):
     def abort_config(self, session):
         commands = ['configure session %s' % session, 'abort']
         self.execute(commands)
+
 
 class Eapi(EosConfigMixin):
 
@@ -186,8 +183,8 @@ class Eapi(EosConfigMixin):
         if self.enable is not None:
             commands.insert(0, self.enable)
 
-        data = self._get_body(commands, output)
-        data = json.dumps(data)
+        body = self._get_body(commands, output)
+        data = json.dumps(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
 
@@ -215,7 +212,6 @@ class Eapi(EosConfigMixin):
             response['result'].pop(0)
 
         return response['result']
-
 
     def run_commands(self, commands, **kwargs):
         output = None
@@ -325,7 +321,7 @@ def prepare_commands(commands):
     jsonify = lambda x: '%s | json' % x
     for item in to_list(commands):
         if item.output == 'json':
-            cmd = jsonify(cmd)
+            cmd = jsonify(item)
         elif item.command.endswith('| json'):
             item.output = 'json'
             cmd = str(item)

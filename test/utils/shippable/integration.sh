@@ -2,17 +2,26 @@
 
 source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '../../..')))")
 
-test_image="${IMAGE}"
+test_image="${IMAGE:-ansible/ansible:centos7}"
 test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
-test_target="${TARGET:-}"
+test_target="${TARGET:-all}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
 test_python3="${PYTHON3:-}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
+# Keep the docker containers after tests complete.
+# The default behavior is to always remove the containers.
+# Set to "onfailure" to keep the containers only on test failure.
+# Any other non-empty value will always keep the containers.
 keep_containers="${KEEP_CONTAINERS:-}"
-copy_source="${COPY_SOURCE:-}"
+
+# Run the tests directly from the source directory shared with the container.
+# The default behavior is to run the tests on a copy of the source.
+# Copying the source isolates changes to the source between host and container.
+# Set to any non-empty value to share the source.
+share_source="${SHARE_SOURCE:-}"
 
 # Force ansible color output by default.
 # To disable color force mode use FORCE_COLOR=0
@@ -21,12 +30,13 @@ force_color="${FORCE_COLOR:-1}"
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
+    share_source=1
 else
     host_shared_dir="${source_root}"
     controller_shared_dir=""
 fi
 
-if [ "${copy_source}" ]; then
+if [ -z "${share_source}" ]; then
     test_shared_dir="/shared"
 else
     test_shared_dir="${test_ansible_dir}"
@@ -34,6 +44,7 @@ fi
 
 container_id=
 httptester_id=
+tests_completed=
 
 function show_environment
 {
@@ -49,6 +60,10 @@ function cleanup
     if [ "${controller_shared_dir}" ]; then
         cp -av "${controller_shared_dir}/shippable" "${SHIPPABLE_BUILD_DIR}"
         rm -rf "${controller_shared_dir}"
+    fi
+
+    if [ "${keep_containers}" == "onfailure" ] && [ "${tests_completed}" != "" ]; then
+        keep_containers=
     fi
 
     if [ "${keep_containers}" == "" ]; then
@@ -94,7 +109,7 @@ if [ "${test_python3}" ]; then
     test_flags="--skip-tags ${skip_tags} ${test_flags}"
 fi
 
-if [ "${copy_source}" ]; then
+if [ -z "${share_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
 fi
 
@@ -111,3 +126,5 @@ docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults
 docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
+
+tests_completed=1

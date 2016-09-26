@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2 TBD - ACTIVE DEVELOPMENT
+## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
 
@@ -13,11 +13,15 @@ Ansible Changes By Release
 * `meta` tasks can now use conditionals.
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
-* Windows `async:` support for long-running or backgrodund tasks.
+* Windows `async:` support for long-running or background tasks.
 * Windows `environment:` support for setting module environment vars in play/task. 
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
+* Add ability to specify what ssh client binary to use on the controller.  This
+  can be configured via ssh_executable in the ansible config file or by setting
+  ansible_ssh_executable as an inventory variable if different ones are needed
+  for different hosts.
 * Windows:
   * several facts were modified or renamed for consistency with their Unix counterparts, and many new facts were added. If your playbooks rely on any of the following keys, please ensure they are using the correct key names and/or values:
     - ansible_date_time.date (changed to use yyyy-mm-dd format instead of default system-locale format)
@@ -26,67 +30,214 @@ Ansible Changes By Release
     - ansible_totalmem (renamed to ansible_memtotal_mb, units changed to MB instead of bytes)
   * `async:` support for long-running or background tasks.
   * `environment:` support for setting module environment vars in play/task.
+* Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
+  * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
+  * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
 
 ####New Modules:
+- apache2_mod_proxy
 - archive
 - asa
   * asa_acl
   * asa_command
   * asa_config
   * asa_template
+- atomic
+  * atomic_host
+  * atomic_image
 - aws
+  * cloudformation_facts
+  * ec2_asg_facts
   * ec2_customer_gateway
+  * ec2_lc_find
+  * ec2_vpc_dhcp_options_facts
+  * ec2_vpc_nacl
   * ec2_vpc_nacl_facts
   * ec2_vpc_nat_gateway
+  * ec2_vpc_peer
   * ec2_vpc_vgw
+  * execute_lambda
+  * iam_mfa_device_facts
+  * iam_server_certificate_facts
+  * kinesis_stream
+  * s3_website
+  * sts_session_token
 - cloudstack
   * cs_router
   * cs_snapshot_policy
-- dnos10
-  * dnos10_command
-  * dnos10_config
-  * dnos10_template
+- dellos6
+  * dellos6_command
+  * dellos6_config
+  * dellos6_facts
+  * dellos6_template
+- dellos9
+  * dellos9_command
+  * dellos9_config
+  * dellos9_facts
+  * dellos9_template
+- dellos10
+  * dellos10_command
+  * dellos10_config
+  * dellos10_facts
+  * dellos10_template
+- docker
+  * docker_network
+- eos
+  * eos_facts
+- exoscale:
+  * exo_dns_domain
+  * exo_dns_record
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
   * bigip_device_sshd
+  * bigip_gtm_datacenter
+  * bigip_gtm_virtual_server
   * bigip_irule
-- github_key
+  * bigip_routedomain
+  * bigip_selfip
+  * bigip_ssl_certificate
+  * bigip_sys_db
+  * bigip_vlan
+- github
+  * github_key
+  * github_release
 - google
   * gcdns_record
   * gcdns_zone
+- honeybadger_deployment
+- illumos
+  * dladm_etherstub
+  * dladm_vnic
+  * flowadm
+  * ipadm_if
+  * ipadm_prop
 - ipmi
   * ipmi_boot
   * ipmi_power
+- ios
+  * ios_facts
+- iosxr
+  * iosxr_facts
 - include_role
-- jenkins_plugin
+- jenkins
+  * jenkins_job
+  * jenkins_plugin
+- kibana_plugin
 - letsencrypt
 - logicmonitor
 - logicmonitor_facts
 - lxd
   * lxd_profile
   * lxd_container
+- netapp
+  * netapp_e_facts
+  * netapp_e_storage_system
 - netconf_config
+- netvisor
+  * pn_cluster
+  * pn_ospfarea
+  * pn_ospf
+  * pn_show
+  * pn_trunk
+  * pn_vlag
+  * pn_vlan
+  * pn_vrouterbgp
+  * pn_vrouterif
+  * pn_vrouterlbif
+  * pn_vrouter
+- nxos
+  * nxos_aaa_server_host
+  * nxos_aaa_server
+  * nxos_acl_interface
+  * nxos_acl
+  * nxos_bgp_af
+  * nxos_bgp_neighbor_af
+  * nxos_bgp_neighbor
+  * nxos_bgp
+  * nxos_evpn_global
+  * nxos_evpn_vni
+  * nxos_file_c
+  * nxos_gir_profile_management
+  * nxos_gir
+  * nxos_hsrp
+  * nxos_igmp_interface
+  * nxos_igmp
+  * nxos_igmp_snooping
+  * nxos_interface_ospf
+  * nxos_mtu
+  * nxos_ntp_auth
+  * nxos_ntp_options
+  * nxos_ntp
+  * nxos_ospf
+  * nxos_ospf_vrf
+  * nxos_overlay_global
+  * nxos_pim_interface
+  * nxos_pim
+  * nxos_pim_rp_address
+  * nxos_portchannel
+  * nxos_rollback
+  * nxos_smu
+  * nxos_snapshot
+  * nxos_snmp_community
+  * nxos_snmp_contact
+  * nxos_snmp_host
+  * nxos_snmp_location
+  * nxos_snmp_traps
+  * nxos_snmp_user
+  * nxos_static_route
+  * nxos_udld_interface
+  * nxos_udld
+  * nxos_vpc_interface
+  * nxos_vpc
+  * nxos_vrf_af
+  * nxos_vtp_domain
+  * nxos_vtp_password
+  * nxos_vtp_version
+  * nxos_vxlan_vtep
+  * nxos_vxlan_vtep_vni
+- mssql_db
 - ovh_ip_loadbalancing_backend
+- opendj_backendprop
 - openstack
   * os_keystone_service
   * os_recordset
   * os_server_group
   * os_stack
   * os_zone
+- rhevm
 - rocketchat
+- sefcontext
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- sros
+  * sros_command
+  * sros_config
+  * sros_rollback
+- statusio_maintenance
 - systemd
 - telegram
 - univention
+  * udm_dns_record
+  * udm_dns_zone
+  * udm_group
+  * udm_share
   * udm_user
 - vmware
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
+- vyos
+  * vyos_command
+  * vyos_config
+  * vyos_facts
 - wakeonlan
+- windows:
+  * win_command
+  * win_robocopy
+  * win_shell
 
 
 ###Minor Changes:
@@ -95,6 +246,31 @@ Ansible Changes By Release
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
 * New privilege escalation become method `ksu`
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
+* removed previously deprecated ';' as host list separator.
+* Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
+* Fix a problem with the pip module updating the python pip package itself.
+* ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
+
+###For custom front ends using the API:
+* ansible.parsing.vault:
+  * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
+    Use ansible.parsing.vault.is_encrypted() instead
+  * VaultFile has been removed. This unfinished code was never used inside of
+    Ansible.  The feature it was intended to support has now been implemented
+    without using this.
+  * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
+    and was relaced by VaultAES256 less than a week later, now has a deprecation
+    warning.  **It will be removed in 2.3**.  In the unlikely event that you
+    wrote a vault file in that 1 week window and have never modified the file
+    since (ansible-vault automatically re-encrypts the file using VaultAES256
+    whenever it is written to but not read), run ``ansible-vault rekey
+    [filename]`` to move to VaultAES256.
+
+###Removed Deprecated:
+* ';' as host list separator.
+* with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
+* skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
+* skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
 ## 2.1.2 "The Song Remains the Same"
 
@@ -2523,3 +2699,4 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
+

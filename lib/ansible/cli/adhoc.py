@@ -85,7 +85,7 @@ class AdHocCLI(CLI):
         return True
 
     def _play_ds(self, pattern, async, poll):
-        check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
+        check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
             name = "Ansible Ad-Hoc",
             hosts = pattern,

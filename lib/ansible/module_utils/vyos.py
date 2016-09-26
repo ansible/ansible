@@ -29,7 +29,7 @@
 import re
 
 from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list, get_exception
+from ansible.module_utils.network import register_transport, to_list
 from ansible.module_utils.shell import CliBase
 
 
@@ -66,10 +66,10 @@ class Cli(CliBase):
         response = self.execute(commands)
         return response[1:-2]
 
-    def load_config(self, config, commit=False, comment=None, save=False):
+    def load_config(self, config, commit=False, comment=None, save=False, **kwargs):
         try:
             config.insert(0, 'configure')
-            response = self.execute(config)
+            self.execute(config)
         except NetworkError:
             # discard any changes in case of failure
             self.execute(['exit discard'])
@@ -96,15 +96,12 @@ class Cli(CliBase):
 
         return diff
 
-    def get_config(self, output='config'):
-        if output not in ['config', 'set']:
+    def get_config(self, output='text', **kwargs):
+        if output not in ['text', 'set']:
             raise ValueError('invalid output format specified')
         if output == 'set':
             return self.execute(['show configuration commands'])[0]
         else:
             return self.execute(['show configuration'])[0]
-
-    def save_config(self):
-        raise NotImplementedError
 
 Cli = register_transport('cli', default=True)(Cli)

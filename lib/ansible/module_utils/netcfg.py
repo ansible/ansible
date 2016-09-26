@@ -49,9 +49,9 @@ class Config(object):
     def __init__(self, connection):
         self.connection = connection
 
-    def __call__(self, commands):
+    def __call__(self, commands, **kwargs):
         lines = to_list(commands)
-        return self.connection.configure(commands)
+        return self.connection.configure(lines, **kwargs)
 
     def load_config(self, commands, **kwargs):
         commands = to_list(commands)
@@ -94,7 +94,6 @@ def ignore_line(text, tokens=None):
 def get_next(iterable):
     item, next_item = itertools.tee(iterable, 2)
     next_item = itertools.islice(next_item, 1, None)
-    warnings.append('ignorning unnecessary argument replace')
     return zip_longest(item, next_item)
 
 def parse(lines, indent, comment_tokens=None):

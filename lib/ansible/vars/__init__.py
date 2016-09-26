@@ -413,9 +413,8 @@ class VariableManager:
                 # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
                 #             however this would take work in the templating engine, so for now
                 #             we'll add both so we can give users something transitional to use
-                host_list = [x.name for x in self._inventory.get_hosts()]
-                variables['play_hosts'] = host_list
-                variables['ansible_play_hosts'] = host_list
+                variables['play_hosts'] = [x.name for x in self._inventory.get_hosts()]
+                variables['ansible_play_hosts'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
@@ -490,7 +489,7 @@ class VariableManager:
                     if delegated_host_name in C.LOCALHOST:
                         delegated_host = self._inventory.localhost
                     else:
-                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                        for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
                             # check if the address matches, or if both the delegated_to host
                             # and the current host are in the list of localhost aliases
                             if h.address == delegated_host_name:
@@ -676,6 +675,6 @@ class VariableManager:
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
         if varname in self._vars_cache[host_name] and isinstance(self._vars_cache[host_name][varname], MutableMapping) and isinstance(value, MutableMapping):
-            self._vars_cache[host_name][varname] = combine_vars(self._vars_cache[host_name][varname], value)
+            self._vars_cache[host_name] = combine_vars(self._vars_cache[host_name], {varname: value})
         else:
             self._vars_cache[host_name][varname] = value

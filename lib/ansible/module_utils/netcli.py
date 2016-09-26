@@ -28,11 +28,11 @@
 
 import re
 import time
-import itertools
 import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six.moves import zip
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -46,6 +46,11 @@ class FailedConditionsError(Exception):
     def __init__(self, msg, failed_conditions):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
+
+class FailedConditionalError(Exception):
+    def __init__(self, msg, failed_conditional):
+        super(FailedConditionalError, self).__init__(msg)
+        self.failed_conditional = failed_conditional
 
 class AddCommandError(Exception):
     def __init__(self, msg, command):
@@ -83,7 +88,7 @@ class Cli(object):
 
     def run_commands(self):
         responses = self.connection.run_commands(self._commands)
-        for resp, cmd in itertools.izip(responses, self._commands):
+        for resp, cmd in zip(responses, self._commands):
             cmd.response = resp
 
         # wipe out the commands list to avoid issues if additional
@@ -189,7 +194,7 @@ class Conditional(object):
 
         key, op, val = shlex.split(conditional)
         self.key = key
-        self.func = self.func(op)
+        self.func = self._func(op)
         self.value = self._cast_value(val)
 
     def __call__(self, data):
@@ -206,9 +211,9 @@ class Conditional(object):
         elif re.match(r'^\d+$', value):
             return int(value)
         else:
-            return unicode(value)
+            return text_type(value)
 
-    def func(self, oper):
+    def _func(self, oper):
         for func, operators in self.OPERATORS.items():
             if oper in operators:
                 return getattr(self, func)
@@ -216,7 +221,12 @@ class Conditional(object):
 
     def get_value(self, result):
         if self.encoding in ['json', 'text']:
-            return self.get_json(result)
+            try:
+                return self.get_json(result)
+            except (IndexError, TypeError):
+                msg = 'unable to apply conditional to result'
+                raise FailedConditionalError(msg, self.key)
+
         elif self.encoding == 'xml':
             return self.get_xml(result.get('result'))
 

@@ -43,4 +43,5 @@
     - { role: test_embedded_module, tags: test_embedded_module }
     - { role: test_add_host, tags: test_add_host }
     - { role: test_binary, tags: test_binary }
-
+    - { role: test_loops, tags: test_loops }
+      #- { role: test_mount, tags: [test_mount, requires_root] }

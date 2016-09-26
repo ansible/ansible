@@ -126,8 +126,8 @@ def quote(a):
     return pipes.quote(a)
 
 def fileglob(pathname):
-    ''' return list of matched files for glob '''
-    return glob.glob(pathname)
+    ''' return list of matched regular files for glob '''
+    return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
@@ -192,6 +192,11 @@ def ternary(value, true_val, false_val):
 def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
+
+def from_yaml(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load(data)
+    return data
 
 @environmentfilter
 def rand(environment, end, start=None, step=None):
@@ -336,8 +341,14 @@ def comment(text, style='plain', **kw):
     str_beginning = ''
     if p['beginning']:
         str_beginning = "%s%s" % (p['beginning'], p['newline'])
-    str_prefix = str(
-        "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+    str_prefix = ''
+    if p['prefix']:
+        if p['prefix'] != p['newline']:
+            str_prefix = str(
+                "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+        else:
+            str_prefix = str(
+                "%s" % (p['newline'])) * int(p['prefix_count'])
     str_text = ("%s%s" % (
         p['decoration'],
         # Prepend each line of the text with the decorator
@@ -396,7 +407,7 @@ class FilterModule(object):
             # yaml
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
-            'from_yaml': yaml.safe_load,
+            'from_yaml': from_yaml,
 
             #date
             'to_datetime': to_datetime,

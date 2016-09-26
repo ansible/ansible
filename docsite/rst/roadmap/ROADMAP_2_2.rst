@@ -63,16 +63,16 @@ Target: September 2016
 
 - **Windows platform feature parity** (Matt D)
 
-  - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?)
+  - PS module API (mirror Python module API where appropriate). Note: We don’t necessarily like the current python module API (AnsibleModule is a huge class with many unrelated utility functions.  Maybe we should redesign both at the same time?) (bumped to 2.3+ due to "moving target" uncertainty)
   - Environment keyword support (done)
-  - win_shell/win_command
+  - win_shell/win_command (done)
   - Async support (done)
   - (stretch goal) Pipelining (bumped to 2.3+)
 
 - **Windows-specific enhancements** (Matt D)
 
   - Multiple Kerberos credential support (done)
-  - Server 2016 testing/fixes (done)
+  - Server 2016 testing/fixes (done, awaiting next TP/RTM)
   - (stretch goal) Nano Server connection + module_utils working (bumped to 2.3)
   - (stretch goal) Encrypted kerberos support in pywinrm (bumped to 2.3)
 
@@ -80,16 +80,16 @@ Target: September 2016
 
   - **Done:** Unify NetworkModules (module_utils/network.py) as much as possible 
   - **Done:** Add support for config diff and replace on supported platforms (2 weeks)
-  - Network facts modules 
   - **Done:** Support for VyOS network operating system
   - **Done:** Add support for RestConf for IOS/XE
-  - Add support for NetConf for IOS/XE
   - **Done:** Support for Dell Networking OS10
   - **Done:** Add support for Nokia SR OS modules
+  - **Done:** Network facts modules (dellos, eos, ios, iosxr, junos, nxos, openswitch, vyos)
+  - **Deferred:** Network facts modules (cumulus, netvisor, sros)
+  - **Deferred:** Add support for NetConf for IOS/XE
   - **Deferred:** (stretch goal) Quagga modules
   - **Deferred:** (stretch goal) Bird modules
   - **Deferred:** (stretch goal) GoBGP modules
-  
 
 - **Implement ‘role revamp’ proposal to give users more control on role/task execution (Brian) **
 

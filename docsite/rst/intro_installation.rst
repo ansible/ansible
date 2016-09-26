@@ -86,8 +86,9 @@ You also need Python 2.4 or later. If you are running less than Python 2.5 on th
 
 .. note::
 
-   Python 3 is a slightly different language than Python 2 and most Python programs (including
-   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Python 3 is a slightly different language than Python 2 and some Python programs (including
+   Ansible) are not switching over yet. Ansible uses Python 2 in order to maintain compability with older distributions
+   such as RHEL 5 and RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed

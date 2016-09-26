@@ -104,12 +104,8 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertTrue(os.path.exists(tmp_file.name))
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "VaultAES still needs to be ported to Python 3")
     def test_decrypt_1_0(self):
-        """
-        Skip testing decrypting 1.0 files if we don't have access to AES, KDF or
-        Counter, or we are running on python3 since VaultAES hasn't been backported.
-        """
+        # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
@@ -163,12 +159,8 @@ class TestVaultEditor(unittest.TestCase):
         assert error_hit is False, "error decrypting 1.0 file"
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
-    @unittest.skipIf(sys.version_info[0] >= 3, "VaultAES still needs to be ported to Python 3")
     def test_rekey_migration(self):
-        """
-        Skip testing rekeying files if we don't have access to AES, KDF or
-        Counter, or we are running on python3 since VaultAES hasn't been backported.
-        """
+        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
@@ -205,4 +197,4 @@ class TestVaultEditor(unittest.TestCase):
 
         assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit is False, "error decrypting migrated 1.0 file"
-        assert dec_data.strip() == "foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
+        assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data

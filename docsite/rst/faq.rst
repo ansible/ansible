@@ -276,6 +276,9 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
     python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
 
+Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
+
 .. _commercial_support:
 
 Can I get training on Ansible or find commercial support?

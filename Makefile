@@ -100,10 +100,13 @@ NOSETESTS3 ?= nosetests-3.5
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase
 
 tests-py3:
-	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase
+
+integration:
+	test/utils/shippable/integration.sh
 
 authors:
 	sh hacking/authors.sh

@@ -79,6 +79,9 @@ class GalaxyRole(object):
             else:
                 # use the first path by default
                 self.path = os.path.join(galaxy.roles_paths[0], self.name)
+                # create list of possible paths
+                self.paths = [x for x in galaxy.roles_paths]
+                self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __eq__(self, other):
         return self.name == other.name
@@ -261,38 +264,49 @@ class GalaxyRole(object):
                 # we strip off the top-level directory for all of the files contained within
                 # the tar file here, since the default is 'github_repo-target', and change it
                 # to the specified role's name
-                display.display("- extracting %s to %s" % (self.name, self.path))
-                try:
-                    if os.path.exists(self.path):
-                        if not os.path.isdir(self.path):
-                            raise AnsibleError("the specified roles path exists and is not a directory.")
-                        elif not getattr(self.options, "force", False):
-                            raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
+                installed = False
+                while not installed:
+                    display.display("- extracting %s to %s" % (self.name, self.path))
+                    try:
+                        if os.path.exists(self.path):
+                            if not os.path.isdir(self.path):
+                                raise AnsibleError("the specified roles path exists and is not a directory.")
+                            elif not getattr(self.options, "force", False):
+                                raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
+                            else:
+                                # using --force, remove the old path
+                                if not self.remove():
+                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really want to put the role here." % self.path)
                         else:
-                            # using --force, remove the old path
-                            if not self.remove():
-                                raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really want to put the role here." % self.path)
-                    else:
-                        os.makedirs(self.path)
+                            os.makedirs(self.path)
 
-                    # now we do the actual extraction to the path
-                    for member in members:
-                        # we only extract files, and remove any relative path
-                        # bits that might be in the file for security purposes
-                        # and drop the leading directory, as mentioned above
-                        if member.isreg() or member.issym():
-                            parts = member.name.split(os.sep)[1:]
-                            final_parts = []
-                            for part in parts:
-                                if part != '..' and '~' not in part and '$' not in part:
-                                    final_parts.append(part)
-                            member.name = os.path.join(*final_parts)
-                            role_tar_file.extract(member, self.path)
+                        # now we do the actual extraction to the path
+                        for member in members:
+                            # we only extract files, and remove any relative path
+                            # bits that might be in the file for security purposes
+                            # and drop the leading directory, as mentioned above
+                            if member.isreg() or member.issym():
+                                parts = member.name.split(os.sep)[1:]
+                                final_parts = []
+                                for part in parts:
+                                    if part != '..' and '~' not in part and '$' not in part:
+                                        final_parts.append(part)
+                                member.name = os.path.join(*final_parts)
+                                role_tar_file.extract(member, self.path)
 
-                    # write out the install info file for later use
-                    self._write_galaxy_install_info()
-                except OSError as e:
-                   raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
+                        # write out the install info file for later use
+                        self._write_galaxy_install_info()
+                        installed = True
+                    except OSError as e:
+                        error = True
+                        if e[0] == 13 and len(self.paths) > 1:
+                            current = self.paths.index(self.path)
+                            nextidx = current + 1
+                            if len(self.paths) >= current:
+                                self.path = self.paths[nextidx]
+                                error = False
+                        if error:
+                            raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % self.name)

@@ -581,8 +581,8 @@ class Facts(object):
         size_available = None
         try:
             statvfs_result = os.statvfs(mountpoint)
-            size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-            size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+            size_total = statvfs_result.f_frsize * statvfs_result.f_blocks
+            size_available = statvfs_result.f_frsize * (statvfs_result.f_bavail)
         except OSError:
             pass
         return size_total, size_available
@@ -673,7 +673,7 @@ class Distribution(object):
         self.facts['distribution'] = self.system
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
-        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'FreeBSD', 'OpenBSD', 'SunOS')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'FreeBSD', 'OpenBSD', 'SunOS', 'DragonFly')
 
         self.facts['distribution'] = self.system
 
@@ -776,6 +776,9 @@ class Distribution(object):
             self.facts['distribution_version'] = match.groups()[0]
         else:
             self.facts['distribution_version'] = 'release'
+
+    def get_distribution_DragonFly(self):
+        pass
 
     def get_distribution_Slackware(self, name, data, path):
         if 'Slackware' not in data:
@@ -1121,8 +1124,10 @@ class LinuxHardware(Hardware):
             elif key == '# processors':
                 self.facts['processor_cores'] = int(data[1].strip())
 
-        if vendor_id_occurrence == model_name_occurrence:
-            i = vendor_id_occurrence
+        # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
+        if vendor_id_occurrence > 0:
+            if vendor_id_occurrence == model_name_occurrence:
+                i = vendor_id_occurrence
 
         if self.facts['architecture'] != 's390x':
             if xen_paravirt:
@@ -1886,6 +1891,7 @@ class AIX(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_vgs_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -1943,6 +1949,57 @@ class AIX(Hardware):
         rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         self.facts['firmware_version'] = data[1].strip('IBM,')
+        lsconf_path = self.module.get_bin_path("lsconf")
+        if lsconf_path:
+            rc, out, err = self.module.run_command(lsconf_path)
+            if rc == 0 and out:
+                for line in out.splitlines():
+                    data = line.split(':')
+                    if 'Machine Serial Number' in line:
+                        self.facts['product_serial'] = data[1].strip()
+                    if 'LPAR Info' in line:
+                        self.facts['lpar_info'] = data[1].strip()
+                    if 'System Model' in line:
+                        self.facts['product_name'] = data[1].strip()
+    def get_vgs_facts(self):
+        """
+        Get vg and pv Facts
+        rootvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk0            active            546         0           00..00..00..00..00
+        hdisk1            active            546         113         00..00..00..21..92
+        realsyncvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk74           active            1999        6           00..00..00..00..06
+        testvg:
+        PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+        hdisk105          active            999         838         200..39..199..200..200
+        hdisk106          active            999         599         200..00..00..199..200
+        """
+
+        lsvg_path = self.module.get_bin_path("lsvg")
+        xargs_path = self.module.get_bin_path("xargs")
+        cmd = "%s | %s %s -p" % (lsvg_path ,xargs_path,lsvg_path)
+        if lsvg_path and xargs_path:
+            rc, out, err = self.module.run_command(cmd,use_unsafe_shell=True)
+            if rc == 0 and out:
+                self.facts['vgs']= {}
+                for m in re.finditer(r'(\S+):\n.*FREE DISTRIBUTION(\n(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*)+', out):
+                    self.facts['vgs'][m.group(1)] = []
+                    pp_size = 0
+                    cmd = "%s %s" % (lsvg_path,m.group(1))
+                    rc, out, err = self.module.run_command(cmd)
+                    if rc == 0 and out:
+                        pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
+                        for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                            pv_info = { 'pv_name': n.group(1),
+                                        'pv_state': n.group(2),
+                                        'total_pps': n.group(3),
+                                        'free_pps': n.group(4),
+                                        'pp_size': pp_size
+                                      }
+                            self.facts['vgs'][m.group(1)].append(pv_info)
+
 
 class HPUX(Hardware):
     """
@@ -3249,24 +3306,13 @@ class SunOSVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        rc, out, err = self.module.run_command("/usr/sbin/prtdiag")
-        for line in out.split('\n'):
-            if 'VMware' in line:
-                self.facts['virtualization_type'] = 'vmware'
-                self.facts['virtualization_role'] = 'guest'
-            if 'Parallels' in line:
-                self.facts['virtualization_type'] = 'parallels'
-                self.facts['virtualization_role'] = 'guest'
-            if 'VirtualBox' in line:
-                self.facts['virtualization_type'] = 'virtualbox'
-                self.facts['virtualization_role'] = 'guest'
-            if 'HVM domU' in line:
-                self.facts['virtualization_type'] = 'xen'
-                self.facts['virtualization_role'] = 'guest'
+
         # Check if it's a zone
-        if os.path.exists("/usr/bin/zonename"):
-            rc, out, err = self.module.run_command("/usr/bin/zonename")
-            if out.rstrip() != "global":
+
+        zonename = self.module.get_bin_path('zonename')
+        if zonename:
+            rc, out, err = self.module.run_command(zonename)
+            if rc == 0 and out.rstrip() != "global":
                 self.facts['container'] = 'zone'
         # Check if it's a branded zone (i.e. Solaris 8/9 zone)
         if os.path.isdir('/.SUNWnative'):
@@ -3274,16 +3320,25 @@ class SunOSVirtual(Virtual):
         # If it's a zone check if we can detect if our global zone is itself virtualized.
         # Relies on the "guest tools" (e.g. vmware tools) to be installed
         if 'container' in self.facts and self.facts['container'] == 'zone':
-            rc, out, err = self.module.run_command("/usr/sbin/modinfo")
-            for line in out.split('\n'):
-                if 'VMware' in line:
-                    self.facts['virtualization_type'] = 'vmware'
-                    self.facts['virtualization_role'] = 'guest'
-                if 'VirtualBox' in line:
-                    self.facts['virtualization_type'] = 'virtualbox'
-                    self.facts['virtualization_role'] = 'guest'
+            modinfo = self.module.get_bin_path('modinfo')
+            if modinfo:
+                rc, out, err = self.module.run_command(modinfo)
+                if rc == 0:
+                    for line in out.split('\n'):
+                        if 'VMware' in line:
+                            self.facts['virtualization_type'] = 'vmware'
+                            self.facts['virtualization_role'] = 'guest'
+                        if 'VirtualBox' in line:
+                            self.facts['virtualization_type'] = 'virtualbox'
+                            self.facts['virtualization_role'] = 'guest'
+
+        if os.path.exists('/proc/vz'):
+            self.facts['virtualization_type'] = 'virtuozzo'
+            self.facts['virtualization_role'] = 'guest'
+
         # Detect domaining on Sparc hardware
-        if os.path.exists("/usr/sbin/virtinfo"):
+        virtinfo = self.module.get_bin_path('virtinfo')
+        if virtinfo:
             # The output of virtinfo is different whether we are on a machine with logical
             # domains ('LDoms') on a T-series or domains ('Domains') on a M-series. Try LDoms first.
             rc, out, err = self.module.run_command("/usr/sbin/virtinfo -p")
@@ -3291,21 +3346,40 @@ class SunOSVirtual(Virtual):
             #   DOMAINROLE|impl=LDoms|control=false|io=false|service=false|root=false
             # The output may also be not formatted and the returncode is set to 0 regardless of the error condition:
             #   virtinfo can only be run from the global zone
-            try:
+            if rc == 0:
+                try:
+                    for line in out.split('\n'):
+                        fields = line.split('|')
+                        if( fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms' ):
+                            self.facts['virtualization_type'] = 'ldom'
+                            self.facts['virtualization_role'] = 'guest'
+                            hostfeatures = []
+                            for field in fields[2:]:
+                                arg = field.split('=')
+                                if( arg[1] == 'true' ):
+                                    hostfeatures.append(arg[0])
+                            if( len(hostfeatures) > 0 ):
+                                self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
+                except ValueError:
+                    pass
+
+        else:
+            smbios = self.module.get_bin_path('smbios')
+            rc, out, err = self.module.run_command(smbios)
+            if rc == 0:
                 for line in out.split('\n'):
-                    fields = line.split('|')
-                    if( fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms' ):
-                        self.facts['virtualization_type'] = 'ldom'
+                    if 'VMware' in line:
+                        self.facts['virtualization_type'] = 'vmware'
                         self.facts['virtualization_role'] = 'guest'
-                        hostfeatures = []
-                        for field in fields[2:]:
-                            arg = field.split('=')
-                            if( arg[1] == 'true' ):
-                                hostfeatures.append(arg[0])
-                        if( len(hostfeatures) > 0 ):
-                            self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
-            except ValueError:
-                pass
+                    elif 'Parallels' in line:
+                        self.facts['virtualization_type'] = 'parallels'
+                        self.facts['virtualization_role'] = 'guest'
+                    elif 'VirtualBox' in line:
+                        self.facts['virtualization_type'] = 'virtualbox'
+                        self.facts['virtualization_role'] = 'guest'
+                    elif 'HVM domU' in line:
+                        self.facts['virtualization_type'] = 'xen'
+                        self.facts['virtualization_role'] = 'guest'
 
 class Ohai(Facts):
     """

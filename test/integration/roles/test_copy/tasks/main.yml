@@ -214,8 +214,8 @@
 
 - name: overwrite the file as user nobody
   copy: dest=/tmp/worldwritable/file.txt content="baz"
-  sudo: yes
-  sudo_user: nobody
+  become: yes
+  become_user: nobody
   register: copy_result7
 
 - name: assert the file was overwritten
@@ -258,9 +258,3 @@
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
-
-- name: test first avialable file
-  copy: dest={{output_dir}}/faf_test
-  first_available_file: 
-        - doesntexist.txt
-        - foo.txt

@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible import constants as C
 from ansible.errors import *
 from ansible.plugins import filter_loader, lookup_loader, module_loader
-from ansible.executor.task_queue_manager import SharedPluginLoaderObj
+from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
@@ -61,7 +61,6 @@ class TestTemplar(unittest.TestCase):
         self.assertEqual(templar.template("{{foo}}\n"), "bar\n")
         self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=True), "bar\n")
         self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=False), "bar")
-        self.assertEqual(templar.template("foo", convert_bare=True), "bar")
         self.assertEqual(templar.template("{{bam}}"), "bar")
         self.assertEqual(templar.template("{{num}}"), 1)
         self.assertEqual(templar.template("{{var_true}}"), True)

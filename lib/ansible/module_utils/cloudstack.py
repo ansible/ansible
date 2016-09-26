@@ -109,6 +109,7 @@ class AnsibleCloudStack(object):
         self.vpc = None
         self.zone = None
         self.vm = None
+        self.vm_default_nic = None
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
@@ -158,7 +159,17 @@ class AnsibleCloudStack(object):
                 continue
 
             if key in current_dict:
-                if isinstance(current_dict[key], (int, long, float, complex)):
+                if isinstance(value, (int, float, long, complex)):
+                    # ensure we compare the same type
+                    if isinstance(value, int):
+                        current_dict[key] = int(current_dict[key])
+                    elif isinstance(value, float):
+                        current_dict[key] = float(current_dict[key])
+                    elif isinstance(value, long):
+                        current_dict[key] = long(current_dict[key])
+                    elif isinstance(value, complex):
+                        current_dict[key] = complex(current_dict[key])
+
                     if value != current_dict[key]:
                         return True
                 else:
@@ -275,6 +286,32 @@ class AnsibleCloudStack(object):
 
         self.ip_address = ip_addresses['publicipaddress'][0]
         return self._get_by_key(key, self.ip_address)
+
+
+    def get_vm_guest_ip(self):
+        vm_guest_ip = self.module.params.get('vm_guest_ip')
+        default_nic = self.get_vm_default_nic()
+
+        if not vm_guest_ip:
+            return default_nic['ipaddress']
+
+        for secondary_ip in default_nic['secondaryip']:
+            if vm_guest_ip == secondary_ip['ipaddress']:
+                return vm_guest_ip
+        self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
+
+
+    def get_vm_default_nic(self):
+        if self.vm_default_nic:
+            return self.vm_default_nic
+
+        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
+        if nics:
+            for n in nics['nic']:
+                if n['isdefault']:
+                    self.vm_default_nic = n
+                    return self.vm_default_nic
+        self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
 
     def get_vm(self, key=None):

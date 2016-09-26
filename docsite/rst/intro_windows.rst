@@ -68,7 +68,7 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 .. code-block:: bash
 
-   pip install kerberos
+   pip install kerberos requests_kerberos
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 

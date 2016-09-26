@@ -34,9 +34,6 @@ from ansible.module_utils.network import add_argument, register_transport, to_li
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
-
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
 
@@ -75,6 +72,7 @@ class Response(object):
             return json.loads(self.body)
         except ValueError:
             return None
+
 
 class Rest(object):
 
@@ -209,13 +207,7 @@ class Cli(CliBase):
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"(?:unknown|incomplete|ambiguous) command", re.I),
     ]
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
@@ -230,7 +222,7 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self):
+    def get_config(self, **kwargs):
         return self.execute('show running-config')[0]
 
     def load_config(self, commands, **kwargs):
@@ -241,6 +233,7 @@ class Cli(CliBase):
 
 Cli = register_transport('cli')(Cli)
 
+
 class Ssh(object):
 
     def __init__(self):
@@ -248,6 +241,7 @@ class Ssh(object):
             msg = 'ops.dc lib is required but does not appear to be available'
             raise NetworkError(msg)
         self._opsidl = None
+        self._extschema = None
 
     def configure(self, config):
         if not self._opsidl:

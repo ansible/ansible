@@ -19,17 +19,13 @@
 import re
 import shlex
 
-import re
 from distutils.version import LooseVersion
 
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.network import NetworkError
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.six import string_types
-
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
 
 try:
     from jnpr.junos import Device
@@ -56,7 +52,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 
-SUPPORTED_CONFIG_FORMATS = ['text', 'set', 'json', 'xml']
+SUPPORTED_CONFIG_FORMATS = ['text', 'xml']
 
 
 def xml_to_json(val):
@@ -73,6 +69,16 @@ def xml_to_string(val):
 class Netconf(object):
 
     def __init__(self):
+        if not HAS_PYEZ:
+            raise NetworkError(
+                msg='junos-eznc >= 1.2.2 is required but does not appear to be installed.  '
+                'It can be installed using `pip install junos-eznc`'
+            )
+        if not HAS_JXMLEASE:
+            raise NetworkError(
+                msg='jxmlease is required but does not appear to be installed.  '
+                'It can be installed using `pip install jxmlease`'
+            )
         self.device = None
         self.config = None
         self._locked = False
@@ -88,14 +94,22 @@ class Netconf(object):
 
     def connect(self, params, **kwargs):
         host = params['host']
-        port = params.get('port') or 830
 
-        user = params['username']
-        passwd = params['password']
+        kwargs = dict()
+        kwargs['port'] = params.get('port') or 830
+
+        kwargs['user'] = params['username']
+
+        if params['password']:
+            kwargs['passwd'] = params['password']
+
+        if params['ssh_keyfile']:
+            kwargs['ssh_private_key_file'] = params['ssh_keyfile']
+
+        kwargs['gather_facts'] = False
 
         try:
-            self.device = Device(host, user=user, passwd=passwd, port=port,
-                                 gather_facts=False)
+            self.device = Device(host, **kwargs)
             self.device.open()
         except ConnectError:
             exc = get_exception()
@@ -105,8 +119,10 @@ class Netconf(object):
         self._connected = True
 
     def disconnect(self):
-        if self.device:
+        try:
             self.device.close()
+        except AttributeError:
+            pass
         self._connected = False
 
     ### Command methods ###
@@ -149,23 +165,31 @@ class Netconf(object):
 
         ele = self.rpc('get_configuration', output=config_format)
 
-        if config_format in ['text', 'set']:
+        if config_format == 'text':
             return str(ele.text).strip()
         else:
             return ele
 
-    def load_config(self, candidate, update='merge', comment=None,
-                    confirm=None, format='text', commit=True):
+    def load_config(self, config, commit=False, replace=False, confirm=None,
+                    comment=None, config_format='text'):
 
-        merge = update == 'merge'
-        overwrite = update == 'overwrite'
+        if replace:
+            merge = False
+            overwrite = True
+        else:
+            merge = True
+            overwrite = False
+
+        if overwrite and config_format == 'set':
+            self.raise_exc('replace cannot be True when config_format is `set`')
 
         self.lock_config()
 
         try:
-            candidate = '\n'.join(candidate)
-            self.config.load(candidate, format=format, merge=merge,
+            candidate = '\n'.join(config)
+            self.config.load(candidate, format=config_format, merge=merge,
                              overwrite=overwrite)
+
         except ConfigLoadError:
             exc = get_exception()
             self.raise_exc('Unable to load config: %s' % str(exc))
@@ -221,6 +245,18 @@ class Netconf(object):
             exc = get_exception()
             raise NetworkError('unable to commit config: %s' % str(exc))
 
+    def confirm_commit(self, checkonly=False):
+        try:
+            resp = self.rpc('get_commit_information')
+            needs_confirm = 'commit confirmed, rollback' in resp[0][4].text
+            if checkonly:
+                return needs_confirm
+            return self.commit_config()
+        except IndexError:
+            # if there is no comment tag, the system is not in a commit
+            # confirmed state so just return
+            pass
+
     def rollback_config(self, identifier, commit=True, comment=None):
 
         self.lock_config()
@@ -229,7 +265,7 @@ class Netconf(object):
             self.config.rollback(identifier)
         except ValueError:
             exc = get_exception()
-            self._error('Unable to rollback config: $s' % str(exc))
+            self.raise_exc('Unable to rollback config: $s' % str(exc))
 
         diff = self.config.diff()
         if commit:
@@ -249,42 +285,26 @@ class Cli(CliBase):
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"unkown command")
     ]
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, **kwargs)
-
         if self.shell._matched_prompt.strip().endswith('%'):
             self.execute('cli')
         self.execute('set cli screen-length 0')
 
-    def configure(self, commands, **kwargs):
+    def configure(self, commands, comment=None):
         cmds = ['configure']
         cmds.extend(to_list(commands))
 
-        if kwargs.get('comment'):
-            cmds.append('commit and-quit comment "%s"' % kwargs.get('comment'))
+        if comment:
+            cmds.append('commit and-quit comment "%s"' % comment)
         else:
             cmds.append('commit and-quit')
 
         responses = self.execute(cmds)
         return responses[1:-1]
-
-    def load_config(self, commands):
-        return self.configure(commands)
-
-    def get_config(self, output='block'):
-        cmd = 'show configuration'
-        if output == 'set':
-            cmd += ' | display set'
-        return self.execute([cmd])[0]
 
 Cli = register_transport('cli', default=True)(Cli)
 

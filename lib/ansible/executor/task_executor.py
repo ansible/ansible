@@ -36,6 +36,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
@@ -176,21 +177,12 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
-                # TODO: remove convert_bare true and deprecate this in with_
                 if self._task.loop == 'first_found':
-                    # first_found loops are special.  If the item is undefined
-                    # then we want to fall through to the next value rather
-                    # than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                            loader=self._loader, fail_on_undefined=False, convert_bare=True)
+                    # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=False)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
-                    try:
-                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                                loader=self._loader, fail_on_undefined=True, convert_bare=True)
-                    except AnsibleUndefinedVariable as e:
-                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.: %s" % to_bytes(e))
-                        return None
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
@@ -246,7 +238,7 @@ class TaskExecutor:
             loop_pause = self._task.loop_control.pause or 0
 
         if loop_var in task_vars:
-            display.warning(u"The loop variable '%s' is already in use."
+            display.warning(u"The loop variable '%s' is already in use. "
                     u"You should set the `loop_var` value in the `loop_control` option for the task"
                     u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
@@ -445,7 +437,17 @@ class TaskExecutor:
         # get the connection and the handler for this execution
         if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
             self._connection = self._get_connection(variables=variables, templar=templar)
-            self._connection.set_host_overrides(host=self._host, hostvars=variables.get('hostvars', {}).get(self._host.name, {}))
+            hostvars = variables.get('hostvars', None)
+            if hostvars:
+                try:
+                    target_hostvars = hostvars.raw_get(self._host.name)
+                except:
+                    # FIXME: this should catch the j2undefined error here
+                    #        specifically instead of all exceptions
+                    target_hostvars = dict()
+            else:
+                target_hostvars = dict()
+            self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
@@ -666,14 +668,7 @@ class TaskExecutor:
                 conn_type = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
-                try:
-                    ssh_executable = C.ANSIBLE_SSH_EXECUTABLE
-                    cmd = subprocess.Popen([ssh_executable, '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (out, err) = cmd.communicate()
-                    err = to_text(err)
-                    if u"Bad configuration option" in err or u"Usage:" in err:
-                        conn_type = "paramiko"
-                except OSError:
+                if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)

@@ -232,7 +232,7 @@
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
-  with_items: "{{ uri_os_packages[ansible_os_family] }}"
+  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: install python modules for Older Python SNI verification
@@ -268,7 +268,7 @@
   package:
     name: "{{ item }}"
     state: absent
-  with_items: "{{ uri_os_packages[ansible_os_family] }}"
+  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: validate the status_codes are correct

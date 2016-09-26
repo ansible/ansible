@@ -27,7 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 from time import sleep
+
+from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
@@ -53,6 +56,39 @@ from ansible.module_utils.six import string_types
 
 class AnsibleAWSError(Exception):
     pass
+
+
+def _botocore_exception_maybe():
+    """
+    Allow for boto3 not being installed when using these utils by wrapping
+    botocore.exceptions instead of assigning from it directly.
+    """
+    if HAS_BOTO3:
+        return botocore.exceptions.ClientError
+    return type(None)
+
+
+class AWSRetry(CloudRetry):
+    base_class = _botocore_exception_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.response['Error']['Code']
+
+    @staticmethod
+    def found(response_code):
+        # This list of failures is based on this API Reference
+        # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        retry_on = [
+            'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+            'InternalFailure', 'InternalError'
+        ]
+
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):

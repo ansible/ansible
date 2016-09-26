@@ -31,7 +31,7 @@ from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
@@ -174,7 +174,7 @@ class DataLoader():
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
-                if self._vault.is_encrypted(data):
+                if is_encrypted(data):
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
@@ -291,9 +291,9 @@ class DataLoader():
         b_source = to_bytes(source)
 
         result = None
-        if not source:
-            display.warning('Invalid request to find a file that matches an empty string or "null" value')
-        elif source.startswith('~') or source.startswith(os.path.sep):
+        if source is None:
+            display.warning('Invalid request to find a file that matches a "null" value')
+        elif source and (source.startswith('~') or source.startswith(os.path.sep)):
             # path is absolute, no relative needed, check existence and return source
             test_path = unfrackpath(b_source)
             if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
@@ -395,7 +395,7 @@ class DataLoader():
 
         try:
             with open(to_bytes(real_path), 'rb') as f:
-                if self._vault.is_encrypted_file(f):
+                if is_encrypted_file(f):
                     # if the file is encrypted and no password was specified,
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name

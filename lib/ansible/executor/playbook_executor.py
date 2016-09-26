@@ -28,6 +28,7 @@ from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 try:
     from __main__ import display
@@ -56,6 +57,14 @@ class PlaybookExecutor:
             self._tqm = None
         else:
             self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
+
+        # Note: We run this here to cache whether the default ansible ssh
+        # executable supports control persist.  Sometime in the future we may
+        # need to enhance this to check that ansible_ssh_executable specified
+        # in inventory is also cached.  We can't do this caching at the point
+        # where it is used (in task_executor) because that is post-fork and
+        # therefore would be discarded after every task.
+        check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
 
     def run(self):
 
@@ -186,7 +195,7 @@ class PlaybookExecutor:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
                             elif playbook_path:
-                                basedir = os.path.dirname(playbook_path)
+                                basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:
                                 basedir = '~/'
 
