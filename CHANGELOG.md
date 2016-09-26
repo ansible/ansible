@@ -7,6 +7,7 @@ Ansible Changes By Release
 * Fix a bug with async's poll keyword not making use of ansible_python_interpreter to run (and thus breaking when /usr/bin/python is not present on the remote machine.)
 * Fix a bug where hosts that started with a range in inventory were being treated as an invalid section header.
 * Fix a bug where the fetch module was not idempotent when retrieving the target of a symlink.
+* Change ini_ifle module to disregard leading whitespace when looking for a matching key.
 
 ###Deprecations:
 
