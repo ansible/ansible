@@ -86,7 +86,7 @@ options:
     default: 'yes'
     version_added: "2.5"
 notes:
-  - You must specify lv (when managing the state of logical volumes) or thinpool (when managing a thin provisisoned volume).
+  - You must specify lv (when managing the state of logical volumes) or thinpool (when managing a thin provisioned volume).
 '''
 
 EXAMPLES = '''
