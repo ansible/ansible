@@ -33,7 +33,7 @@
 
 # The opts type of bind mount only works on Linux
 - name: Bind mount a filesystem (Linux)
-  mount:
+  mount2:
     src: "{{ outputdir }}/mount_source"
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
@@ -44,7 +44,7 @@
 
 # Nullfs is freebsd only
 - name: Bind mount a filesystem (FreeBSD)
-  mount:
+  mount2:
     src: "{{ outputdir }}/mount_source"
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
@@ -68,7 +68,7 @@
 
 # The opts type of bind mount only works on Linux
 - name: Bind mount a filesystem (Linux)
-  mount:
+  mount2:
     src: "{{ outputdir }}/mount_source"
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
@@ -79,7 +79,7 @@
 
 # Nullfs is freebsd only
 - name: Bind mount a filesystem (FreeBSD)
-  mount:
+  mount2:
     src: "{{ outputdir }}/mount_source"
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
@@ -93,7 +93,7 @@
       - "not bind_result_linux['changed'] and not bind_result_freebsd['changed']"
 
 - name: Unmount the bind mount
-  mount:
+  mount2:
     name: "{{ outputdir }}/mount_dest"
     state: "absent"
   when: ansible_system in ('Linux', 'FreeBSD')
