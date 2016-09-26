@@ -21,12 +21,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_platform
 from ansible.module_utils.ismount import ismount
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
 import os
 import re
 
@@ -465,6 +465,10 @@ def main():
             passno='0',
             fstab='/etc/fstab'
         )
+
+    # FreeBSD doesn't have any 'default' so set 'rw' instead
+    if get_platform() == 'FreeBSD':
+        args['opts'] = 'rw'
 
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:

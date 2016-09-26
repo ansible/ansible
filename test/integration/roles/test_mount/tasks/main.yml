@@ -49,7 +49,6 @@
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
     fstype: "nullfs"
-    opts: "rw"
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
@@ -74,7 +73,7 @@
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
     fstype: "None"
-    opts: "bind["
+    opts: "bind"
   when: ansible_system == 'Linux'
   register: bind_result_linux
 
@@ -85,7 +84,6 @@
     name: "{{ outputdir }}/mount_dest"
     state: "mounted"
     fstype: "nullfs"
-    opts: "rw"
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
 
