@@ -109,7 +109,7 @@ import re
 
 def match_opt(option, line):
   option = re.escape(option)
-  return re.match('%s( |\t)*=' % option, line) \
+  return re.match(' *%s( |\t)*=' % option, line) \
     or re.match('# *%s( |\t)*=' % option, line) \
     or re.match('; *%s( |\t)*=' % option, line)
 
@@ -118,7 +118,7 @@ def match_opt(option, line):
 
 def match_active_opt(option, line):
   option = re.escape(option)
-  return re.match('%s( |\t)*=' % option, line)
+  return re.match(' *%s( |\t)*=' % option, line)
 
 # ==============================================================
 # do_ini
