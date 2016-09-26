@@ -313,20 +313,24 @@ def main():
     password = module.params['password']
     ssl = module.params['ssl']
     ssl_cert_reqs = None
-    if ssl:
-        ssl_cert_reqs = getattr(ssl_lib, module.params['ssl_cert_reqs'])
     roles = module.params['roles'] or []
     state = module.params['state']
     update_password = module.params['update_password']
 
     try:
+        connection_params = {
+            "host": login_host,
+            "port": int(login_port),
+        }
+
         if replica_set:
-            client = MongoClient(login_host, int(login_port),
-                                 replicaset=replica_set, ssl=ssl,
-                                 ssl_cert_reqs=ssl_cert_reqs)
-        else:
-            client = MongoClient(login_host, int(login_port), ssl=ssl,
-                                 ssl_cert_reqs=ssl_cert_reqs)
+            connection_params["replicaset"] = replica_set
+
+        if ssl:
+            connection_params["ssl"] = ssl
+            connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+
+        client = MongoClient(**connection_params)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
