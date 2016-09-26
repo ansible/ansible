@@ -296,5 +296,5 @@ class Conditional(object):
         return str(self.value) in value
 
     def matches(self, value):
-        match = re.search(value, self.value, re.M)
+        match = re.search(self.value, value, re.M)
         return match is not None
