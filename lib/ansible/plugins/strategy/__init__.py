@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import threading
 import time
 
@@ -35,7 +34,6 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -438,28 +436,33 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     elif 'ansible_facts' in result_item:
-                        loop_var = 'item'
+
+                        # set correct loop var
                         if original_task.loop_control:
                             loop_var = original_task.loop_control.loop_var or 'item'
+                        else:
+                            loop_var = 'item'
 
                         item = result_item.get(loop_var, None)
+
+                        # if delegated fact and we are delegating facts, we need to change target host for them
+                        if original_task.delegate_to is not None and original_task.delegate_facts:
+                            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=original_host, task=original_task)
+                            self.add_tqm_variables(task_vars, play=iterator._play)
+                            if item is not None:
+                                task_vars[loop_var] = item
+                            templar = Templar(loader=self._loader, variables=task_vars)
+                            host_name = templar.template(original_task.delegate_to)
+                            actual_host = self._inventory.get_host(host_name)
+                            if actual_host is None:
+                                actual_host = Host(name=host_name)
+                        else:
+                            actual_host = original_host
 
                         if original_task.action == 'include_vars':
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually refering too here, which may
                                 # be a host that is not really in inventory at all
-                                if original_task.delegate_to is not None and original_task.delegate_facts:
-                                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=original_task)
-                                    self.add_tqm_variables(task_vars, play=iterator._play)
-                                    if item is not None:
-                                        task_vars[loop_var] = item
-                                    templar = Templar(loader=self._loader, variables=task_vars)
-                                    host_name = templar.template(original_task.delegate_to)
-                                    actual_host = self._inventory.get_host(host_name)
-                                    if actual_host is None:
-                                        actual_host = Host(name=host_name)
-                                else:
-                                    actual_host = original_host
 
                                 if original_task.run_once:
                                     host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
@@ -472,7 +475,7 @@ class StrategyBase:
                             if original_task.run_once:
                                 host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
                             else:
-                                host_list = [original_host]
+                                host_list = [actual_host]
 
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
