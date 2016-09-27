@@ -100,7 +100,8 @@ EXAMPLES = """
     src: config.j2
     action: overwrite
 """
-from ansible.module_utils.junos import NetworkModule
+from ansible.module_utils.network import NetworkModule
+import ansible.module_utils.junos
 
 DEFAULT_COMMENT = 'configured by junos_template'
 
