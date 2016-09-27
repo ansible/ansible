@@ -222,8 +222,12 @@ def main():
                 if provider and StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
                     module.fail_json(msg="Shade >= 1.5.0 required to use provider options")
 
-                net = cloud.create_network(name, shared, admin_state_up,
-                                           external, provider, project_id)
+                if project_id is not None:
+                    net = cloud.create_network(name, shared, admin_state_up,
+                                               external, provider, project_id)
+                else:
+                    net = cloud.create_network(name, shared, admin_state_up,
+                                               external, provider)
                 changed = True
             else:
                 changed = False
