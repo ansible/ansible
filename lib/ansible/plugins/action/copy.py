@@ -147,7 +147,11 @@ class ActionModule(ActionBase):
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
 
+        # Keep original value for mode parameter
+        mode_value = self._task.args.get('mode', None)
+
         diffs = []
+        mode_value = self._task.args.get('mode', None)
         for source_full, source_rel in source_files:
 
             source_full = self._loader.get_real_file(source_full)
@@ -157,7 +161,7 @@ class ActionModule(ActionBase):
 
             # Get the local mode and set if not user defined
             # https://github.com/ansible/ansible-modules-core/issues/1124
-            if not self._task.args.get('mode', None):
+            if self._task.args.get('mode', None) == 'preserve':
                 lmode = oct(os.stat(source_full).st_mode & 0o777)
                 self._task.args['mode'] = lmode
 
@@ -300,6 +304,9 @@ class ActionModule(ActionBase):
             # the copy module uses 'dest', so add it if it's not there
             if 'path' in module_return and 'dest' not in module_return:
                 module_return['dest'] = module_return['path']
+
+            # reset the mode
+            self._task.args['mode'] = mode_value
 
         # Delete tmp path if we were recursive or if we did not execute a module.
         if not delete_remote_tmp or (delete_remote_tmp and not module_executed):
