@@ -126,22 +126,24 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import ansible.module_utils.openswitch
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.openswitch import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.six import string_types
 
 VALID_KEYS = ['command', 'prompt', 'response']
 
 def to_lines(stdout):
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
 
 def parse_commands(module):
     for cmd in module.params['commands']:
-        if isinstance(cmd, basestring):
+        if isinstance(cmd, string_types):
             cmd = dict(command=cmd, output=None)
         elif 'command' not in cmd:
             module.fail_json(msg='command keyword argument is required')
@@ -220,4 +222,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

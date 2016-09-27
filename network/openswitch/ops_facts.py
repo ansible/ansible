@@ -171,9 +171,10 @@ endpoints:
 """
 import re
 
-from ansible.module_utils.basic import get_exception
+import ansible.module_utils.openswitch
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
-from ansible.module_utils.openswitch import NetworkModule
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.six import iteritems
 
 
 def add_command(runner, command):
@@ -195,6 +196,9 @@ class FactsBase(object):
 
         if self.transport == 'cli':
             self.commands()
+
+    def commands(self):
+        raise NotImplementedError
 
     def populate(self):
         getattr(self, self.transport)()
@@ -395,11 +399,10 @@ def main():
             inst.populate()
             facts.update(inst.facts)
     except Exception:
-        raise
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in iteritems(facts):
         # this is to maintain capability with ops_facts 2.1
         if key.startswith('_'):
             ansible_facts[key[1:]] = value

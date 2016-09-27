@@ -100,8 +100,11 @@ ansible_net_gather_subset:
 """
 import re
 
-from ansible.module_utils.netcmd import CommandRunner
-from ansible.module_utils.vyos import NetworkModule
+import ansible.module_utils.vyos
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.netcli import CommandRunner
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.six import iteritems
 
 
 class FactsBase(object):
@@ -111,6 +114,9 @@ class FactsBase(object):
         self.facts = dict()
 
         self.commands()
+
+    def commands(self):
+        raise NotImplementedError
 
 
 class Default(FactsBase):
@@ -160,7 +166,7 @@ class Config(FactsBase):
         entry = None
 
         for line in commits.split('\n'):
-            match = re.match('(\d+)\s+(.+)by(.+)via(.+)', line)
+            match = re.match(r'(\d+)\s+(.+)by(.+)via(.+)', line)
             if match:
                 if entry:
                     entries.append(entry)
@@ -288,7 +294,7 @@ def main():
     for key in runable_subsets:
         instances.append(FACT_SUBSETS[key](runner))
 
-    runner.run_commands()
+    runner.run()
 
     try:
         for inst in instances:
@@ -299,7 +305,7 @@ def main():
         module.fail_json(msg='unknown failure', output=runner.items, exc=str(exc))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
