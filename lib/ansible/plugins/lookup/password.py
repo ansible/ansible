@@ -232,7 +232,8 @@ class LookupModule(LookupBase):
 
             changed = False
             content = _read_password_file(b_path)
-            if content is None:
+
+            if content is None or b_path == to_bytes('/dev/null'):
                 plaintext_password = _random_password(params['length'], chars)
                 salt = None
                 changed = True
@@ -243,7 +244,7 @@ class LookupModule(LookupBase):
                 changed = True
                 salt = _random_salt()
 
-            if changed:
+            if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
 
