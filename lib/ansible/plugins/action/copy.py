@@ -44,15 +44,14 @@ class ActionModule(ActionBase):
         dest    = self._task.args.get('dest', None)
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
-        faf     = self._task.first_available_file
         remote_src = boolean(self._task.args.get('remote_src', False))
         follow  = boolean(self._task.args.get('follow', False))
 
-        if (source is None and content is None and faf is None) or dest is None:
+        if (source is None and content is None) or dest is None:
             result['failed'] = True
             result['msg'] = "src (or content) and dest are required"
             return result
-        elif (source is not None or faf is not None) and content is not None:
+        elif source is not None and content is not None:
             result['failed'] = True
             result['msg'] = "src and content are mutually exclusive"
             return result
@@ -86,8 +85,6 @@ class ActionModule(ActionBase):
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
-        elif faf:
-            source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
         elif remote_src:
             result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
             return result

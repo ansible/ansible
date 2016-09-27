@@ -75,7 +75,6 @@ class Task(Base, Conditional, Taggable, Become):
     _delegate_to          = FieldAttribute(isa='string')
     _delegate_facts       = FieldAttribute(isa='bool', default=False)
     _failed_when          = FieldAttribute(isa='list', default=[])
-    _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True, inherit=False)
     _loop_args            = FieldAttribute(isa='list', private=True, inherit=False)
     _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
