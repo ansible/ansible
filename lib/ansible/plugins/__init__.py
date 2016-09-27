@@ -219,7 +219,6 @@ class PluginLoader:
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
-                self._plugin_path_cache.clear()
                 self._paths = None
 
     def find_plugin(self, name, mod_type=''):
