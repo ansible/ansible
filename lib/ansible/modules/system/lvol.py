@@ -415,30 +415,20 @@ def main():
             lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
             if snapshot is not None:
                 cmd = "%s %s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
+            if thinpool and lv:
+                if size_opt == 'l':
+                    module.fail_json(changed=False, msg="Thin volume sizing with percentage not supported.")
+                size_opt = 'V'
+                cmd = "%s %s -n %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg, thinpool)
+            elif thinpool and not lv:
+                cmd = "%s %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, opts, vg, thinpool)
             else:
                 cmd = "%s %s %s -n %s -%s %s%s %s %s %s" % (lvcreate_cmd, test_opt, yesopt, lv, size_opt, size, size_unit, opts, vg, pvs)
             rc, _, err = module.run_command(cmd)
             if rc == 0:
                 changed = True
             else:
-                lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
-                if snapshot is not None:
-                    cmd = "%s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
-                if thinpool and lv:
-                    if size_opt == 'l':
-                       module.fail_json(changed=False, msg="Thin volume sizing with percentage not supported.")
-                    size_opt = 'V'
-
-                    cmd = "%s %s -n %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg, thinpool)
-                elif thinpool and not lv:
-                    cmd = "%s %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, opts, vg, thinpool)
-                else:
-                    cmd = "%s %s -n %s -%s %s%s %s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg, pvs)
-                rc, _, err = module.run_command(cmd)
-                if rc == 0:
-                    changed = True
-                else:
-                    module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
+                module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
     else:
         if state == 'absent':
             # remove LV
