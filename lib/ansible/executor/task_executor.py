@@ -276,7 +276,7 @@ class TaskExecutor:
 
             if label is not None:
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
-                res['_ansible_item_label'] = templar.template(label, fail_on_undefined=False)
+                res['_ansible_item_label'] = templar.template(label)
 
             self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
             results.append(res)
