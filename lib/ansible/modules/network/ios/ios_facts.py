@@ -126,9 +126,11 @@ ansible_net_neighbors:
 import re
 import itertools
 
-from ansible.module_utils.basic import get_exception
+import ansible.module_utils.ios
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
-from ansible.module_utils.ios import NetworkModule
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import zip
 
 
 def add_command(runner, command):
@@ -146,6 +148,9 @@ class FactsBase(object):
         self.facts = dict()
 
         self.commands()
+
+    def commands(self):
+        raise NotImplementedError
 
 class Default(FactsBase):
 
@@ -199,7 +204,7 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.runner.get_command('show memory statistics | include Processor')
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) / 1024
             self.facts['memfree_mb'] = int(match[1]) / 1024
@@ -244,7 +249,7 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, interfaces):
         facts = dict()
-        for key, value in interfaces.iteritems():
+        for key, value in iteritems(interfaces):
             intf = dict()
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
@@ -266,11 +271,11 @@ class Interfaces(FactsBase):
         return facts
 
     def populate_ipv6_interfaces(self, data):
-        for key, value in data.iteritems():
+        for key, value in iteritems(data):
             self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)
-            for addr, subnet in itertools.izip(addresses, subnets):
+            for addr, subnet in zip(addresses, subnets):
                 ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
                 self.add_ip_address(addr.strip(), 'ipv6')
                 self.facts['interfaces'][key]['ipv6'].append(ipv6)
@@ -297,6 +302,7 @@ class Interfaces(FactsBase):
 
     def parse_interfaces(self, data):
         parsed = dict()
+        key = ''
         for line in data.split('\n'):
             if len(line) == 0:
                 continue
@@ -444,7 +450,7 @@ def main():
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 

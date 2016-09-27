@@ -114,8 +114,9 @@ responses:
   type: list
   sample: ['...', '...']
 """
+import ansible.module_utils.ios
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ios import NetworkModule, NetworkError
+from ansible.module_utils.ios import NetworkModule
 
 def get_config(module):
     config = module.params['config'] or dict()
