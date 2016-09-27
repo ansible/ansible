@@ -58,7 +58,7 @@ When run against a specific host, this script returns the following variables:
  - do_private_ip_address
  - do_kernel - object
  - do_locked
- - de_memory
+ - do_memory
  - do_name
  - do_networks - object
  - do_next_backup_window
@@ -67,7 +67,9 @@ When run against a specific host, this script returns the following variables:
  - do_size_slug
  - do_snapshot_ids - list
  - do_status
+ - do_tags
  - do_vcpus
+ - do_volume_ids
 
 -----
 ```
