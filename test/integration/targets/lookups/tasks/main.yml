@@ -134,6 +134,18 @@
     that:
         - "newpass == newpass2"
 
+- name: verify that we can generate a 1st password without writing it
+  set_fact:
+    newpass: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify that we can generate a 2nd password without writing it
+  set_fact:
+    newpass2: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify lookup password behavior with /dev/null
+  assert:
+    that:
+        - "newpass != newpass2"
 
 # ENV LOOKUP
 
