@@ -158,7 +158,7 @@ class ActionModule(ActionBase):
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
-            # Get the local mode and set if not user defined
+            # Get the local mode and set if user wanted it preserved
             # https://github.com/ansible/ansible-modules-core/issues/1124
             if self._task.args.get('mode', None) == 'preserve':
                 lmode = oct(os.stat(source_full).st_mode & 0o777)
