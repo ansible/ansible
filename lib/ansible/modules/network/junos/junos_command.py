@@ -205,6 +205,10 @@ def parse(module, command_type):
 
         item['command_type'] = command_type
 
+        # show configuration [options] will return as text
+        if item['command'].startswith('show configuration'):
+            item['output'] = 'text'
+
         parsed.append(item)
 
     return parsed
