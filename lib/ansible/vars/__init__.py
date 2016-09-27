@@ -439,8 +439,7 @@ class VariableManager:
         if task.loop is not None:
             if task.loop in lookup_loader:
                 try:
-                    #TODO: remove convert_bare true and deprecate this in with_
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable as e:
                     # This task will be skipped later due to this, so we just setup
