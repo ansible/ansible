@@ -1181,6 +1181,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_etc_hosts = self._convert_simple_dict_to_list('etc_hosts')
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
+        self.parameters.expected_devices = self._get_expected_devices()
 
         if not self.container.get('HostConfig'):
             self.fail("has_config_diff: Error parsing container properties. HostConfig missing.")
@@ -1208,7 +1209,7 @@ class Container(DockerBaseClass):
             detach=detach,
             interactive=config.get('OpenStdin'),
             capabilities=host_config.get('CapAdd'),
-            devices=host_config.get('Devices'),
+            expected_devices=host_config.get('Devices'),
             dns_servers=host_config.get('Dns'),
             dns_opts=host_config.get('DnsOptions'),
             dns_search_domains=host_config.get('DnsSearch'),
@@ -1432,6 +1433,37 @@ class Container(DockerBaseClass):
                     extra = True
                     extra_networks.append(dict(name=network, id=network_config['NetworkID']))
         return extra, extra_networks
+
+    def _get_expected_devices(self):
+        if not self.parameters.devices:
+            return None
+        expected_devices = []
+        for device in self.parameters.devices:
+            parts = device.split(':')
+            if len(parts) == 1:
+                expected_devices.append(
+                    dict(
+                        CgroupPermissions='rwm',
+                        PathInContainer=parts[0],
+                        PathOnHost=parts[0]
+                    ))
+            elif len(parts) == 2:
+                parts = device.split(':')
+                expected_devices.append(
+                    dict(
+                        CgroupPermissions='rwm',
+                        PathInContainer=parts[1],
+                        PathOnHost=parts[0]
+                    )
+                )
+            else:
+                expected_devices.append(
+                    dict(
+                    CgroupPermissions=parts[2],
+                    PathInContainer=parts[1],
+                    PathOnHost=parts[0]
+                ))
+        return expected_devices
 
     def _get_expected_entrypoint(self):
         self.log('_get_expected_entrypoint')
