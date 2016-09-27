@@ -401,6 +401,11 @@ or environment variables (DO_API_TOKEN)\n''')
                         self.inventory[image] = { 'hosts': [ ], 'vars': {} }
                     self.inventory[image]['hosts'].append(dest)
 
+            if droplet['tags']:
+                for tag in droplet['tags']:
+                    if tag not in self.inventory:
+                        self.inventory[tag] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[tag]['hosts'].append(dest)
 
 
     def load_droplet_variables_for_host(self):
