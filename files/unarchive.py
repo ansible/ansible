@@ -558,12 +558,12 @@ class ZipArchive(object):
 
     def can_handle_archive(self):
         if not self.cmd_path:
-            return False
+            return False, 'Command "unzip" not found.'
         cmd = [ self.cmd_path, '-l', self.src ]
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
-            return True
-        return False
+            return True, None
+        return False, 'Command "%s" could not handle archive.' % self.cmd_path
 
 
 # class to handle gzipped tar files
@@ -585,6 +585,21 @@ class TgzArchive(object):
             self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = '-z'
         self._files_in_archive = []
+
+        if self.cmd_path:
+            self.tar_type = self._get_tar_type()
+        else:
+            self.tar_type = None
+
+    def _get_tar_type(self):
+        cmd = [self.cmd_path, '--version']
+        (rc, out, err) = self.module.run_command(cmd)
+        tar_type = None
+        if out.startswith('bsdtar'):
+            tar_type = 'bsd'
+        elif out.startswith('tar') and 'GNU' in out:
+            tar_type = 'gnu'
+        return tar_type
 
     @property
     def files_in_archive(self, force_refresh=False):
@@ -678,16 +693,19 @@ class TgzArchive(object):
 
     def can_handle_archive(self):
         if not self.cmd_path:
-            return False
+            return False, 'Commands "gtar" and "tar" not found.'
+
+        if self.tar_type != 'gnu':
+            return False, 'Command "%s" detected as tar type %s. GNU tar required.' % (self.cmd_path, self.tar_type)
 
         try:
             if self.files_in_archive:
-                return True
+                return True, None
         except UnarchiveError:
-            pass
+            return False, 'Command "%s" could not handle archive.' % self.cmd_path
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
-        return False
+        return False, 'Command "%s" found no files in archive.' % self.cmd_path
 
 
 # class to handle tar files that aren't compressed
@@ -715,11 +733,15 @@ class TarXzArchive(TgzArchive):
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
     handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive]
+    reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
-        if obj.can_handle_archive():
+        (can_handle, reason) = obj.can_handle_archive()
+        if can_handle:
             return obj
-    module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed.' % src)
+        reasons.add(reason)
+    reason_msg = ' '.join(reasons)
+    module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed. %s' % (src, reason_msg))
 
 
 def main():
