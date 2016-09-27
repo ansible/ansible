@@ -374,29 +374,31 @@ def main():
 
     lvs = parse_lvs(current_lvs)
 
-    if snapshot is None:
-        check_lv = lv
-    else:
-        check_lv = snapshot
+    if lv:
+        if snapshot:
+            for test_lv in lvs:
+                if test_lv['name'] == lv:
+                    break
+            else:
+                module.fail_json(msg="Snapshot origin LV %s does not exist in volume group %s." % (lv, vg))
+            check_lv = snapshot
+
+        elif thinpool:
+            for test_lv in lvs:
+                if test_lv['name'] == thinpool:
+                    break
+            else:
+                module.fail_json(msg="Thin pool LV %s does not exist in volume group %s." % (thinpool, vg))
+            check_lv = lv
+
+        else:
+            check_lv = lv
+
+    elif thinpool:
+        check_lv = thinpool
+
     for test_lv in lvs:
         if test_lv['name'] in (check_lv, check_lv.rsplit('/', 1)[-1]):
-
-    if thinpool and lv:
-        for test_lv in lvs:
-            if test_lv['name'] == thinpool:
-                break
-        else:
-            module.fail_json(msg="Thin pool %s does not exist." % thinpool)
-
-    if thinpool and not lv:
-        target = thinpool
-    elif snapshot:
-        target = snapshot
-    elif lv:
-        target = lv
-
-    for test_lv in lvs:
-        if test_lv['name'] == target:
             this_lv = test_lv
             break
     else:
