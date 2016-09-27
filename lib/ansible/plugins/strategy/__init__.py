@@ -601,9 +601,6 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         new_group = self._inventory.get_group(group_name)
         if not new_group:
-            # clear cache of group dict, which is used in magic host variables
-            self._inventory.clear_group_dict_cache()
-
             # create the new group and add it to inventory
             new_group = Group(name=group_name)
             self._inventory.add_group(new_group)
@@ -615,6 +612,8 @@ class StrategyBase:
             changed = True
 
         if group_name not in host.get_groups():
+            # clear cache of group dict, which is used in magic host variables
+            self._inventory.clear_group_dict_cache()
             new_group.add_host(real_host)
             changed = True
 
