@@ -761,6 +761,7 @@ def main():
                     )
         elif state == 'stopped':
             vms_module.create(
+                result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
@@ -781,6 +782,7 @@ def main():
                 )
         elif state == 'suspended':
             vms_module.create(
+                result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
