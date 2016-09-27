@@ -424,8 +424,7 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 status = None
                 try:
-                    for line in self.client.push(repository, tag=tag, stream=True):
-                        line = json.loads(line)
+                    for line in self.client.push(repository, tag=tag, stream=True,  decode=True):
                         self.log(line, pretty_print=True)
                         if line.get('errorDetail'):
                             raise Exception(line['errorDetail']['message'])
