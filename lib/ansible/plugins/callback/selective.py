@@ -50,6 +50,7 @@ COLORS = {
     'changed': '\033[93m',
     'failed': '\033[91m',
     'endc': '\033[0m',
+    'skipped': '\033[96m',
 }
 
 DONT_COLORIZE = os.getenv('ANSIBLE_SELECTIVE_DONT_COLORIZE', default=False)
@@ -58,7 +59,11 @@ DONT_COLORIZE = os.getenv('ANSIBLE_SELECTIVE_DONT_COLORIZE', default=False)
 def dict_diff(prv, nxt):
     """Return a dict of keys that differ with another config object."""
     keys = set(prv.keys() + nxt.keys())
-    return {k: (prv.get(k), nxt.get(k)) for k in keys if prv.get(k) != nxt.get(k)}
+    result = {}
+    for k in keys:
+        if prv.get(k) != nxt.get(k):
+            result[k] = (prv.get(k), nxt.get(k))
+    return result
 
 
 def colorize(msg, color):
@@ -222,8 +227,28 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result, **kwargs):
         """Run when a task is skipped."""
-        pass
+        if self._display.verbosity > 1:
+            self._print_task()
+            self.last_skipped = False
+
+            line_length = 120
+            spaces = ' ' * (31-len(result._host.name)-4)
+
+            line = "  * {}{}- {}".format(colorize(result._host.name, 'not_so_bold'),
+                                         spaces,
+                                         colorize("skipped", 'skipped'),)
+
+            reason = result._result.get('skipped_reason', '') or \
+                result._result.get('skip_reason', '')
+            if len(reason) < 50:
+                line += ' -- {}'.format(reason)
+                print("{} {}---------".format(line, '-' * (line_length - len(line))))
+            else:
+                print("{} {}".format(line, '-' * (line_length - len(line))))
+                print(self._indent_text(reason, 8))
+                print(reason)
 
     v2_playbook_on_handler_task_start = v2_playbook_on_task_start
     v2_runner_on_failed = v2_runner_on_ok
     v2_runner_on_unreachable = v2_runner_on_ok
+
