@@ -465,7 +465,7 @@ class Connection(ConnectionBase):
                     if p.poll() is not None:
                         break
                     self._terminate_process(p)
-                    raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                    raise AnsibleConnectionTimeout('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
             # Read whatever output is available on stdout and stderr, and stop
             # listening to the pipe if it's been closed.
