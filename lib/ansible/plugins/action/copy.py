@@ -155,6 +155,12 @@ class ActionModule(ActionBase):
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
+            # Get the local mode and set if not user defined
+            # https://github.com/ansible/ansible-modules-core/issues/1124
+            if not self._task.args.get('mode', None):
+                lmode = oct(os.stat(source_full).st_mode & 0777)
+                self._task.args['mode'] = lmode
+
             # If local_checksum is not defined we can't find the file so we should fail out.
             if local_checksum is None:
                 result['failed'] = True
