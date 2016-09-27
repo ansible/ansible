@@ -619,14 +619,24 @@ class TaskExecutor:
         while time_left > 0:
             time.sleep(self._task.poll)
 
-            async_result = normal_handler.run(task_vars=task_vars)
-            # We do not bail out of the loop in cases where the failure
-            # is associated with a parsing error. The async_runner can
-            # have issues which result in a half-written/unparseable result
-            # file on disk, which manifests to the user as a timeout happening
-            # before it's time to timeout.
-            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
-                break
+            try:
+                async_result = normal_handler.run(task_vars=task_vars)
+                # We do not bail out of the loop in cases where the failure
+                # is associated with a parsing error. The async_runner can
+                # have issues which result in a half-written/unparseable result
+                # file on disk, which manifests to the user as a timeout happening
+                # before it's time to timeout.
+                if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
+                    break
+            except Exception as e:
+                # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
+                # On an exception, call the connection's reset method if it has one (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
+                display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
+                display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
+                try:
+                    normal_handler._connection._reset()
+                except AttributeError:
+                    pass
 
             time_left -= self._task.poll
 
