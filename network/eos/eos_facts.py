@@ -141,8 +141,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import NetworkModule
 
 
@@ -163,6 +163,10 @@ class FactsBase(object):
 
         self.load_commands()
 
+    def load_commands(self):
+        raise NotImplementedError
+
+
 class Default(FactsBase):
 
     SYSTEM_MAP = {
@@ -178,7 +182,7 @@ class Default(FactsBase):
 
     def populate(self):
         data = self.runner.get_command('show version', 'json')
-        for key, value in self.SYSTEM_MAP.iteritems():
+        for key, value in iteritems(self.SYSTEM_MAP):
             if key in data:
                 self.facts[value] = data[key]
 
@@ -256,10 +260,10 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, data):
         facts = dict()
-        for key, value in data['interfaces'].iteritems():
+        for key, value in iteritems(data['interfaces']):
             intf = dict()
 
-            for remote, local in self.INTERFACE_MAP.iteritems():
+            for remote, local in iteritems(self.INTERFACE_MAP):
                 if remote in value:
                     intf[local] = value[remote]
 
@@ -336,7 +340,8 @@ def main():
             exclude = False
 
         if subset not in VALID_SUBSETS:
-            module.fail_json(msg='Bad subset')
+            module.fail_json(msg='Subset must be one of [%s], got %s' %
+                             (', '.join(VALID_SUBSETS), subset))
 
         if exclude:
             exclude_subsets.add(subset)
@@ -365,11 +370,10 @@ def main():
             inst.populate()
             facts.update(inst.facts)
     except Exception:
-        raise
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
@@ -378,4 +382,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
