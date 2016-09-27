@@ -414,6 +414,7 @@ class VariableManager:
                 #             however this would take work in the templating engine, so for now
                 #             we'll add both so we can give users something transitional to use
                 variables['play_hosts'] = [x.name for x in self._inventory.get_hosts()]
+                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts()]
                 variables['ansible_play_hosts'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
