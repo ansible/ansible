@@ -151,7 +151,6 @@ class ActionModule(ActionBase):
         mode_value = self._task.args.get('mode', None)
 
         diffs = []
-        mode_value = self._task.args.get('mode', None)
         for source_full, source_rel in source_files:
 
             source_full = self._loader.get_real_file(source_full)
