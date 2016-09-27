@@ -95,10 +95,11 @@ responses:
   type: list
   sample: [...]
 """
-import copy
 
+import ansible.module_utils.openswitch
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.openswitch import NetworkModule
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.openswitch import HAS_OPS
 
 
 def get_config(module):

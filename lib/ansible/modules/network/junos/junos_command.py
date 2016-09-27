@@ -158,16 +158,14 @@ xml:
   type: list
   sample: [['...', '...'], ['...', '...']]
 """
-import re
 
 import ansible.module_utils.junos
-
-
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
 from ansible.module_utils.junos import xml_to_json
+from ansible.module_utils.six import string_types
 
 VALID_KEYS = {
     'cli': frozenset(['command', 'output', 'prompt', 'response']),
@@ -177,7 +175,7 @@ VALID_KEYS = {
 
 def to_lines(stdout):
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
 
@@ -189,7 +187,7 @@ def parse(module, command_type):
 
     parsed = list()
     for item in (items or list()):
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = dict(command=item, output=None)
         elif 'command' not in item:
             module.fail_json(msg='command keyword argument is required')
@@ -302,4 +300,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
