@@ -57,21 +57,15 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
-        faf    = self._task.first_available_file
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
 
         if state is not None:
             result['failed'] = True
             result['msg'] = "'state' cannot be specified on a template"
-        elif (source is None and faf is not None) or dest is None:
+        elif source is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
-        elif faf:
-            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
         else:
             try:
                 source = self._find_needle('templates', source)
