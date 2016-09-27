@@ -270,12 +270,12 @@ class Task(Base, Conditional, Taggable, Become):
                 env = []
                 for env_item in value:
                     if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                        env[env_item] = templar.template(env_item, convert_bare=True)
+                        env[env_item] = templar.template(env_item, convert_bare=False)
         elif isinstance(value, dict):
             env = dict()
             for env_item in value:
                 if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                    env[env_item] = templar.template(value[env_item], convert_bare=True)
+                    env[env_item] = templar.template(value[env_item], convert_bare=False)
 
         # at this point it should be a simple string
         return templar.template(value, convert_bare=True)
