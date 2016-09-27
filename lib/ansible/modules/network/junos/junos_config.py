@@ -169,6 +169,7 @@ import ansible.module_utils.junos
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.netcfg import NetworkConfig
 
 
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -192,6 +193,46 @@ def guess_format(config):
 
     return 'text'
 
+def config_to_commands(config):
+    set_format = config.startswith('set') or config.startswith('delete')
+    candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
+    if not set_format:
+        candidate = [c.line for c in candidate.items]
+        commands = list()
+        # this filters out less specific lines
+        for item in candidate:
+            for index, entry in enumerate(commands):
+                if item.startswith(entry):
+                    del commands[index]
+                    break
+            commands.append(item)
+
+    else:
+        commands = str(candidate).split('\n')
+
+    return commands
+
+def diff_commands(commands, config):
+    config = [str(c).replace("'", '') for c in config]
+
+    updates = list()
+    visited = set()
+
+    for item in commands:
+        if not item.startswith('set') and not item.startswith('delete'):
+            raise ValueError('line must start with either `set` or `delete`')
+
+        elif item.startswith('set') and item[4:] not in config:
+            updates.append(item)
+
+        elif item.startswith('delete'):
+            for entry in config:
+                if entry.startswith(item[7:]) and item not in visited:
+                    updates.append(item)
+                    visited.add(item)
+
+    return updates
+
 def load_config(module, result):
     candidate =  module.params['lines'] or module.params['src']
 
@@ -206,6 +247,13 @@ def load_config(module, result):
     elif module.params['lines']:
         config_format = 'set'
     kwargs['config_format'] = config_format
+
+    # this is done to filter out `delete ...` statements which map to
+    # nothing in the config as that will cause an exception to be raised
+    if config_format == 'set':
+        config = module.config.get_config()
+        config = config_to_commands(config)
+        candidate = diff_commands(candidate, config)
 
     diff = module.config.load_config(candidate, **kwargs)
 
