@@ -158,7 +158,7 @@ class ActionModule(ActionBase):
             # Get the local mode and set if not user defined
             # https://github.com/ansible/ansible-modules-core/issues/1124
             if not self._task.args.get('mode', None):
-                lmode = oct(os.stat(source_full).st_mode & 0777)
+                lmode = oct(os.stat(source_full).st_mode & 0o777)
                 self._task.args['mode'] = lmode
 
             # If local_checksum is not defined we can't find the file so we should fail out.
