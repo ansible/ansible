@@ -23,8 +23,8 @@ version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
 short_description: Manage Cisco ASA configuration sections
 description:
-  - Cisco ASA configurations use a simple block indent file sytanx
-    for segementing configuration into sections.  This module provides
+  - Cisco ASA configurations use a simple block indent file syntax
+    for segmenting configuration into sections.  This module provides
     an implementation for working with ASA configuration sections in
     a deterministic way.
 extends_documentation_fragment: asa
@@ -131,7 +131,7 @@ options:
     choices: ['yes', 'no']
   config:
     description:
-      - The C(config) argument allows the playbook desginer to supply
+      - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
