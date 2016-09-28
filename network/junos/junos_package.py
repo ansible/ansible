@@ -94,7 +94,7 @@ EXAMPLES = """
 """
 import ansible.module_utils.junos
 
-from ansible.module_utils.newtork import NetworkModule
+from ansible.module_utils.network import NetworkModule
 
 try:
     from jnpr.junos.utils.sw import SW
