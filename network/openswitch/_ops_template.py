@@ -28,6 +28,7 @@ description:
     against a provided candidate configuration. If there are changes, the
     candidate configuration is merged with the current configuration and
     pushed into OpenSwitch
+deprecated: Deprecated in 2.2. Use eos_config instead
 extends_documentation_fragment: openswitch
 options:
   src:

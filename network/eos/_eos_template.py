@@ -28,6 +28,7 @@ description:
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
+deprecated: Deprecated in 2.2. Use eos_config instead
 extends_documentation_fragment: eos
 options:
   src:
