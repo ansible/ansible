@@ -26,7 +26,7 @@ matrix:
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1
 
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos6 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos6
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora-rawhide PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora23 PRIVILEGED=true
