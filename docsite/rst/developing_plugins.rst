@@ -53,7 +53,17 @@ Plugins are loaded in alphanumeric order; for example, a plugin implemented in a
 
 Callbacks need to be whitelisted in your `ansible.cfg` file in order to function. For example::
   
-  #callback_whitelist = timer, mail, myplugin
+  #callback_whitelist = timer, mail, mycallbackplugin
+
+
+Writing to stdout
+`````````````````
+
+If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
+
+  #stdout_callback = mycallbackplugin
+
+
 
 .. _callback_development:
 
@@ -109,12 +119,7 @@ The following example shows how Ansible's timer plugin is implemented::
           runtime = end_time - self.start_time
           self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
 
-Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
-
-  #stdout_callback = mycallbackplugin
-
-
-
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. 
 
 .. _developing_connection_type_plugins:
 
