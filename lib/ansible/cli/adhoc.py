@@ -139,9 +139,12 @@ class AdHocCLI(CLI):
 
         inventory.subset(self.options.subset)
         hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0 and no_hosts is False:
-            # Invalid limit
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        if len(hosts) == 0:
+            if no_hosts is False and self.options.subset:
+                # Invalid limit
+                raise AnsibleError("Specified --limit does not match any hosts")
+            else:
+                display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))
