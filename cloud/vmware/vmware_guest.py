@@ -95,7 +95,7 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 Example from Ansible playbook
 #
-# Crate VM from template
+# Create a VM from a template
 #
     - name: create the VM
       vmware_guest:
