@@ -47,9 +47,9 @@ options:
     choices: [ "yes", "no" ]
   cache_valid_time:
     description:
-      - If C(update_cache) is specified and the last run is less or equal than I(cache_valid_time) seconds ago, the C(update_cache) gets skipped.
+      - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
     required: false
-    default: no
+    default: 0
   purge:
     description:
      - Will force purging of configuration files if the module state is set to I(absent).
@@ -696,12 +696,37 @@ def download(module, deb):
     return deb
 
 
+def get_cache_mtime():
+    """Return mtime of a valid apt cache file.
+    Stat the apt cache file and if no cache file is found return 0
+    :returns: ``int``
+    """
+    if os.path.exists(APT_UPDATE_SUCCESS_STAMP_PATH):
+        return os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
+    elif os.path.exists(APT_LISTS_PATH):
+        return os.stat(APT_LISTS_PATH).st_mtime
+    else:
+        return 0
+
+
+def get_updated_cache_time():
+    """Return the mtime time stamp and the updated cache time.
+    Always retrieve the mtime of the apt cache or set the `cache_mtime`
+    variable to 0
+    :returns: ``tuple``
+    """
+    cache_mtime = get_cache_mtime()
+    mtimestamp = datetime.datetime.fromtimestamp(cache_mtime)
+    updated_cache_time = int(time.mktime(mtimestamp.timetuple()))
+    return mtimestamp, updated_cache_time
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            cache_valid_time = dict(type='int'),
+            cache_valid_time = dict(type='int', default=0),
             purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None, type='path'),
@@ -772,30 +797,16 @@ def main():
             # reopen cache w/ modified config
             cache.open(progress=None)
 
+
+        mtimestamp, updated_cache_time = get_updated_cache_time()
+        # Cache valid time is default 0, which will update the cache if
+        #  needed and `update_cache` was set to true
+        updated_cache = False
         if p['update_cache']:
-            # Default is: always update the cache
-            cache_valid = False
             now = datetime.datetime.now()
-            if p.get('cache_valid_time', False):
-                try:
-                    mtime = os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
-                except:
-                    # Looks like the update-success-stamp is not available
-                    # Fallback: Checking the mtime of the lists
-                    try:
-                        mtime = os.stat(APT_LISTS_PATH).st_mtime
-                    except:
-                        # No mtime could be read. We update the cache to be safe
-                        mtime = False
-
-                if mtime:
-                    tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
-                    mtimestamp = datetime.datetime.fromtimestamp(mtime)
-                    if mtimestamp + tdelta >= now:
-                        cache_valid = True
-                        updated_cache_time = int(time.mktime(mtimestamp.timetuple()))
-
-            if cache_valid is not True:
+            tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
+            if not mtimestamp + tdelta >= now:
+                # Retry to update the cache up to 3 times
                 for retry in range(3):
                     try:
                         cache.update()
@@ -806,12 +817,16 @@ def main():
                     module.fail_json(msg='Failed to update apt cache.')
                 cache.open(progress=None)
                 updated_cache = True
-                updated_cache_time = int(time.mktime(now.timetuple()))
+                mtimestamp, updated_cache_time = get_updated_cache_time()
+
+            # If theres nothing else to do exit. This will set state as
+            #  changed based on if the cache was updated.
             if not p['package'] and not p['upgrade'] and not p['deb']:
-                module.exit_json(changed=False, cache_updated=updated_cache, cache_update_time=updated_cache_time)
-        else:
-            updated_cache = False
-            updated_cache_time = 0
+                module.exit_json(
+                    changed=updated_cache,
+                    cache_updated=updated_cache,
+                    cache_update_time=updated_cache_time
+                )
 
         force_yes = p['force']
 
@@ -843,16 +858,33 @@ def main():
                 state_upgrade = True
             if p['state'] == 'build-dep':
                 state_builddep = True
-            result = install(module, packages, cache, upgrade=state_upgrade,
-                    default_release=p['default_release'],
-                    install_recommends=install_recommends,
-                    force=force_yes, dpkg_options=dpkg_options,
-                    build_dep=state_builddep, autoremove=autoremove,
-                    only_upgrade=p['only_upgrade'],
-                    allow_unauthenticated=allow_unauthenticated)
-            (success, retvals) = result
-            retvals['cache_updated']=updated_cache
-            retvals['cache_update_time']=updated_cache_time
+
+            success, retvals = install(
+                module,
+                packages,
+                cache,
+                upgrade=state_upgrade,
+                default_release=p['default_release'],
+                install_recommends=install_recommends,
+                force=force_yes,
+                dpkg_options=dpkg_options,
+                build_dep=state_builddep,
+                autoremove=autoremove,
+                only_upgrade=p['only_upgrade'],
+                allow_unauthenticated=allow_unauthenticated
+            )
+
+            # Store if the cache has been updated
+            retvals['cache_updated'] = updated_cache
+            # Store when the update time was last
+            retvals['cache_update_time'] = updated_cache_time
+            # If the cache was updated and the general state change was set to
+            #  False make sure that the change in cache state is acurately
+            #  updated by setting the general changed state to the same as
+            #  the cache state.
+            if updated_cache and not retvals['changed']:
+                retvals['changed'] = updated_cache
+
             if success:
                 module.exit_json(**retvals)
             else:
