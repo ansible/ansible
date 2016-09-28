@@ -14,7 +14,7 @@ test_flags="${TEST_FLAGS:-}"
 force_color="${FORCE_COLOR:-1}"
 
 # FIXME: these tests fail
-skip_tags='test_unarchive,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
+skip_tags='test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
 
 cd ~/
 
@@ -37,6 +37,7 @@ if [ "${container}" = "freebsd" ]; then
     pkg install -y \
         bash \
         devel/ruby-gems \
+        gtar \
         mercurial \
         rsync \
         ruby \
