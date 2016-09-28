@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import json
 import os
+import stat
 import tempfile
 
 from ansible.errors import AnsibleError
@@ -161,7 +162,7 @@ class ActionModule(ActionBase):
             # Get the local mode and set if user wanted it preserved
             # https://github.com/ansible/ansible-modules-core/issues/1124
             if self._task.args.get('mode', None) == 'preserve':
-                lmode = oct(os.stat(source_full).st_mode & 0o777)
+                lmode = '0%03o' % stat.S_IMODE(os.stat(source_full).st_mode)
                 self._task.args['mode'] = lmode
 
             # If local_checksum is not defined we can't find the file so we should fail out.
