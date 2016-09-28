@@ -42,7 +42,6 @@ Ansible Changes By Release
   * asa_acl
   * asa_command
   * asa_config
-  * asa_template
 - atomic
   * atomic_host
   * atomic_image
@@ -271,6 +270,17 @@ Ansible Changes By Release
 * with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
 * skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
 * skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
+
+###Deprecations
+Notice given that the following will be removed in Ansible 2.4:
+* Modules
+  * asa_template
+  * eos_template
+  * ios_template
+  * iosxr_template
+  * junos_template
+  * nxos_template
+  * ops_template
 
 ## 2.1.2 "The Song Remains the Same"
 
