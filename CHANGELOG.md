@@ -249,6 +249,7 @@ Ansible Changes By Release
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
 * Fix a problem with the pip module updating the python pip package itself.
 * ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
+* ansible_play_batch is a new magic variable meant to substitute the current play_hosts.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
@@ -481,6 +482,7 @@ Notice given that the following will be removed in Ansible 2.4:
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
   completely in 2.3, after which time it will be an error.
+* play_hosts magic variable, use ansible_play_batch or ansible_play_hosts instead.
 
 ## 2.0.2 "Over the Hills and Far Away"
 
