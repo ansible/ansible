@@ -263,8 +263,12 @@ def main():
                 exc = get_exception()
                 warnings.append('duplicate command detected: %s' % cmd)
 
-    for item in conditionals:
-        runner.add_conditional(item)
+    try:
+        for item in conditionals:
+            runner.add_conditional(item)
+    except (ValueError, AttributeError):
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
