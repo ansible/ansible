@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Red Hat, Inc. All rights reserved.
+
 #
 # This file is part of Ansible
 #
@@ -91,7 +91,7 @@ class IncludeRole(Task):
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
         # set built in's
-        attributes = frozenset(self._valid_attrs.keys())
+        attributes = frozenset(ir._valid_attrs.keys())
         for builtin in attributes:
             if ir.args.get(builtin):
                 setattr(ir, builtin, ir.args.get(builtin))
