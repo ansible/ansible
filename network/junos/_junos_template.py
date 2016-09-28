@@ -101,8 +101,10 @@ EXAMPLES = """
     src: config.j2
     action: overwrite
 """
-from ansible.module_utils.network import NetworkModule
 import ansible.module_utils.junos
+
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
 
 DEFAULT_COMMENT = 'configured by junos_template'
 
@@ -125,24 +127,35 @@ def main():
     confirm = module.params['confirm']
     commit = not module.check_mode
 
+    replace = False
+    overwrite = False
+
     action = module.params['action']
+    if action == 'overwrite':
+        overwrite = True
+    elif action == 'replace':
+        replace = True
 
     src = module.params['src']
     fmt = module.params['config_format']
 
     if action == 'overwrite' and fmt == 'set':
         module.fail_json(msg="overwrite cannot be used when format is "
-            "set per junos documentation")
+            "set per junos-pyez documentation")
 
     results = dict(changed=False)
     results['_backup'] = str(module.config.get_config()).strip()
 
-    diff = module.config.load_config(src, action=action, comment=comment,
-            format=fmt, commit=commit, confirm=confirm)
+    try:
+        diff = module.config.load_config(src, commit=commit, replace=replace,
+                confirm=confirm, comment=comment, config_format=fmt)
 
-    if diff:
-        results['changed'] = True
-        results['diff'] = dict(prepared=diff)
+        if diff:
+            results['changed'] = True
+            results['diff'] = dict(prepared=diff)
+    except NetworkError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), **exc.kwargs)
 
     module.exit_json(**results)
 
