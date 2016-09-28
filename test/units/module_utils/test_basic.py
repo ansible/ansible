@@ -1032,5 +1032,5 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
 
         # invalid modes
-        mock_stat.st_mode = 0o0400000
+        mock_stat.st_mode = 0o040000
         self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')
