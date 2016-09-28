@@ -28,7 +28,6 @@ from ansible.module_utils.ismount import ismount
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 import os
-import re
 
 
 DOCUMENTATION = '''
@@ -354,7 +353,7 @@ def umount(module, dest):
 # from @jupeter -- https://github.com/ansible/ansible-modules-core/pull/2923
 # @jtyr -- https://github.com/ansible/ansible-modules-core/issues/4439
 # and @abadger to relicense from GPLv3+
-def is_bind_mounted(module, dest, src=None, fstype=None):
+def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
     """Return whether the dest is bind mounted
 
     :arg module: The AnsibleModule (used for helper functions)
@@ -364,62 +363,147 @@ def is_bind_mounted(module, dest, src=None, fstype=None):
         ensure that we are detecting that the correct source is mounted there.
     :kwarg fstype: The filesystem type. If specified this is also used to
         help ensure that we are detecting the right mount.
+    :kwarg linux_mounts: Cached list of mounts for Linux.
     :returns: True if the dest is mounted with src otherwise False.
     """
 
     is_mounted = False
-    bin_path = module.get_bin_path('mount', required=True)
-    cmd = '%s -l' % bin_path
 
     if get_platform() == 'Linux':
-        bin_path = module.get_bin_path('findmnt', required=True)
-        cmd = '%s -nr %s' % (bin_path, dest)
+        if src is None:
+            # That's for unmounted/absent
+            if dest in linux_mounts:
+                is_mounted = True
+        else:
+            # That's for mounted
+            if dest in linux_mounts and linux_mounts[dest]['src'] == src:
+                is_mounted = True
+    else:
+        bin_path = module.get_bin_path('mount', required=True)
+        cmd = '%s -l' % bin_path
+        rc, out, err = module.run_command(cmd)
+        mounts = []
 
-    rc, out, err = module.run_command(cmd)
-    mounts = []
+        if len(out):
+            mounts = to_native(out).strip().split('\n')
 
-    if len(out):
-        mounts = to_native(out).strip().split('\n')
+        for mnt in mounts:
+            arguments = mnt.split()
 
-    mount_pattern = re.compile('\[(.*)\]')
+            if (
+                    (arguments[0] == src or src is None) and
+                    arguments[2] == dest and
+                    (arguments[4] == fstype or fstype is None)):
+                is_mounted = True
 
-    for mnt in mounts:
-        arguments = mnt.split()
-
-        if get_platform() == 'Linux':
-            source = arguments[1]
-            result = mount_pattern.search(arguments[1])
-
-            # This is only for LVM and tmpfs mounts
-            if result is not None and len(result.groups()) == 1:
-                source = result.group(1)
-
-            if src is None:
-                # That's for unmounted/absent
-                if arguments[0] == dest:
-                    is_mounted = True
-            else:
-                # That's for mounted
-                if arguments[0] == dest and source == src:
-                    is_mounted = True
-                elif arguments[0] == dest and src.endswith(source):
-                    # Check if it's tmpfs mount
-                    sub_path = src[:len(src)-len(source)]
-
-                    if (
-                            is_bind_mounted(module, sub_path, 'tmpfs') and
-                            source == src[len(sub_path):]):
-                        is_mounted = True
-        elif (
-                (arguments[0] == src or src is None) and
-                arguments[2] == dest and
-                (arguments[4] == fstype or fstype is None)):
-            is_mounted = True
-
-        if is_mounted:
-            break
+            if is_mounted:
+                break
 
     return is_mounted
+
+
+def get_linux_mounts(module):
+    """Gather mount information"""
+
+    mntinfo_file = "/proc/self/mountinfo"
+
+    try:
+        f = open(mntinfo_file)
+    except IOError:
+        module.fail_json(msg="Cannot open file %s" % mntinfo_file)
+
+    lines = map(str.strip, f.readlines())
+
+    try:
+        f.close()
+    except IOError:
+        module.fail_json(msg="Cannot close file %s" % mntinfo_file)
+
+    mntinfo = []
+
+    for line in lines:
+        fields = line.split()
+
+        record = {
+            'root': fields[3],
+            'dst': fields[4],
+            'opts': fields[5],
+            'fields': fields[6:-4],
+            'fs': fields[-3],
+            'src': fields[-2],
+        }
+
+        mntinfo.append(record)
+
+    mounts = {}
+
+    for i, mnt in enumerate(mntinfo):
+        src = mnt['src']
+
+        if mnt['fs'] == 'tmpfs' and mnt['root'] != '/':
+            ### Example:
+            # 65 19 0:35 / /tmp rw shared:25 - tmpfs tmpfs rw
+            # 210 65 0:35 /aaa /tmp/bbb rw shared:25 - tmpfs tmpfs rw
+            ### Expected result:
+            # src=/tmp/aaa
+            ###
+
+            shared = None
+
+            # Search for the shared field
+            for fld in mnt['fields']:
+                if fld.startswith('shared'):
+                    shared = fld
+
+            if shared is None:
+                break
+
+            dest = None
+
+            # Search fo the record with the same field
+            for j, m in enumerate(mntinfo):
+                if j < i:
+                    if shared in m['fields']:
+                        dest = m['dst']
+                else:
+                    break
+
+            if dest is not None:
+                src = "%s%s" % (dest, mnt['root'])
+            else:
+                break
+
+        elif mnt['root'] != '/' and len(mnt['fields']) > 0:
+            ### Example:
+            # 67 19 8:18 / /mnt/disk2 rw shared:26 - ext4 /dev/sdb2 rw
+            # 217 65 8:18 /test /tmp/ccc rw shared:26 - ext4 /dev/sdb2 rw
+            ### Expected result:
+            # src=/mnt/disk2/test
+            ###
+
+            # Search for parent
+            for j, m in enumerate(mntinfo):
+                if j < i:
+                    if m['src'] == mnt['src']:
+                        src = "%s%s" % (m['dst'], mnt['root'])
+                else:
+                    break
+
+        elif mnt['root'] != '/' and len(mnt['fields']) == 0:
+            ### Example:
+            # 27 20 8:1 /tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
+            ### Expected result:
+            # src=/tmp/aaa
+            ###
+            src = mnt['root']
+
+        mounts[mnt['dst']] = {
+            'src': src,
+            'opts': mnt['opts'],
+            'fs': mnt['fs']
+        }
+
+    return mounts
 
 
 def main():
@@ -470,6 +554,14 @@ def main():
     if get_platform() == 'FreeBSD':
         args['opts'] = 'rw'
 
+    linux_mounts = []
+
+    # Cache all mounts here in order we have consistent results if we need to
+    # call is_bind_mouted() multiple times
+    if get_platform() == 'Linux':
+        linux_mounts = get_linux_mounts(module)
+
+    # Override defaults with user specified params
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:
             args[key] = module.params[key]
@@ -502,7 +594,7 @@ def main():
         name, changed = unset_mount(module, args)
 
         if changed and not module.check_mode:
-            if ismount(name) or is_bind_mounted(module, name):
+            if ismount(name) or is_bind_mounted(module, linux_mounts, name):
                 res, msg = umount(module, name)
 
                 if res:
@@ -516,7 +608,7 @@ def main():
                     e = get_exception()
                     module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
     elif state == 'unmounted':
-        if ismount(name) or is_bind_mounted(module, name):
+        if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
                 res, msg = umount(module, name)
 
@@ -544,7 +636,8 @@ def main():
         elif 'bind' in args.get('opts', []):
             changed = True
 
-            if is_bind_mounted(module, name, args['src'], args['fstype']):
+            if is_bind_mounted(
+                    module, linux_mounts, name, args['src'], args['fstype']):
                 changed = False
 
             if changed and not module.check_mode:
