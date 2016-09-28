@@ -109,6 +109,10 @@ if [ "${test_python3}" ]; then
     test_flags="--skip-tags ${skip_tags} ${test_flags}"
 fi
 
+if [ "${test_privileged}" = 'false' ]; then
+    test_flags="--skip-tags needs_privileged ${test_flags}"
+fi
+
 if [ -z "${share_source}" ]; then
     docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
 fi
