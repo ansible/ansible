@@ -544,7 +544,7 @@ def main():
     else:
         args = dict(
             name=module.params['name'],
-            opts='default',
+            opts='defaults',
             dump='0',
             passno='0',
             fstab='/etc/fstab'
