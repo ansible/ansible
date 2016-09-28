@@ -140,7 +140,7 @@ class AdHocCLI(CLI):
         inventory.subset(self.options.subset)
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0:
-            if no_hosts is False and  self.options.subset:
+            if no_hosts is False and self.options.subset:
                 # Invalid limit
                 raise AnsibleError("Specified --limit does not match any hosts")
             else:
