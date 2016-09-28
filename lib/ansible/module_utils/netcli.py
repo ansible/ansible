@@ -42,6 +42,7 @@ def to_list(val):
     else:
         return list()
 
+
 class FailedConditionsError(Exception):
     def __init__(self, msg, failed_conditions):
         super(FailedConditionsError, self).__init__(msg)
@@ -192,7 +193,11 @@ class Conditional(object):
         self.raw = conditional
         self.encoding = encoding
 
-        key, op, val = shlex.split(conditional)
+        try:
+            key, op, val = shlex.split(conditional)
+        except ValueError:
+            raise ValueError('failed to parse conditional')
+
         self.key = key
         self.func = self._func(op)
         self.value = self._cast_value(val)
