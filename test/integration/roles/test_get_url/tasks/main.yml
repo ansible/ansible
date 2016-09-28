@@ -209,5 +209,5 @@
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
   get_url: 
-    url: http://www.google.com 
+    url: https://{{ httpbin_host }}
     dest: "{{ output_dir }}"
