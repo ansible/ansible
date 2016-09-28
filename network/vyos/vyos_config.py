@@ -244,12 +244,11 @@ def run(module, result):
 
     result['updates'] = updates
 
-    if module.params['update'] != 'check':
-        load_config(module, updates, result)
+    load_config(module, updates, result)
 
-        if result.get('filtered'):
-            result['warnings'].append('Some configuration commands where '
-                                      'removed, please see the filtered key')
+    if result.get('filtered'):
+        result['warnings'].append('Some configuration commands where '
+                                  'removed, please see the filtered key')
 
 
 def main():
