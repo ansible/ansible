@@ -167,7 +167,7 @@
 - assert:
     that:
       - "\"foo t'e~m\\plated\" in unusual_results.stdout_lines"
-      - "{{unusual_results.stdout_lines| length}} == 1"
+      - unusual_results.stdout_lines| length == 1
 
 - name: check that the unusual filename can be checked for changes
   template:

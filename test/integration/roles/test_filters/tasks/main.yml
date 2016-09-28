@@ -75,14 +75,14 @@
   tags: "human_to_bytes"
   assert:
     that:
-        - "{{'0'|human_to_bytes}}        == 0"
-        - "{{'0.1'|human_to_bytes}}      == 0"
-        - "{{'0.9'|human_to_bytes}}      == 1"
-        - "{{'1'|human_to_bytes}}        == 1"
-        - "{{'10.00 KB'|human_to_bytes}} == 10240"
-        - "{{   '11 MB'|human_to_bytes}} == 11534336"
-        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
-        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+        - "'0'|human_to_bytes        == 0"
+        - "'0.1'|human_to_bytes      == 0"
+        - "'0.9'|human_to_bytes      == 1"
+        - "'1'|human_to_bytes        == 1"
+        - "'10.00 KB'|human_to_bytes == 10240"
+        - "   '11 MB'|human_to_bytes == 11534336"
+        - "  '1.1 GB'|human_to_bytes == 1181116006"
+        - "'10.00 Kb'|human_to_bytes(isbits=True) == 10240"
 
 - name: Verify human_to_bytes (bad string)
   tags: "human_to_bytes"

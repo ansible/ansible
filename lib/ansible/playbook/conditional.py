@@ -88,9 +88,6 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
-            conditional = all_vars[conditional]
-
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 

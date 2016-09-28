@@ -184,7 +184,7 @@
 
 - name: test good conditional based on nested variables
   shell: echo 'testing'
-  when: test_bare_nested_good
+  when: "{{test_bare_nested_good}}"
   register: result
 
 - name: assert good conditional based on nested var ran
@@ -196,13 +196,13 @@
 
 - name: test bad conditional based on nested variables
   shell: echo 'testing'
-  when: test_bare_nested_bad
+  when: "{{test_bare_nested_bad}}"
   register: result
 
 - name: assert that the bad nested conditional did NOT run
   assert:
     that:
-    - "result.skipped == true"
+    - result|skipped
 
 #-----------------------------------------------------------------------
 # proper booleanification tests (issue #8629)
