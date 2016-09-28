@@ -236,6 +236,10 @@ mqueue /dev/mqueue mqueue rw,seclabel,relatime 0 0
 tmpfs /run/user/1000 tmpfs rw,seclabel,nosuid,nodev,relatime,size=1611044k,mode=700,uid=1000,gid=1000 0 0
 gvfsd-fuse /run/user/1000/gvfs fuse.gvfsd-fuse rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
 fusectl /sys/fs/fuse/connections fusectl rw,relatime 0 0
+grimlock.g.a: /home/adrian/sshfs-grimlock fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
+grimlock.g.a:test_path/path_with'single_quotes /home/adrian/sshfs-grimlock-single-quote fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
+grimlock.g.a:path_with'single_quotes /home/adrian/sshfs-grimlock-single-quote-2 fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
+grimlock.g.a:/mnt/data/foto's /home/adrian/fotos fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
 """
 
 MTAB_ENTRIES = \
@@ -437,8 +441,12 @@ FINDMNT_OUTPUT = b"""
 /run/user/1000/gvfs             gvfsd-fuse                           fuse.gvfsd-fuse rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
 /sys/fs/fuse/connections        fusectl                              fusectl         rw,relatime
 /not/a/real/bind_mount          /dev/sdz4[/some/other/path]     ext4    rw,relatime,seclabel,data=ordered
+/home/adrian/sshfs-grimlock                grimlock.g.a:                         fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
+/home/adrian/sshfs-grimlock-single-quote   grimlock.g.a:test_path/path_with'single_quotes
+                                                                                 fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
+/home/adrian/sshfs-grimlock-single-quote-2 grimlock.g.a:path_with'single_quotes  fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
+/home/adrian/fotos                         grimlock.g.a:/mnt/data/foto's         fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
 """
-
 
 class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
 
@@ -479,7 +487,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         mtab_entries = lh._mtab_entries()
         self.assertIsInstance(mtab_entries, list)
         self.assertIsInstance(mtab_entries[0], list)
-        self.assertEqual(len(mtab_entries), 34)
+        self.assertEqual(len(mtab_entries), 38)
 
     @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT,''))
     def test_find_bind_mounts(self, mock_run_findmnt):
