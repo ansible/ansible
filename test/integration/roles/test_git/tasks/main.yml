@@ -315,7 +315,7 @@
   register: submodule1
 
 - assert:
-    that: '{{ submodule1.stdout_lines|length }} == 2'
+    that: submodule1.stdout_lines|length == 2
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
@@ -331,7 +331,7 @@
   register: submodule1
 
 - assert:
-    that: '{{ submodule1.stdout_lines|length }} == 4'
+    that: submodule1.stdout_lines|length == 4
 
 - name: Copy the checkout so we can run several different tests on it
   command: 'cp -pr {{ checkout_dir }} {{ checkout_dir }}.bak'
@@ -361,9 +361,9 @@
   register: submodule2
 
 - assert:
-    that: '{{ submodule1.stdout_lines|length }} == 4'
+    that: submodule1.stdout_lines|length == 4
 - assert:
-    that: '{{ submodule2.stdout_lines|length }} == 2'
+    that: submodule2.stdout_lines|length == 2
 
 
 
@@ -387,7 +387,7 @@
   register: submodule1
 
 - assert:
-    that: '{{ submodule1.stdout_lines|length }} == 5'
+    that: submodule1.stdout_lines|length == 5
 
 
 - name: Test that update with recursive found new submodules
@@ -395,7 +395,7 @@
   register: submodule2
 
 - assert:
-    that: '{{ submodule2.stdout_lines|length }} == 4'
+    that: submodule2.stdout_lines|length == 4
 # test change of repo url
 # see https://github.com/ansible/ansible-modules-core/pull/721
 
@@ -653,7 +653,7 @@
 - name: check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
+      - lookup('file', checkout_dir+'/a' ) == 2
       - git_fetch|changed
 
 - name: clear checkout_dir

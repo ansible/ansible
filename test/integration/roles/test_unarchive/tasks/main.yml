@@ -141,7 +141,7 @@
       - "unarchive03.changed == true"
       # Verify that file list is generated
       - "'files' in unarchive03"
-      - "{{unarchive03['files']| length}} == 1"
+      - unarchive03['files']| length == 1
       - "'foo-unarchive.txt' in unarchive03['files']"
 
 - name: verify that the file was unarchived
@@ -201,7 +201,7 @@
       - "unarchive06_stat.stat.mode == '0600'"
       # Verify that file list is generated
       - "'files' in unarchive06"
-      - "{{unarchive06['files']| length}} == 1"
+      - unarchive06['files']| length == 1
       - "'foo-unarchive.txt' in unarchive06['files']"
 
 - name: remove our tar.gz unarchive destination
@@ -246,7 +246,7 @@
       - "unarchive07.changed == false"
       # Verify that file list is generated
       - "'files' in unarchive07"
-      - "{{unarchive07['files']| length}} == 1"
+      - unarchive07['files']| length == 1
       - "'foo-unarchive.txt' in unarchive07['files']"
 
 - name: remove our tar.gz unarchive destination
