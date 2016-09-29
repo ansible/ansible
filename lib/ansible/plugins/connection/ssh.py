@@ -646,11 +646,13 @@ class Connection(ConnectionBase):
         host = '[%s]' % self.host
 
         # since this can be a non-bool now, we need to handle it correctly
-        scp_if_ssh = C.DEFAULT_SCP_IF_SSH.lower()
-        if scp_if_ssh in BOOLEANS:
-            scp_if_ssh = boolean(scp_if_ssh)
-        elif scp_if_ssh != 'smart':
-            raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
+        scp_if_ssh = C.DEFAULT_SCP_IF_SSH
+        if not isinstance(scp_if_ssh, bool):
+            scp_if_ssh = scp_if_ssh.lower()
+            if scp_if_ssh in BOOLEANS:
+                scp_if_ssh = boolean(scp_if_ssh)
+            elif scp_if_ssh != 'smart':
+                raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
 
         # create a list of commands to use based on config options
         methods = ['sftp']
