@@ -309,7 +309,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _run(self, cmd, in_data, sudoable=True):
+    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -551,7 +551,7 @@ class Connection(ConnectionBase):
         if p.returncode != 0 and controlpersisterror:
             raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
-        if p.returncode == 255 and in_data:
+        if p.returncode == 255 and in_data and checkrc:
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, b_stdout, b_stderr)
@@ -595,6 +595,7 @@ class Connection(ConnectionBase):
         * remaining_tries is <2
         * retries limit reached
         """
+
 
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = "%s..." % args[0]
@@ -641,18 +642,40 @@ class Connection(ConnectionBase):
         # accept them for hostnames and IPv4 addresses too.
         host = '[%s]' % self.host
 
+        # create a list of commands to use based on config options
+        methods = ['sftp']
         if C.DEFAULT_SCP_IF_SSH:
-            cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, pipes.quote(out_path)))
-            in_data = None
-        else:
-            cmd = self._build_command('sftp', to_bytes(host))
-            in_data = u"put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+            methods = ['scp']
+        if C.DEFAULT_SMART_TRANSFER:
+            methods = ['sftp', 'scp']
 
-        in_data = to_bytes(in_data, nonstring='passthru')
-        (returncode, stdout, stderr) = self._run(cmd, in_data)
+        success = False
+        res = None
+        for method in methods:
+            if method == 'sftp':
+                cmd = self._build_command('sftp', to_bytes(host))
+                in_data = u"put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+            elif method == 'scp':
+                cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, pipes.quote(out_path)))
+                in_data = None
 
-        if returncode != 0:
-            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(to_native(out_path), to_native(stdout), to_native(stderr)))
+            in_data = to_bytes(in_data, nonstring='passthru')
+            (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+            # Check the return code and rollover to next method if failed
+            if returncode == 0:
+                success = True
+                break
+            else:
+                # If not in smart mode, the data will be printed by the raise below 
+                if C.DEFAULT_SMART_TRANSFER:
+                    display.warning(msg='%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
+                    display.debug(msg='%s' % to_native(stdout))
+                    display.debug(msg='%s' % to_native(stderr))
+                res = (returncode, stdout, stderr)
+
+        if not success:
+            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}"\
+                    .format(to_native(out_path), to_native(res[1]), to_native(res[2])))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
