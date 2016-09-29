@@ -49,7 +49,6 @@ Module fixes:
 * Fixed a bug in postgresql_db related to the changed logic when state=absent.
 * Fixed a bug where single_transaction and quick were not passed into db_dump for the mysql_db module.
 * Fixed a bug where the fetch module was not idempotent when retrieving the target of a symlink.
-* Fixed many major and minor bugs with mount.
 * Many minor fixes for bugs in extras modules.
 
 ###Deprecations:
