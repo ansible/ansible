@@ -4,7 +4,8 @@ Ansible Releases at a Glance
 VERSION  RELEASE     CODE NAME
 ++++++++++++++++++++++++++++++
 
-2.2.0    TBD         "TBD"
+2.2.0    TBD         "The Battle of Evermore"
+2.1.2    TBD         "The Song Remains the Same"
 2.1.1    07-28-2016  "The Song Remains the Same"
 2.1.0    05-25-2016  "The Song Remains the Same"
 2.0.2    04-19-2016  "Over the Hills and Far Away"
