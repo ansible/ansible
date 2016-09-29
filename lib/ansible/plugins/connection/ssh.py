@@ -31,11 +31,13 @@ import time
 from ansible import constants as C
 from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
+
 
 try:
     from __main__ import display
@@ -644,9 +646,11 @@ class Connection(ConnectionBase):
         host = '[%s]' % self.host
 
         # since this can be a non-bool now, we need to handle it correctly
-        scp_if_ssh = C.DEFAULT_SCP_IF_SSH
+        scp_if_ssh = C.DEFAULT_SCP_IF_SSH.lower()
         if scp_if_ssh in BOOLEANS:
             scp_if_ssh = boolean(scp_if_ssh)
+        elif scp_if_ssh != 'smart':
+            raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
 
         # create a list of commands to use based on config options
         methods = ['sftp']
