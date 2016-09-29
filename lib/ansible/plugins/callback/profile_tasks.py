@@ -86,7 +86,7 @@ class CallbackModule(CallbackBase):
         if self.task_output_limit == 'all':
             self.task_output_limit = None
         else:
-            self.task_output_limit = int(self.task_output_limit) 
+            self.task_output_limit = int(self.task_output_limit)
 
         super(CallbackModule, self).__init__()
 
@@ -101,7 +101,7 @@ class CallbackModule(CallbackBase):
         self.current = task._uuid
         self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
         if self._display.verbosity >= 2:
-            self.stats[self.current][ 'path'] = task.get_path()
+            self.stats[self.current]['path'] = task.get_path()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._record_task(task)
@@ -118,7 +118,7 @@ class CallbackModule(CallbackBase):
 
         timestamp(self)
 
-        results = self.stats.items() 
+        results = self.stats.items()
 
         # Sort the tasks by the specified sort
         if self.sort_order != 'none':
@@ -128,12 +128,12 @@ class CallbackModule(CallbackBase):
                 reverse=self.sort_order,
             )
 
-        # Display the number of tasks specified or the default of 20 
+        # Display the number of tasks specified or the default of 20
         results = results[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:
-            msg=u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
+            msg = u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
             if 'path' in result:
                 msg += u"\n{0:-<79}".format(result['path'] + u' ')
             self._display.display(msg)
