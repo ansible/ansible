@@ -26,7 +26,6 @@ from jinja2.exceptions import UndefinedError
 from ansible.compat.six import text_type
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
 from ansible.module_utils._text import to_native
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
@@ -40,20 +39,16 @@ class Conditional:
 
     _when = FieldAttribute(isa='list', default=[])
 
-    def __init__(self, loader=None):
-        # when used directly, this class needs a loader, but we want to
-        # make sure we don't trample on the existing one if this class
-        # is used as a mix-in with a playbook base class
-        if not hasattr(self, '_loader'):
-            if loader is None:
-                raise AnsibleError("a loader must be specified when using Conditional() directly")
-            else:
-                self._loader = loader
-        super(Conditional, self).__init__()
+    @classmethod
+    def from_loader(cls, loader):
+        assert loader is not None, "a loader must be specified when using Conditional() directly"
+        instance = cls()
+        instance._loader = loader
+        return instance
 
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
-            setattr(self, name, [ value ])
+            setattr(self, name, [value])
 
     def _get_attr_when(self):
         '''
