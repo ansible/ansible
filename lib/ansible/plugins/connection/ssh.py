@@ -31,9 +31,13 @@ import time
 from ansible import constants as C
 from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleOptionsError
+from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
+
 
 try:
     from __main__ import display
@@ -309,7 +313,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _run(self, cmd, in_data, sudoable=True):
+    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -551,7 +555,7 @@ class Connection(ConnectionBase):
         if p.returncode != 0 and controlpersisterror:
             raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
-        if p.returncode == 255 and in_data:
+        if p.returncode == 255 and in_data and checkrc:
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, b_stdout, b_stderr)
@@ -641,18 +645,49 @@ class Connection(ConnectionBase):
         # accept them for hostnames and IPv4 addresses too.
         host = '[%s]' % self.host
 
-        if C.DEFAULT_SCP_IF_SSH:
-            cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, pipes.quote(out_path)))
-            in_data = None
-        else:
-            cmd = self._build_command('sftp', to_bytes(host))
-            in_data = u"put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+        # since this can be a non-bool now, we need to handle it correctly
+        scp_if_ssh = C.DEFAULT_SCP_IF_SSH
+        if not isinstance(scp_if_ssh, bool):
+            scp_if_ssh = scp_if_ssh.lower()
+            if scp_if_ssh in BOOLEANS:
+                scp_if_ssh = boolean(scp_if_ssh)
+            elif scp_if_ssh != 'smart':
+                raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
 
-        in_data = to_bytes(in_data, nonstring='passthru')
-        (returncode, stdout, stderr) = self._run(cmd, in_data)
+        # create a list of commands to use based on config options
+        methods = ['sftp']
+        if scp_if_ssh == 'smart':
+            methods.append('scp')
+        elif scp_if_ssh:
+            methods = ['scp']
 
-        if returncode != 0:
-            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(to_native(out_path), to_native(stdout), to_native(stderr)))
+        success = False
+        res = None
+        for method in methods:
+            if method == 'sftp':
+                cmd = self._build_command('sftp', to_bytes(host))
+                in_data = u"put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+            elif method == 'scp':
+                cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, pipes.quote(out_path)))
+                in_data = None
+
+            in_data = to_bytes(in_data, nonstring='passthru')
+            (returncode, stdout, stderr) = self._run(cmd, in_data, checkrc=False)
+            # Check the return code and rollover to next method if failed
+            if returncode == 0:
+                success = True
+                break
+            else:
+                # If not in smart mode, the data will be printed by the raise below 
+                if scp_if_ssh == 'smart':
+                    display.warning(msg='%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
+                    display.debug(msg='%s' % to_native(stdout))
+                    display.debug(msg='%s' % to_native(stderr))
+                res = (returncode, stdout, stderr)
+
+        if not success:
+            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}"\
+                    .format(to_native(out_path), to_native(res[1]), to_native(res[2])))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
