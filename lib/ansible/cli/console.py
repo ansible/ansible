@@ -94,12 +94,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
             help="one-step-at-a-time: confirm each task before running")
 
         self.parser.set_defaults(cwd='*')
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        super(AdHocCLI, self).parse()
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
-
-        return True
 
     def get_names(self):
         return dir(self)

@@ -154,12 +154,11 @@ class TestGalaxy(unittest.TestCase):
 
     def run_parse_common(self, galaxycli_obj, action):
         with patch.object(ansible.cli.SortedOptParser, "set_usage") as mocked_usage:
-            galaxy_parser = galaxycli_obj.parse()
+            galaxycli_obj.parse()
 
             # checking that the common results of parse() for all possible actions have been created/called
-            self.assertTrue(galaxy_parser)
-            self.assertTrue(isinstance(galaxycli_obj.parser, ansible.cli.SortedOptParser))
-            self.assertTrue(isinstance(galaxycli_obj.galaxy, ansible.galaxy.Galaxy))
+            self.assertIsInstance(galaxycli_obj.parser, ansible.cli.SortedOptParser)
+            self.assertIsInstance(galaxycli_obj.galaxy, ansible.galaxy.Galaxy)
             if action in ['import', 'delete']:
                 formatted_call = 'usage: %prog ' + action + ' [options] github_user github_repo'
             elif action == 'info':
@@ -194,61 +193,61 @@ class TestGalaxy(unittest.TestCase):
         # testing action 'delete'
         gc = GalaxyCLI(args=["delete", "-c"])
         self.run_parse_common(gc, "delete")
-        self.assertTrue(gc.options.verbosity==0)
+        self.assertEqual(gc.options.verbosity, 0)
 
         # testing action 'import'
         gc = GalaxyCLI(args=["import", "-c"])
         self.run_parse_common(gc, "import")
-        self.assertTrue(gc.options.wait==True)
-        self.assertTrue(gc.options.reference==None)
-        self.assertTrue(gc.options.check_status==False)
-        self.assertTrue(gc.options.verbosity==0)
+        self.assertEqual(gc.options.wait, True)
+        self.assertEqual(gc.options.reference, None)
+        self.assertEqual(gc.options.check_status, False)
+        self.assertEqual(gc.options.verbosity, 0)
 
         # testing action 'info'
         gc = GalaxyCLI(args=["info", "-c"])
         self.run_parse_common(gc, "info")
-        self.assertTrue(gc.options.offline==False)
+        self.assertEqual(gc.options.offline, False)
 
         # testing action 'init'
         gc = GalaxyCLI(args=["init", "-c"])
         self.run_parse_common(gc, "init")
-        self.assertTrue(gc.options.offline==False)
-        self.assertTrue(gc.options.force==False)
+        self.assertEqual(gc.options.offline, False)
+        self.assertEqual(gc.options.force, False)
 
         # testing action 'install'
         gc = GalaxyCLI(args=["install", "-c"])
         self.run_parse_common(gc, "install")
-        self.assertTrue(gc.options.ignore_errors==False)
-        self.assertTrue(gc.options.no_deps==False)
-        self.assertTrue(gc.options.role_file==None)
-        self.assertTrue(gc.options.force==False)
+        self.assertEqual(gc.options.ignore_errors, False)
+        self.assertEqual(gc.options.no_deps, False)
+        self.assertEqual(gc.options.role_file, None)
+        self.assertEqual(gc.options.force, False)
 
         # testing action 'list'
         gc = GalaxyCLI(args=["list", "-c"])
         self.run_parse_common(gc, "list")
-        self.assertTrue(gc.options.verbosity==0)
+        self.assertEqual(gc.options.verbosity, 0)
 
         # testing action 'login'
         gc = GalaxyCLI(args=["login", "-c"])
         self.run_parse_common(gc, "login")
-        self.assertTrue(gc.options.verbosity==0)
-        self.assertTrue(gc.options.token==None)
+        self.assertEqual(gc.options.verbosity, 0)
+        self.assertEqual(gc.options.token, None)
 
         # testing action 'remove'
         gc = GalaxyCLI(args=["remove", "-c"])
         self.run_parse_common(gc, "remove")
-        self.assertTrue(gc.options.verbosity==0)
+        self.assertEqual(gc.options.verbosity, 0)
 
         # testing action 'search'
         gc = GalaxyCLI(args=["search", "-c"])
         self.run_parse_common(gc, "search")
-        self.assertTrue(gc.options.platforms==None)
-        self.assertTrue(gc.options.tags==None)
-        self.assertTrue(gc.options.author==None)
+        self.assertEqual(gc.options.platforms, None)
+        self.assertEqual(gc.options.galaxy_tags, None)
+        self.assertEqual(gc.options.author, None)
 
         # testing action 'setup'
         gc = GalaxyCLI(args=["setup", "-c"])
         self.run_parse_common(gc, "setup")
-        self.assertTrue(gc.options.verbosity==0)
-        self.assertTrue(gc.options.remove_id==None)
-        self.assertTrue(gc.options.setup_list==False)
+        self.assertEqual(gc.options.verbosity, 0)
+        self.assertEqual(gc.options.remove_id, None)
+        self.assertEqual(gc.options.setup_list, False)

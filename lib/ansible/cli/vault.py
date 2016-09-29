@@ -70,7 +70,8 @@ class VaultCLI(CLI):
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(VaultCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
         can_output = ['encrypt', 'decrypt']
