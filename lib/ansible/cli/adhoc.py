@@ -72,7 +72,7 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(AdHocCLI, self).parse()
 
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
@@ -81,8 +81,6 @@ class AdHocCLI(CLI):
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
-
-        return True
 
     def _play_ds(self, pattern, async, poll):
         check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')

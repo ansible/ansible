@@ -100,7 +100,7 @@ class GalaxyCLI(CLI):
         elif self.action == "search":
             self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
             self.parser.add_option('--platforms', dest='platforms', help='list of OS platforms to filter by')
-            self.parser.add_option('--galaxy-tags', dest='tags', help='list of galaxy tags to filter by')
+            self.parser.add_option('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
             self.parser.add_option('--author', dest='author', help='GitHub username')
         elif self.action == "setup":
             self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret")
@@ -120,10 +120,10 @@ class GalaxyCLI(CLI):
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(GalaxyCLI, self).parse()
+
         display.verbosity = self.options.verbosity
         self.galaxy = Galaxy(self.options)
-        return True
 
     def run(self):
 
@@ -505,11 +505,11 @@ class GalaxyCLI(CLI):
                 terms.append(self.args.pop())
             search = '+'.join(terms[::-1])
 
-        if not search and not self.options.platforms and not self.options.tags and not self.options.author:
+        if not search and not self.options.platforms and not self.options.galaxy_tags and not self.options.author:
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
         response = self.api.search_roles(search, platforms=self.options.platforms,
-            tags=self.options.tags, author=self.options.author, page_size=page_size)
+            tags=self.options.galaxy_tags, author=self.options.author, page_size=page_size)
 
         if response['count'] == 0:
             display.display("No roles match your search.", color=C.COLOR_ERROR)

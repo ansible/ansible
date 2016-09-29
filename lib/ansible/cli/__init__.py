@@ -30,9 +30,11 @@ import re
 import getpass
 import signal
 import subprocess
+from abc import ABCMeta, abstractmethod
 
 from ansible.release import __version__
 from ansible import constants as C
+from ansible.compat.six import with_metaclass
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -89,7 +91,7 @@ class InvalidOptsParser(SortedOptParser):
             pass
 
 
-class CLI(object):
+class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
     VALID_ACTIONS = ['No Actions']
@@ -144,17 +146,19 @@ class CLI(object):
         fn = getattr(self, "execute_%s" % self.action)
         fn()
 
-    def parse(self):
-        raise Exception("Need to implement!")
-
+    @abstractmethod
     def run(self):
+        """Run the ansible command
+
+        Subclasses must implement this method.  It does the actual work of
+        running an Ansible command.
+        """
 
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
                 display.display(u"Using %s as config file" % to_text(C.CONFIG_FILE))
             else:
                 display.display(u"No config file found; using defaults")
-
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
@@ -314,9 +318,9 @@ class CLI(object):
                 action="callback", callback=CLI.expand_tilde, type=str)
 
         if subset_opts:
-            parser.add_option('-t', '--tags', dest='tags', default='all',
+            parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
                 help="only run plays and tasks tagged with these values")
-            parser.add_option('--skip-tags', dest='skip_tags',
+            parser.add_option('--skip-tags', dest='skip_tags', default=[], action='append',
                 help="only run plays and tasks whose tags do not match these values")
 
         if output_opts:
@@ -404,6 +408,55 @@ class CLI(object):
                 help="clear the fact cache")
 
         return parser
+
+    @abstractmethod
+    def parse(self):
+        """Parse the command line args
+
+        This method parses the command line arguments.  It uses the parser
+        stored in the self.parser attribute and saves the args and options in
+        self.args and self.options respectively.
+
+        Subclasses need to implement this method.  They will usually create
+        a base_parser, add their own options to the base_parser, and then call
+        this method to do the actual parsing.  An implementation will look
+        something like this::
+
+            def parse(self):
+                parser = super(MyCLI, self).base_parser(usage="My Ansible CLI", inventory_opts=True)
+                parser.add_option('--my-option', dest='my_option', action='store')
+                self.parser = parser
+                super(MyCLI, self).parse()
+                # If some additional transformations are needed for the
+                # arguments and options, do it here.
+        """
+        self.options, self.args = self.parser.parse_args(self.args[1:])
+        if hasattr(self.options, 'tags') and not self.options.tags:
+            # optparse defaults does not do what's expected
+            self.options.tags = ['all']
+        if hasattr(self.options, 'tags') and self.options.tags:
+            if not C.MERGE_MULTIPLE_CLI_TAGS:
+                if len(self.options.tags) > 1:
+                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    self.options.tags = [self.options.tags[-1]]
+
+            tags = set()
+            for tag_set in self.options.tags:
+                for tag in tag_set.split(u','):
+                    tags.add(tag.strip())
+            self.options.tags = list(tags)
+
+        if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
+            if not C.MERGE_MULTIPLE_CLI_TAGS:
+                if len(self.options.skip_tags) > 1:
+                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    self.options.skip_tags = [self.options.skip_tags[-1]]
+
+            skip_tags = set()
+            for tag_set in self.options.skip_tags:
+                for tag in tag_set.split(u','):
+                    skip_tags.add(tag.strip())
+            self.options.skip_tags = list(skip_tags)
 
     @staticmethod
     def version(prog):

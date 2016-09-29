@@ -193,12 +193,19 @@ test_win_group3: setup
 	ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags: setup
+	# Run these using en_US.UTF-8 because list-tasks is a user output function and so it tailors its output to the user's locale.  For unicode tags, this means replacing non-ascii chars with "?"
 	# Run everything by default
-	[ "$$(ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
 	# Run the exact tags, and always
-	[ "$$(ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
 	# Skip one tag
-	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
+	# Skip a unicode tag
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --skip-tags くらとみ test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
+	# Run just a unicode tag and always
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags くらとみ test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ]" ]
+	# Run a tag from a list of tags and always
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags café test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press]" ]
 
 blocks: setup
 	# remove old output log

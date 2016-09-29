@@ -151,6 +151,11 @@ DEFAULTS='defaults'
 DEPRECATED_HOST_LIST  = get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts', ispath=True)
 # this is not used since 0.5 but people might still have in config
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern', None, None)
+# If --tags or --skip-tags is given multiple times on the CLI and this is
+# True, merge the lists of tags together.  If False, let the last argument
+# overwrite any previous ones.  Behaviour is overwrite through 2.2.  2.3
+# overwrites but prints deprecation.  2.4 the default is to merge.
+MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', False, boolean=True)
 
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)

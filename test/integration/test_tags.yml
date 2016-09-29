@@ -10,6 +10,14 @@
     - name: Task_with_always_tag
       debug: msg=
       tags: always
+    - name: Task_with_unicode_tag
+      debug: msg=
+      tags: くらとみ
+    - name: Task_with_list_of_tags
+      debug: msg=
+      tags:
+      - café
+      - press
     - name: Task_without_tag
       debug: msg=
 

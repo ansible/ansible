@@ -179,17 +179,6 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
-.. _stdout_callback:
-
-stdout_callback
-===============
-
-.. versionadded:: 2.0
-
-This setting allows you to override the default stdout callback for ansible-playbook::
-
-    stdout_callback = skippy
-
 .. _callback_whitelist:
 
 callback_whitelist
@@ -523,6 +512,23 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _merge_multiple_cli_tags:
+
+merge_multiple_cli_tags
+=======================
+
+.. versionadded:: 2.3
+
+This allows changing how multiple --tags and --skip-tags arguments are handled
+on the command line.  In Ansible up to and including 2.3, specifying --tags
+more than once will only take the last value of --tags.  Setting this config
+value to True will mean that all of the --tags options will be merged
+together.  The same holds true for --skip-tags.
+
+.. note:: The default value for this in 2.3 is False.  In 2.4, the
+    default value will be True.  After 2.4, the option is going away.
+    Multiple --tags and multiple --skip-tags will always be merged together.
+
 .. _module_set_locale:
 
 module_set_locale
@@ -704,6 +710,17 @@ The default value for this setting is only for certain package managers, but it 
 
 Currently, this is only supported for modules that have a name parameter, and only when the item is the
 only thing being passed to the parameter.
+
+.. _stdout_callback:
+
+stdout_callback
+===============
+
+.. versionadded:: 2.0
+
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _cfg_strategy_plugins:
 
