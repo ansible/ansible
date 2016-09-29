@@ -34,6 +34,7 @@ Ansible Changes By Release
   * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
   * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
   * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
+  * scp_if_ssh now supports True, False and "smart". "smart" is the default and will retry failed sftp transfers with scp.
 
 ####New Modules:
 - apache2_mod_proxy
