@@ -596,7 +596,6 @@ class Connection(ConnectionBase):
         * retries limit reached
         """
 
-
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = "%s..." % args[0]
         for attempt in range(remaining_tries):
