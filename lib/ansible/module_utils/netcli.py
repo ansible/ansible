@@ -171,7 +171,7 @@ class CommandRunner(object):
             self.retries -= 1
         else:
             failed_conditions = [item.raw for item in self.conditionals]
-            errmsg = 'One or more conditional statements have not be satisfied'
+            errmsg = 'One or more conditional statements have not been satisfied'
             raise FailedConditionsError(errmsg, failed_conditions)
 
 class Conditional(object):
@@ -189,9 +189,9 @@ class Conditional(object):
         'matches': ['matches']
     }
 
-    def __init__(self, conditional, encoding='json'):
+    def __init__(self, conditional, encoding=None):
         self.raw = conditional
-        self.encoding = encoding
+        self.encoding = encoding or 'json'
 
         try:
             key, op, val = shlex.split(conditional)
@@ -230,7 +230,7 @@ class Conditional(object):
                 return self.get_json(result)
             except (IndexError, TypeError):
                 msg = 'unable to apply conditional to result'
-                raise FailedConditionalError(msg, self.key)
+                raise FailedConditionalError(msg, self.raw)
 
         elif self.encoding == 'xml':
             return self.get_xml(result.get('result'))
@@ -250,14 +250,16 @@ class Conditional(object):
         path += '/text()'
 
         index = int(re.match(r'result\[(\d+)\]', parts[0]).group(1))
-        values = result[index].xpath(path)
+        values = result[index].findall(path)
 
         if value_index is not None:
             return values[value_index].strip()
         return [v.strip() for v in values]
 
     def get_json(self, result):
-        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
+        string = re.sub(r"\[[\'|\"]", ".", self.key)
+        string = re.sub(r"[\'|\"]\]", ".", string)
+        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', string)
         for part in parts:
             match = re.findall(r'\[(\S+?)\]', part)
             if match:
