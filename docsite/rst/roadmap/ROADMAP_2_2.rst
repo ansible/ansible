@@ -6,9 +6,9 @@ Target: September 2016
 **********************
 - **Docker** (lead by Chris Houseknecht)
 
-  - Docker_network
-  - Docker_volume
-  - Docker_file
+  - Docker_network: **done**
+  - Docker_volume: Not in this release
+  - Docker_file: Not in this release.
   - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_.)
   - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_)
 
