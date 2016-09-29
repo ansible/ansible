@@ -311,22 +311,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None)
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None)
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
             to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
             to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
