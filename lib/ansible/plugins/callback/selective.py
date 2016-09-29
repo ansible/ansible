@@ -119,7 +119,7 @@ class CallbackModule(CallbackBase):
             except AttributeError:
                 diff = dict_diff(diff['before'], diff['after'])
         if diff:
-            diff = colorize(diff, 'changed')
+            diff = colorize(str(diff), 'changed')
             print(self._indent_text(diff, indent_level+4))
 
     def _print_host_or_item(self, host_or_item, changed, msg, diff, is_host, error, stdout, stderr):
@@ -128,6 +128,9 @@ class CallbackModule(CallbackBase):
             name = colorize(host_or_item.name, 'not_so_bold')
         else:
             indent_level = 4
+            if isinstance(host_or_item, dict):
+                if 'key' in host_or_item.keys():
+                    host_or_item = host_or_item['key']
             name = colorize(unicode(host_or_item), 'bold')
 
         if error:
