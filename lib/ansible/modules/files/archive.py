@@ -49,6 +49,11 @@ options:
         multiple paths in a list.
     required: false
     default: null
+  exclude_path:
+    version_added: 2.4
+    description:
+      - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive
+    required: false
   remove:
     description:
       - Remove any added source files and trees after adding to archive.
@@ -84,6 +89,23 @@ EXAMPLES = '''
         - /path/wong/foo
     dest: /path/file.tar.bz2
     format: bz2
+
+# Create a bz2 archive of a globbed path, while excluding specific dirnames - archive:
+    path:
+        - /path/to/foo/*
+    dest: /path/file.tar.bz2
+    exclude_path:
+        - /path/to/foo/bar
+        - /path/to/foo/baz
+    format: bz2
+
+# Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+    path:
+        - /path/to/foo/*
+    dest: /path/file.tar.bz2
+    exclude_path:
+        - /path/to/foo/ba*
+    format: bz2
 '''
 
 RETURN = '''
@@ -112,6 +134,10 @@ expanded_paths:
     description: The list of matching paths from paths argument.
     type: list
     returned: always
+expanded_exclude_paths:
+    description: The list of matching exclude paths from the exclude_path argument.
+    type: list
+    returned: always
 '''
 
 import os
@@ -131,8 +157,9 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             path = dict(type='list', required=True),
-            format  = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
+            format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
             dest = dict(required=False, type='path'),
+            exclude_path = dict(type='list', required=False),
             remove = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
@@ -143,9 +170,11 @@ def main():
     check_mode = module.check_mode
     paths = params['path']
     dest = params['dest']
+    exclude_paths = params['exclude_path']
     remove = params['remove']
 
     expanded_paths = []
+    expanded_exclude_paths = []
     format = params['format']
     globby = False
     changed = False
@@ -168,6 +197,21 @@ def main():
         # whether the path exists or not
         else:
             expanded_paths.append(path)
+
+    # Only attempt to expand the exclude paths if it exists
+    if exclude_paths:
+        for i, exclude_path in enumerate(exclude_paths):
+            exclude_path = os.path.expanduser(os.path.expandvars(exclude_path))
+
+            # Expand any glob characters. If found, add the expanded glob to the
+            # list of expanded_paths, which might be empty.
+            if ('*' in exclude_path or '?' in exclude_path):
+                expanded_exclude_paths = expanded_exclude_paths + glob.glob(exclude_path)
+
+                # If there are no glob character the exclude path is added to the expanded
+                # exclude paths whether the path exists or not.
+            else:
+                expanded_exclude_paths.append(exclude_path)
 
     if len(expanded_paths) == 0:
         return module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
@@ -208,7 +252,7 @@ def main():
         if remove and os.path.isdir(path) and dest.startswith(path):
             module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
 
-        if os.path.lexists(path):
+        if os.path.lexists(path) and path not in expanded_exclude_paths:
             archive_paths.append(path)
         else:
             missing.append(path)
@@ -407,7 +451,14 @@ def main():
 
     changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    module.exit_json(archived=successes, dest=dest, changed=changed, state=state, arcroot=arcroot, missing=missing, expanded_paths=expanded_paths)
+    module.exit_json(archived=successes,
+                     dest=dest,
+                     changed=changed,
+                     state=state,
+                     arcroot=arcroot,
+                     missing=missing,
+                     expanded_paths=expanded_paths,
+                     expanded_exclude_paths=expanded_exclude_paths)
 
 if __name__ == '__main__':
     main()
