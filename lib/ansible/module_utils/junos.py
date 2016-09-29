@@ -136,7 +136,7 @@ class Netconf(object):
 
         for index, cmd in enumerate(commands):
             if cmd.output == 'xml':
-                responses[index] = etree.tostring(responses[index])
+                responses[index] = xml_to_json(responses[index])
             elif cmd.args.get('command_type') == 'rpc':
                 responses[index] = str(responses[index].text).strip()
 
