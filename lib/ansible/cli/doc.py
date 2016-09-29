@@ -60,7 +60,8 @@ class DocCLI(CLI):
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(DocCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
     def run(self):

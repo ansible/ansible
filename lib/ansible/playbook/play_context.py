@@ -284,23 +284,16 @@ class PlayContext(Base):
         if hasattr(options, 'timeout') and options.timeout:
             self.timeout = int(options.timeout)
 
-        # get the tag info from options, converting a comma-separated list
-        # of values into a proper list if need be. We check to see if the
-        # options have the attribute, as it is not always added via the CLI
+        # get the tag info from options. We check to see if the options have
+        # the attribute, as it is not always added via the CLI
         if hasattr(options, 'tags'):
-            if isinstance(options.tags, list):
-                self.only_tags.update(options.tags)
-            elif isinstance(options.tags, string_types):
-                self.only_tags.update(options.tags.split(','))
+            self.only_tags.update(options.tags)
 
         if len(self.only_tags) == 0:
             self.only_tags = set(['all'])
 
         if hasattr(options, 'skip_tags'):
-            if isinstance(options.skip_tags, list):
-                self.skip_tags.update(options.skip_tags)
-            elif isinstance(options.skip_tags, string_types):
-                self.skip_tags.update(options.skip_tags.split(','))
+            self.skip_tags.update(options.skip_tags)
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
