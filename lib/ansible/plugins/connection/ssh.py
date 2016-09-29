@@ -31,8 +31,10 @@ import time
 from ansible import constants as C
 from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
 
 try:
@@ -641,12 +643,17 @@ class Connection(ConnectionBase):
         # accept them for hostnames and IPv4 addresses too.
         host = '[%s]' % self.host
 
+        # since this can be a non-bool now, we need to handle it correctly
+        scp_if_ssh = C.DEFAULT_SCP_IF_SSH
+        if scp_if_ssh in BOOLEANS:
+            scp_if_ssh = boolean(scp_if_ssh)
+
         # create a list of commands to use based on config options
         methods = ['sftp']
-        if C.DEFAULT_SCP_IF_SSH:
+        if scp_if_ssh == 'smart':
+            methods.append('scp')
+        elif scp_if_ssh:
             methods = ['scp']
-        if C.DEFAULT_SMART_TRANSFER:
-            methods = ['sftp', 'scp']
 
         success = False
         res = None
@@ -666,7 +673,7 @@ class Connection(ConnectionBase):
                 break
             else:
                 # If not in smart mode, the data will be printed by the raise below 
-                if C.DEFAULT_SMART_TRANSFER:
+                if scp_if_ssh == 'smart':
                     display.warning(msg='%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
                     display.debug(msg='%s' % to_native(stdout))
                     display.debug(msg='%s' % to_native(stderr))
