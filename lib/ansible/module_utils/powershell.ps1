@@ -154,8 +154,12 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
     }
 }
 
-#Alias Get-attr-->Get-AnsibleParam for backwards compat.
-New-Alias -Name Get-attr -Value Get-AnsibleParam
+#Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
+If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
+{
+    New-Alias -Name Get-attr -Value Get-AnsibleParam
+}
+
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
