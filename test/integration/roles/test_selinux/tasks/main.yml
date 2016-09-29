@@ -1,0 +1,29 @@
+- name: Set policy to enforcing
+  selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Get status
+  shell: getenforce
+  register: status
+  environment:
+    LC_ALL: C
+
+- assert:
+    that:
+    - "status.stdout == 'Enforcing'"
+
+- name: Set policy to permissive
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: Get status
+  shell: getenforce
+  register: status
+  environment:
+    LC_ALL: C
+
+- assert:
+    that:
+    - "status.stdout == 'Permissive'"
