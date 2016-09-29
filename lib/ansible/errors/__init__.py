@@ -173,6 +173,10 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
 
+class AnsibleConnectionTimeout(AnsibleRuntimeError):
+    ''' the transport / connection_plugin didn't respond in time '''
+    pass
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass

@@ -30,7 +30,7 @@ import time
 
 from ansible import constants as C
 from ansible.compat.six import text_type, binary_type
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound, AnsibleConnectionTimeout
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -309,7 +309,48 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
+
     def _run(self, cmd, in_data, sudoable=True):
+        '''
+        Will retry execution if ssh were unable to connect or timeout
+        '''
+        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
+        cmd_summary = ' '.join(cmd)
+        for attempt in range(remaining_tries):
+            try:
+                return_tuple = self._run_once(cmd=cmd, in_data=in_data, sudoable=sudoable)
+                # 0 = success
+                # 1-254 = remote command return code
+                # 255 = failure from the ssh command itself
+                if return_tuple[0] != 255:
+                    break
+                else:
+                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
+            except (AnsibleConnectionFailure, AnsibleConnectionTimeout, Exception) as e:
+                if attempt == remaining_tries - 1:
+                    raise
+                else:
+                    pause = 2 ** attempt - 1
+                    if pause > 30:
+                        pause = 30
+
+                    if isinstance(e, AnsibleConnectionFailure):
+                        msg = "ssh_retry [%s]: attempt: %d, ssh return code is 255." % (self.host, attempt)
+                    elif isinstance(e, AnsibleConnectionTimeout):
+                        msg = "ssh_retry [%s]: attempt: %d, ssh timeout." % (self.host, attempt)
+                    else:
+                        msg = "ssh_retry [%s]: attempt: %d, caught exception(%s) from" % (self.host, attempt, e)
+
+                    msg += " cmd (%s), pausing for %d seconds" % (cmd_summary, pause)
+                    display.warning(msg)
+
+                    time.sleep(pause)
+                    continue
+
+        return return_tuple
+
+
+    def _run_once(self, cmd, in_data, sudoable=True):
         '''
         Starts the command and communicates with it until it ends.
         '''
@@ -424,7 +465,7 @@ class Connection(ConnectionBase):
                     if p.poll() is not None:
                         break
                     self._terminate_process(p)
-                    raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                    raise AnsibleConnectionTimeout('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
             # Read whatever output is available on stdout and stderr, and stop
             # listening to the pipe if it's been closed.
@@ -556,7 +597,7 @@ class Connection(ConnectionBase):
 
         return (p.returncode, b_stdout, b_stderr)
 
-    def _exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -581,52 +622,6 @@ class Connection(ConnectionBase):
 
         return (returncode, stdout, stderr)
 
-    #
-    # Main public methods
-    #
-    def exec_command(self, *args, **kwargs):
-        """
-        Wrapper around _exec_command to retry in the case of an ssh failure
-
-        Will retry if:
-        * an exception is caught
-        * ssh returns 255
-        Will not retry if
-        * remaining_tries is <2
-        * retries limit reached
-        """
-
-        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
-        cmd_summary = "%s..." % args[0]
-        for attempt in range(remaining_tries):
-            try:
-                return_tuple = self._exec_command(*args, **kwargs)
-                # 0 = success
-                # 1-254 = remote command return code
-                # 255 = failure from the ssh command itself
-                if return_tuple[0] != 255:
-                    break
-                else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
-            except (AnsibleConnectionFailure, Exception) as e:
-                if attempt == remaining_tries - 1:
-                    raise
-                else:
-                    pause = 2 ** attempt - 1
-                    if pause > 30:
-                        pause = 30
-
-                    if isinstance(e, AnsibleConnectionFailure):
-                        msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
-                    else:
-                        msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
-
-                    display.vv(msg, host=self.host)
-
-                    time.sleep(pause)
-                    continue
-
-        return return_tuple
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
