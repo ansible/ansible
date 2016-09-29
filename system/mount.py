@@ -441,12 +441,12 @@ def get_linux_mounts(module):
         src = mnt['src']
 
         if mnt['fs'] == 'tmpfs' and mnt['root'] != '/':
-            ### Example:
+            # == Example:
             # 65 19 0:35 / /tmp rw shared:25 - tmpfs tmpfs rw
             # 210 65 0:35 /aaa /tmp/bbb rw shared:25 - tmpfs tmpfs rw
-            ### Expected result:
+            # == Expected result:
             # src=/tmp/aaa
-            ###
+            # ==
 
             shared = None
 
@@ -456,7 +456,7 @@ def get_linux_mounts(module):
                     shared = fld
 
             if shared is None:
-                break
+                continue
 
             dest = None
 
@@ -471,15 +471,15 @@ def get_linux_mounts(module):
             if dest is not None:
                 src = "%s%s" % (dest, mnt['root'])
             else:
-                break
+                continue
 
         elif mnt['root'] != '/' and len(mnt['fields']) > 0:
-            ### Example:
+            # == Example:
             # 67 19 8:18 / /mnt/disk2 rw shared:26 - ext4 /dev/sdb2 rw
             # 217 65 8:18 /test /tmp/ccc rw shared:26 - ext4 /dev/sdb2 rw
-            ### Expected result:
+            # == Expected result:
             # src=/mnt/disk2/test
-            ###
+            # ==
 
             # Search for parent
             for j, m in enumerate(mntinfo):
@@ -490,12 +490,26 @@ def get_linux_mounts(module):
                     break
 
         elif mnt['root'] != '/' and len(mnt['fields']) == 0:
-            ### Example:
+            # == Example 1:
             # 27 20 8:1 /tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
-            ### Expected result:
+            # == Example 2:
+            # 204 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
+            # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
+            # == Expected result:
             # src=/tmp/aaa
-            ###
+            # ==
+
             src = mnt['root']
+
+            # Search for parent
+            for j, m in enumerate(mntinfo):
+                if j < i:
+                    if (
+                            m['src'] == mnt['src'] and
+                            mnt['root'].startswith(m['root'])):
+                        src = src.replace("%s/" % m['root'], '/', 1)
+                else:
+                    break
 
         mounts[mnt['dst']] = {
             'src': src,
