@@ -27,17 +27,16 @@ from ansible.plugins.callback import CallbackBase
 from ansible import utils
 from ansible.module_utils import basic
 from ansible.utils.unicode import to_unicode, to_bytes
-
 class CallbackModule(CallbackBase):
 
-    CALLBACK_VERSION = 1.0
+    CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'jabber'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self):
+    def __init__(self, display=None):
 
-        super(CallbackModule, self).__init__()
+        super(CallbackModule, self).__init__(display=display)
 
         if not HAS_XMPP:
             print ("The required python xmpp library (xmpppy) is not installed"
@@ -50,8 +49,7 @@ class CallbackModule(CallbackBase):
 
         if (self.j_user or self.j_pass or self.serv ) is None:
             self.disabled = True
-            if (CALLBACK_NEEDS_WHITELIST) is True:
-                print ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
+            self._display.warning ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
 
     def send_msg(self, msg):
         """Send message"""
