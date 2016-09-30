@@ -85,7 +85,8 @@ def main():
     else:
         raise Exception('job parameters not specified')
 
-    generate_test_commands(args.module_group, targets, script, args.output, jobs=jobs, verbose=args.verbose, changes=args.changes)
+    generate_test_commands(args.module_group, targets, script, args.output,
+                           jobs=jobs, verbose=args.verbose, changes=args.changes)
 
 
 def generate_test_commands(module_group, targets, script, output, jobs=None, verbose=False, changes=None):
@@ -103,11 +104,9 @@ def generate_test_commands(module_group, targets, script, output, jobs=None, ver
 
     base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
 
-    job_config_path = path.join(base_dir, 'shippable.yml')
     module_dir = os.path.join(base_dir, 'lib', 'ansible', 'modules', module_group)
 
     if verbose:
-        print_stderr(' config: %s' % job_config_path)
         print_stderr('modules: %s' % module_dir)
         print_stderr('targets: %s' % ' '.join(targets))
         print_stderr()
