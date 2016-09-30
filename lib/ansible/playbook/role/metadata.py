@@ -23,12 +23,12 @@ import os
 
 from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_roles
 from ansible.playbook.role.include import RoleInclude
-
+from ansible.playbook.role.requirement import RoleRequirement
 
 __all__ = ['RoleMetadata']
 
@@ -65,15 +65,30 @@ class RoleMetadata(Base):
         which returns a list of RoleInclude objects
         '''
 
-        if ds is None:
-            ds = []
+        roles = []
+        if ds:
+            if not isinstance(ds, list):
+                raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds) 
+                
+            for role_def in ds: 
+                 if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                     roles.append(role_def)   
+                     continue
+                 try:   
+                    # role_def is new style: { src: 'galaxy.role,version,name', other_vars: "here" }
+                    def_parsed = RoleRequirement.role_yaml_parse(role_def)
+                    if def_parsed.get('name'):
+                        role_def['name'] = def_parsed['name']  
+                    roles.append(role_def)    
+                 except AnsibleError as exc:
+                     raise AnsibleParserError(str(exc), obj=role_def) 
 
         current_role_path = None
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
-
+       
         try:
-            return load_list_of_roles(ds, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
+            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds)
 
