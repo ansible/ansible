@@ -163,7 +163,7 @@ branch as reference). Code comments won't be lost, they just won't be attached t
 
 We’ll then review your contributions and engage with you about questions and  so on.
 
-As we have a very large and active community, so it may take awhile to get your contributions
+Because we have a very large and active community it may take awhile to get your contributions
 in!  See the notes about priorities in a later section for understanding our work queue.
 Be patient, your request might not get merged right away, we also try to keep the devel branch more
 or less usable so we like to examine Pull requests carefully, which takes time.
