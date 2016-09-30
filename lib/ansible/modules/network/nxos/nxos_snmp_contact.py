@@ -268,10 +268,7 @@ def get_cli_body_ssh(command, response, module):
         body = response
     else:
         try:
-            if isinstance(response[0], str):
-                body = [json.loads(response[0])]
-            else:
-                body = response
+            body = [json.loads(response[0])]
         except ValueError:
             module.fail_json(msg='Command does not support JSON output',
                              command=command)
@@ -300,7 +297,7 @@ def execute_show(cmds, module, command_type=None):
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
             else:
-                module.cli.add_commands(cmds)
+                module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
@@ -383,6 +380,8 @@ def main():
             changed = True
             execute_config_command(cmds, module)
             end_state = get_snmp_contact(module)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
     results = {}
     results['proposed'] = proposed
