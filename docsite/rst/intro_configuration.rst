@@ -700,7 +700,7 @@ Instead of calling the module once for each item, the module is called once with
 
 The default value for this setting is only for certain package managers, but it can be used for any module::
 
-    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+    squash_actions = apk,apt,dnf,homebrew,package,pacman,pkgng,yum,zypper
 
 Currently, this is only supported for modules that have a name parameter, and only when the item is the
 only thing being passed to the parameter.
