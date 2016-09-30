@@ -68,9 +68,8 @@ class IncludeRole(Task):
 
         ri = RoleInclude.load(self.name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
-        #ri._role_params.update(self.args) # jimi-c cant we avoid this?
 
-        #build role
+        # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
 
         # compile role
@@ -78,7 +77,7 @@ class IncludeRole(Task):
 
         # set parent to ensure proper inheritance
         for b in blocks:
-            b._parent = self._parent
+            b._parent = self
 
         # updated available handlers in play
         myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
@@ -108,8 +107,13 @@ class IncludeRole(Task):
 
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
-        new_me.name = self.name
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
 
         return new_me
+
+    def get_include_params(self):
+        v = super(IncludeRole, self).get_include_params()
+        if self._parent_role:
+            v.update(self._parent_role.get_role_params())
+        return v
