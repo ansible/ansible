@@ -26,10 +26,27 @@ from ansible.utils.vars import combine_vars
 
 __all__ = ['Host']
 
+
 class Host:
     ''' a single ansible host '''
 
-    #__slots__ = [ 'name', 'vars', 'groups' ]
+    # __slots__ = [ 'name', 'vars', 'groups' ]
+    def __init__(self, name=None, port=None, gen_uuid=True):
+
+        self.name = name
+        self.vars = {}
+        self.groups = []
+
+        self.address = name
+
+        if port:
+            self.set_variable('ansible_port', int(port))
+
+        self._gathered_facts = False
+        self._uuid = None
+        if gen_uuid:
+            self._uuid = uuid.uuid4()
+        self.implicit = False
 
     def __getstate__(self):
         return self.serialize()
@@ -70,30 +87,13 @@ class Host:
         self.vars    = data.get('vars', dict())
         self.address = data.get('address', '')
         self._uuid   = data.get('uuid', None)
-        self.implicit= data.get('implicit', False)
+        self.implicit = data.get('implicit', False)
 
         groups = data.get('groups', [])
         for group_data in groups:
             g = Group()
             g.deserialize(group_data)
             self.groups.append(g)
-
-    def __init__(self, name=None, port=None, gen_uuid=True):
-
-        self.name = name
-        self.vars = {}
-        self.groups = []
-
-        self.address = name
-
-        if port:
-            self.set_variable('ansible_port', int(port))
-
-        self._gathered_facts = False
-        self._uuid = None
-        if gen_uuid:
-            self._uuid = uuid.uuid4()
-        self.implicit = False
 
     def __repr__(self):
         return self.get_name()
@@ -113,8 +113,7 @@ class Host:
         self.groups.append(group)
 
     def set_variable(self, key, value):
-
-        self.vars[key]=value
+        self.vars[key] = value
 
     def get_groups(self):
 
@@ -132,7 +131,7 @@ class Host:
         results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
+        results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
         return results
 
     def get_group_vars(self):
