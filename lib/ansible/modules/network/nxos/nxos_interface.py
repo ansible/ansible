@@ -291,9 +291,6 @@ def load_config(module, candidate):
     return result
 # END OF COMMON CODE
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 'True', 1, True]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 'False', 0, False]
-ACCEPTED = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 def is_default_interface(interface, module):
     """Checks to see if interface exists and if it is a default config
@@ -697,6 +694,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def get_cli_body_ssh(command, response, module):
@@ -741,7 +747,7 @@ def execute_show(cmds, module, command_type=None):
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
             else:
-                module.cli.add_commands(cmds, output=command_type)
+                module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
@@ -804,8 +810,7 @@ def main():
         interface_type=dict(required=False,
                             choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
-        fabric_forwarding_anycast_gateway=dict(required=False, type='bool',
-                                               choices=ACCEPTED),
+        fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
         state=dict(choices=['absent', 'present', 'default'],
                    default='present', required=False),
         include_defaults=dict(default=True),
@@ -926,6 +931,7 @@ def main():
                                                        normalized_interface)
             else:
                 end_state = get_interfaces_dict(module)[interface_type]
+            cmds = [cmd for cmd in cmds if cmd != 'configure']
 
     results = {}
     results['proposed'] = proposed
