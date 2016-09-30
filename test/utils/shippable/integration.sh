@@ -140,7 +140,7 @@ function run_container
     fi
 
     docker exec "${container_id}" \
-        pip install -r "${test_ansible_dir}/test/utils/shippable/integration-requirements.txt" --upgrade
+        pip install -r "${test_ansible_dir}/test/utils/shippable/integration-container-requirements.txt" --upgrade
 
     if [ "${test_python3}" ]; then
         docker exec "${container_id}" sed -i -f \
