@@ -144,7 +144,7 @@ def main():
             "set per junos-pyez documentation")
 
     results = dict(changed=False)
-    results['_backup'] = str(module.config.get_config()).strip()
+    results['_backup'] = unicode(module.config.get_config()).strip()
 
     try:
         diff = module.config.load_config(src, commit=commit, replace=replace,

@@ -213,7 +213,7 @@ def config_to_commands(config):
     return commands
 
 def diff_commands(commands, config):
-    config = [str(c).replace("'", '') for c in config]
+    config = [unicode(c).replace("'", '') for c in config]
 
     updates = list()
     visited = set()
