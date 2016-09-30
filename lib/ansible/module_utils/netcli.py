@@ -228,7 +228,7 @@ class Conditional(object):
         if self.encoding in ['json', 'text']:
             try:
                 return self.get_json(result)
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
                 msg = 'unable to apply conditional to result'
                 raise FailedConditionalError(msg, self.raw)
 
