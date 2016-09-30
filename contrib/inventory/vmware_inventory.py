@@ -186,6 +186,7 @@ class VMWareInventory(object):
             'port': 443,
             'username': '',
             'password': '',
+            'validate_certs': True,
             'ini_path': os.path.join(os.path.dirname(__file__), '%s.ini' % scriptbasename),
             'cache_name': 'ansible-vmware',
             'cache_path': '~/.ansible/tmp',
@@ -228,6 +229,11 @@ class VMWareInventory(object):
         self.port = int(os.environ.get('VMWARE_PORT', config.get('vmware', 'port')))
         self.username = os.environ.get('VMWARE_USERNAME', config.get('vmware', 'username'))
         self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password'))
+        self.validate_certs = os.environ.get('VMWARE_VALIDATE_CERTS', config.get('vmware', 'validate_certs'))
+        if self.validate_certs in ['no', 'false', 'False', False]:
+            self.validate_certs = False
+        else:
+            self.validate_certs = True
 
         # behavior control
         self.maxlevel = int(config.get('vmware', 'max_object_level'))
@@ -270,17 +276,12 @@ class VMWareInventory(object):
         instances = []        
 
         kwargs = {'host': self.server,
-                      'user': self.username,
-                      'pwd': self.password,
-                      'port': int(self.port) }
+                  'user': self.username,
+                  'pwd': self.password,
+                  'port': int(self.port) }
 
-        if hasattr(ssl, 'SSLContext'):
-            # older ssl libs do not have an SSLContext method:
-                #     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-            #     AttributeError: 'module' object has no attribute 'SSLContext'
-            # older pyvmomi version also do not have an sslcontext kwarg:
-            # https://github.com/vmware/pyvmomi/commit/92c1de5056be7c5390ac2a28eb08ad939a4b7cdd
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        if hasattr(ssl, 'SSLContext') and not self.validate_certs:
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             context.verify_mode = ssl.CERT_NONE
             kwargs['sslContext'] = context
 
