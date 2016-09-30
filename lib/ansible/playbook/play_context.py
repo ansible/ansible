@@ -562,8 +562,11 @@ class PlayContext(Base):
             elif self.become_method == 'dzdo':
 
                 exe = self.become_exe or 'dzdo'
-
-                becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                if self.become_pass:
+                    prompt = '[dzdo via ansible, key=%s] password: ' % randbits
+                    becomecmd = '%s -p %s -u %s %s' % (exe, pipes.quote(prompt), self.become_user, command)
+                else:
+                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
