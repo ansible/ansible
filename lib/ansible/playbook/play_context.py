@@ -565,6 +565,10 @@ class PlayContext(Base):
 
                 becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'ksu':
+                becomecmd = 'ksu %s -q -e %s' % (self.become_user, command)
+                self.become_pass = None
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 

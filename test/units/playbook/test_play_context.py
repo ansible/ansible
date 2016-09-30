@@ -134,6 +134,7 @@ class TestPlayContext(unittest.TestCase):
         ksu_exe = 'ksu'
         ksu_flags = ''
         dzdo_exe   = 'dzdo'
+        ksu_exe     = 'ksu'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
@@ -176,6 +177,10 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_method = 'dzdo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+
+        play_context.become_method = 'ksu'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -q -e %s -c 'echo %s; %s'""" & (ksu_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
