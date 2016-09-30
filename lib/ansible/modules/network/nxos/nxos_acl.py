@@ -946,6 +946,19 @@ def execute_show(cmds, module, command_type=None):
         clie = get_exception()
         module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, raw=True)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
@@ -1125,6 +1138,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def main():
@@ -1286,6 +1308,8 @@ def main():
             execute_config_command(cmds, module)
             changed = True
             new_existing_core, end_state, seqs = get_acl(module, name, seq)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
     results['proposed'] = proposed
     results['existing'] = existing_core
