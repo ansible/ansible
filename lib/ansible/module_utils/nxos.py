@@ -60,7 +60,10 @@ class NxapiConfigMixin(object):
             self.execute(['no checkpoint %s' % checkpoint])
 
     def save_config(self, **kwargs):
-        self.execute(['copy running-config startup-config'])
+        try:
+            self.execute(['copy running-config startup-config'], output='text')
+        except TypeError:
+            self.execute(['copy running-config startup-config'])
 
     def load_checkpoint(self, checkpoint):
         try:
