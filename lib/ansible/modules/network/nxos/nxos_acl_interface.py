@@ -683,6 +683,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def main():
@@ -742,6 +751,8 @@ def main():
                 interfaces_acls, this_dir_acl_intf = other_existing_acl(
                     end_state_acls, interface, direction)
                 end_state = this_dir_acl_intf
+                if 'configure' in cmds:
+                    cmds.pop(0)
     else:
         cmds = []
 
