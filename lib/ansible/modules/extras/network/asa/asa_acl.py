@@ -31,7 +31,7 @@ options:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
-        command syntanx as some commands are automatically modified by the
+        command syntax as some commands are automatically modified by the
         device config parser.
     required: true
   before:
@@ -40,7 +40,7 @@ options:
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
+        against the system.
     required: false
     default: null
   after:
@@ -69,7 +69,7 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct
+        line is not correct.
     required: false
     default: line
     choices: ['line', 'block']
