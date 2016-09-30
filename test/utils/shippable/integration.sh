@@ -209,8 +209,18 @@ function run_privileged_container
 
     # Identify unique tags from the selected targets which require a privileged container.
     for requested in "${selected_targets[@]}"; do
-        supported_tags+=($(grep 'needs_privileged' "${source_root}/test/integration/${requested}.yml" | \
+        local found_tags
+        found_tags=($(grep 'needs_privileged' "${source_root}/test/integration/${requested}.yml" | \
             sed 's/^.*tags: *\[//; s/\].*$//; s/,/ /g;'))
+
+        # Only support tags starting with 'test_'.
+        # Skips unprivileged tests sharing tags with privileged tests when the tags are not 'test_' prefixed.
+        local found_tag
+        for found_tag in "${found_tags[@]}"; do
+            if [[ "${found_tag}" =~ ^test_ ]]; then
+                supported_tags+=("${found_tag}")
+            fi
+        done
     done
 
     # Make sure the list of tags is sorted and unique.
