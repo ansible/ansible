@@ -298,7 +298,7 @@ def execute_show(cmds, module, command_type=None):
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
             else:
-                module.cli.add_commands(cmds, output=command_type)
+                module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
@@ -399,7 +399,10 @@ def validate_feature(module, mode='show'):
                 'sla sender': 'sla_sender',
                 'ssh': 'sshServer',
                 'tacacs+': 'tacacs',
-                'telnet': 'telnetServer'},
+                'telnet': 'telnetServer',
+                'ethernet-link-oam': 'elo',
+                'port-security': 'eth_port_sec'
+                },
         'config':
                 {
                 'nve': 'nv overlay',
@@ -413,6 +416,8 @@ def validate_feature(module, mode='show'):
                 'sshServer': 'ssh',
                 'tacacs': 'tacacs+',
                 'telnetServer': 'telnet',
+                'elo': 'ethernet-link-oam',
+                'eth_port_sec': 'port-security'
                 }
         }
 
