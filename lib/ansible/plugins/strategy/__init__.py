@@ -481,6 +481,8 @@ class StrategyBase:
                                 if original_task.action == 'set_fact':
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
                                 else:
+                                    if original_task.action == 'setup':
+                                        target_host._gathered_facts = True
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
 
                 if 'diff' in task_result._result:
