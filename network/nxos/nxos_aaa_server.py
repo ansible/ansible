@@ -349,7 +349,7 @@ def execute_show(cmds, module, command_type=None):
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
             else:
-                module.cli.add_commands(cmds)
+                module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
@@ -543,7 +543,7 @@ def main():
         command = default_aaa_server(existing, proposed, server_type)
         if command:
             commands.append(command)
-    
+
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
@@ -552,6 +552,8 @@ def main():
             changed = True
             execute_config_command(cmds, module)
             end_state = get_aaa_server_info(server_type, module)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
     results = {}
     results['proposed'] = proposed
