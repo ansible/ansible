@@ -56,9 +56,6 @@ def main():
                         help='file listing changed paths (default: query git)')
     parser.add_argument('--image', dest='image', default=os.environ.get('IMAGE'),
                         help='image to run tests with')
-    parser.add_argument('--privileged', dest='privileged', action='store_true',
-                        default=os.environ.get('PRIVILEGED') == 'true',
-                        help='run container in privileged mode')
     parser.add_argument('--python3', dest='python3', action='store_true',
                         default=os.environ.get('PYTHON3', '') != '',
                         help='run tests using python3')
@@ -76,8 +73,6 @@ def main():
     if args.image is not None:
         script = 'integration'
         options = ''
-        if args.privileged:
-            options += ' PRIVILEGED=true'
         if args.python3:
             options += ' PYTHON3=1'
         jobs = ['IMAGE=%s%s' % (args.image, options)]
