@@ -31,6 +31,11 @@
     dest: "{{ outputdir }}/mount_source/test_file"
   register: orig_info
 
+- name: copy mountinfo (1)
+  copy:
+    src: /proc/self/mountinfo
+    dest: /root/ansible/shippable/mountinfo-pb-1.debug
+
 # The opts type of bind mount only works on Linux
 - name: Bind mount a filesystem (Linux)
   mount:
@@ -51,6 +56,11 @@
     fstype: "nullfs"
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
+
+- name: copy mountinfo (2)
+  copy:
+    src: /proc/self/mountinfo
+    dest: /root/ansible/shippable/mountinfo-pb-2.debug
 
 - name: get checksum for bind mounted file
   stat:
@@ -66,6 +76,11 @@
       - "orig_info['checksum'] == dest_stat['stat']['checksum']"
   when: ansible_system in ('FreeBSD', 'Linux')
 
+- name: copy mountinfo (3)
+  copy:
+    src: /proc/self/mountinfo
+    dest: /root/ansible/shippable/mountinfo-pb-3.debug
+
 # The opts type of bind mount only works on Linux
 - name: Bind mount a filesystem (Linux)
   mount:
@@ -86,6 +101,11 @@
     fstype: "nullfs"
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
+
+- name: copy mountinfo (4)
+  copy:
+    src: /proc/self/mountinfo
+    dest: /root/ansible/shippable/mountinfo-pb-4.debug
 
 - name: Make sure we didn't mount a second time
   assert:
