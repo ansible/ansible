@@ -764,6 +764,19 @@ def execute_show(cmds, module, command_type=None):
         clie = get_exception()
         module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, raw=True)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
@@ -788,12 +801,21 @@ def remote_file_exists(module, dst, file_system='bootflash:'):
 
 def execute_config_command(commands, module):
     try:
-        response = module.configure(commands)
+        output = module.configure(commands)
     except ShellError:
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
-    return response
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            output = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
+    return output
 
 
 def apply_patch(module, commands):
@@ -852,10 +874,13 @@ def main():
     if not module.check_mode and commands:
         try:
             apply_patch(module, commands)
-            changed=True
+            changed = True
         except ShellError:
             e = get_exception()
             module.fail_json(msg=str(e))
+
+    if 'configure' in commands:
+        commands.pop(0)
 
     module.exit_json(changed=changed,
                      pkg=pkg,
