@@ -982,6 +982,15 @@ def execute_config_command(commands, module):
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
 
 
 def get_cli_body_ssh(command, response, module):
@@ -1014,6 +1023,19 @@ def execute_show(cmds, module, command_type=None):
         clie = get_exception()
         module.fail_json(msg='Error sending {0}'.format(command),
                          error=str(clie))
+    except AttributeError:
+        try:
+            if command_type:
+                command_type = command_type_map.get(command_type)
+                module.cli.add_commands(cmds, output=command_type)
+                response = module.cli.run_commands()
+            else:
+                module.cli.add_commands(cmds, raw=True)
+                response = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
@@ -1069,7 +1091,6 @@ def main():
     proposed_vlans_list = numerical_sort(vlan_range_to_list(
         vlan_id or vlan_range))
     existing_vlans_list = numerical_sort(get_list_of_vlans(module))
-
     commands = []
     existing = None
 
@@ -1104,7 +1125,7 @@ def main():
     end_state_vlans_list = existing_vlans_list
 
     if commands:
-        if existing:
+        if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                 existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
@@ -1115,6 +1136,8 @@ def main():
             execute_config_command(commands, module)
             changed = True
             end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
+            if 'configure' in commands:
+                commands.pop(0)
             if vlan_id:
                 end_state = get_vlan(vlan_id, module)
 
