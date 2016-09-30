@@ -318,7 +318,7 @@ class Task(Base, Conditional, Taggable, Become):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action == 'include':
+        if self.action in ('include', 'include_role'):
             all_vars.update(self.vars)
         return all_vars
 
