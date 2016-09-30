@@ -199,7 +199,12 @@ class PlayIterator:
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
             if host.name in variable_manager._fact_cache:
-                host._gathered_facts = True
+                # But only consider the setup module having been run as having '_gathered_facts',
+                # so that tasks/modules that return other facts don't cause all fact gathering to
+                # be skipped. The 'module_setup' item in facts is provided when setup is run.
+                # Fixes https://github.com/ansible/ansible/issues/17213
+                if 'module_setup' in variable_manager._fact_cache[host.name]:
+                    host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
             if play_context.start_at_task is not None and not start_at_done:
