@@ -166,7 +166,7 @@ class Netconf(object):
         ele = self.rpc('get_configuration', output=config_format)
 
         if config_format == 'text':
-            return str(ele.text).strip()
+            return unicode(ele.text).strip()
         else:
             return ele
 
