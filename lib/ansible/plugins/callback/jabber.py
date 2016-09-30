@@ -48,9 +48,10 @@ class CallbackModule(CallbackBase):
         self.j_pass = os.getenv('JABBER_PASS')
         self.j_to = os.getenv('JABBER_TO')
 
-        if (self.j_user or self.j_pass or self.serv) is None:
+        if (self.j_user or self.j_pass or self.serv ) is None:
             self.disabled = True
-            print ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
+            if (CALLBACK_NEEDS_WHITELIST) is True:
+                print ('Jabber CallBack want JABBER_USER and JABBER_PASS env variables')
 
     def send_msg(self, msg):
         """Send message"""
