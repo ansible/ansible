@@ -220,7 +220,7 @@ function run_privileged_container
 
     # Determine which tags should be used.
     if [ ${#requested_tags[@]} -eq 0 ]; then
-        selected_tags=(${supported_tags[@]})
+        selected_tags=("${supported_tags[@]}")
     else
         selected_tags=()
 

@@ -112,7 +112,7 @@ the Ansible continuous integration (CI) system is recommended.
 To run all integration test targets with the default settings in a Centos 7 container, run `make integration` from the repository root.
 
 You can also run specific tests or select a different Linux distribution.
-For example, to run the test `test_ping` from the non_destructive target on a Ubuntu 14.04 container:
+For example, to run the test `test_ping` from the `non_destructive` target on a Ubuntu 14.04 container:
 
 - go to the repository root
 - and execute `make integration IMAGE=ansible/ansible:ubuntu1404 TARGET=non_destructive TEST_FLAGS='--tags test_ping'`
@@ -133,8 +133,8 @@ Most container images are for testing with Python 2:
   - fedora-rawhide
   - fedora23
   - opensuseleap
-  - ubuntu1204 (requires `PRIVILEGED=true`)
-  - ubuntu1404 (requires `PRIVILEGED=true`)
+  - ubuntu1204
+  - ubuntu1404
   - ubuntu1604
 
 ### Python 3
@@ -143,11 +143,27 @@ To test with Python 3 you must set `PYTHON3=1` and use the following images:
 
   - ubuntu1604py3
 
-## Additional Options
+## Environment Variables
 
-There are additional environment variables that can be used. A few of the more useful ones:
+There are environment variables that can be used to control how tests are run:
 
+  - `IMAGE` - The Docker container image to use when running the tests.
+              See [Container Images](#container-images) for details.
+  - `TARGET` - Targets in the [Makefile](Makefile).
+               Multiple arguments can be passed in quotes, separated by spaces.
+               The most common targets are `destructive` and `non_destructive`.
+               The default is `all`.
+  - `TEST_TAGS` - A comma separated list of test tags to run.
+                  Use when setting `TARGET` to `destructive` or `non_destructive`.
+  - `SKIP_TAGS` - A comma separated list of test tags to skip.
+                  Use when setting `TARGET` to `destructive` or `non_destructive`.
+  - `TEST_FLAGS` - Pass extra flags to tests, such as increasing verbosity with `TEST_FLAGS=-vvv`.
+                   Multiple arguments can be passed in quotes, separated by spaces.
+                   _**NOTE:** Do not use to pass tags. For that, use `TEST_TAGS` and `SKIP_TAGS`._
   - `KEEP_CONTAINERS=onfailure` - Containers will be preserved if tests fail.
   - `KEEP_CONTAINERS=1` - Containers will always be preserved.
   - `SHARE_SOURCE=1` - Changes to source from the host or container will be shared between host and container.
                        _**CAUTION:** Files created by the container will be owned by root on the host._
+  - `PYTHON3=1` - Run tests using Python 3 instead of Python 2.
+                  Requires setting `IMAGE` to a container with Python 3 installed.
+                  See [Python 3](#python-3) for details.
