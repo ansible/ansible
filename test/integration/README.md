@@ -40,9 +40,9 @@ Run as follows:
 
     make non_destructive
 
-You can select specific tests with the --tags parameter.
+You can select specific test roles with the `TEST_TAGS` environment variable:
 
-    TEST_FLAGS="--tags test_vars_blending" make
+    make non_destructive TEST_TAGS=test_ping
 
 Destructive Tests
 =================
@@ -51,6 +51,10 @@ These tests are allowed to install and remove some trivial packages.  You will l
 to a virtual environment.  They won't reformat your filesystem, however :)
 
     make destructive
+
+You can select specific test roles with the `TEST_TAGS` environment variable:
+
+    make destructive TEST_TAGS=test_apt
 
 Cloud Tests
 ===========
@@ -115,7 +119,7 @@ You can also run specific tests or select a different Linux distribution.
 For example, to run the test `test_ping` from the `non_destructive` target on a Ubuntu 14.04 container:
 
 - go to the repository root
-- and execute `make integration IMAGE=ansible/ansible:ubuntu1404 TARGET=non_destructive TEST_FLAGS='--tags test_ping'`
+- and execute `make integration IMAGE=ansible/ansible:ubuntu1404 TARGET=non_destructive TEST_TAGS=test_ping`
 
 ## Container Images
 
