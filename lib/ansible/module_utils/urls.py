@@ -82,6 +82,13 @@ try:
 except ImportError:
     HAS_SSLCONTEXT = False
 
+try:
+    import urllib_kerberos
+    import kerberos
+    HAS_KERBEROS_AUTH = True
+except ImportError:
+    HAS_KERBEROS_AUTH = False
+
 # SNI Handling for python < 2.7.9 with urllib3 support
 try:
     # urllib3>=1.15
@@ -756,7 +763,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None):
+             client_cert=None, client_key=None, cookies=None, kerberos_auth=False):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -811,6 +818,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         elif username and force_basic_auth:
             headers["Authorization"] = basic_auth_header(username, password)
+
+        elif kerberos_auth:
+            handlers.append(urllib_kerberos.HTTPKerberosAuthHandler())
 
         else:
             try:
@@ -923,6 +933,7 @@ def url_argument_spec():
         force_basic_auth=dict(required=False, type='bool', default='no'),
         client_cert=dict(required=False, type='path', default=None),
         client_key=dict(required=False, type='path', default=None),
+        kerberos_auth=dict(type='bool', default='no'),
     )
 
 
@@ -971,6 +982,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     force_basic_auth = module.params.get('force_basic_auth', '')
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
+    kerberos_auth = module.params.get('kerberos_auth')
+    if kerberos_auth and not HAS_KERBEROS_AUTH:
+        module.fail_json(msg="kerberos or urllib_kerberos is not installed. Please install from pip")
 
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
@@ -985,7 +999,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies)
+                     client_key=client_key, cookies=cookies, kerberos_auth=kerberos_auth)
         info.update(r.info())
         # parse the cookies into a nice dictionary
         cookie_dict = dict()
