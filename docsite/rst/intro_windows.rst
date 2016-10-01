@@ -373,7 +373,7 @@ The following section defines the purpose of each relevant value::
 * ``Auth/Negotiate``: Leverages Windows SSPI for auth, used by NTLM and Kerberos
 * ``Auth/Certificate``: Allows certificate authentication, only for local accounts
 * ``Auth/CredSSP``: Allows CredSSP authentication for credential delegation (double-hop). Not currently supported by pywinrm
-* ``Auth/CbtHardeningLevel``: Channel Binding Token is either mandatory (``Strict``) or optional (``Relaxed``, ``None``). ``Strict not currently supported by pywinrm
+* ``Auth/CbtHardeningLevel``: Channel Binding Token is either mandatory (``Strict``) or optional (``Relaxed``, ``None``). ``Strict`` not currently supported by pywinrm
 
 .. note::
    It is highly recommended to not set AllowUnencrypted to true, please
