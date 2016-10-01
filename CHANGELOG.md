@@ -70,17 +70,14 @@ Ansible Changes By Release
   * dellos6_command
   * dellos6_config
   * dellos6_facts
-  * dellos6_template
 - dellos9
   * dellos9_command
   * dellos9_config
   * dellos9_facts
-  * dellos9_template
 - dellos10
   * dellos10_command
   * dellos10_config
   * dellos10_facts
-  * dellos10_template
 - docker
   * docker_network
 - eos
