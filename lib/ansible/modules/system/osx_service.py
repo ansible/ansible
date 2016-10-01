@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: osx_service
 author: "Björn Albers <bjoernalbers@gmail.com>"
-version_added: "2.1"
+version_added: "2.2"
 short_description: Manage Mac OS X system services via launchctl
 description:
   - Start, stop and restart Mac OS X system services that have a valid launchd
