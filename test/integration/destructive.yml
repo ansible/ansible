@@ -3,7 +3,7 @@
   roles:
     # In destructive because it creates and removes a user
     - { role: test_become, tags: test_become}
-    - { role: test_service, tags: test_service }
+    - { role: test_service, tags: [test_service, needs_privileged] }
     # Current pip unconditionally uses md5.  We can re-enable if pip switches
     # to a different hash or allows us to not check md5
     - { role: test_pip, tags: test_pip, when: ansible_fips != True }
@@ -11,7 +11,7 @@
     - { role: test_yum, tags: test_yum, when: ansible_python.version.major == '2' }
     - { role: test_apt, tags: test_apt }
     - { role: test_apt_repository, tags: [test_apt_repository, test_apt_key] }
-    - { role: test_postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user] }
+    - { role: test_postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user, needs_privileged] }
     - { role: test_mysql_db, tags: test_mysql_db}
     - { role: test_mysql_user, tags: test_mysql_user}
     - { role: test_mysql_variables, tags: test_mysql_variables}
