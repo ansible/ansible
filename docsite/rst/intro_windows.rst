@@ -365,14 +365,15 @@ In the above example we are able to authenticate with the Windows host using
 
 Because AllowUnencrypted is set to false we also have to use a HTTPS listener as pywinrm does not currently support encrypted WinRM messages over HTTP.
 
-These are the settings currently supported by pywinrm;
+The following section defines the purpose of each relevant value::
 
-- AllowUnencrypted #When using a HTTP endpoint this must be true.
-- Auth/Basic #Only supported by local accounts
-- Auth/Kerberos #Only supported by domain accounts
-- Auth/Negotiate #NTLM comes under Negotiate
-- Auth/Certificate #Only supported by local accounts
-- Auth/CbtHardeningLevel = None or Relaxed #Strict is not currently supported
+* ``AllowUnencrypted``: When set to ``true`` allows WinRM messages to be sent without encryption.
+* ``Auth/Basic``: Allows basic authentication, only for local accounts
+* ``Auth/Kerberos``: Allows Kerberos authentication, only for domain accounts
+* ``Auth/Negotiate``: Leverages Windows SSPI for auth, used by NTLM and Kerberos
+* ``Auth/Certificate``: Allows certificate authentication, only for local accounts
+* ``Auth/CredSSP``: Allows CredSSP authentication for credential delegation (double-hop). Not currently supported by pywinrm
+* ``Auth/CbtHardeningLevel``: Channel Binding Token is either mandatory (``Strict``) or optional (``Relaxed``, ``None``). ``Strict not currently supported by pywinrm
 
 .. note::
    It is highly recommended to not set AllowUnencrypted to true, please
