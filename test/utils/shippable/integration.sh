@@ -31,6 +31,7 @@ if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     share_source=1
+    test_privileged=false # temporarily disabled to troubleshoot performance issues
 else
     host_shared_dir="${source_root}"
     controller_shared_dir=""
@@ -101,16 +102,21 @@ container_id=$(docker run -d \
 
 show_environment
 
+skip=
+
 if [ "${test_python3}" ]; then
     docker exec "${container_id}" ln -s /usr/bin/python3 /usr/bin/python
     docker exec "${container_id}" ln -s /usr/bin/pip3 /usr/bin/pip
 
-    skip_tags=$(tr '\n' ',' < "${source_root}/test/utils/shippable/python3-test-tag-blacklist.txt")
-    test_flags="--skip-tags ${skip_tags} ${test_flags}"
+    skip+=",$(tr '\n' ',' < "${source_root}/test/utils/shippable/python3-test-tag-blacklist.txt")"
 fi
 
 if [ "${test_privileged}" = 'false' ]; then
-    test_flags="--skip-tags needs_privileged ${test_flags}"
+    skip+=",needs_privileged"
+fi
+
+if [ "${skip}" ]; then
+    test_flags="--skip-tags ${skip} ${test_flags}"
 fi
 
 if [ -z "${share_source}" ]; then
