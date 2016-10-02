@@ -87,3 +87,68 @@
   assert:
     that:
     - fnf_result.finished
+
+- name: test graceful module failure
+  async_test:
+    fail_mode: graceful
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- name: assert task failed correctly
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result | changed == false
+    - async_result | failed
+    - async_result.msg == 'failed gracefully'
+
+- name: test exception module failure
+  async_test:
+    fail_mode: exception
+  async: 5
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result.changed == false
+    - async_result | failed == true
+    - async_result.stderr is search('failing via exception', multiline=True)
+
+- name: test leading junk before JSON
+  async_test:
+    fail_mode: leading_junk
+  async: 5
+  poll: 1
+  register: async_result
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result.changed == true
+    - async_result | success
+
+- name: test trailing junk after JSON
+  async_test:
+    fail_mode: trailing_junk
+  async: 5
+  poll: 1
+  register: async_result
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result.changed == true
+    - async_result | success
+    - async_result.warnings[0] is search('trailing junk after module output')

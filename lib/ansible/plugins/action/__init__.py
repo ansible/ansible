@@ -36,6 +36,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 
@@ -503,50 +504,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             return initial_fragment
 
-    @staticmethod
-    def _filter_non_json_lines(data):
-        '''
-        Used to avoid random output from SSH at the top of JSON output, like messages from
-        tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-
-        need to filter anything which does not start with '{', '[', or is an empty line.
-        Have to be careful how we filter trailing junk as multiline JSON is valid.
-        '''
-        # Filter initial junk
-        lines = data.splitlines()
-        for start, line in enumerate(lines):
-            line = line.strip()
-            if line.startswith(u'{'):
-                endchar = u'}'
-                break
-            elif line.startswith(u'['):
-                endchar = u']'
-                break
-        else:
-            display.debug('No start of json char found')
-            raise ValueError('No start of json char found')
-
-        # Filter trailing junk
-        lines = lines[start:]
-        lines.reverse()
-        for end, line in enumerate(lines):
-            if line.strip().endswith(endchar):
-                break
-        else:
-            display.debug('No end of json char found')
-            raise ValueError('No end of json char found')
-
-        if end < len(lines) - 1:
-            # Trailing junk is uncommon and can point to things the user might
-            # want to change.  So print a warning if we find any
-            trailing_junk = lines[:end]
-            trailing_junk.reverse()
-            display.warning('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
-
-        lines = lines[end:]
-        lines.reverse()
-        return '\n'.join(lines)
-
     def _strip_success_message(self, data):
         '''
         Removes the BECOME-SUCCESS message from the data.
@@ -708,7 +665,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _parse_returned_data(self, res):
         try:
-            data = json.loads(self._filter_non_json_lines(res.get('stdout', u'')))
+            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
+            for w in warnings:
+                display.warning(w)
+            data = json.loads(filtered_output)
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
