@@ -537,6 +537,8 @@ def main():
             changed = True
             execute_config_command(cmds, module)
             end_state = get_igmp_snooping(module)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
     results['proposed'] = proposed
     results['existing'] = existing
