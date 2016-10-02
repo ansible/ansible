@@ -149,7 +149,7 @@ import ansible.module_utils.eos
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError
+from ansible.module_utils.netcli import AddCommandError, AddConditionError
 from ansible.module_utils.netcli import FailedConditionsError
 from ansible.module_utils.netcli import FailedConditionalError
 from ansible.module_utils.six import string_types
@@ -212,8 +212,13 @@ def main():
                 exc = get_exception()
                 warnings.append('duplicate command detected: %s' % cmd)
 
-    for item in conditionals:
-        runner.add_conditional(item)
+    try:
+        for item in conditionals:
+            runner.add_conditional(item)
+    except AddConditionError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc), condition=exc.condition)
+
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
