@@ -41,6 +41,23 @@ options:
 requirements: [ launchctl ]
 '''
 
+RETURN = '''
+These values will be returned on success...
+
+name:
+  description: Label of job
+  type: string
+  sample: "com.docker.vmnetd"
+state:
+  description: Current state of job
+  type: string
+  sample: "started"
+changed:
+  description: Did the job state change?
+  type: boolean
+  sample: True
+'''
+
 EXAMPLES = '''
 - osx_service: name=com.docker.vmnetd state=started
 '''
