@@ -158,7 +158,7 @@ from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.netcli import FailedConditionalError
+from ansible.module_utils.netcli import FailedConditionalError, AddConditionError
 from ansible.module_utils.junos import xml_to_json
 from ansible.module_utils.six import string_types
 
@@ -261,9 +261,9 @@ def main():
     try:
         for item in conditionals:
             runner.add_conditional(item)
-    except (ValueError, AttributeError):
+    except (ValueError, AddConditionError):
         exc = get_exception()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=str(exc), condition=exc.condition)
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
