@@ -2268,7 +2268,7 @@ class AnsibleModule(object):
         # reset the pwd
         os.chdir(prev_dir)
 
-        return (rc, stdout, stderr)
+        return (rc, stdout.decode(), stderr.decode())
 
     def append_to_file(self, filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))
