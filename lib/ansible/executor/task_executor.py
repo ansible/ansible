@@ -539,12 +539,12 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
+                result['attempts'] = attempt
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
                     if attempt < retries:
-                        result['attempts'] = attempt
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
@@ -553,6 +553,7 @@ class TaskExecutor:
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
+                result['attempts'] = retries - 1
                 result['failed'] = True
 
         # do the final update of the local variables here, for both registered
