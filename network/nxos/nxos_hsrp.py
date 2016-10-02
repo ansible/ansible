@@ -277,12 +277,21 @@ def load_config(module, candidate):
 
 def execute_config_command(commands, module):
     try:
-        response = module.configure(commands)
+        output = module.configure(commands)
     except ShellError:
         clie = get_exception()
         module.fail_json(msg='Error sending CLI commands',
                          error=str(clie), commands=commands)
-    return response
+    except AttributeError:
+        try:
+            commands.insert(0, 'configure')
+            module.cli.add_commands(commands, output='config')
+            output = module.cli.run_commands()
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending CLI commands',
+                             error=str(clie), commands=commands)
+    return output
 
 
 def get_cli_body_ssh(command, response, module):
@@ -329,7 +338,7 @@ def execute_show(cmds, module, command_type=None):
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
             else:
-                module.cli.add_commands(cmds, output=command_type)
+                module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
         except ShellError:
             clie = get_exception()
@@ -675,6 +684,8 @@ def main():
                 validate_config(body, vip, module)
             changed = True
             end_state = get_hsrp_group(group, interface, module)
+            if 'configure' in commands:
+                commands.pop(0)
 
     results = {}
     results['proposed'] = proposed
