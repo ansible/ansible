@@ -42,8 +42,8 @@ requirements: [ launchctl ]
 '''
 
 RETURN = '''
-These values will be returned on success...
-
+---
+# These values will be returned on success...
 name:
   description: Label of job
   type: string
