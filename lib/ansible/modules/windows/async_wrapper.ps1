@@ -324,6 +324,10 @@ Function Start-Watchdog {
     # FUTURE: use CreateProcess + stream redirection to watch for/return quick watchdog failures?
     $result = $([wmiclass]"Win32_Process").Create($exec_path, $null, $pstartup)
 
+    # On fast + idle machines, the process never starts without this delay. Hopefully the switch to
+    # Win32 process launch will make this unnecessary.
+    Sleep -Seconds 1
+
     $watchdog_pid = $result.ProcessId
 
     return $watchdog_pid
