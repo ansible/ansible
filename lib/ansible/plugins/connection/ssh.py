@@ -29,7 +29,7 @@ import subprocess
 import time
 
 from ansible import constants as C
-from ansible.compat.six import text_type, binary_type
+from ansible.compat.six import PY3, text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
@@ -343,14 +343,20 @@ class Connection(ConnectionBase):
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if PY3 and self._play_context.password:
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                else:
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
                 p = None
 
         if not p:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if PY3 and self._play_context.password:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+            else:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
 
         # If we are using SSH password authentication, write the password into
