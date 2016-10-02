@@ -139,6 +139,9 @@ class Netconf(object):
                 responses[index] = xml_to_json(responses[index])
             elif cmd.args.get('command_type') == 'rpc':
                 responses[index] = str(responses[index].text).strip()
+            elif 'RpcError' in responses[index]:
+                raise NetworkError(responses[index])
+
 
         return responses
 
