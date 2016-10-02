@@ -31,6 +31,7 @@ import time
 import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.basic import get_exception
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils.six.moves import zip
 
@@ -57,6 +58,12 @@ class AddCommandError(Exception):
     def __init__(self, msg, command):
         super(AddCommandError, self).__init__(msg)
         self.command = command
+
+class AddConditionError(Exception):
+    def __init__(self, msg, condition):
+        super(AddConditionError, self).__init__(msg)
+        self.condition=condition
+
 
 class Cli(object):
 
@@ -151,7 +158,11 @@ class CommandRunner(object):
         return [cmd.response for cmd in self.commands]
 
     def add_conditional(self, condition):
-        self.conditionals.add(Conditional(condition))
+        try:
+            self.conditionals.add(Conditional(condition))
+        except AttributeError:
+            exc = get_exception()
+            raise AddConditionError(msg=str(exc), condition=condition)
 
     def run(self):
         while self.retries > 0:
