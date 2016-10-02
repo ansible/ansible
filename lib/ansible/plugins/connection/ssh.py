@@ -86,7 +86,7 @@ class Connection(ConnectionBase):
         return SSHPASS_AVAILABLE
 
     @staticmethod
-    def _persistence_controls(command):
+    def _persistence_controls(b_command):
         '''
         Takes a command array and scans it for ControlPersist and ControlPath
         settings and returns two booleans indicating whether either was found.
@@ -97,21 +97,29 @@ class Connection(ConnectionBase):
         controlpersist = False
         controlpath = False
 
-        for arg in command:
-            if 'controlpersist' in arg.lower():
+        for b_arg in (a.lower() for a in b_command):
+            if b'controlpersist' in b_arg:
                 controlpersist = True
-            elif 'controlpath' in arg.lower():
+            elif b'controlpath' in b_arg:
                 controlpath = True
 
         return controlpersist, controlpath
 
-    def _add_args(self, explanation, args):
+    def _add_args(self, b_command, b_args, explanation):
         """
-        Adds the given args to self._command and displays a caller-supplied
-        explanation of why they were added.
+        Adds arguments to the ssh command and displays a caller-supplied explanation of why.
+
+        :arg b_command: A list containing the command to add the new arguments to.
+            This list will be modified by this method.
+        :arg b_args: An iterable of new arguments to add.  This iterable is used
+            more than once so it must be persistent (ie: a list is okay but a
+            StringIO would not)
+        :arg explanation: A text string containing explaining why the arguments
+            were added.  It will be displayed with a high enough verbosity.
+        .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        self._command += args
-        display.vvvvv('SSH: ' + explanation + ': (%s)' % ')('.join(map(to_text, args)), host=self._play_context.remote_addr)
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
+        b_command += b_args
 
     def _build_command(self, binary, *other_args):
         '''
@@ -119,9 +127,11 @@ class Connection(ConnectionBase):
         a command line as an array that can be passed to subprocess.Popen.
         '''
 
-        self._command = []
+        b_command = []
 
-        ## First, the command name.
+        #
+        # First, the command to invoke
+        #
 
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
@@ -131,11 +141,13 @@ class Connection(ConnectionBase):
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
             self.sshpass_pipe = os.pipe()
-            self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
+            b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
-        self._command += [binary]
+        b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
-        ## Next, additional arguments based on the configuration.
+        #
+        # Next, additional arguments based on the configuration.
+        #
 
         # sftp batch mode allows us to correctly catch failed transfers, but can
         # be disabled if the client side doesn't support the option. However,
@@ -143,98 +155,95 @@ class Connection(ConnectionBase):
         # if not using controlpersist and using sshpass
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             if self._play_context.password:
-                self._add_args('disable batch mode for sshpass', ['-o', 'BatchMode=no'])
-            self._command += ['-b', '-']
+                b_args = [b'-o', b'BatchMode=no']
+                self._add_args(b_command, b_args, u'disable batch mode for sshpass')
+            b_command += [b'-b', b'-']
 
         if self._play_context.verbosity > 3:
-            self._command += ['-vvv']
+            b_command.append(b'-vvv')
 
+        #
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
+        #
 
         if self._play_context.ssh_args:
-            args = self._split_ssh_args(self._play_context.ssh_args)
-            self._add_args("ansible.cfg set ssh_args", args)
+            b_args = [to_bytes(a, errors='surrogate_or_strict') for a in
+                      self._split_ssh_args(self._play_context.ssh_args)]
+            self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
         # a combination thereof.
 
         if not C.HOST_KEY_CHECKING:
-            self._add_args(
-                "ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled",
-                ("-o", "StrictHostKeyChecking=no")
-            )
+            b_args = (b"-o", b"StrictHostKeyChecking=no")
+            self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
         if self._play_context.port is not None:
-            self._add_args(
-                "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
-                ("-o", "Port={0}".format(self._play_context.port))
-            )
+            b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
+            self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
         key = self._play_context.private_key_file
         if key:
-            self._add_args(
-                "ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set",
-                ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(key)))
-            )
+            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
+            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
         if not self._play_context.password:
             self._add_args(
-                "ansible_password/ansible_ssh_pass not set", (
-                    "-o", "KbdInteractiveAuthentication=no",
-                    "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
-                    "-o", "PasswordAuthentication=no"
-                )
+                b_command, (
+                    b"-o", b"KbdInteractiveAuthentication=no",
+                    b"-o", b"PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
+                    b"-o", b"PasswordAuthentication=no"
+                ),
+                u"ansible_password/ansible_ssh_pass not set"
             )
 
         user = self._play_context.remote_user
         if user:
-            self._add_args(
-                "ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set",
-                ("-o", "User={0}".format(to_bytes(self._play_context.remote_user)))
-            )
+            self._add_args(b_command,
+                    (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+                    u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
+                )
 
-        self._add_args(
-            "ANSIBLE_TIMEOUT/timeout set",
-            ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
+        self._add_args(b_command,
+            (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
+            u"ANSIBLE_TIMEOUT/timeout set"
         )
 
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
 
-        for opt in ['ssh_common_args', binary + '_extra_args']:
+        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
-                args = self._split_ssh_args(attr)
-                self._add_args("PlayContext set %s" % opt, args)
+                b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
+                self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
         # already been set.
 
-        controlpersist, controlpath = self._persistence_controls(self._command)
+        controlpersist, controlpath = self._persistence_controls(b_command)
 
         if controlpersist:
             self._persistent = True
 
             if not controlpath:
-                cpdir = unfrackpath('$HOME/.ansible/cp')
-                b_cpdir = to_bytes(cpdir)
+                cpdir = unfrackpath(u'$HOME/.ansible/cp')
+                b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
                 # The directory must exist and be writable.
                 makedirs_safe(b_cpdir, 0o700)
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
-                args = ("-o", "ControlPath=" + C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=cpdir))
-                self._add_args("found only ControlPersist; added ControlPath", args)
+                b_args = (b"-o", b"ControlPath=" + to_bytes(C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=cpdir), errors='surrogate_or_strict'))
+                self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
-        ## Finally, we add any caller-supplied extras.
-
+        # Finally, we add any caller-supplied extras.
         if other_args:
-            self._command += other_args
+            b_command += [to_bytes(a) for a in other_args]
 
-        cmd = [to_bytes(a) for a in self._command]
-        return cmd
+        return b_command
 
     def _send_initial_data(self, fh, in_data):
         '''
@@ -357,8 +366,10 @@ class Connection(ConnectionBase):
                     raise
             os.close(self.sshpass_pipe[1])
 
-        ## SSH state machine
         #
+        # SSH state machine
+        #
+
         # Now we read and accumulate output from the running process until it
         # exits. Depending on the circumstances, we may also need to write an
         # escalation password and/or pipelined input to the process.
