@@ -268,26 +268,19 @@ class Cli(EosConfigMixin, CliBase):
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=True, **kwargs)
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('terminal length 0')
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+        if passwd:
+            self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+        else:
+            self.execute('enable')
 
     ### Command methods ###
 
     def run_commands(self, commands):
-        """execute the ordered set of commands on the remote host
-
-        This method will take a list of Command objects, convert them
-        to a list of dict objects and execute them on the shell
-        connection.
-
-        :param commands: list of Command objects
-
-        :returns: set of ordered responses
-        """
         cmds = list(prepare_commands(commands))
         responses = self.execute(cmds)
         for index, cmd in enumerate(commands):
@@ -297,7 +290,8 @@ class Cli(EosConfigMixin, CliBase):
                 except ValueError:
                     raise NetworkError(
                         msg='unable to load response from device',
-                        response=responses[index]
+                        response=responses[index],
+                        responses=responses
                     )
         return responses
 
@@ -312,12 +306,6 @@ def prepare_config(commands):
 
 
 def prepare_commands(commands):
-    """ transforms a list of Command objects to dict
-
-    :param commands: list of Command objects
-
-    :returns: list of dict objects
-    """
     jsonify = lambda x: '%s | json' % x
     for item in to_list(commands):
         if item.output == 'json':
