@@ -27,7 +27,10 @@ notes:
     - The module will fail due to timeout issues, but the install will go on
       anyway. Ansible's block and rescue can be leveraged to handle this kind
       of failure and check actual module results. See EXAMPLE for more about
-      this.
+      this. The first task on the rescue block is needed to make sure the
+      device has completed all checks and it started to reboot. The second
+      task is needed to wait the device to come back up. Last two tasks are
+      used to verify the installation process's been successful.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - You must know if your platform supports taking a kickstart image as a
@@ -62,6 +65,13 @@ EXAMPLES = '''
         password: "{{ pwd }}"
         transport: nxapi
     rescue:
+      - name: Wait for device to perform checks 
+        wait_for:
+          port: 22
+          state: stopped
+          timeout: 300
+          delay: 60
+          host: "{{ inventory_hostname }}"
       - name: Wait for device to come back up
         wait_for:
           port: 22
