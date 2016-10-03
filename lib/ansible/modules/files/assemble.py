@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -17,11 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-import os
-import os.path
-import tempfile
-import re
 
 DOCUMENTATION = '''
 ---
@@ -106,48 +102,60 @@ EXAMPLES = '''
 - assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='/usr/sbin/sshd -t -f %s'
 '''
 
+import codecs
+import os
+import os.path
+import re
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import b
+
+
 # ===========================================
 # Support method
 
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
-    tmp = os.fdopen(tmpfd,'w')
+    tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
 
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
-        fragment = "%s/%s" % (src_path, f)
+        fragment = u"%s/%s" % (src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
-        fragment_content = file(fragment).read()
+        fragment_content = open(fragment, 'rb').read()
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:
-            tmp.write('\n')
+            tmp.write(b('\n'))
 
         # delimiters should only appear between fragments
         if delimit_me:
             if delimiter:
                 # un-escape anything like newlines
-                delimiter = delimiter.decode('unicode-escape')
+                delimiter = codecs.escape_decode(delimiter)[0]
                 tmp.write(delimiter)
                 # always make sure there's a newline after the
                 # delimiter, so lines don't run together
-                if delimiter[-1] != '\n':
-                    tmp.write('\n')
+                if delimiter[-1] != b('\n'):
+                    tmp.write(b('\n'))
 
         tmp.write(fragment_content)
         delimit_me = True
-        if fragment_content.endswith('\n'):
+        if fragment_content.endswith(b('\n')):
             add_newline = False
         else:
             add_newline = True
 
     tmp.close()
     return temp_path
+
 
 def cleanup(path, result=None):
     # cleanup just in case
@@ -160,8 +168,6 @@ def cleanup(path, result=None):
             if result is not None:
                 result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, str(e))]
 
-# ==============================================================
-# main
 
 def main():
 
@@ -199,7 +205,7 @@ def main():
     if not os.path.isdir(src):
         module.fail_json(msg="Source (%s) is not a directory" % src)
 
-    if regexp != None:
+    if regexp is not None:
         try:
             compiled_regexp = re.compile(regexp)
         except re.error:
@@ -246,8 +252,5 @@ def main():
     result['msg'] = "OK"
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-
-main()
-
+if __name__ == '__main__':
+    main()
