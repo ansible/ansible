@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2016, René Moser <mail@renemoser.net>
 # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
@@ -154,7 +155,7 @@ EXAMPLES = """
             value: "load average: 5,16, 4,64, 2,43"
             short: "true"
 
-- name: Send notification message via Slack (deprecated API using domian)
+- name: Send notification message via Slack (deprecated API using domain)
   local_action:
     module: slack
     domain: future500.slack.com
@@ -166,13 +167,27 @@ EXAMPLES = """
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
+# See https://api.slack.com/docs/message-formatting#how_to_escape_characters
+# Escaping quotes and apostrophe however is related to how Ansible handles them.
+html_escape_table = {
+    '&': "&amp;",
+    '>': "&gt;",
+    '<': "&lt;",
+    '"': "\"",
+    "'": "\'",
+}
+
+def html_escape(text):
+    '''Produce entities within text.'''
+    return "".join(html_escape_table.get(c,c) for c in text)
+
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
     payload = {}
     if color == "normal" and text is not None:
-        payload = dict(text=text)
+        payload = dict(text=html_escape(text))
     elif text is not None:
         # With a custom color we have to set the message as attachment, and explicitely turn markdown parsing on for it.
-        payload = dict(attachments=[dict(text=text, color=color, mrkdwn_in=["text"])])
+        payload = dict(attachments=[dict(text=html_escape(text), color=color, mrkdwn_in=["text"])])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
@@ -194,12 +209,24 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
             payload['attachments'] = []
 
     if attachments is not None:
+        keys_to_escape = [
+            'title',
+            'text',
+            'author_name',
+            'pretext',
+            'fallback',
+        ]
         for attachment in attachments:
+            for key in keys_to_escape:
+                if key in attachment:
+                    attachment[key] = html_escape(attachment[key])
+
             if 'fallback' not in attachment:
                 attachment['fallback'] = attachment['text']
+
             payload['attachments'].append(attachment)
 
-    payload="payload=" + module.jsonify(payload)
+    payload=module.jsonify(payload)
     return payload
 
 def do_notify_slack(module, domain, token, payload):
@@ -211,7 +238,12 @@ def do_notify_slack(module, domain, token, payload):
             module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form XXXX/YYYY/ZZZZ in your playbook")
         slack_incoming_webhook = OLD_SLACK_INCOMING_WEBHOOK % (domain, token)
 
-    response, info = fetch_url(module, slack_incoming_webhook, data=payload)
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
+    response, info = fetch_url(module=module, url=slack_incoming_webhook, headers=headers, method='POST', data=payload)
+
     if info['status'] != 200:
         obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % ('[obscured]')
         module.fail_json(msg=" failed to send %s to %s: %s" % (payload, obscured_incoming_webhook, info['msg']))
