@@ -92,21 +92,24 @@ class IncludeRole(Task):
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
 
+        # deal with options
+
+        # name is needed
         ir._role_name = ir.args.get('name')
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field.")
-
-        # set built in's
-        attributes = frozenset(ir._valid_attrs.keys())
-        for builtin in attributes:
-            if ir.args.get(builtin):
-                setattr(ir, builtin, ir.args.get(builtin))
 
         # build options for role includes
         for key in ['tasks', 'vars', 'defaults']:
             from_key = key + '_from'
             if  ir.args.get(from_key):
                 ir._from_files[key] = basename(ir.args.get(from_key))
+
+        #TODO: find a way to make this list come from object ( attributes does not work as per below)
+        # manual list as otherwise the options would set other task parameters we don't want.
+        for option in ['static', 'private']:
+            if option in ir.args:
+                setattr(ir, option, ir.args.get(option))
 
         return ir.load_data(data, variable_manager=variable_manager, loader=loader)
 
