@@ -82,14 +82,14 @@ options:
     choices: [present, latest]
     default: present
   no_deps:
-    version_added: "2.0"
+    version_added: "2.2"
     description:
       - don't install dependencies
     required: false
     choices: ["yes", "no"]
     default: no
   find_links:
-    version_added: "2.0"
+    version_added: "2.2"
     description:
       - additional URL(s) to search for packages
     required: false
