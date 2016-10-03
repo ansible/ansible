@@ -261,9 +261,8 @@ class Facts(object):
                 # try to read it as json first
                 # if that fails read it with ConfigParser
                 # if that fails, skip it
-                rc, out, err = self.module.run_command(fn)
                 try:
-                    out = out.decode('utf-8', 'strict')
+                    rc, out, err = self.module.run_command(fn)
                 except UnicodeError:
                     fact = 'error loading fact - output of running %s was not utf-8' % fn
                     local[fact_base] = fact
@@ -394,9 +393,8 @@ class Facts(object):
     def get_lsb_facts(self):
         lsb_path = self.module.get_bin_path('lsb_release')
         if lsb_path:
-            rc, out, err = self.module.run_command([lsb_path, "-a"])
+            rc, out, err = self.module.run_command([lsb_path, "-a"], errors='surrogate_or_replace')
             if rc == 0:
-                out = out.decode('utf-8', 'replace')
                 self.facts['lsb'] = {}
                 for line in out.split('\n'):
                     if len(line) < 1 or ':' not in line:
@@ -466,8 +464,7 @@ class Facts(object):
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
-            rc, out, err = self.module.run_command([capsh_path, "--print"])
-            out = out.decode('utf-8', 'replace')
+            rc, out, err = self.module.run_command([capsh_path, "--print"], errors='surrogate_or_replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.split('\n'):
@@ -1268,7 +1265,7 @@ class LinuxHardware(Hardware):
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, errors='surrogate_or_replace')
         return rc, out, err
 
     def _find_bind_mounts(self):
@@ -1280,7 +1277,6 @@ class LinuxHardware(Hardware):
         rc, out, err = self._run_findmnt(findmnt_path)
         if rc != 0:
             return bind_mounts
-        out = out.decode('utf-8', 'replace')
 
         # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
         for line in out.splitlines():
@@ -1359,8 +1355,7 @@ class LinuxHardware(Hardware):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
         if lspci:
-            rc, pcidata, err = self.module.run_command([lspci, '-D'])
-            pcidata = pcidata.decode('utf-8', 'replace')
+            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_or_replace')
         else:
             pcidata = None
 
@@ -2254,8 +2249,7 @@ class LinuxNetwork(Network):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue
-            rc, out, err = self.module.run_command(command[v])
-            out = out.decode('utf-8', 'replace')
+            rc, out, err = self.module.run_command(command[v], errors='surrogate_or_replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -2425,12 +2419,10 @@ class LinuxNetwork(Network):
             ip_path = self.module.get_bin_path("ip")
 
             args = [ip_path, 'addr', 'show', 'primary', device]
-            rc, stdout, stderr = self.module.run_command(args)
-            primary_data = stdout.decode('utf-8', 'replace')
+            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
-            rc, stdout, stderr = self.module.run_command(args)
-            secondary_data = stdout.decode('utf-8', 'decode')
+            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
@@ -2452,8 +2444,7 @@ class LinuxNetwork(Network):
         ethtool_path = self.module.get_bin_path("ethtool")
         if ethtool_path:
             args = [ethtool_path, '-k', device]
-            rc, stdout, stderr = self.module.run_command(args)
-            stdout = stdout.decode('utf-8', 'replace')
+            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_or_replace')
             if rc == 0:
                 for line in stdout.strip().split('\n'):
                     if not line or line.endswith(":"):
