@@ -18,10 +18,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import os
 import os.path
-import tempfile
 import re
+import tempfile
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
@@ -59,7 +60,7 @@ class ActionModule(ActionBase):
             if delimit_me:
                 if delimiter:
                     # un-escape anything like newlines
-                    delimiter = delimiter.decode('unicode-escape')
+                    delimiter = codecs.escape_decode(delimiter)[0]
                     tmp.write(delimiter)
                     # always make sure there's a newline after the
                     # delimiter, so lines don't run together
