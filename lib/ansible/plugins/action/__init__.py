@@ -719,13 +719,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 
-        # Change directory to basedir of task for command execution
-        cwd = os.getcwd()
-        os.chdir(self._loader.get_basedir())
+        # Change directory to basedir of task for command execution when connection is local
+        if self._connection.transport == 'local':
+            os.chdir(self._loader.get_basedir())
+            cwd = os.getcwd()
         try:
             rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         finally:
-            os.chdir(cwd)
+            if self._connection.transport == 'local':
+                os.chdir(cwd)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
