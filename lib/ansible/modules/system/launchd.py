@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
+# (c) 2016, Brian Coca <bcoca@ansible.com>
+# (c) 2106, Theo Crevon (https://github.com/tcr-ableton)
 # (c) 2016, Björn Albers <bjoernalbers@gmail.com>
 #
 # This file is part of Ansible
@@ -20,48 +22,63 @@
 
 
 DOCUMENTATION = '''
----
-module: osx_service
-author: "Björn Albers <bjoernalbers@gmail.com>"
-version_added: "2.2"
-short_description: Manage Mac OS X system services via launchctl
+module: launchd
+author:
+    - 'Ansible Core Team'
+    - 'Theo Crevon (@tcr-ableton)'
+    - 'Björn Albers <bjoernalbers@gmail.com>'
+version_added: '2.2'
+short_description: Manage Mac OS X launchd services.
 description:
-  - Start, stop and restart Mac OS X system services that have a valid launchd
-    plist under /Library/LaunchDaemons.
+    - Manage (start, stop & restart) Mac OS X launchd services via launchctl.
 options:
-  name:
-    description:
-      Label of job
-    required: true
-  state:
-    description:
-      Desired state
-    required: true
-    choices: [ "started", "stopped", "restarted" ]
-requirements: [ launchctl ]
+    name:
+        required: true
+        description:
+            - Name of the service.
+        aliases: [ 'service', 'label' ]
+    state:
+        required: true
+        choices: [ 'started', 'loaded', 'stopped', 'unloaded', 'restarted', 'reloaded ]
+        description:
+            - C(started), C(loaded), C(stopped) and C(unloaded) are idempotent
+              actions that will not run commands unless necessary.
+              Launchd does not support C(restarted) / C(reloaded) natively, so
+              these will both trigger a stop and start as needed.
+requirements:
+    - target host OS must be Mac OS X
+    - you have to run the module as root via sudo
+    - the service must be a system service and have a valid launchd plist under
+      /Library/LaunchDaemons
 '''
 
 RETURN = '''
----
 # These values will be returned on success...
 name:
-  description: Label of job
-  type: string
-  sample: "com.docker.vmnetd"
+    description: Name of the service.
+    type: string
+    sample: 'com.docker.vmnetd'
 state:
-  description: Current state of job
-  type: string
-  sample: "started"
+    description: Current state of the service.
+    type: string
+    sample: 'started'
 changed:
-  description: Did the job state change?
-  type: boolean
-  sample: True
+    description: Did the service state change?
+    type: boolean
+    sample: True
 '''
 
 EXAMPLES = '''
-- osx_service: name=com.docker.vmnetd state=started
+- name: ensure com.docker.vmnetd is started
+  launchd:
+      name: com.docker.vmnetd
+      state: started
+      become: yes
+      become_user: root
 '''
 
+
+import os
 
 class OSXService:
     COMMAND   = '/bin/launchctl'
@@ -108,9 +125,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name  = dict(required = True),
-            state = dict(required = True,
-                choices = ['started', 'stopped', 'restarted']),
+            name = dict(
+                required = True,
+                type     = 'str',
+                aliases  = [ 'service', 'label' ]
+            ),
+            state = dict(
+                required = True,
+                type     = 'str',
+                choices  = [ 'started',   'loaded',
+                             'stopped',   'unloaded',
+                             'restarted', 'reloaded' ]
+            ),
         ),
         supports_check_mode = False
     )
@@ -122,11 +148,11 @@ def main():
     state = module.params['state']
 
     service = OSXService(module)
-    if state == 'started':
+    if state in [ 'started', 'loaded' ] :
         changed = service.start()
-    elif state == 'stopped':
+    elif state in [ 'stopped', 'unloaded' ]:
         changed = service.stop()
-    elif state == 'restarted':
+    elif state in [ 'restarted', 'reloaded' ]:
         changed = service.restart()
 
     module.exit_json(name=name, state=state, changed=changed) 
