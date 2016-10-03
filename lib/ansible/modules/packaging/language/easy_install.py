@@ -81,6 +81,19 @@ options:
     required: false
     choices: [present, latest]
     default: present
+  no_deps:
+    version_added: "2.0"
+    description:
+      - don't install dependencies
+    required: false
+    choices: ["yes", "no"]
+    default: no
+  find_links:
+    version_added: "2.0"
+    description:
+      - additional URL(s) to search for packages
+    required: false
+    default: null
 notes:
     - Please note that the M(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
@@ -144,6 +157,8 @@ def main():
                    default='present',
                    choices=['present','latest'],
                    type='str'),
+        no_deps=dict(default='no', required=False, type='bool'),
+        find_links=dict(default=None, required=False),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
@@ -160,7 +175,11 @@ def main():
     executable_arguments = []
     if module.params['state'] == 'latest':
         executable_arguments.append('--upgrade')
-
+    if module.params['no_deps']:
+        executable_arguments.append('--no-deps')
+    if module.params['find_links']:
+        executable_arguments.append('--find-links %s' %
+                                    module.params['find_links'])
     rc = 0
     err = ''
     out = ''
