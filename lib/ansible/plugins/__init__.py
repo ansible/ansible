@@ -417,13 +417,10 @@ class PluginLoader:
             yield obj
 
     def add_module_by_file(self, name, filename):
+        # Add a module to the cache by filepath
         self._module_cache[name] = self._load_module_source(name, filename)
-        # self._plugin_path_cache[suffix]
-        #self._plugin_path_cache[name] = filename
         self._plugin_path_cache[''][name] = filename
-        #self.add_directory(os.path.dirname(filename))
-        if not self.find_plugin(name):
-            import sys; sys.exit(1)
+        self.find_plugin(name):
 
 
 action_loader = PluginLoader(
