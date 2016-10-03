@@ -236,6 +236,8 @@ Ansible Changes By Release
   * win_robocopy
   * win_shell
 
+####New Callbacks:
+* foreman
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
