@@ -181,7 +181,7 @@ class LookupModule(LookupBase):
              # get subdir if set by task executor, default to files otherwise
             subdir = getattr(self, '_subdir', 'files')
             path = None
-            path = self.find_file_in_search_path(variables, subdir, fn)
+            path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
             if path is not None:
                 return [path]
         else:
