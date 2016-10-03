@@ -27,9 +27,6 @@ from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
 
-# dynamically installed roles ...
-from ansible.galaxy.helpers import get_role_by_module_fqn
-
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
     'command',
@@ -287,11 +284,6 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item.count('.') == 2:
-                # This is a module from a galaxy role
-                gr = get_role_by_module_fqn(item)
-                if gr.module_file not in module_loader._module_cache:
-                    module_loader.add_module_by_file(item, gr.module_file)
 
             if item in module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem

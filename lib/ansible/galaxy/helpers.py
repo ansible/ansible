@@ -8,8 +8,14 @@ import ansible.constants as C
 import os
 
 from ansible.errors import AnsibleError
-from ansible.galaxy import Galaxy
-from ansible.galaxy.role import GalaxyRole
+
+galaxy_imported = None
+try:
+    from ansible.galaxy import Galaxy
+    from ansible.galaxy.role import GalaxyRole
+    galaxy_imported = True
+except ImportError as e:
+    galaxy_imported = False
 
 
 class GalaxyOptions(object):
@@ -18,8 +24,15 @@ class GalaxyOptions(object):
         self.ignore_certs = True
         self.api_server = C.GALAXY_SERVER
 
+
 def get_role_by_module_fqn(module_fqn):
     '''Use the module FQN to enumerate role and install it'''
+
+    # deferred galaxy imports (because the plugin loader mucks things up)
+    if not galaxy_imported:
+        from ansible.galaxy import Galaxy
+        from ansible.galaxy.role import GalaxyRole
+
     iparts = module_fqn.split('.')
     role_fqn = '.'.join(iparts[0:2])
     gopts = GalaxyOptions()

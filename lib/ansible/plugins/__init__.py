@@ -33,6 +33,7 @@ from collections import defaultdict
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 
+from ansible.galaxy.helpers import get_role_by_module_fqn
 
 try:
     from __main__ import display
@@ -234,6 +235,10 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
+            if name.count('.') == 2:
+                gr = get_role_by_module_fqn(name)
+                self.add_module_by_file(name, gr.module_file)
+
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
@@ -420,7 +425,6 @@ class PluginLoader:
         # Add a module to the cache by filepath
         self._module_cache[name] = self._load_module_source(name, filename)
         self._plugin_path_cache[''][name] = filename
-        self.find_plugin(name)
 
 
 action_loader = PluginLoader(
