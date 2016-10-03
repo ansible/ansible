@@ -212,12 +212,12 @@ def debug(command, zipped_mod, json_params):
                 directory = os.path.dirname(dest_filename)
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                f = open(dest_filename, 'w')
+                f = open(dest_filename, 'wb')
                 f.write(z.read(filename))
                 f.close()
 
         # write the args file
-        f = open(args_path, 'w')
+        f = open(args_path, 'wb')
         f.write(json_params)
         f.close()
 
