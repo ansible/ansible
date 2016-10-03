@@ -46,6 +46,7 @@ The following groups are generated from --list:
  - region_NAME
  - size_NAME
  - status_STATUS
+ - tag_TAG
 
 When run against a specific host, this script returns the following variables:
  - do_backup_ids
@@ -399,6 +400,12 @@ or environment variables (DO_API_TOKEN)\n''')
                         self.inventory[image] = { 'hosts': [ ], 'vars': {} }
                     self.inventory[image]['hosts'].append(dest)
 
+            # create a group for each tag.
+            for tag in droplet['tags']:
+                group = 'tag_' + tag
+                if group not in self.inventory:
+                    self.inventory[group] = { 'hosts': [ ], 'vars': {} }
+                self.inventory[group]['hosts'].append(dest)
 
 
     def load_droplet_variables_for_host(self):
