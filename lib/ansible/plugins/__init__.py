@@ -416,6 +416,16 @@ class PluginLoader:
             setattr(obj, '_original_path', path)
             yield obj
 
+    def add_module_by_file(self, name, filename):
+        self._module_cache[name] = self._load_module_source(name, filename)
+        # self._plugin_path_cache[suffix]
+        #self._plugin_path_cache[name] = filename
+        self._plugin_path_cache[''][name] = filename
+        #self.add_directory(os.path.dirname(filename))
+        if not self.find_plugin(name):
+            import sys; sys.exit(1)
+
+
 action_loader = PluginLoader(
     'ActionModule',
     'ansible.plugins.action',
