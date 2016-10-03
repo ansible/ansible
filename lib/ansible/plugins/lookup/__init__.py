@@ -102,7 +102,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def find_file_in_search_path(self, myvars, subdir, needle):
+    def find_file_in_search_path(self, myvars, subdir, needle, ignore_missing=False):
         '''
         Return a file (needle) in the task's expected search path.
         '''
@@ -113,7 +113,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
             paths = self.get_basedir(myvars)
 
         result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
-        if result is None:
+        if result is None and not ignore_missing:
             self._display.warning("Unable to find '%s' in expected paths." % needle)
 
         return result
