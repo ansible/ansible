@@ -969,6 +969,7 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
     pipelining=False
 
 .. _ssh_executable:
+
 ssh_executable
 ==============
 
