@@ -61,10 +61,18 @@ Ansible Changes By Release
   * ec2_vpc_nat_gateway
   * ec2_vpc_peer
   * ec2_vpc_vgw
+  * efs
+  * efs_facts
   * execute_lambda
   * iam_mfa_device_facts
   * iam_server_certificate_facts
   * kinesis_stream
+  * lambda
+  * lambda_alias
+  * lambda_event
+  * lambda_facts
+  * redshift
+  * redshift_subnet_group
   * s3_website
   * sts_session_token
 - cloudstack
@@ -82,6 +90,7 @@ Ansible Changes By Release
   * dellos10_command
   * dellos10_config
   * dellos10_facts
+- digital_ocean_block_storage
 - docker
   * docker_network
 - eos
@@ -107,6 +116,7 @@ Ansible Changes By Release
 - google
   * gcdns_record
   * gcdns_zone
+  * gce_mig
 - honeybadger_deployment
 - illumos
   * dladm_etherstub
@@ -133,8 +143,22 @@ Ansible Changes By Release
   * lxd_profile
   * lxd_container
 - netapp
+  * netapp_e_amg
+  * netapp_e_amg_role
+  * netapp_e_amg_sync
+  * netapp_e_auth
   * netapp_e_facts
+  * netapp_e_flashcache
+  * netapp_e_hostgroup
+  * netapp_e_host
+  * netapp_e_lun_mapping
+  * netapp_e_snapshot_group
+  * netapp_e_snapshot_images
+  * netapp_e_snapshot_volume
   * netapp_e_storage_system
+  * netapp_e_storagepool
+  * netapp_e_volume
+  * netapp_e_volume_copy
 - netconf_config
 - netvisor
   * pn_cluster
@@ -159,13 +183,14 @@ Ansible Changes By Release
   * nxos_bgp
   * nxos_evpn_global
   * nxos_evpn_vni
-  * nxos_file_c
+  * nxos_file_copy
   * nxos_gir_profile_management
   * nxos_gir
   * nxos_hsrp
   * nxos_igmp_interface
   * nxos_igmp
   * nxos_igmp_snooping
+  * nxos_install_os
   * nxos_interface_ospf
   * nxos_mtu
   * nxos_ntp_auth
@@ -207,6 +232,10 @@ Ansible Changes By Release
   * os_server_group
   * os_stack
   * os_zone
+- ovirt
+  * ovirt_auth
+  * ovirt_disks
+  * ovirt_vms
 - rhevm
 - rocketchat
 - sefcontext
@@ -235,7 +264,7 @@ Ansible Changes By Release
   * vyos_config
   * vyos_facts
 - wakeonlan
-- windows:
+- windows
   * win_command
   * win_robocopy
   * win_shell
