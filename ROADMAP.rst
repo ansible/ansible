@@ -14,12 +14,13 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
   - IRC freenode channel: #ansible-devel (this one may have things lost in lots of conversation, so a caution).
 
 =======================================
-Current 2.2 Roadmap is open for comment
+Current 2.3 Roadmap is open for comment
 =======================================
-We are currently trying to finalize the 2.2 Roadmap, targeted for September delivery.  We are seeking community feedback for 2.2.  That document is here:  
+We are currently trying to finalize the 2.3 Roadmap, targeted for January delivery.  We are seeking community feedback for 2.3.  That document is here:
+ - `2.3 Roadmap Document <docsite/rst/roadmap/ROADMAP_2_3.rst>`_
 
-`2.2 Roadmap Document <docsite/rst/roadmap/ROADMAP_2_2.rst>`_
 
 
 **Old Roadmaps are found here:**
+ - `2.2 Roadmap Document <docsite/rst/roadmap/ROADMAP_2_2.rst>`_
  - `2.1 Roadmap Document <docsite/rst/roadmap/ROADMAP_2_1.rst>`_
