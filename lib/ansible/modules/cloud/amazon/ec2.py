@@ -1366,7 +1366,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                                      exception=traceback.format_exc(exc))
 
             # Check "termination_protection" attribute
-            if inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
+            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
+                    and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
 
@@ -1433,8 +1434,6 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     termination_protection = module.params.get('termination_protection')
     changed = False
     instance_dict_array = []
-    source_dest_check = module.params.get('source_dest_check')
-    termination_protection = module.params.get('termination_protection')
 
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         # Fail unless the user defined instance tags
@@ -1452,17 +1451,30 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
      # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
-    running_instances_array = []
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
 
             # Check "source_dest_check" attribute
-            if inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                inst.modify_attribute('sourceDestCheck', source_dest_check)
-                changed = True
+            try:
+                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                    inst.modify_attribute('sourceDestCheck', source_dest_check)
+                    changed = True
+            except boto.exception.EC2ResponseError as exc:
+                # instances with more than one Elastic Network Interface will
+                # fail, because they have the sourceDestCheck attribute defined
+                # per-interface
+                if exc.code == 'InvalidInstanceID':
+                    for interface in inst.interfaces:
+                        if interface.source_dest_check != source_dest_check:
+                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
+                            changed = True
+                else:
+                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
+                                     exception=traceback.format_exc(exc))
 
             # Check "termination_protection" attribute
-            if inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
+            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
+                    and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
 
@@ -1507,7 +1519,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list', aliases=['instance_id']),
             source_dest_check = dict(type='bool', default=True),
-            termination_protection = dict(type='bool', default=False),
+            termination_protection = dict(type='bool', default=None),
             state = dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
             exact_count = dict(type='int', default=None),
