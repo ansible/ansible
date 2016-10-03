@@ -230,12 +230,12 @@ def get_role_tags(playbook_path):
     return tags
 
 
-def get_changed_paths(git_root, branch='stable-2.2'):
+def get_changed_paths(git_root, branch='origin/stable-2.2'):
     """Get file paths changed in current branch vs given branch.
 
     Args:
         git_root: The root of the git clone.
-        branch: The branch to compare against (default: stable-2.2)
+        branch: The branch to compare against (default: origin/stable-2.2)
 
     Returns: List of file paths changed.
     """
