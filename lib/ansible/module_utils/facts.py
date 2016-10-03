@@ -2422,7 +2422,7 @@ class LinuxNetwork(Network):
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
-            rc, secondaty_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
