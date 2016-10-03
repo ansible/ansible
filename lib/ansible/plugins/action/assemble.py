@@ -1,6 +1,7 @@
-# (c) 2013-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013-2016, Michael DeHaan <michael.dehaan@gmail.com>
 #           Stephen Fromm <sfromm@gmail.com>
 #           Brian Coca  <briancoca+dev@gmail.com>
+#           Toshio Kuratomi  <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -18,10 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import os
 import os.path
-import tempfile
 import re
+import tempfile
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
@@ -38,7 +40,7 @@ class ActionModule(ActionBase):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
-        tmp = os.fdopen(tmpfd,'w')
+        tmp = os.fdopen(tmpfd, 'wb')
         delimit_me = False
         add_newline = False
 
@@ -49,26 +51,26 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment)).read()
+            fragment_content = open(self._loader.get_real_file(fragment), 'rb').read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
-                tmp.write('\n')
+                tmp.write(b'\n')
 
             # delimiters should only appear between fragments
             if delimit_me:
                 if delimiter:
                     # un-escape anything like newlines
-                    delimiter = delimiter.decode('unicode-escape')
+                    delimiter = codecs.escape_decode(delimiter)[0]
                     tmp.write(delimiter)
                     # always make sure there's a newline after the
                     # delimiter, so lines don't run together
-                    if delimiter[-1] != '\n':
-                        tmp.write('\n')
+                    if delimiter[-1] != b'\n':
+                        tmp.write(b'\n')
 
             tmp.write(fragment_content)
             delimit_me = True
-            if fragment_content.endswith('\n'):
+            if fragment_content.endswith(b'\n'):
                 add_newline = False
             else:
                 add_newline = True
