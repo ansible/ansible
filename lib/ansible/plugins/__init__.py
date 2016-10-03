@@ -235,6 +235,7 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
+            # naive assumption that this is a namespace module from a role
             if name.count('.') == 2:
                 gr = get_role_by_module_fqn(name)
                 self.add_module_by_file(name, gr.module_file)
