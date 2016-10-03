@@ -97,12 +97,12 @@ EXAMPLES = '''
 
 import datetime
 import glob
-import re
 import shlex
 import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
+
 
 def check_command(commandline):
     arguments = { 'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
@@ -144,9 +144,9 @@ def main():
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args  = module.params['_raw_params']
-    creates  = module.params['creates']
-    removes  = module.params['removes']
+    args = module.params['_raw_params']
+    creates = module.params['creates']
+    removes = module.params['removes']
     warn = module.params['warn']
 
     if args.strip() == '':
@@ -169,9 +169,9 @@ def main():
             )
 
     if removes:
-    # do not run the command if the line contains removes=filename
-    # and the filename does not exist.  This allows idempotence
-    # of command executions.
+        # do not run the command if the line contains removes=filename
+        # and the filename does not exist.  This allows idempotence
+        # of command executions.
         if not glob.glob(removes):
             module.exit_json(
                 cmd=args,
@@ -188,7 +188,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell)
+    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None)
 
     endd = datetime.datetime.now()
     delta = endd - startd
