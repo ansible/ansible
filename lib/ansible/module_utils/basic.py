@@ -2030,7 +2030,7 @@ class AnsibleModule(object):
       else:
           self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2052,8 +2052,27 @@ class AnsibleModule(object):
         :kw prompt_regex: Regex string (not a compiled regex) which can be
             used to detect prompts in the stdout which would otherwise cause
             the execution to hang (especially if no input data is specified)
-        :kwarg environ_update: dictionary to *update* os.environ with
+        :kw environ_update: dictionary to *update* os.environ with
         :kw umask: Umask to be used when running the command. Default None
+        :kw encoding: Since we return native strings, on python3 we need to
+            know the encoding to use to transform from bytes to text.  If you
+            want to always get bytes back, use encoding=None.  The default is
+            "utf-8".  This does not affect transformation of strings given as
+            args.
+        :kw errors: Since we return native strings, on python3 we need to
+            transform stdout and stderr from bytes to text.  If the bytes are
+            undecodable in the ``encoding`` specified, then use this error
+            handler to deal with them.  The default is ``surrogate_or_strict``
+            which means that the bytes will be decoded using the
+            surrogateescape error handler if available (available on all
+            python3 versions we support) otherwise a UnicodeError traceback
+            will be raised.  This does not affect transformations of strings
+            given as args.
+        :returns: A 3-tuple of return code (integer), stdout (native string),
+            and stderr (native string).  On python2, stdout and stderr are both
+            byte strings.  On python3, stdout and stderr are text strings converted
+            according to the encoding and errors parameters.  If you want byte
+            strings on python3, use encoding=None to turn decoding to text off.
         '''
 
         shell = False
@@ -2188,11 +2207,7 @@ class AnsibleModule(object):
         try:
 
             if self._debug:
-                if isinstance(args, list):
-                    running = ' '.join(args)
-                else:
-                    running = args
-                self.log('Executing: ' + running)
+                self.log('Executing: ' + clean_args)
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2268,6 +2283,9 @@ class AnsibleModule(object):
         # reset the pwd
         os.chdir(prev_dir)
 
+        if encoding is not None:
+            return (rc, to_native(stdout, encoding=encoding, errors=errors),
+                    to_native(stderr, encoding=encoding, errors=errors))
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
