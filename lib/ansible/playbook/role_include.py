@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from os.path import basename
 
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 from ansible.playbook.role import Role
@@ -56,6 +57,7 @@ class IncludeRole(Task):
         self.statically_loaded = False
         self._from_files = {}
         self._parent_role = role
+        self._role_name = None
 
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
@@ -66,7 +68,7 @@ class IncludeRole(Task):
         else:
             myplay = play
 
-        ri = RoleInclude.load(self.name, play=myplay, variable_manager=variable_manager, loader=loader)
+        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
 
         # build role
@@ -88,6 +90,11 @@ class IncludeRole(Task):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
+
+
+        ir._role_name = ir.args.get('name')
+        if ir._role_name is None:
+            raise AnsibleParserError("'name' is a required field.")
 
         # set built in's
         attributes = frozenset(ir._valid_attrs.keys())
