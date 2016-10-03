@@ -420,7 +420,7 @@ class PluginLoader:
         # Add a module to the cache by filepath
         self._module_cache[name] = self._load_module_source(name, filename)
         self._plugin_path_cache[''][name] = filename
-        self.find_plugin(name):
+        self.find_plugin(name)
 
 
 action_loader = PluginLoader(

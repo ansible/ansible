@@ -9,7 +9,6 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import Galaxy
-from ansible.galaxy.options import GalaxyOptions
 from ansible.galaxy.role import GalaxyRole
 
 
