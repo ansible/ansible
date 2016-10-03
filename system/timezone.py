@@ -52,7 +52,7 @@ options:
         to configure, especially on virtual environments such as AWS.
     required: false
     aliases: ['rtc']
-author: "Shinichi TAMURA @tmshn"
+author: "Shinichi TAMURA (@tmshn)"
 '''
 
 RETURN = '''
@@ -402,7 +402,7 @@ class NosystemdTimezone(Timezone):
     def set_timezone(self, value):
         self._edit_file(filename=self.conf_files['name'],
                         regexp=self.regexps['name'],
-                        value=self.tzline_format.format % value)
+                        value=self.tzline_format % value)
         self.execute(self.update_timezone)
 
     def set_hwclock(self, value):
