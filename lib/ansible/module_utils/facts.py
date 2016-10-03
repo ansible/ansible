@@ -262,7 +262,7 @@ class Facts(object):
                 # if that fails read it with ConfigParser
                 # if that fails, skip it
                 try:
-                    rc, out, err = self.module.run_command(fn, errors='strict')
+                    rc, out, err = self.module.run_command(fn)
                 except UnicodeError:
                     fact = 'error loading fact - output of running %s was not utf-8' % fn
                     local[fact_base] = fact
