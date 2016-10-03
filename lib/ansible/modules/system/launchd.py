@@ -30,7 +30,7 @@ author:
 version_added: '2.2'
 short_description: Manage Mac OS X launchd services.
 description:
-    - Manage (start, stop & restart) Mac OS X launchd services via launchctl.
+    - Manage (start, stop and restart) Mac OS X launchd services via launchctl.
 options:
     name:
         required: true
@@ -39,7 +39,7 @@ options:
         aliases: [ 'service', 'label' ]
     state:
         required: true
-        choices: [ 'started', 'loaded', 'stopped', 'unloaded', 'restarted', 'reloaded ]
+        choices: [ 'started', 'loaded', 'stopped', 'unloaded', 'restarted', 'reloaded' ]
         description:
             - C(started), C(loaded), C(stopped) and C(unloaded) are idempotent
               actions that will not run commands unless necessary.
