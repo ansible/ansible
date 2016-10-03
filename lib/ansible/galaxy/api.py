@@ -91,7 +91,8 @@ class GalaxyAPI(object):
             headers = self.__auth_header()
         try:
             display.vvv(url)
-            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method)
+            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method,
+                            timeout=20)
             data = json.load(resp)
         except HTTPError as e:
             res = json.load(e)
