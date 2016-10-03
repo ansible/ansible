@@ -35,6 +35,10 @@ Ansible Changes By Release
   * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
   * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
   * scp_if_ssh now supports True, False and "smart". "smart" is the default and will retry failed sftp transfers with scp.
+* Network:
+  * Refactored all network modules to remove dulicate code and take advantage of Ansiballz implementation
+  * All functionality from *_template network modules have been combined into *_config module
+  * Network *_command modules not longer allow configuration mode statements
 
 ####New Modules:
 - apache2_mod_proxy
