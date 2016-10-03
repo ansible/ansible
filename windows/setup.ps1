@@ -17,9 +17,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-# enabled $params (David O'Brien, 06/08/2015)
-$params = Parse-Args $args;
-
+$params = Parse-Args $args -supports_check_mode $true
 
 Function Get-CustomFacts {
   [cmdletBinding()]
