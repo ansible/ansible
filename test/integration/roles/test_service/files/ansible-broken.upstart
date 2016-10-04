@@ -5,6 +5,6 @@ stop on runlevel [!345]
 
 expect daemon
 
-exec ansible_test_service
+exec does_not_exist
 
 manual

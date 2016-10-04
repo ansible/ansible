@@ -16,4 +16,4 @@
     - "install_upstart_broken_result.dest == '/etc/init/ansible_broken_test.conf'"
     - "install_upstart_broken_result.state == 'file'"
     - "install_upstart_broken_result.mode == '0644'"
-    - "install_upstart_broken_result.checksum == 'e66497894f2b2bf71e1380a196cc26089cc24a10'"
+    - "install_upstart_broken_result.checksum == '07535a6711240413fe8438a3e0642905023f9aa9'"
