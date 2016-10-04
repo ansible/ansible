@@ -45,11 +45,10 @@ def get_file_parser(hostsfile, groups, loader):
     parser = None
 
     try:
-        inv_file = open(hostsfile)
-        first_line = inv_file.readlines()[0]
-        inv_file.close()
-        if first_line.startswith('#!'):
-            shebang_present = True
+        with open(hostsfile, 'rb') as inv_file:
+            initial_chars = inv_file.read(2)
+            if initial_chars.startswith(b'#!'):
+                shebang_present = True
     except:
         pass
 
