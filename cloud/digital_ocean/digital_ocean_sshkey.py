@@ -69,7 +69,7 @@ EXAMPLES = '''
 '''
 
 import os
-import time
+import traceback
 
 try:
     from dopy.manager import DoError, DoManager
@@ -77,14 +77,13 @@ try:
 except ImportError:
     HAS_DOPY = False
 
-class TimeoutError(DoError):
-    def __init__(self, msg, id):
-        super(TimeoutError, self).__init__(msg)
-        self.id = id
+from ansible.module_utils.basic import AnsibleModule
+
 
 class JsonfyMixIn(object):
     def to_json(self):
         return self.__dict__
+
 
 class SSH(JsonfyMixIn):
     manager = None
@@ -121,6 +120,7 @@ class SSH(JsonfyMixIn):
         json = cls.manager.new_ssh_key(name, key_pub)
         return cls(json)
 
+
 def core(module):
     def getkeyordie(k):
         v = module.params[k]
@@ -135,7 +135,6 @@ def core(module):
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
-    changed = True
     state = module.params['state']
 
     SSH.setup(client_id, api_key)
@@ -153,6 +152,7 @@ def core(module):
             module.exit_json(changed=False, msg='SSH key with the name of %s is not found.' % name)
         key.destroy()
         module.exit_json(changed=True)
+
 
 def main():
     module = AnsibleModule(
@@ -173,12 +173,8 @@ def main():
 
     try:
         core(module)
-    except TimeoutError as e:
-        module.fail_json(msg=str(e), id=e.id)
     except (DoError, Exception) as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

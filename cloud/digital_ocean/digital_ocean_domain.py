@@ -46,7 +46,7 @@ options:
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
   - As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes C(client_id) and C(api_key) options in favor of C(api_token).
-  - If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired. 
+  - If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired.
 
 requirements:
   - "python >= 2.6"
@@ -82,7 +82,7 @@ EXAMPLES = '''
 '''
 
 import os
-import time
+import traceback
 
 try:
     from dopy.manager import DoError, DoManager
@@ -90,14 +90,13 @@ try:
 except ImportError as e:
     HAS_DOPY = False
 
-class TimeoutError(DoError):
-    def __init__(self, msg, id):
-        super(TimeoutError, self).__init__(msg)
-        self.id = id
+from ansible.module_utils.basic import AnsibleModule
+
 
 class JsonfyMixIn(object):
     def to_json(self):
         return self.__dict__
+
 
 class DomainRecord(JsonfyMixIn):
     manager = None
@@ -106,7 +105,7 @@ class DomainRecord(JsonfyMixIn):
         self.__dict__.update(json)
     update_attr = __init__
 
-    def update(self, data = None, record_type = None):
+    def update(self, data=None, record_type=None):
         json = self.manager.edit_domain_record(self.domain_id,
                                                self.id,
                                                record_type if record_type is not None else self.record_type,
@@ -117,6 +116,7 @@ class DomainRecord(JsonfyMixIn):
     def destroy(self):
         json = self.manager.destroy_domain_record(self.domain_id, self.id)
         return json
+
 
 class Domain(JsonfyMixIn):
     manager = None
@@ -164,6 +164,7 @@ class Domain(JsonfyMixIn):
                     return domain
 
         return False
+
 
 def core(module):
     def getkeyordie(k):
@@ -236,12 +237,8 @@ def main():
 
     try:
         core(module)
-    except TimeoutError as e:
-        module.fail_json(msg=str(e), id=e.id)
     except (DoError, Exception) as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
