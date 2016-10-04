@@ -16,15 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
-import time
-
 DOCUMENTATION = '''
 ---
 module: digital_ocean_block_storage
 short_description: Create/destroy or attach/detach Block Storage volumes in DigitalOcean
 description:
-     - Create/destroy Block Storage volume in DigitalOcean, or attach/detach Block Storage volume to a droplet. 
+     - Create/destroy Block Storage volume in DigitalOcean, or attach/detach Block Storage volume to a droplet.
 version_added: "2.2"
 options:
   command:
@@ -113,8 +110,18 @@ id:
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 
+import json
+import os
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
+
 class DOBlockStorageException(Exception):
     pass
+
 
 class Response(object):
 
@@ -136,6 +143,7 @@ class Response(object):
     @property
     def status_code(self):
         return self.info["status"]
+
 
 class Rest(object):
 
@@ -168,6 +176,7 @@ class Rest(object):
 
     def delete(self, path, data=None, headers=None):
         return self.send('DELETE', path, data, headers)
+
 
 class DOBlockStorage(object):
 
@@ -206,9 +215,9 @@ class DOBlockStorage(object):
         json = response.json
         if status == 200:
             volumes = json['volumes']
-            if len(volumes)>0:
+            if len(volumes) > 0:
                 droplet_ids = volumes[0]['droplet_ids']
-                if len(droplet_ids)>0:
+                if len(droplet_ids) > 0:
                     return droplet_ids[0]
             return None
         else:
@@ -216,10 +225,10 @@ class DOBlockStorage(object):
 
     def attach_detach_block_storage(self, method, volume_name, region, droplet_id):
         data = {
-            'type' : method,
-            'volume_name' : volume_name,
-            'region' : region,
-            'droplet_id' : droplet_id
+            'type': method,
+            'volume_name': volume_name,
+            'region': region,
+            'droplet_id': droplet_id
         }
         response = self.rest.post('volumes/actions', data=data)
         status = response.status_code
@@ -239,10 +248,10 @@ class DOBlockStorage(object):
         region = self.get_key_or_fail('region')
         description = self.module.params['description']
         data = {
-            'size_gigabytes' : block_size,
-            'name' : volume_name,
-            'description' : description,
-            'region' : region
+            'size_gigabytes': block_size,
+            'name': volume_name,
+            'description': description,
+            'region': region
         }
         response = self.rest.post("volumes", data=data)
         status = response.status_code
@@ -259,7 +268,7 @@ class DOBlockStorage(object):
         region = self.get_key_or_fail('region')
         url = 'volumes?name={}&region={}'.format(volume_name, region)
         attached_droplet_id = self.get_attached_droplet_ID(volume_name, region)
-        if attached_droplet_id != None:
+        if attached_droplet_id is not None:
             self.attach_detach_block_storage('detach', volume_name, region, attached_droplet_id)
         response = self.rest.delete(url)
         status = response.status_code
@@ -276,8 +285,8 @@ class DOBlockStorage(object):
         region = self.get_key_or_fail('region')
         droplet_id = self.get_key_or_fail('droplet_id')
         attached_droplet_id = self.get_attached_droplet_ID(volume_name, region)
-        if attached_droplet_id != None:
-            if attached_droplet_id==droplet_id:
+        if attached_droplet_id is not None:
+            if attached_droplet_id == droplet_id:
                 self.module.exit_json(changed=False)
             else:
                 self.attach_detach_block_storage('detach', volume_name, region, attached_droplet_id)
@@ -291,6 +300,7 @@ class DOBlockStorage(object):
         changed_status = self.attach_detach_block_storage('detach', volume_name, region, droplet_id)
         self.module.exit_json(changed=changed_status)
 
+
 def handle_request(module):
     block_storage = DOBlockStorage(module)
     command = module.params['command']
@@ -301,10 +311,11 @@ def handle_request(module):
         elif state == 'absent':
             block_storage.delete_block_storage()
     elif command == 'attach':
-        if state =='present':
+        if state == 'present':
             block_storage.attach_block_storage()
         elif state == 'absent':
             block_storage.detach_block_storage()
+
 
 def main():
     module = AnsibleModule(
@@ -329,7 +340,5 @@ def main():
         e = get_exception()
         module.fail_json(msg='Unable to load %s' % e.message)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

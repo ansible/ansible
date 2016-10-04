@@ -109,7 +109,7 @@ options:
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
   - As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes C(client_id) and C(api_key) options in favor of C(api_token).
-  - If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired. 
+  - If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired.
     Upgrade Ansible or, if unable to, try downloading the latest version of this module from github and putting it into a 'library' directory.
 requirements:
   - "python >= 2.6"
@@ -180,6 +180,8 @@ EXAMPLES = '''
 
 import os
 import time
+import traceback
+
 from distutils.version import LooseVersion
 
 HAS_DOPY = True
@@ -191,14 +193,20 @@ try:
 except ImportError:
     HAS_DOPY = False
 
-class TimeoutError(DoError):
-    def __init__(self, msg, id):
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
+
+class TimeoutError(Exception):
+    def __init__(self, msg, id_):
         super(TimeoutError, self).__init__(msg)
-        self.id = id
+        self.id = id_
+
 
 class JsonfyMixIn(object):
     def to_json(self):
         return self.__dict__
+
 
 class Droplet(JsonfyMixIn):
     manager = None
@@ -283,6 +291,7 @@ class Droplet(JsonfyMixIn):
         json = cls.manager.all_active_droplets()
         return map(cls, json)
 
+
 class SSH(JsonfyMixIn):
     manager = None
 
@@ -317,6 +326,7 @@ class SSH(JsonfyMixIn):
     def add(cls, name, key_pub):
         json = cls.manager.new_ssh_key(name, key_pub)
         return cls(json)
+
 
 def core(module):
     def getkeyordie(k):
@@ -385,7 +395,7 @@ def core(module):
             if not droplet:
                 module.exit_json(changed=False, msg='The droplet is not found.')
 
-            event_json = droplet.destroy()
+            droplet.destroy()
             module.exit_json(changed=True)
 
     elif command == 'ssh':
@@ -446,12 +456,9 @@ def main():
     try:
         core(module)
     except TimeoutError as e:
-        module.fail_json(msg=str(e), id=e.id)
+        module.fail_json(msg=to_native(e), id=e.id)
     except (DoError, Exception) as e:
-        module.fail_json(msg=str(e))
-
-# import module snippets
-from ansible.module_utils.basic import *
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 if __name__ == '__main__':
     main()

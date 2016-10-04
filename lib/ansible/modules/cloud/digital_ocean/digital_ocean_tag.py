@@ -105,6 +105,10 @@ data:
 '''
 
 import json
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 class Response(object):
@@ -123,7 +127,7 @@ class Response(object):
             return None
         try:
             return json.loads(self.body)
-        except ValueError as e:
+        except ValueError:
             return None
 
     @property
@@ -250,8 +254,5 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
