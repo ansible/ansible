@@ -20,16 +20,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections import defaultdict
-from six import iteritems
 
+from ansible.compat.six import iteritems
+from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import MagicMock, mock_open, patch
 from ansible.inventory import Inventory
 from ansible.playbook.play import Play
-from ansible.vars import VariableManager
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
+
+from ansible.vars import VariableManager
+
 
 class TestVariableManager(unittest.TestCase):
 
@@ -192,9 +195,7 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager()
         v._fact_cache = defaultdict(dict)
 
-        fake_loader = DictDataLoader({
-            # inventory1
-            '/etc/ansible/inventory1': """
+        inventory1_filedata = """
             [group2:children]
             group1
 
@@ -206,8 +207,11 @@ class TestVariableManager(unittest.TestCase):
 
             [group2:vars]
             group_var = group_var_from_inventory_group2
-            """,
+            """
 
+        fake_loader = DictDataLoader({
+            # inventory1
+            '/etc/ansible/inventory1': inventory1_filedata,
             # role defaults_only1
             '/etc/ansible/roles/defaults_only1/defaults/main.yml': """
             default_var: "default_var_from_defaults_only1"
@@ -231,7 +235,8 @@ class TestVariableManager(unittest.TestCase):
         })
 
         mock_basedir.return_value = './'
-        inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
+        with patch.object(builtins, 'open', mock_open(read_data=inventory1_filedata)):
+            inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
         inv1.set_playbook_basedir('./')
 
         play1 = Play.load(dict(
