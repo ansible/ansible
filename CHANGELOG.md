@@ -308,7 +308,6 @@ Ansible Changes By Release
 ###Deprecations
 Notice given that the following will be removed in Ansible 2.4:
 * Modules
-  * asa_template
   * eos_template
   * ios_template
   * iosxr_template
