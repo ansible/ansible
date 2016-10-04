@@ -405,7 +405,7 @@ MTAB_ENTRIES = \
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
 
-FINDMNT_OUTPUT = b"""
+FINDMNT_OUTPUT = u"""
 /sys                            sysfs                                sysfs           rw,nosuid,nodev,noexec,relatime,seclabel
 /proc                           proc                                 proc            rw,nosuid,nodev,noexec,relatime
 /dev                            devtmpfs                             devtmpfs        rw,nosuid,seclabel,size=8044400k,nr_inodes=2011100,mode=755

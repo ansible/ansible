@@ -5,6 +5,7 @@
 # to the complete work.
 #
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+# Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -2240,6 +2241,10 @@ class AnsibleModule(object):
                 # if we're checking for prompts, do it now
                 if prompt_re:
                     if prompt_re.search(stdout) and not data:
+                        if encoding:
+                            stdout = to_native(stdout, encoding=encoding, errors=errors)
+                        else:
+                            stdout = stdout
                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
