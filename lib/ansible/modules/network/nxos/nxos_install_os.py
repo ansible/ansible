@@ -29,8 +29,8 @@ notes:
       of failure and check actual module results. See EXAMPLE for more about
       this. The first task on the rescue block is needed to make sure the
       device has completed all checks and it started to reboot. The second
-      task is needed to wait the device to come back up. Last two tasks are
-      used to verify the installation process's been successful.
+      task is needed to wait for the device to come back up. The last two tasks
+      are used to verify the installation process was successful.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - You must know if your platform supports taking a kickstart image as a
