@@ -721,8 +721,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            os.chdir(self._loader.get_basedir())
             cwd = os.getcwd()
+            os.chdir(self._loader.get_basedir())
         try:
             rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         finally:
