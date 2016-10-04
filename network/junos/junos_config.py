@@ -43,8 +43,7 @@ options:
         to load into the remote system.  The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
-        This argument is mutually exclusive with the I(lines) and
-        I(parents) arguments.
+        This argument is mutually exclusive with the I(lines) argument.
     required: false
     default: null
     version_added: "2.2"
