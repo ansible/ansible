@@ -388,6 +388,7 @@ class StrategyBase:
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for handler_name in result_item['_ansible_notify']:
+                                found = False
                                 # Find the handler using the above helper.  First we look up the
                                 # dependency chain of the current task (if it's from a role), otherwise
                                 # we just look through the list of handlers in the current play/all
@@ -395,15 +396,15 @@ class StrategyBase:
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_name in self._listening_handlers[handler_name]:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
-                                        if listening_handler is None:
-                                            raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                                        if listening_handler is not None:
+                                            found = True
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
-
                                 else:
                                     target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
                                     if target_handler is not None:
+                                        found = True
                                         if original_host not in self._notified_handlers[target_handler]:
                                             self._notified_handlers[target_handler].append(original_host)
                                             # FIXME: should this be a callback?
@@ -411,17 +412,19 @@ class StrategyBase:
                                     else:
                                         # As there may be more than one handler with the notified name as the
                                         # parent, so we just keep track of whether or not we found one at all
-                                        found = False
                                         for target_handler in self._notified_handlers:
                                             if parent_handler_match(target_handler, handler_name):
                                                 self._notified_handlers[target_handler].append(original_host)
                                                 display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
                                                 found = True
 
-                                        # and if none were found, then we raise an error
-                                        if not found:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
-
+                                # and if none were found, then we raise an error
+                                if not found:
+                                  msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                  if C.ERROR_ON_MISSING_HANDLER:
+                                      raise AnsibleError(msg)
+                                  else:
+                                      display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
