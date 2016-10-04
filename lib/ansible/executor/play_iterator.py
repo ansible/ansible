@@ -80,7 +80,7 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s, did start at task? %s" % (
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did start at task? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
@@ -499,6 +499,10 @@ class PlayIterator:
     def _check_failed_state(self, state):
         if state is None:
             return False
+        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
+            return True
+        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
+            return True
         elif state.fail_state != self.FAILED_NONE:
             if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
                 return False
@@ -512,10 +516,6 @@ class PlayIterator:
                 return False
             else:
                 return True
-        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
-            return True
-        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
-            return True
         return False
 
     def is_failed(self, host):
