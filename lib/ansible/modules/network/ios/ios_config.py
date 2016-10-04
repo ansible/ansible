@@ -110,17 +110,6 @@ options:
     required: false
     default: false
     choices: ["true", "false"]
-  commit:
-    description:
-      - This argument specifies the update method to use when applying the
-        configuration changes to the remote node.  If the value is set to
-        I(merge) the configuration updates are merged with the running-
-        config.  If the value is set to I(check), no changes are made to
-        the remote host.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-    version_added: "2.2"
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -134,7 +123,7 @@ options:
     version_added: "2.2"
   config:
     description:
-      - The C(config) argument allows the playbook desginer to supply
+      - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
