@@ -33,15 +33,7 @@ Note:: on distributions with multiple python versions, use pip2 or pip2.x, where
 Active Directory Support
 ++++++++++++++++++++++++
 
-Ansible supports both local accounts and domain accounts on Windows, to use domain accounts you can use either of these authentication method;
-
-- NTLM
-- Kerberos
-
-NTLM authentication can be used on versions of pywinrm>=0.2.0 and does not need any special configuration on the Ansible control host. To use NTLM set ``ansible_winrm_transport=ntlm`` in the host_vars.
-
-To use Kerberos you will need to install the "python-kerberos" module on the Ansible control host (and the MIT krb5 libraries it depends on). The Ansible control host also requires a properly configured computer account in Active Directory.
-
+If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module on the Ansible control host (and the MIT krb5 libraries it depends on). The Ansible control host also requires a properly configured computer account in Active Directory.
 
 Installing python-kerberos dependencies
 ---------------------------------------
@@ -168,65 +160,17 @@ Ansible's windows support relies on a few standard variables to indicate the use
 
 .. include:: ../rst_common/ansible_ssh_changes_note.rst
 
-Examples
-++++++++
+In group_vars/windows.yml, define the following inventory variables::
 
-Below are some examples of how to set your inventory based on the auth method chosen. These should all be defined in the group_vars/windows.yml file.
+    # it is suggested that these be encrypted with ansible-vault:
+    # ansible-vault edit group_vars/windows.yml
 
-Basic Auth
-----------
-
-Inventory setup for Basic auth::
-
-   ansible_user: USER
-   ansible_password: SecretPasswordGoesHere
-   ansible_port: 5986
-   ansible_connection: winrm
-
-Certificate Auth
-----------------
-
-Inventory setup for Certificate auth::
-
-   ansible_port: 5986
-   ansible_connection: winrm
-   ansible_transport: certificate
-   ansible_winrm_cert_pem: path to the client authentication certificate file path in PEM format
-   ansible_winrm_cert_key_pem: path to the client authentication certificate key file path in PEM format
-
-
-Kerberos Auth
--------------
-
-Inventory setup for Kerberos auth, note: specifying ansible_password does not make any difference here, you need to have obtained a valid Kerberos ticket outside of Ansible for this to work::
-
-   ansible_user: USER@DOMAIN.COM
-   ansible_port: 5986
-   ansible_connection: winrm
-
-
-NTLM Auth
----------
-
-Inventory setup for NTLM auth::
-
-   ansible_user: DOMAIN\USER
-   ansible_password: SecretPasswordGoesHere
-   ansible_port: 5986
-   ansible_connection: winrm
-   ansible_transport: ntlm
-
-Other Options
--------------
-
-There are other inventory options you can set for additional configuration of the WinRM connections::
-
-* ``ansible_winrm_scheme``: Specify the connection scheme (``http`` or ``https``) to use for the WinRM connection.  Ansible uses ``https`` by default unless the port is 5985.
-* ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
-* ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
-* ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  When older versions of pywinrm <0.2.0, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
-* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
-* ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
+    ansible_user: Administrator
+    ansible_password: SecretPasswordGoesHere
+    ansible_port: 5986
+    ansible_connection: winrm
+    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    ansible_winrm_server_cert_validation: ignore
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
 
@@ -246,6 +190,15 @@ section about how to enable PowerShell remoting - and if necessary - how to upgr
 a version that is 3 or higher.
 
 You'll run this command again later though, to make sure everything is working.
+
+Since 2.0, the following custom inventory variables are also supported for additional configuration of WinRM connections::
+
+* ``ansible_winrm_scheme``: Specify the connection scheme (``http`` or ``https``) to use for the WinRM connection.  Ansible uses ``https`` by default unless the port is 5985.
+* ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
+* ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
+* ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
+* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
+* ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
 
@@ -288,100 +241,6 @@ PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows
 Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
 
 .. _what_windows_modules_are_available:
-
-Verifying Windows Configuration
-```````````````````````````````
-
-After you have set up the Windows host you can use the following commands to verify the setup to ensure Ansible can communicate with the host.
-
-Verify WinRM Listeners
-++++++++++++++++++++++
-
-To see what listeners are currently active you can run the following ``winrm`` command in PowerShell::
-
-   #!powershell
-   PS C:\> winrm enumerate winrm/config/listener
-
-   Listener
-       Address = *
-       Transport = HTTP
-       Port = 5985
-       Hostname
-       Enabled = true
-       URLPrefix = wsman
-       CertificateThumbprint
-       ListeningOn = 127.0.0.1, ::1
-
-   Listener
-       Address = *
-       Transport = HTTPS
-       Port = 5986
-       Hostname = WINDOWS-SERVER
-       Enabled = true
-       URLPrefix = wsman
-       CertificateThumbprint = 1234567890ABCDEF111213141516171819101A1B
-       ListeningOn = 127.0.0.1, ::1
-
-In the above example we can see both a HTTP and HTTPS listener has been created and are listening on ports 5985 and 5986 respectively.
-
-Verify Service Settings
-+++++++++++++++++++++++
-
-Once you have verified that WinRM is setup and listening on a port you can use ``winrm get winrm/config/service`` to get the configuration of the WinRM service::
-
-   #!powershell
-   PS C:\> winrm get winrm/config/service
-
-   Service
-       RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
-       MaxConcurrentOperations = 4294967295
-       MaxConcurrentOperationsPerUser = 1500
-       EnumerationTimeoutms = 240000
-       MaxConnections = 300
-       MaxPacketRetrievalTimeSeconds = 120
-       AllowUnencrypted = false
-       Auth
-           Basic = true
-           Kerberos = true
-           Negotiate = true
-           Certificate = false
-           CredSSP = false
-           CbtHardeningLevel = Relaxed
-       DefaultPorts
-           HTTP = 5985
-           HTTPS = 5986
-       IPv4Filter = *
-       IPv6Filter = *
-       EnableCompatibilityHttpListener = false
-       EnableCompatibilityHttpsListener = false
-       CertificateThumbprint
-       AllowRemoteAccess = true
-
-In the above example we are able to authenticate with the Windows host using:
-
-- Basic (local accounts only)
-- Kerberos (domain accounts only)
-- Negotiate [Kerberos/NTLM] (local and domain accounts)
-
-Because AllowUnencrypted is set to false we also have to use a HTTPS listener as pywinrm does not currently support encrypted WinRM messages over HTTP.
-
-The following section defines the purpose of each relevant value::
-
-* ``AllowUnencrypted``: When set to ``true`` allows WinRM messages to be sent without encryption.
-* ``Auth/Basic``: Allows basic authentication, only for local accounts
-* ``Auth/Kerberos``: Allows Kerberos authentication, only for domain accounts
-* ``Auth/Negotiate``: Leverages Windows SSPI for auth, used by NTLM and Kerberos
-* ``Auth/Certificate``: Allows certificate authentication, only for local accounts
-* ``Auth/CredSSP``: Allows CredSSP authentication for credential delegation (double-hop). Not currently supported by pywinrm
-* ``Auth/CbtHardeningLevel``: Channel Binding Token is either mandatory (``Strict``) or optional (``Relaxed``, ``None``). ``Strict`` not currently supported by pywinrm
-
-.. note::
-   It is highly recommended to not set AllowUnencrypted to true, please
-   use HTTPS endpoints wherever possible.
-
-   Double-hop authentication is currently supported by pywinrm with
-   the Kerberos auth method. Please set ``ansible_winrm_kerberos_delegation=true``
-   in host vars for this.
 
 What modules are available
 ``````````````````````````
