@@ -800,6 +800,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         res['results'].append('Nothing to do here, all packages are up to date')
         return res
     elif rc == 100:
+        # remove incorrect new lines in longer columns in output from yum check-update
+        out=re.sub('\n\W+', ' ', out)
         available_updates = out.split('\n')
         # build update dictionary
         for line in available_updates:
