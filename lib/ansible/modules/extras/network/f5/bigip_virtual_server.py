@@ -86,10 +86,11 @@ options:
       - List of rules to be applied in priority order
     required: false
     default: None
-  all_enabled_vlans:
+  enabled_vlans:
     version_added: "2.2"
     description:
-      - List of vlans to be enabled
+      - List of vlans to be enabled. When a VLAN named C(ALL) is used, all
+        VLANs will be allowed.
     required: false
     default: None
   pool:
@@ -132,7 +133,7 @@ EXAMPLES = '''
       all_profiles:
           - http
           - clientssl
-      all_enabled_vlans:
+      enabled_vlans:
           - /Common/vlan2
   delegate_to: localhost
 
@@ -272,7 +273,7 @@ def set_profiles(api, name, profiles_list):
     try:
         if profiles_list is None:
             return False
-        current_profiles = map(lambda x: x['profile_name'], get_profiles(api, name))
+        current_profiles = list(map(lambda x: x['profile_name'], get_profiles(api, name)))
         to_add_profiles = []
         for x in profiles_list:
             if x not in current_profiles:
@@ -297,24 +298,58 @@ def set_profiles(api, name, profiles_list):
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting profiles : %s' % e)
 
+
+def get_vlan(api, name):
+    return api.LocalLB.VirtualServer.get_vlan(
+        virtual_servers=[name]
+    )[0]
+
+
 def set_enabled_vlans(api, name, vlans_enabled_list):
     updated = False
+    to_add_vlans = []
     try:
         if vlans_enabled_list is None:
-            return False
+            return updated
+        current_vlans = get_vlan(api, name)
 
-        to_add_vlans = []
-        for x in vlans_enabled_list:
-            to_add_vlans.append(x)
+        # Set allowed list back to default ("all")
+        #
+        # This case allows you to undo what you may have previously done.
+        # The default case is "All VLANs and Tunnels". This case will handle
+        # that situation.
+        if 'ALL' in vlans_enabled_list:
+            # The user is coming from a situation where they previously
+            # were specifying a list of allowed VLANs
+            if len(current_vlans['vlans']) > 0 or \
+               current_vlans['state'] is "STATE_ENABLED":
+                api.LocalLB.VirtualServer.set_vlan(
+                    virtual_servers=[name],
+                    vlans=[{'state': 'STATE_DISABLED', 'vlans': []}]
+                )
+                updated = True
+        else:
+            if current_vlans['state'] is "STATE_DISABLED":
+                to_add_vlans = vlans_enabled_list
+            else:
+                for vlan in vlans_enabled_list:
+                    if vlan not in current_vlans['vlans']:
+                        updated = True
+                        to_add_vlans = vlans_enabled_list
+                        break
+            if updated:
+                api.LocalLB.VirtualServer.set_vlan(
+                    virtual_servers=[name],
+                    vlans=[{
+                        'state': 'STATE_ENABLED',
+                        'vlans': [to_add_vlans]
+                    }]
+                )
 
-        api.LocalLB.VirtualServer.set_vlan(
-            virtual_servers=[name],
-            vlans = [{ 'state':'STATE_ENABLED', 'vlans':[to_add_vlans] }]
-        )
-        updated = True
         return updated
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting enabled vlans : %s' % e)
+
 
 def set_snat(api, name, snat):
     updated = False
@@ -488,7 +523,7 @@ def main():
         port=dict(type='int'),
         all_profiles=dict(type='list'),
         all_rules=dict(type='list'),
-        all_enabled_vlans=dict(type='list'),
+        enabled_vlans=dict(type='list'),
         pool=dict(type='str'),
         description=dict(type='str'),
         snat=dict(type='str'),
@@ -521,7 +556,13 @@ def main():
     port = module.params['port']
     all_profiles = fq_list_names(partition, module.params['all_profiles'])
     all_rules = fq_list_names(partition, module.params['all_rules'])
-    all_enabled_vlans = fq_list_names(partition, module.params['all_enabled_vlans'])
+
+    enabled_vlans = module.params['enabled_vlans']
+    if enabled_vlans is None or 'ALL' in enabled_vlans:
+        all_enabled_vlans = enabled_vlans
+    else:
+        all_enabled_vlans = fq_list_names(partition, enabled_vlans)
+
     pool = fq_name(partition, module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
