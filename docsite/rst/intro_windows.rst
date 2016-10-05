@@ -171,7 +171,7 @@ Ansible's windows support relies on a few standard variables to indicate the use
 Examples
 ++++++++
 
-Below are some examples of how to set your inventory based on the auth method chosen. THese should all be defined in the group_vars/windows.yml file.
+Below are some examples of how to set your inventory based on the auth method chosen. These should all be defined in the group_vars/windows.yml file.
 
 Basic Auth
 ----------
@@ -292,12 +292,12 @@ Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <h
 Verifying Windows Configuration
 ```````````````````````````````
 
-After you have set up the Windows host you can use the following commands to verify the setup to ensure Ansible can communite with the host.
+After you have set up the Windows host you can use the following commands to verify the setup to ensure Ansible can communicate with the host.
 
 Verify WinRM Listeners
 ++++++++++++++++++++++
 
-To see what listeners are currently active you can run ``winrm enumerate winrm/config/listener`` the following command in PowerShell::
+To see what listeners are currently active you can run the following ``winrm`` command in PowerShell::
 
    #!powershell
    PS C:\> winrm enumerate winrm/config/listener
@@ -327,7 +327,7 @@ In the above example we can see both a HTTP and HTTPS listener has been created 
 Verify Service Settings
 +++++++++++++++++++++++
 
-Once you have verified that WinRM is setup and listener on a port you can use ``winrm get winrm/config/service`` to get the configuration of the WinRM service::
+Once you have verified that WinRM is setup and listening on a port you can use ``winrm get winrm/config/service`` to get the configuration of the WinRM service::
 
    #!powershell
    PS C:\> winrm get winrm/config/service
@@ -357,7 +357,7 @@ Once you have verified that WinRM is setup and listener on a port you can use ``
        CertificateThumbprint
        AllowRemoteAccess = true
 
-In the above example we are able to authenticate with the Windows host using
+In the above example we are able to authenticate with the Windows host using:
 
 - Basic (local accounts only)
 - Kerberos (domain accounts only)
