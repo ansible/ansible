@@ -464,7 +464,7 @@ from ansible.module_utils.basic import *
 try:
     from compose import __version__ as compose_version
     from compose.cli.command import project_from_options
-    from compose.service import ConvergenceStrategy
+    from compose.service import ConvergenceStrategy, NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
     from compose.const import DEFAULT_TIMEOUT
 except ImportError as exc:
@@ -484,7 +484,7 @@ AUTH_PARAM_MAPPING = {
     u'tls_verify': u'--tlsverify'
 }
 
-
+    
 class ContainerManager(DockerBaseClass):
 
     def __init__(self, client):
@@ -598,11 +598,11 @@ class ContainerManager(DockerBaseClass):
         return options
 
     def cmd_up(self):
-
+    
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, actions=dict(), ansible_facts=dict())
+        result = dict(changed=False, actions=[], ansible_facts=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -624,26 +624,29 @@ class ContainerManager(DockerBaseClass):
         self.log("convergence strategy: %s" % converge)
 
         if self.pull:
-            result.update(self.cmd_pull())
+            pull_output = self.cmd_pull()
+            result['changed'] = pull_output['changed']  
+            result['actions'] += pull_output['actions']
 
         if self.build:
-            result.update(self.cmd_build())
+            build_output = self.cmd_build()
+            result['changed'] = build_output['changed']  
+            result['actions'] += build_output['actions']
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
                 plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
-                if self.debug or self.check_mode:
-                    if not result['actions'].get(service.name):
-                        result['actions'][service.name] = dict()
-                    result['actions'][service.name][plan.action] = []
+                    result_action = dict(service=service.name) 
+                    result_action[plan.action] = []                      
                     for container in plan.containers:
-                        result['actions'][service.name][plan.action].append(dict(
+                        result_action[plan.action].append(dict(
                             id=container.id,
                             name=container.name,
                             short_id=container.short_id,
                         ))
+                    result['actions'].append(result_action)
 
         if not self.check_mode and result['changed']:
             try:
@@ -661,13 +664,19 @@ class ContainerManager(DockerBaseClass):
                 self.client.fail("Error starting project - %s" % str(exc))
 
         if self.stopped:
-            result.update(self.cmd_stop(service_names))
+            stop_output = self.cmd_stop(service_names)
+            result['changed'] = stop_output['changed']  
+            result['actions'] += stop_output['actions']
 
         if self.restarted:
-            result.update(self.cmd_restart(service_names))
+            restart_output = self.cmd_restart(service_names)
+            result['changed'] = restart_output['changed']  
+            result['actions'] += restart_output['actions']
 
         if self.scale:
-            result.update(self.cmd_scale())
+            scale_output = self.cmd_scale()
+            result['changed'] = scale_output['changed']  
+            result['actions'] += scale_output['actions']
 
         for service in self.project.services:
             result['ansible_facts'][service.name] = dict()
@@ -729,105 +738,131 @@ class ContainerManager(DockerBaseClass):
     def cmd_pull(self):
         result = dict(
             changed=False,
-            actions=dict(),
+            actions=[],
         )
 
         if not self.check_mode:
             for service in self.project.get_services(self.services, include_deps=False):
+                if 'image' not in service.options:
+                    continue 
+
                 self.log('Pulling image for service %s' % service.name)
                 # store the existing image ID
-                image = service.image()
-                old_image_id = None
-                if image and image.get('Id'):
-                    old_image_id = image['Id']
+                old_image_id = ''
+                try:
+                    image = service.image()
+                    if image and image.get('Id'):
+                        old_image_id = image['Id']
+                except NoSuchImageError:
+                    pass
+                except Exception as exc:
+                    self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
                 # pull the image
-                service.pull(ignore_pull_failures=False)
+                try:
+                    service.pull(ignore_pull_failures=False)
+                except Exception as exc:
+                    self.client.fail("Error: pull failed with %s" % str(exc)) 
 
                 # store the new image ID
-                image = service.image()
-                new_image_id = None
-                if image and image.get('Id'):
-                    new_image_id = image['Id']
+                new_image_id = '' 
+                try:
+                    image = service.image()
+                    if image and image.get('Id'):
+                        new_image_id = image['Id']
+                except NoSuchImageError as exc:
+                    self.client.fail("Error: service image lookup failed after pull - %s" % str(exc))    
 
                 if new_image_id != old_image_id:
                     # if a new image was pulled
                     result['changed'] = True
-                    result['actions'][service.name] = dict()
-                    result['actions'][service.name]['pulled_image'] = dict(
-                        name=service.image_name,
-                        id=service.image()['Id']
-                    )
+                    result['actions'].append(dict(
+                        service=service.name,
+                        pulled_image=dict(
+                            name=service.image_name,
+                            id=new_image_id
+                        )
+                    ))
         return result
 
     def cmd_build(self):
         result = dict(
             changed=False,
-            actions=dict(),
+            actions=[]
         )
         if not self.check_mode:
             for service in self.project.get_services(self.services, include_deps=False):
-                self.log('Building image for service %s' % service.name)
                 if service.can_be_built():
+                    self.log('Building image for service %s' % service.name)
                     # store the existing image ID
-                    image = service.image()
-                    old_image_id = None
-                    if image and image.get('Id'):
-                        old_image_id = image['Id']
+                    old_image_id = ''
+                    try:
+                        image = service.image()
+                        if image and image.get('Id'):
+                            old_image_id = image['Id']
+                    except NoSuchImageError:
+                        pass
+                    except Exception as exc:
+                        self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
                     # build the image
-                    new_image_id = service.build(pull=True, no_cache=self.nocache)
+                    try:
+                        new_image_id = service.build(pull=True, no_cache=self.nocache)
+                    except Exception as exc:
+                        self.client.fail("Error: build failed with %s" % str(exc)) 
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
                         result['changed'] = True
-                        result['actions'][service.name] = dict()
-                        result['actions'][service.name]['built_image'] = dict(
-                            name=service.image_name,
-                            id=service.image()['Id']
-                        )
+                        result['actions'].append(dict(
+                            service=service.name, 
+                            built_image=dict(
+                                name=service.image_name,
+                                id=new_image_id
+                            )
+                        ))
         return result
 
     def cmd_down(self):
         result = dict(
             changed=False,
-            actions=dict(),
+            actions=[]
         )
-
         for service in self.project.services:
             containers = service.containers(stopped=True)
             if len(containers):
                 result['changed'] = True
-            if self.debug or self.check_mode:
-                result['actions'][service.name] = dict()
-                result['actions'][service.name]['deleted'] = [container.name for container in containers]
-
+            result['actions'].append(dict(
+                service=service.name,
+                deleted=[container.name for container in containers]
+            ))
         if not self.check_mode and result['changed']:
             image_type = image_type_from_opt('--rmi', self.remove_images)
             try:
                 self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
                 self.client.fail("Error stopping project - %s" % str(exc))
-
         return result
 
     def cmd_stop(self, service_names):
         result = dict(
             changed=False,
-            actions=dict()
+            actions=[]
         )
         for service in self.project.services:
             if not service_names or service.name in service_names:
-                result['actions'][service.name] = dict()
-                result['actions'][service.name]['stop'] = []
+                service_res = dict(
+                    service=service.name,
+                    stop=[]
+                ) 
                 for container in service.containers(stopped=False):
                     result['changed'] = True
-                    if self.debug:
-                        result['actions'][service.name]['stop'].append(dict(
-                            id=container.id,
-                            name=container.name,
-                            short_id=container.short_id,
-                        ))
+                    service_res['stop'].append(dict(
+                        id=container.id,
+                        name=container.name,
+                        short_id=container.short_id
+                    ))
+                result['actions'].append(service_res)
 
         if not self.check_mode and result['changed']:
             try:
@@ -840,22 +875,24 @@ class ContainerManager(DockerBaseClass):
     def cmd_restart(self, service_names):
         result = dict(
             changed=False,
-            actions=dict()
+            actions=[]
         )
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
-                result['actions'][service.name] = dict()
-                result['actions'][service.name]['restart'] = []
+                service_res = dict(
+                    service=service.name,
+                    restart=[]
+                )
                 for container in service.containers(stopped=True):
                     result['changed'] = True
-                    if self.debug or self.check_mode:
-                        result['actions'][service.name]['restart'].append(dict(
-                            id=container.id,
-                            name=container.name,
-                            short_id=container.short_id,
-                        ))
-
+                    service_res['restart'].append(dict(
+                        id=container.id,
+                        name=container.name,
+                        short_id=container.short_id
+                    ))
+                result['actions'].append(service_res)
+         
         if not self.check_mode and result['changed']:
             try:
                 self.project.restart(service_names=service_names, timeout=self.timeout)
@@ -867,22 +904,25 @@ class ContainerManager(DockerBaseClass):
     def cmd_scale(self):
         result = dict(
             changed=False,
-            actions=dict()
+            actions=[]
         )
 
         for service in self.project.services:
             if service.name in self.scale:
-                result['actions'][service.name] = dict()
+                service_res = dict(
+                    service=service.name,
+                    scale=0
+                )
                 containers = service.containers(stopped=True)
                 if len(containers) != self.scale[service.name]:
                     result['changed'] = True
-                    if self.debug or self.check_mode:
-                        result['actions'][service.name]['scale'] = self.scale[service.name] - len(containers)
+                    service_res['scale'] = self.scale[service.name] - len(containers)
                     if not self.check_mode:
                         try:
                             service.scale(int(self.scale[service.name]))
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
+                    result['actions'].append(service_res) 
         return result
 
 
