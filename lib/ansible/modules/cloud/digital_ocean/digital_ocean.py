@@ -184,17 +184,22 @@ import traceback
 
 from distutils.version import LooseVersion
 
-HAS_DOPY = True
+try:
+    import six
+    HAS_SIX = True
+except ImportError:
+    HAS_SIX = False
+
+HAS_DOPY = False
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-    if LooseVersion(dopy.__version__) < LooseVersion('0.3.2'):
-        HAS_DOPY = False
+    if LooseVersion(dopy.__version__) >= LooseVersion('0.3.2'):
+        HAS_DOPY = True
 except ImportError:
-    HAS_DOPY = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
 
 class TimeoutError(Exception):
@@ -450,15 +455,17 @@ def main():
             ['id', 'name'],
         ),
     )
+    if not HAS_DOPY and not HAS_SIX:
+        module.fail_json(msg='dopy >= 0.3.2 is required for this module.  dopy requires six but six is not installed.  Make sure both dopy and six are installed.')
     if not HAS_DOPY:
         module.fail_json(msg='dopy >= 0.3.2 required for this module')
 
     try:
         core(module)
     except TimeoutError as e:
-        module.fail_json(msg=to_native(e), id=e.id)
+        module.fail_json(msg=str(e), id=e.id)
     except (DoError, Exception) as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 if __name__ == '__main__':
     main()
