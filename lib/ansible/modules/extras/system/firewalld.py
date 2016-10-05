@@ -61,7 +61,7 @@ options:
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
     description:
-      - "Should this configuration be in the running firewalld configuration or persist across reboots."
+      - "Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can operate on firewalld configs when it's not running (requires firewalld >= 3.0.9)"
     required: false
     default: null
   immediate:
@@ -88,7 +88,7 @@ options:
     version_added: "2.1"
 notes:
   - Not tested on any Debian based system.
-  - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3 
+  - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
 '''
@@ -104,20 +104,32 @@ EXAMPLES = '''
 - firewalld: masquerade=yes state=enabled permanent=true zone=dmz
 '''
 
-import os
-import re
+fw = None
+fw_offline = False
+Rich_Rule = None
+FirewallClientZoneSettings = None
 
-try:
-    import firewall.config
-    FW_VERSION = firewall.config.VERSION
+#####################
+# fw_offline helpers
+#
 
-    from firewall.client import Rich_Rule
-    from firewall.client import FirewallClient
-    fw = FirewallClient()
-    HAS_FIREWALLD = True
-except ImportError:
-    HAS_FIREWALLD = False
+def get_fw_zone_settings(zone):
+    if fw_offline:
+        fw_zone = fw.config.get_zone(zone)
+        fw_settings = FirewallClientZoneSettings(
+            list(fw.config.get_zone_config(fw_zone))
+        )
+    else:
+        fw_zone = fw.config().getZoneByName(zone)
+        fw_settings = fw_zone.getSettings()
 
+    return (fw_zone, fw_settings)
+
+def update_fw_settings(fw_zone, fw_settings):
+    if fw_offline:
+        fw.config.set_zone_config(fw_zone, fw_settings.settings)
+    else:
+        fw_zone.update(fw_settings)
 
 #####################
 # masquerade handling
@@ -129,13 +141,13 @@ def get_masquerade_enabled(zone):
         return False
 
 def get_masquerade_enabled_permanent(zone):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     if fw_settings.getMasquerade() == True:
         return True
     else:
         return False
-    
+
+
 def set_masquerade_enabled(zone):
     fw.addMasquerade(zone)
 
@@ -143,16 +155,21 @@ def set_masquerade_disabled(zone):
     fw.removeMasquerade(zone)
 
 def set_masquerade_permanent(zone, masquerade):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.setMasquerade(masquerade)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 ################
 # port handling
 #
 def get_port_enabled(zone, port_proto):
-    if port_proto in fw.getPorts(zone):
+    if fw_offline:
+        fw_zone, fw_settings = get_fw_zone_settings(zone)
+        ports_list = fw_settings.getPorts()
+    else:
+        ports_list = fw.getPorts(zone)
+
+    if port_proto in ports_list:
         return True
     else:
         return False
@@ -164,52 +181,52 @@ def set_port_disabled(zone, port, protocol):
     fw.removePort(zone, port, protocol)
 
 def get_port_enabled_permanent(zone, port_proto):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
+
     if tuple(port_proto) in fw_settings.getPorts():
         return True
     else:
         return False
 
 def set_port_enabled_permanent(zone, port, protocol):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.addPort(port, protocol)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 def set_port_disabled_permanent(zone, port, protocol):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.removePort(port, protocol)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 ####################
 # source handling
 #
 def get_source(zone, source):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     if source in fw_settings.getSources():
        return True
     else:
         return False
 
 def add_source(zone, source):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.addSource(source)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 def remove_source(zone, source):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.removeSource(source)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 ####################
 # interface handling
 #
 def get_interface(zone, interface):
+    if fw_offline:
+        fw_zone, fw_settings = get_fw_zone_settings(zone)
+        interface_list = fw_settings.getInterfaces()
+    else:
+        interface_list = fw.getInterfaces(zone)
     if interface in fw.getInterfaces(zone):
         return True
     else:
@@ -222,31 +239,55 @@ def remove_interface(zone, interface):
     fw.removeInterface(zone, interface)
 
 def get_interface_permanent(zone, interface):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
+
     if interface in fw_settings.getInterfaces():
        return True
     else:
         return False
 
 def change_zone_of_interface_permanent(zone, interface):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
-    old_zone_name = fw.config().getZoneOfInterface(interface)
-    if old_zone_name != zone:
-        if old_zone_name:
-            old_zone_obj = fw.config().getZoneByName(old_zone_name)
-            old_zone_settings = old_zone_obj.getSettings()
-            old_zone_settings.removeInterface(interface) # remove from old
-            old_zone_obj.update(old_zone_settings)
-        fw_settings.addInterface(interface)              # add to new
-        fw_zone.update(fw_settings)
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
+    if fw_offline:
+        iface_zone_objs = [ ]
+        for zone in fw.config.get_zones():
+            old_zone_obj = fw.config.get_zone(zone)
+            if interface in old_zone_obj.interfaces:
+                iface_zone_objs.append(old_zone_obj)
+        if len(iface_zone_objs) > 1:
+            # Even it shouldn't happen, it's actually possible that
+            # the same interface is in several zone XML files
+            module.fail_json(
+                msg = 'ERROR: interface {} is in {} zone XML file, can only be in one'.format(
+                    interface,
+                    len(iface_zone_objs)
+                )
+            )
+        old_zone_obj = iface_zone_objs[0]
+        if old_zone_obj.name != zone:
+            old_zone_settings = FirewallClientZoneSettings(
+                fw.config.get_zone_config(old_zone_obj)
+            )
+            old_zone_settings.removeInterface(interface)    # remove from old
+            fw.config.set_zone_config(old_zone_obj, old_zone_settings.settings)
+
+            fw_settings.addInterface(interface)             # add to new
+            fw.config.set_zone_config(fw_zone, fw_settings.settings)
+    else:
+        old_zone_name = fw.config().getZoneOfInterface(interface)
+        if old_zone_name != zone:
+            if old_zone_name:
+                old_zone_obj = fw.config().getZoneByName(old_zone_name)
+                old_zone_settings = old_zone_obj.getSettings()
+                old_zone_settings.removeInterface(interface) # remove from old
+                old_zone_obj.update(old_zone_settings)
+            fw_settings.addInterface(interface)              # add to new
+            fw_zone.update(fw_settings)
 
 def remove_interface_permanent(zone, interface):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.removeInterface(interface)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 ####################
 # service handling
@@ -264,25 +305,22 @@ def set_service_disabled(zone, service):
     fw.removeService(zone, service)
 
 def get_service_enabled_permanent(zone, service):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
+
     if service in fw_settings.getServices():
         return True
     else:
         return False
 
 def set_service_enabled_permanent(zone, service):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.addService(service)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 def set_service_disabled_permanent(zone, service):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.removeService(service)
-    fw_zone.update(fw_settings)
-
+    update_fw_settings(fw_zone, fw_settings)
 
 ####################
 # rich rule handling
@@ -303,8 +341,7 @@ def set_rich_rule_disabled(zone, rule):
     fw.removeRichRule(zone, rule)
 
 def get_rich_rule_enabled_permanent(zone, rule):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     # Convert the rule string to standard format
     # before checking whether it is present
     rule = str(Rich_Rule(rule_str=rule))
@@ -314,16 +351,14 @@ def get_rich_rule_enabled_permanent(zone, rule):
         return False
 
 def set_rich_rule_enabled_permanent(zone, rule):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.addRichRule(rule)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 def set_rich_rule_disabled_permanent(zone, rule):
-    fw_zone = fw.config().getZoneByName(zone)
-    fw_settings = fw_zone.getSettings()
+    fw_zone, fw_settings = get_fw_zone_settings(zone)
     fw_settings.removeRichRule(rule)
-    fw_zone.update(fw_settings)
+    update_fw_settings(fw_zone, fw_settings)
 
 
 def main():
@@ -343,25 +378,73 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    ## Handle running (online) daemon vs non-running (offline) daemon
+    global fw
+    global fw_offline
+    global Rich_Rule
+    global FirewallClientZoneSettings
+
+    ## Imports
+    try:
+        import firewall.config
+        FW_VERSION = firewall.config.VERSION
+
+        from firewall.client import Rich_Rule
+        from firewall.client import FirewallClient
+        HAS_FIREWALLD = True
+        fw = None
+        fw_offline = False
+
+        try:
+            fw = FirewallClient()
+            fw.getDefaultZone()
+        except AttributeError:
+            ## Firewalld is not currently running, permanent-only operations
+
+            ## Import other required parts of the firewalld API
+            ##
+            ## NOTE:
+            ##  online and offline operations do not share a common firewalld API
+            from firewall.core.fw_test import Firewall_test
+            from firewall.client import FirewallClientZoneSettings
+            fw = Firewall_test()
+            fw.start()
+            fw_offline = True
+
+    except ImportError:
+        HAS_FIREWALLD = False
+
+    if not HAS_FIREWALLD:
+        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations)')
+
+    if fw_offline:
+        ## Pre-run version checking
+        if FW_VERSION < "0.3.9":
+            module.fail_json(msg='unsupported version of firewalld, offline operations require >= 3.0.9')
+    else:
+        ## Pre-run version checking
+        if FW_VERSION < "0.2.11":
+            module.fail_json(msg='unsupported version of firewalld, requires >= 2.0.11')
+
+        ## Check for firewalld running
+        try:
+            if fw.connected == False:
+                module.fail_json(msg='firewalld service must be running, or try with offline=true')
+        except AttributeError:
+            module.fail_json(msg="firewalld connection can't be established,\
+                    installed version (%s) likely too old. Requires firewalld >= 2.0.11" % FW_VERSION)
+
+
+    ## Verify required params are provided
     if module.params['source'] == None and module.params['permanent'] == None:
         module.fail_json(msg='permanent is a required parameter')
 
     if module.params['interface'] != None and module.params['zone'] == None:
         module.fail(msg='zone is a required parameter')
 
-    if not HAS_FIREWALLD:
-        module.fail_json(msg='firewalld and its python 2 module are required for this module')
-
-    ## Pre-run version checking
-    if FW_VERSION < "0.2.11":
-        module.fail_json(msg='unsupported version of firewalld, requires >= 2.0.11')
-    ## Check for firewalld running
-    try:
-        if fw.connected == False:
-            module.fail_json(msg='firewalld service must be running')
-    except AttributeError:
-        module.fail_json(msg="firewalld connection can't be established,\
-                installed version (%s) likely too old. Requires firewalld >= 2.0.11" % FW_VERSION)
+    if module.params['immediate'] and fw_offiline:
+        module.fail(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
     ## Global Vars
     changed=False
@@ -379,7 +462,10 @@ def main():
     if module.params['zone'] != None:
         zone = module.params['zone']
     else:
-        zone = fw.getDefaultZone()
+        if fw_offline:
+            zone = fw.get_default_zone()
+        else:
+            zone = fw.getDefaultZone()
 
     permanent = module.params['permanent']
     desired_state = module.params['state']
@@ -592,7 +678,7 @@ def main():
         if permanent:
             is_enabled = get_masquerade_enabled_permanent(zone)
             msgs.append('Permanent operation')
-            
+
             if desired_state == "enabled":
                 if is_enabled == False:
                     if module.check_mode:
@@ -612,7 +698,7 @@ def main():
         if immediate or not permanent:
             is_enabled = get_masquerade_enabled(zone)
             msgs.append('Non-permanent operation')
-            
+
             if desired_state == "enabled":
                 if is_enabled == False:
                     if module.check_mode:
@@ -630,6 +716,8 @@ def main():
                     changed=True
                     msgs.append("Removed masquerade from zone %s" % (zone))
 
+    if fw_offline:
+        msgs.append("(offline operation: only on-disk configs were altered)")
     module.exit_json(changed=changed, msg=', '.join(msgs))
 
 
