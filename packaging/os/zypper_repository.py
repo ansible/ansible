@@ -98,7 +98,13 @@ options:
         default: "no"
         choices: ["yes", "no"]
         version_added: "2.2"
-
+    enabled:
+        description:
+            - Set repository to enabled (or disabled).
+        required: false
+        default: "yes"
+        choices: ["yes", "no"]
+        version_added: "2.2"
 
 
 requirements: 
