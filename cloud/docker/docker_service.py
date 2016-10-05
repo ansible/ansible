@@ -464,7 +464,7 @@ from ansible.module_utils.basic import *
 try:
     from compose import __version__ as compose_version
     from compose.cli.command import project_from_options
-    from compose.service import ConvergenceStrategy
+    from compose.service import ConvergenceStrategy, NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
     from compose.const import DEFAULT_TIMEOUT
 except ImportError as exc:
@@ -736,19 +736,30 @@ class ContainerManager(DockerBaseClass):
             for service in self.project.get_services(self.services, include_deps=False):
                 self.log('Pulling image for service %s' % service.name)
                 # store the existing image ID
-                image = service.image()
-                old_image_id = None
-                if image and image.get('Id'):
-                    old_image_id = image['Id']
+                old_image_id = ''
+                try:
+                    image = service.image()
+                    if image and image.get('Id'):
+                        old_image_id = image['Id']
+                except NoSuchImageError:
+                    pass
+                except Exception as exc:
+                    self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
                 # pull the image
-                service.pull(ignore_pull_failures=False)
+                try:
+                    service.pull(ignore_pull_failures=False)
+                except Exception as exc:
+                    self.client.fail("Error: pull failed with %s" % str(exc)) 
 
                 # store the new image ID
-                image = service.image()
-                new_image_id = None
-                if image and image.get('Id'):
-                    new_image_id = image['Id']
+                new_image_id = '' 
+                try:
+                    image = service.image()
+                    if image and image.get('Id'):
+                        new_image_id = image['Id']
+                except NoSuchImageError as exc:
+                    self.client.fail("Error: service image lookup failed after pull - %s" % str(exc))    
 
                 if new_image_id != old_image_id:
                     # if a new image was pulled
@@ -756,7 +767,7 @@ class ContainerManager(DockerBaseClass):
                     result['actions'][service.name] = dict()
                     result['actions'][service.name]['pulled_image'] = dict(
                         name=service.image_name,
-                        id=service.image()['Id']
+                        id=new_image_id
                     )
         return result
 
@@ -770,13 +781,21 @@ class ContainerManager(DockerBaseClass):
                 self.log('Building image for service %s' % service.name)
                 if service.can_be_built():
                     # store the existing image ID
-                    image = service.image()
-                    old_image_id = None
-                    if image and image.get('Id'):
-                        old_image_id = image['Id']
+                    old_image_id = ''
+                    try:
+                        image = service.image()
+                        if image and image.get('Id'):
+                            old_image_id = image['Id']
+                    except NoSuchImageError:
+                        pass
+                    except Exception as exc:
+                        self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
                     # build the image
-                    new_image_id = service.build(pull=True, no_cache=self.nocache)
+                    try:
+                        new_image_id = service.build(pull=True, no_cache=self.nocache)
+                    except Exception as exc:
+                        self.client.fail("Error: build failed with %s" % str(exc)) 
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
@@ -784,7 +803,7 @@ class ContainerManager(DockerBaseClass):
                         result['actions'][service.name] = dict()
                         result['actions'][service.name]['built_image'] = dict(
                             name=service.image_name,
-                            id=service.image()['Id']
+                            id=new_image_id
                         )
         return result
 
