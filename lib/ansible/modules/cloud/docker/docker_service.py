@@ -452,6 +452,9 @@ HAS_COMPOSE = True
 HAS_COMPOSE_EXC = None
 MINIMUM_COMPOSE_VERSION = '1.7.0'
 
+import sys
+import re
+
 try:
     import yaml
 except ImportError as exc:
@@ -463,6 +466,7 @@ from ansible.module_utils.basic import *
 
 try:
     from compose import __version__ as compose_version
+    from compose.project import ProjectError
     from compose.cli.command import project_from_options
     from compose.service import ConvergenceStrategy, NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
@@ -473,6 +477,7 @@ except ImportError as exc:
     DEFAULT_TIMEOUT = 10
 
 from ansible.module_utils.docker_common import *
+from contextlib import contextmanager
 
 
 AUTH_PARAM_MAPPING = {
@@ -484,7 +489,32 @@ AUTH_PARAM_MAPPING = {
     u'tls_verify': u'--tlsverify'
 }
 
-    
+
+@contextmanager
+def stdout_redirector(path_name):
+    old_stdout = sys.stdout  
+    fd = open(path_name, 'w')
+    sys.stdout = fd
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout    
+
+def get_stdout(path_name):
+    full_stdout = ''
+    last_line = '' 
+    with open(path_name, 'r') as fd:
+        for line in fd:
+            # strip terminal format/color chars
+            new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
+            full_stdout += new_line
+            if new_line.strip():
+               # Assuming last line contains the error message 
+               last_line = new_line.strip().encode('utf-8')
+    fd.close()
+    os.remove(path_name)
+    return full_stdout, last_line
+
 class ContainerManager(DockerBaseClass):
 
     def __init__(self, client):
@@ -649,19 +679,25 @@ class ContainerManager(DockerBaseClass):
                     result['actions'].append(result_action)
 
         if not self.check_mode and result['changed']:
+            _, fd_name = tempfile.mkstemp(prefix="ansible")
             try:
-                do_build = build_action_from_opts(up_options)
-                self.log('Setting do_build to %s' % do_build)
-                self.project.up(
-                    service_names=service_names,
-                    start_deps=start_deps,
-                    strategy=converge,
-                    do_build=do_build,
-                    detached=detached,
-                    remove_orphans=self.remove_orphans,
-                    timeout=self.timeout)
+                with stdout_redirector(fd_name):
+                    do_build = build_action_from_opts(up_options)
+                    self.log('Setting do_build to %s' % do_build)
+                    self.project.up(
+                        service_names=service_names,
+                        start_deps=start_deps,
+                        strategy=converge,
+                        do_build=do_build,
+                        detached=detached,
+                        remove_orphans=self.remove_orphans,
+                        timeout=self.timeout)
             except Exception as exc:
-                self.client.fail("Error starting project - %s" % str(exc))
+                full_stdout, last_line= get_stdout(fd_name)
+                self.client.module.fail_json(msg="Error starting project %s" % str(exc), module_stderr=last_line,
+                                             module_stdout=full_stdout)
+            else:
+                get_stdout(fd_name)
 
         if self.stopped:
             stop_output = self.cmd_stop(service_names)
@@ -863,13 +899,17 @@ class ContainerManager(DockerBaseClass):
                         short_id=container.short_id
                     ))
                 result['actions'].append(service_res)
-
         if not self.check_mode and result['changed']:
+            _, fd_name = tempfile.mkstemp(prefix="ansible")
             try:
-                self.project.stop(service_names=service_names, timeout=self.timeout)
+                with stdout_redirector(fd_name):
+                    self.project.stop(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
-                self.client.fail("Error stopping services for %s - %s" % (self.project.name, str(exc)))
-
+                full_stdout, last_line = get_stdout(fd_name)
+                self.client.module.fail_json(msg="Error stopping project %s" % str(exc), module_stderr=last_line,
+                                             module_stdout=full_stdout)
+            else:
+                get_stdout(fd_name)
         return result
 
     def cmd_restart(self, service_names):
@@ -894,11 +934,16 @@ class ContainerManager(DockerBaseClass):
                 result['actions'].append(service_res)
          
         if not self.check_mode and result['changed']:
+            _, fd_name = tempfile.mkstemp(prefix="ansible")
             try:
-                self.project.restart(service_names=service_names, timeout=self.timeout)
+                with stdout_redirector(fd_name):
+                    self.project.restart(service_names=service_names, timeout=self.timeout)
             except Exception as exc:
-                self.client.fail("Error restarting services for %s - %s" % (self.project.name, str(exc)))
-
+                full_stdout, last_line = get_stdout(fd_name)
+                self.client.module.fail_json(msg="Error restarting project %s" % str(exc), module_stderr=last_line,
+                                             module_stdout=full_stdout)
+            else:
+                get_stdout(fd_name)
         return result
 
     def cmd_scale(self):
@@ -906,7 +951,6 @@ class ContainerManager(DockerBaseClass):
             changed=False,
             actions=[]
         )
-
         for service in self.project.services:
             if service.name in self.scale:
                 service_res = dict(
