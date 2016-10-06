@@ -72,6 +72,7 @@ options:
        - Volume source to create from
      required: false
      default: None
+     version_added: "2.3"
    state:
      description:
        - Should the resource be present or absent.
