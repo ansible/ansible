@@ -16,6 +16,8 @@ Ansible Changes By Release
   the old overwriting behaviour via the config option.  In 2.5, multiple --tags
   options will be merged with no way to go back to the old behaviour.
 
+###New Modules:
+- archive
 
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
@@ -58,7 +60,6 @@ Ansible Changes By Release
 
 ####New Modules:
 - apache2_mod_proxy
-- archive
 - asa
   * asa_acl
   * asa_command
