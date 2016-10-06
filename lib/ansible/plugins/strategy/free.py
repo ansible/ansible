@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import time
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
@@ -202,7 +203,7 @@ class StrategyModule(StrategyBase):
                 display.debug("done adding collected blocks to iterator")
 
             # pause briefly so we don't spin lock
-            time.sleep(0.001)
+            time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         # collect all the final results
         results = self._wait_on_pending_results(iterator)

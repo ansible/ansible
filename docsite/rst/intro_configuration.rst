@@ -443,6 +443,20 @@ implications and wish to disable it, you may do so here by setting the value to 
 
     host_key_checking=True
 
+.. _internal_poll_interval:
+
+internal_poll_interval
+======================
+
+.. versionadded:: 2.2
+
+This sets the interval (in seconds) of Ansible internal processes polling each other.
+Lower values improve performance with large playbooks at the expense of extra CPU load.
+Higher values are more suitable for Ansible usage in automation scenarios, when UI responsiveness is not required but CPU usage might be a concern.
+Default corresponds to the value hardcoded in Ansible ≤ 2.1::
+
+    internal_poll_interval=0.001
+
 .. _inventory_file:
 
 inventory
