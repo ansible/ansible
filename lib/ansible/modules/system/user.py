@@ -60,9 +60,10 @@ options:
     groups:
         required: false
         description:
-            - Puts the user in this comma-delimited list of groups. When set to
-              the empty string ('groups='), the user is removed from all groups
-              except the primary group.
+            - Puts the user in  list of groups. When set to the empty string ('groups='),
+              the user is removed from all groups except the primary group.
+            - Before version 2.3, the only input format allowed was a 'comma separated string',
+              now it should be able to accept YAML lists also.
     append:
         required: false
         default: "no"
