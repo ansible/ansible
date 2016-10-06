@@ -23,7 +23,7 @@ short_description: Execute the Stress benchmark
 description:
  - Use this module to run the Stress benchmark
  - https://people.seas.harvard.edu/~apw/stress/
-version_added: "2.1"
+version_added: "2.3"
 options:
   chdir:
     description:
