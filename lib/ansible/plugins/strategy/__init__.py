@@ -26,6 +26,7 @@ from collections import deque
 from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
+from ansible import constants as C
 from ansible.compat.six.moves import queue as Queue
 from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
@@ -530,7 +531,7 @@ class StrategyBase:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             if self._pending_results > 0:
-                time.sleep(0.001)
+                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         display.debug("no more pending results, returning what we have")
 
