@@ -90,18 +90,6 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
-  show_command:
-    description:
-      - Specifies which command will be used to get the current configuration.
-        By default the C(show running-config) command will be used, this command
-        masks some passwords. For example passwords for VPN. If you need to
-        match against masked passwords use C(more system:running-config).
-        Note that the C(more system:running-config) only works in the system
-        context if you are running the ASA in multiple context mode.
-        before sending any commands.
-    required: false
-    default: show running-config
-    choices: ['show running-config', 'more system:running-config']
   context:
     description:
       - Specifies which context to target if you are running in the ASA in
