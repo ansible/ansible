@@ -261,7 +261,7 @@ class User(object):
         self.non_unique  = module.params['non_unique']
         self.seuser     = module.params['seuser']
         self.group      = module.params['group']
-        self.groups     = module.params['groups']
+        self.groups     = ','.join(module.params['groups'])
         self.comment    = module.params['comment']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
@@ -2079,7 +2079,7 @@ def main():
             uid=dict(default=None, type='str'),
             non_unique=dict(default='no', type='bool'),
             group=dict(default=None, type='str'),
-            groups=dict(default=None, type='str'),
+            groups=dict(default=None, type='list'),
             comment=dict(default=None, type='str'),
             home=dict(default=None, type='path'),
             shell=dict(default=None, type='str'),
