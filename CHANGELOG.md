@@ -42,7 +42,6 @@ Ansible Changes By Release
 
 ####New Modules:
 - apache2_mod_proxy
-- archive
 - asa
   * asa_acl
   * asa_command
