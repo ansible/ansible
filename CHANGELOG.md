@@ -1,6 +1,22 @@
 Ansible Changes By Release
 ==========================
 
+## 2.3 TBD - ACTIVE DEVELOPMENT
+
+###Major Changes:
+
+###Deprecations:
+* Specifying --tags (or --skip-tags) multiple times on the command line
+  currently leads to the last one overridding all the previous ones.  This
+  behaviour is deprecated.  In the future, if you specify --tags multiple times
+  the tags will be merged together.  In 2.3, using --tags multiple times on one
+  command line will emit a deprecation warning.  Setting the
+  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
+  the new behaviour.  In 2.4, the default will be to merge and you can enable
+  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
+  options will be merged with no way to go back to the old behaviour.
+
+
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
