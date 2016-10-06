@@ -79,8 +79,7 @@ Content of requirements.yml
 ::
      # from github
      - src: yatesr.timezone
-     
-     - include: webserver.yml
+
 
 
 Content of the webserver.yml file.
