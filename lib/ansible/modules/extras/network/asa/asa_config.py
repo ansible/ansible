@@ -146,14 +146,14 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-  mask_passwords:
+  passwords:
     description:
       - This argument specifies to include passwords in the config
         when retrieving the running-config from the remote device.  This
         includes passwords related to VPN endpoints.  This argument is
         mutually exclusive with I(defaults).
-    required: true
-    default: true
+    required: false
+    default: no
     choices: ['yes', 'no']
   save:
     description:
@@ -235,9 +235,9 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 def get_config(module):
     contents = module.params['config']
     if not contents:
-        if module.params['defaults'] is True:
+        if module.params['defaults']:
             include = 'defaults'
-        elif module.params['mask_passwords'] is False:
+        elif module.params['passwords']:
             include = 'passwords'
         else:
             include = None
@@ -307,13 +307,13 @@ def main():
 
         config=dict(),
         defaults=dict(type='bool', default=False),
-        mask_passwords=dict(type='bool', default=True),
+        passwords=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
     )
 
-    mutually_exclusive = [('lines', 'src'), ('defaults', 'mask_passwords')]
+    mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
