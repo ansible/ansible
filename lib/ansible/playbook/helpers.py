@@ -197,7 +197,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # the same fashion used by the on_include callback. We also do it here,
                         # because the recursive nature of helper methods means we may be loading
                         # nested includes, and we want the include order printed correctly
-                        display.display("statically included: %s" % include_file, color=C.COLOR_SKIP)
+                        display.vv("statically included: %s" % include_file)
                     except AnsibleFileNotFound:
                         if t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
