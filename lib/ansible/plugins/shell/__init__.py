@@ -31,11 +31,15 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 class ShellBase(object):
 
     def __init__(self):
-        self.env = dict(
-            LANG        = C.DEFAULT_MODULE_LANG,
-            LC_ALL      = C.DEFAULT_MODULE_LANG,
-            LC_MESSAGES = C.DEFAULT_MODULE_LANG,
-        )
+        self.env = dict()
+        if C.DEFAULT_MODULE_SET_LOCALE:
+            self.env.update(
+                dict(
+                    LANG        = C.DEFAULT_MODULE_LANG,
+                    LC_ALL      = C.DEFAULT_MODULE_LANG,
+                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                )
+            )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
@@ -52,9 +56,46 @@ class ShellBase(object):
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
-    def chmod(self, mode, path):
+    def chmod(self, mode, path, recursive=True):
         path = pipes.quote(path)
-        return 'chmod %s %s' % (mode, path)
+        cmd = ['chmod']
+
+        if recursive:
+            cmd.append('-R') # many chmods require -R before file list
+
+        cmd.extend([mode, path])
+
+        return ' '.join(cmd)
+
+    def chown(self, path, user, group=None, recursive=True):
+        path = pipes.quote(path)
+        user = pipes.quote(user)
+
+        cmd = ['chown']
+
+        if recursive:
+            cmd.append('-R') # many chowns require -R before file list
+
+        if group is None:
+            cmd.extend([user, path])
+        else:
+            group = pipes.quote(group)
+            cmd.extend(['%s:%s' % (user, group), path])
+
+        return ' '.join(cmd)
+
+    def set_user_facl(self, path, user, mode, recursive=True):
+        """Only sets acls for users as that's really all we need"""
+        path = pipes.quote(path)
+        mode = pipes.quote(mode)
+        user = pipes.quote(user)
+
+        cmd = ['setfacl']
+        if recursive:
+            cmd.append('-R')
+        cmd.extend(('-m', 'u:%s:%s %s' % (user, mode, path)))
+
+        return ' '.join(cmd)
 
     def remove(self, path, recurse=False):
         path = pipes.quote(path)
@@ -63,12 +104,35 @@ class ShellBase(object):
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
+    def exists(self, path):
+        cmd = ['test', '-e', pipes.quote(path)]
+        return ' '.join(cmd)
+
     def mkdtemp(self, basefile=None, system=False, mode=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
-        if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
-            basetmp = self.join_path('/tmp', basefile)
+
+        # When system is specified we have to create this in a directory where
+        # other users can read and access the temp directory.  This is because
+        # we use system to create tmp dirs for unprivileged users who are
+        # sudo'ing to a second unprivileged user.  The only dirctories where
+        # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
+        # allow one of those two locations if system=True.  However, users
+        # might want to have some say over which of /tmp or /var/tmp is used
+        # (because /tmp may be a tmpfs and want to conserve RAM or persist the
+        # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
+        # to somewhere in or below /var/tmp and if so use /var/tmp.  If
+        # anything else we use /tmp (because /tmp is specified by POSIX nad
+        # /var/tmp is not).
+        if system:
+            if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
+                basetmpdir = '/var/tmp'
+            else:
+                basetmpdir = '/tmp'
+        else:
+            basetmpdir = C.DEFAULT_REMOTE_TMP
+        basetmp = self.join_path(basetmpdir, basefile)
+
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 

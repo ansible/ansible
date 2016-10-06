@@ -51,7 +51,7 @@ class GalaxyCLI(CLI):
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
-    
+
     def __init__(self, args):
         self.api = None
         self.galaxy = None
@@ -120,7 +120,11 @@ class GalaxyCLI(CLI):
 
         # options that apply to more than one action
         if not self.action in ("delete","import","init","login","setup"):
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
+            # NOTE: while the option type=str, the default is a list, and the
+            # callback will set the value to a list.
+            self.parser.add_option('-p', '--roles-path', dest='roles_path',
+                                   action="callback", callback=CLI.expand_paths,
+                                   type=str, default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
@@ -142,14 +146,10 @@ class GalaxyCLI(CLI):
         return True
 
     def run(self):
-        
+
         super(GalaxyCLI, self).run()
 
-        # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup","delete") or \
-            (self.action == 'init' and not self.options.offline):
-            self.api = GalaxyAPI(self.galaxy)
-
+        self.api = GalaxyAPI(self.galaxy)
         self.execute()
 
     def exit_without_ignore(self, rc=1):
@@ -238,7 +238,7 @@ class GalaxyCLI(CLI):
                 # platforms included (but commented out), the galaxy_tags
                 # list, and the dependencies section
                 platforms = []
-                if not offline and self.api:
+                if not offline:
                     platforms = self.api.get_list("platforms") or []
 
                 # group the list of platforms from the api based
@@ -251,6 +251,7 @@ class GalaxyCLI(CLI):
 
                 inject = dict(
                     author = 'your name',
+                    description = 'your description',
                     company = 'your company (optional)',
                     license = 'license (GPLv2, CC-BY, etc)',
                     issue_tracker_url = 'http://example.com/issue/tracker',
@@ -310,7 +311,7 @@ class GalaxyCLI(CLI):
                 role_info.update(install_info)
 
             remote_data = False
-            if self.api:
+            if not self.options.offline:
                 remote_data = self.api.lookup_role_by_name(role, False)
 
             if remote_data:

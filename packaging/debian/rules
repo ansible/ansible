@@ -1,6 +1,10 @@
 #!/usr/bin/make -f
 # -- makefile --
 
+DEB_PYTHON2_MODULE_PACKAGES=ansible
+ifneq ($(shell dpkg-query -f '$${Version}' -W python-support 2>/dev/null),)
+DEB_PYTHON_SYSTEM=pysupport
+endif
+
 include /usr/share/cdbs/1/rules/debhelper.mk
-DEB_PYTHON_SYSTEM = pysupport
 include /usr/share/cdbs/1/class/python-distutils.mk

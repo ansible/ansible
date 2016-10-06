@@ -31,6 +31,40 @@
     python_has_ssl_context: False
   when: python_test.rc != 0
 
+- name: Define test files for file schema
+  set_fact:
+    geturl_srcfile: "{{ output_dir | expanduser }}/aurlfile.txt"
+    geturl_dstfile: "{{ output_dir | expanduser }}/aurlfile_copy.txt"
+
+- name: Create source file
+  copy: 
+    dest: "{{ geturl_srcfile }}" 
+    content: "foobar" 
+
+- name: test file fetch
+  get_url:
+    url: "{{ 'file://' + geturl_srcfile }}"
+    dest: "{{ geturl_dstfile }}"  
+  register: result  
+
+- name: assert success and change
+  assert:
+    that:
+        - result.changed
+        - '"OK" in result.msg'
+
+- name: test nonexisting file fetch
+  get_url:
+    url: "{{ 'file://' + geturl_srcfile + 'NOFILE' }}"
+    dest: "{{ geturl_dstfile + 'NOFILE' }}"  
+  register: result  
+  ignore_errors: True
+
+- name: assert success and change
+  assert:
+    that:
+        - result.failed
+
 - name: test https fetch
   get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
   register: result
@@ -62,7 +96,7 @@
   assert:
     that:
       - "result.failed == true"
-      - "'Certificate does not belong to ' in result.msg"
+      - "'Failed to validate the SSL certificate' in result.msg"
       - "stat_result.stat.exists == false"
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
@@ -145,3 +179,42 @@
       - 'get_url_result["failed"]'
   when: "{{ not python_has_ssl_context }}"
 # End hacky SNI test section
+
+- name: Test get_url with redirect
+  get_url:
+    url: 'http://httpbin.org/redirect/6'
+    dest: "{{ output_dir }}/redirect.json"
+
+- name: Test that setting file modes work
+  get_url:
+    url: 'http://httpbin.org/'
+    dest: '{{ output_dir }}/test'
+    mode: '0707'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0707'"
+
+- name: Test that setting file modes on an already downlaoded file work
+  get_url:
+    url: 'http://httpbin.org/'
+    dest: '{{ output_dir }}/test'
+    mode: '0070'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - "result.changed == true"
+      - "stat_result.stat.mode == '0070'"

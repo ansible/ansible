@@ -33,9 +33,15 @@ except Exception:
     pass
 
 import os
+import shutil
 import sys
 import traceback
 
+# for debug
+from multiprocessing import Lock
+debug_lock = Lock()
+
+import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
@@ -83,28 +89,28 @@ if __name__ == '__main__':
 
         cli = mycli(sys.argv)
         cli.parse()
-        sys.exit(cli.run())
+        exit_code = cli.run()
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(5)
+        exit_code = 5
     except AnsibleParserError as e:
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(4)
+        exit_code = 4
 # TQM takes care of these, but leaving comment to reserve the exit codes
 #    except AnsibleHostUnreachable as e:
 #        display.error(str(e))
-#        sys.exit(3)
+#        exit_code = 3
 #    except AnsibleHostFailed as e:
 #        display.error(str(e))
-#        sys.exit(2)
+#        exit_code = 2
     except AnsibleError as e:
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(1)
+        exit_code = 1
     except KeyboardInterrupt:
         display.error("User interrupted execution")
-        sys.exit(99)
+        exit_code = 99
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
@@ -112,4 +118,9 @@ if __name__ == '__main__':
             display.display(u"the full traceback was:\n\n%s" % to_unicode(traceback.format_exc()))
         else:
             display.display("to see the full traceback, use -vvv")
-        sys.exit(250)
+        exit_code = 250
+    finally:
+        # Remove ansible tempdir
+        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+
+    sys.exit(exit_code)

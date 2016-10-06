@@ -43,6 +43,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -125,10 +126,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object from other classes '''
-        return 'paramiko'
+    transport = 'paramiko'
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -268,11 +266,13 @@ class Connection(ConnectionBase):
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansble.cfg), and we try
-        # to initialise from the calling environment
-        if C.PARAMIKO_PTY:
+        # to initialise from the calling environment when sudoable is enabled
+        if C.PARAMIKO_PTY and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
+
+        cmd = to_bytes(cmd, errors='strict')
 
         no_prompt_out = ''
         no_prompt_err = ''
@@ -282,13 +282,9 @@ class Connection(ConnectionBase):
             chan.exec_command(cmd)
             if self._play_context.prompt:
                 passprompt = False
-                while True:
+                become_sucess = False
+                while not (become_sucess or passprompt):
                     display.debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output):
-                        break
-                    elif self.check_password_prompt(become_output):
-                        passprompt = True
-                        break
 
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
@@ -299,6 +295,17 @@ class Connection(ConnectionBase):
                             break
                             #raise AnsibleError('ssh connection closed waiting for password prompt')
                     become_output += chunk
+
+                    # need to check every line because we might get lectured
+                    # and we might get the middle of a line in a chunk
+                    for l in become_output.splitlines(True):
+                        if self.check_become_success(l):
+                            become_sucess = True
+                            break
+                        elif self.check_password_prompt(l):
+                            passprompt = True
+                            break
+
                 if passprompt:
                     if self._play_context.become and self._play_context.become_pass:
                         chan.sendall(self._play_context.become_pass + '\n')
@@ -322,7 +329,7 @@ class Connection(ConnectionBase):
 
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         try:
@@ -331,7 +338,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(in_path, out_path)
+            self.sftp.put(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
@@ -357,7 +364,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)", e)
 
         try:
-            self.sftp.get(in_path, out_path)
+            self.sftp.get(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 

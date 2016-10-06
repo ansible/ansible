@@ -495,6 +495,24 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
+.. _ansible_version:
+
+Ansible version
+```````````````
+
+.. versionadded:: 1.8
+
+To adapt playbook behavior to specific version of ansible, a variable ansible_version is available, with the following
+structure::
+
+    "ansible_version": {
+        "full": "2.0.0.2",
+        "major": 2,
+        "minor": 0,
+        "revision": 0,
+        "string": "2.0.0.2"
+    }
+
 .. _fact_caching:
 
 Fact Caching
@@ -614,7 +632,7 @@ these names themselves as they are reserved.  ``environment`` is also reserved.
 
 ``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can get at the variables, but you will not be able to see the facts.
+or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -650,13 +668,13 @@ period, without the rest of the domain.
 
 ``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
-``delegate_to`` is the inventory hostname of the host that the current task has been delegated to using ``delegate_to`` keyword.
-
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
-And finally, ``role_path`` will return the current role's pathname (since 1.8). This will only work inside a role.
+We then have ``role_path`` which will return the current role's pathname (since 1.8). This will only work inside a role.
+
+And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic variable which will be set to ``True`` if you run Ansible with ``--check``.
 
 .. _variable_file_separation_details:
 
@@ -729,6 +747,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
     --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 The ``key=value`` form is obviously simpler, but it's there if you need it!
+
+.. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
+          Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
 As of Ansible 1.3, extra vars can be loaded from a JSON file with the ``@`` syntax::
 

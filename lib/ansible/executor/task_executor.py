@@ -26,7 +26,7 @@ import sys
 import time
 import traceback
 
-from ansible.compat.six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types, binary_type
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
@@ -75,7 +75,9 @@ class TaskExecutor:
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
-        task requires looping and either runs the task with
+        task requires looping and either runs the task with self._run_loop()
+        or self._execute(). After that, the returned results are parsed and
+        returned as a dict.
         '''
 
         display.debug("in run()")
@@ -135,6 +137,8 @@ class TaskExecutor:
                         res[idx] = _clean_res(item)
                 elif isinstance(res, UnsafeProxy):
                     return res._obj
+                elif isinstance(res, binary_type):
+                    return to_unicode(res, errors='strict')
                 return res
 
             display.debug("dumping result to json")
@@ -186,8 +190,8 @@ class TaskExecutor:
                     try:
                         loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
-                        loop_terms = []
                         display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.: %s" % to_bytes(e))
+                        return None
                 items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=self._job_vars, wantlist=True)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
@@ -222,9 +226,17 @@ class TaskExecutor:
         #task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
-        items = self._squash_items(items, task_vars)
+        loop_var = 'item'
+        if self._task.loop_control:
+            # the value may be 'None', so we still need to default it back to 'item' 
+            loop_var = self._task.loop_control.loop_var or 'item'
+
+        if loop_var in task_vars:
+            raise AnsibleError("the loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions" % loop_var)
+
+        items = self._squash_items(items, loop_var, task_vars)
         for item in items:
-            task_vars['item'] = item
+            task_vars[loop_var] = item
 
             try:
                 tmp_task = self._task.copy()
@@ -243,15 +255,16 @@ class TaskExecutor:
 
             # now update the result with the item info, and append the result
             # to the list of results
-            res['item'] = item
+            res[loop_var] = item
             res['_ansible_item_result'] = True
 
             self._rslt_q.put(TaskResult(self._host, self._task, res), block=False)
             results.append(res)
+            del task_vars[loop_var]
 
         return results
 
-    def _squash_items(self, items, variables):
+    def _squash_items(self, items, loop_var, variables):
         '''
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
@@ -281,18 +294,18 @@ class TaskExecutor:
                 template_no_item = template_with_item = None
                 if name:
                     if templar._contains_vars(name):
-                        variables['item'] = '\0$'
+                        variables[loop_var] = '\0$'
                         template_no_item = templar.template(name, variables, cache=False)
-                        variables['item'] = '\0@'
+                        variables[loop_var] = '\0@'
                         template_with_item = templar.template(name, variables, cache=False)
-                        del variables['item']
+                        del variables[loop_var]
 
                     # Check if the user is doing some operation that doesn't take
                     # name/pkg or the name/pkg field doesn't have any variables
                     # and thus the items can't be squashed
                     if template_no_item != template_with_item:
                         for item in items:
-                            variables['item'] = item
+                            variables[loop_var] = item
                             if self._task.evaluate_conditional(templar, variables):
                                 new_item = templar.template(name, cache=False)
                                 final_items.append(new_item)
@@ -452,19 +465,20 @@ class TaskExecutor:
 
             # helper methods for use below in evaluating changed/failed_when
             def _evaluate_changed_when_result(result):
-                if self._task.changed_when is not None:
+                if self._task.changed_when is not None and self._task.changed_when:
                     cond = Conditional(loader=self._loader)
-                    cond.when = [ self._task.changed_when ]
+                    cond.when = self._task.changed_when
                     result['changed'] = cond.evaluate_conditional(templar, vars_copy)
 
             def _evaluate_failed_when_result(result):
-                if self._task.failed_when is not None:
+                if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
-                    cond.when = [ self._task.failed_when ]
+                    cond.when = self._task.failed_when
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
-                    return failed_when_result
-                return False
+                else:
+                    failed_when_result = False
+                return failed_when_result
 
             if 'ansible_facts' in result:
                 vars_copy.update(result['ansible_facts'])
@@ -482,7 +496,7 @@ class TaskExecutor:
 
             if attempt < retries - 1:
                 cond = Conditional(loader=self._loader)
-                cond.when = [ self._task.until ]
+                cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
@@ -581,14 +595,14 @@ class TaskExecutor:
             # since we're delegating, we don't want to use interpreter values
             # which would have been set for the original target host
             for i in variables.keys():
-                if i.startswith('ansible_') and i.endswith('_interpreter'):
+                if isinstance(i, string_types) and i.startswith('ansible_') and i.endswith('_interpreter'):
                     del variables[i]
             # now replace the interpreter values with those that may have come
             # from the delegated-to host
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
             if isinstance(delegated_vars, dict):
                 for i in delegated_vars:
-                    if i.startswith("ansible_") and i.endswith("_interpreter"):
+                    if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
         conn_type = self._play_context.connection
@@ -604,7 +618,8 @@ class TaskExecutor:
                 try:
                     cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     (out, err) = cmd.communicate()
-                    if "Bad configuration option" in err or "Usage:" in err:
+                    err = to_unicode(err)
+                    if u"Bad configuration option" in err or u"Usage:" in err:
                         conn_type = "paramiko"
                 except OSError:
                     conn_type = "paramiko"
@@ -642,7 +657,9 @@ class TaskExecutor:
             try:
                 connection._connect()
             except AnsibleConnectionFailure:
+                display.debug('connection failed, fallback to accelerate')
                 res = handler._execute_module(module_name='accelerate', module_args=accelerate_args, task_vars=variables, delete_remote_tmp=False)
+                display.debug(res)
                 connection._connect()
 
         return connection

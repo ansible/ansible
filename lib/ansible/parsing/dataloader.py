@@ -21,10 +21,11 @@ __metaclass__ = type
 
 import copy
 import os
-import stat
+import json
 import subprocess
+import tempfile
+from yaml import YAMLError
 
-from yaml import load, YAMLError
 from ansible.compat.six import text_type, string_types
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
@@ -59,6 +60,7 @@ class DataLoader():
     def __init__(self):
         self._basedir = '.'
         self._FILE_CACHE = dict()
+        self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
@@ -119,7 +121,7 @@ class DataLoader():
 
     def path_exists(self, path):
         path = self.path_dwim(path)
-        return os.path.exists(to_bytes(path))
+        return os.path.exists(to_bytes(path, errors='strict'))
 
     def is_file(self, path):
         path = self.path_dwim(path)
@@ -145,7 +147,10 @@ class DataLoader():
         try:
             return loader.get_single_data()
         finally:
-            loader.dispose()
+            try:
+                loader.dispose()
+            except AttributeError:
+                pass # older versions of yaml don't have dispose function, ignore
 
     def _get_file_contents(self, file_name):
         '''
@@ -155,12 +160,13 @@ class DataLoader():
         if not file_name or not isinstance(file_name, string_types):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
-        if not self.path_exists(file_name) or not self.is_file(file_name):
+        b_file_name = to_bytes(file_name)
+        if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
-            with open(file_name, 'rb') as f:
+            with open(b_file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
                     data = self._vault.decrypt(data)
@@ -290,3 +296,72 @@ class DataLoader():
                 f.close()
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
+
+    def _create_content_tempfile(self, content):
+        ''' Create a tempfile containing defined content '''
+        fd, content_tempfile = tempfile.mkstemp()
+        f = os.fdopen(fd, 'wb')
+        content = to_bytes(content)
+        try:
+            f.write(content)
+        except Exception as err:
+            os.remove(content_tempfile)
+            raise Exception(err)
+        finally:
+            f.close()
+        return content_tempfile
+
+    def get_real_file(self, file_path):
+        """
+        If the file is vault encrypted return a path to a temporary decrypted file
+        If the file is not encrypted then the path is returned
+        Temporary files are cleanup in the destructor
+        """
+
+        if not file_path or not isinstance(file_path, string_types):
+            raise AnsibleParserError("Invalid filename: '%s'" % str(file_path))
+
+        if not self.path_exists(file_path) or not self.is_file(file_path):
+            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_path)
+
+        if not self._vault:
+            self._vault = VaultLib(password="")
+
+        real_path = self.path_dwim(file_path)
+
+        try:
+            with open(to_bytes(real_path), 'rb') as f:
+                data = f.read()
+                if self._vault.is_encrypted(data):
+                    # if the file is encrypted and no password was specified,
+                    # the decrypt call would throw an error, but we check first
+                    # since the decrypt function doesn't know the file name
+                    if not self._vault_password:
+                        raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
+
+                    data = self._vault.decrypt(data)
+                    # Make a temp file
+                    real_path = self._create_content_tempfile(data)
+                    self._tempfiles.add(real_path)
+
+            return real_path
+
+        except (IOError, OSError) as e:
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (real_path, str(e)))
+
+    def cleanup_tmp_file(self, file_path):
+        """
+        Removes any temporary files created from a previous call to
+        get_real_file. file_path must be the path returned from a
+        previous call to get_real_file.
+        """
+        if file_path in self._tempfiles:
+            os.unlink(file_path)
+            self._tempfiles.remove(file_path);
+
+    def cleanup_all_tmp_files(self):
+        for f in self._tempfiles:
+            try:
+                self.cleanup_tmp_file(f)
+            except:
+                pass #TODO: this should at least warn

@@ -80,10 +80,16 @@ class IncludedFile:
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
-                    if 'item' in include_result:
-                        task_vars['item'] = include_variables['item'] = include_result['item']
+                    loop_var = 'item'
+                    if res._task.loop_control:
+                        loop_var = res._task.loop_control.loop_var or 'item'
+                    if loop_var in include_result:
+                        task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 
                     if original_task:
+                        if original_task.static:
+                            continue
+
                         if original_task._task_include:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists

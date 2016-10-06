@@ -168,8 +168,9 @@ class PlaybookExecutor:
                 # send the stats callback for this playbook
                 if self._tqm is not None:
                     if C.RETRY_FILES_ENABLED:
-                        retries = list(set(self._tqm._failed_hosts.keys() + self._tqm._unreachable_hosts.keys()))
-                        retries.sort()
+                        retries = set(self._tqm._failed_hosts.keys())
+                        retries.update(self._tqm._unreachable_hosts.keys())
+                        retries = sorted(retries)
                         if len(retries) > 0:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
@@ -193,6 +194,8 @@ class PlaybookExecutor:
         finally:
             if self._tqm is not None:
                 self._tqm.cleanup()
+            if self._loader:
+                self._loader.cleanup_all_tmp_files()
 
         if self._options.syntax:
             display.display("No issues encountered")
@@ -213,7 +216,7 @@ class PlaybookExecutor:
         # and convert it to an integer value based on the number of hosts
         if isinstance(play.serial, string_types) and play.serial.endswith('%'):
             serial_pct = int(play.serial.replace("%",""))
-            serial = int((serial_pct/100.0) * len(all_hosts))
+            serial = int((serial_pct/100.0) * len(all_hosts)) or 1
         else:
             if play.serial is None:
                 serial = -1

@@ -39,30 +39,49 @@ options:
     description:
       - Configures the usename to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
-        the SSH session
-    required: true
+        the SSH session. If the value is not specified in the task, the
+        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+    required: false
   password:
     description:
-      - Specifies the password to use when authentication the connection to
+      - Specifies the password to use to authenticate the connection to
         the remote device.   The value of I(password) is used to authenticate
-        the SSH session
+        the SSH session. If the value is not specified in the task, the
+        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
+  ssh_keyfile:
+    description:
+      - Specifies the SSH key to use to authenticate the connection to
+        the remote device.   The value of I(ssh_keyfile) is the path to the
+        key used to authenticate the SSH session. If the value is not specified
+        in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
+        will be used instead.
+    required: false
   authorize:
     description:
       - Instructs the module to enter priviledged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode.
+        attempt to excecute all commands in non-priviledged mode. If the value
+        is not specified in the task, the value of environment variable
+        ANSIBLE_NET_AUTHORIZE will be used instead.
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
-        does nothing
+        does nothing. If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
     required: false
     default: none
+  timeout:
+    description:
+      - Specifies idle timeout for the connection. Useful if the console
+        freezes before continuing. For example when saving configurations.
+    required: false
+    default: 10
   provider:
     description:
       - Convience method that allows all M(ios) arguments to be passed as

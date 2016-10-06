@@ -15,6 +15,11 @@ Add ``profile_tasks`` to the ``callback_whitelist`` in ``ansible.cfg``.
 
 Run playbooks as normal.
 
+Certain options are configurable using environment variables. You can specify ``ascending`` or ``none`` for
+the environment variable ``PROFILE_TASKS_SORT_ORDER`` to adjust sorting output. If you want to see more than
+20 tasks in the output you can set ``PROFILE_TASKS_TASK_OUTPUT_LIMIT`` to any number, or the special value
+``all`` to get a list of all tasks.
+
 Features
 --------
 
@@ -50,18 +55,19 @@ No more wondering how old the results in a terminal window are.
 
        ansible <args here>
        <normal output here>
-       PLAY RECAP ******************************************************************** 
+       PLAY RECAP ********************************************************************
        Thursday 11 June 2016  22:51:00 +0100 (0:00:01.011)       0:00:43.247 *********
        ===============================================================================
-       really slow task  | Download project packages----------------------------11.61s
-       security | Really slow security policies----------------------------------7.03s
-       common-base | Install core system dependencies----------------------------3.62s
-       common | Install pip------------------------------------------------------3.60s
-       common | Install boto-----------------------------------------------------3.57s
-       nginx | Install nginx-----------------------------------------------------3.41s
-       serf | Install system dependencies----------------------------------------3.38s
-       duo_security | Install Duo Unix SSH Integration---------------------------3.37s
-       loggly | Install TLS version----------------------------------------------3.36s
+       old_and_slow : install tons of packages -------------------------------- 20.03s
+       /home/bob/ansible/roles/old_and_slow/tasks/main.yml:4 -------------------------
+       db : second task to run ------------------------------------------------- 2.03s
+       /home/bob/ansible/roles/db/tasks/main.yml:4 -----------------------------------
+       setup ------------------------------------------------------------------- 0.42s
+       None --------------------------------------------------------------------------
+       www : first task to run ------------------------------------------------- 0.03s
+       /home/bob/ansible/roles/www/tasks/main.yml:1 ----------------------------------
+       fast_task : first task to run ------------------------------------------- 0.01s
+       /home/bob/ansible/roles/fast_task.yml:1 ---------------------------------------
 
 Compatibility
 -------------

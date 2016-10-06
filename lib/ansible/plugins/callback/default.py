@@ -103,9 +103,9 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_ERROR)
+            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_UNREACHABLE)
         else:
-            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
+            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_UNREACHABLE)
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
@@ -150,16 +150,16 @@ class CallbackModule(CallbackBase):
     def v2_on_file_diff(self, result):
         if result._task.loop and 'results' in result._result:
             for res in result._result['results']:
-                if 'diff' in res and res['diff']:
+                if 'diff' in res and res['diff'] and res.get('changed', False):
                     diff = self._get_diff(res['diff'])
                     if diff:
                         self._display.display(diff)
-        elif 'diff' in result._result and result._result['diff']:
+        elif 'diff' in result._result and result._result['diff'] and result._result.get('changed', False):
             diff = self._get_diff(result._result['diff'])
             if diff:
                 self._display.display(diff)
 
-    def v2_playbook_item_on_ok(self, result):
+    def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if result._task.action == 'include':
             return
@@ -175,13 +175,13 @@ class CallbackModule(CallbackBase):
         else:
             msg += ": [%s]" % result._host.get_name()
 
-        msg += " => (item=%s)" % (self._get_item(result._result))
+        msg += " => (item=%s)" % (self._get_item(result._result),)
 
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
-    def v2_playbook_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if 'exception' in result._result:
             if self._display.verbosity < 3:
@@ -205,11 +205,12 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
         self._handle_warnings(result._result)
 
-    def v2_playbook_item_on_skipped(self, result):
-        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
-            msg += " => %s" % self._dump_results(result._result)
-        self._display.display(msg, color=C.COLOR_SKIP)
+    def v2_runner_item_on_skipped(self, result):
+        if C.DISPLAY_SKIPPED_HOSTS:
+            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
@@ -256,7 +257,7 @@ class CallbackModule(CallbackBase):
                     if val:
                         self._display.vvvv('%s: %s' % (option,val))
 
-    def v2_playbook_retry(self, result):
+    def v2_runner_retry(self, result):
         msg = "FAILED - RETRYING: %s (%d retries left)." % (result._task, result._result['retries'] - result._result['attempts'])
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)

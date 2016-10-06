@@ -1,4 +1,4 @@
-Roadmap For Ansible by RedHat
+Roadmap For Ansible by Red Hat
 =============
 This document is now the location for published Ansible Core roadmaps.     
 
@@ -41,7 +41,7 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
   * vsphere\_guest brought to parity with other vmware modules (vs Viasat and 'whereismyjetpack' provided modules)
   * VMware modules moved to official pyvmomi bindings
   * VMware inventory script updates for pyvmomi, adding tagging support
-* Azure (Notes: This is on hold until Microsoft swaps out the code generator on the Azure Python SDK, which may introduce breaking changes. We have basic modules working against all of these resources at this time. Could ship it against current SDK, but may break. Or should the version be pinned?)
+* Azure (Notes: We've made progress here now that Microsoft has swaped out the code generator on the Azure Python SDK. We have basic modules working against all of these resources at this time. Could ship it against current SDK, but may break. Or should the version be pinned?)
   * Minimal Azure coverage using new ARM api
   * Resource Group
   * Virtual Network

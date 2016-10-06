@@ -25,7 +25,16 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import os
+from time import sleep
+
+try:
+    import boto
+    import boto.ec2 #boto does weird import stuff
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
 
 try:
     import boto3
@@ -82,10 +91,6 @@ def ec2_argument_spec():
         )
     )
     return spec
-
-
-def boto_supports_profile_name():
-    return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
 def get_aws_connection_info(module, boto3=False):
@@ -171,15 +176,11 @@ def get_aws_connection_info(module, boto3=False):
                            aws_secret_access_key=secret_key,
                            security_token=security_token)
 
-        # profile_name only works as a key in boto >= 2.24
-        # so only set profile_name if passed as an argument
+        # only set profile_name if passed as an argument
         if profile_name:
-            if not boto_supports_profile_name():
-                module.fail_json("boto does not support profile_name before 2.24")
             boto_params['profile_name'] = profile_name
 
-        if HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
-            boto_params['validate_certs'] = validate_certs
+        boto_params['validate_certs'] = validate_certs
 
     for param, value in boto_params.items():
         if isinstance(value, str):
@@ -237,3 +238,227 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
+
+def paging(pause=0, marker_property='marker'):
+    """ Adds paging to boto retrieval functions that support a 'marker'
+        this is configurable as not all boto functions seem to use the
+        same name.
+    """
+    def wrapper(f):
+        def page(*args, **kwargs):
+            results = []
+            marker = None
+            while True:
+                try:
+                    new = f(*args, marker=marker, **kwargs)
+                    marker = getattr(new, marker_property)
+                    results.extend(new)
+                    if not marker:
+                        break
+                    elif pause:
+                        sleep(pause)
+                except TypeError:
+                    # Older version of boto do not allow for marker param, just run normally
+                    results = f(*args, **kwargs)
+                    break
+            return results
+        return page
+    return wrapper
+
+
+def camel_dict_to_snake_dict(camel_dict):
+
+    def camel_to_snake(name):
+
+        import re
+
+        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+        all_cap_re = re.compile('([a-z0-9])([A-Z])')
+        s1 = first_cap_re.sub(r'\1_\2', name)
+
+        return all_cap_re.sub(r'\1_\2', s1).lower()
+
+
+    def value_is_list(camel_list):
+
+        checked_list = []
+        for item in camel_list:
+            if isinstance(item, dict):
+                checked_list.append(camel_dict_to_snake_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+
+        return checked_list
+
+
+    snake_dict = {}
+    for k, v in camel_dict.iteritems():
+        if isinstance(v, dict):
+            snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
+        elif isinstance(v, list):
+            snake_dict[camel_to_snake(k)] = value_is_list(v)
+        else:
+            snake_dict[camel_to_snake(k)] = v
+
+    return snake_dict
+
+
+def ansible_dict_to_boto3_filter_list(filters_dict):
+
+    """ Convert an Ansible dict of filters to list of dicts that boto3 can use
+    Args:
+        filters_dict (dict): Dict of AWS filters.
+    Basic Usage:
+        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> ansible_dict_to_boto3_filter_list(filters)
+        {
+            'some-aws-id': 'i-01234567'
+        }
+    Returns:
+        List: List of AWS filters and their values
+        [
+            {
+                'Name': 'some-aws-id',
+                'Values': [
+                    'i-01234567',
+                ]
+            }
+        ]
+    """
+
+    filters_list = []
+    for k,v in filters_dict.iteritems():
+        filter_dict = {'Name': k}
+        if isinstance(v, basestring):
+            filter_dict['Values'] = [v]
+        else:
+            filter_dict['Values'] = v
+
+        filters_list.append(filter_dict)
+
+    return filters_list
+
+
+def boto3_tag_list_to_ansible_dict(tags_list):
+
+    """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
+    Args:
+        tags_list (list): List of dicts representing AWS tags.
+    Basic Usage:
+        >>> tags_list = [{'Key': 'MyTagKey', 'Value': 'MyTagValue'}]
+        >>> boto3_tag_list_to_ansible_dict(tags_list)
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    Returns:
+        Dict: Dict of key:value pairs representing AWS tags
+         {
+            'MyTagKey': 'MyTagValue',
+        }
+    """
+
+    tags_dict = {}
+    for tag in tags_list:
+        tags_dict[tag['Key']] = tag['Value']
+
+    return tags_dict
+
+
+def ansible_dict_to_boto3_tag_list(tags_dict):
+
+    """ Convert a flat dict of key:value pairs representing AWS resource tags to a boto3 list of dicts
+    Args:
+        tags_dict (dict): Dict representing AWS resource tags.
+    Basic Usage:
+        >>> tags_dict = {'MyTagKey': 'MyTagValue'}
+        >>> ansible_dict_to_boto3_tag_list(tags_dict)
+        {
+            'MyTagKey': 'MyTagValue'
+        }
+    Returns:
+        List: List of dicts containing tag keys and values
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    """
+
+    tags_list = []
+    for k,v in tags_dict.iteritems():
+        tags_list.append({'Key': k, 'Value': v})
+
+    return tags_list
+
+
+def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id=None, boto3=True):
+
+    """ Return list of security group IDs from security group names. Note that security group names are not unique
+     across VPCs.  If a name exists across multiple VPCs and no VPC ID is supplied, all matching IDs will be returned. This
+     will probably lead to a boto exception if you attempt to assign both IDs to a resource so ensure you wrap the call in
+     a try block
+     """
+
+    def get_sg_name(sg, boto3):
+
+        if boto3:
+            return sg['GroupName']
+        else:
+            return sg.name
+
+
+    def get_sg_id(sg, boto3):
+
+        if boto3:
+            return sg['GroupId']
+        else:
+            return sg.id
+
+
+    sec_group_id_list = []
+
+    if isinstance(sec_group_list, basestring):
+        sec_group_list = [sec_group_list]
+
+    # Get all security groups
+    if boto3:
+        if vpc_id:
+            filters = [
+                {
+                    'Name': 'vpc-id',
+                    'Values': [
+                        vpc_id,
+                    ]
+                }
+            ]
+            all_sec_groups = ec2_connection.describe_security_groups(Filters=filters)['SecurityGroups']
+        else:
+            all_sec_groups = ec2_connection.describe_security_groups()['SecurityGroups']
+    else:
+        if vpc_id:
+            filters = { 'vpc-id': vpc_id }
+            all_sec_groups = ec2_connection.get_all_security_groups(filters=filters)
+        else:
+            all_sec_groups = ec2_connection.get_all_security_groups()
+
+    unmatched = set(sec_group_list).difference(str(get_sg_name(all_sg, boto3)) for all_sg in all_sec_groups)
+    sec_group_name_list = list(set(sec_group_list) - set(unmatched))
+
+    if len(unmatched) > 0:
+        # If we have unmatched names that look like an ID, assume they are
+        import re
+        sec_group_id_list[:] = [sg for sg in unmatched if re.match('sg-[a-fA-F0-9]+$', sg)]
+        still_unmatched = [sg for sg in unmatched if not re.match('sg-[a-fA-F0-9]+$', sg)]
+        if len(still_unmatched) > 0:
+            raise ValueError("The following group names are not valid: %s" % ', '.join(still_unmatched))
+
+    sec_group_id_list += [ str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list ]
+
+    return sec_group_id_list
+

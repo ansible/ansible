@@ -45,8 +45,10 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -57,6 +59,7 @@ class ActionModule(ActionBase):
             if stat and stat.get('exists', False):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
+                self._remove_tmp_path(tmp)
                 return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
@@ -72,25 +75,25 @@ class ActionModule(ActionBase):
         if remote_checksum == '4':
             result['failed'] = True
             result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            self._remove_tmp_path(tmp)
             return result
         elif remote_checksum != '3':
             result['failed'] = True
             result['msg'] = "dest '%s' must be an existing dir" % dest
+            self._remove_tmp_path(tmp)
             return result
 
         if copy:
             # transfer the file to a remote tmp location
-            tmp_src = tmp + 'source'
-            self._connection.put_file(source, tmp_src)
+            tmp_src = self._connection._shell.join_path(tmp, 'source')
+            self._transfer_file(source, tmp_src)
 
         # handle diff mode client side
         # handle check mode client side
-        # fix file permissions when the copy is done as a different user
-        if copy:
-            if self._play_context.become and self._play_context.become_user != 'root':
-                if not self._play_context.check_mode:
-                    self._remote_chmod('a+r', tmp_src)
 
+        if copy:
+            # fix file permissions when the copy is done as a different user
+            self._fixup_perms(tmp, remote_user, recursive=True)
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -110,4 +113,5 @@ class ActionModule(ActionBase):
 
         # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
         return result

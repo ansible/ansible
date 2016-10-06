@@ -69,7 +69,8 @@ Examples:
   $ contrib/inventory/gce.py --host my_instance
 
 Author: Eric Johnson <erjohnso@google.com>
-Version: 0.0.1
+Contributors: Matt Hite <mhite@hotmail.com>
+Version: 0.0.2
 '''
 
 __requires__ = ['pycrypto>=2.6']
@@ -83,12 +84,15 @@ except ImportError:
     pass
 
 USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v1"
+USER_AGENT_VERSION="v2"
 
 import sys
 import os
 import argparse
 import ConfigParser
+
+import logging
+logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
 
 try:
     import json
@@ -108,7 +112,11 @@ class GceInventory(object):
     def __init__(self):
         # Read settings and parse CLI arguments
         self.parse_cli_args()
+        self.config = self.get_config()
         self.driver = self.get_gce_driver()
+        self.ip_type = self.get_inventory_options()
+        if self.ip_type:
+            self.ip_type = self.ip_type.lower()
 
         # Just display data for specific host
         if self.args.host:
@@ -122,9 +130,13 @@ class GceInventory(object):
             pretty=self.args.pretty))
         sys.exit(0)
 
-    def get_gce_driver(self):
-        """Determine the GCE authorization settings and return a
-        libcloud driver.
+    def get_config(self):
+        """
+        Populates a SafeConfigParser object with defaults and
+        attempts to read an .ini-style configuration from the filename
+        specified in GCE_INI_PATH. If the environment variable is
+        not present, the filename defaults to gce.ini in the current
+        working directory.
         """
         gce_ini_default_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "gce.ini")
@@ -139,14 +151,32 @@ class GceInventory(object):
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
             'libcloud_secrets': '',
+            'inventory_ip_type': '',
         })
         if 'gce' not in config.sections():
             config.add_section('gce')
-        config.read(gce_ini_path)
+        if 'inventory' not in config.sections():
+            config.add_section('inventory')
 
+        config.read(gce_ini_path)
+        return config
+
+    def get_inventory_options(self):
+        """Determine inventory options. Environment variables always
+        take precedence over configuration files."""
+        ip_type = self.config.get('inventory', 'inventory_ip_type')
+        # If the appropriate environment variables are set, they override
+        # other configuration
+        ip_type = os.environ.get('INVENTORY_IP_TYPE', ip_type)
+        return ip_type
+
+    def get_gce_driver(self):
+        """Determine the GCE authorization settings and return a
+        libcloud driver.
+        """
         # Attempt to get GCE params from a configuration file, if one
         # exists.
-        secrets_path = config.get('gce', 'libcloud_secrets')
+        secrets_path = self.config.get('gce', 'libcloud_secrets')
         secrets_found = False
         try:
             import secrets
@@ -172,10 +202,10 @@ class GceInventory(object):
                 pass
         if not secrets_found:
             args = [
-                config.get('gce','gce_service_account_email_address'),
-                config.get('gce','gce_service_account_pem_file_path')
+                self.config.get('gce','gce_service_account_email_address'),
+                self.config.get('gce','gce_service_account_pem_file_path')
             ]
-            kwargs = {'project': config.get('gce', 'gce_project_id')}
+            kwargs = {'project': self.config.get('gce', 'gce_project_id')}
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
@@ -215,6 +245,12 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        # default to exernal IP unless user has specified they prefer internal
+        if self.ip_type == 'internal':
+            ssh_host = inst.private_ips[0]
+        else:
+            ssh_host = inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+
         return {
             'gce_uuid': inst.uuid,
             'gce_id': inst.id,
@@ -230,7 +266,7 @@ class GceInventory(object):
             'gce_metadata': md,
             'gce_network': net,
             # Hosts don't have a public name, so we add an IP
-            'ansible_ssh_host': inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+            'ansible_ssh_host': ssh_host
         }
 
     def get_instance(self, instance_name):

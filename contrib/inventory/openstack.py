@@ -55,7 +55,7 @@ import os_client_config
 import shade
 import shade.inventory
 
-CONFIG_FILES = ['/etc/ansible/openstack.yaml']
+CONFIG_FILES = ['/etc/ansible/openstack.yaml', '/etc/ansible/openstack.yml']
 
 
 def get_groups_from_server(server_vars, namegroup=True):
@@ -149,7 +149,7 @@ def get_host_groups_from_cloud(inventory):
             else:
                 for server in servers:
                     append_hostvars(
-                        hostvars, groups, server['id'], servers[0],
+                        hostvars, groups, server['id'], server,
                         namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
@@ -159,7 +159,7 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     ''' Determines if cache file has expired, or if it is still valid '''
     if refresh:
         return True
-    if os.path.isfile(cache_file):
+    if os.path.isfile(cache_file) and os.path.getsize(cache_file) > 0:
         mod_time = os.path.getmtime(cache_file)
         current_time = time.time()
         if (mod_time + cache_expiration_time) > current_time:

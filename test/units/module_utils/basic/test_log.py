@@ -21,12 +21,15 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import sys
+import json
 import syslog
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
+from units.mock.procenv import swap_stdin_and_argv
 
 from ansible.module_utils import basic
+
 
 try:
     # Python 3.4+
@@ -39,10 +42,14 @@ except ImportError:
 
 
 class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
-
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
@@ -53,7 +60,8 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
             basic.has_journal = False
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
         basic.has_journal = self.has_journal
 
     def test_smoketest_syslog(self):
@@ -72,14 +80,20 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
 class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
 
     @unittest.skipUnless(basic.has_journal, 'python systemd bindings not installed')
     def test_smoketest_journal(self):
@@ -115,19 +129,27 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             }
 
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
+
         self.has_journal = basic.has_journal
         if self.has_journal:
             # Systems with journal can still test syslog
             basic.has_journal = False
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        # teardown/reset
         basic.has_journal = self.has_journal
+
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
 
     @patch('syslog.syslog', autospec=True)
     def test_no_log(self, mock_func):
@@ -166,15 +188,21 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
             b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
             }
 
+    # overriding run lets us use context managers for setup/teardown-esque behavior
     def setUp(self):
-        self.complex_args_token = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+        reload(basic)
         self.am = basic.AnsibleModule(
             argument_spec = dict(),
         )
 
         self.has_journal = basic.has_journal
         basic.has_journal = True
+
         self.module_patcher = None
 
         # In case systemd-python is not installed
@@ -187,8 +215,12 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
                 self._fake_out_reload(basic)
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.complex_args_token
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
+
+        # teardown/reset
         basic.has_journal = self.has_journal
+
         if self.module_patcher:
             self.module_patcher.stop()
             reload(basic)

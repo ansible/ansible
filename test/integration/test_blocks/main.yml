@@ -33,17 +33,17 @@
     - name: set block always run flag
       set_fact:
         block_always_run: true
-    - block:
-      - meta: noop
-      always:
-      - name: set nested block always run flag
-        set_fact:
-          nested_block_always_run: true
-      - name: fail in always
-        fail:
-      - name: tasks flag should not be set after failure in always
-        set_fact:
-          always_run_after_failure: true
+    #- block:
+    #  - meta: noop
+    #  always:
+    #  - name: set nested block always run flag
+    #    set_fact:
+    #      nested_block_always_run: true
+    #  - name: fail in always
+    #    fail:
+    #  - name: tasks flag should not be set after failure in always
+    #    set_fact:
+    #      always_run_after_failure: true
     - meta: clear_host_errors
 
   post_tasks:
@@ -52,7 +52,7 @@
       - block_tasks_run
       - block_rescue_run
       - block_always_run
-      - nested_block_always_run
+      #- nested_block_always_run
       - not tasks_run_after_failure
       - not rescue_run_after_failure
       - not always_run_after_failure
@@ -84,7 +84,7 @@
       include: fail.yml
       args:
         msg: "failed from rescue"
-    - name: tasks flag should not be set after failure in rescue
+    - name: flag should not be set after failure in rescue
       set_fact:
         rescue_run_after_failure: true
     always:

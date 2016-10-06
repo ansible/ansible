@@ -34,7 +34,7 @@ from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 from ansible.utils.vars import combine_vars
 from ansible.parsing.utils.addresses import parse_address
 
@@ -103,7 +103,7 @@ class Inventory(object):
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
         # empty: in this case we will subsequently an the implicit 'localhost' to it.
 
-        ungrouped = Group(name='ungrouped')
+        ungrouped = Group('ungrouped')
         all = Group('all')
         all.add_child_group(ungrouped)
 
@@ -138,11 +138,12 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
-        # get group vars from group_vars/ files and vars plugins
-        for group in self.groups.values():
+        # set group vars from group_vars/ files and vars plugins
+        for g in self.groups:
+            group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
-        # get host vars from host_vars/ files and vars plugins
+        # set host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
@@ -741,11 +742,11 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "group_vars/%s" % group.name))
+                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"group_vars/" + to_bytes(group.name))), errors='strict')
                 results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.abspath(os.path.join(to_unicode(basedir, errors='strict'), "host_vars/%s" % host.name))
+                base_path = to_unicode(os.path.abspath(os.path.join(to_bytes(basedir), b"host_vars/" + to_bytes(host.name))), errors='strict')
                 results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
 
         # all done, results is a dictionary of variables for this particular host.

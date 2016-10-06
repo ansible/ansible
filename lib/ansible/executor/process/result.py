@@ -35,7 +35,12 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.utils.debug import debug
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 __all__ = ['ResultProcess']
 
@@ -57,24 +62,24 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug(u"sending result: %s" % ([text_type(x) for x in result],))
+        display.debug(u"sending result: %s" % ([text_type(x) for x in result],))
         self._final_q.put(result)
-        debug("done sending result")
+        display.debug("done sending result")
 
     def _read_worker_result(self):
         result = None
         starting_point = self._cur_worker
         while True:
-            (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+            (worker_prc, rslt_q) = self._workers[self._cur_worker]
             self._cur_worker += 1
             if self._cur_worker >= len(self._workers):
                 self._cur_worker = 0
 
             try:
                 if not rslt_q.empty():
-                    debug("worker %d has data to read" % self._cur_worker)
+                    display.debug("worker %d has data to read" % self._cur_worker)
                     result = rslt_q.get()
-                    debug("got a result from worker %d: %s" % (self._cur_worker, result))
+                    display.debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
                 pass
@@ -106,15 +111,17 @@ class ResultProcess(multiprocessing.Process):
 
                 # send callbacks for 'non final' results
                 if '_ansible_retry' in result._result:
-                    self._send_result(('v2_playbook_retry', result))
+                    self._send_result(('v2_runner_retry', result))
                     continue
                 elif '_ansible_item_result' in result._result:
                     if result.is_failed() or result.is_unreachable():
-                        self._send_result(('v2_playbook_item_on_failed', result))
+                        self._send_result(('v2_runner_item_on_failed', result))
                     elif result.is_skipped():
-                        self._send_result(('v2_playbook_item_on_skipped', result))
+                        self._send_result(('v2_runner_item_on_skipped', result))
                     else:
-                        self._send_result(('v2_playbook_item_on_ok', result))
+                        self._send_result(('v2_runner_item_on_ok', result))
+                        if 'diff' in result._result:
+                            self._send_result(('v2_on_file_diff', result))
                     continue
 
                 clean_copy = strip_internal_keys(result._result)
@@ -141,7 +148,7 @@ class ResultProcess(multiprocessing.Process):
                     if result._task.loop:
                         # this task had a loop, and has more than one result, so
                         # loop over all of them instead of a single result
-                        result_items = result._result['results']
+                        result_items = result._result.get('results', [])
                     else:
                         result_items = [ result._result ]
 
@@ -164,7 +171,10 @@ class ResultProcess(multiprocessing.Process):
                             self._send_result(('add_group', result._host, result_item))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
-                            item = result_item.get('item', None)
+                            loop_var = 'item'
+                            if result._task.loop_control:
+                                loop_var = result._task.loop_control.get('loop_var') or 'item'
+                            item = result_item.get(loop_var, None)
                             if result._task.action == 'include_vars':
                                 for (key, value) in iteritems(result_item['ansible_facts']):
                                     self._send_result(('set_host_var', result._host, result._task, item, key, value))

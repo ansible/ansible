@@ -51,7 +51,8 @@ class LookupModule(LookupBase):
 
                     searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     if 'role_path' in variables:
-                        searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                        if C.DEFAULT_ROLES_PATH:
+                            searchpath[:0] = C.DEFAULT_ROLES_PATH
                         searchpath.insert(1, variables['role_path'])
 
                     self._templar.environment.loader.searchpath = searchpath

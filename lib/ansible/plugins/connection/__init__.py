@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
@@ -41,6 +41,8 @@ except ImportError:
     display = Display()
 
 __all__ = ['ConnectionBase', 'ensure_connect']
+
+BUFSIZE = 65536
 
 
 def ensure_connect(func):
@@ -87,7 +89,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             shell_type = getattr(self, '_shell_type')
         else:
             shell_type = 'sh'
-            shell_filename = os.path.basename(C.DEFAULT_EXECUTABLE)
+            shell_filename = os.path.basename(self._play_context.executable)
             for shell in shell_loader.all():
                 if shell_filename in shell.COMPATIBLE_SHELLS:
                     shell_type = shell.SHELL_FAMILY
@@ -128,7 +130,16 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
         the argument list. The list will not contain any empty elements.
         """
-        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+        try:
+            # Python 2.6.x shlex doesn't handle unicode type so we have to
+            # convert args to byte string for that case.  More efficient to
+            # try without conversion first but python2.6 doesn't throw an
+            # exception, it merely mangles the output:
+            # >>> shlex.split(u't e')
+            # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
+            return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+        except AttributeError:
+            return [to_unicode(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
     def transport(self):
@@ -162,8 +173,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         When a command is executed, it goes through multiple commands to get
         there.  It looks approximately like this::
 
-            HardCodedShell ConnectionCommand UsersLoginShell DEFAULT_EXECUTABLE BecomeCommand DEFAULT_EXECUTABLE Command
-        :HardCodedShell: Is optional.  It is run locally to invoke the
+            [LocalShell] ConnectionCommand [UsersLoginShell (*)] ANSIBLE_SHELL_EXECUTABLE [(BecomeCommand ANSIBLE_SHELL_EXECUTABLE)] Command
+        :LocalShell: Is optional.  It is run locally to invoke the
             ``Connection Command``.  In most instances, the
             ``ConnectionCommand`` can be invoked directly instead.  The ssh
             connection plugin which can have values that need expanding
@@ -176,30 +187,36 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             ``ansible_ssh_host`` and so forth are fed to this piece of the
             command to connect to the correct host (Examples ``ssh``,
             ``chroot``)
-        :UsersLoginShell: This is the shell that the ``ansible_ssh_user`` has
-            configured as their login shell.  In traditional UNIX parlance,
-            this is the last field of a user's ``/etc/passwd`` entry   We do not
-            specifically try to run the ``UsersLoginShell`` when we connect.
-            Instead it is implicit in the actions that the
-            ``ConnectionCommand`` takes when it connects to a remote machine.
-            ``ansible_shell_type`` may be set to inform ansible of differences
-            in how the ``UsersLoginShell`` handles things like quoting if a
-            shell has different semantics than the Bourne shell.
-        :DEFAULT_EXECUTABLE: This is the shell accessible via
-            ``ansible.constants.DEFAULT_EXECUTABLE``.  We explicitly invoke
-            this shell so that we have predictable quoting rules at this
-            point.  The ``DEFAULT_EXECUTABLE`` is only settable by the user
-            because some sudo setups may only allow invoking a specific Bourne
-            shell.  (For instance, ``/bin/bash`` may be allowed but
-            ``/bin/sh``, our default, may not).  We invoke this twice, once
-            after the ``ConnectionCommand`` and once after the
+        :UsersLoginShell: This shell may or may not be created depending on
+            the ConnectionCommand used by the connection plugin.  This is the
+            shell that the ``ansible_ssh_user`` has configured as their login
+            shell.  In traditional UNIX parlance, this is the last field of
+            a user's ``/etc/passwd`` entry   We do not specifically try to run
+            the ``UsersLoginShell`` when we connect.  Instead it is implicit
+            in the actions that the ``ConnectionCommand`` takes when it
+            connects to a remote machine.  ``ansible_shell_type`` may be set
+            to inform ansible of differences in how the ``UsersLoginShell``
+            handles things like quoting if a shell has different semantics
+            than the Bourne shell.
+        :ANSIBLE_SHELL_EXECUTABLE: This is the shell set via the inventory var
+            ``ansible_shell_executable`` or via
+            ``constants.DEFAULT_EXECUTABLE`` if the inventory var is not set.
+            We explicitly invoke this shell so that we have predictable
+            quoting rules at this point.  ``ANSIBLE_SHELL_EXECUTABLE`` is only
+            settable by the user because some sudo setups may only allow
+            invoking a specific shell.  (For instance, ``/bin/bash`` may be
+            allowed but ``/bin/sh``, our default, may not).  We invoke this
+            twice, once after the ``ConnectionCommand`` and once after the
             ``BecomeCommand``.  After the ConnectionCommand, this is run by
             the ``UsersLoginShell``.  After the ``BecomeCommand`` we specify
-            that the ``DEFAULT_EXECUTABLE`` is being invoked directly.
-        :BecomeComand: Is the command that performs privilege escalation.
-            Setting this up is performed by the action plugin prior to running
-            ``exec_command``. So we just get passed :param:`cmd` which has the
-            BecomeCommand already added.  (Examples: sudo, su)
+            that the ``ANSIBLE_SHELL_EXECUTABLE`` is being invoked directly.
+        :BecomeComand ANSIBLE_SHELL_EXECUTABLE: Is the command that performs
+            privilege escalation.  Setting this up is performed by the action
+            plugin prior to running ``exec_command``. So we just get passed
+            :param:`cmd` which has the BecomeCommand already added.
+            (Examples: sudo, su)  If we have a BecomeCommand then we will
+            invoke a ANSIBLE_SHELL_EXECUTABLE shell inside of it so that we
+            have a consistent view of quoting.
         :Command: Is the command we're actually trying to run remotely.
             (Examples: mkdir -p $HOME/.ansible, python $HOME/.ansible/tmp-script-file)
         """
@@ -246,11 +263,11 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f))
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f))
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def connection_unlock(self):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f))
+        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)

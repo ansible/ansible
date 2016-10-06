@@ -35,5 +35,5 @@ class CallbackModule(CallbackModule_default):
     def v2_runner_on_skipped(self, result):
         pass
 
-    def v2_playbook_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result):
         pass

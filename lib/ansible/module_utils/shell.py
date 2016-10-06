@@ -79,17 +79,15 @@ class Command(object):
 
 class Shell(object):
 
-    def __init__(self):
+    def __init__(self, prompts_re=None, errors_re=None, kickstart=True):
         self.ssh = None
         self.shell = None
 
+        self.kickstart = kickstart
         self._matched_prompt = None
 
-        self.prompts = list()
-        self.prompts.extend(CLI_PROMPTS_RE)
-
-        self.errors = list()
-        self.errors.extend(CLI_ERRORS_RE)
+        self.prompts = prompts_re or CLI_PROMPTS_RE
+        self.errors = errors_re or CLI_ERRORS_RE
 
     def open(self, host, port=22, username=None, password=None,
             timeout=10, key_filename=None, pkey=None, look_for_keys=None,
@@ -108,7 +106,11 @@ class Shell(object):
                     key_filename=key_filename, allow_agent=allow_agent)
 
         self.shell = self.ssh.invoke_shell()
-        self.shell.settimeout(10)
+        self.shell.settimeout(timeout)
+
+        if self.kickstart:
+            self.shell.sendall("\n")
+
         self.receive()
 
     def strip(self, data):
@@ -144,7 +146,7 @@ class Shell(object):
                 cmd = '%s\r' % str(command)
                 self.shell.sendall(cmd)
                 responses.append(self.receive(command))
-        except socket.timeout, exc:
+        except socket.timeout:
             raise ShellError("timeout trying to send command", cmd)
         return responses
 
@@ -175,32 +177,10 @@ class Shell(object):
     def read(self, response):
         for regex in self.errors:
             if regex.search(response):
-                raise ShellError('%s' % response)
+                raise ShellError('matched error in response: %s' % response)
 
         for regex in self.prompts:
             match = regex.search(response)
             if match:
                 self._matched_prompt = match.group()
                 return True
-
-def get_cli_connection(module):
-    host = module.params['host']
-    port = module.params['port']
-    if not port:
-        port = 22
-
-    username = module.params['username']
-    password = module.params['password']
-
-    try:
-        cli = Cli()
-        cli.open(host, port=port, username=username, password=password)
-    except paramiko.ssh_exception.AuthenticationException, exc:
-        module.fail_json(msg=exc.message)
-    except socket.error, exc:
-        host = '%s:%s' % (host, port)
-        module.fail_json(msg=exc.strerror, errno=exc.errno, host=host)
-    except socket.timeout:
-        module.fail_json(msg='socket timed out')
-
-    return cli

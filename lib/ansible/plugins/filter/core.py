@@ -106,7 +106,7 @@ def to_nice_json(a, *args, **kw):
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
 
-def bool(a):
+def to_bool(a):
     ''' return a bool for the arg '''
     if a is None or type(a) == bool:
         return a
@@ -137,6 +137,45 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
         flags = 0
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
+
+def regex_findall(value, regex, multiline=False, ignorecase=False):
+    ''' Perform re.findall and return the list of matches '''
+    flags = 0
+    if ignorecase:
+        flags |= re.I
+    if multiline:
+        flags |= re.M
+    return re.findall(regex, value, flags)
+
+def regex_search(value, regex, *args, **kwargs):
+    ''' Perform re.search and return the list of matches or a backref '''
+
+    groups = list()
+    for arg in args:
+        if arg.startswith('\\g'):
+            match = re.match(r'\\g<(\S+)>', arg).group(1)
+            groups.append(match)
+        elif arg.startswith('\\'):
+            match = int(re.match(r'\\(\d+)', arg).group(1))
+            groups.append(match)
+        else:
+            raise errors.AnsibleFilterError('Unknown argument')
+
+    flags = 0
+    if kwargs.get('ignorecase'):
+        flags |= re.I
+    if kwargs.get('multiline'):
+        flags |= re.M
+
+    match = re.search(regex, value, flags)
+    if match:
+        if not groups:
+            return match.group()
+        else:
+            items = list()
+            for item in groups:
+                items.append(match.group(item))
+            return items
 
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
@@ -392,7 +431,7 @@ class FilterModule(object):
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
 
             # value as boolean
-            'bool': bool,
+            'bool': to_bool,
 
             # quote string for shell usage
             'quote': quote,
@@ -414,6 +453,8 @@ class FilterModule(object):
             # regex
             'regex_replace': regex_replace,
             'regex_escape': regex_escape,
+            'regex_search': regex_search,
+            'regex_findall': regex_findall,
 
             # ? : ;
             'ternary': ternary,

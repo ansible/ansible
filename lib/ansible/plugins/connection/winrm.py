@@ -29,10 +29,10 @@ import xmltodict
 
 from ansible.compat.six.moves.urllib.parse import urlunsplit
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleConnectionFailure
 try:
+    import winrm
     from winrm import Response
-    from winrm.exceptions import WinRMTransportError
     from winrm.protocol import Protocol
 except ImportError:
     raise AnsibleError("winrm is not installed")
@@ -61,6 +61,7 @@ except ImportError:
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
+    transport = 'winrm'
     module_implementation_preferences = ('.ps1', '')
     become_methods = []
     allow_executable = False
@@ -73,14 +74,9 @@ class Connection(ConnectionBase):
         self.delegate         = None
         self._shell_type      = 'powershell'
 
-        # TODO: Add runas support
+        # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
-
-    @property
-    def transport(self):
-        ''' used to identify this connection object from other classes '''
-        return 'winrm'
 
     def set_host_overrides(self, host):
         '''
@@ -95,15 +91,16 @@ class Connection(ConnectionBase):
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
 
-        if '@' in self._winrm_user:
-            self._winrm_realm = self._winrm_user.split('@', 1)[1].strip() or None
+        if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
+            self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
         else:
-            self._winrm_realm = None
-        self._winrm_realm = host_vars.get('ansible_winrm_realm', self._winrm_realm) or None
+            # for legacy versions of pywinrm, use the values we know are supported
+            self._winrm_supported_authtypes = set(['plaintext','ssl','kerberos'])
 
+        # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
         transport_selector = 'ssl' if self._winrm_scheme == 'https' else 'plaintext'
 
-        if HAVE_KERBEROS and ('@' in self._winrm_user or self._winrm_realm):
+        if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
             self._winrm_transport = 'kerberos,%s' % transport_selector
         else:
             self._winrm_transport = transport_selector
@@ -111,13 +108,27 @@ class Connection(ConnectionBase):
         if isinstance(self._winrm_transport, basestring):
             self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
 
-        self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass, realm=self._winrm_realm)
+        unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
+
+        if unsupported_transports:
+            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
+
+        self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
         argspec = inspect.getargspec(Protocol.__init__)
-        for arg in argspec.args:
-            if arg in ('self', 'endpoint', 'transport', 'username', 'password', 'realm'):
-                continue
-            if 'ansible_winrm_%s' % arg in host_vars:
-                self._winrm_kwargs[arg] = host_vars['ansible_winrm_%s' % arg]
+        supported_winrm_args = set(argspec.args)
+        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in host_vars if v.startswith('ansible_winrm_')])
+        unsupported_args = passed_winrm_args.difference(supported_winrm_args)
+
+        # warn for kwargs unsupported by the installed version of pywinrm
+        for arg in unsupported_args:
+            display.warning("ansible_winrm_{0} unsupported by pywinrm (is an up-to-date version of pywinrm installed?)".format(arg))
+
+        # arg names we're going passing directly
+        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password'])
+
+        # pass through matching kwargs, excluding the list we want to treat specially
+        for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
+            self._winrm_kwargs[arg] = host_vars['ansible_winrm_%s' % arg]
 
     def _winrm_connect(self):
         '''
@@ -135,7 +146,12 @@ class Connection(ConnectionBase):
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
                 protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
-                protocol.send_message('')
+
+                # open the shell from connect so we know we're able to talk to the server
+                if not self.shell_id:
+                    self.shell_id = protocol.open_shell(codepage=65001) # UTF-8
+                    display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
+
                 return protocol
             except Exception as e:
                 err_msg = to_unicode(e).strip()
@@ -145,13 +161,13 @@ class Connection(ConnectionBase):
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
-                        err_msg = 'the username/password specified for this server was incorrect'
+                        err_msg = 'the specified credentials were rejected by the server'
                     elif code == 411:
                         return protocol
                 errors.append(u'%s: %s' % (transport, err_msg))
                 display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_unicode(traceback.format_exc())), host=self._winrm_host)
         if errors:
-            raise AnsibleError(', '.join(map(to_str, errors)))
+            raise AnsibleConnectionFailure(', '.join(map(to_str, errors)))
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
@@ -173,9 +189,6 @@ class Connection(ConnectionBase):
         if not self.protocol:
             self.protocol = self._winrm_connect()
             self._connected = True
-        if not self.shell_id:
-            self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
-            display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
         if from_exec:
             display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
         else:
@@ -190,18 +203,27 @@ class Connection(ConnectionBase):
                 if stdin_iterator:
                     for (data, is_last) in stdin_iterator:
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
-            except:
+
+            except Exception as ex:
+                from traceback import format_exc
+                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc(ex))
                 stdin_push_failed = True
 
-            # NB: this could hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
+            if stdin_push_failed:
+                raise AnsibleError('winrm send_input failed')
+
+            # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
             # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
+
+            # TODO: check result from response and set stdin_push_failed if we have nonzero
             if from_exec:
                 display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             else:
                 display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
             display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
+
 
             if stdin_push_failed:
                 raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
@@ -216,6 +238,11 @@ class Connection(ConnectionBase):
             self.protocol = self._winrm_connect()
             self._connected = True
         return self
+
+    def _reset(self): # used by win_reboot (and any other action that might need to bounce the state)
+        self.protocol = None
+        self.shell_id = None
+        self._connect()
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -244,16 +271,35 @@ class Connection(ConnectionBase):
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception:
             traceback.print_exc()
-            raise AnsibleError("failed to exec cmd %s" % cmd)
+            raise AnsibleConnectionFailure("failed to exec cmd %s" % cmd)
         result.std_out = to_bytes(result.std_out)
         result.std_err = to_bytes(result.std_err)
+
+        # parse just stderr from CLIXML output
+        if self.is_clixml(result.std_err):
+            try:
+                result.std_err = self.parse_clixml_stream(result.std_err)
+            except:
+                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
+                pass
+
         return (result.status_code, result.std_out, result.std_err)
+
+    def is_clixml(self, value):
+        return value.startswith("#< CLIXML")
+
+    # hacky way to get just stdout- not always sure of doc framing here, so use with care
+    def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
+        clear_xml = clixml_doc.replace('#< CLIXML\r\n', '')
+        doc = xmltodict.parse(clear_xml)
+        lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
+        return '\r\n'.join(lines)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
-        in_size = os.path.getsize(in_path)
+        in_size = os.path.getsize(to_bytes(in_path, errors='strict'))
         offset = 0
-        with open(in_path, 'rb') as in_file:
+        with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
             for out_data in iter((lambda:in_file.read(buffer_size)), ''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
@@ -269,12 +315,12 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
-        if not os.path.exists(in_path):
+        if not os.path.exists(to_bytes(in_path, errors='strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
 
         script_template = u'''
             begin {{
-                $path = "{0}"
+                $path = '{0}'
 
                 $DebugPreference = "Continue"
                 $ErrorActionPreference = "Stop"
@@ -370,9 +416,9 @@ class Connection(ConnectionBase):
                     else:
                         if not out_file:
                             # If out_path is a directory and we're expecting a file, bail out now.
-                            if os.path.isdir(out_path):
+                            if os.path.isdir(to_bytes(out_path, errors='strict')):
                                 break
-                            out_file = open(out_path, 'wb')
+                            out_file = open(to_bytes(out_path, errors='strict'), 'wb')
                         out_file.write(data)
                         if len(data) < buffer_size:
                             break

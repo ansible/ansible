@@ -29,6 +29,7 @@
     repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
     repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
     repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
+    repo_depth_url: 'https://github.com/ansible-test-robinro/git-test-shallow-depth'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -39,9 +40,15 @@
 - name: verify that git is installed so this test can continue
   shell: which git
 
+- name: get git version, only newer than 1.8.2 has fixed git depth
+  shell: git --version | grep 'git version' | sed 's/git version //'
+  register: git_version
+
+
 #
 # Test repo=https://github.com/...
 #
+
 
 - name: initial checkout
   git: repo={{ repo_format1 }} dest={{ checkout_dir }}
@@ -219,6 +226,40 @@
 - assert:
     that:
       - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+# try out combination of refspec and depth
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: update to revision by specifying the refspec with depth=1
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+    depth: 1
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+- name: try to access other commit
+  shell: git checkout 0ce1096
+  register: checkout_shallow
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: make sure the old commit was not fetched
+  assert:
+    that: 
+      - checkout_shallow.rc == 1
+      - checkout_shallow|failed
+  when: git_version.stdout | version_compare("1.8.2", '>=')
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
@@ -412,3 +453,161 @@
     repo: '{{ checkout_dir}}/repo'
     version: 'new-branch'
     dest: '{{ checkout_dir }}/checkout'
+
+
+# Test the depth option and fetching revisions that were ignored first
+  
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: Clone example git repo with depth=1
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+
+- name: try to access earlier commit
+  shell: git checkout 79624b4
+  register: checkout_early
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: make sure the old commit was not fetched
+  assert:
+    that: checkout_early.rc == 1
+  when: git_version.stdout | version_compare("1.8.2", '>=')
+
+# tests https://github.com/ansible/ansible/issues/14954
+- name: fetch repo again with depth=1
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+  register: checkout2
+
+- assert:
+    that: "not checkout2|changed"
+  when: git_version.stdout | version_compare("1.8.2", '>=')
+
+- name: again try to access earlier commit
+  shell: git checkout 79624b4
+  register: checkout_early
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: again make sure the old commit was not fetched
+  assert:
+    that: checkout_early.rc == 1
+  when: git_version.stdout | version_compare("1.8.2", '>=')
+    
+# make sure we are still able to fetch other versions
+- name: Clone same repo with older version
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: cloneold
+
+- assert:
+    that: "cloneold|success"
+
+- name: try to access earlier commit
+  shell: git checkout 79624b4
+  args:
+    chdir: '{{ checkout_dir }}'
+
+# test for  https://github.com/ansible/ansible-modules-core/issues/527
+# clone a repo, add a tag to the same commit and try to checkout the new commit
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout example repo
+  git: repo={{ repo_format1 }} dest={{ checkout_dir }}
+
+- name: clone example repo locally
+  git: repo={{ checkout_dir }} dest={{checkout_dir}}.copy
+
+- name: get tags of head
+  command: git tag --contains chdir="{{ checkout_dir }}.copy"
+  register: listoftags
+
+- name: make sure the tag does not yet exist
+  assert:
+    that:
+      - "'newtag' not in listoftags.stdout_lines"
+
+- name: add tag in orig repo
+  command: git tag newtag chdir="{{ checkout_dir }}"
+
+- name: update copy with new tag
+  git: repo={{ checkout_dir }} dest={{checkout_dir}}.copy version=newtag
+  register: update_new_tag
+
+- name: get tags of new head
+  command: git tag --contains chdir="{{ checkout_dir }}.copy"
+  register: listoftags
+
+- name: check new head
+  assert:
+    that:
+      - not update_new_tag|changed
+      - "'newtag' in listoftags.stdout_lines"
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+
+  # Test for https://github.com/ansible/ansible-modules-core/issues/3456
+  # clone a repo with depth and version specified
+
+- name: clone repo with both version and depth specified
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: run a second time (now fetch, not clone)
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+  register: git_fetch
+
+- name: ensure the fetch succeeded
+  assert:
+    that: git_fetch|success
+
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: clone repo with both version and depth specified
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: switch to older branch with depth=1 (uses fetch)
+  git:
+    repo: '{{ repo_depth_url }}'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlybranch
+  register: git_fetch
+
+- name: ensure the fetch succeeded
+  assert:
+    that: git_fetch|success
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+

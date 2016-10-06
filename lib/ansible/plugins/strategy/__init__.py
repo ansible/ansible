@@ -19,15 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, text_type, string_types
-
 import json
 import time
 import zlib
+from collections import defaultdict
+from multiprocessing import Lock
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.compat.six.moves import queue as Queue
+from ansible.compat.six import iteritems, text_type, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor.play_iterator import PlayIterator
@@ -35,6 +36,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
@@ -51,6 +53,24 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
+if 'action_write_locks' not in globals():
+    # Do not initialize this more than once because it seems to bash
+    # the existing one.  multiprocessing must be reloading the module
+    # when it forks?
+    action_write_locks = dict()
+
+    # Below is a Lock for use when we weren't expecting a named module.
+    # It gets used when an action plugin directly invokes a module instead
+    # of going through the strategies.  Slightly less efficient as all
+    # processes with unexpected module names will wait on this lock
+    action_write_locks[None] = Lock()
+
+    # These plugins are called directly by action plugins (not going through
+    # a strategy).  We precreate them here as an optimization
+    mods = set(p['name'] for p in Facts.PKG_MGRS)
+    mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))
+    for mod_name in mods:
+        action_write_locks[mod_name] = Lock()
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -141,7 +161,21 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
 
-        task_vars['hostvars'] = self._tqm.hostvars
+        # Add a write lock for tasks.
+        # Maybe this should be added somewhere further up the call stack but
+        # this is the earliest in the code where we have task (1) extracted
+        # into its own variable and (2) there's only a single code path
+        # leading to the module being run.  This is called by three
+        # functions: __init__.py::_do_handler_run(), linear.py::run(), and
+        # free.py::run() so we'd have to add to all three to do it there.
+        # The next common higher level is __init__.py::run() and that has
+        # tasks inside of play_iterator so we'd have to extract them to do it
+        # there.
+        global action_write_locks
+        if task.action not in action_write_locks:
+            display.debug('Creating lock for %s' % task.action)
+            action_write_locks[task.action] = Lock()
+
         # and then queue the new task
         display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
@@ -153,7 +187,7 @@ class StrategyBase:
 
             queued = False
             while True:
-                (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+                (worker_prc, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
@@ -216,6 +250,20 @@ class StrategyBase:
                             if iterator.is_failed(host):
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
+                            else:
+                                # otherwise, we grab the current state and if we're iterating on
+                                # the rescue portion of a block then we save the failed task in a
+                                # special var for use within the rescue/always
+                                state, _ = iterator.get_next_task_for_host(host, peek=True)
+                                if state.run_state == iterator.ITERATING_RESCUE:
+                                    original_task = iterator.get_original_task(host, task)
+                                    self._variable_manager.set_nonpersistent_facts(
+                                        host,
+                                        dict(
+                                            ansible_failed_task=original_task.serialize(),
+                                            ansible_failed_result=task_result._result,
+                                        ),
+                                    )
                         else:
                             self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=task.ignore_errors)
@@ -301,9 +349,12 @@ class StrategyBase:
                     # be a host that is not really in inventory at all
                     if task.delegate_to is not None and task.delegate_facts:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
+                        task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
+                        loop_var = 'item'
+                        if task.loop_control:
+                            loop_var = task.loop_control.loop_var or 'item'
                         if item is not None:
-                            task_vars['item'] = item
+                            task_vars[loop_var] = item
                         templar = Templar(loader=self._loader, variables=task_vars)
                         host_name = templar.template(task.delegate_to)
                         actual_host = self._inventory.get_host(host_name)
@@ -329,8 +380,11 @@ class StrategyBase:
                                 self._variable_manager.set_nonpersistent_facts(target_host, facts)
                             else:
                                 self._variable_manager.set_host_facts(target_host, facts)
-                elif result[0].startswith('v2_playbook_item') or result[0] == 'v2_playbook_retry':
+                elif result[0].startswith('v2_runner_item') or result[0] == 'v2_runner_retry':
                     self._tqm.send_callback(result[0], result[1])
+                elif result[0] == 'v2_on_file_diff':
+                    if self._diff:
+                        self._tqm.send_callback('v2_on_file_diff', result[1])
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
 
@@ -366,10 +420,9 @@ class StrategyBase:
 
         host_name = host_info.get('host_name')
 
-        # Check if host in cache, add if not
-        if host_name in self._inventory._hosts_cache:
-            new_host = self._inventory._hosts_cache[host_name]
-        else:
+        # Check if host in inventory, add if not
+        new_host = self._inventory.get_host(host_name)
+        if not new_host:
             new_host = Host(name=host_name)
             self._inventory._hosts_cache[host_name] = new_host
 
@@ -457,7 +510,8 @@ class StrategyBase:
                 task_include=included_file._task,
                 role=included_file._task._role,
                 use_handlers=is_handler,
-                loader=self._loader
+                loader=self._loader,
+                variable_manager=self._variable_manager,
             )
 
             # since we skip incrementing the stats when the task result is
@@ -620,10 +674,10 @@ class StrategyBase:
     def _take_step(self, task, host=None):
 
         ret=False
+        msg=u'Perform task: %s ' % task
         if host:
-            msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
-        else:
-            msg = u'Perform task: %s (y/n/c): ' % task
+            msg += u'on %s ' % host
+        msg += u'(N)o/(y)es/(c)ontinue: '
         resp = display.prompt(msg)
 
         if resp.lower() in ['y','yes']:
@@ -653,6 +707,9 @@ class StrategyBase:
             self.run_handlers(iterator, play_context)
         elif meta_action == 'refresh_inventory':
             self._inventory.refresh_inventory()
+        elif meta_action == 'clear_facts':
+            for host in iterator._host_states:
+                self._variable_manager.clear_facts(host)
         #elif meta_action == 'reset_connection':
         #    connection_info.connection.close()
         elif meta_action == 'clear_host_errors':

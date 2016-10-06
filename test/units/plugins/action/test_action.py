@@ -33,7 +33,7 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from ansible import __version__ as ansible_version
+from ansible.release import __version__ as ansible_version
 from ansible import constants as C
 from ansible.compat.six import text_type
 from ansible.compat.tests import unittest
@@ -52,7 +52,6 @@ python_module_replacers = b"""
 #!/usr/bin/python
 
 #ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
-#MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 #MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 #SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
@@ -61,7 +60,7 @@ from ansible.module_utils.basic import *
 """
 
 powershell_module_replacers = b"""
-WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
+WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 # POWERSHELL_COMMON
 """
 
@@ -213,14 +212,15 @@ class TestActionBase(unittest.TestCase):
 
         # test python module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))) as m:
-            mock_task.args = dict(a=1, foo='fö〩')
-            mock_connection.module_implementation_preferences = ('',)
-            (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
-            self.assertEqual(style, "new")
-            self.assertEqual(shebang, b"#!/usr/bin/python")
+            with patch.object(os, 'rename') as m:
+                mock_task.args = dict(a=1, foo='fö〩')
+                mock_connection.module_implementation_preferences = ('',)
+                (style, shebang, data) = action_base._configure_module(mock_task.action, mock_task.args)
+                self.assertEqual(style, "new")
+                self.assertEqual(shebang, b"#!/usr/bin/python")
 
-            # test module not found
-            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+                # test module not found
+                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
 
         # test powershell module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))) as m:
@@ -392,27 +392,27 @@ class TestActionBase(unittest.TestCase):
 
         action_base._low_level_execute_command = MagicMock()
         action_base._low_level_execute_command.return_value = dict(rc=0, stdout='/some/path')
-        self.assertEqual(action_base._make_tmp_path(), '/some/path/')
+        self.assertEqual(action_base._make_tmp_path('root'), '/some/path/')
 
         # empty path fails
         action_base._low_level_execute_command.return_value = dict(rc=0, stdout='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # authentication failure
         action_base._low_level_execute_command.return_value = dict(rc=5, stdout='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # ssh error
         action_base._low_level_execute_command.return_value = dict(rc=255, stdout='', stderr='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
         play_context.verbosity = 5
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # general error
         action_base._low_level_execute_command.return_value = dict(rc=1, stdout='some stuff here', stderr='')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
         action_base._low_level_execute_command.return_value = dict(rc=1, stdout='some stuff here', stderr='No space left on device')
-        self.assertRaises(AnsibleError, action_base._make_tmp_path)
+        self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
     def test_action_base__remove_tmp_path(self):
         # create our fake task
@@ -567,8 +567,8 @@ class TestActionBase(unittest.TestCase):
         action_base._make_tmp_path = MagicMock()
         action_base._transfer_data = MagicMock()
         action_base._compute_environment_string = MagicMock()
-        action_base._remote_chmod = MagicMock()
         action_base._low_level_execute_command = MagicMock()
+        action_base._fixup_perms = MagicMock()
 
         action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data')
         action_base._late_needs_tmp_path.return_value = False
@@ -617,8 +617,8 @@ class TestActionBase(unittest.TestCase):
         play_context.make_become_cmd.assert_not_called()
 
         play_context.remote_user = 'apo'
-        action_base._low_level_execute_command('ECHO', sudoable=True)
-        play_context.make_become_cmd.assert_called_once_with("ECHO", executable='/bin/sh')
+        action_base._low_level_execute_command('ECHO', sudoable=True, executable='/bin/csh')
+        play_context.make_become_cmd.assert_called_once_with("ECHO", executable='/bin/csh')
 
         play_context.make_become_cmd.reset_mock()
 
@@ -627,6 +627,6 @@ class TestActionBase(unittest.TestCase):
         try:
             play_context.remote_user = 'root'
             action_base._low_level_execute_command('ECHO SAME', sudoable=True)
-            play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable='/bin/sh')
+            play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable=None)
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user

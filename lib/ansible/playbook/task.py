@@ -21,20 +21,22 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 
 from ansible.plugins import lookup_loader
-
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+
+from ansible.utils.unicode import to_str
 
 try:
     from __main__ import display
@@ -69,20 +71,21 @@ class Task(Base, Conditional, Taggable, Become):
 
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
-    _changed_when         = FieldAttribute(isa='string')
+    _changed_when         = FieldAttribute(isa='list', default=[])
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
     _delegate_facts       = FieldAttribute(isa='bool', default=False)
-    _failed_when          = FieldAttribute(isa='string')
+    _failed_when          = FieldAttribute(isa='list', default=[])
     _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
+    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl)
     _name                 = FieldAttribute(isa='string', default='')
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=3)
-    _until                = FieldAttribute(isa='string')
+    _until                = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -168,7 +171,10 @@ class Task(Base, Conditional, Taggable, Become):
         # and the delegate_to value from the various possible forms
         # supported as legacy
         args_parser = ModuleArgsParser(task_ds=ds)
-        (action, args, delegate_to) = args_parser.parse()
+        try:
+            (action, args, delegate_to) = args_parser.parse()
+        except AnsibleParserError as e:
+            raise AnsibleParserError(to_str(e), obj=ds)
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
@@ -216,6 +222,16 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
+    def _load_loop_control(self, attr, ds):
+        if not isinstance(ds, dict):
+           raise AnsibleParserError(
+               "the `loop_control` value must be specified as a dictionary and cannot " \
+               "be a variable itself (though it can contain variables)",
+               obj=ds,
+           )
+
+        return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
+
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
@@ -228,6 +244,13 @@ class Task(Base, Conditional, Taggable, Become):
             self._task_include.post_validate(templar)
 
         super(Task, self).post_validate(templar)
+
+    def _post_validate_register(self, attr, value, templar):
+        '''
+        Override post validation for the register args field, which is not
+        supposed to be templated
+        '''
+        return value
 
     def _post_validate_loop_args(self, attr, value, templar):
         '''

@@ -26,6 +26,7 @@ import textwrap
 
 from ansible.compat.six import iteritems
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins import module_loader
 from ansible.cli import CLI
@@ -40,9 +41,6 @@ except ImportError:
 
 class DocCLI(CLI):
     """ Vault command line class """
-
-    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
-    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
 
     def __init__(self, args):
 
@@ -96,7 +94,7 @@ class DocCLI(CLI):
                     display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
 
-                if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
+                if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
                 try:
@@ -143,11 +141,11 @@ class DocCLI(CLI):
                     continue
                 elif os.path.isdir(module):
                     self.find_modules(module)
-                elif any(module.endswith(x) for x in self.BLACKLIST_EXTS):
+                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
                 elif module.startswith('__'):
                     continue
-                elif module in self.IGNORE_FILES:
+                elif module in C.IGNORE_FILES:
                     continue
                 elif module.startswith('_'):
                     fullpath = '/'.join([path,module])
@@ -221,7 +219,10 @@ class DocCLI(CLI):
             opt = doc['options'][o]
             desc = CLI.tty_ify(" ".join(opt['description']))
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 s = o + "="
             else:
                 s = o
@@ -254,7 +255,10 @@ class DocCLI(CLI):
         for o in sorted(doc['option_keys']):
             opt = doc['options'][o]
 
-            if opt.get('required', False):
+            required = opt.get('required', False)
+            if not isinstance(required, bool):
+                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            if required:
                 opt_leadin = "="
             else:
                 opt_leadin = "-"

@@ -44,16 +44,25 @@ options:
         the remote device.  The value of I(username) is used to authenticate
         either the CLI login or the eAPI authentication depending on which
         transport is used. Note this argument does not affect the SSH
-        transport.
-    required: true
+        transport. If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_USERNAME will be used instead.
+    required: false
   password:
     description:
-      - Specifies the password to use when authentication the connection to
+      - Specifies the password to use to authenticate the connection to
         the remote device.  This is a common argument used for either I(cli)
         or I(rest) transports.  Note this argument does not affect the SSH
-        transport
+        transport. If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
+  ssh_keyfile:
+    description:
+      - Specifies the SSH key to use to authenticate the connection to
+        the remote device.  This argument is only used for the I(cli)
+        transports. If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    required: false
   transport:
     description:
       - Configures the transport connection to use when connecting to the
@@ -68,8 +77,8 @@ options:
         I(transport) argument is configured as rest.  If the transport
         argument is not rest, this value is ignored
     required: false
-    default: true
-    choices: BOOLEANS
+    default: yes
+    choices: ['yes', 'no']
   provider:
     description:
       - Convience method that allows all M(openswitch) arguments to be passed as

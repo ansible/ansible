@@ -41,28 +41,40 @@ options:
       - Configures the usename to use to authenticate the connection to
         the remote device.  The value of I(username) is used to authenticate
         either the CLI login or the eAPI authentication depending on which
-        transport is used.
-    required: true
+        transport is used. If the value is not specified in the task, the
+        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+    required: false
   password:
     description:
-      - Specifies the password to use when authentication the connection to
+      - Specifies the password to use to authenticate the connection to
         the remote device.  This is a common argument used for either I(cli)
-        or I(eapi) transports.
+        or I(eapi) transports. If the value is not specified in the task, the
+        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
+  ssh_keyfile:
+    description:
+      - Specifies the SSH keyfile to use to authenticate the connection to
+        the remote device.  This argument is only used for I(cli) transports.
+        If the value is not specified in the task, the value of environment
+        variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    required: false
   authorize:
     description:
       - Instructs the module to enter priviledged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode.
+        attempt to excecute all commands in non-priviledged mode. If the value
+        is not specified in the task, the value of environment variable
+        ANSIBLE_NET_AUTHORIZE will be used instead.
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
-        does nothing
+        does nothing. If the value is not specified in the task, the value of
+        environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
     required: false
     default: none
   transport:
@@ -78,8 +90,8 @@ options:
         I(transport) argument is configured as eapi.  If the transport
         argument is not eapi, this value is ignored
     required: false
-    default: true
-    choices: BOOLEANS
+    default: yes
+    choices: ['yes', 'no']
   provider:
     description:
       - Convience method that allows all M(eos) arguments to be passed as

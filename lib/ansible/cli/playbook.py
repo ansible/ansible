@@ -30,8 +30,10 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager
 
 try:
@@ -124,6 +126,8 @@ class PlaybookCLI(CLI):
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
+        variable_manager.options_vars = load_options_vars(self.options)
+
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
@@ -172,26 +176,34 @@ class PlaybookCLI(CLI):
                         if self.options.listtasks:
                             taskmsg = '    tasks:\n'
 
+                        def _process_block(b):
+                            taskmsg = ''
+                            for task in b.block:
+                                if isinstance(task, Block):
+                                    taskmsg += _process_block(task)
+                                else:
+                                    if task.action == 'meta':
+                                        continue
+
+                                    all_tags.update(task.tags)
+                                    if self.options.listtasks:
+                                        cur_tags = list(mytags.union(set(task.tags)))
+                                        cur_tags.sort()
+                                        if task.name:
+                                            taskmsg += "      %s" % task.get_name()
+                                        else:
+                                            taskmsg += "      %s" % task.action
+                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+                            return taskmsg
+
                         all_vars = variable_manager.get_vars(loader=loader, play=play)
                         play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
                             block = block.filter_tagged_tasks(play_context, all_vars)
                             if not block.has_tasks():
                                 continue
-
-                            for task in block.block:
-                                if task.action == 'meta':
-                                    continue
-
-                                all_tags.update(task.tags)
-                                if self.options.listtasks:
-                                    cur_tags = list(mytags.union(set(task.tags)))
-                                    cur_tags.sort()
-                                    if task.name:
-                                        taskmsg += "      %s" % task.get_name()
-                                    else:
-                                        taskmsg += "      %s" % task.action
-                                    taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+                            taskmsg += _process_block(block)
 
                         if self.options.listtags:
                             cur_tags = list(mytags.union(all_tags))

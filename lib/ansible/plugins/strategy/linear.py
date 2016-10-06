@@ -29,6 +29,7 @@ from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -91,7 +92,7 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == PlayIterator.ITERATING_ALWAYS:
                 num_always += 1
-        display.debug("done counting tasks in each state of execution")
+        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups, num_tasks, num_rescue, num_always))
 
         def _advance_selected_hosts(hosts, cur_block, cur_state):
             '''
@@ -229,7 +230,7 @@ class StrategyModule(StrategyBase):
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
-                        if task.any_errors_fatal or run_once:
+                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:
@@ -330,7 +331,7 @@ class StrategyModule(StrategyBase):
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                            display.error(e, wrap_text=False)
+                            display.error(to_unicode(e), wrap_text=False)
                             include_failure = True
                             continue
 

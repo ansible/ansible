@@ -16,28 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+import re
 import time
 import json
 
 try:
-    from runconfig import runconfig
-    from opsrest.settings import settings
-    from opsrest.manager import OvsdbConnectionManager
+    import ovs.poller
+    import ops.dc
+    from ops.settings import settings
     from opslib import restparser
     HAS_OPS = True
 except ImportError:
     HAS_OPS = False
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
+from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
+from ansible.module_utils.netcfg import parse
+from ansible.module_utils.urls import fetch_url
+
 NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
 NET_COMMON_ARGS = dict(
-    host=dict(),
+    host=dict(required=True),
     port=dict(type='int'),
-    username=dict(),
-    password=dict(no_log=True),
-    use_ssl=dict(default=True, type='int'),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    validate_certs=dict(default=True, type='bool'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
-    provider=dict()
+    use_ssl=dict(default=True, type='bool'),
+    provider=dict(type='dict')
 )
 
 def to_list(val):
@@ -48,35 +57,36 @@ def to_list(val):
     else:
         return list()
 
-def get_idl():
-    manager = OvsdbConnectionManager(settings.get('ovs_remote'),
-                                     settings.get('ovs_schema'))
-    manager.start()
-    idl = manager.idl
+def get_opsidl():
+    extschema = restparser.parseSchema(settings.get('ext_schema'))
+    ovsschema = settings.get('ovs_schema')
+    ovsremote = settings.get('ovs_remote')
+    opsidl = ops.dc.register(extschema, ovsschema, ovsremote)
 
-    init_seq_no = 0
-    while (init_seq_no == idl.change_seqno):
-        idl.run()
-        time.sleep(1)
+    init_seqno = opsidl.change_seqno
+    while True:
+        opsidl.run()
+        if init_seqno != opsidl.change_seqno:
+            break
+        poller = ovs.poller.Poller()
+        opsidl.wait(poller)
+        poller.block()
 
-    return idl
-
-def get_schema():
-    return restparser.parseSchema(settings.get('ext_schema'))
-
-def get_runconfig():
-    idl = get_idl()
-    schema = get_schema()
-    return runconfig.RunConfigUtil(idl, schema)
+    return (extschema, opsidl)
 
 class Response(object):
 
     def __init__(self, resp, hdrs):
-        self.body = resp.read()
+        self.body = None
         self.headers = hdrs
+
+        if resp:
+            self.body = resp.read()
 
     @property
     def json(self):
+        if not self.body:
+            return None
         try:
             return json.loads(self.body)
         except ValueError:
@@ -91,6 +101,9 @@ class Rest(object):
     def connect(self):
         host = self.module.params['host']
         port = self.module.params['port']
+
+        self.module.params['url_username'] = self.module.params['username']
+        self.module.params['url_password'] = self.module.params['password']
 
         if self.module.params['use_ssl']:
             proto = 'https'
@@ -145,12 +158,23 @@ class Cli(object):
 
         username = self.module.params['username']
         password = self.module.params['password']
+        key_filename = self.module.params['ssh_keyfile']
 
-        self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+        try:
+            self.shell = Shell()
+            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
+        except ShellError:
+            e = get_exception()
+            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
+            self.module.fail_json(msg=msg)
 
     def send(self, commands, encoding='text'):
-        return self.shell.send(commands)
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            e = get_exception()
+            self.module.fail_json(msg=e.message, commands=commands)
+
 
 class NetworkModule(AnsibleModule):
 
@@ -158,7 +182,8 @@ class NetworkModule(AnsibleModule):
         super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
-        self._runconfig = None
+        self._opsidl = None
+        self._extschema = None
 
     @property
     def config(self):
@@ -167,41 +192,40 @@ class NetworkModule(AnsibleModule):
         return self._config
 
     def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
+        super(NetworkModule, self)._load_params()
+        provider = self.params.get('provider') or dict()
         for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                params[key] = value
-        return params
+            if key in NET_COMMON_ARGS:
+                if self.params.get(key) is None and value is not None:
+                    self.params[key] = value
 
     def connect(self):
-        if self.params['transport'] == 'rest':
-            self.connection = Rest(self)
-        elif self.params['transport'] == 'cli':
-            self.connection = Cli(self)
+        cls = globals().get(str(self.params['transport']).capitalize())
+        try:
+            self.connection = cls(self)
+        except TypeError:
+            e = get_exception()
+            self.fail_json(msg=e.message)
 
         self.connection.connect()
 
-    def configure(self, config):
+    def configure(self, commands):
         if self.params['transport'] == 'cli':
-            commands = to_list(config)
+            commands = to_list(commands)
             commands.insert(0, 'configure terminal')
             responses = self.execute(commands)
             responses.pop(0)
             return responses
         elif self.params['transport'] == 'rest':
             path = '/system/full-configuration'
-            return self.connection.put(path, data=config)
+            return self.connection.put(path, data=commands)
         else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            self._runconfig.write_config_to_db(config)
+            if not self._opsidl:
+                (self._extschema, self._opsidl) = get_opsidl()
+            ops.dc.write(commands, self._extschema, self._opsidl)
 
     def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message, commands=commands)
+        return self.connection.send(commands, **kwargs)
 
     def disconnect(self):
         self.connection.close()
@@ -218,9 +242,9 @@ class NetworkModule(AnsibleModule):
             return resp.json
 
         else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            return self._runconfig.get_running_config()
+            if not self._opsidl:
+                (self._extschema, self._opsidl) = get_opsidl()
+            return ops.dc.read(self._extschema, self._opsidl)
 
 
 def get_module(**kwargs):
@@ -236,7 +260,6 @@ def get_module(**kwargs):
     if not HAS_OPS and module.params['transport'] == 'ssh':
         module.fail_json(msg='could not import ops library')
 
-    # HAS_PARAMIKO is set by module_utils/shell.py
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
@@ -244,4 +267,3 @@ def get_module(**kwargs):
         module.connect()
 
     return module
-

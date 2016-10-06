@@ -172,6 +172,8 @@ In group_vars/windows.yml, define the following inventory variables::
     # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
+Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
+
 Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
 If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.

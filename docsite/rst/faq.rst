@@ -177,7 +177,7 @@ How do I loop over a list of hosts in a group, inside of a template?
 A pretty common pattern is to iterate over a list of hosts inside of a host group, perhaps to populate a template configuration
 file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this:
 
-.. code-block:: jinja2
+.. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
         {{ host }}
@@ -328,8 +328,8 @@ be applied to single tasks only, once a playbook is completed.
 .. _dynamic_variables:
 .. _interpolate_variables:
 
-When should I use {{ }}? Also, howto interpolate variables or dyanmic variable names
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,
@@ -340,11 +340,11 @@ as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this::
 
-     {{ somvar_{{other_var}} }}
+     {{ somevar_{{other_var}} }}
 
 The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
 
-    {{ hostvars[inventory_hostname]['somevar_'  + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
 
 .. _i_dont_see_my_question:
