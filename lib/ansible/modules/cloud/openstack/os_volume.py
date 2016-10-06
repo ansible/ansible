@@ -116,6 +116,8 @@ def _present_volume(module, cloud):
 
     if module.params['volume_src']:
         volume_id = cloud.get_volume_id(module.params['volume_src'])
+        if not volume_id:
+            module.fail_json(msg="Failed to find volume source '%s'" % module.params['volume_src'])
         volume_args['source_volid'] = volume_id
 
     volume = cloud.create_volume(
