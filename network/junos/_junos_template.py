@@ -27,7 +27,7 @@ description:
     from a template file onto a remote device running Junos.  The
     module will return the differences in configuration if the diff
     option is specified on the Ansible command line
-deprecated: Deprecated in 2.2. Use eos_config instead
+deprecated: Deprecated in 2.2. Use junos_config instead
 extends_documentation_fragment: junos
 options:
   src:
