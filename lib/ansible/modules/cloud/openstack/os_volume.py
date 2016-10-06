@@ -67,6 +67,11 @@ options:
        - Volume snapshot id to create from
      required: false
      default: None
+   volume_src:
+     description:
+       - Volume source to create from
+     required: false
+     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -109,6 +114,10 @@ def _present_volume(module, cloud):
         image_id = cloud.get_image_id(module.params['image'])
         volume_args['imageRef'] = image_id
 
+    if module.params['volume_src']:
+        volume_id = cloud.get_volume_id(module.params['volume_src'])
+        volume_args['source_volid'] = volume_id
+
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
@@ -134,11 +143,12 @@ def main():
         display_description=dict(default=None, aliases=['description']),
         image=dict(default=None),
         snapshot_id=dict(default=None),
+        volume_src=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['image', 'snapshot_id'],
+            ['image', 'snapshot_id', 'volume_src'],
         ],
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
