@@ -153,7 +153,7 @@ def get_config(module, acl_name):
 
     filtered_config = list()
     for item in contents.split('\n'):
-        if item.startswith('access-list %s' % acl_name):
+        if item.startswith('access-list %s ' % acl_name):
             filtered_config.append(item)
 
     return NetworkConfig(indent=1, contents='\n'.join(filtered_config))
